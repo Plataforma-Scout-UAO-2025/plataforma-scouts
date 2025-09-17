@@ -65,21 +65,6 @@ export const mockCuotas: Cuota[] = [
 
 export const columns: ColumnDef<Cuota>[] = [
   {
-    id: "id",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          ID
-          <ArrowUpDown />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div className="lowercase text-center">{row.original.id}</div>,
-  },
-  {
     accessorKey: "nombre",
     header: ({ column }) => {
       return (

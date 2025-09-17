@@ -12,15 +12,27 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash } from "lucide-react";
 import type { Cuota } from "../types/cuota.type";
+import { toast, type ExternalToast } from "sonner";
+import axios from "axios";
 
 interface DeleteCuotaModalProps {
   cuota: Cuota;
 }
 
 export default function DeleteCuotaModal({ cuota }: DeleteCuotaModalProps) {
-  const handleDelete = () => {
+  const handleDelete = async () => {
     console.log("Eliminando cuota:", cuota.id);
-    // Aquí irá la llamada al API para eliminar: deleteCuota(cuota.id)
+    try{
+      const response = await axios.delete(import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + cuota.id);
+      if(response.status === 200) {
+        toast.success("Cuota eliminada correctamente");
+      } else {
+        toast.error("Error al eliminar la cuota:", response.data.message);
+      }
+    } catch (error) {
+      toast.error("Error al eliminar la cuota:", error as ExternalToast);
+      console.error("Error al eliminar la cuota:", error);
+    }
   };
 
   return (

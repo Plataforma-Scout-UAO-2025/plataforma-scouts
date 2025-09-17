@@ -7,6 +7,7 @@ import AppLayout from "./components/layout/AppLayout";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Dashboard from "./app/routes/Dashboard";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
+import { Toaster } from "sonner";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           {/* Agrega más rutas aquí */}
         </Routes>
       </div>
+      <Toaster />
     </BrowserRouter>
   );
 }

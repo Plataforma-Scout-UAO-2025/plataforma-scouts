@@ -21,49 +21,96 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast, type ExternalToast } from "sonner";
+import axios from "axios";
 
 interface CreateCuotaFormProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   defaultValues?: Partial<CreateCuotaFormValues>;
-  onSuccess?: () => void;
   submitButtonText?: string;
   cuotaId?: string; // ID para edición
 }
 
-export default function CreateCuotaForm({ 
+export default function CreateCuotaForm({
   setOpen,
-  defaultValues, 
-  onSuccess,
+  defaultValues,
   submitButtonText = "Crear cuota",
-  cuotaId
+  cuotaId,
 }: CreateCuotaFormProps) {
   const form = useForm<CreateCuotaFormValues>({
     resolver: zodResolver(CreateCuotaFormSchema),
     defaultValues: {
       nombre: defaultValues?.nombre || "",
       monto: defaultValues?.monto || "0",
-      periodicidad: (defaultValues?.periodicidad as "Mensual" | "Trimestral" | "Semestral" | "Anual") || "Mensual",
-      tipoCuota: (defaultValues?.tipoCuota as "Ordinaria" | "Extraordinaria") || "Ordinaria",
+      periodicidad:
+        (defaultValues?.periodicidad as
+          | "Mensual"
+          | "Trimestral"
+          | "Semestral"
+          | "Anual") || "Mensual",
+      tipoCuota:
+        (defaultValues?.tipoCuota as "Ordinaria" | "Extraordinaria") ||
+        "Ordinaria",
       fechaLimitePago: defaultValues?.fechaLimitePago || "",
-      medioPago: (defaultValues?.medioPago as "PSE" | "Efectivo" | "Tarjeta de Debito" | "Tarjeta de Credito" | "Otro") || "PSE",
+      medioPago:
+        (defaultValues?.medioPago as
+          | "PSE"
+          | "Efectivo"
+          | "Tarjeta de Debito"
+          | "Tarjeta de Credito"
+          | "Otro") || "PSE",
       aplicaA: defaultValues?.aplicaA || "",
     },
   });
 
-  function onSubmit(values: CreateCuotaFormValues) {
+  async function onSubmit(values: CreateCuotaFormValues) {
     if (cuotaId) {
       // Modo edición: incluir el ID de la cuota
-      console.log("Editando cuota:", { id: cuotaId, ...values });
-      // Aquí irá la llamada al API para actualizar: updateCuota(cuotaId, values)
+      try {
+
+        const data = {
+          id: cuotaId,
+          ...values,
+        }
+
+        const response = await axios.put(
+          import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + cuotaId,
+          data
+        );
+
+        if (response.status === 200) {
+          toast.success("Cuota actualizada correctamente");
+          // window.location.reload();
+          setOpen(false);
+        } else {
+          toast.error("Error al actualizar la cuota:", response.data.message);
+        }
+      } catch (error) {
+        toast.error("Error al actualizar la cuota:", error as ExternalToast);
+        console.error("Error al actualizar la cuota:", error);
+      }
     } else {
       // Modo creación: crear nueva cuota
-      console.log("Creando nueva cuota:", values);
-      // Aquí irá la llamada al API para crear: createCuota(values)
+      try {
+        const response = await axios.post(
+          import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas",
+          values
+        );
+
+        if(response.status === 201) {
+          toast.success("Cuota creada correctamente");
+          // window.location.reload();
+          setOpen(false);
+        } else {
+          toast.error("Error al crear la cuota:", response.data.message);
+        }
+
+      } catch (error) {
+        toast.error("Error al crear la cuota:", error as ExternalToast);
+        console.error("Error al crear la cuota:", error);
+      }
     }
-    
-    // Llamar onSuccess si está definida (para cerrar el modal)
-    onSuccess?.();
   }
 
   return (
@@ -110,7 +157,10 @@ export default function CreateCuotaForm({
               <FormItem>
                 <FormLabel>Periodicidad</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || ""}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecciona una periodicidad" />
                     </SelectTrigger>
@@ -134,9 +184,9 @@ export default function CreateCuotaForm({
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Fecha límite de pago</FormLabel>
-                    <FormControl>
-                        <Input type="text" placeholder="28 de cada mes" {...field} />
-                    </FormControl>
+                <FormControl>
+                  <Input type="text" placeholder="28 de cada mes" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -150,7 +200,10 @@ export default function CreateCuotaForm({
               <FormItem>
                 <FormLabel>Tipo de cuota</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || ""}
+                  >
                     <SelectTrigger className="w-auto">
                       <SelectValue placeholder="Selecciona un tipo de cuota" />
                     </SelectTrigger>
@@ -176,7 +229,10 @@ export default function CreateCuotaForm({
               <FormItem>
                 <FormLabel>Medio de pago</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || ""}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecciona un medio de pago" />
                     </SelectTrigger>
@@ -214,7 +270,11 @@ export default function CreateCuotaForm({
           />
         </div>
         <div className="col-span-full flex justify-end mt-4 gap-2">
-          <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setOpen(false)}
+          >
             Cancelar
           </Button>
           <Button type="submit" variant="primary">

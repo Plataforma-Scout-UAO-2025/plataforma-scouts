@@ -47,7 +47,6 @@ export default function EditCuotaModal({ cuota }: EditCuotaModalProps) {
             medioPago: cuota.medioPago as "PSE" | "Efectivo" | "Tarjeta de Debito" | "Tarjeta de Credito" | "Otro",
             aplicaA: cuota.aplicaA,
           }}
-          onSuccess={() => setOpen(false)}
           submitButtonText="Actualizar cuota"
         />
 

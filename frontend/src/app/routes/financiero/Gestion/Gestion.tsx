@@ -1,6 +1,24 @@
-import CuotasTable, { mockCuotas } from "./components/CuotasTable";
+import { useEffect, useState } from "react";
+import CuotasTable from "./components/CuotasTable";
+import type { Cuota } from "./types/cuota.type";
+import axios from "axios";
+import { Loader2 } from "lucide-react";
 
 export default function Gestion() {
+  const [cuotas, setCuotas] = useState<Cuota[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCuotas = async () => {
+      const response = await axios.get(
+        import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas"
+      );
+      setCuotas(response.data);
+      setLoading(false);
+    };
+    fetchCuotas();
+  }, []);
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -17,7 +35,12 @@ export default function Gestion() {
           </p>
         </div>
       </div>
-      <CuotasTable cuotas={mockCuotas} />
+      <CuotasTable cuotas={cuotas} />
+      {loading && (
+        <div className="flex items-center justify-center">
+          <Loader2 className="w-4 h-4 animate-spin" />
+        </div>
+      )}
     </div>
   );
 }
