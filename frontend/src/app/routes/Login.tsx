@@ -83,7 +83,8 @@ const Login = () => {
                   })}
                 />
                 <Button
-                  variant="eyebutton"
+                  variant="iconbutton"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}

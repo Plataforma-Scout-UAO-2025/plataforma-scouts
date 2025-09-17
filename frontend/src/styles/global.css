@@ -31,6 +31,7 @@
   --muted-foreground: oklch(55.553% 0.00006 271.152);
   --accent: #EDEDED;
   --accent-foreground: #717171;
+  --text-color: #282828;
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
@@ -97,6 +98,7 @@ h1 {
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-text: var(--text-color);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
