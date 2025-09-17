@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "../../lib/api";
 import { User, Home, Users, Calendar, DollarSign, HelpCircle, LogOut } from "lucide-react";
 
 interface FormData {
@@ -42,9 +43,31 @@ const RegistroAcudientePadres = () => {
         }));
     };
 
-    const handleContinue = () => {
-        console.log("Navegando a emergencia...", formData);
-        navigate("/registro-acudiente-emergencia");
+    const handleContinue = async() => {
+        try {
+            await apiClient.post('', {
+                acudienteName: formData.nombrePadre,
+                acudienteLastName: formData.apellidosPadre,
+                acudientePhone: formData.contactoPadre,
+                acudienteParent: "Padre",
+                acudienteEmail: formData.correoPadre,
+               // acudienteProfession: formData.profesionPadre,
+                //acudienteCompany: formData.empresaPadre,
+            });
+            await apiClient.post('', {
+                acudienteName: formData.nombreMadre,
+                acudienteLastName: formData.apellidosMadre,
+                acudientePhone: formData.contactoMadre,
+                acudienteParent: "Madre",
+                acudienteEmail: formData.correoMadre
+            });
+
+            console.log("Datos enviados correctamente...");
+            navigate("/registro-acudiente-emergencia");
+
+        } catch (error) {
+            console.error("Error enviando datos:", error);
+        }
     };
 
     const handleAtras = () => {
