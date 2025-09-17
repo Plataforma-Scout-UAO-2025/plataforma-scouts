@@ -15,8 +15,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { LineChart, Boxes, CalendarDays, Settings, HelpCircle, LogOut } from "lucide-react"
+import { LineChart, Boxes, CalendarDays, Settings, HelpCircle, LogOut, Group } from "lucide-react"
 import { Outlet, Link, useLocation } from "react-router-dom"
+import { useAuth0 } from "@auth0/auth0-react"
 import type { ReactNode } from "react"
 
 type MenuItem = {
@@ -31,6 +32,7 @@ const mainItems: MenuItem[] = [
   { id: "tropa", label: "Tropa", icon: <Boxes />, href: "/app/tropa" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+  { id: "grupos", label: "grupos", icon: <Group/>, href: "/app/grupos" },
 ]
 
 const bottomItems: MenuItem[] = [
@@ -40,6 +42,15 @@ const bottomItems: MenuItem[] = [
 
 export default function AppLayout() {
   const location = useLocation()
+  const { logout, user, isAuthenticated } = useAuth0()
+
+  const handleLogout = () => {
+    logout({
+      logoutParams: {
+        returnTo: window.location.origin
+      }
+    })
+  }
 
   const isActive = (href: string) => {
     if (href === "/app") {
@@ -57,12 +68,14 @@ export default function AppLayout() {
         <SidebarHeader className="p-4 bg-primary">
           <div className="flex items-center gap-3">
             <img
-              src="https://i.pravatar.cc/80?img=12"
+              src={user?.picture || '/a.png'}
               alt="avatar"
               className="size-10 rounded-full object-cover"
             />
             <div className="leading-tight">
-              <div className="text-base font-semibold">Juan Esteban Torres</div>
+              <div className="text-base font-semibold">
+                {isAuthenticated && user ? user.nickname : 'Usuario'}
+              </div>
               <div className="text-xs opacity-80">MANADA KUNA</div>
             </div>
           </div>
@@ -105,7 +118,10 @@ export default function AppLayout() {
           <SidebarMenu>
             {bottomItems.map((item) => (
               <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton className="h-12 px-3 rounded-lg hover:bg-white/10">
+                <SidebarMenuButton
+                  className="h-12 px-3 rounded-lg hover:bg-white/10"
+                  onClick={item.id === 'logout' ? handleLogout : undefined}
+                >
                   {item.icon}
                   <span>{item.label}</span>
                 </SidebarMenuButton>

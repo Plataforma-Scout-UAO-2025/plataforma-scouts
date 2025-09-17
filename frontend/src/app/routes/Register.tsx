@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, KeyRoundIcon, User, Eye, EyeOff } from "lucide-react";
 import { Button, Input, Label } from "@/components/ui/index";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
+import { useAuth0 } from "@auth0/auth0-react";
 
 interface RegisterFormValues {
   name: string;
@@ -14,15 +15,23 @@ interface RegisterFormValues {
 
 const Register = () => {
   const { register, handleSubmit } = useForm<RegisterFormValues>();
-
-  const onSubmit: SubmitHandler<RegisterFormValues> = (data) => {
-    // Método de registro
-    console.log(data);
-  };
+  const { loginWithRedirect } = useAuth0();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const navigate = useNavigate();
+  const onSubmit: SubmitHandler<RegisterFormValues> = (data) => {
+    // Método de registro tradicional (opcional)
+    console.log(data);
+  };
+
+  const handleAuth0Register = () => {
+    loginWithRedirect({
+      authorizationParams: {
+        screen_hint: "signup",
+      },
+    });
+  };
 
   return (
     <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-br from-primary/100 to-primary-hover/100 p-4">
@@ -31,6 +40,23 @@ const Register = () => {
           <h1 className="text-3xl font-bold text-primary mb-8 text-center">
             Registro
           </h1>
+
+          {/* Auth0 Register Button */}
+          <div className="mb-6 px-8">
+            <Button
+              onClick={handleAuth0Register}
+              className="w-full"
+              type="button"
+            >
+              Registrarse con Auth0
+            </Button>
+            
+            <div className="flex items-center my-4">
+              <hr className="flex-1 border-accent-strong" />
+              <span className="px-4 text-accent-strong text-sm">o</span>
+              <hr className="flex-1 border-accent-strong" />
+            </div>
+          </div>
 
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -131,13 +157,8 @@ const Register = () => {
                   required
                   {...register("confirmPassword", {
                     required: "Por favor, confirma tu contraseña.",
-                    validate: (value) =>
-                      value ===
-                        (
-                          document.querySelector(
-                            'input[name="password"]'
-                          ) as HTMLInputElement
-                        )?.value || "Las contraseñas no coinciden.",
+                    validate: (value, formValues) =>
+                      value === formValues.password || "Las contraseñas no coinciden.",
                   })}
                 />
                 <Button

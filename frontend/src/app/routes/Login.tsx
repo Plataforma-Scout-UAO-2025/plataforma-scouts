@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, KeyRoundIcon, Eye, EyeOff } from "lucide-react";
 import { Button, Input, Label, Checkbox } from "@/components/ui/index";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
+import { useAuth0 } from "@auth0/auth0-react";
 
 interface LoginFormValues {
   email: string;
@@ -13,12 +14,20 @@ interface LoginFormValues {
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit } = useForm<LoginFormValues>();
+  const { isAuthenticated, loginWithRedirect, isLoading} = useAuth0();
+  const navigate = useNavigate();
+
+  // Redirect to app if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/app", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const onSubmit: SubmitHandler<LoginFormValues> = (data) => {
-    // Método de inicio de sesión
+    // Método de inicio de sesión tradicional (opcional)
     console.log(data);
   };
-  const navigate = useNavigate();
 
   return (
     <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-br from-primary/100 to-primary-hover/100 p-4">
@@ -28,7 +37,21 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-primary mb-8 text-center">
             Inicio de sesión
           </h1>
-
+          <div className="mb-6 px-8">
+            <Button
+              onClick={() => loginWithRedirect()}
+              className="w-full"
+              type="button"
+            >
+              Iniciar sesión con Auth0
+            </Button>
+            
+            <div className="flex items-center my-4">
+              <hr className="flex-1 border-accent-strong" />
+              <span className="px-4 text-accent-strong text-sm">o</span>
+              <hr className="flex-1 border-accent-strong" />
+            </div>
+          </div>
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-5 p-8 pt-1"
