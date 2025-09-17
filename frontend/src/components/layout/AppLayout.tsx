@@ -15,7 +15,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { LineChart, Boxes, CalendarDays, Settings, HelpCircle, LogOut } from "lucide-react"
+import { LineChart, Boxes, CalendarDays, Settings, HelpCircle, LogOut, Network } from "lucide-react"
 import { Outlet, Link, useLocation } from "react-router-dom"
 import type { ReactNode } from "react"
 
@@ -29,6 +29,7 @@ type MenuItem = {
 const mainItems: MenuItem[] = [
   { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
   { id: "tropa", label: "Tropa", icon: <Boxes />, href: "/app/tropa" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
 ]
