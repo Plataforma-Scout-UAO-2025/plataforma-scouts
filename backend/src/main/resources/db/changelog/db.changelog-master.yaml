@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: 001-tenants-sections.sql
+      relativeToChangelogFile: true
+  - include:
+      file: 002-subgroups-committees.sql
+      relativeToChangelogFile: true
+  - include:
+      file: 003-rls-policies.sql
+      relativeToChangelogFile: true
+  - include:
+      file: 004-fix-id-types-to-bigint.sql
+      relativeToChangelogFile: true
