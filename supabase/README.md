@@ -32,17 +32,18 @@ This directory contains the complete database schema and optimization migrations
 
 Before setting up the database, ensure you have:
 
-1. **Supabase CLI installed**:
+1. **Supabase CLI installed (either using npm, pnpm or manually installing binaries)**:
    ```bash
    # Via npm (recommended)
    npm install -g @supabase/supabase-cli
    
    # Or using npx (no global install)
    npx supabase --help
+
+   # Or manually download and install binaries eventually
    ```
 
 2. **Supabase Project**:
-   - Create a new project at [supabase.com](https://supabase.com)
    - Note your project reference ID from dashboard URL: `https://supabase.com/dashboard/project/<project-id>`
    - Save your database password
 
@@ -211,7 +212,7 @@ jobs:
           supabase db push
 ```
 
-## Environment Configuration
+## Environment Configuration (not yet tested)
 
 ### 1. Create Environment Files
 
@@ -319,14 +320,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 # Check migration status (local vs remote)
 supabase migration list
 
-# Verify database connection
-supabase db ping
-
 # Check for schema differences
 supabase db diff
-
-# Generate diff with migra for cleaner output (experimental)
-supabase db diff --use-migra
 
 # Test database integrity
 supabase test db
@@ -337,64 +332,6 @@ supabase inspect db unused-indexes
 # View migration history in database
 psql "YOUR_DATABASE_URL" -c "SELECT * FROM supabase_migrations.schema_migrations ORDER BY version;"
 ```
-
-## Best Practices
-
-### Development Workflow
-
-1. **Always test locally first**:
-   ```bash
-   supabase db reset  # Test migrations locally
-   ```
-
-2. **Use version control**:
-   - Commit migrations before pushing to production
-   - Never modify existing migration files
-
-3. **Environment separation**:
-   - Use different Supabase projects for dev/staging/prod
-   - Maintain separate environment files
-
-4. **Backup before deployment**:
-
-   ```bash
-   # Backup production before major changes
-   supabase db dump --db-url "YOUR_CONNECTION_STRING" -f backup_$(date +%Y%m%d_%H%M%S).sql
-   
-   # For complete backup including roles and data
-   supabase db dump --db-url "YOUR_CONNECTION_STRING" -f roles.sql --role-only
-   supabase db dump --db-url "YOUR_CONNECTION_STRING" -f schema.sql
-   supabase db dump --db-url "YOUR_CONNECTION_STRING" -f data.sql --use-copy --data-only
-   ```
-
-5. **Migration workflow**:
-
-   ```bash
-   # Create new migration
-   supabase migration new descriptive_name
-   
-   # Generate migration from schema changes
-   supabase db diff -f migration_name
-   
-   # Apply single migration
-   supabase migration up
-   ```
-
-### Security Considerations
-
-1. **Environment Variables**:
-   - Never commit secrets to version control
-   - Use secure secret management in production
-
-2. **Database Access**:
-   - Limit service role key usage
-   - Use least-privilege principles
-   - Regular audit of user permissions
-
-3. **Monitoring**:
-   - Set up alerts for failed migrations
-   - Monitor RLS policy performance
-   - Track unusual access patterns
 
 ## Support
 
