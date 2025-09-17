@@ -15,7 +15,7 @@ interface RamaModalProps {
 
 export default function RamaModal({ isOpen, onClose, mode, rama, onSuccess }: RamaModalProps) {
   const isEditing = mode === 'edit'
-  const title = isEditing ? 'Editor Tropa' : 'Crear Nueva Rama'
+  const title = isEditing ? `Editor ${rama?.nombre || 'Rama'}` : 'Crear Nueva Rama'
 
   const handleSubmit = async (data: Omit<Rama, 'id'>) => {
     try {
@@ -39,16 +39,16 @@ export default function RamaModal({ isOpen, onClose, mode, rama, onSuccess }: Ra
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg transform -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-[#FFFAF3] p-6 shadow-lg max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="text-xl font-semibold text-[#282828] font-[Poppins]">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-xl transform -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-[#FFFAF3] p-6 shadow-lg max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog.Title className="text-lg font-semibold text-[#282828] font-[Poppins]">
               {title}
             </Dialog.Title>
             <Dialog.Close asChild>
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-6 w-6 p-0 hover:bg-[#EDEDED]"
+                className="h-6 w-6 p-0 hover:bg-[#EDEDED] rounded-md"
               >
                 <X className="h-4 w-4 text-[#717171]" />
               </Button>

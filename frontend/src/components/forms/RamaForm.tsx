@@ -31,7 +31,7 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 font-[Poppins]">
+    <form onSubmit={handleSubmit} className="space-y-4 font-[Poppins]">
       {/* Nombre de la Rama */}
       <div className="space-y-2">
         <Label htmlFor="nombre" className="text-sm font-medium text-[#282828]">
@@ -43,7 +43,7 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
           onChange={(e) => handleChange('nombre', e.target.value)}
           placeholder="Ej. Manada, Tropa"
           required
-          className="bg-[#FFFAF3] border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20"
+          className="w-full h-11 bg-white border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20 text-[#282828]"
         />
       </div>
 
@@ -58,7 +58,7 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
           onChange={(e) => handleChange('nombreSubramaSingular', e.target.value)}
           placeholder="Ej. Patrulla, Seisena"
           required
-          className="bg-[#FFFAF3] border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20"
+          className="w-full h-11 bg-white border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20 text-[#282828]"
         />
       </div>
 
@@ -73,7 +73,7 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
           onChange={(e) => handleChange('nombreSubramaPlural', e.target.value)}
           placeholder="Ej. Patrullas, Seisenas"
           required
-          className="bg-[#FFFAF3] border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20"
+          className="w-full h-11 bg-white border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20 text-[#282828]"
         />
       </div>
 
@@ -82,17 +82,14 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
         <Label htmlFor="icono" className="text-sm font-medium text-[#282828]">
           Icono
         </Label>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-[#FFFAF3]"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Seleccionar icono
-          </Button>
-          <span className="text-sm text-[#717171]">Ningún archivo seleccionado</span>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-white justify-start"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Seleccionar icono
+        </Button>
       </div>
 
       {/* Galería de imágenes */}
@@ -100,17 +97,14 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
         <Label className="text-sm font-medium text-[#282828]">
           Galería de imágenes
         </Label>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-[#FFFAF3]"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Seleccionar icono
-          </Button>
-          <span className="text-sm text-[#717171]">Ningún archivo seleccionado</span>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-white justify-start"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Subir imágenes a la galería
+        </Button>
       </div>
 
       {/* Descripción */}
@@ -124,7 +118,7 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
           onChange={(e) => handleChange('descripcion', e.target.value)}
           placeholder="Descripción opcional del rama..."
           rows={4}
-          className="w-full min-h-[100px] px-3 py-2 text-sm border border-[#EDEDED] rounded-md bg-[#FFFAF3] placeholder-[#717171] focus:border-[#1A4134] focus:outline-none focus:ring-2 focus:ring-[#1A4134]/20 resize-none"
+          className="w-full min-h-[100px] px-3 py-2 text-sm border border-[#EDEDED] rounded-md bg-white placeholder-[#717171] focus:border-[#1A4134] focus:outline-none focus:ring-2 focus:ring-[#1A4134]/20 resize-none text-[#282828]"
         />
       </div>
 
@@ -134,7 +128,7 @@ export default function RamaForm({ initialData, onSubmit, onCancel }: RamaFormPr
           type="button"
           variant="outline"
           onClick={onCancel}
-          className="border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-[#FFFAF3]"
+          className="border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-white"
         >
           Cancelar
         </Button>

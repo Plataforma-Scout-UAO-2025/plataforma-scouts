@@ -47,7 +47,7 @@ export default function SubramaModal({
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg transform -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-[#FFFAF3] p-6 shadow-lg max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-xl transform -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-[#FFFAF3] p-6 shadow-lg max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <Dialog.Title className="text-xl font-semibold text-[#282828] font-[Poppins]">
               {title}

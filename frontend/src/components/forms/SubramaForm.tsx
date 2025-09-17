@@ -43,7 +43,7 @@ export default function SubramaForm({ initialData, onSubmit, onCancel, ramaId }:
           onChange={(e) => handleChange('nombre', e.target.value)}
           placeholder="Ej. Patrulla de Leones"
           required
-          className="bg-[#FFFAF3] border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20"
+          className="w-full bg-[#FFFAF3] border-[#EDEDED] focus:border-[#1A4134] focus:ring-[#1A4134]/20"
         />
       </div>
 
@@ -52,17 +52,14 @@ export default function SubramaForm({ initialData, onSubmit, onCancel, ramaId }:
         <Label htmlFor="icono" className="text-sm font-medium text-[#282828]">
           Icono
         </Label>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-[#FFFAF3]"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Seleccionar icono
-          </Button>
-          <span className="text-sm text-[#717171]">Ningún archivo seleccionado</span>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full justify-start h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-[#FFFAF3]"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Seleccionar icono
+        </Button>
       </div>
 
       {/* Galería de imágenes */}
@@ -70,17 +67,14 @@ export default function SubramaForm({ initialData, onSubmit, onCancel, ramaId }:
         <Label className="text-sm font-medium text-[#282828]">
           Galería de imágenes
         </Label>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-[#FFFAF3]"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Subir imágenes a la galería
-          </Button>
-          <span className="text-sm text-[#717171]">Ningún archivo seleccionado</span>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full justify-start h-11 px-4 border-[#EDEDED] text-[#717171] hover:bg-[#EDEDED] bg-[#FFFAF3]"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Subir imágenes a la galería
+        </Button>
       </div>
 
       {/* Descripción */}
