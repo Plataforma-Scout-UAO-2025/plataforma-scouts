@@ -4,8 +4,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./app/routes/Login";
 import Register from "./app/routes/Register";
 import AppLayout from "./components/layout/AppLayout";
-import Cuotas from "./app/routes/financiero/Cuotas";
+import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Dashboard from "./app/routes/Dashboard";
+import Gestion from "./app/routes/financiero/Gestion/Gestion";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="financiero/cuotas" element={<Cuotas />} />
+            <Route path="financiero/cuotas/gestion" element={<Gestion />} />
           </Route>
           {/* Agrega más rutas aquí */}
         </Routes>
