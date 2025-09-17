@@ -24,8 +24,9 @@ export default function DeleteCuotaModal({ cuota }: DeleteCuotaModalProps) {
     console.log("Eliminando cuota:", cuota.id);
     try{
       const response = await axios.delete(import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + cuota.id);
-      if(response.status === 200) {
+      if(response.status === 204) {
         toast.success("Cuota eliminada correctamente");
+        window.location.reload();
       } else {
         toast.error("Error al eliminar la cuota:", response.data.message);
       }
