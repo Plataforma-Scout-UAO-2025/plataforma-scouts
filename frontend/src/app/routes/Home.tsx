@@ -1,10 +1,10 @@
 import { FaShieldAlt, FaMountain, FaUsers, FaArrowRight, FaShip } from "react-icons/fa";
+import { useEffect, useState } from "react";
 import home from "@/assets/Home.png";
 import cachorros from "@/assets/cachorros.jpg";
 import lobatos from "@/assets/lobatos.jpeg";
 import webelos from "@/assets/webelos.jpg";
 import scout from "@/assets/scout.jpg";
-import { useEffect, useState } from "react";
 
 const values = [
   {
@@ -280,57 +280,16 @@ useEffect(() => {
   <div className="flex flex-col md:flex-row gap-12 justify-center items-start max-w-4xl mx-auto">
     {/* Bloque de formulario */}
     <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full mb-8 md:mb-0">
-      <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">Déjanos tu información</h3>
-        
-       <form className="flex flex-col gap-4 ">
-  <div className="flex gap-4">
-    <input
-      type="text"
-      placeholder="Nombre"
-      className="border rounded px-4 py-2 w-1/2"
-      required
-    />
-    <input
-      type="text"
-      placeholder="Apellido"
-      className="border rounded px-4 py-2 w-1/2 "
-      required
-    />
-  </div>
-  <input
-    type="email"
-    placeholder="Email"
-    className="border rounded px-4 py-2"
-    required
-  />
-  <div className="flex gap-4">
-    <input
-      type="tel"
-      placeholder="Teléfono"
-      className="border rounded px-4 py-2 w-1/2"
-      required
-    />
-    <input
-      type="number"
-      placeholder="Edad"
-      className="border rounded px-4 py-2 w-1/2"
-      required
-    />
-  </div>
-  <textarea
-    placeholder="Cuéntanos por qué te interesa pertenecer a los scouts..."
-    className="border rounded px-4 py-2 min-h-[80px]"
-    required
-  />
-  <button
-    type="submit"
-    className="bg-gradient-to-r from-[#23614C] to-[#1A4134] text-white font-semibold py-2 rounded mt-2 hover:scale-95 transition"
-  >
-    Enviar
-    
-  </button>
+      <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">Si deceas unirte déjanos tu información</h3>    
+      <div className="mb-4 flex justify-center">   
+<a
+  href="/inscription"
+  className="bg-gradient-to-r from-[#23614C] to-[#1A4134] text-white font-semibold py-2 px-7 rounded mt-2 hover:scale-95 transition text-center"
+>
+  Llena el formulario
+</a>
+</div>
   
-</form>
     </div>
     {/* Bloque de información de contacto */}
     <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full">
@@ -352,3 +311,4 @@ useEffect(() => {
 </div>
   );
 }
+

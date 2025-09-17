@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
 
-export default function ScoutEnrollment() {
+function ScoutEnrollment() {
   const [formulario, setFormulario] = useState({
     nombres: "",
     apellidos: "",
@@ -25,8 +25,6 @@ export default function ScoutEnrollment() {
     sexo: "",
     peso: "",
     estatura: "",
-    tipoSangre: "",
-    rh: "",
     pasatiempos: "",
     deportes: "",
     instrumentos: "",
@@ -349,33 +347,6 @@ export default function ScoutEnrollment() {
 
   const camposPagina3 = (
     <>
-      {/* Sangre, RH */}
-      <div>
-        <Label className="mb-1" htmlFor="tipoSangre">
-          Tipo de sangre *
-        </Label>
-        <Input
-          id="tipoSangre"
-          name="tipoSangre"
-          value={formulario.tipoSangre}
-          onChange={handleChange}
-          className="border border-primary"
-          required
-        />
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="rh">
-          RH *
-        </Label>
-        <Input
-          id="rh"
-          name="rh"
-          value={formulario.rh}
-          onChange={handleChange}
-          className="border border-primary"
-          required
-        />
-      </div>
       {/* Pasatiempos */}
       <div>
         <Label className="mb-1" htmlFor="pasatiempos">
@@ -476,3 +447,4 @@ export default function ScoutEnrollment() {
     </div>
   );
 }
+export default ScoutEnrollment;
