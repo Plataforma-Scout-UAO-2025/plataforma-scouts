@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "PI2 cuotas",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
