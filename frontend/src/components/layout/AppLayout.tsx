@@ -46,10 +46,11 @@ const adminGrupalItems: MenuItem[] = [
     icon: <DollarSign />, 
     submenu: [
       { id: "finanzas-dashboard", label: "Dashboard", icon: <BarChart3 />, href: "/app/adminGrupal/finanzas" },
-      { id: "finanzas-estados", label: "Estados de cuenta", icon: <FileText />, href: "/app/adminGrupal/finanzas/estados" },
-      { id: "finanzas-registros", label: "Registros de pago", icon: <CreditCard />, href: "/app/adminGrupal/finanzas/registro" },
+      { id: "finanzas-estados", label: "Estados de cuenta", icon: <FileText />, href: "/app/adminGrupal/estados" },
+      { id: "finanzas-registros", label: "Registros de pago", icon: <CreditCard />, href: "/app/adminGrupal/registro" },
     ]
   },
+  { id: "imagenes", label: "Gestión de Imágenes", icon: <Settings />, href: "/app/adminGrupal/imagenes" },
 ]
 
 const bottomItems: MenuItem[] = [
@@ -194,5 +195,3 @@ export default function AppLayout() {
     </SidebarProvider>
   )
 }
-
-

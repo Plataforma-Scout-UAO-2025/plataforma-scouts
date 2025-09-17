@@ -127,54 +127,153 @@ export const paymentMetrics = [
 
 export const membersData = [
   {
-    id: 1,
+    id: "1",
     firstName: "José Alberto",
     lastName: "Gutierrez Jimenez",
-    identification: "CC 11231231902310",
+    identification: "CC 1059901379",
     createdAt: "13 ago 2025 4:30pm",
     status: "Activo",
+    statusAccount: "En mora",
     city: "Cali",
     branch: "Cachorros",
+    orders: [
+      {
+        orderNumber: "1545848",
+        concept: "Excursión",
+        value: "$120.000",
+        date: "15 de agosto 2025",
+        status: "Pendiente",
+      },
+      {
+        orderNumber: "1545849",
+        concept: "Uniforme",
+        value: "$130.000",
+        date: "15 de agosto 2025",
+        status: "Pago",
+      },
+      {
+        orderNumber: "1545850",
+        concept: "Mensualidad",
+        value: "$200.000",
+        date: "15 de agosto 2025",
+        status: "Pendiente",
+      },
+    ],
   },
   {
-    id: 2,
+    id: "2",
     firstName: "María de los Ángeles",
     lastName: "Ruiz Fernández",
     identification: "CC 11231231902310",
     createdAt: "15 jul 2025 4:00pm",
     status: "Activo",
+    statusAccount: "Al día",
     city: "Jamundí",
     branch: "Lobatos",
+    orders: [
+      {
+        orderNumber: "1545851",
+        concept: "Camiseta",
+        value: "$50.000",
+        date: "15 de agosto 2025",
+        status: "En proceso",
+      },
+      {
+        orderNumber: "1545852",
+        concept: "Campamento",
+        value: "$170.000",
+        date: "15 de agosto 2025",
+        status: "Pendiente",
+      },
+      {
+        orderNumber: "1545853",
+        concept: "Inscripción",
+        value: "$30.000",
+        date: "15 de agosto 2025",
+        status: "Pago",
+      },
+    ],
   },
   {
-    id: 3,
+    id: "3",
     firstName: "Miguel Ángel",
     lastName: "Tutistar Rosales",
     identification: "CC 11231231902310",
     createdAt: "31 jun 2025 2:10pm",
     status: "Activo",
+    statusAccount: "Al día",
     city: "Dagua",
     branch: "Webelos",
+    orders: [
+      {
+        orderNumber: "1545854",
+        concept: "Uniforme",
+        value: "$130.000",
+        date: "15 de agosto 2025",
+        status: "En proceso",
+      },
+      {
+        orderNumber: "1545855",
+        concept: "Mensualidad",
+        value: "$200.000",
+        date: "15 de agosto 2025",
+        status: "Pago",
+      },
+    ],
   },
   {
-    id: 4,
+    id: "4",
     firstName: "Richard Andrés",
     lastName: "Luna Cano",
     identification: "CC 11231231902310",
     createdAt: "05 ago 2025 8:30am",
     status: "Activo",
+    statusAccount: "En mora",
     city: "Cali",
     branch: "Scout",
+    orders: [
+      {
+        orderNumber: "1545856",
+        concept: "Excursión",
+        value: "$120.000",
+        date: "15 de agosto 2025",
+        status: "Pendiente",
+      },
+      {
+        orderNumber: "1545857",
+        concept: "Campamento",
+        value: "$170.000",
+        date: "15 de agosto 2025",
+        status: "Pendiente",
+      },
+    ],
   },
   {
-    id: 5,
+    id: "5",
     firstName: "Melany",
     lastName: "Camacho Ordoñez",
     identification: "CC 11231231902310",
     createdAt: "20 jun 2025 9:40am",
     status: "Activo",
+    statusAccount: "Al día",
     city: "Palmira",
     branch: "Cachorros",
+    orders: [
+      {
+        orderNumber: "1545858",
+        concept: "Camiseta",
+        value: "$50.000",
+        date: "15 de agosto 2025",
+        status: "Pago",
+      },
+      {
+        orderNumber: "1545859",
+        concept: "Inscripción",
+        value: "$30.000",
+        date: "15 de agosto 2025",
+        status: "En proceso",
+      },
+    ],
   },
 ];
 
@@ -255,3 +354,120 @@ export const eventsData = [
   }
 ];
 
+export const badgeStats = [
+  {
+    value: "18",
+    label: "Insignias Completadas",
+  },
+  {
+    value: "20", 
+    label: "En Progreso",
+  },
+  {
+    value: "60",
+    label: "Miembros Activos",
+  }
+];
+
+export const badgeProgressData = [
+  {
+    memberId: 1,
+    memberName: "José Alberto Gutierrez Jimenez",
+    branch: "Scout",
+    age: 18,
+    completedBadges: 0,
+    totalBadges: 6,
+    badges: [
+      {
+        id: 1,
+        name: "Expresión artística",
+        description: "Conocimientos básicos de arte y expresión",
+        progress: 80,
+        status: "En Progreso"
+      },
+      {
+        id: 2,
+        name: "Espíritu Scout",
+        description: "Conocimientos básicos de escultismo y campamento",
+        progress: 60,
+        status: "En Progreso"
+      },
+      {
+        id: 3,
+        name: "Académica y de Comunicación",
+        description: "Desarrollo académico y liderazgo con enfoque ambiental",
+        progress: 90,
+        status: "En Progreso"
+      },
+      {
+        id: 4,
+        name: "Salud y Bienestar",
+        description: "Conocimientos sobre salud y bienestar",
+        progress: 100,
+        status: "Completado"
+      }
+    ]
+  },
+  {
+    memberId: 2,
+    memberName: "María de los Ángeles Ruiz Fernández",
+    branch: "Lobatos",
+    age: 17,
+    completedBadges: 2,
+    totalBadges: 5,
+    badges: [
+      {
+        id: 1,
+        name: "Liderazgo",
+        description: "Desarrollo de habilidades de liderazgo",
+        progress: 40,
+        status: "En Progreso"
+      },
+      {
+        id: 2,
+        name: "Trabajo en equipo",
+        description: "Fomentar el trabajo en equipo y la colaboración",
+        progress: 60,
+        status: "En Progreso"
+      },
+      {
+        id: 3,
+        name: "Comunicación",
+        description: "Mejorar las habilidades de comunicación",
+        progress: 90,
+        status: "En Progreso"
+      }
+    ]
+  },
+  {
+    memberId: 3,
+    memberName: "Miguel Ángel Tutistar Rosales",
+    branch: "Webelos",
+    age: 16,
+    completedBadges: 1,
+    totalBadges: 4,
+    badges: [
+      {
+        id: 1,
+        name: "Naturaleza",
+        description: "Conocimientos sobre flora y fauna",
+        progress: 25,
+        status: "En Progreso"
+      },
+      {
+        id: 2,
+        name: "Supervivencia",
+        description: "Técnicas de supervivencia en la naturaleza",
+        progress: 50,
+        status: "En Progreso"
+      },
+      {
+        id: 3,
+        name: "Exploración",
+        description: "Habilidades de exploración y orientación",
+        progress: 75,
+        status: "En Progreso"
+      }
+    ]
+  }
+];

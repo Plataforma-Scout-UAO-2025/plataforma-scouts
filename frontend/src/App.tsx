@@ -11,6 +11,7 @@ import Badges from "./app/routes/adminGrupal/Badges";
 import Events from "./app/routes/adminGrupal/Events";
 import FinanceDashboard from "./app/routes/adminGrupal/FinanceDashboard";
 import AccountStatements from "./app/routes/adminGrupal/AccountStatements";
+import MemberStatements from "./app/routes/adminGrupal/MemberStatements";
 import PaymentRecords from "./app/routes/adminGrupal/PaymentRecords";
 import Home from "./app/routes/adminGrupal/Home";
 
@@ -29,8 +30,9 @@ function App() {
             <Route path="adminGrupal/insignias" element={<Badges />} />
             <Route path="adminGrupal/eventos" element={<Events />} />
             <Route path="adminGrupal/finanzas" element={<FinanceDashboard />} />
-            <Route path="adminGrupal/finanzas/estados" element={<AccountStatements />} />
-            <Route path="adminGrupal/finanzas/registro" element={<PaymentRecords />} />
+            <Route path="adminGrupal/estados" element={<AccountStatements />} />
+            <Route path="adminGrupal/estados/member" element={<MemberStatements />} />
+            <Route path="adminGrupal/registro" element={<PaymentRecords />} />
           </Route>
           {/* Agrega más rutas aquí */}
         </Routes>

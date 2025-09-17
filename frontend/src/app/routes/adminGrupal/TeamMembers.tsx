@@ -23,7 +23,7 @@ import {
   User,
   Medal,
 } from "lucide-react";
-import { membersData, branchCounts, cities } from "../../../lib/mockObjects";
+import { membersData, branchCounts, cities } from "@/lib/mockObjects";
 
 const TeamMembers = () => {
   const [isActive, setIsActive] = useState(false);
@@ -180,7 +180,7 @@ const TeamMembers = () => {
                       <Button
                         variant="iconbutton"
                         size="icon"
-                        className="text-red-600 hover:text-red-800"
+                        className="text-destructive hover:text-destructive-hover"
                       >
                         <Trash />
                       </Button>

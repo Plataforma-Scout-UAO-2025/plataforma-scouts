@@ -33,6 +33,7 @@
   --accent-foreground: #717171;
   --text-color: #282828;
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-hover: oklch(33.609% 0.12216 26.88);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -104,6 +105,7 @@ h1 {
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

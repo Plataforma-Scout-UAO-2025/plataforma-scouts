@@ -2,7 +2,7 @@ import {
   homeCards,
   recentActivities,
   pendingTasks,
-} from "../../../lib/mockObjects";
+} from "@/lib/mockObjects";
 
 const Home = () => {
   return (

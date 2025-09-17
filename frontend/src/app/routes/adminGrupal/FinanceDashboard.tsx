@@ -5,7 +5,7 @@ import {
   BanknoteArrowDown,
 } from "lucide-react";
 import { Button, Progress } from "@/components/ui/index";
-import { paymentMetrics } from "../../../lib/mockObjects";
+import { paymentMetrics } from "@/lib/mockObjects";
 import { useNavigate } from "react-router-dom";
 
 const progressValue = 75;
@@ -34,11 +34,11 @@ const Dashboard = () => {
       </header>
 
       {/* Métricas rápidas */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[128px]">
+      <section className="flex flex-col md:flex-row flex-wrap gap-4 min-h-[128px]">
         {paymentMetrics.map((item) => (
           <div
             key={item.label}
-            className="bg-accent rounded-xl shadow-md p-4 md:p-6 flex items-center gap-3 md:gap-4"
+            className="bg-accent rounded-xl shadow-md p-4 md:p-6 flex items-center gap-3 md:gap-4 flex-1 min-w-[250px]"
           >
             <div className="bg-primary/20 p-2 md:p-3 rounded-lg flex-shrink-0">
               {<item.icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />}
@@ -54,8 +54,8 @@ const Dashboard = () => {
       </section>
 
       {/* Actividad reciente */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-accent rounded-xl shadow-md p-6 md:p-12">
+      <section className="flex flex-col lg:flex-row gap-4">
+        <div className="flex-[2] bg-accent rounded-xl shadow-md p-6 md:p-12">
           <p className="text-base md:text-lg text-primary font-bold mb-4">
             Cumplimiento de Pagos
           </p>
@@ -64,7 +64,7 @@ const Dashboard = () => {
           </p>
           <Progress value={progressValue} className="mt-4" />
         </div>
-        <div className="bg-accent rounded-xl shadow-md p-6 md:p-12">
+        <div className="flex-1 bg-accent rounded-xl shadow-md p-6 md:p-12">
           <p className="text-base md:text-lg text-primary font-bold mb-4">
             Acciones
           </p>

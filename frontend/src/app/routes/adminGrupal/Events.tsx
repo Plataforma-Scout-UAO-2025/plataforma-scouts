@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/index";
 import { ChevronDown, ChevronUp, CalendarIcon } from "lucide-react";
-import { eventsData, cities } from "../../../lib/mockObjects";
+import { eventsData, cities } from "@/lib/mockObjects";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 

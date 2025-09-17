@@ -1,9 +1,11 @@
 export { Button } from "./button";
+export { default as BackButton } from "./back-button";
 export { Input } from "./input";
 export { Label } from "./label";
 export { Checkbox } from "./checkbox";
 export { Progress } from "./progress";
 export { Calendar } from "./calendar";
+export { Separator } from "./separator";
 export {
   AlertDialog,
   AlertDialogPortal,
