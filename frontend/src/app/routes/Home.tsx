@@ -280,7 +280,7 @@ useEffect(() => {
   <div className="flex flex-col md:flex-row gap-12 justify-center items-start max-w-4xl mx-auto">
     {/* Bloque de formulario */}
     <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full mb-8 md:mb-0">
-      <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">Si deceas unirte déjanos tu información</h3>    
+      <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">Si deseas unirte déjanos tu información</h3>    
       <div className="mb-4 flex justify-center">   
 <a
   href="/inscription"
