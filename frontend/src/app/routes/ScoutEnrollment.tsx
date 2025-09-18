@@ -418,7 +418,7 @@ function ScoutEnrollment() {
           {/* Botones */}
           <div className="col-span-2 flex justify-between mt-6">
             {pagina === 1 ? (
-              <Button variant="outline" type="button" className="px-10 py-6">
+              <Button variant="outline" type="button" className="px-10 py-6" onClick={() => navigate("/")}>
                 Cancelar
               </Button>
             ) : (
