@@ -3,8 +3,14 @@ import { useNavigate } from "react-router-dom"; // <-- Agrega esta línea
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
+
+const ramasPorEdad = [
+  { nombre: "Cachorros", min: 5, max: 7 },
+  { nombre: "Lobatos", min: 7, max: 10 },
+  { nombre: "Webelos", min: 11, max: 12 },
+  { nombre: "Scout", min: 13, max: 17 },
+]; 
 
 function ScoutEnrollment() {
   const [formulario, setFormulario] = useState({
@@ -29,13 +35,35 @@ function ScoutEnrollment() {
     pasatiempos: "",
     deportes: "",
     instrumentos: "",
+    grupo: "",
+    rama: "",
   });
 
   const [pagina, setPagina] = useState(1);
-  const [mostrarCalendario, setMostrarCalendario] = useState(false);
-  const [showModal, setShowModal] = useState(false); // <-- Estado para controlar el modal
+  const [mostrrCalendario, setMostrarCalendario] = useState(false);
+  const [showModal, setShowModal] = useState(false); 
   const calendarioRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate(); // <-- Inicializa el hook
+  const navigate = useNavigate();
+
+   // Calcula la edad a partir de la fecha de nacimiento
+  const calcularEdad = (fecha: string) => {
+    if (!fecha) return null;
+    const hoy = new Date();
+    const nacimiento = new Date(fecha);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const m = hoy.getMonth() - nacimiento.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+      edad--;
+    }
+    return edad;
+  };
+
+  // Obtiene las ramas permitidas según la edad
+ const ramasDisponibles = () => {
+  const edad = calcularEdad(formulario.fechaNacimiento);
+  if (!edad) return [];
+  return ramasPorEdad.filter(r => edad >= r.min && edad <= r.max).map(r => r.nombre);
+};
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -71,7 +99,7 @@ function ScoutEnrollment() {
       setPagina((prev) => prev + 1);
     } else {
       console.log("Datos de inscripción:", formulario);
-      setShowModal(true); // <-- Muestra el modal al enviar el formulario
+      setShowModal(true);
     }
   };
 
@@ -140,14 +168,18 @@ function ScoutEnrollment() {
         <Label className="mb-1" htmlFor="tipoDocumento">
           Tipo de documento *
         </Label>
-        <Input
+        <select
           id="tipoDocumento"
           name="tipoDocumento"
           value={formulario.tipoDocumento}
           onChange={handleChange}
-          className="border border-primary"
+          className="border border-primary rounded w-65 h-9 px-1 bg-white"
           required
-        />
+        >
+          <option value="">Selecciona...</option>
+          <option value="CC">Cédula de ciudadanía (CC)</option>
+          <option value="TI">Tarjeta de identidad (TI)</option>
+        </select>
       </div>
       <div>
         <Label className="mb-1" htmlFor="numeroDocumento">
@@ -162,36 +194,65 @@ function ScoutEnrollment() {
           required
         />
       </div>
-      {/* Fecha de nacimiento */}
-      <div className="relative">
-        <Label className="mb-1" htmlFor="fechaNacimiento">
-          Fecha de nacimiento *
-        </Label>
-        <Input
-          type="text"
-          id="fechaNacimiento"
-          name="fechaNacimiento"
-          value={formulario.fechaNacimiento}
-          onClick={() => setMostrarCalendario(true)}
-          readOnly
-          className="border border-primary"
-          required
-        />
-        {mostrarCalendario && (
-          <div ref={calendarioRef} className="absolute z-50 mt-2">
-            <Calendar
-              mode="single"
-              selected={
-                formulario.fechaNacimiento
-                  ? new Date(formulario.fechaNacimiento)
-                  : undefined
-              }
-              onSelect={handleFechaSeleccionada}
-              toDate={new Date()}
-            />
+
+      
+       {/* Grupo */}
+        <div>
+          <Label className="mb-1" htmlFor="grupo">
+            Grupo *
+          </Label>
+          <select
+            id="grupo"
+            name="grupo"
+            value={formulario.grupo}
+            onChange={handleChange}
+            className="border border-primary rounded w-full h-10 px-2 bg-white"
+            required
+          >
+            <option value="">Selecciona...</option>
+            <option value="Centinelas 113">Centinelas 113</option>
+            <option value="803 Chiminigagua">803 Chiminigagua</option>
+          </select>
+        </div>
+
+        {/* Fecha de nacimiento */}
+        <div>
+          <Label className="mb-1" htmlFor="fechaNacimiento">
+            Fecha de nacimiento *
+          </Label>
+          <Input
+            type="date"
+            id="fechaNacimiento"
+            name="fechaNacimiento"
+            value={formulario.fechaNacimiento}
+            onChange={handleChange}
+            className="border border-primary"
+            required
+          />
+        </div>
+
+        {/* Rama (solo si hay grupo y fecha de nacimiento) */}
+        {formulario.grupo && formulario.fechaNacimiento && (
+          <div>
+            <Label className="mb-1" htmlFor="rama">
+              Rama *
+            </Label>
+            <select
+              id="rama"
+              name="rama"
+              value={formulario.rama}
+              onChange={handleChange}
+              className="border border-primary rounded w-full h-10 px-2 bg-white"
+              required
+            >
+              <option value="">Selecciona...</option>
+              {ramasDisponibles().map(rama => (
+                <option key={rama} value={rama}>{rama}</option>
+              ))}
+            </select>
           </div>
         )}
-      </div>
+
       {/* Ciudad */}
       <div>
         <Label className="mb-1" htmlFor="ciudad">
@@ -312,14 +373,18 @@ function ScoutEnrollment() {
         <Label className="mb-1" htmlFor="sexo">
           Sexo *
         </Label>
-        <Input
+        <select
           id="sexo"
           name="sexo"
           value={formulario.sexo}
           onChange={handleChange}
-          className="border border-primary"
+          className="border border-primary rounded w-50 h-10 px-2 bg-white"
           required
-        />
+        >
+          <option value="">Selecciona...</option>
+          <option value="Femenino">Femenino</option>
+          <option value="Masculino">Masculino</option>
+        </select>
       </div>
       {/* Peso y estatura */}
       <div>

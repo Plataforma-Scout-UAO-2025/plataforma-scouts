@@ -226,7 +226,7 @@ useEffect(() => {
         </span>
       </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
-          Grupo Centinelas 118 y  803 chiminigagua
+          Grupo Centinelas 113 y  803 chiminigagua
         </h2>
         <div className="flex justify-center">
           <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
