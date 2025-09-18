@@ -401,11 +401,10 @@ function ScoutEnrollment() {
     <div className="min-h-screen w-screen bg-background px-20 py-10">
       <div className="mb-10">
         <h1 className="text-2xl font-bold mb-10 text-left text-primary">
-          Agregar Integrante
+          Inscríbete
         </h1>
         <p className="mt-2 text-muted-foreground max-w-3xl">
-          Ingrese todos los datos requeridos en este formulario para añadir un
-          nuevo integrante scout
+          Ingrese todos los datos requeridos en este formulario para enviar la solicitud de inscripción.
         </p>
       </div>
       <div className="max-w-2xl mx-auto">
