@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // <-- Agrega esta línea
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,9 @@ function ScoutEnrollment() {
 
   const [pagina, setPagina] = useState(1);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
+  const [showModal, setShowModal] = useState(false); // <-- Estado para controlar el modal
   const calendarioRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate(); // <-- Inicializa el hook
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -68,6 +71,7 @@ function ScoutEnrollment() {
       setPagina((prev) => prev + 1);
     } else {
       console.log("Datos de inscripción:", formulario);
+      setShowModal(true); // <-- Muestra el modal al enviar el formulario
     }
   };
 
@@ -443,6 +447,26 @@ function ScoutEnrollment() {
           <Progress className="h-2 rounded-full" value={progreso} />
         </div>
       </div>
+      {/* Modal de confirmación */}
+      {showModal && (
+        <div
+        className="fixed inset-0 z-50 flex items-center justify-center"
+        style={{
+          backdropFilter: "blur(7px)",   // controlas la cantidad de difuminado
+          backgroundColor: "rgba(0, 0, 0, 0.6)", // opcional: leve velo blanco
+        }}
+      >
+        <div className="bg-[#FFFAF3] rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
+          <h3 className="text-xl font-bold mb-4 text-green-700">¡Solicitud enviada!</h3>
+          <p className="mb-6 text-gray-700">
+            Un encargado se comunicará contigo pronto.
+          </p>
+          <Button className="w-full" onClick={() => navigate("/")}>
+            Cerrar
+          </Button>
+        </div>
+      </div>
+      )}
     </div>
   );
 }
