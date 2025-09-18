@@ -156,7 +156,7 @@ useEffect(() => {
           </p>
           <div className="flex gap-4 mb-8">
           <a
-            href="/register"
+            href="#contact"
             className="bg-[#113227] rounded-[8px] text-[#FFFAF3] px-6 py-3 font-medium flex items-center gap-2 
                       hover:bg-[#154737] hover:scale-95 hover:shadow-inner 
                       transition-transform duration-200"
@@ -196,7 +196,7 @@ useEffect(() => {
         </h2>
         <div className="flex justify-center">
           <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
-            Ser scout es formar parte de una comunidad global que promueve el
+            Ser scout es formar parte de una comunidad que promueve el
             desarrollo personal, el liderazgo y el servicio. Cada experiencia te
             prepara para enfrentar los desafíos de la vida con valentía y
             solidaridad.
@@ -230,7 +230,7 @@ useEffect(() => {
         </h2>
         <div className="flex justify-center">
           <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
-            Desde los más pequeños hasta jóvenes adultos, tenemos Grupos diseñados 
+            Desde los más pequeños hasta jóvenes adultos, tenemos grupos diseñados 
             específicamente para cada edad y nivel de desarrollo.
           </p>
         </div>
@@ -273,7 +273,7 @@ useEffect(() => {
   </h2>
   <div className="flex justify-center">
     <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
-      Desde los más pequeños hasta jóvenes adultos, tenemos Grupos diseñados 
+      Desde los más pequeños hasta jóvenes adultos, tenemos grupos diseñados 
       específicamente para cada edad y nivel de desarrollo.
     </p>
   </div>

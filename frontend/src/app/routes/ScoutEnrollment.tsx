@@ -437,7 +437,7 @@ function ScoutEnrollment() {
               </Button>
             ) : (
               <Button type="submit" className="px-10 py-6">
-                Agregar integrante
+                Enviar
               </Button>
             )}
           </div>
