@@ -40,6 +40,32 @@ public class SubgroupService {
   }
 
   @Transactional
+  public SubgroupDTO update(Long id, SubgroupDTO dto) {
+    Subgroup existing = repo.findById(id)
+      .filter(s -> s.getTenantId().equals(tenant()))
+      .orElseThrow(() -> new IllegalArgumentException("Subgroup not found"));
+    
+    
+    if (dto.sectionId() != null && !dto.sectionId().equals(existing.getSection().getId())) {
+      Section newSection = sections.findById(dto.sectionId())
+        .orElseThrow(() -> new IllegalArgumentException("Section not found"));
+      if (!newSection.getTenantId().equals(tenant())) {
+        throw new IllegalArgumentException("Section not in tenant");
+      }
+      existing.setSection(newSection);
+    }
+    
+    
+    if (dto.subgroupName() != null) existing.setSubgroupName(dto.subgroupName());
+    if (dto.subgroupType() != null) existing.setSubgroupType(dto.subgroupType());
+    if (dto.creationDate() != null) existing.setCreationDate(dto.creationDate());
+    if (dto.active() != null) existing.setActive(dto.active());
+    
+    Subgroup updated = repo.save(existing);
+    return toDTO(updated);
+  }
+
+  @Transactional
   public void delete(Long id){
     Subgroup g = repo.findById(id).filter(s -> s.getTenantId().equals(tenant()))
       .orElseThrow(() -> new IllegalArgumentException("Subgroup not found"));

@@ -18,6 +18,12 @@ public class SubgroupController {
     return service.listBySection(sectionId);
   }
 
+  @PutMapping("/{id}")
+  public ResponseEntity<SubgroupDTO> update(@PathVariable Long id, @Valid @RequestBody SubgroupDTO dto){
+    SubgroupDTO updated = service.update(id, dto);
+    return ResponseEntity.ok(updated);
+  }
+
   @PostMapping
   public ResponseEntity<SubgroupDTO> create(@Valid @RequestBody SubgroupDTO dto){
     SubgroupDTO saved = service.create(dto);
