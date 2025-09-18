@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom"
 import RamaModal from "@/components/modals/RamaModal"
 import SubramaModal from "@/components/modals/SubramaModal"
 import ConfirmacionModal from "@/components/modals/ConfirmacionModal"
+import SuccessModal from "@/components/modals/SuccessModal" 
 import type { Rama, Subrama } from "@/_mocks/organigramaData"
 import { deleteRama, deleteSubrama } from "@/lib/api"
 
@@ -17,10 +18,19 @@ export default function OrganigramaPage() {
   const [ramaModalOpen, setRamaModalOpen] = useState(false)
   const [subramaModalOpen, setSubramaModalOpen] = useState(false)
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+  const [successModalOpen, setSuccessModalOpen] = useState(false) 
+  const [successMessage, setSuccessMessage] = useState("") 
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [selectedRama, setSelectedRama] = useState<Rama | undefined>()
   const [selectedSubrama, setSelectedSubrama] = useState<Subrama | undefined>()
   const [itemToDelete, setItemToDelete] = useState<{type: 'rama' | 'subrama', id: string, name: string} | null>(null)
+
+  // Función para mostrar modal de éxito
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg)
+    setSuccessModalOpen(true)
+    setTimeout(() => setSuccessModalOpen(false), 2000) 
+  }
 
   // Funciones para manejar las acciones de los modales
   const handleCreateRama = () => {
@@ -67,6 +77,7 @@ export default function OrganigramaPage() {
         await deleteSubrama(itemToDelete.id)
       }
       console.log(`${itemToDelete.type} eliminada exitosamente`)
+      showSuccess(`${itemToDelete.type === "rama" ? "Rama" : "Subrama"} eliminada con éxito`)
     } catch (error) {
       console.error('Error al eliminar:', error)
     } finally {
@@ -250,7 +261,7 @@ export default function OrganigramaPage() {
         rama={selectedRama}
         onSuccess={(rama) => {
           console.log('Rama guardada:', rama)
-          // Aquí podrías actualizar la lista de ramas
+          showSuccess("Rama guardada con éxito")
         }}
       />
 
@@ -262,7 +273,7 @@ export default function OrganigramaPage() {
         ramaId="2" // ID de la rama Tropa
         onSuccess={(subrama) => {
           console.log('Subrama guardada:', subrama)
-          // Aquí podrías actualizar la lista de subramas
+          showSuccess("Subrama guardada con éxito")
         }}
       />
 
@@ -274,7 +285,14 @@ export default function OrganigramaPage() {
         message={`¿Estás seguro de que quieres eliminar ${itemToDelete?.type === 'rama' ? 'la rama' : 'la subrama'} '${itemToDelete?.name}'?`}
         warningMessage="Esta acción es permanente y no se puede deshacer."
       />
+
+      <SuccessModal
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        message={successMessage}
+      />
     </div>
   )
 }
+
 
