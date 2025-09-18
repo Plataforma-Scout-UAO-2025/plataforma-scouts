@@ -452,8 +452,8 @@ function ScoutEnrollment() {
         <div
         className="fixed inset-0 z-50 flex items-center justify-center"
         style={{
-          backdropFilter: "blur(7px)",   // controlas la cantidad de difuminado
-          backgroundColor: "rgba(0, 0, 0, 0.6)", // opcional: leve velo blanco
+          backdropFilter: "blur(7px)",   
+          backgroundColor: "rgba(0, 0, 0, 0.6)", 
         }}
       >
         <div className="bg-[#FFFAF3] rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
