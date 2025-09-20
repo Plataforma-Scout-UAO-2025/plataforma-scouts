@@ -29,12 +29,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             // Sin CORS para desarrollo - usar Postman/Swagger
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/v1/**").permitAll()
-                .requestMatchers("/api/v1/qa/**").permitAll()
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/v1/").permitAll()
+                .requestMatchers("/api/v1/qa/").permitAll()
+                .requestMatchers("/swagger-ui/").permitAll()
+                .requestMatchers("/v3/api-docs/").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/actuator/").permitAll()
                 .anyRequest().authenticated()
             );
         
@@ -51,9 +51,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(productionCorsConfigurationSource()))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/v1/qa/**").denyAll()   // No endpoints de QA en producción
-                .requestMatchers("/swagger-ui/**").denyAll()   // No Swagger en producción
-                .requestMatchers("/v3/api-docs/**").denyAll()
+                .requestMatchers("/api/v1/qa/").denyAll()   // No endpoints de QA en producción
+                .requestMatchers("/swagger-ui/").denyAll()   // No Swagger en producción
+                .requestMatchers("/v3/api-docs/").denyAll()
                 .requestMatchers("/actuator/health").permitAll() // Solo health check
                 .anyRequest().authenticated()
             );
@@ -80,7 +80,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
-        return source;
-    }
+        source.registerCorsConfiguration("/api/", configuration);
+        return source;
+    }
 }
