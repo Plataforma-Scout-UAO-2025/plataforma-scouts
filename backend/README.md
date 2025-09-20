@@ -53,6 +53,5 @@ src/main/java/uao/edu/co/scouts_project/
 - Java 21 + Spring Boot 3.5.5
 - PostgreSQL (Supabase)
 - Supabase Storage (images/files)
-- Liquibase (migraciones)
 - Swagger/OpenAPI 3
 - Lombok

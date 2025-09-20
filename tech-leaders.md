@@ -22,7 +22,7 @@ soporte de largo plazo.
 - Se implementará RLS en la base de datos, con tenant_id presente en todas las tablas
 principales.
 - El control de acceso se basará en tokens JWT emitidos por Auth0, incluyendo un claim
-tenant_id en los tokens, que será usado por el ORM (Hibernate + Liquibase) para filtrar
+tenant_id en los tokens, que será usado por el ORM (Hibernate) para filtrar
 automáticamente los datos.
 
 3. Manejo de Ambientes
@@ -59,7 +59,7 @@ despliegues en PaaS (Fly.io).
 fallback por path. Internacionalización (i18n) desde el inicio, validación de formularios y
 enmascarado de datos sensibles.
 - Backend: Java SE 24 + Spring Boot 3.5.5, con OpenAPI/Swagger, Redis y políticas RLS en
-PostgreSQL. Migraciones gestionadas con Liquibase.
+PostgreSQL. 
 - Base de datos: PostgreSQL (Supabase) con RLS.
 - Almacenamiento: Supabase Storage con organización por tenant.
 - Correo: SendGrid (plan gratuito inicial).
@@ -141,7 +141,6 @@ Estructura inicial propuesta:
  ├── backend/               # Java + Spring Boot
  │    ├── src/
  │    ├── pom.xml
- │    └── liquibase/        # migraciones versionadas
  ├── docs/                  # documentación técnica y funcional
  ├── .github/               # workflows de GitHub Actions (CI/CD)
  ├── docker/                # Dockerfiles y configuraciones
@@ -187,7 +186,6 @@ backend/
  │    │    │    └── api/
  │    │    └── resources/
  │    │         ├── application.yml
- │    │         └── db/changelog/ (Liquibase)
  │    └── test/java/com/scouts/
  └── pom.xml
 
