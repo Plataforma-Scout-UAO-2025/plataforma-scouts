@@ -14,6 +14,7 @@ import AccountStatements from "./app/routes/adminGrupal/AccountStatements";
 import MemberStatements from "./app/routes/adminGrupal/MemberStatements";
 import PaymentRecords from "./app/routes/adminGrupal/PaymentRecords";
 import Home from "./app/routes/adminGrupal/Home";
+import ImageUploadTest from "./ImageUploadTest";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/test-upload" element={<ImageUploadTest />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="financiero/cuotas" element={<Cuotas />} />

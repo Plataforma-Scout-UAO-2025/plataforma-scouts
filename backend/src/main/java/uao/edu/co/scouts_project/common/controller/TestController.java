@@ -7,8 +7,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,14 +20,11 @@ import java.util.Map;
 
 /**
  * Controlador de prueba para funcionalidades de Supabase Storage
- * ⚠️  SOLO PARA QA/TESTING - NO DISPONIBLE EN PRODUCCIÓN
- * Endpoints temporales para probar la subida de archivos
+ * Endpoints para probar la subida de archivos
  */
 @RestController
-@RequestMapping("/api/v1/qa/test")
-@Tag(name = "QA Testing", description = "🧪 Endpoints SOLO para QA - NO disponible en producción")
-@Profile({"development", "qa", "testing"})
-@ConditionalOnProperty(name = "app.qa.endpoints.enabled", havingValue = "true", matchIfMissing = true)
+@RequestMapping("/api/test")
+@Tag(name = "Test Endpoints", description = "🧪 Endpoints para pruebas de upload")
 public class TestController {
 
     private final SupabaseStorageService storageService;
@@ -56,7 +51,7 @@ public class TestController {
     /**
      * Endpoint para subir una imagen al bucket 'images'
      */
-    @PostMapping(value = "/upload/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Subir Imagen", description = "Sube una imagen al bucket 'images' de Supabase")
     @ApiResponse(responseCode = "200", description = "Imagen subida exitosamente", 
                 content = @Content(schema = @Schema(implementation = StorageUploadResponse.class)))
