@@ -1,4 +1,4 @@
-CREATE ROLE "dba" WITH LOGIN PASSWORD '${DBA_PASSWORD}';
+CREATE USER "dba" WITH PASSWORD '${DBA_PASSWORD}';
 
 -- Grant privileges on the public schema.
 GRANT USAGE ON SCHEMA public TO "dba";
@@ -18,6 +18,3 @@ GRANT ALL PRIVILEGES ON SEQUENCES TO "dba";
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT ALL PRIVILEGES ON FUNCTIONS TO "dba";
-
--- update user pass as best practice ;)
-ALTER ROLE "dba" WITH PASSWORD '${DBA_PASSWORD}';
