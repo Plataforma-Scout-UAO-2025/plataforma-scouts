@@ -1,0 +1,138 @@
+name: Frontend CI Pipeline
+
+on:
+  push:
+    branches: [ develop, release/* ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ develop, release/* ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  # Validaciones para Pull Requests (Feature branches)
+  feature-validation:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    name: Feature PR Validation
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: ESLint validation
+      run: npm run lint
+      
+    - name: TypeScript validation
+      run: npx tsc --noEmit
+      
+    - name: Build validation
+      run: npm run build
+        
+    - name: PR Validation Summary
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '✅ **Frontend Validation Complete**\n\n' +
+                  '- Linting: ✅ Passed\n' +
+                  '- Type Check: ✅ Passed\n' +
+                  '- Build: ✅ Successful\n\n' +
+                  '**Ready for merge to develop**'
+          })
+
+  # Validaciones para rama develop
+  develop-validation:
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    name: Develop Branch Validation
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Code quality validation
+      run: |
+        npm run lint
+        npx tsc --noEmit
+        
+    - name: Build for QA testing
+      run: npm run build
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-develop-${{ github.sha }}
+        path: frontend/dist/
+
+  # Validaciones para ramas release
+  release-validation:
+    if: startsWith(github.ref, 'refs/heads/release/') && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    name: Release Validation
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Strict validation for release
+      run: |
+        npm run lint
+        npx tsc --noEmit
+        
+    - name: Production build
+      run: npm run build
+      
+    - name: Upload release build
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-release-${{ github.sha }}
+        path: frontend/dist/
+
