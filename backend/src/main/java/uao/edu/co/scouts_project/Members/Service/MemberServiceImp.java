@@ -1,22 +1,22 @@
-package uao.edu.co.scouts_project.Miembros.Service;
+package uao.edu.co.scouts_project.Members.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import uao.edu.co.scouts_project.Miembros.Model.MiembroModel;
-import uao.edu.co.scouts_project.Miembros.Repository.IMiembroRepository;
+import uao.edu.co.scouts_project.Members.Model.MemberModel;
+import uao.edu.co.scouts_project.Members.Repository.IMemberRepository;
 
 
 @Slf4j
 @Service
 @Primary
-public class MiembroServiceImp implements IMiembroService {
+public class MemberServiceImp implements IMemberService {
 
     @Autowired
-    private IMiembroRepository miembroRepository;
+    private IMemberRepository miembroRepository;
 
     @Override
-    public MiembroModel registrarMiembro(MiembroModel miembro) {
+    public MemberModel createMember(MemberModel miembro) {
         try {
             if (miembroRepository.findById(miembro.getIdentificacion()).isPresent()) {
                 throw new Exception("Ya existe un miembro con la identificación " + miembro.getIdentificacion());

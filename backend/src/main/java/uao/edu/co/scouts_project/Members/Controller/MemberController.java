@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.Miembros.Controller;
+package uao.edu.co.scouts_project.Members.Controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -8,42 +8,42 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 //import uao.edu.co.scouts_project.Miembros.Dto.MiembroDto;
 //import uao.edu.co.scouts_project.Miembros.Mapper.MiembroMapper;
-import uao.edu.co.scouts_project.Miembros.Model.MiembroModel;
-import uao.edu.co.scouts_project.Miembros.Service.IMiembroService;
+import uao.edu.co.scouts_project.Members.Model.MemberModel;
+import uao.edu.co.scouts_project.Members.Service.IMemberService;
 
 import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/miembros")
-public class MiembroController {
+public class MemberController {
 
     @Autowired
-    private IMiembroService miembroService;
+    private IMemberService miembroService;
 
     //@Autowired
     //private MiembroMapper miembroMapper;
 
     @PostMapping("/registrar")
-    public ResponseEntity<?> registrarMiembro(@Valid @RequestBody MiembroModel miembroModel) {
+    public ResponseEntity<?> createMember(@Valid @RequestBody MemberModel applicationModel) {
         try {
-            log.info("Recibida solicitud de pre registro para miembro: {}", miembroModel.getIdentificacion());
+            log.info("Recibida solicitud de pre registro para miembro: {}", applicationModel.getIdentificacion());
 
             //MiembroModel miembro = miembroMapper.toEntity(miembroDto);
 
-            MiembroModel miembroRegistrado = miembroService.registrarMiembro(miembroModel);
+            MemberModel miembroRegistrado = miembroService.createMember(applicationModel);
 
             //MiembroDto miembroRegistradoDto = miembroMapper.toDto(miembroRegistrado);
 
-            log.info("Miembro pre registrado exitosamente: {}", miembroModel.getIdentificacion());
-            return ResponseEntity.status(HttpStatus.CREATED).body(miembroModel);
+            log.info("Solicitud creada exitosamente: {}", applicationModel.getIdentificacion());
+            return ResponseEntity.status(HttpStatus.CREATED).body(applicationModel);
 
         } catch (IllegalArgumentException e) {
-            log.warn("Error de validación al pre registar miembro: {}", e.getMessage());
+            log.warn("Error de validación al crear la solicitud: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
 
         } catch (Exception e) {
-            log.error("Error inesperado al pre registrar miembro", e);
+            log.error("Error inesperado al crear la solicitud", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error interno del servidor"));
         }
