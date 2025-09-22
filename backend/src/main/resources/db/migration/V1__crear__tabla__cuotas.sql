@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS cuotas (
+  id UUID PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  monto NUMERIC(15,2) NOT NULL,
+  periodicidad VARCHAR(50) NOT NULL,
+  tipo_cuota VARCHAR(50) NOT NULL,
+  fecha_limite_pago VARCHAR(255) NOT NULL,
+  medio_pago VARCHAR(50) NOT NULL,
+  aplica_a VARCHAR(255) NOT NULL,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
