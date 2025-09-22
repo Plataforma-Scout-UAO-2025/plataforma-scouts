@@ -27,7 +27,7 @@ public class MemberController {
     @PostMapping("/registrar")
     public ResponseEntity<?> createMember(@Valid @RequestBody MemberModel applicationModel) {
         try {
-            log.info("Recibida solicitud de pre registro para miembro: {}", applicationModel.getIdentificacion());
+            log.info("Recibida solicitud de pre registro para miembro: {}", applicationModel.getIdentification());
 
             //MiembroModel miembro = miembroMapper.toEntity(miembroDto);
 
@@ -35,7 +35,7 @@ public class MemberController {
 
             //MiembroDto miembroRegistradoDto = miembroMapper.toDto(miembroRegistrado);
 
-            log.info("Solicitud creada exitosamente: {}", applicationModel.getIdentificacion());
+            log.info("Solicitud creada exitosamente: {}", applicationModel.getIdentification());
             return ResponseEntity.status(HttpStatus.CREATED).body(applicationModel);
 
         } catch (IllegalArgumentException e) {

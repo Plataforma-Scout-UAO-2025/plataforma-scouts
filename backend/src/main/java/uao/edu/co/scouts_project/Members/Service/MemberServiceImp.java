@@ -16,17 +16,17 @@ public class MemberServiceImp implements IMemberService {
     private IMemberRepository miembroRepository;
 
     @Override
-    public MemberModel createMember(MemberModel miembro) {
+    public MemberModel createMember(MemberModel member) {
         try {
-            if (miembroRepository.findById(miembro.getIdentificacion()).isPresent()) {
-                throw new Exception("Ya existe un miembro con la identificación " + miembro.getIdentificacion());
+            if (miembroRepository.findById(member.getIdentification()).isPresent()) {
+                throw new Exception("Ya existe un miembro con la identificación " + member.getIdentification());
             }
-            this.miembroRepository.save(miembro);
-            log.info(" Miembro preregistrado: {}", miembro);
+            this.miembroRepository.save(member);
+            log.info(" Miembro preregistrado: {}", member);
         } catch (Exception e) {
             log.error("Error inesperado al registrar miembro", e);
         }
-        return miembro;
+        return member;
     }
 
 }

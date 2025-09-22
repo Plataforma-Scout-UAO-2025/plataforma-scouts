@@ -2,10 +2,10 @@ package uao.edu.co.scouts_project.Members.Mapper;
 
 /*
 @Mapper(componentModel = "spring")
-public interface MiembroMapper {
+public interface MemberMapper {
 
-    MiembroDto toDto(MiembroModel miembro);
+    MemberDto toDto(MemberModel member);
 
-    MiembroModel toEntity(MiembroDto dto);
+    MemberModel toEntity(MemberDto dto);
 }
 */

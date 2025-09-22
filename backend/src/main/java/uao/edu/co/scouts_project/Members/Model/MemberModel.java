@@ -18,29 +18,29 @@ public class MemberModel {
 
     @Id
     @NotBlank @Positive
-    private Long identificacion;
+    private Long identification;
     @NotNull
-    private String nombres;
+    private String name;
     @NotNull
-    private String apellidos;
+    private String lastName;
     @Email
-    private String correo;
-    private String tipo_documento;
-    private String sexo;
-    private String fecha_nacimiento;
-    private String ciudad;
-    private String direccion;
-    private Long telefono;
-    private String institucion;
-    private String curso;
-    private String calendario;
-    private String jornada;
-    private Double peso;
-    private Double estatura;
-    private String tipo_sangre;
-    private String rh;
-    private String pasa_tiempos;
-    private String deportes;
-    private String instrumentos;
+    private String email;
+    private String documentType;
+    private String gender;
+    private String birthDate;
+    private String city;
+    private String address;
+    private Long phone;
+    private String institution;
+    private String course;
+    private String schoolCalendar;
+    private String schoolShift;
+    private Double weight;
+    private Double height;
+    private String bloodType;
+    private String rhFactor;
+    private String hobbies;
+    private String sports;
+    private String instruments;
 
 }
