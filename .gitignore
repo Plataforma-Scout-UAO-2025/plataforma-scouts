@@ -55,3 +55,4 @@ build/
 
 ### supabase
 /supabase/migrations/20250922030106_alter_dba.sql
+/supabase/migrations/20250922214447_updatedCreds.sql
