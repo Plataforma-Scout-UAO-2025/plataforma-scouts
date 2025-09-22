@@ -150,4 +150,3 @@ cd backend
 ---
 
 **Última actualización**: Septiembre 21, 2025  
-**Autor**: Plataforma Scouts Team
