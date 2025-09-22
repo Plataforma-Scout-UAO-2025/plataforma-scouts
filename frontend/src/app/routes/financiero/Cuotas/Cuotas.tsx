@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui";
+import { DollarSign, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Cuotas() {
@@ -11,11 +12,20 @@ export default function Cuotas() {
             Gestiona las cuotas y pagos de los scouts
           </p>
         </div>
-        <Button variant="primary" asChild>
-          <Link to="/app/financiero/cuotas/gestion">
-            Gestionar cuotas
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="primary" asChild>
+            <Link to="/app/financiero/pagos">
+              <DollarSign className="text-white" />
+              Gestionar pagos
+            </Link>
+          </Button>
+          <Button variant="primary" asChild>
+            <Link to="/app/financiero/cuotas/gestion">
+              <FileText className="text-white" />
+              Gestionar cuotas
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

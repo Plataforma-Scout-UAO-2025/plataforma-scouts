@@ -19,6 +19,9 @@ const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal"; // Simulac
 // Protected components
 const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
 
+import Pagos from "./app/routes/financiero/Pagos/Pagos";
+import EstadoCuenta from "./app/routes/acudiente/estado-cuenta/EstadoCuenta";
+
 function App() {
   useAuth0ApiWrapper();
 
@@ -40,6 +43,7 @@ function App() {
                 <Route path="financiero/cuotas" element={<Cuotas />} />
                 <Route path="financiero/cuotas/gestion" element={<Gestion />} />
                 <Route path="grupos" element={<Grupos />} />
+                <Route path="financiero/pagos" element={<Pagos />} />
                 <Route path="grupos/medical-info" element={<MedicalInfo />} />
                 {/* 
                 <Route path="dashboard" element={<Dashboard />} />
