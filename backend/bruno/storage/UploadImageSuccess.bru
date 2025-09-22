@@ -1,0 +1,58 @@
+meta {
+  name: Upload Image - Success
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseurl}}api/v1/test/upload/image
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  file: @file(./test-files/sample-image.jpg)
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has correct structure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('message', 'Archivo subido exitosamente');
+    expect(body).to.have.property('fileName');
+    expect(body).to.have.property('originalName');
+    expect(body).to.have.property('fileUrl');
+    expect(body).to.have.property('bucket', 'images');
+    expect(body).to.have.property('size');
+    expect(body).to.have.property('contentType');
+  });
+  
+  test("File name is generated correctly", function() {
+    const body = res.getBody();
+    expect(body.fileName).to.contain('sample-image.jpg');
+    expect(body.originalName).to.equal('sample-image.jpg');
+  });
+  
+  test("File URL is valid", function() {
+    const body = res.getBody();
+    expect(body.fileUrl).to.be.a('string');
+    expect(body.fileUrl).to.contain('storage/v1/object/public/images/');
+  });
+  
+  test("Content type is image", function() {
+    const body = res.getBody();
+    expect(body.contentType).to.contain('image/');
+  });
+  
+  test("File size is positive", function() {
+    const body = res.getBody();
+    expect(body.size).to.be.greaterThan(0);
+  });
+}
