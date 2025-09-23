@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  type ColumnDef,
   type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
@@ -13,7 +12,6 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/input";
@@ -26,132 +24,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import CreateCuotaModal from "./CreateCuotaModal";
-import EditCuotaModal from "./EditCuotaModal";
-import DeleteCuotaModal from "./DeleteCuotaModal";
 import type { Cuota } from "../types/cuota.type";
-
-export const mockCuotas: Cuota[] = [
-  {
-    id: "1",
-    nombre: "Cuota 1",
-    monto: "100000",
-    periodicidad: "Mensual",
-    tipoCuota: "Ordinaria",
-    fechaLimitePago: "28 de cada mes",
-    medioPago: "PSE",
-    aplicaA: "Todos",
-  },
-  {
-    id: "2",
-    nombre: "Cuota 2",
-    monto: "200000",
-    periodicidad: "Trimestral",
-    tipoCuota: "Ordinaria",
-    fechaLimitePago: "7 de cada mes",
-    medioPago: "PSE",
-    aplicaA: "Todos",
-  },
-  {
-    id: "3",
-    nombre: "Cuota 3",
-    monto: "300000",
-    periodicidad: "Semestral",
-    tipoCuota: "Ordinaria",
-    fechaLimitePago: "20 de cada mes",
-    medioPago: "PSE",
-    aplicaA: "Todos",
-  },
-];
-
-export const columns: ColumnDef<Cuota>[] = [
-  {
-    accessorKey: "nombre",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Nombre
-          <ArrowUpDown />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="lowercase">{row.getValue("nombre")}</div>
-    ),
-  },
-  {
-    accessorKey: "monto",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Monto
-          <ArrowUpDown />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const monto = parseFloat(row.getValue("monto"));
-
-      const formatted = new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-      }).format(monto);
-
-      return <div className="text-left font-medium">{formatted}</div>;
-    },
-  },
-  {
-    accessorKey: "periodicidad",
-    header: "Periodicidad",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("periodicidad")}</div>
-    ),
-  },
-  {
-    accessorKey: "tipoCuota",
-    header: "Tipo de cuota",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("tipoCuota")}</div>
-    ),
-  },
-  {
-    accessorKey: "fechaLimitePago",
-    header: "Fecha límite",
-    cell: ({ row }) => <div>{row.getValue("fechaLimitePago")}</div>,
-  },
-  {
-    accessorKey: "medioPago",
-    header: "Medio de pago",
-    cell: ({ row }) => <div>{row.getValue("medioPago")}</div>,
-  },
-  {
-    accessorKey: "aplicaA",
-    header: "Aplica a",
-    cell: ({ row }) => <div>{row.getValue("aplicaA")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const cuota = row.original;
-
-      return (
-        <div className="flex items-center gap-2">
-          <EditCuotaModal cuota={cuota} />
-          <DeleteCuotaModal cuota={cuota} />
-        </div>
-      );
-    },
-  },
-];
+import { columns } from "./CuotasTableColumns";
 
 export default function CuotasTable({
-  cuotas = mockCuotas,
+  cuotas = [],
 }: {
   cuotas?: Cuota[];
 }) {
