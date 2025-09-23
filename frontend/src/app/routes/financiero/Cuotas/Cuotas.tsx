@@ -1,13 +1,21 @@
+import { Button } from "@/components/ui";
+import { Link } from "react-router-dom";
+
 export default function Cuotas() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-primary">Cuotas</h1>
+          <h1 className="text-5xl font-bold tracking-tight text-primary">Cuotas</h1>
           <p className="text-muted-foreground">
             Gestiona las cuotas y pagos de los scouts
           </p>
         </div>
+        <Button variant="primary" asChild>
+          <Link to="/app/financiero/cuotas/gestion">
+            Gestionar cuotas
+          </Link>
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

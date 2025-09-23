@@ -1,6 +1,5 @@
 package uao.edu.co.scouts_project.common.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -21,7 +20,6 @@ public class SupabaseStorageService {
     private final RestTemplate restTemplate;
     private final SupabaseConfig.SupabaseProperties supabaseProperties;
 
-    @Autowired
     public SupabaseStorageService(RestTemplate supabaseRestTemplate, 
                                   SupabaseConfig.SupabaseProperties supabaseProperties) {
         this.restTemplate = supabaseRestTemplate;

@@ -1,0 +1,34 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseurl}}api/v1/test/health
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has correct structure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('status', 'UP');
+    expect(body).to.have.property('message');
+    expect(body).to.have.property('timestamp');
+  });
+  
+  test("Response message is correct", function() {
+    const body = res.getBody();
+    expect(body.message).to.equal('Aplicación funcionando correctamente');
+  });
+}
