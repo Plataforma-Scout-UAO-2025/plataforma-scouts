@@ -45,3 +45,4 @@ export {
   AlertDialogAction,
   AlertDialogCancel,
 } from "./alert-dialog"
+export { Separator } from "./separator"

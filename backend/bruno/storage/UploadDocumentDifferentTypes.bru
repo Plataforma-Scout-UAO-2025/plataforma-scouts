@@ -1,0 +1,41 @@
+meta {
+  name: Upload Document - Different Types
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseurl}}api/v1/test/upload/document
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  file: @file(./test-files/sample-document.docx)
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Accepts different document types", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('message', 'Archivo subido exitosamente');
+    expect(body).to.have.property('bucket', 'files');
+    expect(body.originalName).to.equal('sample-document.docx');
+  });
+  
+  test("Content type is document", function() {
+    const body = res.getBody();
+    const validContentTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/octet-stream'
+    ];
+    expect(validContentTypes).to.include(body.contentType);
+  });
+}
