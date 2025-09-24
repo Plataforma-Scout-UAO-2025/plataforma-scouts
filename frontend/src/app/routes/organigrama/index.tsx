@@ -10,8 +10,9 @@ import {
 } from '@/components/ui/select';
 import RamaList from './components/RamaList';
 import CreateRamaModal from './components/CreateRamaModal';
+import CreateSubramaModal from './components/CreateSubramaModal';
 import type { Rama } from './types/rama.type';
-import type { CreateRamaFormData } from './schemas/rama.schema';
+import type { CreateRamaFormData, CreateSubramaFormData } from './schemas/rama.schema';
 import * as organigramaService from './services/organigrama.service';
 import { availableYears } from './constants/mockData';
 
@@ -20,6 +21,8 @@ export default function Organigrama() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
+  const [createSubramaModalOpen, setCreateSubramaModalOpen] = useState(false);
+  const [selectedRamaId, setSelectedRamaId] = useState<string>('');
 
   // Cargar ramas al montar el componente y cuando cambie el año
   useEffect(() => {
@@ -70,8 +73,18 @@ export default function Organigrama() {
   };
 
   const handleCreateSubrama = (ramaId: string) => {
-    console.log('Crear subrama para rama:', ramaId);
-    // TODO: Implementar modal de creación de subrama
+    setSelectedRamaId(ramaId);
+    setCreateSubramaModalOpen(true);
+  };
+
+  const handleSubmitSubrama = async (data: CreateSubramaFormData) => {
+    try {
+      await organigramaService.createSubrama(data);
+      await loadRamas(); // Recargar la lista
+    } catch (error) {
+      console.error('Error al crear subrama:', error);
+      throw error;
+    }
   };
 
   const handleViewSubrama = (subrama: any) => {
@@ -189,6 +202,13 @@ export default function Organigrama() {
         open={createRamaModalOpen}
         onOpenChange={setCreateRamaModalOpen}
         onSubmit={handleCreateRama}
+      />
+
+      <CreateSubramaModal
+        open={createSubramaModalOpen}
+        onOpenChange={setCreateSubramaModalOpen}
+        ramaId={selectedRamaId}
+        onSubmit={handleSubmitSubrama}
       />
     </div>
   );

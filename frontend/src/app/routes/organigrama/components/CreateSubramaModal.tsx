@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,44 +10,44 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import type { CreateRamaFormData } from '../schemas/rama.schema';
+import type { CreateSubramaFormData } from '../schemas/rama.schema';
 
-interface CreateRamaModalProps {
+interface CreateSubramaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateRamaFormData) => Promise<void>;
+  ramaId: string;
+  onSubmit: (data: CreateSubramaFormData) => Promise<void>;
 }
 
-export default function CreateRamaModal({
+export default function CreateSubramaModal({
   open,
   onOpenChange,
+  ramaId,
   onSubmit,
-}: CreateRamaModalProps) {
+}: CreateSubramaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<CreateRamaFormData>({
+  const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
-    edadMinima: 7,
-    edadMaxima: 10,
-    año: new Date().getFullYear(),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      const submitData: CreateSubramaFormData = {
+        ...formData,
+        ramaId: ramaId,
+      };
+      await onSubmit(submitData);
       // Reset form
       setFormData({
         nombre: '',
         descripcion: '',
-        edadMinima: 7,
-        edadMaxima: 10,
-        año: new Date().getFullYear(),
       });
       onOpenChange(false);
     } catch (error) {
-      console.error('Error al crear rama:', error);
+      console.error('Error al crear subrama:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -58,9 +58,6 @@ export default function CreateRamaModal({
       setFormData({
         nombre: '',
         descripcion: '',
-        edadMinima: 7,
-        edadMaxima: 10,
-        año: new Date().getFullYear(),
       });
     }
     onOpenChange(newOpen);
@@ -71,7 +68,7 @@ export default function CreateRamaModal({
       <DialogContent className="sm:max-w-[425px] bg-white rounded-xl shadow-lg border-0" showCloseButton={false}>
         <DialogHeader className="relative pb-4">
           <DialogTitle className="text-2xl font-bold text-[#1A4134] pr-8">
-            Crear Nueva Rama
+            Crear Nueva Subrama
           </DialogTitle>
           <Button
             variant="ghost"
@@ -84,10 +81,10 @@ export default function CreateRamaModal({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Campo Nombre de la Rama */}
+          {/* Campo Nombre de la Subrama */}
           <div className="space-y-2">
             <Label htmlFor="nombre" className="text-sm font-medium text-gray-700">
-              Nombre de la Rama
+              Nombre de la Subrama
             </Label>
             <Input
               id="nombre"
@@ -100,28 +97,6 @@ export default function CreateRamaModal({
             />
           </div>
 
-          {/* Campo Icono */}
-          <div className="space-y-2">
-            <Label htmlFor="icono" className="text-sm font-medium text-gray-700">
-              Icono
-            </Label>
-            <div className="relative">
-              <Input
-                id="icono"
-                type="text"
-                readOnly
-                value=""
-                placeholder="Seleccionar icono (Opcional)"
-                className="w-full bg-white border border-gray-300 rounded-md focus:ring-[#1A4134] focus:border-[#1A4134] pr-10 cursor-pointer"
-                onClick={() => {
-                  // Aquí iría la lógica para abrir selector de archivos
-                  console.log('Abrir selector de iconos');
-                }}
-              />
-              <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-
           {/* Campo Descripción */}
           <div className="space-y-2">
             <Label htmlFor="descripcion" className="text-sm font-medium text-gray-700">
@@ -129,7 +104,7 @@ export default function CreateRamaModal({
             </Label>
             <Textarea
               id="descripcion"
-              placeholder="Descripción opcional de la rama..."
+              placeholder="Descripción opcional..."
               value={formData.descripcion}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => 
                 setFormData(prev => ({ ...prev, descripcion: e.target.value }))
@@ -155,7 +130,7 @@ export default function CreateRamaModal({
               disabled={isSubmitting}
               className="px-6 py-2 bg-[#1A4134] hover:bg-[#29765C] text-white"
             >
-              {isSubmitting ? 'Guardando...' : 'Guardar Rama'}
+              {isSubmitting ? 'Guardando...' : 'Guardar Subrama'}
             </Button>
           </div>
         </form>
