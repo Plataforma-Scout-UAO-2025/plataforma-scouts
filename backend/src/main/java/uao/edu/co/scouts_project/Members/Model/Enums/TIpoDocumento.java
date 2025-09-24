@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.Miembros.Model.Enums;
+package uao.edu.co.scouts_project.Members.Model.Enums;
 
 public enum TIpoDocumento {
         Cedula, TI, Pasaporte
