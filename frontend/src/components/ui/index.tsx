@@ -1,4 +1,14 @@
 export { Button } from "./button"
+export { Badge } from "./badge"
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+} from "./card"
 export { Input } from "./input"
 export { Label } from "./label"
 export { Checkbox } from "./checkbox"
@@ -46,3 +56,21 @@ export {
   AlertDialogCancel,
 } from "./alert-dialog"
 export { Separator } from "./separator"
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverAnchor,
+} from "./popover"
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "./select"

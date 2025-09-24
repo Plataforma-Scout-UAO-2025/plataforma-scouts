@@ -10,6 +10,7 @@ import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
+import Reportes from "./app/routes/financiero/Reportes/Reportes";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="financiero/cuotas" element={<Cuotas />} />
 
             <Route path="financiero/cuotas/gestion" element={<Gestion />} />
+            <Route path="financiero/reportes" element={<Reportes />} />
             <Route path="grupos" element={<Grupos />} />
             <Route path="grupos/medical-info" element={<MedicalInfo />} />
 

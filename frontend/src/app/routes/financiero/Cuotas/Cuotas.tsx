@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui";
+import { FileText, List } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Cuotas() {
@@ -6,43 +7,65 @@ export default function Cuotas() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-5xl font-bold tracking-tight text-primary">Cuotas</h1>
+          <h1 className="text-5xl font-bold tracking-tight text-primary">
+            Cuotas
+          </h1>
           <p className="text-muted-foreground">
             Gestiona las cuotas y pagos de los scouts
           </p>
         </div>
-        <Button variant="primary" asChild>
-          <Link to="/app/financiero/cuotas/gestion">
-            Gestionar cuotas
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="primary" asChild>
+            <Link to="/app/financiero/reportes">
+              <FileText className="text-white" />
+              Reportes
+            </Link>
+          </Button>
+          <Button variant="primary" asChild>
+            <Link to="/app/financiero/cuotas/gestion">
+              <List className="text-white" />
+              Gestionar cuotas
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Total Recaudado</h3>
+          <h3 className="font-medium text-sm text-muted-foreground">
+            Total Recaudado
+          </h3>
           <p className="text-2xl font-bold">$2,450,000</p>
         </div>
         <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Pendientes</h3>
+          <h3 className="font-medium text-sm text-muted-foreground">
+            Pendientes
+          </h3>
           <p className="text-2xl font-bold">$850,000</p>
         </div>
         <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Scouts Activos</h3>
+          <h3 className="font-medium text-sm text-muted-foreground">
+            Scouts Activos
+          </h3>
           <p className="text-2xl font-bold">45</p>
         </div>
         <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Mes Actual</h3>
+          <h3 className="font-medium text-sm text-muted-foreground">
+            Mes Actual
+          </h3>
           <p className="text-2xl font-bold">Enero</p>
         </div>
       </div>
 
       <div className="rounded-lg border">
         <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Lista de Cuotas</h2>
+          <h2 className="text-xl font-semibold mb-4">Lista de Pagos</h2>
           <div className="space-y-4">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                     <span className="text-primary font-medium">
@@ -56,11 +79,20 @@ export default function Cuotas() {
                 </div>
                 <div className="text-right">
                   <p className="font-medium">$50,000</p>
-                  <p className={`text-sm ${
-                    i % 3 === 0 ? 'text-green-600' : 
-                    i % 3 === 1 ? 'text-yellow-600' : 'text-red-600'
-                  }`}>
-                    {i % 3 === 0 ? 'Pagado' : i % 3 === 1 ? 'Pendiente' : 'Vencido'}
+                  <p
+                    className={`text-sm ${
+                      i % 3 === 0
+                        ? "text-green-600"
+                        : i % 3 === 1
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {i % 3 === 0
+                      ? "Pagado"
+                      : i % 3 === 1
+                      ? "Pendiente"
+                      : "Vencido"}
                   </p>
                 </div>
               </div>
@@ -69,5 +101,5 @@ export default function Cuotas() {
         </div>
       </div>
     </div>
-  )
+  );
 }
