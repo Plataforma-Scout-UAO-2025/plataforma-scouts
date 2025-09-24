@@ -32,6 +32,8 @@ const mainItems: MenuItem[] = [
   { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
+
 ]
 
 const bottomItems: MenuItem[] = [
@@ -77,7 +79,7 @@ export default function AppLayout() {
               <SidebarMenu>
                 {mainItems.map((item) => (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton 
+                    <SidebarMenuButton
                       asChild
                       isActive={item.href ? isActive(item.href) : false}
                       className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[active=true]:bg-white/20 data-[active=true]:font-semibold data-[active=true]:text-white"
