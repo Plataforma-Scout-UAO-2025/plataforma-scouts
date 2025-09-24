@@ -23,6 +23,28 @@ target/
 # Env files
 .env
 .env.local
+.env.production
+.env.development
+.env.qa
+
+# Database credentials
+application-*.properties
+!application.properties
+
+# Supabase credentials
+supabase/
+.supabase/
+
+# Security files
+*.key
+*.p12
+*.pem
+keystore.*
+
+# QA Testing files (use Swagger instead)
+qa-testing.*
+test-upload.html
+postman_collection.json
 
 
 ### STS ###
