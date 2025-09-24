@@ -1,40 +1,38 @@
 package uao.edu.co.scouts_project.common.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import uao.edu.co.scouts_project.common.service.SupabaseStorageService;
-import uao.edu.co.scouts_project.common.dto.storage.StorageUploadResponse;
 import uao.edu.co.scouts_project.common.dto.storage.StorageErrorResponse;
-
-import java.util.HashMap;
-import java.util.Map;
+import uao.edu.co.scouts_project.common.dto.storage.StorageUploadResponse;
+import uao.edu.co.scouts_project.common.service.SupabaseStorageService;
 
 /**
  * Controlador de prueba para funcionalidades de Supabase Storage
- * ⚠️  SOLO PARA QA/TESTING - NO DISPONIBLE EN PRODUCCIÓN
- * Endpoints temporales para probar la subida de archivos
+ * Endpoints para probar la subida de archivos y funcionalidades del sistema
  */
 @RestController
-@RequestMapping("/api/v1/qa/test")
-@Tag(name = "QA Testing", description = "🧪 Endpoints SOLO para QA - NO disponible en producción")
-@Profile({"development", "qa", "testing"})
-@ConditionalOnProperty(name = "app.qa.endpoints.enabled", havingValue = "true", matchIfMissing = true)
+@RequestMapping("/api/v1/test")
+@Tag(name = "Testing & Health", description = "🧪 Endpoints de prueba y monitoreo del sistema")
 public class TestController {
 
     private final SupabaseStorageService storageService;
 
-    @Autowired
     public TestController(SupabaseStorageService storageService) {
         this.storageService = storageService;
     }

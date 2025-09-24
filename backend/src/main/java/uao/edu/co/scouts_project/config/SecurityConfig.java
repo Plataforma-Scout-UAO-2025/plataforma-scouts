@@ -1,5 +1,7 @@
 package uao.edu.co.scouts_project.config;
 
+import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -9,8 +11,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 /**
  * Configuración de seguridad por perfiles de entorno
@@ -30,7 +30,6 @@ public class SecurityConfig {
             // Sin CORS para desarrollo - usar Postman/Swagger
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/v1/**").permitAll()
-                .requestMatchers("/api/v1/qa/**").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
@@ -51,9 +50,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(productionCorsConfigurationSource()))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/v1/qa/**").denyAll()   // No endpoints de QA en producción
-                .requestMatchers("/swagger-ui/**").denyAll()   // No Swagger en producción
-                .requestMatchers("/v3/api-docs/**").denyAll()
+                .requestMatchers("/api/v1/qa/").denyAll()   // No endpoints de QA en producción
+                .requestMatchers("/swagger-ui/").denyAll()   // No Swagger en producción
+                .requestMatchers("/v3/api-docs/").denyAll()
                 .requestMatchers("/actuator/health").permitAll() // Solo health check
                 .anyRequest().authenticated()
             );
@@ -80,7 +79,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/api/", configuration);
         return source;
     }
 }
