@@ -13,6 +13,8 @@ import CreateRamaModal from './components/CreateRamaModal';
 import CreateSubramaModal from './components/CreateSubramaModal';
 import EditRamaModal from './components/EditRamaModal';
 import EditSubramaModal from './components/EditSubramaModal';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
+import SuccessModal from './components/SuccessModal';
 import type { Rama, Subrama } from './types/rama.type';
 import type {
   CreateRamaFormData,
@@ -26,11 +28,19 @@ import { availableYears } from './constants/mockData';
 export default function Organigrama() {
   const [ramas, setRamas] = useState<Rama[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
   const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
   const [createSubramaModalOpen, setCreateSubramaModalOpen] = useState(false);
   const [editRamaModalOpen, setEditRamaModalOpen] = useState(false);
   const [editSubramaModalOpen, setEditSubramaModalOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'rama' | 'subrama';
+    id: string;
+    name: string;
+  } | null>(null);
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
@@ -52,18 +62,18 @@ export default function Organigrama() {
     }
   };
 
-  // Crear Rama
+  // ====== RAMAS ======
   const handleCreateRama = async (data: CreateRamaFormData) => {
     try {
       await organigramaService.createRama(data);
-      await loadRamas(); // Recargar la lista
+      await loadRamas();
+      showSuccess('Rama creada con éxito');
     } catch (error) {
       console.error('Error al crear rama:', error);
       throw error;
     }
   };
 
-  // Editar Rama
   const handleEditRama = (rama: Rama) => {
     setRamaSeleccionada(rama);
     setEditRamaModalOpen(true);
@@ -74,25 +84,19 @@ export default function Organigrama() {
     try {
       await organigramaService.updateRama({ ...data, id: ramaSeleccionada.id });
       await loadRamas();
+      showSuccess('Rama actualizada con éxito');
     } catch (error) {
       console.error('Error al actualizar rama:', error);
       throw error;
     }
   };
 
-  // Eliminar Rama
-  const handleDeleteRama = async (rama: Rama) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar la rama "${rama.nombre}"?`)) {
-      try {
-        await organigramaService.deleteRama(rama.id);
-        await loadRamas(); // Recargar la lista
-      } catch (error) {
-        console.error('Error al eliminar rama:', error);
-      }
-    }
+  const handleDeleteRama = (rama: Rama) => {
+    setDeleteTarget({ type: 'rama', id: rama.id, name: rama.nombre });
+    setConfirmDeleteOpen(true);
   };
 
-  // Crear Subrama
+  // ====== SUBRAMAS ======
   const handleCreateSubrama = (ramaId: string) => {
     setSelectedRamaId(ramaId);
     setCreateSubramaModalOpen(true);
@@ -101,14 +105,14 @@ export default function Organigrama() {
   const handleSubmitSubrama = async (data: CreateSubramaFormData) => {
     try {
       await organigramaService.createSubrama(data);
-      await loadRamas(); // Recargar la lista
+      await loadRamas();
+      showSuccess('Subrama creada con éxito');
     } catch (error) {
       console.error('Error al crear subrama:', error);
       throw error;
     }
   };
 
-  // Editar Subrama
   const handleEditSubrama = (subrama: Subrama) => {
     setSubramaSeleccionada(subrama);
     setEditSubramaModalOpen(true);
@@ -119,22 +123,41 @@ export default function Organigrama() {
     try {
       await organigramaService.updateSubrama({ ...data, id: subramaSeleccionada.id });
       await loadRamas();
+      showSuccess('Subrama actualizada con éxito');
     } catch (error) {
       console.error('Error al actualizar subrama:', error);
       throw error;
     }
   };
 
-  // Eliminar Subrama
-  const handleDeleteSubrama = async (subrama: Subrama) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar la subrama "${subrama.nombre}"?`)) {
-      try {
-        await organigramaService.deleteSubrama(subrama.id);
-        await loadRamas(); // Recargar la lista
-      } catch (error) {
-        console.error('Error al eliminar subrama:', error);
+  const handleDeleteSubrama = (subrama: Subrama) => {
+    setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre });
+    setConfirmDeleteOpen(true);
+  };
+
+  // ====== ELIMINACIÓN ======
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      if (deleteTarget.type === 'rama') {
+        await organigramaService.deleteRama(deleteTarget.id);
+      } else {
+        await organigramaService.deleteSubrama(deleteTarget.id);
       }
+      await loadRamas();
+      showSuccess(
+        `${deleteTarget.type === 'rama' ? 'Rama' : 'Subrama'} eliminada con éxito`
+      );
+    } catch (error) {
+      console.error('Error al eliminar:', error);
     }
+  };
+
+  // ====== UTIL ======
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setSuccessOpen(true);
+    setTimeout(() => setSuccessOpen(false), 2000);
   };
 
   if (isLoading) {
@@ -153,25 +176,6 @@ export default function Organigrama() {
             <Plus className="h-4 w-4 mr-2" />
             Crear Nueva Rama
           </Button>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <Select disabled>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Seleccionar año" />
-            </SelectTrigger>
-          </Select>
-        </div>
-
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="border rounded-lg shadow-sm bg-white p-6">
-              <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     );
@@ -198,7 +202,7 @@ export default function Organigrama() {
       {/* Controles de filtrado */}
       <div className="flex items-center space-x-4">
         <Select
-          value={selectedYear.toString()}
+          value={selectedYear ? String(selectedYear) : undefined}
           onValueChange={(value: string) => setSelectedYear(parseInt(value))}
         >
           <SelectTrigger className="w-48">
@@ -251,8 +255,28 @@ export default function Organigrama() {
         subrama={subramaSeleccionada}
         onSubmit={handleSubmitEditSubrama}
       />
+
+      {/* Confirmación y Éxito */}
+      <ConfirmDeleteModal
+        open={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={confirmDelete}
+        title={`Confirmar Eliminación de ${
+          deleteTarget?.type === 'rama' ? 'Rama' : 'Subrama'
+        }`}
+        message={`¿Estás seguro de que quieres eliminar ${
+          deleteTarget?.type === 'rama' ? 'la rama' : 'la subrama'
+        } "${deleteTarget?.name}"?`}
+      />
+
+      <SuccessModal
+        open={successOpen}
+        message={successMessage}
+        onClose={() => setSuccessOpen(false)}
+      />
     </div>
   );
 }
+
 
 
