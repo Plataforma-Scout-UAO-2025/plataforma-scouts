@@ -11,6 +11,8 @@ import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 import Organigrama from "./app/routes/organigrama";
+import RamaDetail from "@/app/routes/organigrama/components/RamaDetail";
+import SubramaDetail from "@/app/routes/organigrama/components/SubramaDetail";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
             <Route path="financiero/cuotas/gestion" element={<Gestion />} />
             <Route path="grupos" element={<Grupos />} />
             <Route path="grupos/medical-info" element={<MedicalInfo />} />
+            <Route path="organigrama/rama/:id" element={<RamaDetail />} />
+            <Route path="organigrama/subrama/:id" element={<SubramaDetail />} />
           </Route>
           {/* Agrega más rutas aquí */}
         </Routes>

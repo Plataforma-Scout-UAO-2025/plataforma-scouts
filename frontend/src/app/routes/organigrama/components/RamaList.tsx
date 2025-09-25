@@ -8,30 +8,28 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 import type { Rama } from '../types/rama.type';
 
 interface RamaListProps {
   ramas: Rama[];
-  onViewRama: (rama: Rama) => void;
   onEditRama: (rama: Rama) => void;
   onDeleteRama: (rama: Rama) => void;
   onCreateSubrama: (ramaId: string) => void;
-  onViewSubrama: (subrama: any) => void;
   onEditSubrama: (subrama: any) => void;
   onDeleteSubrama: (subrama: any) => void;
 }
 
 export default function RamaList({
   ramas,
-  onViewRama,
   onEditRama,
   onDeleteRama,
   onCreateSubrama,
-  onViewSubrama,
   onEditSubrama,
   onDeleteSubrama,
 }: RamaListProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>(['2']); // Inicia con la segunda rama expandida
+  const navigate = useNavigate();
 
   const handleToggleExpansion = (ramaId: string) => {
     setExpandedItems(prev => 
@@ -93,14 +91,16 @@ export default function RamaList({
 
               {/* Botones de acción */}
               <div className="flex items-center space-x-2" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                {/* Ver Rama */}
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onViewRama(rama)}
+                  onClick={() => navigate(`/app/organigrama/rama/${rama.id}`)}
                   className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
+                {/* Editar Rama */}
                 <Button
                   size="sm"
                   variant="outline"
@@ -109,6 +109,7 @@ export default function RamaList({
                 >
                   <Edit2 className="h-4 w-4" />
                 </Button>
+                {/* Eliminar Rama */}
                 <Button
                   size="sm"
                   variant="destructive"
@@ -165,14 +166,16 @@ export default function RamaList({
 
                       {/* Botones de acción de la subrama */}
                       <div className="flex items-center space-x-2">
+                        {/* Ver Subrama */}
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => onViewSubrama(subrama)}
+                          onClick={() => navigate(`/app/organigrama/subrama/${subrama.id}`)}
                           className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
                         >
                           <Eye className="h-3 w-3" />
                         </Button>
+                        {/* Editar Subrama */}
                         <Button
                           size="sm"
                           variant="outline"
@@ -181,6 +184,7 @@ export default function RamaList({
                         >
                           <Edit2 className="h-3 w-3" />
                         </Button>
+                        {/* Eliminar Subrama */}
                         <Button
                           size="sm"
                           variant="destructive"

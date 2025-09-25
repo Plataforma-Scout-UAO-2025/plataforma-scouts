@@ -1,0 +1,122 @@
+import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import type { Subrama, UpdateSubramaData } from '../types/rama.type';
+
+interface EditSubramaModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subrama: Subrama | null;
+  onSubmit: (data: UpdateSubramaData) => Promise<void>;
+}
+
+export default function EditSubramaModal({
+  open,
+  onOpenChange,
+  subrama,
+  onSubmit,
+}: EditSubramaModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<UpdateSubramaData>({
+    id: '',
+    nombre: '',
+    descripcion: '',
+    lider: '',
+    estado: 'activa',
+  });
+
+  useEffect(() => {
+    if (subrama) {
+      setFormData({
+        id: subrama.id,
+        nombre: subrama.nombre,
+        descripcion: subrama.descripcion,
+        lider: subrama.lider,
+        estado: subrama.estado,
+      });
+    }
+  }, [subrama]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('❌ Error al editar subrama:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!subrama) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px] bg-white rounded-xl shadow-lg border-0" showCloseButton={false}>
+        <DialogHeader className="relative pb-4">
+          <DialogTitle className="text-2xl font-bold text-[#1A4134] pr-8">
+            Editar Subrama
+          </DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-0 right-0 h-6 w-6 p-0 hover:bg-gray-100"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-4 w-4 text-gray-500" />
+          </Button>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Nombre de la Subrama */}
+          <div className="space-y-2">
+            <Label htmlFor="nombre">Nombre de la Subrama</Label>
+            <Input
+              id="nombre"
+              value={formData.nombre || ''}
+              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              required
+            />
+          </div>
+
+          {/* Descripción */}
+          <div className="space-y-2">
+            <Label htmlFor="descripcion">Descripción</Label>
+            <Textarea
+              id="descripcion"
+              value={formData.descripcion || ''}
+              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              placeholder="Descripción opcional..."
+            />
+          </div>
+
+          {/* Botones */}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="bg-[#1A4134] text-white">
+              {isSubmitting ? 'Guardando...' : 'Guardar Subrama'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

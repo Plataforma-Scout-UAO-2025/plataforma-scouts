@@ -11,8 +11,15 @@ import {
 import RamaList from './components/RamaList';
 import CreateRamaModal from './components/CreateRamaModal';
 import CreateSubramaModal from './components/CreateSubramaModal';
-import type { Rama } from './types/rama.type';
-import type { CreateRamaFormData, CreateSubramaFormData } from './schemas/rama.schema';
+import EditRamaModal from './components/EditRamaModal';
+import EditSubramaModal from './components/EditSubramaModal';
+import type { Rama, Subrama } from './types/rama.type';
+import type {
+  CreateRamaFormData,
+  CreateSubramaFormData,
+  UpdateRamaFormData,
+  UpdateSubramaFormData,
+} from './schemas/rama.schema';
 import * as organigramaService from './services/organigrama.service';
 import { availableYears } from './constants/mockData';
 
@@ -22,7 +29,11 @@ export default function Organigrama() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
   const [createSubramaModalOpen, setCreateSubramaModalOpen] = useState(false);
+  const [editRamaModalOpen, setEditRamaModalOpen] = useState(false);
+  const [editSubramaModalOpen, setEditSubramaModalOpen] = useState(false);
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
+  const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
+  const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
 
   // Cargar ramas al montar el componente y cuando cambie el año
   useEffect(() => {
@@ -41,6 +52,7 @@ export default function Organigrama() {
     }
   };
 
+  // Crear Rama
   const handleCreateRama = async (data: CreateRamaFormData) => {
     try {
       await organigramaService.createRama(data);
@@ -51,16 +63,24 @@ export default function Organigrama() {
     }
   };
 
-  const handleViewRama = (rama: Rama) => {
-    console.log('Ver detalles de rama:', rama);
-    // TODO: Implementar modal de detalles
-  };
-
+  // Editar Rama
   const handleEditRama = (rama: Rama) => {
-    console.log('Editar rama:', rama);
-    // TODO: Implementar modal de edición
+    setRamaSeleccionada(rama);
+    setEditRamaModalOpen(true);
   };
 
+  const handleSubmitEditRama = async (data: UpdateRamaFormData) => {
+    if (!ramaSeleccionada) return;
+    try {
+      await organigramaService.updateRama({ ...data, id: ramaSeleccionada.id });
+      await loadRamas();
+    } catch (error) {
+      console.error('Error al actualizar rama:', error);
+      throw error;
+    }
+  };
+
+  // Eliminar Rama
   const handleDeleteRama = async (rama: Rama) => {
     if (window.confirm(`¿Estás seguro de que quieres eliminar la rama "${rama.nombre}"?`)) {
       try {
@@ -72,6 +92,7 @@ export default function Organigrama() {
     }
   };
 
+  // Crear Subrama
   const handleCreateSubrama = (ramaId: string) => {
     setSelectedRamaId(ramaId);
     setCreateSubramaModalOpen(true);
@@ -87,17 +108,25 @@ export default function Organigrama() {
     }
   };
 
-  const handleViewSubrama = (subrama: any) => {
-    console.log('Ver detalles de subrama:', subrama);
-    // TODO: Implementar modal de detalles
+  // Editar Subrama
+  const handleEditSubrama = (subrama: Subrama) => {
+    setSubramaSeleccionada(subrama);
+    setEditSubramaModalOpen(true);
   };
 
-  const handleEditSubrama = (subrama: any) => {
-    console.log('Editar subrama:', subrama);
-    // TODO: Implementar modal de edición
+  const handleSubmitEditSubrama = async (data: UpdateSubramaFormData) => {
+    if (!subramaSeleccionada) return;
+    try {
+      await organigramaService.updateSubrama({ ...data, id: subramaSeleccionada.id });
+      await loadRamas();
+    } catch (error) {
+      console.error('Error al actualizar subrama:', error);
+      throw error;
+    }
   };
 
-  const handleDeleteSubrama = async (subrama: any) => {
+  // Eliminar Subrama
+  const handleDeleteSubrama = async (subrama: Subrama) => {
     if (window.confirm(`¿Estás seguro de que quieres eliminar la subrama "${subrama.nombre}"?`)) {
       try {
         await organigramaService.deleteSubrama(subrama.id);
@@ -188,11 +217,9 @@ export default function Organigrama() {
       {/* Lista de ramas */}
       <RamaList
         ramas={ramas}
-        onViewRama={handleViewRama}
         onEditRama={handleEditRama}
         onDeleteRama={handleDeleteRama}
         onCreateSubrama={handleCreateSubrama}
-        onViewSubrama={handleViewSubrama}
         onEditSubrama={handleEditSubrama}
         onDeleteSubrama={handleDeleteSubrama}
       />
@@ -210,6 +237,22 @@ export default function Organigrama() {
         ramaId={selectedRamaId}
         onSubmit={handleSubmitSubrama}
       />
+
+      <EditRamaModal
+        open={editRamaModalOpen}
+        onOpenChange={setEditRamaModalOpen}
+        rama={ramaSeleccionada}
+        onSubmit={handleSubmitEditRama}
+      />
+
+      <EditSubramaModal
+        open={editSubramaModalOpen}
+        onOpenChange={setEditSubramaModalOpen}
+        subrama={subramaSeleccionada}
+        onSubmit={handleSubmitEditSubrama}
+      />
     </div>
   );
 }
+
+

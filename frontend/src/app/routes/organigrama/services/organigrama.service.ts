@@ -151,3 +151,16 @@ export const getAvailableYears = async (): Promise<number[]> => {
   const years = Array.from(new Set(ramas.map(rama => rama.año))).sort((a, b) => b - a);
   return years.length > 0 ? years : [new Date().getFullYear()];
 };
+
+// Obtener una subrama por su ID
+export const getSubramaById = async (id: string): Promise<Subrama | null> => {
+  await delay(300);
+  console.log("✅ [OrganigramaService] Obteniendo subrama por ID", { id });
+
+  for (const rama of ramas) {
+    const subrama = rama.subramas.find((s) => s.id === id);
+    if (subrama) return subrama;
+  }
+
+  return null;
+};
