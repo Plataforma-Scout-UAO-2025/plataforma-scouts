@@ -29,14 +29,18 @@ export default function RamaDetail() {
   }, [id]);
 
   if (loading) {
-    return <p className="text-center mt-6">Cargando detalles...</p>;
+    return <p className="text-center mt-6 text-muted-foreground">Cargando detalles...</p>;
   }
 
   if (!rama) {
     return (
-      <div className="text-center mt-6">
-        <p>No se encontró la rama con id: {id}</p>
-        <Button variant="outline" onClick={() => navigate(-1)}>
+      <div className="text-center mt-6 space-y-4">
+        <p className="text-foreground">No se encontró la rama con id: {id}</p>
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="border border-secondary text-secondary hover:bg-accent"
+        >
           Volver
         </Button>
       </div>
@@ -50,21 +54,28 @@ export default function RamaDetail() {
         <h1 className="text-2xl font-bold text-primary">
           Detalles de {rama.nombre} – {rama.año}
         </h1>
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          Volver
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="border border-secondary text-secondary hover:bg-accent"
+        >
+          Anterior
         </Button>
       </div>
 
       {/* Información Principal */}
-      <Card className="p-4 space-y-4">
+      <Card className="p-4 space-y-4 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">
-                Información Principal
-            </h2>
-            <Button size="sm" variant="outline">
-                Añadir Foto
-            </Button>
+          <h2 className="text-lg font-semibold text-foreground">Información Principal</h2>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border border-primary text-primary hover:bg-accent"
+          >
+            Añadir Foto
+          </Button>
         </div>
+
         <div className="relative w-full h-48 rounded-lg overflow-hidden">
           <img
             src="https://placehold.co/800x300"
@@ -72,7 +83,8 @@ export default function RamaDetail() {
             className="object-cover w-full h-full"
           />
         </div>
-        <p className="text-sm text-gray-700">
+
+        <p className="text-sm text-muted-foreground">
           {rama.descripcion || "Sin descripción"}
         </p>
 
@@ -89,8 +101,8 @@ export default function RamaDetail() {
       </Card>
 
       {/* Integrantes */}
-      <Card className="p-4 space-y-3">
-        <h2 className="text-lg font-semibold text-gray-800">
+      <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
+        <h2 className="text-lg font-semibold text-foreground">
           Integrantes en {rama.año}
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -106,12 +118,16 @@ export default function RamaDetail() {
       </Card>
 
       {/* Galería */}
-      <Card className="p-4 space-y-3">
+      <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-lg font-semibold text-foreground">
             Galería de fotos – {rama.año}
           </h2>
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border border-primary text-primary hover:bg-accent"
+          >
             Añadir Foto
           </Button>
         </div>

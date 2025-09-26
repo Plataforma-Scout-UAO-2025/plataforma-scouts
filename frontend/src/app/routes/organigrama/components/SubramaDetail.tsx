@@ -29,42 +29,55 @@ export default function SubramaDetail() {
   }, [id]);
 
   if (loading) {
-    return <p className="text-center mt-6">Cargando detalles...</p>;
+    return <p className="text-center mt-6 text-muted-foreground">Cargando detalles...</p>;
   }
 
   if (!subrama) {
     return (
-      <div className="text-center mt-6">
-        <p>No se encontró la subrama con id: {id}</p>
-        <Button variant="outline" onClick={() => navigate(-1)}>
+      <div className="text-center mt-6 space-y-4">
+        <p className="text-foreground">No se encontró la subrama con id: {id}</p>
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="border border-secondary text-secondary hover:bg-accent"
+        >
           Volver
         </Button>
       </div>
     );
   }
 
+  const year = new Date().getFullYear();
+
   return (
     <div className="space-y-6">
       {/* Cabecera */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-primary">
-          Detalles {subrama.nombre} – {new Date().getFullYear()}
+          Detalles {subrama.nombre} – {year}
         </h1>
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          Volver
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="border border-secondary text-secondary hover:bg-accent"
+        >
+          Anterior
         </Button>
       </div>
 
       {/* Información Principal */}
-      <Card className="p-4 space-y-4">
+      <Card className="p-4 space-y-4 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">
-                Información Principal
-            </h2>
-            <Button size="sm" variant="outline">
-                Añadir Foto
-            </Button>
+          <h2 className="text-lg font-semibold text-foreground">Información Principal</h2>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border border-primary text-primary hover:bg-accent"
+          >
+            Añadir Foto
+          </Button>
         </div>
+
         <div className="relative w-full h-48 rounded-lg overflow-hidden">
           <img
             src="https://placehold.co/800x300"
@@ -72,15 +85,15 @@ export default function SubramaDetail() {
             className="object-cover w-full h-full"
           />
         </div>
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-muted-foreground">
           {subrama.descripcion || "Sin descripción"}
         </p>
       </Card>
 
       {/* Integrantes */}
-      <Card className="p-4 space-y-3">
-        <h2 className="text-lg font-semibold text-gray-800">
-          Integrantes en {new Date().getFullYear()}
+      <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
+        <h2 className="text-lg font-semibold text-foreground">
+          Integrantes en {year}
         </h2>
         <div className="flex flex-wrap gap-2">
           {/* ⚠️ Mock temporal */}
@@ -93,12 +106,16 @@ export default function SubramaDetail() {
       </Card>
 
       {/* Galería */}
-      <Card className="p-4 space-y-3">
+      <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Galería de fotos – {new Date().getFullYear()}
+          <h2 className="text-lg font-semibold text-foreground">
+            Galería de fotos – {year}
           </h2>
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border border-primary text-primary hover:bg-accent"
+          >
             Añadir Foto
           </Button>
         </div>
@@ -118,6 +135,7 @@ export default function SubramaDetail() {
     </div>
   );
 }
+
 
 
 
