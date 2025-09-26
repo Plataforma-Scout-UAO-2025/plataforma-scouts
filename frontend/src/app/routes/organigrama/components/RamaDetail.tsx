@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Camera } from "lucide-react";
 import type { Rama } from "../types/rama.type";
 import * as organigramaService from "../services/organigrama.service";
 
@@ -11,6 +12,29 @@ export default function RamaDetail() {
   const navigate = useNavigate();
   const [rama, setRama] = useState<Rama | null>(null);
   const [loading, setLoading] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleIconClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && rama) {
+      // Crear URL temporal para mostrar la imagen
+      const imageUrl = URL.createObjectURL(file);
+      
+      // Actualizar el estado local
+      setRama({
+        ...rama,
+        icono: imageUrl
+      });
+      
+      // Aquí podrías hacer la llamada al servicio para guardar la imagen
+      console.log('Archivo seleccionado:', file);
+      // TODO: Implementar la subida real del archivo al servidor
+    }
+  };
 
   useEffect(() => {
     const fetchRama = async () => {
@@ -50,17 +74,62 @@ export default function RamaDetail() {
   return (
     <div className="space-y-6">
       {/* Cabecera */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">
-          Detalles de {rama.nombre} – {rama.año}
-        </h1>
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="border border-secondary text-secondary hover:bg-accent"
-        >
-          Anterior
-        </Button>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-primary">
+              Detalles de {rama.nombre} – {rama.año}
+            </h1>
+            {/* Ícono de la rama */}
+            <div className="relative">
+              <div 
+                className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors"
+                onClick={handleIconClick}
+              >
+                {rama.icono ? (
+                  <img 
+                    src={rama.icono} 
+                    alt={`Ícono de ${rama.nombre}`} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-muted-foreground font-medium text-2xl">
+                      {rama.nombre.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {/* Botón de cámara overlay */}
+              <div 
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-hover transition-colors"
+                onClick={handleIconClick}
+              >
+                <Camera className="w-4 h-4 text-primary-foreground" />
+              </div>
+              {/* Input de archivo oculto */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                aria-label="Subir ícono de rama"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Botón Anterior */}
+        <div>
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="border border-secondary text-secondary hover:bg-accent"
+          >
+            Anterior
+          </Button>
+        </div>
       </div>
 
       {/* Información Principal */}

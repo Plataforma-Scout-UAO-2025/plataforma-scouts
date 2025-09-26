@@ -2,6 +2,7 @@ export interface Rama {
   id: string;
   nombre: string;
   descripcion?: string;
+  icono?: string;
   edadMinima: number;
   edadMaxima: number;
   año: number;
