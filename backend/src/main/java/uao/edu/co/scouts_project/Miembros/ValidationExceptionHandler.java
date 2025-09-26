@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.Members;
+package uao.edu.co.scouts_project.Miembros;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

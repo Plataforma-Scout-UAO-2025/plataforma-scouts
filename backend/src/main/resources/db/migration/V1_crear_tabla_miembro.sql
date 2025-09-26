@@ -1,0 +1,26 @@
+CREATE TABLE Miembro (
+    id_miembro INT NOT NULL,
+    identificacion BIGINT NOT NULL,
+    tipo_documento VARCHAR(50) NOT NULL,
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    correo VARCHAR(150),
+    sexo VARCHAR(20),
+    fecha_nacimiento VARCHAR(20),
+    ciudad VARCHAR(100),
+    direccion VARCHAR(150),
+    telefono BIGINT,
+    institucion VARCHAR(150),
+    curso VARCHAR(100),
+    calendario_escolar VARCHAR(50),
+    jornada_escolar VARCHAR(50),
+    peso DOUBLE,
+    estatura DOUBLE,
+    pasatiempos VARCHAR(255),
+    deportes VARCHAR(255),
+    instrumentos VARCHAR(255),
+    estado VARCHAR(20),
+    fecha_aceptacion DATE,
+
+    CONSTRAINT pk_miembro PRIMARY KEY (id_miembro)
+);
