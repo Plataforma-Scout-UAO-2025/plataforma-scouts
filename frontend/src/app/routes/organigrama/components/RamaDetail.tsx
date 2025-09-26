@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera } from "lucide-react";
+import { Camera, Upload } from "lucide-react";
 import type { Rama } from "../types/rama.type";
 import * as organigramaService from "../services/organigrama.service";
 
@@ -12,10 +12,27 @@ export default function RamaDetail() {
   const navigate = useNavigate();
   const [rama, setRama] = useState<Rama | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imagenPrincipal, setImagenPrincipal] = useState<string>("https://placehold.co/800x300");
+  const [galeriaFotos, setGaleriaFotos] = useState<string[]>([
+    "https://placehold.co/200", 
+    "https://placehold.co/201", 
+    "https://placehold.co/202"
+  ]);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mainImageInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const handleIconClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleMainImageClick = () => {
+    mainImageInputRef.current?.click();
+  };
+
+  const handleGalleryClick = () => {
+    galleryInputRef.current?.click();
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,8 +48,28 @@ export default function RamaDetail() {
       });
       
       // Aquí podrías hacer la llamada al servicio para guardar la imagen
-      console.log('Archivo seleccionado:', file);
+      console.log('Ícono seleccionado:', file);
       // TODO: Implementar la subida real del archivo al servidor
+    }
+  };
+
+  const handleMainImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setImagenPrincipal(imageUrl);
+      console.log('Imagen principal seleccionada:', file);
+      // TODO: Implementar la subida real del archivo al servidor
+    }
+  };
+
+  const handleGalleryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      const newImages = files.map(file => URL.createObjectURL(file));
+      setGaleriaFotos(prev => [...prev, ...newImages]);
+      console.log('Fotos de galería seleccionadas:', files);
+      // TODO: Implementar la subida real de los archivos al servidor
     }
   };
 
@@ -139,19 +176,31 @@ export default function RamaDetail() {
           <Button
             size="sm"
             variant="outline"
-            className="border border-primary text-primary hover:bg-accent"
+            onClick={handleMainImageClick}
+            className="border border-primary text-primary hover:bg-accent flex items-center gap-2"
           >
             Añadir Foto
+            <Upload className="w-4 h-4" />
           </Button>
         </div>
 
-        <div className="relative w-full h-48 rounded-lg overflow-hidden">
+        <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100">
           <img
-            src="https://placehold.co/800x300"
+            src={imagenPrincipal}
             alt={rama.nombre}
-            className="object-cover w-full h-full"
+            className="object-contain w-full h-full"
           />
         </div>
+
+        {/* Input oculto para imagen principal */}
+        <input
+          ref={mainImageInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleMainImageChange}
+          className="hidden"
+          aria-label="Subir imagen principal"
+        />
 
         <p className="text-sm text-muted-foreground">
           {rama.descripcion || "Sin descripción"}
@@ -195,23 +244,35 @@ export default function RamaDetail() {
           <Button
             size="sm"
             variant="outline"
-            className="border border-primary text-primary hover:bg-accent"
+            onClick={handleGalleryClick}
+            className="border border-primary text-primary hover:bg-accent flex items-center gap-2"
           >
-            Añadir Foto
+            Añadir Fotos
+            <Upload className="w-4 h-4" />
           </Button>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {["https://placehold.co/200", "https://placehold.co/201", "https://placehold.co/202"].map(
-            (src, idx) => (
+          {galeriaFotos.map((src, idx) => (
+            <div key={idx} className="relative">
               <img
-                key={idx}
                 src={src}
-                alt={`Foto ${idx}`}
-                className="rounded-lg object-cover h-28 w-full"
+                alt={`Foto ${idx + 1}`}
+                className="rounded-lg object-cover w-full h-[300px]"
               />
-            )
-          )}
+            </div>
+          ))}
         </div>
+
+        {/* Input oculto para galería */}
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleGalleryChange}
+          className="hidden"
+          aria-label="Subir fotos a la galería"
+        />
       </Card>
     </div>
   );
