@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.config;
+package uao.edu.co.scouts_project.Config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
