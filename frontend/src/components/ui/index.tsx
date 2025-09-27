@@ -2,6 +2,10 @@ export { Button } from "./button"
 export { Input } from "./input"
 export { Label } from "./label"
 export { Checkbox } from "./checkbox"
+export { default as BackButton } from "./back-button"
+export { Badge } from "./badge"
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card"
+export { Progress } from "./progress"
 export {
   Dialog,
   DialogTrigger,
@@ -15,6 +19,20 @@ export {
   DialogPortal,
 } from "./dialog"
 export { Calendar } from "./calendar"
+export {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./table"
+export {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./popover"
 export {
   DropdownMenu,
   DropdownMenuTrigger,

@@ -40,7 +40,7 @@ function ScoutEnrollment() {
   });
 
   const [pagina, setPagina] = useState(1);
-  const [mostrarCalendario, setMostrarCalendario] = useState(false);
+  const [, setMostrarCalendario] = useState(false);
   const [showModal, setShowModal] = useState(false); 
   const calendarioRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();

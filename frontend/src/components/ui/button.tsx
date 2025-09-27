@@ -14,7 +14,7 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         secondary:
           "border-2 border-secondary bg-transparent text-secondary shadow-xs hover:bg-secondary hover hover:text-white",
-        eyebutton:
+        iconbutton:
           "absolute right-3 top-1/2 -translate-y-1/2 text-accent-strong hover:text-primary",
         outline:
           "border bg-background border-primary text-primary shadow-xs hover:bg-primary/80 hover:text-white dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
