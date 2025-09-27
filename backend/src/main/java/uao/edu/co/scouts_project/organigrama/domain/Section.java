@@ -2,43 +2,80 @@ package uao.edu.co.scouts_project.organigrama.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
+import java.util.UUID;
 
-@Entity @Table(name="sections")
+@Entity
+@Table(name = "sections")
 public class Section {
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name="section_id") private Long id;
-  @Column(name="tenant_id",nullable=false) private Integer tenantId;
-  @NotBlank @Size(max=50) @Column(name="standard_name",nullable=false,length=50) private String standardName;
-  @Size(max=100) @Column(name="group_specific_name",length=100) private String groupSpecificName;
-  @Column(name="program_description") private String programDescription;
-  @Column(name="section_logo_url",length=255) private String sectionLogoUrl;
-  @Column(name="section_flag_url",length=255) private String sectionFlagUrl;
-  @Column(name="section_yell") private String sectionYell;
-  @Column(name="call_method",length=100) private String callMethod;
-  @Column(name="created_at",nullable=false,updatable=false) private Instant createdAt = Instant.now();
-
-  public Section() {}
-  public Section(Integer tenantId, String standardName, String groupSpecificName){
-    this.tenantId=tenantId; this.standardName=standardName; this.groupSpecificName=groupSpecificName;
-  }
-  public Long getId(){ return id; }
-  public Integer getTenantId(){ return tenantId; }
-  public void setTenantId(Integer v){ this.tenantId=v; }
-  public String getStandardName(){ return standardName; }
-  public void setStandardName(String v){ this.standardName=v; }
-  public String getGroupSpecificName(){ return groupSpecificName; }
-  public void setGroupSpecificName(String v){ this.groupSpecificName=v; }
-  public String getProgramDescription(){ return programDescription; }
-  public void setProgramDescription(String v){ this.programDescription=v; }
-  public String getSectionLogoUrl(){ return sectionLogoUrl; }
-  public void setSectionLogoUrl(String v){ this.sectionLogoUrl=v; }
-  public String getSectionFlagUrl(){ return sectionFlagUrl; }
-  public void setSectionFlagUrl(String v){ this.sectionFlagUrl=v; }
-  public String getSectionYell(){ return sectionYell; }
-  public void setSectionYell(String v){ this.sectionYell=v; }
-  public String getCallMethod(){ return callMethod; }
-  public void setCallMethod(String v){ this.callMethod=v; }
-  public Instant getCreatedAt(){ return createdAt; }
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "section_id")
+    private Long sectionId;
+    
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+    
+    @Column(name = "group_id", nullable = false)
+    private Long groupId;
+    
+    @NotBlank
+    @Column(name = "section_name", nullable = false)
+    private String sectionName;
+    
+    @Column(name = "section_description")
+    private String sectionDescription;
+    
+    @Column(name = "section_icon_object_id")
+    private UUID sectionIconObjectId;
+    
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "section_gallery_object_ids", columnDefinition = "uuid[]")
+    private UUID[] sectionGalleryObjectIds = new UUID[0];
+    
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
+    
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt = Instant.now();
+    
+    // Constructors
+    public Section() {}
+    
+    public Section(Long tenantId, Long groupId, String sectionName) {
+        this.tenantId = tenantId;
+        this.groupId = groupId;
+        this.sectionName = sectionName;
+    }
+    
+    // Getters and Setters
+    public Long getSectionId() { return sectionId; }
+    public void setSectionId(Long sectionId) { this.sectionId = sectionId; }
+    
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+    
+    public Long getGroupId() { return groupId; }
+    public void setGroupId(Long groupId) { this.groupId = groupId; }
+    
+    public String getSectionName() { return sectionName; }
+    public void setSectionName(String sectionName) { this.sectionName = sectionName; }
+    
+    public String getSectionDescription() { return sectionDescription; }
+    public void setSectionDescription(String sectionDescription) { this.sectionDescription = sectionDescription; }
+    
+    public UUID getSectionIconObjectId() { return sectionIconObjectId; }
+    public void setSectionIconObjectId(UUID sectionIconObjectId) { this.sectionIconObjectId = sectionIconObjectId; }
+    
+    public UUID[] getSectionGalleryObjectIds() { return sectionGalleryObjectIds; }
+    public void setSectionGalleryObjectIds(UUID[] sectionGalleryObjectIds) { this.sectionGalleryObjectIds = sectionGalleryObjectIds; }
+    
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }
