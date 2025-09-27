@@ -30,6 +30,7 @@ public class SecurityConfig {
             // Sin CORS para desarrollo - usar Postman/Swagger
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/v1/**").permitAll()
+                .requestMatchers("/api/**").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()

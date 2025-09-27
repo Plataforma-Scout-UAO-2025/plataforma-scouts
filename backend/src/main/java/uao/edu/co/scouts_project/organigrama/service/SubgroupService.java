@@ -1,86 +1,199 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
-import uao.edu.co.scouts_project.common.tenant.TenantContext;
+import uao.edu.co.scouts_project.organigrama.domain.Group;
 import uao.edu.co.scouts_project.organigrama.domain.Section;
 import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
+import uao.edu.co.scouts_project.organigrama.domain.Tenant;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
+import uao.edu.co.scouts_project.organigrama.repo.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repo.SectionRepository;
 import uao.edu.co.scouts_project.organigrama.repo.SubgroupRepository;
+import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class SubgroupService {
-  private final SubgroupRepository repo;
-  private final SectionRepository sections;
-  public SubgroupService(SubgroupRepository repo, SectionRepository sections){ this.repo=repo; this.sections=sections; }
-  private Integer tenant(){ return Integer.parseInt(TenantContext.getTenantId()); }
 
-  @Transactional(readOnly = true)
-  public List<SubgroupDTO> listBySection(Long sectionId){
-    return repo.findByTenantAndSection(tenant(), sectionId)
-      .stream()
-      .map(this::toDTO)
-      .collect(Collectors.toList());
-  }
+    private final SubgroupRepository subgroupRepository;
+    private final SectionRepository sectionRepository;
+    private final GroupRepository groupRepository;
+    private final TenantRepository tenantRepository;
 
-  @Transactional
-  public SubgroupDTO create(SubgroupDTO dto){
-    Section section = sections.findById(dto.sectionId())
-      .orElseThrow(() -> new IllegalArgumentException("Section not found"));
-    if (!section.getTenantId().equals(tenant())) throw new IllegalArgumentException("Section not in tenant");
-    Subgroup g = new Subgroup();
-    g.setTenantId(tenant()); g.setSection(section);
-    g.setSubgroupName(dto.subgroupName()); g.setSubgroupType(dto.subgroupType());
-    g.setCreationDate(dto.creationDate()); g.setActive(dto.active()==null?Boolean.TRUE:dto.active());
-    Subgroup saved = repo.save(g);
-    return toDTO(saved);
-  }
-
-  @Transactional
-  public SubgroupDTO update(Long id, SubgroupDTO dto) {
-    Subgroup existing = repo.findById(id)
-      .filter(s -> s.getTenantId().equals(tenant()))
-      .orElseThrow(() -> new IllegalArgumentException("Subgroup not found"));
-    
-    
-    if (dto.sectionId() != null && !dto.sectionId().equals(existing.getSection().getId())) {
-      Section newSection = sections.findById(dto.sectionId())
-        .orElseThrow(() -> new IllegalArgumentException("Section not found"));
-      if (!newSection.getTenantId().equals(tenant())) {
-        throw new IllegalArgumentException("Section not in tenant");
-      }
-      existing.setSection(newSection);
+    public SubgroupService(SubgroupRepository subgroupRepository,
+                          SectionRepository sectionRepository,
+                          GroupRepository groupRepository,
+                          TenantRepository tenantRepository) {
+        this.subgroupRepository = subgroupRepository;
+        this.sectionRepository = sectionRepository;
+        this.groupRepository = groupRepository;
+        this.tenantRepository = tenantRepository;
     }
-    
-    
-    if (dto.subgroupName() != null) existing.setSubgroupName(dto.subgroupName());
-    if (dto.subgroupType() != null) existing.setSubgroupType(dto.subgroupType());
-    if (dto.creationDate() != null) existing.setCreationDate(dto.creationDate());
-    if (dto.active() != null) existing.setActive(dto.active());
-    
-    Subgroup updated = repo.save(existing);
-    return toDTO(updated);
-  }
 
-  @Transactional
-  public void delete(Long id){
-    Subgroup g = repo.findById(id).filter(s -> s.getTenantId().equals(tenant()))
-      .orElseThrow(() -> new IllegalArgumentException("Subgroup not found"));
-    repo.delete(g);
-  }
+    @Transactional(readOnly = true)
+    public List<SubgroupDTO> getSubgroupsBySection(String tenantSlug, String groupSlug, Long sectionId) {
+        validateHierarchy(tenantSlug, groupSlug, sectionId);
+        
+        // Get tenant and group IDs for the repository call
+        Tenant tenant = tenantRepository.findBySlug(tenantSlug)
+                .orElseThrow(() -> new RuntimeException("Tenant not found: " + tenantSlug));
+        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug)
+                .orElseThrow(() -> new RuntimeException("Group not found: " + groupSlug));
+        
+        List<Subgroup> subgroups = subgroupRepository.findByTenantIdAndGroupIdAndSectionId(
+            tenant.getTenantId(), group.getGroupId(), sectionId);
+        return subgroups.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 
-  private SubgroupDTO toDTO(Subgroup g){
-    Long sectionId = g.getSection() != null ? g.getSection().getId() : null;
-    return new SubgroupDTO(
-      g.getId(),
-      sectionId,
-      g.getSubgroupName(),
-      g.getSubgroupType(),
-      g.getCreationDate(),
-      g.getActive()
-    );
-  }
+    @Transactional(readOnly = true)
+    public SubgroupDTO getSubgroupById(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
+        validateHierarchy(tenantSlug, groupSlug, sectionId);
+        
+        Subgroup subgroup = subgroupRepository.findById(subgroupId)
+                .orElseThrow(() -> new RuntimeException("Subgroup not found with id: " + subgroupId));
+        
+        // Validar que el subgrupo pertenece a la sección correcta
+        if (!subgroup.getSectionId().equals(sectionId)) {
+            throw new RuntimeException("Subgroup does not belong to the specified section");
+        }
+        
+        return convertToDTO(subgroup);
+    }
+
+    public SubgroupDTO createSubgroup(String tenantSlug, String groupSlug, Long sectionId, SubgroupDTO dto) {
+        // Validar jerarquía y obtener entidades necesarias
+        Tenant tenant = tenantRepository.findBySlug(tenantSlug)
+                .orElseThrow(() -> new RuntimeException("Tenant not found: " + tenantSlug));
+        
+        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug)
+                .orElseThrow(() -> new RuntimeException("Group not found: " + groupSlug));
+        
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new RuntimeException("Section not found with id: " + sectionId));
+        
+        // Validar que la sección pertenece al grupo correcto
+        if (!section.getGroupId().equals(group.getGroupId())) {
+            throw new RuntimeException("Section does not belong to the specified group");
+        }
+
+        // Validar unicidad del nombre en la sección
+        if (subgroupRepository.existsBySectionIdAndSubgroupName(sectionId, dto.subgroupName())) {
+            throw new RuntimeException("Subgroup name already exists in this section: " + dto.subgroupName());
+        }
+
+        // Crear nueva entidad
+        Subgroup subgroup = new Subgroup();
+        subgroup.setTenantId(tenant.getTenantId());
+        subgroup.setGroupId(group.getGroupId());
+        subgroup.setSectionId(sectionId);
+        subgroup.setSubgroupName(dto.subgroupName());
+        subgroup.setSubgroupDescription(dto.subgroupDescription());
+        
+        // Manejar galería de imágenes
+        if (dto.subgroupGalleryObjectIds() != null) {
+            subgroup.setSubgroupGalleryObjectIds(dto.subgroupGalleryObjectIds());
+        } else {
+            subgroup.setSubgroupGalleryObjectIds(new UUID[0]);
+        }
+        
+        subgroup.setIsActive(dto.isActive() != null ? dto.isActive() : true);
+        subgroup.setCreatedAt(Instant.now());
+        subgroup.setUpdatedAt(Instant.now());
+
+        Subgroup saved = subgroupRepository.save(subgroup);
+        return convertToDTO(saved);
+    }
+
+    public SubgroupDTO updateSubgroup(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId, SubgroupDTO dto) {
+        validateHierarchy(tenantSlug, groupSlug, sectionId);
+        
+        Subgroup existing = subgroupRepository.findById(subgroupId)
+                .orElseThrow(() -> new RuntimeException("Subgroup not found with id: " + subgroupId));
+        
+        // Validar que el subgrupo pertenece a la sección correcta
+        if (!existing.getSectionId().equals(sectionId)) {
+            throw new RuntimeException("Subgroup does not belong to the specified section");
+        }
+
+        // Validar unicidad del nombre si cambió
+        if (dto.subgroupName() != null && !dto.subgroupName().equals(existing.getSubgroupName())) {
+            if (subgroupRepository.existsBySectionIdAndSubgroupName(sectionId, dto.subgroupName())) {
+                throw new RuntimeException("Subgroup name already exists in this section: " + dto.subgroupName());
+            }
+            existing.setSubgroupName(dto.subgroupName());
+        }
+
+        // Actualizar campos
+        if (dto.subgroupDescription() != null) {
+            existing.setSubgroupDescription(dto.subgroupDescription());
+        }
+        
+        if (dto.subgroupGalleryObjectIds() != null) {
+            existing.setSubgroupGalleryObjectIds(dto.subgroupGalleryObjectIds());
+        }
+        
+        if (dto.isActive() != null) {
+            existing.setIsActive(dto.isActive());
+        }
+        
+        existing.setUpdatedAt(Instant.now());
+
+        Subgroup updated = subgroupRepository.save(existing);
+        return convertToDTO(updated);
+    }
+
+    public void deleteSubgroup(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
+        validateHierarchy(tenantSlug, groupSlug, sectionId);
+        
+        Subgroup subgroup = subgroupRepository.findById(subgroupId)
+                .orElseThrow(() -> new RuntimeException("Subgroup not found with id: " + subgroupId));
+        
+        // Validar que el subgrupo pertenece a la sección correcta
+        if (!subgroup.getSectionId().equals(sectionId)) {
+            throw new RuntimeException("Subgroup does not belong to the specified section");
+        }
+
+        subgroupRepository.delete(subgroup);
+    }
+
+    private void validateHierarchy(String tenantSlug, String groupSlug, Long sectionId) {
+        // Validar que el tenant existe
+        Tenant tenant = tenantRepository.findBySlug(tenantSlug)
+                .orElseThrow(() -> new RuntimeException("Tenant not found: " + tenantSlug));
+        
+        // Validar que el grupo existe y pertenece al tenant
+        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug)
+                .orElseThrow(() -> new RuntimeException("Group not found: " + groupSlug));
+        
+        // Validar que la sección existe y pertenece al grupo
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new RuntimeException("Section not found with id: " + sectionId));
+        
+        if (!section.getGroupId().equals(group.getGroupId())) {
+            throw new RuntimeException("Section does not belong to the specified group");
+        }
+    }
+
+    private SubgroupDTO convertToDTO(Subgroup subgroup) {
+        return new SubgroupDTO(
+                subgroup.getSubgroupId(),
+                subgroup.getTenantId(),
+                subgroup.getGroupId(),
+                subgroup.getSectionId(),
+                subgroup.getSubgroupName(),
+                subgroup.getSubgroupDescription(),
+                subgroup.getSubgroupGalleryObjectIds(),
+                subgroup.getIsActive(),
+                subgroup.getCreatedAt(),
+                subgroup.getUpdatedAt()
+        );
+    }
 }
