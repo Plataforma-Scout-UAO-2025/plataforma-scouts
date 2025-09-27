@@ -17,7 +17,7 @@ function Start-Backend {
     Set-Location "backend"
     Start-Process ".\mvnw.cmd" -ArgumentList "spring-boot:run","-Dspring-boot.run.profiles=development" -NoNewWindow
     Set-Location ".."
-    Write-Success "Backend iniciado en http://localhost:8080"
+    Write-Success "Backend iniciado en http://localhost:8080/swagger-ui/index.html#/"
 }
 
 function Start-Frontend {
