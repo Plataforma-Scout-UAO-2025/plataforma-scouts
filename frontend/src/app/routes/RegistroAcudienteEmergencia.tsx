@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiClient } from "../../lib/api";
 import { User, Home, Users, Calendar, DollarSign, HelpCircle, LogOut, Plus } from "lucide-react";
 
 interface ContactoEmergencia {
@@ -18,9 +17,6 @@ const RegistroAcudienteEmergencia = () => {
         { id: 2, nombreCompleto: '', parentesco: '', contacto: '' }
     ]);
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
     const handleInputChange = (id: number, field: keyof ContactoEmergencia, value: string) => {
         if (field === 'id') return; // No permitir cambiar el id
 
@@ -36,51 +32,11 @@ const RegistroAcudienteEmergencia = () => {
         navigate("/registro-acudiente");
     };
 
-    // Función para validar que los campos requeridos estén completos
-    const validarContactos = (): boolean => {
-        for (const contacto of contactosEmergencia) {
-            if (!contacto.nombreCompleto.trim() || !contacto.parentesco.trim() || !contacto.contacto.trim()) {
-                setError('Todos los campos marcados con (*) son obligatorios');
-                return false;
-            }
-        }
-        setError(null);
-        return true;
-    };
-
-    const handleAgregarAcudiente = async () => {
-        // Validar campos antes de enviar
-        if (!validarContactos()) {
-            return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            // Enviar cada contacto de emergencia por separado
-            for (const contacto of contactosEmergencia) {
-                await apiClient.post('/contacto-emergencia', {
-                    nombreCompleto: contacto.nombreCompleto,
-                    parentesco: contacto.parentesco,
-                    contacto: contacto.contacto
-                });
-            }
-
-            console.log('Contactos de emergencia guardados correctamente');
-            
-            // Navegar a la siguiente página o mostrar mensaje de éxito
-            alert('¡Contactos de emergencia agregados correctamente!');
-            
-            // Aquí podrías navegar a otra página o resetear el formulario
-            // navigate("/siguiente-paso");
-            
-        } catch (error) {
-            console.error('Error guardando contactos de emergencia:', error);
-            setError('Error al guardar los contactos de emergencia. Por favor, inténtalo de nuevo.');
-        } finally {
-            setIsLoading(false);
-        }
+    const handleAgregarAcudiente = () => {
+        console.log('Guardando acudiente...', contactosEmergencia);
+        // Aquí iría la lógica para guardar los datos
+        // Por ejemplo, podrías navegar a otra página o mostrar un mensaje de éxito
+        alert('Acudiente agregado correctamente!');
     };
 
     return (
@@ -94,7 +50,7 @@ const RegistroAcudienteEmergencia = () => {
                         </div>
                         <div>
                             <h3 className="font-semibold text-sm text-white">Juan Esteban Torres</h3>
-                            <p className="text-xs text-white/70">YAMAHA KUMA</p>
+                            <p className="text-xs text-white/70">MANADA KUNA</p>
                         </div>
                     </div>
                 </div>
@@ -200,13 +156,6 @@ const RegistroAcudienteEmergencia = () => {
                         </div>
                     ))}
 
-                    {/* Mensaje de error */}
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-red-700 text-sm">{error}</p>
-                        </div>
-                    )}
-
                     {/* Buttons */}
                     <div className="flex justify-between pt-8">
                         <button
@@ -219,35 +168,21 @@ const RegistroAcudienteEmergencia = () => {
                         <button
                             type="button"
                             onClick={handleAgregarAcudiente}
-                            disabled={isLoading}
-                            className="px-8 py-2 rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-8 py-2 rounded-lg transition-colors flex items-center space-x-2"
                             style={{
-                                backgroundColor: isLoading ? '#6b7280' : '#29765C',
+                                backgroundColor: '#29765C',
                                 color: 'white',
                                 border: 'none'
                             }}
                             onMouseEnter={(e) => {
-                                if (!isLoading) {
-                                    e.currentTarget.style.backgroundColor = '#1a4134';
-                                }
+                                e.currentTarget.style.backgroundColor = '#1a4134';
                             }}
                             onMouseLeave={(e) => {
-                                if (!isLoading) {
-                                    e.currentTarget.style.backgroundColor = '#29765C';
-                                }
+                                e.currentTarget.style.backgroundColor = '#29765C';
                             }}
                         >
-                            {isLoading ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    <span style={{ color: 'white' }}>Guardando...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Plus size={16} style={{ color: 'white' }} />
-                                    <span style={{ color: 'white' }}>Agregar Acudiente</span>
-                                </>
-                            )}
+                            <Plus size={16} style={{ color: 'white' }} />
+                            <span style={{ color: 'white' }}>Agregar Acudiente</span>
                         </button>
                     </div>
 

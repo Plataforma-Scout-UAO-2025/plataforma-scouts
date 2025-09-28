@@ -45,7 +45,19 @@ const RegistroAcudientePadres = () => {
 
     const handleContinue = async() => {
         try {
-            await apiClient.post('', {
+            // Validar que los campos obligatorios estén llenos
+            if (!formData.nombrePadre || !formData.apellidosPadre || !formData.contactoPadre || !formData.correoPadre) {
+                alert('Por favor complete todos los campos obligatorios del padre');
+                return;
+            }
+            
+            if (!formData.nombreMadre || !formData.apellidosMadre || !formData.contactoMadre || !formData.correoMadre) {
+                alert('Por favor complete todos los campos obligatorios de la madre');
+                return;
+            }
+
+            // Preparar los datos a enviar
+            const datosPadre = {
                 acudienteName: formData.nombrePadre,
                 acudienteLastName: formData.apellidosPadre,
                 acudientePhone: formData.contactoPadre,
@@ -53,20 +65,47 @@ const RegistroAcudientePadres = () => {
                 acudienteEmail: formData.correoPadre,
                // acudienteProfession: formData.profesionPadre,
                 //acudienteCompany: formData.empresaPadre,
-            });
-            await apiClient.post('', {
+            };
+
+            const datosMadre = {
                 acudienteName: formData.nombreMadre,
                 acudienteLastName: formData.apellidosMadre,
                 acudientePhone: formData.contactoMadre,
                 acudienteParent: "Madre",
                 acudienteEmail: formData.correoMadre
+            };
+
+            console.log("=== DATOS A ENVIAR ===");
+            console.log("Datos del Padre:", datosPadre);
+            console.log("Datos de la Madre:", datosMadre);
+
+            // Enviar los datos
+            console.log("Enviando datos del padre...");
+            const respuestaPadre = await apiClient.post('', datosPadre);
+            console.log("Respuesta del servidor (Padre):", respuestaPadre);
+
+            console.log("Enviando datos de la madre...");
+            const respuestaMadre = await apiClient.post('', datosMadre);
+            console.log(" Respuesta del servidor (Madre):", respuestaMadre);
+
+            console.log("¡Todos los datos enviados correctamente!");
+            console.log("=== RESUMEN COMPLETO ===");
+            console.log({
+                padre: {
+                    datosEnviados: datosPadre,
+                    respuestaAPI: respuestaPadre
+                },
+                madre: {
+                    datosEnviados: datosMadre,
+                    respuestaAPI: respuestaMadre
+                }
             });
 
-            console.log("Datos enviados correctamente...");
             navigate("/registro-acudiente-emergencia");
 
         } catch (error) {
-            console.error("Error enviando datos:", error);
+            console.error("❌ Error enviando datos:", error);
+            alert("Error al enviar los datos. Por favor, inténtalo de nuevo.");
         }
     };
 
@@ -86,7 +125,7 @@ const RegistroAcudientePadres = () => {
                         </div>
                         <div>
                             <h3 className="font-semibold text-sm text-white">Juan Esteban Torres</h3>
-                            <p className="text-xs text-white/70">YAMAHA KUMA</p>
+                            <p className="text-xs text-white/70">MANADA KUNA</p>
                         </div>
                     </div>
                 </div>
