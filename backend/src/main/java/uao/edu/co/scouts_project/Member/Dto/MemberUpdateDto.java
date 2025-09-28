@@ -1,17 +1,14 @@
-package uao.edu.co.scouts_project.Miembros.Dto;
+package uao.edu.co.scouts_project.Member.Dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uao.edu.co.scouts_project.Miembros.Model.Enums.Estado;
-
-import java.time.LocalDate;
 
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MiembroUpdateDto {
+public class MemberUpdateDto {
     private String tipoDecoumento;
     private String correo;
     private String ciudad;
