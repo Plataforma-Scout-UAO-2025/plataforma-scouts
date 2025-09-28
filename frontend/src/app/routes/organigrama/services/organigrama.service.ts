@@ -1,166 +1,357 @@
 import type { Rama, CreateRamaData, UpdateRamaData, CreateSubramaData, UpdateSubramaData, Subrama } from '../types/rama.type';
-import { mockRamas } from '../constants/mockData';
+import { apiClient } from './apiClient';
+import { buildApiPath } from '../hooks/useTenantParams';
+import {
+  mapBackendRamaToFrontend,
+  mapBackendSubramaToFrontend,
+  mapFrontendCreateRamaToBackend,
+  mapFrontendUpdateRamaToBackend,
+  mapFrontendCreateSubramaToBackend
+} from '../utils/mappers';
 
-// Simular delay de API
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Estado simulado en memoria
-let ramas: Rama[] = [...mockRamas];
-
-// CRUD para Ramas
-export const getRamas = async (año?: number): Promise<Rama[]> => {
-  await delay(500);
-  console.log('✅ [OrganigramaService] Obteniendo ramas', { año });
-  
-  if (año) {
-    return ramas.filter(rama => rama.año === año);
-  }
-  
-  return ramas;
-};
-
-export const getRamaById = async (id: string): Promise<Rama | null> => {
-  await delay(300);
-  console.log('✅ [OrganigramaService] Obteniendo rama por ID', { id });
-  
-  return ramas.find(rama => rama.id === id) || null;
-};
-
-export const createRama = async (data: CreateRamaData): Promise<Rama> => {
-  await delay(800);
-  console.log('✅ [OrganigramaService] Creando nueva rama', data);
-  
-  const newRama: Rama = {
-    id: `rama-${Date.now()}`,
-    ...data,
-    estado: 'activa',
-    fechaCreacion: new Date().toISOString().split('T')[0],
-    subramas: [],
-  };
-  
-  ramas.push(newRama);
-  return newRama;
-};
-
-export const updateRama = async (data: UpdateRamaData): Promise<Rama | null> => {
-  await delay(600);
-  console.log('✅ [OrganigramaService] Actualizando rama', data);
-  
-  const ramaIndex = ramas.findIndex(rama => rama.id === data.id);
-  
-  if (ramaIndex === -1) {
-    return null;
-  }
-  
-  const updatedRama = {
-    ...ramas[ramaIndex],
-    ...data,
-  };
-  
-  ramas[ramaIndex] = updatedRama;
-  return updatedRama;
-};
-
-export const deleteRama = async (id: string): Promise<boolean> => {
-  await delay(500);
-  console.log('🗑️ [OrganigramaService] Eliminando rama', { id });
-  
-  const ramaIndex = ramas.findIndex(rama => rama.id === id);
-  
-  if (ramaIndex === -1) {
-    return false;
-  }
-  
-  ramas.splice(ramaIndex, 1);
-  return true;
-};
-
-// CRUD para Subramas
-export const getSubramasByRamaId = async (ramaId: string): Promise<Subrama[]> => {
-  await delay(300);
-  console.log('✅ [OrganigramaService] Obteniendo subramas por rama ID', { ramaId });
-  
-  const rama = ramas.find(r => r.id === ramaId);
-  return rama?.subramas || [];
-};
-
-export const createSubrama = async (data: CreateSubramaData): Promise<Subrama | null> => {
-  await delay(700);
-  console.log('✅ [OrganigramaService] Creando nueva subrama', data);
-  
-  const ramaIndex = ramas.findIndex(rama => rama.id === data.ramaId);
-  
-  if (ramaIndex === -1) {
-    return null;
-  }
-  
-  const newSubrama: Subrama = {
-    id: `subrama-${Date.now()}`,
-    ...data,
-    estado: 'activa',
-    fechaCreacion: new Date().toISOString().split('T')[0],
-    numeroMiembros: 0,
-  };
-  
-  ramas[ramaIndex].subramas.push(newSubrama);
-  return newSubrama;
-};
-
-export const updateSubrama = async (data: UpdateSubramaData): Promise<Subrama | null> => {
-  await delay(600);
-  console.log('✅ [OrganigramaService] Actualizando subrama', data);
-  
-  for (const rama of ramas) {
-    const subramaIndex = rama.subramas.findIndex(sub => sub.id === data.id);
+// CRUD para Ramas (SECTIONS)
+export const getRamas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
+  try {
+    console.log('🔄 [OrganigramaService] Obteniendo ramas del backend', { tenantSlug, groupSlug, año });
     
-    if (subramaIndex !== -1) {
-      const updatedSubrama = {
-        ...rama.subramas[subramaIndex],
-        ...data,
-      };
-      
-      rama.subramas[subramaIndex] = updatedSubrama;
-      return updatedSubrama;
-    }
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections');
+    console.log('🔍 [OrganigramaService] Making API call to:', endpoint);
+    
+    const backendRamas = await apiClient.get<any[]>(endpoint);
+    console.log('🔍 [OrganigramaService] Raw backend response:', backendRamas);
+
+    // Mapear datos del backend al formato del frontend (sin subramas todavía)
+    const mappedRamas: Rama[] = backendRamas.map((backendRama, index) => {
+      console.log(`🔍 [OrganigramaService] Processing rama ${index}:`, backendRama);
+      const mappedRama = mapBackendRamaToFrontend(backendRama);
+      // Inicializar subramas vacías; se llenarán más abajo de forma atómica
+      mappedRama.subramas = [];
+      return mappedRama;
+    });
+
+    // Para cada rama crear una promesa que cargue sus subramas
+    const subramasPromises = mappedRamas.map(async (rama) => {
+      try {
+        console.log(`🔄 [OrganigramaService] Cargando subramas para rama ${rama.id}`);
+        const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, String(rama.section_id));
+        console.log(`✅ [OrganigramaService] Subramas cargadas para rama ${rama.id}:`, subramas.length);
+        return subramas;
+      } catch (error) {
+        console.warn(`⚠️ [OrganigramaService] Error cargando subramas para rama ${rama.id}:`, error);
+        return [] as any[];
+      }
+    });
+
+    // Esperar a que todas las promesas de subramas se resuelvan
+    const allSubramas = await Promise.all(subramasPromises);
+
+    // Asociar las subramas resueltas con cada rama correspondiente
+    const ramas = mappedRamas.map((rama, idx) => {
+      rama.subramas = allSubramas[idx] as any;
+      console.log(`✅ [OrganigramaService] Mapped rama ${idx}:`, rama);
+      return rama;
+    });
+    
+    // Filtrar por año si se especifica
+    const filteredRamas = año ? ramas.filter(rama => rama.año === año) : ramas;
+    
+    console.log('✅ [OrganigramaService] Ramas obtenidas exitosamente', { 
+      totalRamas: ramas.length, 
+      filteredCount: filteredRamas.length,
+      filteredRamas 
+    });
+    return filteredRamas;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error obteniendo ramas:', error);
+    throw error;
   }
-  
-  return null;
 };
 
-export const deleteSubrama = async (id: string): Promise<boolean> => {
-  await delay(500);
-  console.log('🗑️ [OrganigramaService] Eliminando subrama', { id });
-  
-  for (const rama of ramas) {
-    const subramaIndex = rama.subramas.findIndex(sub => sub.id === id);
+export const getRamaById = async (tenantSlug: string, groupSlug: string, id: string): Promise<Rama | null> => {
+  try {
+    console.log('🔄 [OrganigramaService] Obteniendo rama por ID del backend', { tenantSlug, groupSlug, id });
     
-    if (subramaIndex !== -1) {
-      rama.subramas.splice(subramaIndex, 1);
-      return true;
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', id);
+    const backendRama = await apiClient.get<any>(endpoint);
+    
+    const rama = mapBackendRamaToFrontend(backendRama);
+    
+    console.log('✅ [OrganigramaService] Rama obtenida exitosamente', { id: rama.id });
+    return rama;
+  } catch (error: any) {
+    if (error?.status === 404) {
+      console.warn('⚠️ [OrganigramaService] Rama no encontrada', { id });
+      return null;
     }
+    
+    console.error('❌ [OrganigramaService] Error obteniendo rama por ID:', error);
+    throw error;
   }
-  
-  return false;
+};
+
+export const createRama = async (tenantSlug: string, groupSlug: string, data: CreateRamaData): Promise<Rama> => {
+  try {
+    console.log('🔄 [OrganigramaService] Creando nueva rama en backend', { tenantSlug, groupSlug, data });
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections');
+    const backendData = mapFrontendCreateRamaToBackend(data);
+    
+    const backendRama = await apiClient.post<any>(endpoint, backendData);
+    const rama = mapBackendRamaToFrontend(backendRama);
+    
+    console.log('✅ [OrganigramaService] Rama creada exitosamente', { id: rama.id });
+    return rama;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error creando rama:', error);
+    throw error;
+  }
+};
+
+export const updateRama = async (tenantSlug: string, groupSlug: string, data: UpdateRamaData): Promise<Rama | null> => {
+  try {
+    console.log('🔄 [OrganigramaService] Actualizando rama en backend', { tenantSlug, groupSlug, data });
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', data.id);
+    const backendData = mapFrontendUpdateRamaToBackend(data);
+    
+    const backendRama = await apiClient.put<any>(endpoint, backendData);
+    const rama = mapBackendRamaToFrontend(backendRama);
+    
+    console.log('✅ [OrganigramaService] Rama actualizada exitosamente', { id: rama.id });
+    return rama;
+  } catch (error: any) {
+    if (error?.status === 404) {
+      console.warn('⚠️ [OrganigramaService] Rama no encontrada para actualizar', { id: data.id });
+      return null;
+    }
+    
+    console.error('❌ [OrganigramaService] Error actualizando rama:', error);
+    throw error;
+  }
+};
+
+export const deleteRama = async (tenantSlug: string, groupSlug: string, id: string): Promise<boolean> => {
+  try {
+    console.log('🔄 [OrganigramaService] Eliminando rama en backend', { tenantSlug, groupSlug, id });
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', id);
+    await apiClient.delete(endpoint);
+    
+    console.log('✅ [OrganigramaService] Rama eliminada exitosamente', { id });
+    return true;
+  } catch (error: any) {
+    if (error?.status === 404) {
+      console.warn('⚠️ [OrganigramaService] Rama no encontrada para eliminar', { id });
+      return false;
+    }
+    
+    console.error('❌ [OrganigramaService] Error eliminando rama:', error);
+    throw error;
+  }
+};
+
+// CRUD para Subramas (SUBGROUPS)
+export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, sectionId: string): Promise<Subrama[]> => {
+  try {
+    console.log('🔄 [OrganigramaService] Obteniendo subramas por section ID del backend', { tenantSlug, groupSlug, sectionId });
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups');
+    const backendSubramas = await apiClient.get<any[]>(endpoint);
+    
+    // Mapear datos del backend al formato del frontend
+    const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
+    
+    console.log('✅ [OrganigramaService] Subramas obtenidas exitosamente', { sectionId, count: subramas.length });
+    return subramas;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error obteniendo subramas:', error);
+    throw error;
+  }
+};
+
+export const createSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, data: CreateSubramaData): Promise<Subrama | null> => {
+  try {
+    console.log('🔄 [OrganigramaService] Creando nueva subrama en backend', { tenantSlug, groupSlug, sectionId, data });
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups');
+    const backendData = mapFrontendCreateSubramaToBackend(data);
+    
+    const backendSubrama = await apiClient.post<any>(endpoint, backendData);
+    const subrama = mapBackendSubramaToFrontend(backendSubrama);
+    
+    console.log('✅ [OrganigramaService] Subrama creada exitosamente', { id: subrama.id });
+    return subrama;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error creando subrama:', error);
+    throw error;
+  }
+};
+
+export const updateSubrama = async (tenantSlug: string, groupSlug: string, data: UpdateSubramaData): Promise<Subrama | null> => {
+  try {
+    console.log('🔄 [OrganigramaService] Actualizando subrama en backend', { tenantSlug, groupSlug, data });
+    
+    const sectionId = data.ramaId;
+    const subgroupId = data.subgroup_id || data.id;
+    
+    if (!sectionId) {
+      throw new Error('SectionId no proporcionado');
+    }
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
+    
+    // Mapear datos al formato que espera el backend
+    const backendData = {
+      subgroupName: data.nombre,
+      subgroupDescription: data.descripcion,
+      subgroupGalleryObjectIds: [],
+      isActive: data.estado === 'activa'
+    };
+    
+    console.log('🔍 [OrganigramaService] Endpoint:', endpoint);
+    console.log('🔍 [OrganigramaService] Backend data:', backendData);
+    
+    const backendSubrama = await apiClient.put<any>(endpoint, backendData);
+    const subrama = mapBackendSubramaToFrontend(backendSubrama);
+    
+    console.log('✅ [OrganigramaService] Subrama actualizada exitosamente', { id: subrama.id });
+    return subrama;
+  } catch (error: any) {
+    console.error('❌ [OrganigramaService] Error actualizando subrama:', error);
+    throw error;
+  }
+};
+
+export const deleteSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<boolean> => {
+  try {
+    console.log('🔄 [OrganigramaService] Eliminando subrama en backend', { tenantSlug, groupSlug, sectionId, id });
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', id);
+    await apiClient.delete(endpoint);
+    
+    console.log('✅ [OrganigramaService] Subrama eliminada exitosamente', { id });
+    return true;
+  } catch (error: any) {
+    if (error?.status === 404) {
+      console.warn('⚠️ [OrganigramaService] Subrama no encontrada para eliminar', { id });
+      return false;
+    }
+    
+    console.error('❌ [OrganigramaService] Error eliminando subrama:', error);
+    throw error;
+  }
 };
 
 // Utility functions
-export const getAvailableYears = async (): Promise<number[]> => {
-  await delay(200);
-  console.log('✅ [OrganigramaService] Obteniendo años disponibles');
-  
-  const years = Array.from(new Set(ramas.map(rama => rama.año))).sort((a, b) => b - a);
-  return years.length > 0 ? years : [new Date().getFullYear()];
+export const getAvailableYears = async (tenantSlug: string, groupSlug: string): Promise<number[]> => {
+  try {
+    console.log('🔄 [OrganigramaService] Obteniendo años disponibles del backend');
+    
+    // Obtener todas las ramas y extraer los años únicos
+    const ramas = await getRamas(tenantSlug, groupSlug);
+    const years = Array.from(new Set(ramas.map(rama => rama.año))).sort((a, b) => b - a);
+    
+    console.log('✅ [OrganigramaService] Años disponibles obtenidos', { years });
+    return years.length > 0 ? years : [new Date().getFullYear()];
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error obteniendo años disponibles:', error);
+    // Fallback en caso de error
+    return [new Date().getFullYear()];
+  }
 };
 
 // Obtener una subrama por su ID
-export const getSubramaById = async (id: string): Promise<Subrama | null> => {
-  await delay(300);
-  console.log("✅ [OrganigramaService] Obteniendo subrama por ID", { id });
-
-  for (const rama of ramas) {
-    const subrama = rama.subramas.find((s) => s.id === id);
-    if (subrama) return subrama;
+export const getSubramaById = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<Subrama | null> => {
+  try {
+    console.log('🔄 [OrganigramaService] Obteniendo subrama por ID del backend', { tenantSlug, groupSlug, sectionId, id });
+    
+    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', id);
+    const backendSubrama = await apiClient.get<any>(endpoint);
+    
+    const subrama = mapBackendSubramaToFrontend(backendSubrama);
+    
+    console.log('✅ [OrganigramaService] Subrama obtenida exitosamente', { id: subrama.id });
+    return subrama;
+  } catch (error: any) {
+    if (error?.status === 404) {
+      console.warn('⚠️ [OrganigramaService] Subrama no encontrada', { id });
+      return null;
+    }
+    
+    console.error('❌ [OrganigramaService] Error obteniendo subrama por ID:', error);
+    throw error;
   }
+};
 
-  return null;
+// CRUD para Imágenes y Galería
+export const uploadGalleryImages = async (
+  tenantSlug: string, 
+  groupSlug: string, 
+  sectionId: string, 
+  files: File[]
+): Promise<string[]> => {
+  try {
+    console.log('🔄 [OrganigramaService] Subiendo imágenes de galería', { 
+      tenantSlug, groupSlug, sectionId, filesCount: files.length 
+    });
+    
+    const imageIds: string[] = [];
+    
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Endpoint para subir archivos (podría necesitar ajuste según tu backend)
+      const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
+      const response = await apiClient.postFormData<{ objectId: string }>(uploadEndpoint, formData);
+      
+      imageIds.push(response.objectId);
+    }
+    
+    // Actualizar la galería de la sección
+    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId);
+    await apiClient.patch(updateEndpoint, {
+      sectionGalleryObjectIds: imageIds
+    });
+    
+    console.log('✅ [OrganigramaService] Imágenes de galería subidas exitosamente', { imageIds });
+    return imageIds;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error subiendo imágenes de galería:', error);
+    throw error;
+  }
+};
+
+export const uploadSectionIcon = async (
+  tenantSlug: string, 
+  groupSlug: string, 
+  sectionId: string, 
+  file: File
+): Promise<string> => {
+  try {
+    console.log('🔄 [OrganigramaService] Subiendo ícono de sección', { 
+      tenantSlug, groupSlug, sectionId, fileName: file.name 
+    });
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Subir el archivo
+    const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
+    const response = await apiClient.postFormData<{ objectId: string }>(uploadEndpoint, formData);
+    
+    // Actualizar el ícono de la sección
+    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId);
+    await apiClient.patch(updateEndpoint, {
+      sectionIconObjectId: response.objectId
+    });
+    
+    console.log('✅ [OrganigramaService] Ícono de sección subido exitosamente', { 
+      objectId: response.objectId 
+    });
+    return response.objectId;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error subiendo ícono de sección:', error);
+    throw error;
+  }
 };

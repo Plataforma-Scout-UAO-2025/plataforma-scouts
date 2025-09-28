@@ -28,7 +28,7 @@ export default function RamaList({
   onEditSubrama,
   onDeleteSubrama,
 }: RamaListProps) {
-  const [expandedItems, setExpandedItems] = useState<string[]>(['2']); // Inicia con la segunda rama expandida
+  const [expandedItems, setExpandedItems] = useState<string[]>(['2']); // Inicia con la rama que tiene section_id = 2
   const navigate = useNavigate();
 
   const handleToggleExpansion = (ramaId: string) => {
@@ -57,20 +57,21 @@ export default function RamaList({
     <Accordion type="multiple" value={expandedItems} className="space-y-4">
       {ramas.map((rama) => (
         <AccordionItem 
-          key={rama.id} 
-          value={rama.id}
+          key={rama.section_id} 
+          value={rama.section_id.toString()}
           className="border rounded-lg shadow-sm bg-white"
         >
-          <AccordionTrigger 
-            className="px-6 py-4 hover:no-underline hover:bg-gray-50 rounded-t-lg [&>svg]:hidden"
-            onClick={() => handleToggleExpansion(rama.id)}
-          >
-            <div className="flex items-center justify-between w-full">
-              {/* Contenido izquierdo */}
+          {/* Header con título y botones separados */}
+          <div className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 rounded-t-lg">
+            {/* Trigger del acordeón solo para el título */}
+            <AccordionTrigger 
+              className="flex-1 hover:no-underline [&>svg]:hidden p-0"
+              onClick={() => handleToggleExpansion(rama.section_id.toString())}
+            >
               <div className="flex items-center space-x-3">
                 <ChevronDown 
                   className={`h-4 w-4 text-muted-foreground transition-transform ${
-                    expandedItems.includes(rama.id) ? 'rotate-180' : ''
+                    expandedItems.includes(rama.section_id.toString()) ? 'rotate-180' : ''
                   }`}
                 />
                 <Users className="h-5 w-5 text-primary" />
@@ -88,51 +89,59 @@ export default function RamaList({
                   </div>
                 </div>
               </div>
+            </AccordionTrigger>
 
-              {/* Botones de acción */}
-              <div className="flex items-center space-x-2" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                {/* Ver Rama */}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => navigate(`/app/organigrama/rama/${rama.id}`)}
-                  className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                {/* Editar Rama */}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onEditRama(rama)}
-                  className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-                {/* Eliminar Rama */}
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => onDeleteRama(rama)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+            {/* Botones de acción fuera del trigger */}
+            <div className="flex items-center space-x-2 ml-4">
+              {/* Ver Rama */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  console.log('🔍 [RamaList] Navigating to rama with ID:', rama.id);
+                  console.log('🔍 [RamaList] Full rama object:', rama);
+                  navigate(`/app/organigrama/rama/${rama.id}`)
+                }}
+                className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              {/* Editar Rama */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onEditRama(rama)}
+                className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              {/* Eliminar Rama */}
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onDeleteRama(rama)}
+                className="h-8 w-8 p-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-          </AccordionTrigger>
+          </div>
 
           <AccordionContent className="px-6 pb-4 pt-0 bg-gray-50/50">
             <div className="space-y-3 border-l-2 border-gray-200 pl-6 ml-2">
               {rama.subramas.length === 0 ? (
-                <div className="text-center py-6">
+                <div key={`no-subramas-${rama.section_id}`} className="text-center py-6">
                   <p className="text-sm text-muted-foreground mb-3">
                     Esta rama no tiene subramas
                   </p>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onCreateSubrama(rama.id)}
+                    onClick={() => {
+                      console.log('🔍 [RamaList] Creating subrama for rama ID:', rama.id);
+                      console.log('🔍 [RamaList] Full rama object for subrama creation:', rama);
+                      onCreateSubrama(rama.id);
+                    }}
                     className="text-primary border-primary hover:bg-primary hover:text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -140,10 +149,10 @@ export default function RamaList({
                   </Button>
                 </div>
               ) : (
-                <>
-                  {rama.subramas.map((subrama) => (
+                <div key={`subramas-${rama.section_id}`}>
+                  {rama.subramas.map((subrama, index) => (
                     <div
-                      key={subrama.id}
+                      key={`subrama-${rama.section_id}-${subrama.id}-${index}`}
                       className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm"
                     >
                       {/* Contenido izquierdo de la subrama */}
@@ -170,7 +179,11 @@ export default function RamaList({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => navigate(`/app/organigrama/subrama/${subrama.id}`)}
+                          onClick={() => {
+                            console.log('🔍 [RamaList] Navigating to subrama with ID:', subrama.subgroup_id || subrama.id);
+                            console.log('🔍 [RamaList] Full subrama object:', subrama);
+                            navigate(`/app/organigrama/subrama/${subrama.subgroup_id || subrama.id}`)
+                          }}
                           className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
                         >
                           <Eye className="h-3 w-3" />
@@ -198,18 +211,22 @@ export default function RamaList({
                   ))}
                   
                   {/* Botón para crear nueva subrama */}
-                  <div className="pt-3 border-t border-gray-200">
+                  <div key={`create-subrama-${rama.section_id}`} className="pt-3 border-t border-gray-200">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onCreateSubrama(rama.id)}
+                      onClick={() => {
+                        console.log('🔍 [RamaList] Creating subrama for rama ID (from bottom):', rama.id);
+                        console.log('🔍 [RamaList] Full rama object for subrama creation (from bottom):', rama);
+                        onCreateSubrama(rama.id);
+                      }}
                       className="w-full text-primary border-primary hover:bg-primary hover:text-white"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Crear Nueva Subrama
                     </Button>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </AccordionContent>

@@ -3,13 +3,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Upload, Users } from "lucide-react";
 import type { Rama } from "../types/rama.type";
 import * as organigramaService from "../services/organigrama.service";
+import { useTenantParams } from "../hooks/useTenantParams";
 
 export default function RamaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { tenantSlug, groupSlug } = useTenantParams();
   const [rama, setRama] = useState<Rama | null>(null);
   const [loading, setLoading] = useState(true);
   const [imagenPrincipal, setImagenPrincipal] = useState<string>("https://placehold.co/800x300");
@@ -35,41 +37,92 @@ export default function RamaDetail() {
     galleryInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && rama) {
-      // Crear URL temporal para mostrar la imagen
-      const imageUrl = URL.createObjectURL(file);
-      
-      // Actualizar el estado local
-      setRama({
-        ...rama,
-        icono: imageUrl
-      });
-      
-      // Aquí podrías hacer la llamada al servicio para guardar la imagen
-      console.log('Ícono seleccionado:', file);
-      // TODO: Implementar la subida real del archivo al servidor
+      try {
+        console.log('🔄 [RamaDetail] Subiendo ícono de rama:', file.name);
+        
+        // Mostrar imagen temporalmente
+        const imageUrl = URL.createObjectURL(file);
+        setRama({
+          ...rama,
+          icono: imageUrl
+        });
+        
+        // Subir al servidor
+        await organigramaService.uploadSectionIcon(
+          tenantSlug, 
+          groupSlug, 
+          rama.section_id.toString(), 
+          file
+        );
+        
+        console.log('✅ [RamaDetail] Ícono subido exitosamente');
+      } catch (error) {
+        console.error('❌ [RamaDetail] Error subiendo ícono:', error);
+        // Revertir cambio visual en caso de error
+        if (rama.icono !== URL.createObjectURL(file)) {
+          setRama({
+            ...rama,
+            icono: rama.icono // Restaurar ícono anterior
+          });
+        }
+      }
     }
   };
 
-  const handleMainImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImagenPrincipal(imageUrl);
-      console.log('Imagen principal seleccionada:', file);
-      // TODO: Implementar la subida real del archivo al servidor
+    if (file && rama) {
+      try {
+        console.log('🔄 [RamaDetail] Subiendo imagen principal:', file.name);
+        
+        // Mostrar imagen temporalmente
+        const imageUrl = URL.createObjectURL(file);
+        setImagenPrincipal(imageUrl);
+        
+        // Subir al servidor
+        await organigramaService.uploadSectionIcon(
+          tenantSlug, 
+          groupSlug, 
+          rama.section_id.toString(), 
+          file
+        );
+        
+        console.log('✅ [RamaDetail] Imagen principal subida exitosamente');
+      } catch (error) {
+        console.error('❌ [RamaDetail] Error subiendo imagen principal:', error);
+        // Revertir cambio visual en caso de error
+        setImagenPrincipal('');
+      }
     }
   };
 
-  const handleGalleryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    if (files.length > 0) {
-      const newImages = files.map(file => URL.createObjectURL(file));
-      setGaleriaFotos(prev => [...prev, ...newImages]);
-      console.log('Fotos de galería seleccionadas:', files);
-      // TODO: Implementar la subida real de los archivos al servidor
+    if (files.length > 0 && rama) {
+      try {
+        console.log('🔄 [RamaDetail] Subiendo fotos a la galería:', files.length);
+        
+        // Mostrar imágenes temporalmente
+        const newImages = files.map(file => URL.createObjectURL(file));
+        setGaleriaFotos(prev => [...prev, ...newImages]);
+        
+        // Subir al servidor
+        await organigramaService.uploadGalleryImages(
+          tenantSlug, 
+          groupSlug, 
+          rama.section_id.toString(), 
+          files
+        );
+        
+        console.log('✅ [RamaDetail] Fotos de galería subidas exitosamente');
+      } catch (error) {
+        console.error('❌ [RamaDetail] Error subiendo fotos de galería:', error);
+        // Revertir cambio visual en caso de error
+        setGaleriaFotos(prev => prev.slice(0, -files.length));
+      }
     }
   };
 
@@ -77,17 +130,25 @@ export default function RamaDetail() {
     const fetchRama = async () => {
       try {
         if (id) {
-          const data = await organigramaService.getRamaById(id);
-          setRama(data);
+          console.log("🔄 [RamaDetail] Obteniendo rama con ID:", id, { tenantSlug, groupSlug });
+          const data = await organigramaService.getRamaById(tenantSlug, groupSlug, id);
+          if (data) {
+            setRama(data);
+            console.log("✅ [RamaDetail] Rama cargada:", data);
+          } else {
+            console.warn("⚠️ [RamaDetail] No se encontró la rama con ID:", id);
+          }
+        } else {
+          console.error("❌ [RamaDetail] ID de rama no proporcionado");
         }
       } catch (error) {
-        console.error("Error cargando rama:", error);
+        console.error("❌ [RamaDetail] Error cargando rama:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchRama();
-  }, [id]);
+  }, [id, tenantSlug, groupSlug]);
 
   if (loading) {
     return <p className="text-center mt-6 text-muted-foreground">Cargando detalles...</p>;
@@ -97,6 +158,9 @@ export default function RamaDetail() {
     return (
       <div className="text-center mt-6 space-y-4">
         <p className="text-foreground">No se encontró la rama con id: {id}</p>
+        <p className="text-sm text-muted-foreground">
+          Tenant: {tenantSlug} | Group: {groupSlug}
+        </p>
         <Button
           variant="outline"
           onClick={() => navigate(-1)}
@@ -205,18 +269,55 @@ export default function RamaDetail() {
         <p className="text-sm text-muted-foreground">
           {rama.descripcion || "Sin descripción"}
         </p>
+      </Card>
 
-        {/* Subramas */}
-        {rama.subramas.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {rama.subramas.map((sub) => (
-              <Badge key={sub.id} variant="secondary">
-                {sub.nombre}
-              </Badge>
+      {/* Subramas */}
+      {rama.subramas && rama.subramas.length > 0 && (
+        <Card className="p-6 space-y-4 bg-card text-card-foreground border border-border">
+          <h2 className="text-lg font-semibold text-foreground">
+            Subramas de {rama.nombre}
+          </h2>
+          <div className="grid gap-3">
+            {rama.subramas.map((subrama) => (
+              <div
+                key={subrama.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-primary transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Users className="h-5 w-5 text-primary" />
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-foreground">
+                        {subrama.nombre}
+                      </span>
+                      <Badge 
+                        variant={subrama.estado === 'activa' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {subrama.estado}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {subrama.descripcion || 'Sin descripción'}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    console.log('🔍 [RamaDetail] Navigating to subrama with ID:', subrama.subgroup_id || subrama.id);
+                    navigate(`/app/organigrama/subrama/${subrama.subgroup_id || subrama.id}`)
+                  }}
+                  className="bg-primary hover:bg-primary-hover text-white border-primary"
+                >
+                  Ver Detalles
+                </Button>
+              </div>
             ))}
           </div>
-        )}
-      </Card>
+        </Card>
+      )}
 
       {/* Integrantes */}
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">

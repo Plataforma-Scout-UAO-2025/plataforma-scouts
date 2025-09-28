@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,9 @@ export default function EditRamaModal({
           <DialogTitle className="text-2xl font-bold text-primary pr-8">
             Editar Rama
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Modifica los detalles de la rama seleccionada.
+          </DialogDescription>
           <Button
             variant="ghost"
             size="sm"

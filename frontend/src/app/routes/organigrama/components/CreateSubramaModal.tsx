@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,9 @@ export default function CreateSubramaModal({
           <DialogTitle className="text-2xl font-bold text-primary pr-8">
             Crear Nueva Subrama
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Completa los campos para crear una subrama dentro de la rama seleccionada.
+          </DialogDescription>
           <Button
             variant="ghost"
             size="sm"

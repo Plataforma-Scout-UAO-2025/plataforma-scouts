@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -76,6 +77,9 @@ export default function CreateRamaModal({
           <DialogTitle className="text-2xl font-bold text-primary pr-8">
             Crear Nueva Rama
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Proporciona los datos básicos para crear una nueva rama.
+          </DialogDescription>
           <Button
             variant="ghost"
             size="sm"
