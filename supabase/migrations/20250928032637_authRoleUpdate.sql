@@ -1,0 +1,4 @@
+-- updated credentials
+ALTER ROLE dba WITH PASSWORD 'fsqA4aM9Y2b3gnENr9kZTpFkRoPbQUAawMEad2P5';
+ALTER ROLE api_user WITH PASSWORD 'mFXMdDZQJvXAox3JNdwsUmEqDkvqPbUreFduFg73';
+ALTER ROLE reader WITH PASSWORD 'NAUSgmRtxsbxTtAs5TwKKQMNs9wcLFhamC5vqC3U';
