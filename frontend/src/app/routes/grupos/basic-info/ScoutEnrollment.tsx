@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // <-- Agrega esta línea
+import { useNavigate } from "react-router-dom"; 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ function ScoutEnrollment() {
   });
 
   const [pagina, setPagina] = useState(1);
-  const [mostrrCalendario, setMostrarCalendario] = useState(false);
+  const [, setMostrarCalendario] = useState(false);
   const [showModal, setShowModal] = useState(false); 
   const calendarioRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -69,13 +69,6 @@ function ScoutEnrollment() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setFormulario({ ...formulario, [e.target.name]: e.target.value });
-  };
-
-  const handleFechaSeleccionada = (fecha?: Date) => {
-    if (!fecha) return;
-    const fechaFormateada = fecha.toISOString().split("T")[0];
-    setFormulario({ ...formulario, fechaNacimiento: fechaFormateada });
-    setMostrarCalendario(false);
   };
 
   useEffect(() => {

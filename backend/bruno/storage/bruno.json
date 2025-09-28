@@ -1,0 +1,15 @@
+{
+  "version": "1",
+  "name": "Storage Tests",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "size": 0.009045600891113281,
+  "filesCount": 9,
+  "presets": {
+    "requestType": "http",
+    "requestUrl": "localhost:80/"
+  }
+}
