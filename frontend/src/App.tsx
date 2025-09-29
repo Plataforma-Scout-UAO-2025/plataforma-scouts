@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { withAuthenticationRequired } from "@auth0/auth0-react";
 
 // Routes imports
 import Login from "./app/routes/Login";
@@ -12,15 +13,19 @@ import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 import Home from "./app/routes/Home";
 
+// Protected components
+const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
+
 function App() {
   return (
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
           <Route path="/" element={<Home/>}/>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/app" element={<AppLayout />}>
+          {/* Se quitan las rutas de login y register pues todo será manejado desde Auth0
+          <Route path="/login" element={<ProtectedLogin />} />
+          <Route path="/register" element={<ProtectedRegister />} /> */}
+          <Route path="/app" element={<ProtectedAppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="financiero/cuotas" element={<Cuotas />} />
 
@@ -30,6 +35,7 @@ function App() {
 
           </Route>
           {/* Agrega más rutas aquí */}
+          <Route path="*" element={<Navigate to={"/"}/>}/>
         </Routes>
       </div>
       <Toaster />
