@@ -49,16 +49,12 @@ export default function Organigrama() {
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
-  // Ref para almacenar el timeout de éxito y poder limpiarlo
   const successTimeoutRef = useRef<number | null>(null);
   
-  // Hook para manejar errores de la API
   const { error, handleError, clearError } = useApiError();
   
-  // Hook para obtener parámetros del tenant
   const { tenantSlug, groupSlug } = useTenantParams();
 
-  // Cargar ramas al montar el componente y cuando cambie el año
   useEffect(() => {
     loadAvailableYears();
   }, []);
@@ -73,7 +69,6 @@ export default function Organigrama() {
       setAvailableYears(years);
     } catch (error) {
       handleError(error);
-      // Fallback en caso de error
       setAvailableYears([new Date().getFullYear()]);
     }
   };
@@ -161,7 +156,6 @@ export default function Organigrama() {
   };
 
   const handleDeleteSubrama = (subrama: Subrama) => {
-    // Guardar sectionId real para poder eliminar la subrama sin parsear el id
     const sectionId = subrama.section_id || subrama.ramaId || '';
     setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre, sectionId });
     setConfirmDeleteOpen(true);
@@ -174,10 +168,8 @@ export default function Organigrama() {
       if (deleteTarget.type === 'rama') {
         await organigramaService.deleteRama(tenantSlug, groupSlug, deleteTarget.id);
       } else {
-        // Para subramas usamos el sectionId guardado en deleteTarget cuando esté disponible
         const sectionId = deleteTarget.sectionId;
         if (!sectionId) {
-          // Fallback por compatibilidad: intentar derivarlo del id
           const fallbackSectionId = deleteTarget.id.split('-')[0];
           console.warn('⚠️ [Organigrama] sectionId no disponible en deleteTarget, usando fallback', { fallbackSectionId });
           await organigramaService.deleteSubrama(tenantSlug, groupSlug, fallbackSectionId, deleteTarget.id);
@@ -227,8 +219,6 @@ export default function Organigrama() {
     };
   }, []);
 
-  // Nota: render principal siempre mostrará la cabecera; la sección de lista
-  // mostrará `OrganigramaLoader` mientras `isLoading` es true.
 
   return (
     <div className="space-y-6">

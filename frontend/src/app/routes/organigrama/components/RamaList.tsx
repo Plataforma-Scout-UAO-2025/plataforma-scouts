@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, Edit2, Trash2, ChevronDown, Users, Plus } from 'lucide-react';
 import {
   Accordion,
@@ -9,15 +9,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import type { Rama } from '../types/rama.type';
+import type { Rama, Subrama } from '../types/rama.type';
 
 interface RamaListProps {
   ramas: Rama[];
   onEditRama: (rama: Rama) => void;
   onDeleteRama: (rama: Rama) => void;
   onCreateSubrama: (ramaId: string) => void;
-  onEditSubrama: (subrama: any) => void;
-  onDeleteSubrama: (subrama: any) => void;
+  onEditSubrama: (subrama: Subrama) => void;
+  onDeleteSubrama: (subrama: Subrama) => void;
 }
 
 export default function RamaList({
@@ -28,7 +28,13 @@ export default function RamaList({
   onEditSubrama,
   onDeleteSubrama,
 }: RamaListProps) {
-  const [expandedItems, setExpandedItems] = useState<string[]>(['2']); // Inicia con la rama que tiene section_id = 2
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  useEffect(() => {
+    if (expandedItems.length === 0 && ramas && ramas.length > 0) {
+      setExpandedItems([ramas[0].section_id.toString()]);
+    }
+  
+  }, [ramas]);
   const navigate = useNavigate();
 
   const handleToggleExpansion = (ramaId: string) => {
