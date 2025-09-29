@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { subirImagen } from '../services/storage.service';
 import {
   Dialog,
@@ -115,13 +115,32 @@ export default function CreateRamaModal({
             <Label htmlFor="icono-file-create" className="text-foreground">
               Icono
             </Label>
-            <div className="flex items-center space-x-3">
+            <div>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => document.getElementById('icono-file-create')?.click()}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('icono-file-create')?.click(); }}
+                className="w-full bg-card border border-border rounded-md px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-accent"
+              >
+                <div className="text-muted-foreground">Seleccionar icono (Opcional)</div>
+                <div className="flex items-center gap-3">
+                  {isUploading ? (
+                    <div className="text-sm text-muted-foreground">Subiendo...</div>
+                  ) : imagenUrl ? (
+                    <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
+                  ) : (
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
               <input
                 id="icono-file-create"
                 name="icono-file-create"
                 type="file"
                 accept="image/*"
-                title="Seleccionar icono" 
+                className="hidden"
+                title="Seleccionar icono"
                 aria-label="Seleccionar icono"
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
@@ -140,13 +159,6 @@ export default function CreateRamaModal({
                   }
                 }}
               />
-              {isUploading ? (
-                <div className="text-sm text-muted-foreground">Subiendo...</div>
-              ) : imagenUrl ? (
-                <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
-              ) : (
-                <div className="text-sm text-muted-foreground">No hay imagen seleccionada</div>
-              )}
             </div>
           </div>
 

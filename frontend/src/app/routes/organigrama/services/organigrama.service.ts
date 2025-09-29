@@ -19,12 +19,10 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
     // Mapear datos del backend al formato del frontend (sin subramas todavía)
     const mappedRamas: Rama[] = backendRamas.map((backendRama) => {
       const mappedRama = mapBackendRamaToFrontend(backendRama);
-      // Inicializar subramas vacías; se llenarán más abajo de forma atómica
       mappedRama.subramas = [];
       return mappedRama;
     });
 
-    // Para cada rama crear una promesa que cargue sus subramas
     const subramasPromises = mappedRamas.map(async (rama) => {
       try {
   const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, String(rama.section_id));
@@ -35,20 +33,16 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
       }
     });
 
-    // Esperar a que todas las promesas de subramas se resuelvan
     const allSubramas = await Promise.all(subramasPromises);
 
-    // Asociar las subramas resueltas con cada rama correspondiente
     const ramas = mappedRamas.map((rama, idx) => {
       rama.subramas = allSubramas[idx] as any;
       // Rama mapped
       return rama;
     });
     
-    // Filtrar por año si se especifica
     const filteredRamas = año ? ramas.filter(rama => rama.año === año) : ramas;
     
-    // Ramas obtenidas exitosamente
     return filteredRamas;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error obteniendo ramas:', error);
@@ -189,7 +183,6 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
     
-    // Mapear datos al formato que espera el backend
     const backendData = {
       subgroupName: data.nombre,
       subgroupDescription: data.descripcion,
@@ -236,7 +229,6 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
   try {
     console.log('🔄 [OrganigramaService] Obteniendo años disponibles del backend');
     
-    // Obtener todas las ramas y extraer los años únicos
     const ramas = await getRamas(tenantSlug, groupSlug);
     const years = Array.from(new Set(ramas.map(rama => rama.año))).sort((a, b) => b - a);
     
@@ -244,7 +236,6 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
     return years.length > 0 ? years : [new Date().getFullYear()];
   } catch (error) {
     console.error('❌ [OrganigramaService] Error obteniendo años disponibles:', error);
-    // Fallback en caso de error
     return [new Date().getFullYear()];
   }
 };
@@ -290,7 +281,6 @@ export const uploadGalleryImages = async (
       const formData = new FormData();
       formData.append('file', file);
       
-      // Endpoint para subir archivos (podría necesitar ajuste según tu backend)
       const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
       const response = await apiClient.postFormData<{ objectId: string }>(uploadEndpoint, formData);
       
@@ -325,7 +315,6 @@ export const uploadSectionIcon = async (
     const fileId = await subirImagen(file);
 
     console.log('✅ [OrganigramaService] Ícono de sección subido a Supabase Storage', { fileId });
-    // Devolver el UUID para que el caller lo persista en el backend
     return fileId;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error subiendo ícono de sección:', error);

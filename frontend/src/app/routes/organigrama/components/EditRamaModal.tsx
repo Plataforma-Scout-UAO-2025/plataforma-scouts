@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { subirImagen } from '../services/storage.service';
 import {
   Dialog,
@@ -92,13 +92,13 @@ export default function EditRamaModal({
           {/* Nombre de la Rama */}
           <div className="space-y-2">
             <Label htmlFor="nombre" className="text-foreground">Nombre de la Rama</Label>
-            <Input
-              id="nombre"
-              value={formData.nombre || ''}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              className="bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary"
-              required
-            />
+              <Input
+                id="nombre"
+                value={formData.nombre || ''}
+                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                className="w-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary"
+                required
+              />
           </div>
 
           {/* Campo Icono */}
@@ -106,12 +106,31 @@ export default function EditRamaModal({
             <Label htmlFor="icono-file-edit" className="text-sm font-medium text-foreground">
               Icono
             </Label>
-            <div className="flex items-center space-x-3">
+            <div>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => document.getElementById('icono-file-edit')?.click()}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('icono-file-edit')?.click(); }}
+                className="w-full bg-card border border-border rounded-md px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-accent"
+              >
+                <div className="text-muted-foreground">Seleccionar icono (Opcional)</div>
+                <div className="flex items-center gap-3">
+                  {isUploading ? (
+                    <div className="text-sm text-muted-foreground">Subiendo...</div>
+                  ) : imagenUrl ? (
+                    <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
+                  ) : (
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
               <input
                 id="icono-file-edit"
                 name="icono-file-edit"
                 type="file"
                 accept="image/*"
+                className="hidden"
                 title="Seleccionar icono"
                 aria-label="Seleccionar icono"
                 onChange={async (e) => {
@@ -130,13 +149,6 @@ export default function EditRamaModal({
                   }
                 }}
               />
-              {isUploading ? (
-                <div className="text-sm text-muted-foreground">Subiendo...</div>
-              ) : imagenUrl ? (
-                <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
-              ) : (
-                <div className="text-sm text-muted-foreground">No hay imagen seleccionada</div>
-              )}
             </div>
           </div>
 
@@ -148,7 +160,7 @@ export default function EditRamaModal({
               value={formData.descripcion || ''}
               onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
               placeholder="Descripción opcional..."
-              className="bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary resize-none"
+              className="w-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary resize-none"
             />
           </div>
 

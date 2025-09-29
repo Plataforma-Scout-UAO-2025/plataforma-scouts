@@ -50,7 +50,6 @@ export const getAvailableGroups = async (tenantSlug: string): Promise<GroupInfo[
   } catch (error) {
     console.warn('⚠️ [TenantService] No se pudieron obtener grupos:', error);
     
-    // Fallback
     return [
       { slug: 'group-1', name: 'Grupo 1' }
     ];
