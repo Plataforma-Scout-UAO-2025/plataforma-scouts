@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { withAuthenticationRequired } from "@auth0/auth0-react";
 
 // Routes imports
-import Login from "./app/routes/Login";
-import Register from "./app/routes/Register";
+// import Login from "./app/routes/Login";
+// import Register from "./app/routes/Register";
 import AppLayout from "./components/layout/AppLayout";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Dashboard from "./app/routes/Dashboard";
