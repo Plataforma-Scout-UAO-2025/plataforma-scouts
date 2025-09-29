@@ -59,6 +59,16 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
     
     const rama = mapBackendRamaToFrontend(backendRama);
     
+    // Intentar cargar subramas asociadas y anexarlas al objeto Rama
+    try {
+      const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, String(rama.section_id));
+      rama.subramas = subramas;
+      console.log('✅ [OrganigramaService] Subramas anexadas a la rama', { id: rama.id, count: subramas.length });
+    } catch (subErr) {
+      console.warn('⚠️ [OrganigramaService] No se pudieron cargar subramas para la rama, devolviendo rama sin subramas', { id: rama.id, error: subErr });
+      rama.subramas = [];
+    }
+
     console.log('✅ [OrganigramaService] Rama obtenida exitosamente', { id: rama.id });
     return rama;
   } catch (error: any) {

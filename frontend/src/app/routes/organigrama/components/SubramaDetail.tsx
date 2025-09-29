@@ -158,7 +158,7 @@ export default function SubramaDetail() {
       {/* Información Principal */}
       <Card className="p-4 space-y-4 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Información Principal</h2>
+          <h2 className="text-lg font-semibold text-primary">Información Principal</h2>
           <Button
             size="sm"
             variant="outline"
@@ -206,14 +206,18 @@ export default function SubramaDetail() {
 
       {/* Integrantes */}
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="text-lg font-semibold text-primary">
           Integrantes
         </h2>
         <div className="flex flex-wrap gap-2">
           {/* ⚠️ Mock temporal */}
           {["Roberto Restrepo", "Carlos Camargo", "Ana Aguillón", "Mario Mora"].map(
             (name, idx) => (
-              <Badge key={idx} variant="outline">
+              <Badge
+                key={idx}
+                variant="outline"
+                className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
+              >
                 {name}
               </Badge>
             )
@@ -224,7 +228,7 @@ export default function SubramaDetail() {
       {/* Galería */}
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className="text-lg font-semibold text-primary">
             Galería de fotos
           </h2>
           <Button
