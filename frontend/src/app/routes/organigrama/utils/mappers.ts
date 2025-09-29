@@ -67,24 +67,31 @@ export const mapBackendSubramaToFrontend = (backendSubrama: any): Subrama => {
 
   const hasBackendId = rawId !== undefined && rawId !== null && rawId !== '';
   const extractedId = hasBackendId ? String(rawId) : undefined;
-  const consistentId = !hasBackendId ? generateConsistentId() : extractedId as string;
+  const consistentId = hasBackendId ? String(rawId) : generateConsistentId();
+
+  // Normalizar nombre intentanto varias posibles claves que el backend pueda usar
+  const nameFromBackend =
+    backendSubrama.subgroupName ||
+    backendSubrama.subgroup_name ||
+    backendSubrama.name ||
+    backendSubrama.nombre ||
+    '';
 
   return {
-    // Si el backend provee un identificador canonical, úsalo para BOTH id y subgroup_id.
-    // Esto evita que el frontend use un ID generado cuando el backend ya tiene uno real.
-    subgroup_id: extractedId ?? '',
-    subgroupName: backendSubrama.subgroupName || '',
-    subgroupDescription: backendSubrama.subgroupDescription,
+    // Si el backend provee un identificador canonical, úsalo; si no, usar el id consistente generado
+    subgroup_id: extractedId ?? consistentId,
+    subgroupName: nameFromBackend,
+    subgroupDescription: backendSubrama.subgroupDescription || backendSubrama.subgroup_description || backendSubrama.description,
     section_id: backendSubrama.section_id || backendSubrama.sectionId || '',
     // Mapeo para retrocompatibilidad con el frontend
-    id: consistentId, // Será el ID canonical si existe, o un ID consistente generado en su defecto
-    nombre: backendSubrama.subgroupName || '',
-    descripcion: backendSubrama.subgroupDescription,
+    id: consistentId,
+    nombre: nameFromBackend,
+    descripcion: backendSubrama.subgroupDescription || backendSubrama.subgroup_description || backendSubrama.description,
     ramaId: backendSubrama.section_id || backendSubrama.sectionId || '', // Mapear section_id a ramaId
-    lider: backendSubrama.leader || '',
-    estado: 'activa' as const,
+    lider: backendSubrama.leader || backendSubrama.leaderName || '',
+    estado: (backendSubrama.isActive === false || backendSubrama.status === 'inactive') ? 'inactiva' as const : 'activa' as const,
     fechaCreacion: backendSubrama.createdAt || new Date().toISOString().split('T')[0],
-    numeroMiembros: backendSubrama.memberCount || 0
+    numeroMiembros: backendSubrama.memberCount || backendSubrama.members || 0
   };
 };
 
