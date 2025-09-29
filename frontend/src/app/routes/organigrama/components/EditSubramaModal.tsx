@@ -93,7 +93,7 @@ export default function EditSubramaModal({
               value={formData.nombre || ''}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
               required
-              className="bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary"
+              className="w-full bg-card border border-border rounded-md focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             />
           </div>
 
@@ -105,7 +105,7 @@ export default function EditSubramaModal({
               value={formData.descripcion || ''}
               onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
               placeholder="Descripción opcional..."
-              className="bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary resize-none"
+              className="w-full bg-background border border-border rounded-md resize-none focus:ring-primary focus:border-primary min-h-[100px] placeholder:text-muted-foreground"
             />
           </div>
 

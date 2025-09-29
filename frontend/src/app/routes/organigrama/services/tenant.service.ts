@@ -17,7 +17,6 @@ export const getAvailableTenants = async (): Promise<TenantInfo[]> => {
   try {
     console.log('🔄 [TenantService] Obteniendo tenants disponibles');
     
-    // Asumiendo que existe un endpoint para listar tenants
     const tenants = await apiClient.get<TenantInfo[]>('/api/tenants');
     
     console.log('✅ [TenantService] Tenants obtenidos:', tenants);
@@ -25,7 +24,6 @@ export const getAvailableTenants = async (): Promise<TenantInfo[]> => {
   } catch (error) {
     console.warn('⚠️ [TenantService] No se pudieron obtener tenants:', error);
     
-    // Fallback con valores comunes
     return [
       {
         slug: 'scouts-main',
