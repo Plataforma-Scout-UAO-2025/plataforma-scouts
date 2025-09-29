@@ -44,6 +44,7 @@ export default function Organigrama() {
     type: 'rama' | 'subrama';
     id: string;
     name: string;
+    sectionId?: string;
   } | null>(null);
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
@@ -158,7 +159,9 @@ export default function Organigrama() {
   };
 
   const handleDeleteSubrama = (subrama: Subrama) => {
-    setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre });
+    // Guardar sectionId real para poder eliminar la subrama sin parsear el id
+    const sectionId = subrama.section_id || subrama.ramaId || '';
+    setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre, sectionId });
     setConfirmDeleteOpen(true);
   };
 
@@ -169,9 +172,16 @@ export default function Organigrama() {
       if (deleteTarget.type === 'rama') {
         await organigramaService.deleteRama(tenantSlug, groupSlug, deleteTarget.id);
       } else {
-        // Para subramas necesitamos el sectionId, por ahora usamos una estrategia temporal
-        const sectionId = deleteTarget.id.split('-')[0]; // Estrategia temporal
-        await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, deleteTarget.id);
+        // Para subramas usamos el sectionId guardado en deleteTarget cuando esté disponible
+        const sectionId = deleteTarget.sectionId;
+        if (!sectionId) {
+          // Fallback por compatibilidad: intentar derivarlo del id
+          const fallbackSectionId = deleteTarget.id.split('-')[0];
+          console.warn('⚠️ [Organigrama] sectionId no disponible en deleteTarget, usando fallback', { fallbackSectionId });
+          await organigramaService.deleteSubrama(tenantSlug, groupSlug, fallbackSectionId, deleteTarget.id);
+        } else {
+          await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, deleteTarget.id);
+        }
       }
       await loadRamas();
       showSuccess(
@@ -189,35 +199,8 @@ export default function Organigrama() {
     setTimeout(() => setSuccessOpen(false), 2000);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">
-              Gestión de Organigrama
-            </h1>
-            <p className="text-muted-foreground">
-              Administra la estructura de ramas y subramas de tu grupo scout
-            </p>
-          </div>
-          <Button onClick={() => setCreateRamaModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Crear Nueva Rama
-          </Button>
-        </div>
-
-        {/* Mostrar errores de la API */}
-        {error.hasError && (
-          <ErrorAlert 
-            message={error.message} 
-            type={error.type} 
-            onClose={clearError} 
-          />
-        )}
-      </div>
-    );
-  }
+  // Nota: render principal siempre mostrará la cabecera; la sección de lista
+  // mostrará `OrganigramaLoader` mientras `isLoading` es true.
 
   return (
     <div className="space-y-6">
@@ -236,6 +219,15 @@ export default function Organigrama() {
           Crear Nueva Rama
         </Button>
       </div>
+
+      {/* Mostrar errores de la API (si los hay) */}
+      {error.hasError && (
+        <ErrorAlert 
+          message={error.message} 
+          type={error.type} 
+          onClose={clearError} 
+        />
+      )}
 
       {/* Controles de filtrado */}
       <div className="flex items-center space-x-4">
