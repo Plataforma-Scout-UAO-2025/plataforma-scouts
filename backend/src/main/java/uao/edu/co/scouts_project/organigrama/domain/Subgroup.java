@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subgroups")
+@Table(name = "subgroup")
 public class Subgroup {
     
     @Id
@@ -26,15 +26,15 @@ public class Subgroup {
     private Long sectionId;
     
     @NotBlank
-    @Column(name = "subgroup_name", nullable = false)
-    private String subgroupName;
+    @Column(name = "name", nullable = false)
+    private String name;
     
-    @Column(name = "subgroup_description")
-    private String subgroupDescription;
+    @Column(name = "description")
+    private String description;
     
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "subgroup_gallery_object_ids", columnDefinition = "uuid[]", nullable = false)
-    private java.util.UUID[] subgroupGalleryObjectIds;
+    @Column(name = "gallery_object_ids", columnDefinition = "uuid[]", nullable = false)
+    private java.util.UUID[] galleryObjectIds;
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -48,11 +48,11 @@ public class Subgroup {
     // Constructors
     public Subgroup() {}
     
-    public Subgroup(Long tenantId, Long groupId, Long sectionId, String subgroupName) {
+    public Subgroup(Long tenantId, Long groupId, Long sectionId, String name) {
         this.tenantId = tenantId;
         this.groupId = groupId;
         this.sectionId = sectionId;
-        this.subgroupName = subgroupName;
+        this.name = name;
     }
     
     // Getters and Setters
@@ -68,15 +68,15 @@ public class Subgroup {
     public Long getSectionId() { return sectionId; }
     public void setSectionId(Long sectionId) { this.sectionId = sectionId; }
     
-    public String getSubgroupName() { return subgroupName; }
-    public void setSubgroupName(String subgroupName) { this.subgroupName = subgroupName; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
     
-    public String getSubgroupDescription() { return subgroupDescription; }
-    public void setSubgroupDescription(String subgroupDescription) { this.subgroupDescription = subgroupDescription; }
-    
-    public UUID[] getSubgroupGalleryObjectIds() { return subgroupGalleryObjectIds; }
-    public void setSubgroupGalleryObjectIds(UUID[] subgroupGalleryObjectIds) { this.subgroupGalleryObjectIds = subgroupGalleryObjectIds; }
-    
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public UUID[] getGalleryObjectIds() { return galleryObjectIds; }
+    public void setGalleryObjectIds(UUID[] galleryObjectIds) { this.galleryObjectIds = galleryObjectIds; }
+
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     

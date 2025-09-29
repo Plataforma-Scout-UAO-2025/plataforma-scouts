@@ -9,9 +9,9 @@ public record SubgroupDTO(
     Long tenantId,
     Long groupId,
     Long sectionId,
-    @NotBlank String subgroupName,
-    String subgroupDescription,
-    UUID[] subgroupGalleryObjectIds,
+    @NotBlank String name,
+    String description,
+    UUID[] galleryObjectIds,
     Boolean isActive,
     Instant createdAt,
     Instant updatedAt

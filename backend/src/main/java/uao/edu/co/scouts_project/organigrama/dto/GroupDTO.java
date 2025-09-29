@@ -17,7 +17,7 @@ public record GroupDTO(
     String address,
     String phone,
     @Email String email,
-    LocalDate foundedOn,
+    LocalDate foundedIn,
     String motto,
     String mission,
     String vision,
@@ -27,6 +27,7 @@ public record GroupDTO(
     Map<String, Object> socialLinks,
     Map<String, Object> config,
     Boolean isActive,
+    String status,
     Instant createdAt,
     Instant updatedAt
 ) {}

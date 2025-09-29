@@ -89,7 +89,7 @@ public class GroupService {
         if (dto.address() != null) group.setAddress(dto.address());
         if (dto.phone() != null) group.setPhone(dto.phone());
         if (dto.email() != null) group.setEmail(dto.email());
-        if (dto.foundedOn() != null) group.setFoundedOn(dto.foundedOn());
+        if (dto.foundedIn() != null) group.setFoundedIn(dto.foundedIn());
         if (dto.motto() != null) group.setMotto(dto.motto());
         if (dto.mission() != null) group.setMission(dto.mission());
         if (dto.vision() != null) group.setVision(dto.vision());
@@ -99,6 +99,7 @@ public class GroupService {
         if (dto.socialLinks() != null) group.setSocialLinks(dto.socialLinks());
         if (dto.config() != null) group.setConfig(dto.config());
         if (dto.isActive() != null) group.setIsActive(dto.isActive());
+        if (dto.status() != null) group.setStatus(dto.status());
     }
     
     private GroupDTO toDTO(Group group) {
@@ -112,7 +113,7 @@ public class GroupService {
             group.getAddress(),
             group.getPhone(),
             group.getEmail(),
-            group.getFoundedOn(),
+            group.getFoundedIn(),
             group.getMotto(),
             group.getMission(),
             group.getVision(),
@@ -122,6 +123,7 @@ public class GroupService {
             group.getSocialLinks(),
             group.getConfig(),
             group.getIsActive(),
+            group.getStatus(),
             group.getCreatedAt(),
             group.getUpdatedAt()
         );

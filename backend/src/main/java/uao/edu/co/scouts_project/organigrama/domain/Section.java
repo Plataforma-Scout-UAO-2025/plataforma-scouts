@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sections")
+@Table(name = "section")
 public class Section {
     
     @Id
@@ -23,18 +23,18 @@ public class Section {
     private Long groupId;
     
     @NotBlank
-    @Column(name = "section_name", nullable = false)
-    private String sectionName;
+    @Column(name = "name", nullable = false)
+    private String name;
     
-    @Column(name = "section_description")
-    private String sectionDescription;
+    @Column(name = "description")
+    private String description;
     
-    @Column(name = "section_icon_object_id")
-    private UUID sectionIconObjectId;
+    @Column(name = "icon_object_id")
+    private UUID iconObjectId;
     
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "section_gallery_object_ids", columnDefinition = "uuid[]", nullable = false)
-    private java.util.UUID[] sectionGalleryObjectIds;
+    @Column(name = "gallery_object_ids", columnDefinition = "uuid[]", nullable = false)
+    private java.util.UUID[] galleryObjectIds;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -45,10 +45,10 @@ public class Section {
     // Constructors
     public Section() {}
     
-    public Section(Long tenantId, Long groupId, String sectionName) {
+    public Section(Long tenantId, Long groupId, String name) {
         this.tenantId = tenantId;
         this.groupId = groupId;
-        this.sectionName = sectionName;
+        this.name = name;
     }
     
     // Getters and Setters
@@ -61,17 +61,17 @@ public class Section {
     public Long getGroupId() { return groupId; }
     public void setGroupId(Long groupId) { this.groupId = groupId; }
     
-    public String getSectionName() { return sectionName; }
-    public void setSectionName(String sectionName) { this.sectionName = sectionName; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
     
-    public String getSectionDescription() { return sectionDescription; }
-    public void setSectionDescription(String sectionDescription) { this.sectionDescription = sectionDescription; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     
-    public UUID getSectionIconObjectId() { return sectionIconObjectId; }
-    public void setSectionIconObjectId(UUID sectionIconObjectId) { this.sectionIconObjectId = sectionIconObjectId; }
+    public UUID getIconObjectId() { return iconObjectId; }
+    public void setIconObjectId(UUID iconObjectId) { this.iconObjectId = iconObjectId; }
     
-    public UUID[] getSectionGalleryObjectIds() { return sectionGalleryObjectIds; }
-    public void setSectionGalleryObjectIds(UUID[] sectionGalleryObjectIds) { this.sectionGalleryObjectIds = sectionGalleryObjectIds; }
+    public UUID[] getGalleryObjectIds() { return galleryObjectIds; }
+    public void setGalleryObjectIds(UUID[] galleryObjectIds) { this.galleryObjectIds = galleryObjectIds; }
     
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

@@ -10,6 +10,6 @@ import java.util.Optional;
 public interface SectionRepository extends JpaRepository<Section, Long> {
     List<Section> findByTenantIdAndGroupId(Long tenantId, Long groupId);
     Optional<Section> findByTenantIdAndGroupIdAndSectionId(Long tenantId, Long groupId, Long sectionId);
-    Optional<Section> findByGroupIdAndSectionName(Long groupId, String sectionName);
-    boolean existsByGroupIdAndSectionName(Long groupId, String sectionName);
+    Optional<Section> findByGroupIdAndName(Long groupId, String name);
+    boolean existsByGroupIdAndName(Long groupId, String name);
 }

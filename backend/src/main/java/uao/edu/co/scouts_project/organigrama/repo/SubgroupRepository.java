@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface SubgroupRepository extends JpaRepository<Subgroup, Long> {
     List<Subgroup> findByTenantIdAndGroupIdAndSectionId(Long tenantId, Long groupId, Long sectionId);
     Optional<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndSubgroupId(Long tenantId, Long groupId, Long sectionId, Long subgroupId);
-    Optional<Subgroup> findBySectionIdAndSubgroupName(Long sectionId, String subgroupName);
-    boolean existsBySectionIdAndSubgroupName(Long sectionId, String subgroupName);
+    Optional<Subgroup> findBySectionIdAndName(Long sectionId, String name);
+    boolean existsBySectionIdAndName(Long sectionId, String name);
     List<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndIsActive(Long tenantId, Long groupId, Long sectionId, Boolean isActive);
 }

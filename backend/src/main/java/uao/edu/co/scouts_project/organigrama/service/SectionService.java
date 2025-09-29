@@ -45,12 +45,12 @@ public class SectionService {
     @Transactional
     public SectionDTO createSection(String tenantSlug, String groupSlug, SectionDTO dto) {
         Group group = getGroupBySlug(tenantSlug, groupSlug);
-        
-        if (sectionRepository.existsByGroupIdAndSectionName(group.getGroupId(), dto.sectionName())) {
-            throw new IllegalArgumentException("Section with name '" + dto.sectionName() + "' already exists in this group");
+
+        if (sectionRepository.existsByGroupIdAndName(group.getGroupId(), dto.name())) {
+            throw new IllegalArgumentException("Section with name '" + dto.name() + "' already exists in this group");
         }
-        
-        Section section = new Section(group.getTenantId(), group.getGroupId(), dto.sectionName());
+
+        Section section = new Section(group.getTenantId(), group.getGroupId(), dto.name());
         mapDtoToEntity(dto, section);
         
         Section saved = sectionRepository.save(section);
@@ -84,10 +84,10 @@ public class SectionService {
     }
     
     private void mapDtoToEntity(SectionDTO dto, Section section) {
-        if (dto.sectionName() != null) section.setSectionName(dto.sectionName());
-        if (dto.sectionDescription() != null) section.setSectionDescription(dto.sectionDescription());
-        if (dto.sectionIconObjectId() != null) section.setSectionIconObjectId(dto.sectionIconObjectId());
-        if (dto.sectionGalleryObjectIds() != null) section.setSectionGalleryObjectIds(dto.sectionGalleryObjectIds());
+        if (dto.name() != null) section.setName(dto.name());
+        if (dto.description() != null) section.setDescription(dto.description());
+        if (dto.iconObjectId() != null) section.setIconObjectId(dto.iconObjectId());
+        if (dto.galleryObjectIds() != null) section.setGalleryObjectIds(dto.galleryObjectIds());
     }
     
     private SectionDTO toDTO(Section section) {
@@ -95,10 +95,10 @@ public class SectionService {
             section.getSectionId(),
             section.getTenantId(),
             section.getGroupId(),
-            section.getSectionName(),
-            section.getSectionDescription(),
-            section.getSectionIconObjectId(),
-            section.getSectionGalleryObjectIds(),
+            section.getName(),
+            section.getDescription(),
+            section.getIconObjectId(),
+            section.getGalleryObjectIds(),
             section.getCreatedAt(),
             section.getUpdatedAt()
         );

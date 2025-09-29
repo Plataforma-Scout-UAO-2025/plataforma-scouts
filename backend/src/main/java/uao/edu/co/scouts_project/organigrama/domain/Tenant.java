@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 
 @Entity
-@Table(name = "tenants")
+@Table(name = "tenant")
 public class Tenant {
     
     @Id

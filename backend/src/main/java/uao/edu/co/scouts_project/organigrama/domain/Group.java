@@ -44,8 +44,8 @@ public class Group {
     @Column(name = "email")
     private String email;
     
-    @Column(name = "founded_on")
-    private LocalDate foundedOn;
+    @Column(name = "founded_in")
+    private LocalDate foundedIn;
     
     @Column(name = "motto")
     private String motto;
@@ -81,6 +81,9 @@ public class Group {
     
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
+
+    @Column(name = "status")
+    private String status;
     
     // Constructors
     public Group() {}
@@ -119,8 +122,8 @@ public class Group {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     
-    public LocalDate getFoundedOn() { return foundedOn; }
-    public void setFoundedOn(LocalDate foundedOn) { this.foundedOn = foundedOn; }
+    public LocalDate getFoundedIn() { return foundedIn; }
+    public void setFoundedIn(LocalDate foundedIn) { this.foundedIn = foundedIn; }
     
     public String getMotto() { return motto; }
     public void setMotto(String motto) { this.motto = motto; }
@@ -154,4 +157,7 @@ public class Group {
     
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

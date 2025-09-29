@@ -8,10 +8,10 @@ public record SectionDTO(
     Long sectionId,
     Long tenantId,
     Long groupId,
-    @NotBlank String sectionName,
-    String sectionDescription,
-    UUID sectionIconObjectId,
-    UUID[] sectionGalleryObjectIds,
+    @NotBlank String name,
+    String description,
+    UUID iconObjectId,
+    UUID[] galleryObjectIds,
     Instant createdAt,
     Instant updatedAt
 ) {}

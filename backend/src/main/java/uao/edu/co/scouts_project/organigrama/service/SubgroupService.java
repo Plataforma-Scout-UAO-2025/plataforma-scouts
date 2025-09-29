@@ -85,8 +85,8 @@ public class SubgroupService {
         }
 
         // Validar unicidad del nombre en la sección
-        if (subgroupRepository.existsBySectionIdAndSubgroupName(sectionId, dto.subgroupName())) {
-            throw new RuntimeException("Subgroup name already exists in this section: " + dto.subgroupName());
+        if (subgroupRepository.existsBySectionIdAndName(sectionId, dto.name())) {
+            throw new RuntimeException("Subgroup name already exists in this section: " + dto.name());
         }
 
         // Crear nueva entidad
@@ -94,14 +94,14 @@ public class SubgroupService {
         subgroup.setTenantId(tenant.getTenantId());
         subgroup.setGroupId(group.getGroupId());
         subgroup.setSectionId(sectionId);
-        subgroup.setSubgroupName(dto.subgroupName());
-        subgroup.setSubgroupDescription(dto.subgroupDescription());
-        
+        subgroup.setName(dto.name());
+        subgroup.setDescription(dto.description());
+
         // Manejar galería de imágenes
-        if (dto.subgroupGalleryObjectIds() != null) {
-            subgroup.setSubgroupGalleryObjectIds(dto.subgroupGalleryObjectIds());
+        if (dto.galleryObjectIds() != null) {
+            subgroup.setGalleryObjectIds(dto.galleryObjectIds());
         } else {
-            subgroup.setSubgroupGalleryObjectIds(new UUID[0]);
+            subgroup.setGalleryObjectIds(new UUID[0]);
         }
         
         subgroup.setIsActive(dto.isActive() != null ? dto.isActive() : true);
@@ -124,20 +124,20 @@ public class SubgroupService {
         }
 
         // Validar unicidad del nombre si cambió
-        if (dto.subgroupName() != null && !dto.subgroupName().equals(existing.getSubgroupName())) {
-            if (subgroupRepository.existsBySectionIdAndSubgroupName(sectionId, dto.subgroupName())) {
-                throw new RuntimeException("Subgroup name already exists in this section: " + dto.subgroupName());
+        if (dto.name() != null && !dto.name().equals(existing.getName())) {
+            if (subgroupRepository.existsBySectionIdAndName(sectionId, dto.name())) {
+                throw new RuntimeException("Subgroup name already exists in this section: " + dto.name());
             }
-            existing.setSubgroupName(dto.subgroupName());
+            existing.setName(dto.name());
         }
 
         // Actualizar campos
-        if (dto.subgroupDescription() != null) {
-            existing.setSubgroupDescription(dto.subgroupDescription());
+        if (dto.description() != null) {
+            existing.setDescription(dto.description());
         }
-        
-        if (dto.subgroupGalleryObjectIds() != null) {
-            existing.setSubgroupGalleryObjectIds(dto.subgroupGalleryObjectIds());
+
+        if (dto.galleryObjectIds() != null) {
+            existing.setGalleryObjectIds(dto.galleryObjectIds());
         }
         
         if (dto.isActive() != null) {
@@ -188,9 +188,9 @@ public class SubgroupService {
                 subgroup.getTenantId(),
                 subgroup.getGroupId(),
                 subgroup.getSectionId(),
-                subgroup.getSubgroupName(),
-                subgroup.getSubgroupDescription(),
-                subgroup.getSubgroupGalleryObjectIds(),
+                subgroup.getName(),
+                subgroup.getDescription(),
+                subgroup.getGalleryObjectIds(),
                 subgroup.getIsActive(),
                 subgroup.getCreatedAt(),
                 subgroup.getUpdatedAt()
