@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -28,6 +29,7 @@ export default function EditSubramaModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<UpdateSubramaData>({
     id: '',
+    subgroup_id: undefined,
     nombre: '',
     descripcion: '',
     lider: '',
@@ -38,6 +40,7 @@ export default function EditSubramaModal({
     if (subrama) {
       setFormData({
         id: subrama.id,
+        subgroup_id: subrama.subgroup_id,
         nombre: subrama.nombre,
         descripcion: subrama.descripcion,
         lider: subrama.lider,
@@ -68,6 +71,9 @@ export default function EditSubramaModal({
           <DialogTitle className="text-2xl font-bold text-primary pr-8">
             Editar Subrama
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Modifica los detalles de la subrama seleccionada.
+          </DialogDescription>
           <Button
             variant="ghost"
             size="sm"

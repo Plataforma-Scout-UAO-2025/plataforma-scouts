@@ -15,6 +15,8 @@ import EditRamaModal from './components/EditRamaModal';
 import EditSubramaModal from './components/EditSubramaModal';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import SuccessModal from './components/SuccessModal';
+import ErrorAlert from './components/ErrorAlert';
+import OrganigramaLoader from './components/OrganigramaLoader';
 import type { Rama, Subrama } from './types/rama.type';
 import type {
   CreateRamaFormData,
@@ -23,11 +25,13 @@ import type {
   UpdateSubramaFormData,
 } from './schemas/rama.schema';
 import * as organigramaService from './services/organigrama.service';
-import { availableYears } from './constants/mockData';
+import { useApiError } from './hooks/useApiError';
+import { useTenantParams } from './hooks/useTenantParams';
 
 export default function Organigrama() {
   const [ramas, setRamas] = useState<Rama[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
   const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
   const [createSubramaModalOpen, setCreateSubramaModalOpen] = useState(false);
@@ -44,19 +48,42 @@ export default function Organigrama() {
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
+  
+  // Hook para manejar errores de la API
+  const { error, handleError, clearError } = useApiError();
+  
+  // Hook para obtener parámetros del tenant
+  const { tenantSlug, groupSlug } = useTenantParams();
 
   // Cargar ramas al montar el componente y cuando cambie el año
+  useEffect(() => {
+    loadAvailableYears();
+  }, []);
+
   useEffect(() => {
     loadRamas();
   }, [selectedYear]);
 
+  const loadAvailableYears = async () => {
+    try {
+      const years = await organigramaService.getAvailableYears(tenantSlug, groupSlug);
+      setAvailableYears(years);
+    } catch (error) {
+      handleError(error);
+      // Fallback en caso de error
+      setAvailableYears([new Date().getFullYear()]);
+    }
+  };
+
   const loadRamas = async () => {
     try {
       setIsLoading(true);
-      const data = await organigramaService.getRamas(selectedYear);
+      console.log('🔍 [Organigrama] Loading ramas with params:', { tenantSlug, groupSlug, selectedYear });
+      const data = await organigramaService.getRamas(tenantSlug, groupSlug, selectedYear);
+      console.log('🔍 [Organigrama] Loaded ramas:', data);
       setRamas(data);
     } catch (error) {
-      console.error('Error al cargar ramas:', error);
+      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -65,11 +92,11 @@ export default function Organigrama() {
   // ====== RAMAS ======
   const handleCreateRama = async (data: CreateRamaFormData) => {
     try {
-      await organigramaService.createRama(data);
+      await organigramaService.createRama(tenantSlug, groupSlug, data);
       await loadRamas();
       showSuccess('Rama creada con éxito');
     } catch (error) {
-      console.error('Error al crear rama:', error);
+      handleError(error);
       throw error;
     }
   };
@@ -82,11 +109,11 @@ export default function Organigrama() {
   const handleSubmitEditRama = async (data: UpdateRamaFormData) => {
     if (!ramaSeleccionada) return;
     try {
-      await organigramaService.updateRama({ ...data, id: ramaSeleccionada.id });
+      await organigramaService.updateRama(tenantSlug, groupSlug, { ...data, id: ramaSeleccionada.id });
       await loadRamas();
       showSuccess('Rama actualizada con éxito');
     } catch (error) {
-      console.error('Error al actualizar rama:', error);
+      handleError(error);
       throw error;
     }
   };
@@ -104,11 +131,11 @@ export default function Organigrama() {
 
   const handleSubmitSubrama = async (data: CreateSubramaFormData) => {
     try {
-      await organigramaService.createSubrama(data);
+      await organigramaService.createSubrama(tenantSlug, groupSlug, data.ramaId, data);
       await loadRamas();
       showSuccess('Subrama creada con éxito');
     } catch (error) {
-      console.error('Error al crear subrama:', error);
+      handleError(error);
       throw error;
     }
   };
@@ -121,11 +148,11 @@ export default function Organigrama() {
   const handleSubmitEditSubrama = async (data: UpdateSubramaFormData) => {
     if (!subramaSeleccionada) return;
     try {
-      await organigramaService.updateSubrama({ ...data, id: subramaSeleccionada.id });
+  await organigramaService.updateSubrama(tenantSlug, groupSlug, { ...data, id: subramaSeleccionada.id, subgroup_id: String(subramaSeleccionada.subgroup_id), ramaId: subramaSeleccionada.ramaId });
       await loadRamas();
       showSuccess('Subrama actualizada con éxito');
     } catch (error) {
-      console.error('Error al actualizar subrama:', error);
+      handleError(error);
       throw error;
     }
   };
@@ -140,16 +167,18 @@ export default function Organigrama() {
     if (!deleteTarget) return;
     try {
       if (deleteTarget.type === 'rama') {
-        await organigramaService.deleteRama(deleteTarget.id);
+        await organigramaService.deleteRama(tenantSlug, groupSlug, deleteTarget.id);
       } else {
-        await organigramaService.deleteSubrama(deleteTarget.id);
+        // Para subramas necesitamos el sectionId, por ahora usamos una estrategia temporal
+        const sectionId = deleteTarget.id.split('-')[0]; // Estrategia temporal
+        await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, deleteTarget.id);
       }
       await loadRamas();
       showSuccess(
         `${deleteTarget.type === 'rama' ? 'Rama' : 'Subrama'} eliminada con éxito`
       );
     } catch (error) {
-      console.error('Error al eliminar:', error);
+      handleError(error);
     }
   };
 
@@ -172,11 +201,20 @@ export default function Organigrama() {
               Administra la estructura de ramas y subramas de tu grupo scout
             </p>
           </div>
-          <Button disabled>
+          <Button onClick={() => setCreateRamaModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Crear Nueva Rama
           </Button>
         </div>
+
+        {/* Mostrar errores de la API */}
+        {error.hasError && (
+          <ErrorAlert 
+            message={error.message} 
+            type={error.type} 
+            onClose={clearError} 
+          />
+        )}
       </div>
     );
   }
@@ -219,14 +257,18 @@ export default function Organigrama() {
       </div>
 
       {/* Lista de ramas */}
-      <RamaList
-        ramas={ramas}
-        onEditRama={handleEditRama}
-        onDeleteRama={handleDeleteRama}
-        onCreateSubrama={handleCreateSubrama}
-        onEditSubrama={handleEditSubrama}
-        onDeleteSubrama={handleDeleteSubrama}
-      />
+      {isLoading ? (
+        <OrganigramaLoader />
+      ) : (
+        <RamaList
+          ramas={ramas}
+          onEditRama={handleEditRama}
+          onDeleteRama={handleDeleteRama}
+          onCreateSubrama={handleCreateSubrama}
+          onEditSubrama={handleEditSubrama}
+          onDeleteSubrama={handleDeleteSubrama}
+        />
+      )}
 
       {/* Modales */}
       <CreateRamaModal

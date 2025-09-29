@@ -3,6 +3,10 @@ import type { Rama } from '../types/rama.type';
 export const mockRamas: Rama[] = [
   {
     id: '1',
+    section_id: 'section-1',
+    sectionName: 'Manada',
+    sectionDescription: '',
+    sectionGalleryObjectIds: [],
     nombre: 'Manada',
     descripcion: '',
     edadMinima: 7,
@@ -14,6 +18,10 @@ export const mockRamas: Rama[] = [
   },
   {
     id: '2',
+    section_id: 'section-2',
+    sectionName: 'Tropa',
+    sectionDescription: '',
+    sectionGalleryObjectIds: [],
     nombre: 'Tropa',
     descripcion: '',
     edadMinima: 11,
@@ -24,6 +32,10 @@ export const mockRamas: Rama[] = [
     subramas: [
       {
         id: 'sub-2',
+        subgroup_id: 'subgroup-sub-2',
+        subgroupName: 'Patrulla Leones',
+        subgroupDescription: '',
+        section_id: 'section-2',
         nombre: 'Patrulla Leones',
         descripcion: '',
         ramaId: '2',
@@ -34,6 +46,10 @@ export const mockRamas: Rama[] = [
       },
       {
         id: 'sub-3',
+        subgroup_id: 'subgroup-sub-3',
+        subgroupName: 'Patrulla Leones',
+        subgroupDescription: '',
+        section_id: 'section-2',
         nombre: 'Patrulla Leones',
         descripcion: '',
         ramaId: '2',
@@ -46,6 +62,10 @@ export const mockRamas: Rama[] = [
   },
   {
     id: '3',
+    section_id: 'section-3',
+    sectionName: 'Manada',
+    sectionDescription: '',
+    sectionGalleryObjectIds: [],
     nombre: 'Manada',
     descripcion: '',
     edadMinima: 7,

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Upload } from 'lucide-react';
+import { X } from 'lucide-react';
+import { subirImagen } from '../services/storage.service';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +28,8 @@ export default function EditRamaModal({
   onSubmit,
 }: EditRamaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState<UpdateRamaData>({
     id: '',
     nombre: '',
@@ -45,6 +49,7 @@ export default function EditRamaModal({
         edadMaxima: rama.edadMaxima,
         estado: rama.estado,
       });
+      if (rama.icono) setImagenUrl(rama.icono);
     }
   }, [rama]);
 
@@ -70,6 +75,9 @@ export default function EditRamaModal({
           <DialogTitle className="text-2xl font-bold text-primary pr-8">
             Editar Rama
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Modifica los detalles de la rama seleccionada.
+          </DialogDescription>
           <Button
             variant="ghost"
             size="sm"
@@ -95,22 +103,40 @@ export default function EditRamaModal({
 
           {/* Campo Icono */}
           <div className="space-y-2">
-            <Label htmlFor="icono" className="text-sm font-medium text-foreground">
+            <Label htmlFor="icono-file-edit" className="text-sm font-medium text-foreground">
               Icono
             </Label>
-            <div className="relative">
-              <Input
-                id="icono"
-                type="text"
-                readOnly
-                value=""
-                placeholder="Seleccionar icono (Opcional)"
-                className="w-full bg-background border border-border rounded-md focus:ring-primary focus:border-primary pr-10 cursor-pointer text-foreground placeholder:text-muted-foreground"
-                onClick={() => {
-                  console.log('Abrir selector de iconos');
+            <div className="flex items-center space-x-3">
+              <input
+                id="icono-file-edit"
+                name="icono-file-edit"
+                type="file"
+                accept="image/*"
+                title="Seleccionar icono"
+                aria-label="Seleccionar icono"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setIsUploading(true);
+                  try {
+                    const url = await subirImagen(file);
+                    setImagenUrl(url);
+                    setFormData(prev => ({ ...prev, // @ts-ignore
+                      icono: url }));
+                  } catch (err) {
+                    console.error('Error subiendo imagen:', err);
+                  } finally {
+                    setIsUploading(false);
+                  }
                 }}
               />
-              <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              {isUploading ? (
+                <div className="text-sm text-muted-foreground">Subiendo...</div>
+              ) : imagenUrl ? (
+                <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
+              ) : (
+                <div className="text-sm text-muted-foreground">No hay imagen seleccionada</div>
+              )}
             </div>
           </div>
 
