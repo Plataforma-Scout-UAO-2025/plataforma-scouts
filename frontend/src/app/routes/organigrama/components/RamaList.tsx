@@ -103,11 +103,7 @@ export default function RamaList({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => {
-                  console.log('🔍 [RamaList] Navigating to rama with ID:', rama.id);
-                  console.log('🔍 [RamaList] Full rama object:', rama);
-                  navigate(`/app/organigrama/rama/${rama.id}`)
-                }}
+                onClick={() => navigate(`/app/organigrama/rama/${rama.id}`)}
                 className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
               >
                 <Eye className="h-4 w-4" />
@@ -140,16 +136,12 @@ export default function RamaList({
                   <p className="text-sm text-muted-foreground mb-3">
                     Esta rama no tiene subramas
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      console.log('🔍 [RamaList] Creating subrama for rama ID:', rama.id);
-                      console.log('🔍 [RamaList] Full rama object for subrama creation:', rama);
-                      onCreateSubrama(rama.id);
-                    }}
-                    className="text-primary border-primary hover:bg-primary hover:text-white"
-                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onCreateSubrama(rama.id)}
+                      className="text-primary border-primary hover:bg-primary hover:text-white"
+                    >
                     <Plus className="h-4 w-4 mr-2" />
                     Crear Nueva Subrama
                   </Button>
@@ -185,11 +177,7 @@ export default function RamaList({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            console.log('🔍 [RamaList] Navigating to subrama with ID:', subrama.subgroup_id || subrama.id);
-                            console.log('🔍 [RamaList] Full subrama object:', subrama);
-                            navigate(`/app/organigrama/subrama/${subrama.subgroup_id || subrama.id}`)
-                          }}
+                          onClick={() => navigate(`/app/organigrama/subrama/${subrama.subgroup_id || subrama.id}`)}
                           className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
                         >
                           <Eye className="h-3 w-3" />
@@ -221,11 +209,7 @@ export default function RamaList({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        console.log('🔍 [RamaList] Creating subrama for rama ID (from bottom):', rama.id);
-                        console.log('🔍 [RamaList] Full rama object for subrama creation (from bottom):', rama);
-                        onCreateSubrama(rama.id);
-                      }}
+                      onClick={() => onCreateSubrama(rama.id)}
                       className="w-full text-primary border-primary hover:bg-primary hover:text-white"
                     >
                       <Plus className="h-4 w-4 mr-2" />

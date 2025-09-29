@@ -76,9 +76,7 @@ export default function Organigrama() {
   const loadRamas = async () => {
     try {
       setIsLoading(true);
-      console.log('🔍 [Organigrama] Loading ramas with params:', { tenantSlug, groupSlug, selectedYear });
       const data = await organigramaService.getRamas(tenantSlug, groupSlug, selectedYear);
-      console.log('🔍 [Organigrama] Loaded ramas:', data);
       setRamas(data);
     } catch (error) {
       handleError(error);

@@ -13,17 +13,12 @@ import type {
 
 // Mapear datos del backend a formato frontend para Ramas
 export const mapBackendRamaToFrontend = (backendRama: any): Rama => {
-  console.log('🔍 [Mapper] Raw backend data:', backendRama);
-  
   // Intentar diferentes posibles nombres de campo para el ID
-  const possibleId = backendRama.section_id || 
-                     backendRama.id || 
-                     backendRama.sectionId || 
-                     backendRama.ID || 
+  const possibleId = backendRama.section_id ||
+                     backendRama.id ||
+                     backendRama.sectionId ||
+                     backendRama.ID ||
                      backendRama.Section_ID;
-                     
-  console.log('🔍 [Mapper] Extracted ID:', possibleId);
-  
   const mappedRama = {
     section_id: possibleId,
     sectionName: backendRama.sectionName || backendRama.name || '',
@@ -42,7 +37,6 @@ export const mapBackendRamaToFrontend = (backendRama: any): Rama => {
     subramas: [] // Se cargan por separado
   };
   
-  console.log('✅ [Mapper] Mapped rama:', mappedRama);
   return mappedRama;
 };
 

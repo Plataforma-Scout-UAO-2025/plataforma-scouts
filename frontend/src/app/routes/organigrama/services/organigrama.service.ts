@@ -13,17 +13,11 @@ import {
 // CRUD para Ramas (SECTIONS)
 export const getRamas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
   try {
-    console.log('🔄 [OrganigramaService] Obteniendo ramas del backend', { tenantSlug, groupSlug, año });
-    
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections');
-    console.log('🔍 [OrganigramaService] Making API call to:', endpoint);
-    
     const backendRamas = await apiClient.get<any[]>(endpoint);
-    console.log('🔍 [OrganigramaService] Raw backend response:', backendRamas);
 
     // Mapear datos del backend al formato del frontend (sin subramas todavía)
-    const mappedRamas: Rama[] = backendRamas.map((backendRama, index) => {
-      console.log(`🔍 [OrganigramaService] Processing rama ${index}:`, backendRama);
+    const mappedRamas: Rama[] = backendRamas.map((backendRama) => {
       const mappedRama = mapBackendRamaToFrontend(backendRama);
       // Inicializar subramas vacías; se llenarán más abajo de forma atómica
       mappedRama.subramas = [];
@@ -33,9 +27,7 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
     // Para cada rama crear una promesa que cargue sus subramas
     const subramasPromises = mappedRamas.map(async (rama) => {
       try {
-        console.log(`🔄 [OrganigramaService] Cargando subramas para rama ${rama.id}`);
-        const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, String(rama.section_id));
-        console.log(`✅ [OrganigramaService] Subramas cargadas para rama ${rama.id}:`, subramas.length);
+  const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, String(rama.section_id));
         return subramas;
       } catch (error) {
         console.warn(`⚠️ [OrganigramaService] Error cargando subramas para rama ${rama.id}:`, error);
@@ -49,18 +41,14 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
     // Asociar las subramas resueltas con cada rama correspondiente
     const ramas = mappedRamas.map((rama, idx) => {
       rama.subramas = allSubramas[idx] as any;
-      console.log(`✅ [OrganigramaService] Mapped rama ${idx}:`, rama);
+      // Rama mapped
       return rama;
     });
     
     // Filtrar por año si se especifica
     const filteredRamas = año ? ramas.filter(rama => rama.año === año) : ramas;
     
-    console.log('✅ [OrganigramaService] Ramas obtenidas exitosamente', { 
-      totalRamas: ramas.length, 
-      filteredCount: filteredRamas.length,
-      filteredRamas 
-    });
+    // Ramas obtenidas exitosamente
     return filteredRamas;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error obteniendo ramas:', error);
