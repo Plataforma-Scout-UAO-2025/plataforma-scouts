@@ -56,3 +56,14 @@ tests {
     expect(body.size).to.be.greaterThan(0);
   });
 }
+
+docs {
+  Nombre: Subida exitosa de documento PDF
+  Endpoint: /api/v1/test/upload/document
+  HU relacionadas: 
+  Descripción: Test que verifica la subida correcta de archivos PDF al bucket de documentos
+  Respuesta esperada: Status 200 con información del archivo subido y URL de acceso
+  Estructura del body de salida: {message: string, fileName: string, originalName: string, fileUrl: string, bucket: string, size: number, contentType: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}
