@@ -19,6 +19,7 @@ import { LineChart, Boxes, CalendarDays, Settings, HelpCircle, LogOut } from "lu
 import { Outlet, Link, useLocation } from "react-router-dom"
 import type { ReactNode } from "react"
 import LogoutButton from "@/components/auth/LogoutButton"
+import { useAuth0 } from '@auth0/auth0-react';
 
 type MenuItem = {
   id: string
@@ -43,6 +44,7 @@ const bottomItems: MenuItem[] = [
 
 export default function AppLayout() {
   const location = useLocation()
+  const { user } = useAuth0();
 
   const isActive = (href: string) => {
     if (href === "/app") {
@@ -60,12 +62,12 @@ export default function AppLayout() {
         <SidebarHeader className="p-4 bg-primary">
           <div className="flex items-center gap-3">
             <img
-              src="https://i.pravatar.cc/80?img=12"
+              src={user?.picture}
               alt="avatar"
               className="size-10 rounded-full object-cover"
             />
             <div className="leading-tight">
-              <div className="text-base font-semibold">Juan Esteban Torres</div>
+              <div className="text-base font-semibold">{user?.nickname}</div>
               <div className="text-xs opacity-80">MANADA KUNA</div>
             </div>
           </div>
