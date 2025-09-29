@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Upload, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { subirImagen } from '../services/storage.service';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,8 @@ export default function CreateRamaModal({
   onSubmit,
 }: CreateRamaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateRamaFormData>({
     nombre: '',
     descripcion: '',
@@ -109,23 +112,41 @@ export default function CreateRamaModal({
 
           {/* Campo Icono */}
           <div className="space-y-2">
-            <Label htmlFor="icono" className="text-foreground">
+            <Label htmlFor="icono-file-create" className="text-foreground">
               Icono
             </Label>
-            <div className="relative">
-              <Input
-                id="icono"
-                type="text"
-                readOnly
-                value=""
-                placeholder="Seleccionar icono (Opcional)"
-                className="w-full bg-card border border-border rounded-md focus:ring-primary focus:border-primary pr-10 cursor-pointer placeholder:text-muted-foreground"
-                onClick={() => {
-                  // Aquí iría la lógica para abrir selector de archivos
-                  console.log('Abrir selector de iconos');
+            <div className="flex items-center space-x-3">
+              <input
+                id="icono-file-create"
+                name="icono-file-create"
+                type="file"
+                accept="image/*"
+                title="Seleccionar icono" 
+                aria-label="Seleccionar icono"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setIsUploading(true);
+                  try {
+                    const url = await subirImagen(file);
+                    setImagenUrl(url);
+                    // Guardar la url en el formData bajo la propiedad icono si existe
+                    setFormData(prev => ({ ...prev, // @ts-ignore
+                      icono: url }));
+                  } catch (err) {
+                    console.error('Error subiendo imagen:', err);
+                  } finally {
+                    setIsUploading(false);
+                  }
                 }}
               />
-              <Upload className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              {isUploading ? (
+                <div className="text-sm text-muted-foreground">Subiendo...</div>
+              ) : imagenUrl ? (
+                <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
+              ) : (
+                <div className="text-sm text-muted-foreground">No hay imagen seleccionada</div>
+              )}
             </div>
           </div>
 

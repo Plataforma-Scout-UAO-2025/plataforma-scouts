@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Upload, Users } from "lucide-react";
 import type { Rama } from "../types/rama.type";
 import * as organigramaService from "../services/organigrama.service";
+import { apiClient } from "../services/apiClient";
+import { buildApiPath } from "../hooks/useTenantParams";
+import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 
 export default function RamaDetail() {
@@ -50,15 +53,42 @@ export default function RamaDetail() {
           icono: imageUrl
         });
         
-        // Subir al servidor
-        await organigramaService.uploadSectionIcon(
-          tenantSlug, 
-          groupSlug, 
-          rama.section_id.toString(), 
+        // Subir a Supabase Storage (devuelve publicUrl)
+        const publicUrl = await organigramaService.uploadSectionIcon(
+          tenantSlug,
+          groupSlug,
+          rama.section_id.toString(),
           file
         );
-        
-        console.log('✅ [RamaDetail] Ícono subido exitosamente');
+
+        // Persistir la URL en el backend principal
+        try {
+          const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', rama.section_id.toString());
+          // Intentar primero persistir la URL directamente (campo sectionIconUrl)
+          try {
+            await apiClient.patch(updateEndpoint, { sectionIconUrl: publicUrl });
+            setRama(prev => prev ? { ...prev, icono: publicUrl } : prev);
+            toast.success('Ícono actualizado correctamente');
+            console.log('✅ [RamaDetail] Ícono subido y persistido en backend (sectionIconUrl)');
+          } catch (innerErr: any) {
+            console.warn('⚠️ [RamaDetail] Falló persistir sectionIconUrl, intentando fallback a sectionIconObjectId', innerErr);
+            // Extraer ruta relativa del objeto desde la publicUrl para compatibilidad con backend
+            const marker = '/object/public/media/';
+            const idx = publicUrl.indexOf(marker);
+            if (idx !== -1) {
+              const objectId = publicUrl.substring(idx + marker.length);
+              await apiClient.patch(updateEndpoint, { sectionIconObjectId: objectId });
+              setRama(prev => prev ? { ...prev, icono: publicUrl } : prev);
+              toast.success('Ícono actualizado correctamente');
+              console.log('✅ [RamaDetail] Ícono subido y persistido en backend (sectionIconObjectId)', { objectId });
+            } else {
+              throw innerErr; // no pudimos formar objectId, propagar
+            }
+          }
+        } catch (err) {
+          console.error('❌ [RamaDetail] Error persistiendo ícono en backend:', err);
+          toast.error('Error al guardar el ícono en el backend');
+        }
       } catch (error) {
         console.error('❌ [RamaDetail] Error subiendo ícono:', error);
         // Revertir cambio visual en caso de error
@@ -82,15 +112,40 @@ export default function RamaDetail() {
         const imageUrl = URL.createObjectURL(file);
         setImagenPrincipal(imageUrl);
         
-        // Subir al servidor
-        await organigramaService.uploadSectionIcon(
-          tenantSlug, 
-          groupSlug, 
-          rama.section_id.toString(), 
+        // Subir a Supabase Storage (devuelve publicUrl)
+        const publicUrlMain = await organigramaService.uploadSectionIcon(
+          tenantSlug,
+          groupSlug,
+          rama.section_id.toString(),
           file
         );
-        
-        console.log('✅ [RamaDetail] Imagen principal subida exitosamente');
+
+        try {
+          const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', rama.section_id.toString());
+          // Intentar campo directo
+          try {
+            await apiClient.patch(updateEndpoint, { sectionMainImageUrl: publicUrlMain });
+            setImagenPrincipal(publicUrlMain);
+            toast.success('Imagen principal actualizada correctamente');
+            console.log('✅ [RamaDetail] Imagen principal subida y persistida en backend (sectionMainImageUrl)');
+          } catch (innerErr: any) {
+            console.warn('⚠️ [RamaDetail] Falló persistir sectionMainImageUrl, intentando fallback a sectionIconObjectId', innerErr);
+            const marker = '/object/public/media/';
+            const idx = publicUrlMain.indexOf(marker);
+            if (idx !== -1) {
+              const objectId = publicUrlMain.substring(idx + marker.length);
+              await apiClient.patch(updateEndpoint, { sectionMainImageObjectId: objectId });
+              setImagenPrincipal(publicUrlMain);
+              toast.success('Imagen principal actualizada correctamente');
+              console.log('✅ [RamaDetail] Imagen principal subida y persistida en backend (sectionMainImageObjectId)', { objectId });
+            } else {
+              throw innerErr;
+            }
+          }
+        } catch (err) {
+          console.error('❌ [RamaDetail] Error persistiendo imagen principal en backend:', err);
+          toast.error('Error al guardar la imagen principal en el backend');
+        }
       } catch (error) {
         console.error('❌ [RamaDetail] Error subiendo imagen principal:', error);
         // Revertir cambio visual en caso de error
@@ -109,15 +164,27 @@ export default function RamaDetail() {
         const newImages = files.map(file => URL.createObjectURL(file));
         setGaleriaFotos(prev => [...prev, ...newImages]);
         
-        // Subir al servidor
-        await organigramaService.uploadGalleryImages(
-          tenantSlug, 
-          groupSlug, 
-          rama.section_id.toString(), 
+        // Subir al servidor (aún usa uploadGalleryImages que espera postFormData)
+        const imageIds = await organigramaService.uploadGalleryImages(
+          tenantSlug,
+          groupSlug,
+          rama.section_id.toString(),
           files
         );
-        
-        console.log('✅ [RamaDetail] Fotos de galería subidas exitosamente');
+
+        try {
+          // Actualizar la sección en backend con los ids devueltos
+          const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', rama.section_id.toString());
+          await apiClient.patch(updateEndpoint, {
+            sectionGalleryObjectIds: imageIds
+          });
+
+          toast.success('Galería actualizada correctamente');
+          console.log('✅ [RamaDetail] Fotos de galería subidas y persistidas en backend');
+        } catch (err) {
+          console.error('❌ [RamaDetail] Error persistiendo galería en backend:', err);
+          toast.error('Error al guardar la galería en el backend');
+        }
       } catch (error) {
         console.error('❌ [RamaDetail] Error subiendo fotos de galería:', error);
         // Revertir cambio visual en caso de error

@@ -1,5 +1,6 @@
 import type { Rama, CreateRamaData, UpdateRamaData, CreateSubramaData, UpdateSubramaData, Subrama } from '../types/rama.type';
 import { apiClient } from './apiClient';
+import { subirImagen } from './storage.service';
 import { buildApiPath } from '../hooks/useTenantParams';
 import {
   mapBackendRamaToFrontend,
@@ -332,24 +333,12 @@ export const uploadSectionIcon = async (
     console.log('🔄 [OrganigramaService] Subiendo ícono de sección', { 
       tenantSlug, groupSlug, sectionId, fileName: file.name 
     });
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    // Subir el archivo
-    const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
-    const response = await apiClient.postFormData<{ objectId: string }>(uploadEndpoint, formData);
-    
-    // Actualizar el ícono de la sección
-    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId);
-    await apiClient.patch(updateEndpoint, {
-      sectionIconObjectId: response.objectId
-    });
-    
-    console.log('✅ [OrganigramaService] Ícono de sección subido exitosamente', { 
-      objectId: response.objectId 
-    });
-    return response.objectId;
+    // Subir directamente a Supabase Storage usando el servicio local
+    const publicUrl = await subirImagen(file);
+
+    console.log('✅ [OrganigramaService] Ícono de sección subido a Supabase Storage', { publicUrl });
+    // Devolver la URL pública para que el caller la utilice/almacene en su backend si lo requiere
+    return publicUrl;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error subiendo ícono de sección:', error);
     throw error;
