@@ -60,11 +60,11 @@ public class Group {
     private String history;
     
     @Column(name = "logo_object_id")
-    private UUID logoObjectId;
+    private java.util.UUID logoObjectId;
     
     @Column(name = "scarf_object_id")
-    private UUID scarfObjectId;
-    
+    private java.util.UUID scarfObjectId;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "social_links", nullable = false, columnDefinition = "jsonb")
     private Map<String, Object> socialLinks = Map.of();

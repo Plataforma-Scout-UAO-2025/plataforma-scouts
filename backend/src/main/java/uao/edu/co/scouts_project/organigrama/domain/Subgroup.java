@@ -33,8 +33,8 @@ public class Subgroup {
     private String subgroupDescription;
     
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "subgroup_gallery_object_ids", columnDefinition = "uuid[]")
-    private UUID[] subgroupGalleryObjectIds = new UUID[0];
+    @Column(name = "subgroup_gallery_object_ids", columnDefinition = "uuid[]", nullable = false)
+    private java.util.UUID[] subgroupGalleryObjectIds;
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;

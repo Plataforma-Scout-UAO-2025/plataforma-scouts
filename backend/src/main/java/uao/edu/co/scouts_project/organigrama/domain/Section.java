@@ -33,8 +33,8 @@ public class Section {
     private UUID sectionIconObjectId;
     
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "section_gallery_object_ids", columnDefinition = "uuid[]")
-    private UUID[] sectionGalleryObjectIds = new UUID[0];
+    @Column(name = "section_gallery_object_ids", columnDefinition = "uuid[]", nullable = false)
+    private java.util.UUID[] sectionGalleryObjectIds;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
