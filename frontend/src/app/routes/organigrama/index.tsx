@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +49,8 @@ export default function Organigrama() {
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
+  // Ref para almacenar el timeout de éxito y poder limpiarlo
+  const successTimeoutRef = useRef<number | null>(null);
   
   // Hook para manejar errores de la API
   const { error, handleError, clearError } = useApiError();
@@ -196,8 +198,34 @@ export default function Organigrama() {
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     setSuccessOpen(true);
-    setTimeout(() => setSuccessOpen(false), 2000);
+    // Limpiar cualquier timeout previo antes de crear uno nuevo
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+    successTimeoutRef.current = window.setTimeout(() => {
+      setSuccessOpen(false);
+      successTimeoutRef.current = null;
+    }, 2000);
   };
+
+  // Handler para cerrar el modal de éxito y limpiar timeout asociado
+  const closeSuccess = () => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    setSuccessOpen(false);
+  };
+
+  // Cleanup: limpiar timeout si el componente se desmonta
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Nota: render principal siempre mostrará la cabecera; la sección de lista
   // mostrará `OrganigramaLoader` mientras `isLoading` es true.
@@ -214,7 +242,11 @@ export default function Organigrama() {
             Administra la estructura de ramas y subramas de tu grupo scout
           </p>
         </div>
-        <Button onClick={() => setCreateRamaModalOpen(true)}>
+        <Button
+          onClick={() => setCreateRamaModalOpen(true)}
+          disabled={isLoading}
+          aria-busy={isLoading}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Crear Nueva Rama
         </Button>
@@ -306,7 +338,7 @@ export default function Organigrama() {
       <SuccessModal
         open={successOpen}
         message={successMessage}
-        onClose={() => setSuccessOpen(false)}
+        onClose={closeSuccess}
       />
     </div>
   );
