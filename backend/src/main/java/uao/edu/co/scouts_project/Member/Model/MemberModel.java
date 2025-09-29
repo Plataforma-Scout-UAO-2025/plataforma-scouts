@@ -40,7 +40,7 @@ public class MemberModel {
     private String phone;
     private Double weight;
     private Double height;
-    private String hobbbies;
+    private String hobbies;
     private String sports;
     private String instruments;
     private Estado status;

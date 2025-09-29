@@ -1,53 +1,134 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
+interface PersonalData {
+  firstname: string;
+  lastname: string;
+  email: string;
+  confirmarCorreo: string;
+  document_type: string;
+  identification: string;
+  birth_date: string;
+  address: string;
+  phone: string;
+  gender: string;
+  weight: string;
+  height: string;
+  hobbies: string;
+  sports: string;
+  instruments: string;
+  grupo: string;
+  rama: string;
+  emergency_phone: string;
+}
+
+interface SchoolData {
+  institution: string;
+  course: string;
+  calendar: string;
+  shift: string;
+}
+
+interface CrearMiembroData {
+  subgroup_id: number;
+  firstname: string;
+  lastname: string;
+  age: number;
+  role: string;
+  identification: number;
+  document_type: string;
+  email: string;
+  gender: string;
+  birth_date: string;
+  address: string;
+  phone: string;
+  weight: number;
+  height: number;
+  hobbies: string;
+  sports: string;
+  instruments: string;
+  status: string;
+  emergency_phone: string;
+}
+
+interface CrearMiembroResponse {
+  member_id: number;
+  [key: string]: any;
+}
+/*
 const ramasPorEdad = [
   { nombre: "Cachorros", min: 5, max: 7 },
   { nombre: "Lobatos", min: 7, max: 10 },
   { nombre: "Webelos", min: 11, max: 12 },
   { nombre: "Scout", min: 13, max: 17 },
-]; 
+];
+
+const subgruposPorRama = {
+  Cachorros: { "Centinelas 113": 1, "803 Chiminigagua": 2 },
+  Lobatos: { "Centinelas 113": 3, "803 Chiminigagua": 4 },
+  Webelos: { "Centinelas 113": 5, "803 Chiminigagua": 6 },
+  Scout: { "Centinelas 113": 7, "803 Chiminigagua": 8 },
+};*/
 
 function ScoutEnrollment() {
-  const [formulario, setFormulario] = useState({
-    nombres: "",
-    apellidos: "",
-    correo: "",
+  // Datos del miembro
+  const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
+    firstname: "",
+    lastname: "",
+    email: "",
     confirmarCorreo: "",
-    tipoDocumento: "",
-    numeroDocumento: "",
-    fechaNacimiento: "",
-    ciudad: "",
-    direccion: "",
-    barrio: "",
-    telefono: "",
-    institucion: "",
-    curso: "",
-    calendario: "",
-    jornada: "",
-    sexo: "",
-    peso: "",
-    estatura: "",
-    pasatiempos: "",
-    deportes: "",
-    instrumentos: "",
+    document_type: "",
+    identification: "",
+    birth_date: "",
+    address: "",
+    phone: "",
+    gender: "",
+    weight: "",
+    height: "",
+    hobbies: "",
+    sports: "",
+    instruments: "",
     grupo: "",
     rama: "",
+    emergency_phone: "",
+  });
+
+  // Datos escolares
+  const [datosEscolares, setDatosEscolares] = useState({
+    institution: "",
+    course: "",
+    calendar: "",
+    shift: "",
   });
 
   const [pagina, setPagina] = useState(1);
-  const [, setMostrarCalendario] = useState(false);
-  const [showModal, setShowModal] = useState(false); 
-  const calendarioRef = useRef<HTMLDivElement>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showSchoolDialog, setShowSchoolDialog] = useState(false);
+  const [incluirDatosEscolares, setIncluirDatosEscolares] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-   // Calcula la edad a partir de la fecha de nacimiento
-  const calcularEdad = (fecha: string) => {
-    if (!fecha) return null;
+  // Calcula la edad a partir de la fecha de nacimiento
+  interface CalcularEdad {
+    (fecha: string): number;
+  }
+
+  const calcularEdad: CalcularEdad = (fecha) => {
+    if (!fecha) return 0;
     const hoy = new Date();
     const nacimiento = new Date(fecha);
     let edad = hoy.getFullYear() - nacimiento.getFullYear();
@@ -59,84 +140,197 @@ function ScoutEnrollment() {
   };
 
   // Obtiene las ramas permitidas según la edad
- const ramasDisponibles = () => {
-  const edad = calcularEdad(formulario.fechaNacimiento);
-  if (!edad) return [];
-  return ramasPorEdad.filter(r => edad >= r.min && edad <= r.max).map(r => r.nombre);
-};
+  /*const ramasDisponibles = () => {
+    const edad = calcularEdad(datosPersonales.birth_date);
+    if (!edad) return [];
+    return ramasPorEdad
+      .filter((r) => edad >= r.min && edad <= r.max)
+      .map((r) => r.nombre);
+  };*/
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFormulario({ ...formulario, [e.target.name]: e.target.value });
+  interface ChangeEvent
+    extends React.ChangeEvent<HTMLInputElement | HTMLSelectElement> {}
+
+  const handlePersonalChange = (e: ChangeEvent) => {
+    const { name, value } = e.target;
+    setDatosPersonales((prev) => ({ ...prev, [name]: value }));
   };
 
-  useEffect(() => {
-    const handleClickFuera = (e: MouseEvent) => {
-      if (
-        calendarioRef.current &&
-        !calendarioRef.current.contains(e.target as Node)
-      ) {
-        setMostrarCalendario(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => {
-      document.removeEventListener("mousedown", handleClickFuera);
-    };
-  }, []);
+  const handleSchoolChange = (e: ChangeEvent) => {
+    const { name, value } = e.target;
+    setDatosEscolares((prev: SchoolData) => ({ ...prev, [name]: value }));
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const crearMiembro = async (
+    memberData: CrearMiembroData
+  ): Promise<CrearMiembroResponse> => {
+    try {
+      const response = await fetch("/api/member/crear_miembro", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(memberData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al crear el miembro");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  };
+
+  const crearDatosEscolares = async (schoolData: SchoolData) => {
+    try {
+      const response = await fetch("/api/school/crear_datos_escolares", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(schoolData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Error al crear los datos escolares"
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  };
+
+  const transformarDatos = (data: PersonalData): CrearMiembroData => {
+    const edad = calcularEdad(datosPersonales.birth_date);
+    return {
+      subgroup_id: Number(data.grupo),
+      firstname: data.firstname,
+      lastname: data.lastname,
+      age: edad,
+      role: "MIEMBRO",
+      identification: Number(data.identification),
+      document_type: data.document_type,
+      email: data.email,
+      gender: data.gender,
+      birth_date: new Date(data.birth_date).toISOString().split("T")[0], // formato yyyy-MM-dd
+      address: data.address,
+      phone: data.phone,
+      weight: Number(data.weight),
+      height: Number(data.height),
+      hobbies: data.hobbies,
+      sports: data.sports,
+      instruments: data.instruments,
+      status: "PENDING",
+      emergency_phone: data.emergency_phone,
+    };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pagina < 3) {
-      setPagina((prev) => prev + 1);
-    } else {
-      console.log("Datos de inscripción:", formulario);
+
+    if (pagina === 1) {
+      // Después de la primera página, preguntar si quiere incluir datos escolares
+      setShowSchoolDialog(true);
+      return;
+    }
+
+    if (pagina === 2 && incluirDatosEscolares) {
+      setPagina(3);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Conversión de datos personales
+      const memberData = transformarDatos(datosPersonales);
+
+      const miembroCreado = await crearMiembro(memberData);
+
+      if (
+        incluirDatosEscolares &&
+        (datosEscolares.institution || datosEscolares.course)
+      ) {
+        const schoolData = {
+          member_id: miembroCreado.member_id,
+          institution: datosEscolares.institution,
+          course: datosEscolares.course,
+          calendar: datosEscolares.calendar,
+          shift: datosEscolares.shift,
+        };
+
+        await crearDatosEscolares(schoolData);
+      }
+
+      // Mostrar modal de éxito
       setShowModal(true);
+    } catch (error: any) {
+      alert("Error al enviar la solicitud: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSchoolDialogResponse = (incluir: boolean) => {
+    setIncluirDatosEscolares(incluir);
+    setShowSchoolDialog(false);
+
+    if (incluir) {
+      setPagina(2);
+    } else {
+      setPagina(3);
     }
   };
 
   const camposPagina1 = (
     <>
       {/* Nombres */}
-      <div className="">
-        <Label className="mb-1" htmlFor="nombres">
+      <div>
+        <Label className="mb-1" htmlFor="firstname">
           Nombres *
         </Label>
         <Input
-          id="nombres"
-          name="nombres"
-          value={formulario.nombres}
-          onChange={handleChange}
+          id="firstname"
+          name="firstname"
+          value={datosPersonales.firstname}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
       {/* Apellidos */}
       <div>
-        <Label className="mb-1" htmlFor="apellidos">
+        <Label className="mb-1" htmlFor="lastname">
           Apellidos *
         </Label>
         <Input
-          id="apellidos"
-          name="apellidos"
-          value={formulario.apellidos}
-          onChange={handleChange}
+          id="lastname"
+          name="lastname"
+          value={datosPersonales.lastname}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
       {/* Correo */}
       <div>
-        <Label className="mb-1" htmlFor="correo">
+        <Label className="mb-1" htmlFor="email">
           Correo electrónico *
         </Label>
         <Input
           type="email"
-          id="correo"
-          name="correo"
-          value={formulario.correo}
-          onChange={handleChange}
+          id="email"
+          name="email"
+          value={datosPersonales.email}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
@@ -150,23 +344,23 @@ function ScoutEnrollment() {
           type="email"
           id="confirmarCorreo"
           name="confirmarCorreo"
-          value={formulario.confirmarCorreo}
-          onChange={handleChange}
+          value={datosPersonales.confirmarCorreo}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
       {/* Documento */}
       <div>
-        <Label className="mb-1" htmlFor="tipoDocumento">
+        <Label className="mb-1" htmlFor="document_type">
           Tipo de documento *
         </Label>
         <select
-          id="tipoDocumento"
-          name="tipoDocumento"
-          value={formulario.tipoDocumento}
-          onChange={handleChange}
-          className="border border-primary rounded w-65 h-9 px-1 bg-white"
+          id="document_type"
+          name="document_type"
+          value={datosPersonales.document_type}
+          onChange={handlePersonalChange}
+          className="border border-primary rounded w-full h-10 px-2 bg-white"
           required
         >
           <option value="">Selecciona...</option>
@@ -175,203 +369,134 @@ function ScoutEnrollment() {
         </select>
       </div>
       <div>
-        <Label className="mb-1" htmlFor="numeroDocumento">
+        <Label className="mb-1" htmlFor="identification">
           Número de documento *
         </Label>
         <Input
-          id="numeroDocumento"
-          name="numeroDocumento"
-          value={formulario.numeroDocumento}
-          onChange={handleChange}
+          id="identification"
+          name="identification"
+          value={datosPersonales.identification}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
 
-      
-       {/* Grupo */}
+      {/* Grupo */}
+      <div>
+        <Label className="mb-1" htmlFor="grupo">
+          Grupo *
+        </Label>
+        <select
+          id="grupo"
+          name="grupo"
+          value={datosPersonales.grupo}
+          onChange={handlePersonalChange}
+          className="border border-primary rounded w-full h-10 px-2 bg-white"
+          required
+        >
+          <option value="">Selecciona...</option>
+          <option value="Centinelas 113">Centinelas 113</option>
+          <option value="803 Chiminigagua">803 Chiminigagua</option>
+        </select>
+      </div>
+
+      {/* Fecha de nacimiento */}
+      <div>
+        <Label className="mb-1" htmlFor="birth_date">
+          Fecha de nacimiento *
+        </Label>
+        <Input
+          type="date"
+          id="birth_date"
+          name="birth_date"
+          value={datosPersonales.birth_date}
+          onChange={handlePersonalChange}
+          className="border border-primary"
+          required
+        />
+      </div>
+
+      {/* Rama */}
+      {/* {datosPersonales.grupo && datosPersonales.birth_date && (
         <div>
-          <Label className="mb-1" htmlFor="grupo">
-            Grupo *
+          <Label className="mb-1" htmlFor="rama">
+            Rama *
           </Label>
           <select
-            id="grupo"
-            name="grupo"
-            value={formulario.grupo}
-            onChange={handleChange}
+            id="rama"
+            name="rama"
+            value={datosPersonales.rama}
+            onChange={handlePersonalChange}
             className="border border-primary rounded w-full h-10 px-2 bg-white"
             required
           >
             <option value="">Selecciona...</option>
-            <option value="Centinelas 113">Centinelas 113</option>
-            <option value="803 Chiminigagua">803 Chiminigagua</option>
+            {ramasDisponibles().map((rama) => (
+              <option key={rama} value={rama}>
+                {rama}
+              </option>
+            ))}
           </select>
         </div>
+      )}*/}
 
-        {/* Fecha de nacimiento */}
-        <div>
-          <Label className="mb-1" htmlFor="fechaNacimiento">
-            Fecha de nacimiento *
-          </Label>
-          <Input
-            type="date"
-            id="fechaNacimiento"
-            name="fechaNacimiento"
-            value={formulario.fechaNacimiento}
-            onChange={handleChange}
-            className="border border-primary"
-            required
-          />
-        </div>
-
-        {/* Rama (solo si hay grupo y fecha de nacimiento) */}
-        {formulario.grupo && formulario.fechaNacimiento && (
-          <div>
-            <Label className="mb-1" htmlFor="rama">
-              Rama *
-            </Label>
-            <select
-              id="rama"
-              name="rama"
-              value={formulario.rama}
-              onChange={handleChange}
-              className="border border-primary rounded w-full h-10 px-2 bg-white"
-              required
-            >
-              <option value="">Selecciona...</option>
-              {ramasDisponibles().map(rama => (
-                <option key={rama} value={rama}>{rama}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-      {/* Ciudad */}
-      <div>
-        <Label className="mb-1" htmlFor="ciudad">
-          Ciudad de residencia *
-        </Label>
-        <Input
-          id="ciudad"
-          name="ciudad"
-          value={formulario.ciudad}
-          onChange={handleChange}
-          className="border border-primary"
-          required
-        />
-      </div>
       {/* Dirección */}
       <div>
-        <Label className="mb-1" htmlFor="direccion">
+        <Label className="mb-1" htmlFor="address">
           Dirección *
         </Label>
         <Input
-          id="direccion"
-          name="direccion"
-          value={formulario.direccion}
-          onChange={handleChange}
+          id="address"
+          name="address"
+          value={datosPersonales.address}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
-      {/* Barrio */}
-      <div>
-        <Label className="mb-1" htmlFor="barrio">
-          Barrio *
-        </Label>
-        <Input
-          id="barrio"
-          name="barrio"
-          value={formulario.barrio}
-          onChange={handleChange}
-          className="border border-primary"
-          required
-        />
-      </div>
-    </>
-  );
 
-  const camposPagina2 = (
-    <>
       {/* Teléfono */}
       <div>
-        <Label className="mb-1" htmlFor="telefono">
+        <Label className="mb-1" htmlFor="phone">
           Teléfono *
         </Label>
         <Input
-          id="telefono"
-          name="telefono"
-          value={formulario.telefono}
-          onChange={handleChange}
+          id="phone"
+          name="phone"
+          value={datosPersonales.phone}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
-      {/* Institución y curso */}
+
+      {/* Teléfono de emergencia */}
       <div>
-        <Label className="mb-1" htmlFor="institucion">
-          Institución educativa *
+        <Label className="mb-1" htmlFor="emergency_phone">
+          Teléfono de emergencia *
         </Label>
         <Input
-          id="institucion"
-          name="institucion"
-          value={formulario.institucion}
-          onChange={handleChange}
+          id="emergency_phone"
+          name="emergency_phone"
+          value={datosPersonales.emergency_phone}
+          onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
-      <div>
-        <Label className="mb-1" htmlFor="curso">
-          Curso actual *
-        </Label>
-        <Input
-          id="curso"
-          name="curso"
-          value={formulario.curso}
-          onChange={handleChange}
-          className="border border-primary"
-          required
-        />
-      </div>
-      {/* Calendario */}
-      <div>
-        <Label className="mb-1" htmlFor="calendario">
-          Calendario
-        </Label>
-        <Input
-          id="calendario"
-          name="calendario"
-          value={formulario.calendario}
-          onChange={handleChange}
-          className="border border-primary"
-        />
-      </div>
-      {/* Jornada */}
-      <div>
-        <Label className="mb-1" htmlFor="jornada">
-          Jornada *
-        </Label>
-        <Input
-          id="jornada"
-          name="jornada"
-          value={formulario.jornada}
-          onChange={handleChange}
-          className="border border-primary"
-          required
-        />
-      </div>
+
       {/* Sexo */}
       <div>
-        <Label className="mb-1" htmlFor="sexo">
+        <Label className="mb-1" htmlFor="gender">
           Sexo *
         </Label>
         <select
-          id="sexo"
-          name="sexo"
-          value={formulario.sexo}
-          onChange={handleChange}
-          className="border border-primary rounded w-50 h-10 px-2 bg-white"
+          id="gender"
+          name="gender"
+          value={datosPersonales.gender}
+          onChange={handlePersonalChange}
+          className="border border-primary rounded w-full h-10 px-2 bg-white"
           required
         >
           <option value="">Selecciona...</option>
@@ -379,30 +504,98 @@ function ScoutEnrollment() {
           <option value="Masculino">Masculino</option>
         </select>
       </div>
+
       {/* Peso y estatura */}
       <div>
-        <Label className="mb-1" htmlFor="peso">
-          Peso
+        <Label className="mb-1" htmlFor="weight">
+          Peso (kg)
         </Label>
         <Input
-          id="peso"
-          name="peso"
-          value={formulario.peso}
-          onChange={handleChange}
+          id="weight"
+          name="weight"
+          value={datosPersonales.weight}
+          onChange={handlePersonalChange}
+          className="border border-primary"
+          type="number"
+          step="0.1"
+        />
+      </div>
+      <div>
+        <Label className="mb-1" htmlFor="height">
+          Estatura (cm)
+        </Label>
+        <Input
+          id="height"
+          name="height"
+          value={datosPersonales.height}
+          onChange={handlePersonalChange}
+          className="border border-primary"
+          type="number"
+          step="0.1"
+        />
+      </div>
+    </>
+  );
+
+  const camposPagina2 = (
+    <>
+      {/* Datos escolares */}
+      <div>
+        <Label className="mb-1" htmlFor="institution">
+          Institución educativa *
+        </Label>
+        <Input
+          id="institution"
+          name="institution"
+          value={datosEscolares.institution}
+          onChange={handleSchoolChange}
+          className="border border-primary"
+          required
+        />
+      </div>
+      <div>
+        <Label className="mb-1" htmlFor="course">
+          Curso actual *
+        </Label>
+        <Input
+          id="course"
+          name="course"
+          value={datosEscolares.course}
+          onChange={handleSchoolChange}
+          className="border border-primary"
+          required
+        />
+      </div>
+      <div>
+        <Label className="mb-1" htmlFor="calendar">
+          Calendario
+        </Label>
+        <Input
+          id="calendar"
+          name="calendar"
+          value={datosEscolares.calendar}
+          onChange={handleSchoolChange}
           className="border border-primary"
         />
       </div>
       <div>
-        <Label className="mb-1" htmlFor="estatura">
-          Estatura
+        <Label className="mb-1" htmlFor="shift">
+          Jornada *
         </Label>
-        <Input
-          id="estatura"
-          name="estatura"
-          value={formulario.estatura}
-          onChange={handleChange}
-          className="border border-primary"
-        />
+        <select
+          id="shift"
+          name="shift"
+          value={datosEscolares.shift}
+          onChange={handleSchoolChange}
+          className="border border-primary rounded w-full h-10 px-2 bg-white"
+          required
+        >
+          <option value="">Selecciona...</option>
+          <option value="Mañana">Mañana</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noche">Noche</option>
+          <option value="Completa">Completa</option>
+        </select>
       </div>
     </>
   );
@@ -411,40 +604,40 @@ function ScoutEnrollment() {
     <>
       {/* Pasatiempos */}
       <div>
-        <Label className="mb-1" htmlFor="pasatiempos">
+        <Label className="mb-1" htmlFor="hobbies">
           Pasatiempos
         </Label>
         <Input
-          id="pasatiempos"
-          name="pasatiempos"
-          value={formulario.pasatiempos}
-          onChange={handleChange}
+          id="hobbies"
+          name="hobbies"
+          value={datosPersonales.hobbies}
+          onChange={handlePersonalChange}
           className="border border-primary"
         />
       </div>
       {/* Deportes */}
       <div>
-        <Label className="mb-1" htmlFor="deportes">
+        <Label className="mb-1" htmlFor="sports">
           Deportes
         </Label>
         <Input
-          id="deportes"
-          name="deportes"
-          value={formulario.deportes}
-          onChange={handleChange}
+          id="sports"
+          name="sports"
+          value={datosPersonales.sports}
+          onChange={handlePersonalChange}
           className="border border-primary"
         />
       </div>
       {/* Instrumentos */}
       <div>
-        <Label className="mb-1" htmlFor="instrumentos">
+        <Label className="mb-1" htmlFor="instruments">
           Instrumentos
         </Label>
         <Input
-          id="instrumentos"
-          name="instrumentos"
-          value={formulario.instrumentos}
-          onChange={handleChange}
+          id="instruments"
+          name="instruments"
+          value={datosPersonales.instruments}
+          onChange={handlePersonalChange}
           className="border border-primary"
         />
       </div>
@@ -457,7 +650,15 @@ function ScoutEnrollment() {
     return camposPagina3;
   };
 
-  const progreso = pagina === 1 ? 33 : pagina === 2 ? 66 : 100;
+  const getTituloPagina = () => {
+    if (pagina === 1) return "Información personal";
+    if (pagina === 2) return "Información escolar";
+    return "Intereses y habilidades";
+  };
+
+  const totalPaginas = incluirDatosEscolares ? 3 : 2;
+  const paginaActual = pagina > totalPaginas ? totalPaginas : pagina;
+  const progreso = (paginaActual / totalPaginas) * 100;
 
   return (
     <div className="min-h-screen w-screen bg-background px-20 py-10">
@@ -466,17 +667,23 @@ function ScoutEnrollment() {
           Inscríbete
         </h1>
         <p className="mt-2 text-muted-foreground max-w-3xl">
-          Ingrese todos los datos requeridos en este formulario para enviar la solicitud de inscripción.
+          Ingrese todos los datos requeridos en este formulario para enviar la
+          solicitud de inscripción.
         </p>
       </div>
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-xl font-semibold mb-6">Información personal</h2>
+        <h2 className="text-xl font-semibold mb-6">{getTituloPagina()}</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           {getCamposPagina()}
           {/* Botones */}
           <div className="col-span-2 flex justify-between mt-6">
             {pagina === 1 ? (
-              <Button variant="outline" type="button" className="px-10 py-6" onClick={() => navigate("/")}>
+              <Button
+                variant="outline"
+                type="button"
+                className="px-10 py-6"
+                onClick={() => navigate("/")}
+              >
                 Cancelar
               </Button>
             ) : (
@@ -489,15 +696,14 @@ function ScoutEnrollment() {
                 Atrás
               </Button>
             )}
-            {pagina < 3 ? (
-              <Button type="submit" className="px-10 py-6">
-                Continuar
-              </Button>
-            ) : (
-              <Button type="submit" className="px-10 py-6">
-                Enviar
-              </Button>
-            )}
+
+            <Button type="submit" className="px-10 py-6" disabled={loading}>
+              {loading
+                ? "Enviando..."
+                : pagina === totalPaginas
+                ? "Enviar"
+                : "Continuar"}
+            </Button>
           </div>
         </form>
         {/* Barra de progreso */}
@@ -505,27 +711,53 @@ function ScoutEnrollment() {
           <Progress className="h-2 rounded-full" value={progreso} />
         </div>
       </div>
+
+      {/* Modal para preguntar sobre datos escolares */}
+      <AlertDialog open={showSchoolDialog} onOpenChange={setShowSchoolDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Datos escolares</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Desea incluir información escolar en la inscripción?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => handleSchoolDialogResponse(false)}
+            >
+              No, continuar.
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleSchoolDialogResponse(true)}>
+              Sí, incluir.
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Modal de confirmación */}
       {showModal && (
         <div
-        className="fixed inset-0 z-50 flex items-center justify-center"
-        style={{
-          backdropFilter: "blur(7px)",   
-          backgroundColor: "rgba(0, 0, 0, 0.6)", 
-        }}
-      >
-        <div className="bg-[#FFFAF3] rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
-          <h3 className="text-xl font-bold mb-4 text-green-700">¡Solicitud enviada!</h3>
-          <p className="mb-6 text-gray-700">
-            Un encargado se comunicará contigo pronto.
-          </p>
-          <Button className="w-full" onClick={() => navigate("/")}>
-            Cerrar
-          </Button>
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            backdropFilter: "blur(7px)",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+          }}
+        >
+          <div className="bg-[#FFFAF3] rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
+            <h3 className="text-xl font-bold mb-4 text-green-700">
+              ¡Solicitud enviada!
+            </h3>
+            <p className="mb-6 text-gray-700">
+              Un encargado se comunicará contigo pronto.
+            </p>
+            <Button className="w-full" onClick={() => navigate("/")}>
+              Cerrar
+            </Button>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );
 }
+
 export default ScoutEnrollment;
