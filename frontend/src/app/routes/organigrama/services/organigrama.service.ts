@@ -334,11 +334,11 @@ export const uploadSectionIcon = async (
       tenantSlug, groupSlug, sectionId, fileName: file.name 
     });
     // Subir directamente a Supabase Storage usando el servicio local
-    const publicUrl = await subirImagen(file);
+    const fileId = await subirImagen(file);
 
-    console.log('✅ [OrganigramaService] Ícono de sección subido a Supabase Storage', { publicUrl });
-    // Devolver la URL pública para que el caller la utilice/almacene en su backend si lo requiere
-    return publicUrl;
+    console.log('✅ [OrganigramaService] Ícono de sección subido a Supabase Storage', { fileId });
+    // Devolver el UUID para que el caller lo persista en el backend
+    return fileId;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error subiendo ícono de sección:', error);
     throw error;

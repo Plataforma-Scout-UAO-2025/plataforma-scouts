@@ -27,36 +27,55 @@ export const apiClient = {
   async request<T>(endpoint: string, config: ApiRequestConfig = { method: 'GET' }): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = { ...getDefaultHeaders(), ...config.headers };
-    try {
-      console.log(`🔄 [ApiClient] ${config.method} ${endpoint}`, config.body || '');
-      const response = await fetch(url, {
-        method: config.method,
-        headers,
-        body: config.body ? JSON.stringify(config.body) : undefined,
-        signal: AbortSignal.timeout(15000)
-      });
+    const maxRetries = 2; // número total de intentos (1 + reintentos)
+    let attempt = 0;
 
-      if (!response.ok) {
-        throw new ApiError(response.status, response.statusText, `Error ${response.status}: ${response.statusText}`);
-      }
+    while (attempt < maxRetries) {
+      try {
+        attempt += 1;
+        console.log(`🔄 [ApiClient] ${config.method} ${endpoint} (attempt ${attempt})`, config.body || '');
+        const response = await fetch(url, {
+          method: config.method,
+          headers,
+          body: config.body ? JSON.stringify(config.body) : undefined,
+          signal: AbortSignal.timeout(15000)
+        });
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.log(`✅ [ApiClient] ${config.method} ${endpoint} - Respuesta vacía`);
-        return {} as T;
-      }
+        if (!response.ok) {
+          throw new ApiError(response.status, response.statusText, `Error ${response.status}: ${response.statusText}`);
+        }
 
-      const data = await response.json();
-      console.log(`✅ [ApiClient] ${config.method} ${endpoint} - Éxito`, data);
-      return data;
-    } catch (error) {
-      if (error instanceof ApiError) {
-        console.error(`❌ [ApiClient] ${config.method} ${endpoint} - Error API:`, error);
-        throw error;
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.log(`✅ [ApiClient] ${config.method} ${endpoint} - Respuesta vacía`);
+          return {} as T;
+        }
+
+        const data = await response.json();
+        console.log(`✅ [ApiClient] ${config.method} ${endpoint} - Éxito`, data);
+        return data;
+      } catch (error: any) {
+        // Si es un ApiError (código HTTP no OK), no reintentamos
+        if (error instanceof ApiError) {
+          console.error(`❌ [ApiClient] ${config.method} ${endpoint} - Error API:`, error);
+          throw error;
+        }
+
+        // Error de red / timeout: si quedan reintentos, esperar y reintentar
+        console.error(`❌ [ApiClient] ${config.method} ${endpoint} - Error de red (attempt ${attempt}):`, error?.message || error);
+        if (attempt >= maxRetries) {
+          throw new Error(`Error de conexión: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        }
+
+        // Backoff simple antes de reintentar
+        const backoffMs = 500 * attempt;
+        await new Promise(r => setTimeout(r, backoffMs));
+        // loop continuará y reintentará
       }
-      console.error(`❌ [ApiClient] ${config.method} ${endpoint} - Error de red:`, error);
-      throw new Error(`Error de conexión: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
+
+    // debería ser inalcanzable
+    throw new Error('Error inesperado en ApiClient.request');
   },
 
   get<T>(endpoint: string): Promise<T> { return this.request<T>(endpoint, { method: 'GET' }); },
