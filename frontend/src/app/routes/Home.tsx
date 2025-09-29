@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import LoginButton from "@/components/auth/LoginButton"
 import { Card, CardContent } from "@/components/ui/card"
 import { Shield, Mountain, Target, Users } from "lucide-react"
 
@@ -7,12 +7,10 @@ export default function Home() {
     <div className="min-h-screen bg-background flex-col">
       <header className="bg-primary py-4">
         <div className="container mx-auto px-4 flex items-center justify-end">
-          <Button
+          <LoginButton
             variant="secondary"
             className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
-          >
-            Iniciar Sesión
-          </Button>
+          />
         </div>
       </header>
 

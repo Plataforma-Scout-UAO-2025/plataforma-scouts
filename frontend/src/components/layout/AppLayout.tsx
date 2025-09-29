@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator"
 import { LineChart, Boxes, CalendarDays, Settings, HelpCircle, LogOut } from "lucide-react"
 import { Outlet, Link, useLocation } from "react-router-dom"
 import type { ReactNode } from "react"
+import LogoutButton from "@/components/auth/LogoutButton"
 
 type MenuItem = {
   id: string
@@ -108,8 +109,14 @@ export default function AppLayout() {
             {bottomItems.map((item) => (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton className="h-12 px-3 rounded-lg hover:bg-white/10">
-                  {item.icon}
-                  <span>{item.label}</span>
+                  {item.id === "logout" ? (
+                    <LogoutButton />
+                  ) : (
+                    <>
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
