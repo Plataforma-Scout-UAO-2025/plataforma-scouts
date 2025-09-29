@@ -78,3 +78,4 @@ build/
 
 ### supabase
 supabase/migrations/20250928032637_authRoleUpdate.sql
+supabase/migrations/20250929070353_leakedCredsUpdate.sql
