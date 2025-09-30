@@ -1,7 +1,5 @@
 package uao.edu.co.scouts_project.Member.Service;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import uao.edu.co.scouts_project.Member.Model.Enums.Estado;
 import uao.edu.co.scouts_project.Member.Model.MemberModel;
 
 import java.util.List;
@@ -15,11 +13,11 @@ public interface IMemberService {
 
     Optional<MemberModel> get_member_by_id(Integer member_id);
 
-    Boolean update_status(Integer member_id, Estado estado);
+    Boolean update_status(Integer member_id, String status);
 
     Optional<MemberModel> update_member_by_id(Integer member_id, MemberModel miembroUpdateDto);
 
-    List<MemberModel> list_members_by_status(Estado estado);
+    List<MemberModel> list_members_by_status(String status);
 
 
 }

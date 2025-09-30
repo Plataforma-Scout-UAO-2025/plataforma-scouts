@@ -1,0 +1,17 @@
+package uao.edu.co.scouts_project.Member.Dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class SchoolDto {
+    private Integer schoolDataId;
+    private Integer identification;
+    private String institution;
+    private String course;
+    private String calendar;
+    private String shift;
+}

@@ -14,11 +14,15 @@ public class SchoolModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer school_data_id;
+
     @OneToOne
     @JoinColumn(name = "member_id", referencedColumnName = "member_id", nullable = false)
+
     private MemberModel member;
     private String institution;
     private String course;
     private String calendar;
     private String shift;
+
+
 }

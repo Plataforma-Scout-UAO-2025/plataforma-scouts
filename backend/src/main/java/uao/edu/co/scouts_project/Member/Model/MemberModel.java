@@ -7,10 +7,13 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uao.edu.co.scouts_project.Member.Model.Enums.Estado;
+import com.vladmihalcea.hibernate.type.json.JsonType;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.util.ArrayList;
-import java.util.Date;
+import java.sql.Timestamp;
+import java.util.Map;
+import java.util.List;
 
 @Entity
 @Table(name = "Member")
@@ -18,14 +21,16 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MemberModel {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer member_id;
-    @NotNull
-    private Integer subgroup_id;
-    private String firstname;
-    private String lastname;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "subgroup_id", referencedColumnName = "subgroup_id", nullable = false)
+    private SubgroupModel subgroup;
+
+    private String first_name;
+    private String last_name;
     private Integer age;
     private String role;
     @Positive
@@ -35,19 +40,31 @@ public class MemberModel {
     @Email
     private String email;
     private String gender;
-    private Date birth_date;
+    private Timestamp birth_date;
     private String address;
     private String phone;
-    private Double weight;
-    private Double height;
-    private String hobbbies;
+    private String weight;
+    private String height;
+    private String hobbies;
     private String sports;
     private String instruments;
-    private Estado status;
-    private Date acceptance_date;
-    private ArrayList<Integer> in_charge_of;
-    private String emergency_phone;
 
+    @Column(nullable = false, columnDefinition = "varchar default 'PENDING'")
+    private String status = "PENDING";
+
+    private Timestamp acceptance_date;
+
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private List<Integer> in_charge_of;
+
+    @Type(JsonType.class)
+    @Column(columnDefinition = "json")
+    private Map<String, Object> emergencyPhone;
+
+    @Column(nullable = false)
+    @UpdateTimestamp
+    private Timestamp updated_at;
 
 }
 
