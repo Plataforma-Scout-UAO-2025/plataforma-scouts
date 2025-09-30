@@ -1,7 +1,5 @@
 package uao.edu.co.scouts_project.organigrama.api;
 
-import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
-import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,8 +8,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
+import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
+
 import java.net.URI;
 import java.util.List;
+import java.util.UUID; // <-- IMPORTADO
 
 @Tag(name = "Subgroups", description = "Operaciones CRUD para la gestión de subgrupos scouts (Seisenes, Patrullas, Equipos, Tribus)")
 @RestController
@@ -30,7 +33,7 @@ public class SubgroupController {
         @ApiResponse(responseCode = "404", description = "Tenant, grupo o sección no encontrado")
     })
     @GetMapping
-    public List<SubgroupDTO> getSubgroupsBySection(
+    public List<SubgroupResponseDTO> getSubgroupsBySection(
         @Parameter(description = "Identificador único del tenant", example = "region-valle")
         @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
@@ -46,7 +49,7 @@ public class SubgroupController {
         @ApiResponse(responseCode = "404", description = "Tenant, grupo, sección o subgrupo no encontrado")
     })
     @GetMapping("/{subgroupId}")
-    public SubgroupDTO getSubgroupById(
+    public SubgroupResponseDTO getSubgroupById(
         @Parameter(description = "Identificador único del tenant", example = "region-valle")
         @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
@@ -66,7 +69,7 @@ public class SubgroupController {
         @ApiResponse(responseCode = "409", description = "El nombre del subgrupo ya existe en la sección")
     })
     @PostMapping
-    public ResponseEntity<SubgroupDTO> createSubgroup(
+    public ResponseEntity<SubgroupResponseDTO> createSubgroup(
         @Parameter(description = "Identificador único del tenant", example = "region-valle")
         @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
@@ -75,7 +78,7 @@ public class SubgroupController {
         @PathVariable Long sectionId,
         @Parameter(description = "Datos del subgrupo a crear")
         @Valid @RequestBody SubgroupDTO dto) {
-        SubgroupDTO created = subgroupService.createSubgroup(tenantSlug, groupSlug, sectionId, dto);
+        SubgroupResponseDTO created = subgroupService.createSubgroup(tenantSlug, groupSlug, sectionId, dto);
         String location = "/api/tenants/" + tenantSlug + "/groups/" + groupSlug + 
                          "/sections/" + sectionId + "/subgroups/" + created.subgroupId();
         return ResponseEntity.created(URI.create(location)).body(created);
@@ -88,7 +91,7 @@ public class SubgroupController {
         @ApiResponse(responseCode = "400", description = "Datos inválidos proporcionados")
     })
     @PutMapping("/{subgroupId}")
-    public SubgroupDTO updateSubgroup(
+    public SubgroupResponseDTO updateSubgroup(
         @Parameter(description = "Identificador único del tenant", example = "region-valle")
         @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
@@ -102,7 +105,7 @@ public class SubgroupController {
         return subgroupService.updateSubgroup(tenantSlug, groupSlug, sectionId, subgroupId, dto);
     }
     
-    @Operation(summary = "Eliminar subgrupo", description = "Elimina un subgrupo del sistema")
+    @Operation(summary = "Eliminar subgrupo", description = "Elimina un subgrupo del sistema, incluyendo todas sus imágenes asociadas.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Subgrupo eliminado exitosamente"),
         @ApiResponse(responseCode = "404", description = "Tenant, grupo, sección o subgrupo no encontrado")
@@ -118,6 +121,29 @@ public class SubgroupController {
         @Parameter(description = "ID único del subgrupo", example = "1")
         @PathVariable Long subgroupId) {
         subgroupService.deleteSubgroup(tenantSlug, groupSlug, sectionId, subgroupId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============== ENDPOINT PARA ELIMINACIÓN DE IMAGEN INDIVIDUAL DE LA GALERÍA ==============
+
+    @Operation(summary = "Eliminar una imagen específica de la galería de un subgrupo", description = "Elimina un archivo específico de la galería de Supabase y desvincula su ID del subgrupo.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Imagen de la galería eliminada exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo, sección, subgrupo o imagen no encontrada")
+    })
+    @DeleteMapping("/{subgroupId}/gallery/{objectId}") // <-- RUTA CORREGIDA
+    public ResponseEntity<Void> deleteGalleryImageById( // <-- MÉTODO CORREGIDO
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId,
+        @Parameter(description = "ID único del subgrupo", example = "1")
+        @PathVariable Long subgroupId,
+        @Parameter(description = "ID (UUID) del objeto de storage a eliminar")
+        @PathVariable UUID objectId) { // <-- PARÁMETRO AÑADIDO
+        subgroupService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, subgroupId, objectId); // <-- LLAMADA CORREGIDA
         return ResponseEntity.noContent().build();
     }
 }
