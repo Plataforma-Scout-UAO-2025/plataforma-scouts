@@ -1,0 +1,66 @@
+name: Supabase Migration Deployment
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - feature/supabase_db_setup
+
+jobs:
+  # ----------------------------------------------------------------
+  # 1. DEPLOY TO STAGING
+  # ----------------------------------------------------------------
+  deploy_staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: Staging
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/cli@main
+        with:
+          version: latest
+          
+      - name: Link to Staging Project
+        run: supabase link --project-ref ${{ secrets.STAGING_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          
+      - name: Push Migrations to Staging
+        run: supabase db push
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+
+  # ----------------------------------------------------------------
+  # 2. DEPLOY TO PRODUCTION (Waits for Staging to complete)
+  # ----------------------------------------------------------------
+  deploy_production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy_staging # !!! THIS IS KEY: Ensures Staging deploy must succeed first
+    environment: Production
+
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/cli@main
+        with:
+          version: latest
+
+      - name: Link to Production Project
+        run: supabase link --project-ref ${{ secrets.PRODUCTION_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }
+
+      - name: Push Migrations to Production
+        run: supabase db push
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}

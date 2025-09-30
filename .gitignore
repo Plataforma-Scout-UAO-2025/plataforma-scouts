@@ -23,29 +23,6 @@ target/
 # Env files
 .env
 .env.local
-.env.production
-.env.development
-.env.qa
-
-# Database credentials
-application-*.properties
-!application.properties
-!**/application-test.properties
-
-# Supabase credentials
-supabase/
-.supabase/
-
-# Security files
-*.key
-*.p12
-*.pem
-keystore.*
-
-# QA Testing files (use Swagger instead)
-qa-testing.*
-test-upload.html
-postman_collection.json
 
 
 ### STS ###
@@ -77,5 +54,6 @@ build/
 .vscode/
 
 ### supabase
-supabase/migrations/20250922214447_updatedCreds.sql
-
+supabase/migrations/20250928032637_authRoleUpdate.sql
+supabase/migrations/20250929070353_leakedCredsUpdate.sql
+supabase/.temp/
