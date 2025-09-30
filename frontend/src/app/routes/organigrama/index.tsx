@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,18 +44,17 @@ export default function Organigrama() {
     type: 'rama' | 'subrama';
     id: string;
     name: string;
+    sectionId?: string;
   } | null>(null);
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
+  const successTimeoutRef = useRef<number | null>(null);
   
-  // Hook para manejar errores de la API
   const { error, handleError, clearError } = useApiError();
   
-  // Hook para obtener parámetros del tenant
   const { tenantSlug, groupSlug } = useTenantParams();
 
-  // Cargar ramas al montar el componente y cuando cambie el año
   useEffect(() => {
     loadAvailableYears();
   }, []);
@@ -70,7 +69,6 @@ export default function Organigrama() {
       setAvailableYears(years);
     } catch (error) {
       handleError(error);
-      // Fallback en caso de error
       setAvailableYears([new Date().getFullYear()]);
     }
   };
@@ -78,9 +76,7 @@ export default function Organigrama() {
   const loadRamas = async () => {
     try {
       setIsLoading(true);
-      console.log('🔍 [Organigrama] Loading ramas with params:', { tenantSlug, groupSlug, selectedYear });
       const data = await organigramaService.getRamas(tenantSlug, groupSlug, selectedYear);
-      console.log('🔍 [Organigrama] Loaded ramas:', data);
       setRamas(data);
     } catch (error) {
       handleError(error);
@@ -158,7 +154,8 @@ export default function Organigrama() {
   };
 
   const handleDeleteSubrama = (subrama: Subrama) => {
-    setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre });
+    const sectionId = subrama.section_id || subrama.ramaId || '';
+    setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre, sectionId });
     setConfirmDeleteOpen(true);
   };
 
@@ -169,9 +166,14 @@ export default function Organigrama() {
       if (deleteTarget.type === 'rama') {
         await organigramaService.deleteRama(tenantSlug, groupSlug, deleteTarget.id);
       } else {
-        // Para subramas necesitamos el sectionId, por ahora usamos una estrategia temporal
-        const sectionId = deleteTarget.id.split('-')[0]; // Estrategia temporal
-        await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, deleteTarget.id);
+        const sectionId = deleteTarget.sectionId;
+        if (!sectionId) {
+          const fallbackSectionId = deleteTarget.id.split('-')[0];
+          console.warn('⚠️ [Organigrama] sectionId no disponible en deleteTarget, usando fallback', { fallbackSectionId });
+          await organigramaService.deleteSubrama(tenantSlug, groupSlug, fallbackSectionId, deleteTarget.id);
+        } else {
+          await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, deleteTarget.id);
+        }
       }
       await loadRamas();
       showSuccess(
@@ -186,38 +188,35 @@ export default function Organigrama() {
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     setSuccessOpen(true);
-    setTimeout(() => setSuccessOpen(false), 2000);
+    // Limpiar cualquier timeout previo antes de crear uno nuevo
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+    successTimeoutRef.current = window.setTimeout(() => {
+      setSuccessOpen(false);
+      successTimeoutRef.current = null;
+    }, 2000);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">
-              Gestión de Organigrama
-            </h1>
-            <p className="text-muted-foreground">
-              Administra la estructura de ramas y subramas de tu grupo scout
-            </p>
-          </div>
-          <Button onClick={() => setCreateRamaModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Crear Nueva Rama
-          </Button>
-        </div>
+  // Handler para cerrar el modal de éxito y limpiar timeout asociado
+  const closeSuccess = () => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    setSuccessOpen(false);
+  };
 
-        {/* Mostrar errores de la API */}
-        {error.hasError && (
-          <ErrorAlert 
-            message={error.message} 
-            type={error.type} 
-            onClose={clearError} 
-          />
-        )}
-      </div>
-    );
-  }
+  // Cleanup: limpiar timeout si el componente se desmonta
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
 
   return (
     <div className="space-y-6">
@@ -231,11 +230,24 @@ export default function Organigrama() {
             Administra la estructura de ramas y subramas de tu grupo scout
           </p>
         </div>
-        <Button onClick={() => setCreateRamaModalOpen(true)}>
+        <Button
+          onClick={() => setCreateRamaModalOpen(true)}
+          disabled={isLoading}
+          aria-busy={isLoading}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Crear Nueva Rama
         </Button>
       </div>
+
+      {/* Mostrar errores de la API (si los hay) */}
+      {error.hasError && (
+        <ErrorAlert 
+          message={error.message} 
+          type={error.type} 
+          onClose={clearError} 
+        />
+      )}
 
       {/* Controles de filtrado */}
       <div className="flex items-center space-x-4">
@@ -314,7 +326,7 @@ export default function Organigrama() {
       <SuccessModal
         open={successOpen}
         message={successMessage}
-        onClose={() => setSuccessOpen(false)}
+        onClose={closeSuccess}
       />
     </div>
   );

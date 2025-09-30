@@ -34,12 +34,20 @@ export default function SubramaDetail() {
     if (file && subrama) {
       try {
         console.log('🔄 [SubramaDetail] Subiendo imagen principal:', file.name);
-        
-        // Mostrar imagen temporalmente
-        const imageUrl = URL.createObjectURL(file);
-        setImagenPrincipal(imageUrl);
-        
-        console.log('✅ [SubramaDetail] Imagen principal actualizada localmente');
+
+        const preview = URL.createObjectURL(file);
+        setImagenPrincipal(preview);
+
+        const publicUrl = await organigramaService.uploadSubgroupIcon(
+          tenantSlug,
+          groupSlug,
+          subrama.ramaId || subrama.section_id,
+          subrama.subgroup_id || subrama.id,
+          file
+        );
+
+        setImagenPrincipal(publicUrl);
+        console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
         setImagenPrincipal('');
@@ -52,12 +60,25 @@ export default function SubramaDetail() {
     if (files.length > 0 && subrama) {
       try {
         console.log('🔄 [SubramaDetail] Subiendo fotos a la galería:', files.length);
-        
-        // Mostrar imágenes temporalmente
-        const newImages = files.map(file => URL.createObjectURL(file));
-        setGaleriaFotos(prev => [...prev, ...newImages]);
-        
-        console.log('✅ [SubramaDetail] Fotos de galería actualizadas localmente');
+
+        const previews = files.map(f => URL.createObjectURL(f));
+        setGaleriaFotos(prev => [...prev, ...previews]);
+
+        const uploadedUrls = await organigramaService.uploadSubgroupGalleryImages(
+          tenantSlug,
+          groupSlug,
+          subrama.ramaId || subrama.section_id,
+          subrama.subgroup_id || subrama.id,
+          files
+        );
+
+        // Reemplazar previews por URLs reales
+        setGaleriaFotos(prev => {
+          const remaining = prev.slice(0, prev.length - previews.length);
+          return [...remaining, ...uploadedUrls];
+        });
+
+        console.log('✅ [SubramaDetail] Fotos de galería subidas correctamente');
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo fotos de galería:', error);
         setGaleriaFotos(prev => prev.slice(0, -files.length));
@@ -158,7 +179,7 @@ export default function SubramaDetail() {
       {/* Información Principal */}
       <Card className="p-4 space-y-4 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Información Principal</h2>
+          <h2 className="text-lg font-semibold text-primary">Información Principal</h2>
           <Button
             size="sm"
             variant="outline"
@@ -206,14 +227,18 @@ export default function SubramaDetail() {
 
       {/* Integrantes */}
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="text-lg font-semibold text-primary">
           Integrantes
         </h2>
         <div className="flex flex-wrap gap-2">
           {/* ⚠️ Mock temporal */}
           {["Roberto Restrepo", "Carlos Camargo", "Ana Aguillón", "Mario Mora"].map(
             (name, idx) => (
-              <Badge key={idx} variant="outline">
+              <Badge
+                key={idx}
+                variant="outline"
+                className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
+              >
                 {name}
               </Badge>
             )
@@ -224,7 +249,7 @@ export default function SubramaDetail() {
       {/* Galería */}
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className="text-lg font-semibold text-primary">
             Galería de fotos
           </h2>
           <Button

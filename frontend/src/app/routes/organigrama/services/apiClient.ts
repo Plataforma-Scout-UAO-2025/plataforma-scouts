@@ -2,7 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 
 interface ApiRequestConfig {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
 }
 
@@ -54,7 +54,7 @@ export const apiClient = {
         const data = await response.json();
         console.log(`✅ [ApiClient] ${config.method} ${endpoint} - Éxito`, data);
         return data;
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Si es un ApiError (código HTTP no OK), no reintentamos
         if (error instanceof ApiError) {
           console.error(`❌ [ApiClient] ${config.method} ${endpoint} - Error API:`, error);
@@ -79,10 +79,10 @@ export const apiClient = {
   },
 
   get<T>(endpoint: string): Promise<T> { return this.request<T>(endpoint, { method: 'GET' }); },
-  post<T>(endpoint: string, body: any): Promise<T> { return this.request<T>(endpoint, { method: 'POST', body }); },
-  put<T>(endpoint: string, body: any): Promise<T> { return this.request<T>(endpoint, { method: 'PUT', body }); },
+  post<T>(endpoint: string, body: unknown): Promise<T> { return this.request<T>(endpoint, { method: 'POST', body }); },
+  put<T>(endpoint: string, body: unknown): Promise<T> { return this.request<T>(endpoint, { method: 'PUT', body }); },
   delete<T>(endpoint: string): Promise<T> { return this.request<T>(endpoint, { method: 'DELETE' }); },
-  patch<T>(endpoint: string, body: any): Promise<T> { return this.request<T>(endpoint, { method: 'PATCH' as any, body }); },
+  patch<T>(endpoint: string, body: unknown): Promise<T> { return this.request<T>(endpoint, { method: 'PATCH', body }); },
 
   async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;

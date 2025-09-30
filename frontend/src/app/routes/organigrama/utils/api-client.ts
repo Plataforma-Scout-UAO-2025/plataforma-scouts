@@ -6,7 +6,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 // Tipo para las opciones de la petición
 interface RequestOptions {
   method: HttpMethod;
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
 }
 
