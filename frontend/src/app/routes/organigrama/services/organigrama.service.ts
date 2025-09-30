@@ -13,7 +13,7 @@ import {
 export const getRamas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
   try {
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections');
-    const backendRamas = await apiClient.get<any[]>(endpoint);
+    const backendRamas = await apiClient.get<BackendRama[]>(endpoint);
 
     // Mapear datos del backend al formato del frontend (sin subramas todavía)
     const mappedRamas: Rama[] = backendRamas.map((backendRama) => {
@@ -28,14 +28,14 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
         return subramas;
       } catch (error) {
         console.warn(`⚠️ [OrganigramaService] Error cargando subramas para rama ${rama.id}:`, error);
-        return [] as any[];
+        return [] as Subrama[];
       }
     });
 
     const allSubramas = await Promise.all(subramasPromises);
 
     const ramas = mappedRamas.map((rama, idx) => {
-      rama.subramas = allSubramas[idx] as any;
+      rama.subramas = allSubramas[idx] as Subrama[];
       // Rama mapped
       return rama;
     });
@@ -54,7 +54,7 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
     console.log('🔄 [OrganigramaService] Obteniendo rama por ID del backend', { tenantSlug, groupSlug, id });
     
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', id);
-    const backendRama = await apiClient.get<any>(endpoint);
+    const backendRama = await apiClient.get<BackendRama>(endpoint);
     
     const rama = mapBackendRamaToFrontend(backendRama);
     
@@ -70,7 +70,7 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
 
     console.log('✅ [OrganigramaService] Rama obtenida exitosamente', { id: rama.id });
     return rama;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Rama no encontrada', { id });
       return null;
@@ -88,7 +88,7 @@ export const createRama = async (tenantSlug: string, groupSlug: string, data: Cr
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections');
     const backendData = mapFrontendCreateRamaToBackend(data);
     
-    const backendRama = await apiClient.post<any>(endpoint, backendData);
+    const backendRama = await apiClient.post<BackendRama>(endpoint, backendData);
     const rama = mapBackendRamaToFrontend(backendRama);
     
     console.log('✅ [OrganigramaService] Rama creada exitosamente', { id: rama.id });
@@ -106,12 +106,12 @@ export const updateRama = async (tenantSlug: string, groupSlug: string, data: Up
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', data.id);
     const backendData = mapFrontendUpdateRamaToBackend(data);
     
-    const backendRama = await apiClient.put<any>(endpoint, backendData);
+    const backendRama = await apiClient.put<BackendRama>(endpoint, backendData);
     const rama = mapBackendRamaToFrontend(backendRama);
     
     console.log('✅ [OrganigramaService] Rama actualizada exitosamente', { id: rama.id });
     return rama;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Rama no encontrada para actualizar', { id: data.id });
       return null;
@@ -131,7 +131,7 @@ export const deleteRama = async (tenantSlug: string, groupSlug: string, id: stri
     
     console.log('✅ [OrganigramaService] Rama eliminada exitosamente', { id });
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Rama no encontrada para eliminar', { id });
       return false;
@@ -148,7 +148,7 @@ export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string,
     console.log('🔄 [OrganigramaService] Obteniendo subramas por section ID del backend', { tenantSlug, groupSlug, sectionId });
     
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups');
-    const backendSubramas = await apiClient.get<any[]>(endpoint);
+    const backendSubramas = await apiClient.get<BackendSubrama[]>(endpoint);
     
     // Mapear datos del backend al formato del frontend
     const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
@@ -168,7 +168,7 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups');
     const backendData = mapFrontendCreateSubramaToBackend(data);
     
-    const backendSubrama = await apiClient.post<any>(endpoint, backendData);
+    const backendSubrama = await apiClient.post<BackendSubrama>(endpoint, backendData);
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     
     console.log('✅ [OrganigramaService] Subrama creada exitosamente', { id: subrama.id });
@@ -202,12 +202,12 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     console.log('🔍 [OrganigramaService] Endpoint:', endpoint);
     console.log('🔍 [OrganigramaService] Backend data:', backendData);
     
-    const backendSubrama = await apiClient.put<any>(endpoint, backendData);
+    const backendSubrama = await apiClient.put<BackendSubrama>(endpoint, backendData);
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     
     console.log('✅ [OrganigramaService] Subrama actualizada exitosamente', { id: subrama.id });
     return subrama;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ [OrganigramaService] Error actualizando subrama:', error);
     throw error;
   }
@@ -222,7 +222,7 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
     
     console.log('✅ [OrganigramaService] Subrama eliminada exitosamente', { id });
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Subrama no encontrada para eliminar', { id });
       return false;
@@ -255,13 +255,13 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
     console.log('🔄 [OrganigramaService] Obteniendo subrama por ID del backend', { tenantSlug, groupSlug, sectionId, id });
     
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', id);
-    const backendSubrama = await apiClient.get<any>(endpoint);
+    const backendSubrama = await apiClient.get<BackendSubrama>(endpoint);
     
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     
     console.log('✅ [OrganigramaService] Subrama obtenida exitosamente', { id: subrama.id });
     return subrama;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Subrama no encontrada', { id });
       return null;

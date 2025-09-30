@@ -155,7 +155,7 @@ export default function CreateRamaModal({
                         throw new Error('Upload failed');
                       });
                       setImagenUrl(url);
-                      setFormData(prev => ({ ...prev, // @ts-ignore
+                      setFormData(prev => ({ ...prev, // @ts-expect-error: `icono` property type mismatch with `url`
                         icono: url }));
                     } catch (err) {
                       console.error('Error subiendo imagen:', err);

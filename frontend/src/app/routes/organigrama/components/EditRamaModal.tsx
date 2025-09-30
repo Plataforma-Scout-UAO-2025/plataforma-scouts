@@ -141,7 +141,7 @@ export default function EditRamaModal({
                     // Para edición sí tenemos rama.id
                     const url = await uploadSectionIcon('', '', rama.id, file);
                     setImagenUrl(url);
-                    setFormData(prev => ({ ...prev, // @ts-ignore
+                    setFormData(prev => ({ ...prev, // @ts-expect-error: `icono` property type mismatch with `url`
                       icono: url }));
                   } catch (err) {
                     console.error('Error subiendo imagen:', err);

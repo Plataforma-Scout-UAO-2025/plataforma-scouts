@@ -12,7 +12,7 @@ import type {
 } from '../types/rama.type';
 
 // Mapear datos del backend a formato frontend para Ramas
-export const mapBackendRamaToFrontend = (backendRama: any): Rama => {
+export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   // Intentar diferentes posibles nombres de campo para el ID
   const possibleId = backendRama.section_id ||
                      backendRama.id ||
@@ -41,7 +41,7 @@ export const mapBackendRamaToFrontend = (backendRama: any): Rama => {
 };
 
 // Mapear datos del backend a formato frontend para Subramas
-export const mapBackendSubramaToFrontend = (backendSubrama: any): Subrama => {
+export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Subrama => {
   // Intentar extraer el ID canonical que provee el backend desde varios nombres posibles
   const rawId = backendSubrama.subgroup_id ?? backendSubrama.subgroupId ?? backendSubrama.id ?? backendSubrama.ID ?? backendSubrama.subgroupIdLegacy;
 
