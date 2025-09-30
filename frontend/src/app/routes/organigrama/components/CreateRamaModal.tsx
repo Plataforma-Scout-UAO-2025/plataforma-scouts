@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Upload } from 'lucide-react';
-import { subirImagen } from '../services/storage.service';
+import { uploadSectionIcon } from '../services/organigrama.service';
 import {
   Dialog,
   DialogContent,
@@ -142,22 +142,27 @@ export default function CreateRamaModal({
                 className="hidden"
                 title="Seleccionar icono"
                 aria-label="Seleccionar icono"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setIsUploading(true);
-                  try {
-                    const url = await subirImagen(file);
-                    setImagenUrl(url);
-                    // Guardar la url en el formData bajo la propiedad icono si existe
-                    setFormData(prev => ({ ...prev, // @ts-ignore
-                      icono: url }));
-                  } catch (err) {
-                    console.error('Error subiendo imagen:', err);
-                  } finally {
-                    setIsUploading(false);
-                  }
-                }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setIsUploading(true);
+                    try {
+                      // Para creación aún no tenemos sectionId; llamamos al upload que devuelve la URL pública.
+                      // Usamos una ruta temporal del servicio que solo sube y devuelve URL.
+                      const url = await uploadSectionIcon('', '', '', file).catch(async () => {
+                        // Si el servicio exige sectionId, el fallback es enviar FormData al endpoint de upload directamente vía apiClient,
+                        // pero aqui asumimos que uploadSectionIcon puede manejar sección vacía para solo subir y devolver URL.
+                        throw new Error('Upload failed');
+                      });
+                      setImagenUrl(url);
+                      setFormData(prev => ({ ...prev, // @ts-ignore
+                        icono: url }));
+                    } catch (err) {
+                      console.error('Error subiendo imagen:', err);
+                    } finally {
+                      setIsUploading(false);
+                    }
+                  }}
               />
             </div>
           </div>

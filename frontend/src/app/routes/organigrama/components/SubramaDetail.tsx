@@ -34,12 +34,20 @@ export default function SubramaDetail() {
     if (file && subrama) {
       try {
         console.log('🔄 [SubramaDetail] Subiendo imagen principal:', file.name);
-        
-        // Mostrar imagen temporalmente
-        const imageUrl = URL.createObjectURL(file);
-        setImagenPrincipal(imageUrl);
-        
-        console.log('✅ [SubramaDetail] Imagen principal actualizada localmente');
+
+        const preview = URL.createObjectURL(file);
+        setImagenPrincipal(preview);
+
+        const publicUrl = await organigramaService.uploadSubgroupIcon(
+          tenantSlug,
+          groupSlug,
+          subrama.ramaId || subrama.section_id,
+          subrama.subgroup_id || subrama.id,
+          file
+        );
+
+        setImagenPrincipal(publicUrl);
+        console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
         setImagenPrincipal('');
@@ -52,12 +60,25 @@ export default function SubramaDetail() {
     if (files.length > 0 && subrama) {
       try {
         console.log('🔄 [SubramaDetail] Subiendo fotos a la galería:', files.length);
-        
-        // Mostrar imágenes temporalmente
-        const newImages = files.map(file => URL.createObjectURL(file));
-        setGaleriaFotos(prev => [...prev, ...newImages]);
-        
-        console.log('✅ [SubramaDetail] Fotos de galería actualizadas localmente');
+
+        const previews = files.map(f => URL.createObjectURL(f));
+        setGaleriaFotos(prev => [...prev, ...previews]);
+
+        const uploadedUrls = await organigramaService.uploadSubgroupGalleryImages(
+          tenantSlug,
+          groupSlug,
+          subrama.ramaId || subrama.section_id,
+          subrama.subgroup_id || subrama.id,
+          files
+        );
+
+        // Reemplazar previews por URLs reales
+        setGaleriaFotos(prev => {
+          const remaining = prev.slice(0, prev.length - previews.length);
+          return [...remaining, ...uploadedUrls];
+        });
+
+        console.log('✅ [SubramaDetail] Fotos de galería subidas correctamente');
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo fotos de galería:', error);
         setGaleriaFotos(prev => prev.slice(0, -files.length));

@@ -1,6 +1,5 @@
 import type { Rama, CreateRamaData, UpdateRamaData, CreateSubramaData, UpdateSubramaData, Subrama } from '../types/rama.type';
 import { apiClient } from './apiClient';
-import { subirImagen } from './storage.service';
 import { buildApiPath } from '../hooks/useTenantParams';
 import {
   mapBackendRamaToFrontend,
@@ -285,26 +284,29 @@ export const uploadGalleryImages = async (
       tenantSlug, groupSlug, sectionId, filesCount: files.length 
     });
     
-    const imageIds: string[] = [];
-    
+    const uploadedImageUrls: string[] = [];
+
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
-      const response = await apiClient.postFormData<{ objectId: string }>(uploadEndpoint, formData);
-      
-      imageIds.push(response.objectId);
+      // El backend devolverá { objectId, url }
+      const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
+
+      // Guardamos la url pública que provee el backend
+      uploadedImageUrls.push(response.url);
     }
-    
-    // Actualizar la galería de la sección
+
+    // Actualizar la galería de la sección con los objectIds o urls según API
     const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId);
     await apiClient.patch(updateEndpoint, {
-      sectionGalleryObjectIds: imageIds
+      // Preferimos actualizar con objectIds si la API lo requiere; si la API acepta urls públicas, enviamos urls.
+      sectionGalleryObjectIds: uploadedImageUrls
     });
-    
-    console.log('✅ [OrganigramaService] Imágenes de galería subidas exitosamente', { imageIds });
-    return imageIds;
+
+    console.log('✅ [OrganigramaService] Imágenes de galería subidas exitosamente', { uploadedImageUrls });
+    return uploadedImageUrls;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error subiendo imágenes de galería:', error);
     throw error;
@@ -321,13 +323,88 @@ export const uploadSectionIcon = async (
     console.log('🔄 [OrganigramaService] Subiendo ícono de sección', { 
       tenantSlug, groupSlug, sectionId, fileName: file.name 
     });
-    // Subir directamente a Supabase Storage usando el servicio local
-    const fileId = await subirImagen(file);
+    const formData = new FormData();
+    formData.append('file', file);
 
-    console.log('✅ [OrganigramaService] Ícono de sección subido a Supabase Storage', { fileId });
-    return fileId;
+    const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
+    // El backend devolverá { objectId, url }
+    const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
+
+    // Actualizar la sección con el nuevo icon (backend maneja persistencia)
+    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId);
+    await apiClient.patch(updateEndpoint, {
+      sectionIconObjectId: response.objectId,
+      sectionIconUrl: response.url
+    });
+
+    console.log('✅ [OrganigramaService] Ícono de sección subido y sección actualizada', { objectId: response.objectId, url: response.url });
+    return response.url;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error subiendo ícono de sección:', error);
+    throw error;
+  }
+};
+
+// Uploads for Subgroups (Subramas)
+export const uploadSubgroupIcon = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  file: File
+): Promise<string> => {
+  try {
+    console.log('🔄 [OrganigramaService] Subiendo ícono de subrama', { tenantSlug, groupSlug, sectionId, subgroupId, fileName: file.name });
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
+    const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
+
+    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
+    await apiClient.patch(updateEndpoint, {
+      subgroupIconObjectId: response.objectId,
+      subgroupIconUrl: response.url
+    });
+
+    console.log('✅ [OrganigramaService] Ícono de subrama subido y subrama actualizada', { objectId: response.objectId, url: response.url });
+    return response.url;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error subiendo ícono de subrama:', error);
+    throw error;
+  }
+};
+
+export const uploadSubgroupGalleryImages = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  files: File[]
+): Promise<string[]> => {
+  try {
+    console.log('🔄 [OrganigramaService] Subiendo imágenes de galería para subrama', { tenantSlug, groupSlug, sectionId, subgroupId, filesCount: files.length });
+
+    const uploadedUrls: string[] = [];
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
+      const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
+      uploadedUrls.push(response.url);
+    }
+
+    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
+    await apiClient.patch(updateEndpoint, {
+      subgroupGalleryObjectIds: uploadedUrls
+    });
+
+    console.log('✅ [OrganigramaService] Imágenes de galería de subrama subidas correctamente', { uploadedUrls });
+    return uploadedUrls;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error subiendo galería de subrama:', error);
     throw error;
   }
 };

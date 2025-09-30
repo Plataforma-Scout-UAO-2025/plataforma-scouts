@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
-import { subirImagen } from '../services/storage.service';
+import { uploadSectionIcon } from '../services/organigrama.service';
 import {
   Dialog,
   DialogContent,
@@ -138,7 +138,8 @@ export default function EditRamaModal({
                   if (!file) return;
                   setIsUploading(true);
                   try {
-                    const url = await subirImagen(file);
+                    // Para edición sí tenemos rama.id
+                    const url = await uploadSectionIcon('', '', rama.id, file);
                     setImagenUrl(url);
                     setFormData(prev => ({ ...prev, // @ts-ignore
                       icono: url }));

@@ -6,9 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import type { Rama } from "../types/rama.type";
 import * as organigramaService from "../services/organigrama.service";
-import { apiClient } from "../services/apiClient";
-import { buildApiPath } from "../hooks/useTenantParams";
-import { deleteImagen } from "../services/storage.service";
+// apiClient and buildApiPath not needed after refactor: backend handles uploads and URLs
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 
@@ -29,48 +27,28 @@ export default function RamaDetail() {
   const handleMainImageClick = () => mainImageInputRef.current?.click();
   const handleGalleryClick = () => galleryInputRef.current?.click();
 
-  const getExtension = (name: string) => {
-    const m = name.match(/\.([0-9a-z]+)(?:[?#]|$)/i);
-    return m ? `.${m[1]}` : "";
-  };
+  // Ya no necesitamos construir URLs manualmente ni extensiones
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !rama) return;
 
     const preview = URL.createObjectURL(file);
+    // Mostrar preview inmediato
     setRama(prev => prev ? { ...prev, icono: preview } : prev);
 
     try {
-      const fileId = await organigramaService.uploadSectionIcon(
+      // Subir archivo al backend; la función devolverá la URL pública
+      const publicUrl = await organigramaService.uploadSectionIcon(
         tenantSlug,
         groupSlug,
         rama.section_id.toString(),
         file
       );
 
-      const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', rama.section_id.toString());
-      try {
-        const backendResource = await apiClient.get<any>(updateEndpoint);
-
-        const payload = {
-          sectionName: backendResource?.sectionName ?? rama.sectionName ?? rama.nombre,
-          sectionDescription: backendResource?.sectionDescription ?? rama.sectionDescription ?? rama.descripcion ?? '',
-          sectionIconObjectId: fileId,
-          sectionGalleryObjectIds: backendResource?.sectionGalleryObjectIds ?? rama.sectionGalleryObjectIds ?? []
-        };
-
-        console.log('🔍 [RamaDetail] PUT payload (icon) - cleaned:', JSON.stringify(payload, null, 2));
-        await apiClient.put(updateEndpoint, payload);
-
-        const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/media/organigrama/${fileId}${getExtension(file.name)}`;
-        setRama(prev => prev ? { ...prev, icono: publicUrl } : prev);
-        toast.success('Ícono actualizado correctamente');
-      } catch (err) {
-        console.error('❌ [RamaDetail] Error persistiendo ícono en backend:', err);
-        try { await deleteImagen(`organigrama/${fileId}${getExtension(file.name)}`); } catch (e) { console.warn('Rollback fallo', e); }
-        toast.error('Error al guardar el ícono en el backend');
-      }
+      // Actualizar UI con la URL pública provista por el backend
+      setRama(prev => prev ? { ...prev, icono: publicUrl } : prev);
+      toast.success('Ícono actualizado correctamente');
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo ícono:', err);
       toast.error('Error subiendo el ícono');
@@ -84,30 +62,15 @@ export default function RamaDetail() {
     setImagenPrincipal(preview);
 
     try {
-      const fileId = await organigramaService.uploadSectionIcon(
+      const publicUrl = await organigramaService.uploadSectionIcon(
         tenantSlug,
         groupSlug,
         rama.section_id.toString(),
         file
       );
 
-      const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', rama.section_id.toString());
-      try {
-        const backend = await apiClient.get<any>(updateEndpoint);
-        backend.sectionMainImageObjectId = fileId;
-        delete backend.createdAt;
-        delete backend.updatedAt;
-        console.log('🔍 [RamaDetail] PUT payload (main):', JSON.stringify(backend, null, 2));
-        await apiClient.put(updateEndpoint, backend);
-
-        const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/media/organigrama/${fileId}${getExtension(file.name)}`;
-        setImagenPrincipal(publicUrl);
-        toast.success('Imagen principal actualizada correctamente');
-      } catch (err) {
-        console.error('❌ [RamaDetail] Error persistiendo imagen principal:', err);
-        try { await deleteImagen(`organigrama/${fileId}${getExtension(file.name)}`); } catch (e) { console.warn('Rollback fallo', e); }
-        toast.error('Error al guardar la imagen principal en el backend');
-      }
+      setImagenPrincipal(publicUrl);
+      toast.success('Imagen principal actualizada correctamente');
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo imagen principal:', err);
       toast.error('Error subiendo la imagen principal');
@@ -122,23 +85,22 @@ export default function RamaDetail() {
     setGaleriaFotos(prev => [...prev, ...previews]);
 
     try {
-      const imageIds = await organigramaService.uploadGalleryImages(tenantSlug, groupSlug, rama.section_id.toString(), files);
-      const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', rama.section_id.toString());
-      try {
-        const backend = await apiClient.get<any>(updateEndpoint);
-        backend.sectionGalleryObjectIds = imageIds;
-        delete backend.createdAt;
-        delete backend.updatedAt;
-        console.log('🔍 [RamaDetail] PUT payload (gallery):', JSON.stringify(backend, null, 2));
-        await apiClient.put(updateEndpoint, backend);
-        toast.success('Galería actualizada correctamente');
-      } catch (err) {
-        console.error('❌ [RamaDetail] Error persistiendo galería:', err);
-        toast.error('Error al guardar la galería en el backend');
-      }
+      // Subir al backend, que devolverá las URLs públicas
+      const uploadedUrls = await organigramaService.uploadGalleryImages(tenantSlug, groupSlug, rama.section_id.toString(), files);
+
+      // Reemplazar los previews temporales por las URLs devueltas por el backend
+      setGaleriaFotos(prev => {
+        // quitar los previews añadidos y concatenar las URLs reales
+        const remaining = prev.slice(0, prev.length - previews.length);
+        return [...remaining, ...uploadedUrls];
+      });
+
+      toast.success('Galería actualizada correctamente');
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo galería:', err);
+      // eliminar los previews temporales
       setGaleriaFotos(prev => prev.slice(0, -previews.length));
+      toast.error('Error subiendo la galería');
     }
   };
 
