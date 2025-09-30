@@ -7,7 +7,7 @@ import static java.lang.String.format;
 
 @RestController
 @RequestMapping("/api/v1/mock/scouts")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 public class MockTestAuthzController {
 
     @GetMapping("/list")

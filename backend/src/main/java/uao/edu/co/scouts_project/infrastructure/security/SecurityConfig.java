@@ -27,16 +27,15 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
 
                         .requestMatchers("/api/public").permitAll()
-                        .requestMatchers("/api/v1/scouts/list").hasAuthority("SCOPE_read:scouts-list")
-                        .requestMatchers("/api/v1/scouts/add/member").hasAuthority("SCOPE_write:scout-member")
-                        .requestMatchers("/api/v1/scouts/member").hasAuthority("SCOPE_read:scout-member")
+                        .requestMatchers("/api/v1/mock/scouts/list").hasAuthority("SCOPE_read:scouts-list")
+                        .requestMatchers("/api/v1/mock/scouts/add/member").hasAuthority("SCOPE_write:scout-member")
+                        .requestMatchers("/api/v1/mock/scouts/member").hasAuthority("SCOPE_read:scout-member")
                 )
                 .cors(withDefaults())
                 .oauth2ResourceServer(oauth2 -> oauth2
