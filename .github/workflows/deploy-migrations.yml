@@ -5,7 +5,7 @@ on:
     branches:
       - develop
       - main
-      - feature/supabase_db_migration
+      - feature/supabase_db_setup
 
 jobs:
   # ----------------------------------------------------------------
