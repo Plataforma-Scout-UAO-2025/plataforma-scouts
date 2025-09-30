@@ -1,7 +1,48 @@
 -- User and Role Creations
-CREATE USER reader WITH PASSWORD 'placeHolder' LOGIN;
-CREATE USER api_user WITH PASSWORD 'placeHolder' LOGIN;
-CREATE USER dba WITH PASSWORD '${DBA_PASSWORD}' LOGIN;
+
+-- 1. Create 'reader' role conditionally
+DO
+$$
+BEGIN
+    IF NOT EXISTS (
+        SELECT FROM pg_catalog.pg_roles
+        WHERE rolname = 'reader'
+    ) THEN
+        CREATE ROLE reader WITH LOGIN PASSWORD 'placeHolder';
+    END IF;
+END
+$$;
+
+----------------------------------------------------------------------
+
+-- 2. Create 'api_user' role conditionally
+DO
+$$
+BEGIN
+    IF NOT EXISTS (
+        SELECT FROM pg_catalog.pg_roles
+        WHERE rolname = 'api_user'
+    ) THEN
+        CREATE ROLE api_user WITH LOGIN PASSWORD 'placeHolder';
+    END IF;
+END
+$$;
+
+----------------------------------------------------------------------
+
+-- 3. Create 'dba' role conditionally
+DO
+$$
+BEGIN
+    IF NOT EXISTS (
+        SELECT FROM pg_catalog.pg_roles
+        WHERE rolname = 'dba'
+    ) THEN
+        -- Using the variable in the password definition
+        CREATE ROLE dba WITH LOGIN PASSWORD '${DBA_PASSWORD}';
+    END IF;
+END
+$$;
 
 -- dba rls bypass
 ALTER USER dba WITH BYPASSRLS;
