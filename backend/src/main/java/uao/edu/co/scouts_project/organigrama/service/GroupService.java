@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.organigrama.domain.Group;
@@ -11,9 +12,12 @@ import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class GroupService {
@@ -24,19 +28,30 @@ public class GroupService {
 
     public GroupService(GroupRepository groupRepository, 
                         TenantRepository tenantRepository, 
-                        SupabaseStorageService storageService) {
+                        @Qualifier("organigramaStorageService") SupabaseStorageService storageService) {
         this.groupRepository = groupRepository;
         this.tenantRepository = tenantRepository;
         this.storageService = storageService;
     }
     
-    // MÉTODOS EXISTENTES (sin cambios)...
     @Transactional(readOnly = true)
     public List<GroupResponseDTO> getGroupsByTenant(String tenantSlug) {
         Tenant tenant = getTenantBySlug(tenantSlug);
-        return groupRepository.findByTenantId(tenant.getTenantId())
-            .stream()
-            .map(this::toResponseDTO)
+        // 1. Obtener todos los grupos en una sola consulta
+        List<Group> groups = groupRepository.findByTenantId(tenant.getTenantId());
+        
+        // 2. Recolectar TODOS los UUIDs de TODAS las imágenes de TODOS los grupos
+        Set<UUID> allImageIds = groups.stream()
+            .flatMap(group -> Stream.of(group.getLogoObjectId(), group.getScarfObjectId()))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+            
+        // 3. Hacer UNA SOLA consulta a la base de datos para obtener todas las URLs
+        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(allImageIds);
+        
+        // 4. Construir las respuestas usando el mapa (esto ya no hace consultas a la DB)
+        return groups.stream()
+            .map(group -> toResponseDTO(group, urlMap))
             .collect(Collectors.toList());
     }
     
@@ -44,7 +59,7 @@ public class GroupService {
     public GroupResponseDTO getGroupBySlug(String tenantSlug, String groupSlug) {
         Tenant tenant = getTenantBySlug(tenantSlug);
         Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
-        return toResponseDTO(group);
+        return toResponseDTO(group); // La versión simple es suficiente para un solo objeto
     }
     
     @Transactional
@@ -90,8 +105,6 @@ public class GroupService {
         groupRepository.delete(group);
     }
     
-    // ============== NUEVOS MÉTODOS PARA ELIMINACIÓN INDIVIDUAL ==============
-    
     @Transactional
     public void deleteLogoImage(String tenantSlug, String groupSlug) {
         Tenant tenant = getTenantBySlug(tenantSlug);
@@ -118,8 +131,6 @@ public class GroupService {
         }
     }
     
-    // ============== MÉTODOS PRIVADOS AUXILIARES ==============
-    
     private Group findGroupOrThrow(Long tenantId, String groupSlug) {
         return groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
             .orElseThrow(() -> new IllegalArgumentException("Group not found with slug: " + groupSlug));
@@ -131,7 +142,6 @@ public class GroupService {
     }
     
     private void mapDtoToEntity(GroupDTO dto, Group group) {
-        //... (código de mapeo sin cambios)
         if (dto.name() != null) group.setName(dto.name());
         if (dto.district() != null) group.setDistrict(dto.district());
         if (dto.identifierNumber() != null) group.setIdentifierNumber(dto.identifierNumber());
@@ -151,9 +161,11 @@ public class GroupService {
         if (dto.status() != null) group.setStatus(dto.status());
     }
     
-    private GroupResponseDTO toResponseDTO(Group group) {
-        String logoUrl = storageService.getPublicUrlFromObjectId(group.getLogoObjectId());
-        String scarfUrl = storageService.getPublicUrlFromObjectId(group.getScarfObjectId());
+    // Método `toResponseDTO` sobrecargado: uno para carga masiva (más eficiente)
+    private GroupResponseDTO toResponseDTO(Group group, Map<UUID, String> urlMap) {
+        // Búsquedas súper rápidas en el mapa, sin tocar la base de datos
+        String logoUrl = urlMap.get(group.getLogoObjectId());
+        String scarfUrl = urlMap.get(group.getScarfObjectId());
 
         return new GroupResponseDTO(
             group.getGroupId(), group.getTenantId(), group.getSlug(), group.getName(),
@@ -163,5 +175,17 @@ public class GroupService {
             group.getConfig(), group.getIsActive(), group.getStatus(),
             group.getCreatedAt(), group.getUpdatedAt()
         );
+    }
+    
+    // Y otro para casos de un solo objeto, que llama al servicio de carga masiva internamente
+    private GroupResponseDTO toResponseDTO(Group group) {
+        Set<UUID> ids = Stream.of(group.getLogoObjectId(), group.getScarfObjectId())
+                              .filter(Objects::nonNull)
+                              .collect(Collectors.toSet());
+        if (ids.isEmpty()) {
+            return toResponseDTO(group, Map.of()); // Evita una llamada innecesaria a la DB
+        }
+        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
+        return toResponseDTO(group, urlMap);
     }
 }

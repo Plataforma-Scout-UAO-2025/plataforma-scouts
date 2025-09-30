@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.organigrama.domain.Group;
@@ -12,13 +13,9 @@ import uao.edu.co.scouts_project.organigrama.repo.SectionRepository;
 import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class SectionService {
@@ -29,7 +26,8 @@ public class SectionService {
     private final SupabaseStorageService storageService;
 
     public SectionService(SectionRepository sectionRepository, GroupRepository groupRepository, 
-                          TenantRepository tenantRepository, SupabaseStorageService storageService) {
+                          TenantRepository tenantRepository, 
+                          @Qualifier("organigramaStorageService") SupabaseStorageService storageService) {
         this.sectionRepository = sectionRepository;
         this.groupRepository = groupRepository;
         this.tenantRepository = tenantRepository;
@@ -39,9 +37,24 @@ public class SectionService {
     @Transactional(readOnly = true)
     public List<SectionResponseDTO> getSectionsByGroup(String tenantSlug, String groupSlug) {
         Group group = getGroupBySlug(tenantSlug, groupSlug);
-        return sectionRepository.findByTenantIdAndGroupId(group.getTenantId(), group.getGroupId())
-            .stream()
-            .map(this::toResponseDTO)
+        // 1. Obtener todas las secciones en una consulta
+        List<Section> sections = sectionRepository.findByTenantIdAndGroupId(group.getTenantId(), group.getGroupId());
+
+        // 2. Recolectar TODOS los UUIDs de todas las imágenes (íconos y galerías)
+        Set<UUID> allImageIds = sections.stream()
+            .flatMap(section -> {
+                Stream<UUID> galleryStream = (section.getGalleryObjectIds() != null) ? Arrays.stream(section.getGalleryObjectIds()) : Stream.empty();
+                return Stream.concat(Stream.of(section.getIconObjectId()), galleryStream);
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+            
+        // 3. UNA SOLA consulta para obtener todas las URLs
+        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(allImageIds);
+
+        // 4. Construir las respuestas usando el mapa eficiente
+        return sections.stream()
+            .map(section -> toResponseDTO(section, urlMap))
             .collect(Collectors.toList());
     }
     
@@ -70,7 +83,6 @@ public class SectionService {
         if (dto.iconObjectId() != null && !Objects.equals(dto.iconObjectId(), section.getIconObjectId())) {
             storageService.deleteFileByObjectId(section.getIconObjectId());
         }
-        // Al actualizar, se reemplaza la galería completa. Primero se borran las antiguas.
         if (dto.galleryObjectIds() != null) {
             if (section.getGalleryObjectIds() != null) {
                 Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
@@ -93,8 +105,6 @@ public class SectionService {
         
         sectionRepository.delete(section);
     }
-
-    // ============== MÉTODOS PARA ELIMINACIÓN INDIVIDUAL DE IMÁGENES ==============
     
     @Transactional
     public void deleteIconImage(String tenantSlug, String groupSlug, Long sectionId) {
@@ -108,34 +118,21 @@ public class SectionService {
         }
     }
     
-    /**
-     * Elimina UNA imagen específica de la galería de una sección por su UUID.
-     * @param objectId UUID de la imagen a eliminar
-     */
     @Transactional
     public void deleteGalleryImageById(String tenantSlug, String groupSlug, Long sectionId, UUID objectId) {
         Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
         
         UUID[] galleryIds = section.getGalleryObjectIds();
-        if (galleryIds == null || galleryIds.length == 0) {
-            return; // No hay nada que hacer
-        }
+        if (galleryIds == null || galleryIds.length == 0) return;
 
-        // Convertir el array a una lista mutable para poder eliminar elementos
         List<UUID> galleryIdList = new ArrayList<>(Arrays.asList(galleryIds));
         
-        // Si la imagen a eliminar está en la lista y se elimina con éxito
         if (galleryIdList.remove(objectId)) {
-            // Eliminar el archivo físico de Supabase
             storageService.deleteFileByObjectId(objectId);
-            
-            // Actualizar la entidad con el nuevo array (ya sin el elemento eliminado)
             section.setGalleryObjectIds(galleryIdList.toArray(new UUID[0]));
             sectionRepository.save(section);
         }
     }
-
-    // ============== MÉTODOS PRIVADOS AUXILIARES ==============
 
     private Section findSectionOrThrow(String tenantSlug, String groupSlug, Long sectionId) {
         Group group = getGroupBySlug(tenantSlug, groupSlug);
@@ -157,13 +154,14 @@ public class SectionService {
         if (dto.galleryObjectIds() != null) section.setGalleryObjectIds(dto.galleryObjectIds());
     }
     
-    private SectionResponseDTO toResponseDTO(Section section) {
-        String iconUrl = storageService.getPublicUrlFromObjectId(section.getIconObjectId());
+    // Versión para carga masiva
+    private SectionResponseDTO toResponseDTO(Section section, Map<UUID, String> urlMap) {
+        String iconUrl = urlMap.get(section.getIconObjectId());
         
         List<String> galleryUrls;
         if (section.getGalleryObjectIds() != null && section.getGalleryObjectIds().length > 0) {
             galleryUrls = Arrays.stream(section.getGalleryObjectIds())
-                                .map(storageService::getPublicUrlFromObjectId)
+                                .map(urlMap::get) // Búsqueda eficiente en el mapa
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList());
         } else {
@@ -171,15 +169,27 @@ public class SectionService {
         }
 
         return new SectionResponseDTO(
-            section.getSectionId(),
-            section.getTenantId(),
-            section.getGroupId(),
-            section.getName(),
-            section.getDescription(),
-            iconUrl,
-            galleryUrls,
-            section.getCreatedAt(),
-            section.getUpdatedAt()
+            section.getSectionId(), section.getTenantId(), section.getGroupId(), section.getName(),
+            section.getDescription(), iconUrl, galleryUrls,
+            section.getCreatedAt(), section.getUpdatedAt()
         );
+    }
+    
+    // Versión para un solo objeto
+    private SectionResponseDTO toResponseDTO(Section section) {
+        Set<UUID> ids = new HashSet<>();
+        if (section.getIconObjectId() != null) {
+            ids.add(section.getIconObjectId());
+        }
+        if (section.getGalleryObjectIds() != null) {
+            ids.addAll(Arrays.asList(section.getGalleryObjectIds()));
+        }
+        
+        if (ids.isEmpty()) {
+            return toResponseDTO(section, Collections.emptyMap());
+        }
+        
+        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
+        return toResponseDTO(section, urlMap);
     }
 }

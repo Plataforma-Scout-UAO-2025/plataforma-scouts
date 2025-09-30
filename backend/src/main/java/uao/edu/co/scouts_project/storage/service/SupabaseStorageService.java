@@ -10,8 +10,12 @@ import uao.edu.co.scouts_project.storage.domain.StorageObject;
 import uao.edu.co.scouts_project.storage.repo.StorageObjectRepository;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service("organigramaStorageService")
 public class SupabaseStorageService {
@@ -35,14 +39,11 @@ public class SupabaseStorageService {
      * @return El UUID del registro en la tabla storage.objects.
      */
     public UUID uploadFileAndGetObjectId(MultipartFile file, String bucket) {
-        // 1. Generar una ruta única para el archivo para evitar colisiones.
         String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
         String objectPath = "organigrama/" + UUID.randomUUID().toString() + "." + extension;
 
-        // 2. Subir el archivo usando la lógica existente de RestTemplate.
         uploadFile(file, objectPath, bucket);
 
-        // 3. Después de subir, consultar la DB para obtener el objeto y su UUID.
         StorageObject newObject = storageObjectRepository.findByNameAndBucketId(objectPath, bucket)
             .orElseThrow(() -> new RuntimeException("El objeto de storage no se pudo encontrar después de la subida: " + objectPath));
 
@@ -60,7 +61,32 @@ public class SupabaseStorageService {
         }
         return storageObjectRepository.findById(objectId)
             .map(obj -> getPublicUrl(obj.getBucketId(), obj.getName()))
-            .orElse(null); // Devuelve null si el ID no corresponde a ningún objeto.
+            .orElse(null);
+    }
+
+    // =================================================================
+    // ============== NUEVO MÉTODO PARA CARGA MASIVA (BULK) ==============
+    // =================================================================
+    
+    /**
+     * Obtiene un mapa de URLs públicas a partir de un conjunto de UUIDs en una sola consulta.
+     * @param objectIds Conjunto de UUIDs de los objetos de storage.
+     * @return Un mapa donde la clave es el UUID y el valor es la URL pública completa.
+     */
+    public Map<UUID, String> getPublicUrlsFromObjectIds(Set<UUID> objectIds) {
+        if (objectIds == null || objectIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        
+        // 1. Llama al método del repositorio para obtener todos los objetos en UNA SOLA consulta.
+        List<StorageObject> objects = storageObjectRepository.findByIdIn(objectIds);
+        
+        // 2. Convierte la lista de objetos en un mapa para búsquedas eficientes (UUID -> URL).
+        return objects.stream()
+            .collect(Collectors.toMap(
+                StorageObject::getId,
+                obj -> getPublicUrl(obj.getBucketId(), obj.getName())
+            ));
     }
     
     /**
@@ -76,7 +102,7 @@ public class SupabaseStorageService {
         });
     }
 
-    // --- MÉTODOS PRIVADOS Y EXISTENTES (con pequeños ajustes) ---
+    // --- MÉTODOS PRIVADOS
 
     private void uploadFile(MultipartFile file, String objectPath, String bucket) {
         try {

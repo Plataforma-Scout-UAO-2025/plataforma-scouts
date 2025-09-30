@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.organigrama.domain.*;
@@ -12,12 +13,7 @@ import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +30,7 @@ public class SubgroupService {
                           SectionRepository sectionRepository,
                           GroupRepository groupRepository,
                           TenantRepository tenantRepository,
-                          SupabaseStorageService storageService) {
+                          @Qualifier("organigramaStorageService") SupabaseStorageService storageService) {
         this.subgroupRepository = subgroupRepository;
         this.sectionRepository = sectionRepository;
         this.groupRepository = groupRepository;
@@ -44,17 +40,28 @@ public class SubgroupService {
 
     @Transactional(readOnly = true)
     public List<SubgroupResponseDTO> getSubgroupsBySection(String tenantSlug, String groupSlug, Long sectionId) {
-        validateHierarchy(tenantSlug, groupSlug, sectionId);
+        // Validar jerarquía y obtener entidades necesarias de una vez
+        Tenant tenant = tenantRepository.findBySlug(tenantSlug).orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug).orElseThrow(() -> new RuntimeException("Group not found"));
+        validateSection(group.getGroupId(), sectionId); // Validar que la sección pertenece al grupo
         
-        Tenant tenant = tenantRepository.findBySlug(tenantSlug)
-                .orElseThrow(() -> new RuntimeException("Tenant not found: " + tenantSlug));
-        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug)
-                .orElseThrow(() -> new RuntimeException("Group not found: " + groupSlug));
-        
+        // 1. Obtener todos los subgrupos en una consulta
         List<Subgroup> subgroups = subgroupRepository.findByTenantIdAndGroupIdAndSectionId(
             tenant.getTenantId(), group.getGroupId(), sectionId);
+
+        // 2. Recolectar TODOS los UUIDs de TODAS las galerías
+        Set<UUID> allImageIds = subgroups.stream()
+            .map(Subgroup::getGalleryObjectIds)
+            .filter(Objects::nonNull)
+            .flatMap(Arrays::stream)
+            .collect(Collectors.toSet());
+        
+        // 3. UNA SOLA consulta para obtener todas las URLs
+        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(allImageIds);
+
+        // 4. Construir las respuestas usando el mapa eficiente
         return subgroups.stream()
-                .map(this::toResponseDTO)
+                .map(subgroup -> toResponseDTO(subgroup, urlMap))
                 .collect(Collectors.toList());
     }
 
@@ -65,9 +72,10 @@ public class SubgroupService {
     }
 
     public SubgroupResponseDTO createSubgroup(String tenantSlug, String groupSlug, Long sectionId, SubgroupDTO dto) {
-        validateHierarchy(tenantSlug, groupSlug, sectionId);
+        // La validación ahora es más eficiente
         Tenant tenant = tenantRepository.findBySlug(tenantSlug).orElseThrow(() -> new RuntimeException("Tenant not found"));
         Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug).orElseThrow(() -> new RuntimeException("Group not found"));
+        validateSection(group.getGroupId(), sectionId);
 
         if (subgroupRepository.existsBySectionIdAndName(sectionId, dto.name())) {
             throw new RuntimeException("Subgroup name already exists in this section: " + dto.name());
@@ -132,34 +140,21 @@ public class SubgroupService {
         subgroupRepository.delete(subgroup);
     }
     
-    /**
-     * Elimina UNA imagen específica de la galería de un subgrupo por su UUID.
-     * @param objectId UUID de la imagen a eliminar
-     */
     @Transactional
     public void deleteGalleryImageById(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId, UUID objectId) {
         Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
         
         UUID[] galleryIds = subgroup.getGalleryObjectIds();
-        if (galleryIds == null || galleryIds.length == 0) {
-            return; // No hay nada que hacer
-        }
+        if (galleryIds == null || galleryIds.length == 0) return;
 
-        // Convertir el array a una lista mutable para poder eliminar elementos
         List<UUID> galleryIdList = new ArrayList<>(Arrays.asList(galleryIds));
         
-        // Si la imagen a eliminar está en la lista y se elimina con éxito
         if (galleryIdList.remove(objectId)) {
-            // Eliminar el archivo físico de Supabase
             storageService.deleteFileByObjectId(objectId);
-            
-            // Actualizar la entidad con el nuevo array (ya sin el elemento eliminado)
             subgroup.setGalleryObjectIds(galleryIdList.toArray(new UUID[0]));
             subgroupRepository.save(subgroup);
         }
     }
-
-    // ============== MÉTODOS PRIVADOS AUXILIARES ==============
     
     private Subgroup findSubgroupOrThrow(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
         validateHierarchy(tenantSlug, groupSlug, sectionId);
@@ -172,23 +167,24 @@ public class SubgroupService {
     }
 
     private void validateHierarchy(String tenantSlug, String groupSlug, Long sectionId) {
-        Tenant tenant = tenantRepository.findBySlug(tenantSlug)
-                .orElseThrow(() -> new RuntimeException("Tenant not found: " + tenantSlug));
-        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug)
-                .orElseThrow(() -> new RuntimeException("Group not found: " + groupSlug));
-        Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new RuntimeException("Section not found with id: " + sectionId));
-        
-        if (!section.getGroupId().equals(group.getGroupId())) {
+        Tenant tenant = tenantRepository.findBySlug(tenantSlug).orElseThrow(() -> new RuntimeException("Tenant not found"));
+        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug).orElseThrow(() -> new RuntimeException("Group not found"));
+        validateSection(group.getGroupId(), sectionId);
+    }
+
+    private void validateSection(Long groupId, Long sectionId) {
+        Section section = sectionRepository.findById(sectionId).orElseThrow(() -> new RuntimeException("Section not found"));
+        if (!section.getGroupId().equals(groupId)) {
             throw new RuntimeException("Section does not belong to the specified group");
         }
     }
 
-    private SubgroupResponseDTO toResponseDTO(Subgroup subgroup) {
+    // Versión para carga masiva
+    private SubgroupResponseDTO toResponseDTO(Subgroup subgroup, Map<UUID, String> urlMap) {
         List<String> galleryUrls;
         if (subgroup.getGalleryObjectIds() != null && subgroup.getGalleryObjectIds().length > 0) {
             galleryUrls = Arrays.stream(subgroup.getGalleryObjectIds())
-                                .map(storageService::getPublicUrlFromObjectId)
+                                .map(urlMap::get) // Búsqueda eficiente en el mapa
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList());
         } else {
@@ -196,16 +192,24 @@ public class SubgroupService {
         }
 
         return new SubgroupResponseDTO(
-                subgroup.getSubgroupId(),
-                subgroup.getTenantId(),
-                subgroup.getGroupId(),
-                subgroup.getSectionId(),
-                subgroup.getName(),
-                subgroup.getDescription(),
-                galleryUrls,
-                subgroup.getIsActive(),
-                subgroup.getCreatedAt(),
-                subgroup.getUpdatedAt()
+                subgroup.getSubgroupId(), subgroup.getTenantId(), subgroup.getGroupId(),
+                subgroup.getSectionId(), subgroup.getName(), subgroup.getDescription(),
+                galleryUrls, subgroup.getIsActive(), subgroup.getCreatedAt(), subgroup.getUpdatedAt()
         );
+    }
+
+    // Versión para un solo objeto
+    private SubgroupResponseDTO toResponseDTO(Subgroup subgroup) {
+        Set<UUID> ids = new HashSet<>();
+        if (subgroup.getGalleryObjectIds() != null) {
+            ids.addAll(Arrays.asList(subgroup.getGalleryObjectIds()));
+        }
+
+        if (ids.isEmpty()) {
+            return toResponseDTO(subgroup, Collections.emptyMap());
+        }
+
+        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
+        return toResponseDTO(subgroup, urlMap);
     }
 }
