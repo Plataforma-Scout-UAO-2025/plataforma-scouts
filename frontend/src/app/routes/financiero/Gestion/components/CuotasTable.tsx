@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import CreateCuotaModal from "./CreateCuotaModal";
-import type { Cuota } from "../types/cuota.type";
+import type { Cuota } from "@/types/cuota.type";
 import { columns } from "./CuotasTableColumns";
 
 export default function CuotasTable({
@@ -66,10 +66,10 @@ export default function CuotasTable({
           <Input
             placeholder="Filtrar por nombre..."
             value={
-              (table.getColumn("nombre")?.getFilterValue() as string) ?? ""
+              (table.getColumn("name")?.getFilterValue() as string) ?? ""
             }
             onChange={(event) =>
-              table.getColumn("nombre")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />

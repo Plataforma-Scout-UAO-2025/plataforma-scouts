@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import CuotasTable from "./components/CuotasTable";
-import type { Cuota } from "./types/cuota.type";
-import axios from "axios";
+import type { Cuota } from "@/types/cuota.type";
+import axios from "axios"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { Loader2 } from "lucide-react";
+import { mockCuotas } from "./constants/mock";
 
 export default function Gestion() {
   const [cuotas, setCuotas] = useState<Cuota[]>([]);
@@ -10,11 +11,17 @@ export default function Gestion() {
 
   useEffect(() => {
     const fetchCuotas = async () => {
-      const response = await axios.get(
-        import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas"
-      );
-      setCuotas(response.data);
-      setLoading(false);
+      // TODO: Descomentar cuando el backend esté disponible
+      // const response = await axios.get(
+      //   import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas"
+      // );
+      // setCuotas(response.data);
+
+      // Usando datos mockeados temporalmente
+      setTimeout(() => {
+        setCuotas(mockCuotas);
+        setLoading(false);
+      }, 500); // Simulando delay de carga
     };
     fetchCuotas();
   }, []);
