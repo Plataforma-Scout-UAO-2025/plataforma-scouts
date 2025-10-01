@@ -33,7 +33,7 @@ public class Section {
     private UUID iconObjectId;
     
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "gallery_object_ids", columnDefinition = "uuid[]", nullable = false)
+    @Column(name = "gallery_object_id", columnDefinition = "uuid[]", nullable = false)
     private java.util.UUID[] galleryObjectIds;
     
     @Column(name = "created_at", nullable = false, updatable = false)

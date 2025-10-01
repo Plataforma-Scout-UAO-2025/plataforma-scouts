@@ -6,7 +6,7 @@ import java.time.Instant;
 public record TenantDTO(
     Long tenantId,
     @NotBlank String slug,
-    Boolean status,
+    String status,
     Instant createdAt,
     Instant updatedAt
 ) {}

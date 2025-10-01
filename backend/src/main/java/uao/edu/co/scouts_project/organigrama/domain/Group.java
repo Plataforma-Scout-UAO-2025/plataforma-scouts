@@ -2,10 +2,13 @@ package uao.edu.co.scouts_project.organigrama.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -66,34 +69,62 @@ public class Group {
     private java.util.UUID scarfObjectId;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "social_links", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> socialLinks = Map.of();
+    @Column(name = "social_links", columnDefinition = "jsonb")
+    private Map<String, Object> socialLinks;
     
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "config", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> config = Map.of();
+    @Column(name = "config", columnDefinition = "jsonb")
+    private Map<String, Object> config;
     
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    @Column(name = "is_active")
+    private Boolean isActive;
     
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private Instant createdAt;
     
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt = Instant.now();
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     @Column(name = "status")
     private String status;
     
     // Constructors
-    public Group() {}
+    public Group() {
+        // Dejar que @PrePersist inicialice los campos
+    }
     
     public Group(Long tenantId, String slug, String name) {
         this.tenantId = tenantId;
         this.slug = slug;
         this.name = name;
     }
-    
+
+    @PrePersist
+    public void prePersist() {
+        if (this.socialLinks == null) {
+            this.socialLinks = new HashMap<>();
+        }
+        if (this.config == null) {
+            this.config = new HashMap<>();
+        }
+        if (this.isActive == null) {
+            this.isActive = true;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        // @UpdateTimestamp se encarga del updatedAt automáticamente
+        if (this.socialLinks == null) {
+            this.socialLinks = new HashMap<>();
+        }
+        if (this.config == null) {
+            this.config = new HashMap<>();
+        }
+    }
+
     // Getters and Setters
     public Long getGroupId() { return groupId; }
     public void setGroupId(Long groupId) { this.groupId = groupId; }
@@ -143,11 +174,19 @@ public class Group {
     public UUID getScarfObjectId() { return scarfObjectId; }
     public void setScarfObjectId(UUID scarfObjectId) { this.scarfObjectId = scarfObjectId; }
     
-    public Map<String, Object> getSocialLinks() { return socialLinks; }
-    public void setSocialLinks(Map<String, Object> socialLinks) { this.socialLinks = socialLinks; }
-    
-    public Map<String, Object> getConfig() { return config; }
-    public void setConfig(Map<String, Object> config) { this.config = config; }
+    public Map<String, Object> getSocialLinks() { 
+        return socialLinks != null ? socialLinks : new HashMap<>(); 
+    }
+    public void setSocialLinks(Map<String, Object> socialLinks) { 
+        this.socialLinks = socialLinks != null ? socialLinks : new HashMap<>(); 
+    }
+
+    public Map<String, Object> getConfig() { 
+        return config != null ? config : new HashMap<>(); 
+    }
+    public void setConfig(Map<String, Object> config) { 
+        this.config = config != null ? config : new HashMap<>(); 
+    }
     
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }

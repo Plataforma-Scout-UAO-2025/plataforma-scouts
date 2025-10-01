@@ -19,7 +19,7 @@ import java.util.UUID;
 public class StorageController {
 
     private final SupabaseStorageService storageService;
-    private static final String BUCKET_NAME = "media"; // Bucket definido...NOTA: Este bucket debe de cambiar al pasar a la BD general
+    private static final String BUCKET_NAME = "images"; 
 
     public StorageController(SupabaseStorageService storageService) {
         this.storageService = storageService;

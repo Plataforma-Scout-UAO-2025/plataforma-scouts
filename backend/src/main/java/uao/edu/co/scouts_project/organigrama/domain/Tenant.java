@@ -18,7 +18,7 @@ public class Tenant {
     private String slug;
     
     @Column(name = "status", nullable = false)
-    private Boolean status = true;
+    private String status = "active";
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -39,10 +39,10 @@ public class Tenant {
     
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }
-    
-    public Boolean getStatus() { return status; }
-    public void setStatus(Boolean status) { this.status = status; }
-    
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     
