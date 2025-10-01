@@ -7,6 +7,9 @@ export interface Rama {
   nombre: string;
   descripcion?: string;
   icono?: string;
+  iconoObjectId?: string; // ID para la imagen en localStorage
+  imagenPrincipal?: string; // URL de la imagen principal
+  imagenPrincipalObjectId?: string; // ID para la imagen principal en localStorage
   edadMinima: number;
   edadMaxima: number;
   año: number;
@@ -24,6 +27,7 @@ export interface Subrama {
   nombre: string;
   descripcion?: string;
   icono?: string;
+  iconoObjectId?: string; // ID para la imagen en localStorage
   ramaId: string;
   lider?: string;
   estado: 'activa' | 'inactiva';
@@ -34,7 +38,7 @@ export interface Subrama {
 export interface CreateRamaBackendData {
   name: string;
   description?: string;
-  iconObjectId: null;
+  iconObjectId: string | null;
   galleryObjectIds: string[];
 }
 
@@ -47,7 +51,7 @@ export interface CreateSubramaBackendData {
 export interface UpdateRamaBackendData {
   name?: string;
   description?: string;
-  iconObjectId?: null;
+  iconObjectId?: string | null;
   galleryObjectIds?: string[];
 }
 
@@ -64,6 +68,8 @@ export interface CreateRamaData {
   edadMinima: number;
   edadMaxima: number;
   año: number;
+  iconFile?: File;
+  galleryFiles?: File[];
 }
 
 export interface UpdateRamaData {
@@ -73,6 +79,8 @@ export interface UpdateRamaData {
   edadMinima?: number;
   edadMaxima?: number;
   estado?: 'activa' | 'inactiva';
+  iconFile?: File;
+  galleryFiles?: File[];
 }
 
 export interface CreateSubramaData {
@@ -80,6 +88,7 @@ export interface CreateSubramaData {
   descripcion?: string;
   ramaId: string;
   lider?: string;
+  galleryFiles?: File[];
 }
 
 export interface UpdateSubramaData {
@@ -104,7 +113,9 @@ export interface BackendRama {
   description?: string;
   sectionDescription?: string;
   iconObjectUrl?: string;
+  iconObjectId?: string;
   galleryObjectUrls?: string[];
+  galleryObjectIds?: string[];
   sectionGalleryObjectIds?: string[];
   createdAt?: string;
   updatedAt?: string;

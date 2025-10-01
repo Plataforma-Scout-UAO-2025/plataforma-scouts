@@ -1,410 +1,265 @@
-import type { Rama, CreateRamaData, UpdateRamaData, CreateSubramaData, UpdateSubramaData, Subrama, BackendRama, BackendSubrama } from '../types/rama.type';
-import { apiClient } from './apiClient';
-import { buildApiPath } from '../hooks/useTenantParams';
+import type { 
+  Rama, 
+  CreateRamaData, 
+  UpdateRamaData, 
+  CreateSubramaData, 
+  UpdateSubramaData, 
+  Subrama 
+} from '../types/rama.type';
+
 import {
-  mapBackendRamaToFrontend,
-  mapBackendSubramaToFrontend,
-  mapFrontendCreateRamaToBackend,
-  mapFrontendUpdateRamaToBackend,
-  mapFrontendCreateSubramaToBackend
-} from '../utils/mappers';
+  mockGetRamas,
+  mockGetRamaById,
+  mockCreateRama,
+  mockUpdateRama,
+  mockDeleteRama,
+  mockGetSubramasByRamaId,
+  mockGetSubramaById,
+  mockCreateSubrama,
+  mockUpdateSubrama,
+  mockDeleteSubrama,
+  clearStorageData
+} from './organigrama.mock.service';
+
+// Interruptor para alternar entre API real y simulación
+const USE_MOCK_API = true;
 
 // CRUD para Ramas (SECTIONS)
 export const getRamas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
-  try {
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections');
-    const backendRamas = await apiClient.get<BackendRama[]>(endpoint);
-
-    // Mapear datos del backend al formato del frontend (sin subramas todavía)
-    const mappedRamas: Rama[] = backendRamas.map((backendRama) => {
-      const mappedRama = mapBackendRamaToFrontend(backendRama);
-      mappedRama.subramas = [];
-      return mappedRama;
-    });
-
-    const subramasPromises = mappedRamas.map(async (rama) => {
-      try {
-  const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, String(rama.section_id));
-        return subramas;
-      } catch (error) {
-        console.warn(`⚠️ [OrganigramaService] Error cargando subramas para rama ${rama.id}:`, error);
-        return [] as Subrama[];
-      }
-    });
-
-    const allSubramas = await Promise.all(subramasPromises);
-
-    const ramas = mappedRamas.map((rama, idx) => {
-      rama.subramas = allSubramas[idx] as Subrama[];
-      // Rama mapped
-      return rama;
-    });
-    
-    const filteredRamas = año ? ramas.filter(rama => rama.año === año) : ramas;
-    
-    return filteredRamas;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error obteniendo ramas:', error);
-    throw error;
+  if (USE_MOCK_API) {
+    console.log('��� [OrganigramaService] Modo simulación activado');
+    return await mockGetRamas(tenantSlug, groupSlug, año);
+  } else {
+    console.log('��� [OrganigramaService] Modo real activado');
+    return [];
   }
 };
 
 export const getRamaById = async (tenantSlug: string, groupSlug: string, id: string): Promise<Rama | null> => {
-  try {
-    console.log('🔄 [OrganigramaService] Obteniendo rama por ID del backend', { tenantSlug, groupSlug, id });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', id);
-    const backendRama = await apiClient.get<BackendRama>(endpoint);
-    
-    const rama = mapBackendRamaToFrontend(backendRama);
-    
-    // Intentar cargar subramas asociadas y anexarlas al objeto Rama
-    try {
-      const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, String(rama.section_id));
-      rama.subramas = subramas;
-      console.log('✅ [OrganigramaService] Subramas anexadas a la rama', { id: rama.id, count: subramas.length });
-    } catch (subErr) {
-      console.warn('⚠️ [OrganigramaService] No se pudieron cargar subramas para la rama, devolviendo rama sin subramas', { id: rama.id, error: subErr });
-      rama.subramas = [];
-    }
-
-    console.log('✅ [OrganigramaService] Rama obtenida exitosamente', { id: rama.id });
-    return rama;
-  } catch (error: unknown) {
-    if ((error as any)?.status === 404) {
-      console.warn('⚠️ [OrganigramaService] Rama no encontrada', { id });
-      return null;
-    }
-    
-    console.error('❌ [OrganigramaService] Error obteniendo rama por ID:', error);
-    throw error;
+  if (USE_MOCK_API) {
+    return await mockGetRamaById(tenantSlug, groupSlug, id);
+  } else {
+    return null;
   }
 };
 
 export const createRama = async (tenantSlug: string, groupSlug: string, data: CreateRamaData): Promise<Rama> => {
-  try {
-    console.log('🔄 [OrganigramaService] Creando nueva rama en backend', { tenantSlug, groupSlug, data });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections');
-    const backendData = mapFrontendCreateRamaToBackend(data);
-    
-    const backendRama = await apiClient.post<BackendRama>(endpoint, backendData);
-    const rama = mapBackendRamaToFrontend(backendRama);
-    
-    console.log('✅ [OrganigramaService] Rama creada exitosamente', { id: rama.id });
-    return rama;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error creando rama:', error);
-    throw error;
+  if (USE_MOCK_API) {
+    return await mockCreateRama(data);
+  } else {
+    throw new Error('API real no implementada');
   }
 };
 
 export const updateRama = async (tenantSlug: string, groupSlug: string, data: UpdateRamaData): Promise<Rama | null> => {
-  try {
-    console.log('🔄 [OrganigramaService] Actualizando rama en backend', { tenantSlug, groupSlug, data });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', data.id);
-    const backendData = mapFrontendUpdateRamaToBackend(data);
-    
-    const backendRama = await apiClient.put<BackendRama>(endpoint, backendData);
-    const rama = mapBackendRamaToFrontend(backendRama);
-    
-    console.log('✅ [OrganigramaService] Rama actualizada exitosamente', { id: rama.id });
-    return rama;
-  } catch (error: unknown) {
-    if ((error as any)?.status === 404) {
-      console.warn('⚠️ [OrganigramaService] Rama no encontrada para actualizar', { id: data.id });
-      return null;
-    }
-    
-    console.error('❌ [OrganigramaService] Error actualizando rama:', error);
-    throw error;
+  if (USE_MOCK_API) {
+    return await mockUpdateRama(data.id, data);
+  } else {
+    return null;
   }
 };
 
 export const deleteRama = async (tenantSlug: string, groupSlug: string, id: string): Promise<boolean> => {
-  try {
-    console.log('🔄 [OrganigramaService] Eliminando rama en backend', { tenantSlug, groupSlug, id });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', id);
-    await apiClient.delete(endpoint);
-    
-    console.log('✅ [OrganigramaService] Rama eliminada exitosamente', { id });
-    return true;
-  } catch (error: unknown) {
-    if ((error as any)?.status === 404) {
-      console.warn('⚠️ [OrganigramaService] Rama no encontrada para eliminar', { id });
+  if (USE_MOCK_API) {
+    try {
+      await mockDeleteRama(id);
+      return true;
+    } catch (error) {
       return false;
     }
-    
-    console.error('❌ [OrganigramaService] Error eliminando rama:', error);
-    throw error;
+  } else {
+    return false;
   }
 };
 
 // CRUD para Subramas (SUBGROUPS)
-export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, sectionId: string): Promise<Subrama[]> => {
-  try {
-    console.log('🔄 [OrganigramaService] Obteniendo subramas por section ID del backend', { tenantSlug, groupSlug, sectionId });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups');
-    const backendSubramas = await apiClient.get<BackendSubrama[]>(endpoint);
-    
-    // Mapear datos del backend al formato del frontend
-    const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
-    
-    console.log('✅ [OrganigramaService] Subramas obtenidas exitosamente', { sectionId, count: subramas.length });
-    return subramas;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error obteniendo subramas:', error);
-    throw error;
+export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, ramaId: string): Promise<Subrama[]> => {
+  if (USE_MOCK_API) {
+    return await mockGetSubramasByRamaId(tenantSlug, groupSlug, ramaId);
+  } else {
+    return [];
+  }
+};
+
+export const getSubramaById = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<Subrama | null> => {
+  if (USE_MOCK_API) {
+    return await mockGetSubramaById(tenantSlug, groupSlug, sectionId, id);
+  } else {
+    return null;
   }
 };
 
 export const createSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, data: CreateSubramaData): Promise<Subrama | null> => {
-  try {
-    console.log('🔄 [OrganigramaService] Creando nueva subrama en backend', { tenantSlug, groupSlug, sectionId, data });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups');
-    const backendData = mapFrontendCreateSubramaToBackend(data);
-    
-    const backendSubrama = await apiClient.post<BackendSubrama>(endpoint, backendData);
-    const subrama = mapBackendSubramaToFrontend(backendSubrama);
-    
-    console.log('✅ [OrganigramaService] Subrama creada exitosamente', { id: subrama.id });
-    return subrama;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error creando subrama:', error);
-    throw error;
+  if (USE_MOCK_API) {
+    return await mockCreateSubrama(sectionId, data);
+  } else {
+    return null;
   }
 };
 
 export const updateSubrama = async (tenantSlug: string, groupSlug: string, data: UpdateSubramaData): Promise<Subrama | null> => {
-  try {
-    console.log('🔄 [OrganigramaService] Actualizando subrama en backend', { tenantSlug, groupSlug, data });
-    
-    const sectionId = data.ramaId;
-    const subgroupId = data.subgroup_id || data.id;
-    
-    if (!sectionId) {
-      throw new Error('SectionId no proporcionado');
+  if (USE_MOCK_API) {
+    if (!data.ramaId) {
+      throw new Error('ramaId es requerido para actualizar subrama');
     }
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
-    
-    const backendData = {
-      name: data.nombre,
-      description: data.descripcion,
-      galleryObjectIds: [],
-      isActive: data.estado === 'activa'
-    };
-    
-    console.log('🔍 [OrganigramaService] Endpoint:', endpoint);
-    console.log('🔍 [OrganigramaService] Backend data:', backendData);
-    
-    const backendSubrama = await apiClient.put<BackendSubrama>(endpoint, backendData);
-    const subrama = mapBackendSubramaToFrontend(backendSubrama);
-    
-    console.log('✅ [OrganigramaService] Subrama actualizada exitosamente', { id: subrama.id });
-    return subrama;
-  } catch (error: unknown) {
-    console.error('❌ [OrganigramaService] Error actualizando subrama:', error);
-    throw error;
+    return await mockUpdateSubrama(data.ramaId, data.id, data);
+  } else {
+    return null;
   }
 };
 
 export const deleteSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<boolean> => {
-  try {
-    console.log('🔄 [OrganigramaService] Eliminando subrama en backend', { tenantSlug, groupSlug, sectionId, id });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', id);
-    await apiClient.delete(endpoint);
-    
-    console.log('✅ [OrganigramaService] Subrama eliminada exitosamente', { id });
-    return true;
-  } catch (error: unknown) {
-    if ((error as any)?.status === 404) {
-      console.warn('⚠️ [OrganigramaService] Subrama no encontrada para eliminar', { id });
+  if (USE_MOCK_API) {
+    try {
+      await mockDeleteSubrama(sectionId, id);
+      return true;
+    } catch (error) {
       return false;
     }
-    
-    console.error('❌ [OrganigramaService] Error eliminando subrama:', error);
-    throw error;
+  } else {
+    return false;
   }
 };
 
-// Utility functions
+// Funciones auxiliares
 export const getAvailableYears = async (tenantSlug: string, groupSlug: string): Promise<number[]> => {
-  try {
-    console.log('🔄 [OrganigramaService] Obteniendo años disponibles del backend');
-    
-    const ramas = await getRamas(tenantSlug, groupSlug);
-    const years = Array.from(new Set(ramas.map(rama => rama.año))).sort((a, b) => b - a);
-    
-    console.log('✅ [OrganigramaService] Años disponibles obtenidos', { years });
-    return years.length > 0 ? years : [new Date().getFullYear()];
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error obteniendo años disponibles:', error);
-    return [new Date().getFullYear()];
+  if (USE_MOCK_API) {
+    const ramas = await mockGetRamas(tenantSlug, groupSlug);
+    const years = [...new Set(ramas.map(rama => rama.año).filter(año => año !== undefined && año !== null))];
+    return years.sort((a, b) => b - a);
+  } else {
+    return [];
   }
 };
 
-// Obtener una subrama por su ID
-export const getSubramaById = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<Subrama | null> => {
-  try {
-    console.log('🔄 [OrganigramaService] Obteniendo subrama por ID del backend', { tenantSlug, groupSlug, sectionId, id });
-    
-    const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', id);
-    const backendSubrama = await apiClient.get<BackendSubrama>(endpoint);
-    
-    const subrama = mapBackendSubramaToFrontend(backendSubrama);
-    
-    console.log('✅ [OrganigramaService] Subrama obtenida exitosamente', { id: subrama.id });
-    return subrama;
-  } catch (error: unknown) {
-    if ((error as any)?.status === 404) {
-      console.warn('⚠️ [OrganigramaService] Subrama no encontrada', { id });
-      return null;
-    }
-    
-    console.error('❌ [OrganigramaService] Error obteniendo subrama por ID:', error);
-    throw error;
-  }
-};
-
-// CRUD para Imágenes y Galería
-export const uploadGalleryImages = async (
-  tenantSlug: string, 
-  groupSlug: string, 
-  sectionId: string, 
-  files: File[]
-): Promise<string[]> => {
-  try {
-    console.log('🔄 [OrganigramaService] Subiendo imágenes de galería', { 
-      tenantSlug, groupSlug, sectionId, filesCount: files.length 
-    });
-    
-    const uploadedImageUrls: string[] = [];
-
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
-      // El backend devolverá { objectId, url }
-      const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
-
-      // Guardamos la url pública que provee el backend
-      uploadedImageUrls.push(response.url);
-    }
-
-    // Actualizar la galería de la sección con los objectIds o urls según API
-    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId);
-    await apiClient.patch(updateEndpoint, {
-      // Preferimos actualizar con objectIds si la API lo requiere; si la API acepta urls públicas, enviamos urls.
-      sectionGalleryObjectIds: uploadedImageUrls
-    });
-
-    console.log('✅ [OrganigramaService] Imágenes de galería subidas exitosamente', { uploadedImageUrls });
-    return uploadedImageUrls;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error subiendo imágenes de galería:', error);
-    throw error;
-  }
-};
-
+// Funciones de carga de archivos (simuladas)
 export const uploadSectionIcon = async (
-  tenantSlug: string, 
-  groupSlug: string, 
-  sectionId: string, 
+  _tenantSlug: string,
+  _groupSlug: string,
+  sectionId: string,
   file: File
 ): Promise<string> => {
-  try {
-    console.log('🔄 [OrganigramaService] Subiendo ícono de sección', { 
-      tenantSlug, groupSlug, sectionId, fileName: file.name 
-    });
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
-    // El backend devolverá { objectId, url }
-    const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
-
-    // Actualizar la sección con el nuevo icon (backend maneja persistencia)
-    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId);
-    await apiClient.patch(updateEndpoint, {
-      sectionIconObjectId: response.objectId,
-      sectionIconUrl: response.url
-    });
-
-    console.log('✅ [OrganigramaService] Ícono de sección subido y sección actualizada', { objectId: response.objectId, url: response.url });
-    return response.url;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error subiendo ícono de sección:', error);
-    throw error;
+  if (USE_MOCK_API) {
+    console.log('📤 [MockService] Subiendo icono de sección...');
+    
+    try {
+      // Usar StorageService para manejar la persistencia real
+      const { StorageService } = await import('./storage.service');
+      const objectId = await StorageService.uploadRamaIcon(file, sectionId);
+      
+      console.log('✅ [MockService] Icono de sección subido con éxito:', objectId);
+      return objectId;
+    } catch (error) {
+      console.error('❌ [MockService] Error subiendo icono:', error);
+      throw error;
+    }
   }
+
+  // TODO: Implementar upload real cuando se conecte con el backend
+  throw new Error('Real API not implemented yet');
 };
 
-// Uploads for Subgroups (Subramas)
+export const uploadSectionMainImage = async (
+  _tenantSlug: string,
+  _groupSlug: string,
+  sectionId: string,
+  file: File
+): Promise<string> => {
+  if (USE_MOCK_API) {
+    console.log('📤 [MockService] Subiendo imagen principal de sección...');
+    
+    try {
+      // Usar StorageService para manejar la persistencia real
+      const { StorageService } = await import('./storage.service');
+      const objectId = await StorageService.uploadRamaMainImage(file, sectionId);
+      
+      console.log('✅ [MockService] Imagen principal de sección subida con éxito:', objectId);
+      return objectId;
+    } catch (error) {
+      console.error('❌ [MockService] Error subiendo imagen principal:', error);
+      throw error;
+    }
+  }
+
+  // TODO: Implementar upload real cuando se conecte con el backend
+  throw new Error('Real API not implemented yet');
+};
+
 export const uploadSubgroupIcon = async (
   tenantSlug: string,
-  groupSlug: string,
+  groupSlug: string, 
   sectionId: string,
   subgroupId: string,
   file: File
 ): Promise<string> => {
-  try {
-    console.log('🔄 [OrganigramaService] Subiendo ícono de subrama', { tenantSlug, groupSlug, sectionId, subgroupId, fileName: file.name });
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
-    const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
-
-    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
-    await apiClient.patch(updateEndpoint, {
-      subgroupIconObjectId: response.objectId,
-      subgroupIconUrl: response.url
-    });
-
-    console.log('✅ [OrganigramaService] Ícono de subrama subido y subrama actualizada', { objectId: response.objectId, url: response.url });
-    return response.url;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error subiendo ícono de subrama:', error);
-    throw error;
+  if (USE_MOCK_API) {
+    console.log('🎭 [OrganigramaService] Simulando carga de icono de subgrupo:', file.name);
+    // Simular delay de carga
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Retornar URL simulada
+    return `https://mock-storage.com/subgroup-icons/${sectionId}/${subgroupId}/${file.name}`;
+  } else {
+    // TODO: Implementar carga real
+    throw new Error('Carga de archivos no implementada para API real');
   }
+};
+
+export const uploadGalleryImages = async (
+  _tenantSlug: string,
+  _groupSlug: string,
+  sectionId: string,
+  files: File[]
+): Promise<string[]> => {
+  if (USE_MOCK_API) {
+    console.log('📤 [MockService] Subiendo imágenes de galería...');
+    
+    try {
+      // Usar StorageService para manejar la persistencia real
+      const { StorageService } = await import('./storage.service');
+      const objectIds = await StorageService.uploadRamaGallery(files, sectionId);
+      
+      // Devolver las URLs para mostrar inmediatamente
+      const urls = objectIds.map(id => StorageService.getImageUrl(id)).filter(url => url !== null) as string[];
+      
+      console.log('✅ [MockService] Imágenes de galería subidas con éxito:', urls.length);
+      return urls;
+    } catch (error) {
+      console.error('❌ [MockService] Error subiendo galería:', error);
+      throw error;
+    }
+  }
+
+  // TODO: Implementar upload real cuando se conecte con el backend
+  throw new Error('Real API not implemented yet');
 };
 
 export const uploadSubgroupGalleryImages = async (
-  tenantSlug: string,
-  groupSlug: string,
-  sectionId: string,
-  subgroupId: string,
-  files: File[]
+  _tenantSlug: string,
+  _groupSlug: string,
+  _sectionId: string,
+  _subgroupId: string,
+  _files: File[]
 ): Promise<string[]> => {
-  try {
-    console.log('🔄 [OrganigramaService] Subiendo imágenes de galería para subrama', { tenantSlug, groupSlug, sectionId, subgroupId, filesCount: files.length });
+  if (USE_MOCK_API) {
+    // Simular upload con delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Generar URLs mock para cada imagen
+    const urls = _files.map((_, index) => `https://mock-api.example.com/images/subgroup-gallery-${_subgroupId}-${index + 1}.jpg`);
+    
+    console.log('📸 [MockService] Subgroup gallery images simuladas:', urls);
+    return urls;
+  }
 
-    const uploadedUrls: string[] = [];
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
+  // TODO: Implementar upload real cuando se conecte con el backend
+  throw new Error('Real API not implemented yet');
+};
 
-      const uploadEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/upload`;
-      const response = await apiClient.postFormData<{ objectId: string; url: string }>(uploadEndpoint, formData);
-      uploadedUrls.push(response.url);
-    }
-
-    const updateEndpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
-    await apiClient.patch(updateEndpoint, {
-      subgroupGalleryObjectIds: uploadedUrls
-    });
-
-    console.log('✅ [OrganigramaService] Imágenes de galería de subrama subidas correctamente', { uploadedUrls });
-    return uploadedUrls;
-  } catch (error) {
-    console.error('❌ [OrganigramaService] Error subiendo galería de subrama:', error);
-    throw error;
+// 🧹 Función para limpiar localStorage (útil para debugging)
+export const clearAllStorageData = (): void => {
+  if (USE_MOCK_API) {
+    clearStorageData();
+  } else {
+    console.warn('clearAllStorageData solo funciona en modo mock');
   }
 };

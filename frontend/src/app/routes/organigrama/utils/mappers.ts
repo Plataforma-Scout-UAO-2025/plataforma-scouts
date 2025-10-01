@@ -12,6 +12,7 @@ import type {
   BackendRama,
   BackendSubrama
 } from '../types/rama.type';
+import { StorageService } from '../services/storage.service';
 
 // Mapear datos del backend a formato frontend para Ramas
 export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
@@ -22,6 +23,11 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
                      backendRama.ID ||
                      backendRama.Section_ID ||
                      '';
+
+  // Obtener URLs de imágenes desde el storage local si existen IDs
+  const iconUrl = backendRama.iconObjectUrl || 
+                  (backendRama.sectionGalleryObjectIds?.[0] ? StorageService.getImageUrl(backendRama.sectionGalleryObjectIds[0]) : null);
+
   const mappedRama = {
     section_id: possibleId,
     sectionName: backendRama.sectionName || backendRama.name || '',
@@ -31,7 +37,7 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
     id: possibleId, // CRÍTICO: Este debe tener valor
     nombre: backendRama.sectionName || backendRama.name || '',
     descripcion: backendRama.sectionDescription || backendRama.description,
-    icono: '', // No viene del backend
+    icono: iconUrl || '', // URL de la imagen o vacío
     edadMinima: backendRama.minAge || 0,
     edadMaxima: backendRama.maxAge || 0,
     año: new Date().getFullYear(), // Por defecto el año actual
@@ -93,17 +99,32 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
 };
 
 // Mapear datos del frontend al formato que espera el backend para crear Ramas
-export const mapFrontendCreateRamaToBackend = (frontendData: CreateRamaData): CreateRamaBackendData => {
+export const mapFrontendCreateRamaToBackend = async (frontendData: CreateRamaData): Promise<CreateRamaBackendData> => {
+  const { StorageService } = await import('../services/storage.service');
+  
+  let iconObjectId: string | null = null;
+  let galleryObjectIds: string[] = [];
+
+  if (frontendData.iconFile) {
+    const result = await StorageService.uploadImage(frontendData.iconFile);
+    iconObjectId = result.objectId;
+  }
+
+  if (frontendData.galleryFiles && frontendData.galleryFiles.length > 0) {
+    galleryObjectIds = await StorageService.uploadMultipleImages(frontendData.galleryFiles);
+  }
+
   return {
     name: frontendData.nombre,
     description: frontendData.descripcion,
-    iconObjectId: null,
-    galleryObjectIds: []
+    iconObjectId,
+    galleryObjectIds
   };
 };
 
 // Mapear datos del frontend al formato que espera el backend para actualizar Ramas
-export const mapFrontendUpdateRamaToBackend = (frontendData: UpdateRamaData): UpdateRamaBackendData => {
+export const mapFrontendUpdateRamaToBackend = async (frontendData: UpdateRamaData): Promise<UpdateRamaBackendData> => {
+  const { StorageService } = await import('../services/storage.service');
   const backendData: UpdateRamaBackendData = {};
   
   if (frontendData.nombre !== undefined) {
@@ -114,19 +135,38 @@ export const mapFrontendUpdateRamaToBackend = (frontendData: UpdateRamaData): Up
     backendData.description = frontendData.descripcion;
   }
   
-  // Siempre incluir estos campos según las instrucciones
-  backendData.iconObjectId = null;
-  backendData.galleryObjectIds = [];
+  // Manejar nuevo icono si se proporciona
+  if (frontendData.iconFile) {
+    const result = await StorageService.uploadImage(frontendData.iconFile);
+    backendData.iconObjectId = result.objectId;
+  } else {
+    backendData.iconObjectId = null;
+  }
+
+  // Manejar nuevas imágenes de galería si se proporcionan
+  if (frontendData.galleryFiles && frontendData.galleryFiles.length > 0) {
+    backendData.galleryObjectIds = await StorageService.uploadMultipleImages(frontendData.galleryFiles);
+  } else {
+    backendData.galleryObjectIds = [];
+  }
   
   return backendData;
 };
 
 // Mapear datos del frontend al formato que espera el backend para crear Subramas
-export const mapFrontendCreateSubramaToBackend = (frontendData: CreateSubramaData): CreateSubramaBackendData => {
+export const mapFrontendCreateSubramaToBackend = async (frontendData: CreateSubramaData): Promise<CreateSubramaBackendData> => {
+  const { StorageService } = await import('../services/storage.service');
+  
+  let galleryObjectIds: string[] = [];
+
+  if (frontendData.galleryFiles && frontendData.galleryFiles.length > 0) {
+    galleryObjectIds = await StorageService.uploadMultipleImages(frontendData.galleryFiles);
+  }
+
   return {
     name: frontendData.nombre,
     description: frontendData.descripcion,
-    galleryObjectIds: [],
+    galleryObjectIds,
     isActive: true
   };
 };

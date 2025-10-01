@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import type { Rama } from "../types/rama.type";
 import * as organigramaService from "../services/organigrama.service";
-// apiClient and buildApiPath not needed after refactor: backend handles uploads and URLs
+import { StorageService } from "../services/storage.service";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 
@@ -27,28 +27,72 @@ export default function RamaDetail() {
   const handleMainImageClick = () => mainImageInputRef.current?.click();
   const handleGalleryClick = () => galleryInputRef.current?.click();
 
-  // Ya no necesitamos construir URLs manualmente ni extensiones
+  // Función para obtener la URL correcta del icono
+  const getIconUrl = (rama: Rama): string => {
+    // Si hay iconoObjectId, usar el StorageService
+    if (rama.iconoObjectId) {
+      const imageUrl = StorageService.getImageUrl(rama.iconoObjectId);
+      if (imageUrl) return imageUrl;
+    }
+    
+    // Si el icono es una URL de datos (data:image/...), usarla directamente
+    if (rama.icono && rama.icono.startsWith('data:')) {
+      return rama.icono;
+    }
+    
+    // Si hay una URL normal en icono, usarla
+    if (rama.icono) {
+      return rama.icono;
+    }
+    
+    // Fallback
+    return '';
+  };
+
+  // Función para obtener la URL correcta de la imagen principal
+  const getMainImageUrl = (rama: Rama): string => {
+    // Si hay imagenPrincipalObjectId, usar el StorageService
+    if (rama.imagenPrincipalObjectId) {
+      const imageUrl = StorageService.getImageUrl(rama.imagenPrincipalObjectId);
+      if (imageUrl) return imageUrl;
+    }
+    
+    // Si la imagenPrincipal es una URL de datos (data:image/...), usarla directamente
+    if (rama.imagenPrincipal && rama.imagenPrincipal.startsWith('data:')) {
+      return rama.imagenPrincipal;
+    }
+    
+    // Si hay una URL normal en imagenPrincipal, usarla
+    if (rama.imagenPrincipal) {
+      return rama.imagenPrincipal;
+    }
+    
+    // Fallback a una imagen placeholder
+    return 'https://placehold.co/800x300/e2e8f0/94a3b8?text=Sin+imagen';
+  };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !rama) return;
 
-    const preview = URL.createObjectURL(file);
-    // Mostrar preview inmediato
-    setRama(prev => prev ? { ...prev, icono: preview } : prev);
-
     try {
-      // Subir archivo al backend; la función devolverá la URL pública
-      const publicUrl = await organigramaService.uploadSectionIcon(
+      console.log('🔄 [RamaDetail] Subiendo icono de rama:', file.name);
+      
+      // Subir archivo usando el nuevo sistema
+      await organigramaService.uploadSectionIcon(
         tenantSlug,
         groupSlug,
-        rama.section_id.toString(),
+        rama.section_id,
         file
       );
 
-      // Actualizar UI con la URL pública provista por el backend
-      setRama(prev => prev ? { ...prev, icono: publicUrl } : prev);
-      toast.success('Ícono actualizado correctamente');
+      // Recargar la rama para obtener la imagen actualizada
+      const updatedRama = await organigramaService.getRamaById(tenantSlug, groupSlug, rama.id);
+      if (updatedRama) {
+        setRama(updatedRama);
+        console.log('✅ [RamaDetail] Icono actualizado correctamente');
+        toast.success('Ícono actualizado correctamente');
+      }
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo ícono:', err);
       toast.error('Error subiendo el ícono');
@@ -58,19 +102,29 @@ export default function RamaDetail() {
   const handleMainImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !rama) return;
-    const preview = URL.createObjectURL(file);
-    setImagenPrincipal(preview);
 
     try {
-      const publicUrl = await organigramaService.uploadSectionIcon(
+      console.log('🔄 [RamaDetail] Subiendo imagen principal:', file.name);
+      
+      // Subir archivo usando el nuevo sistema
+      await organigramaService.uploadSectionMainImage(
         tenantSlug,
         groupSlug,
-        rama.section_id.toString(),
+        rama.section_id,
         file
       );
 
-      setImagenPrincipal(publicUrl);
-      toast.success('Imagen principal actualizada correctamente');
+      // Recargar la rama para obtener la imagen actualizada
+      const updatedRama = await organigramaService.getRamaById(tenantSlug, groupSlug, rama.id);
+      if (updatedRama) {
+        setRama(updatedRama);
+        // Actualizar también el estado local de imagen principal
+        const mainImageUrl = getMainImageUrl(updatedRama);
+        setImagenPrincipal(mainImageUrl);
+        
+        console.log('✅ [RamaDetail] Imagen principal actualizada correctamente');
+        toast.success('Imagen principal actualizada correctamente');
+      }
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo imagen principal:', err);
       toast.error('Error subiendo la imagen principal');
@@ -81,25 +135,24 @@ export default function RamaDetail() {
     const files = Array.from(event.target.files || []);
     if (files.length === 0 || !rama) return;
 
-    const previews = files.map(f => URL.createObjectURL(f));
-    setGaleriaFotos(prev => [...prev, ...previews]);
-
     try {
-      // Subir al backend, que devolverá las URLs públicas
-      const uploadedUrls = await organigramaService.uploadGalleryImages(tenantSlug, groupSlug, rama.section_id.toString(), files);
+      console.log('🔄 [RamaDetail] Subiendo galería:', files.length, 'archivos');
+      
+      // Subir las imágenes usando el nuevo sistema
+      const uploadedUrls = await organigramaService.uploadGalleryImages(
+        tenantSlug, 
+        groupSlug, 
+        rama.section_id, 
+        files
+      );
 
-      // Reemplazar los previews temporales por las URLs devueltas por el backend
-      setGaleriaFotos(prev => {
-        // quitar los previews añadidos y concatenar las URLs reales
-        const remaining = prev.slice(0, prev.length - previews.length);
-        return [...remaining, ...uploadedUrls];
-      });
-
+      // Añadir las nuevas URLs a la galería existente
+      setGaleriaFotos(prev => [...prev, ...uploadedUrls]);
+      
+      console.log('✅ [RamaDetail] Galería actualizada correctamente');
       toast.success('Galería actualizada correctamente');
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo galería:', err);
-      // eliminar los previews temporales
-      setGaleriaFotos(prev => prev.slice(0, -previews.length));
       toast.error('Error subiendo la galería');
     }
   };
@@ -109,7 +162,19 @@ export default function RamaDetail() {
       try {
         if (!id) return;
         const data = await organigramaService.getRamaById(tenantSlug, groupSlug, id);
-        if (data) setRama(data);
+        if (data) {
+          setRama(data);
+          
+          // Cargar imagen principal existente
+          const mainImageUrl = getMainImageUrl(data);
+          setImagenPrincipal(mainImageUrl);
+          
+          // Cargar imágenes de galería existentes
+          const galleryUrls = StorageService.getRamaGalleryUrls(data.id);
+          setGaleriaFotos(galleryUrls);
+          
+          console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
+        }
       } catch (err) {
         console.error('❌ [RamaDetail] Error cargando rama:', err);
       } finally {
@@ -135,10 +200,28 @@ export default function RamaDetail() {
           <h1 className="text-2xl font-bold text-primary">Detalles de {rama.nombre} – {rama.año}</h1>
           <div className="relative">
             <div className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors" onClick={handleIconClick}>
-              {rama.icono ? (
-                <img src={rama.icono} alt={`Ícono de ${rama.nombre}`} className="w-full h-full object-cover" />
+              {rama && getIconUrl(rama) ? (
+                <img 
+                  src={getIconUrl(rama)} 
+                  alt={`Ícono de ${rama.nombre}`} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('❌ Error cargando icono de rama:', getIconUrl(rama));
+                    e.currentTarget.style.display = 'none';
+                  }}
+                  onLoad={() => {
+                    console.log('✅ Icono de rama cargado correctamente:', rama.nombre);
+                  }}
+                />
               ) : (
-                <div className="w-full h-full flex items-center justify-center"><span className="text-muted-foreground font-medium text-2xl">{rama.nombre.charAt(0)}</span></div>
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-muted-foreground font-medium text-2xl">{rama.nombre.charAt(0)}</span>
+                  {rama.iconoObjectId && (
+                    <div className="absolute bottom-1 left-1 text-xs text-red-500 bg-white px-1 rounded">
+                      Debug: iconoObjectId={rama.iconoObjectId}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-hover transition-colors" onClick={handleIconClick}><Camera className="w-4 h-4 text-primary-foreground"/></div>

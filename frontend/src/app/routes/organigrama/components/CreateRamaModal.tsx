@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { X, Upload } from 'lucide-react';
-import { uploadSectionIcon } from '../services/organigrama.service';
 import {
   Dialog,
   DialogContent,
@@ -13,11 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import type { CreateRamaFormData } from '../schemas/rama.schema';
+import type { CreateRamaData } from '../types/rama.type';
 
 interface CreateRamaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateRamaFormData) => Promise<void>;
+  onSubmit: (data: CreateRamaData) => Promise<void>;
 }
 
 export default function CreateRamaModal({
@@ -28,6 +28,7 @@ export default function CreateRamaModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<CreateRamaFormData>({
     nombre: '',
     descripcion: '',
@@ -40,7 +41,14 @@ export default function CreateRamaModal({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      // Crear el objeto de datos incluyendo el archivo de imagen si existe
+      const dataWithFile = {
+        ...formData,
+        iconFile: selectedFile || undefined,
+        galleryFiles: undefined
+      };
+      
+      await onSubmit(dataWithFile);
       // Reset form
       setFormData({
         nombre: '',
@@ -49,6 +57,8 @@ export default function CreateRamaModal({
         edadMaxima: 10,
         año: new Date().getFullYear(),
       });
+      setSelectedFile(null);
+      setImagenUrl(null);
       onOpenChange(false);
     } catch (error) {
       console.error('Error al crear rama:', error);
@@ -66,6 +76,8 @@ export default function CreateRamaModal({
         edadMaxima: 10,
         año: new Date().getFullYear(),
       });
+      setSelectedFile(null);
+      setImagenUrl(null);
     }
     onOpenChange(newOpen);
   };
@@ -145,20 +157,17 @@ export default function CreateRamaModal({
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    
                     setIsUploading(true);
                     try {
-                      // Para creación aún no tenemos sectionId; llamamos al upload que devuelve la URL pública.
-                      // Usamos una ruta temporal del servicio que solo sube y devuelve URL.
-                      const url = await uploadSectionIcon('', '', '', file).catch(async () => {
-                        // Si el servicio exige sectionId, el fallback es enviar FormData al endpoint de upload directamente vía apiClient,
-                        // pero aqui asumimos que uploadSectionIcon puede manejar sección vacía para solo subir y devolver URL.
-                        throw new Error('Upload failed');
-                      });
-                      setImagenUrl(url);
-                      setFormData(prev => ({ ...prev, // @ts-expect-error: `icono` property type mismatch with `url`
-                        icono: url }));
+                      // Almacenar el archivo para enviarlo después en el submit
+                      setSelectedFile(file);
+                      
+                      // Crear una URL temporal para mostrar la preview
+                      const previewUrl = URL.createObjectURL(file);
+                      setImagenUrl(previewUrl);
                     } catch (err) {
-                      console.error('Error subiendo imagen:', err);
+                      console.error('Error procesando imagen:', err);
                     } finally {
                       setIsUploading(false);
                     }

@@ -17,9 +17,8 @@ import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import SuccessModal from './components/SuccessModal';
 import ErrorAlert from './components/ErrorAlert';
 import OrganigramaLoader from './components/OrganigramaLoader';
-import type { Rama, Subrama } from './types/rama.type';
+import type { Rama, Subrama, CreateRamaData } from './types/rama.type';
 import type {
-  CreateRamaFormData,
   CreateSubramaFormData,
   UpdateRamaFormData,
   UpdateSubramaFormData,
@@ -86,7 +85,7 @@ export default function Organigrama() {
   };
 
   // ====== RAMAS ======
-  const handleCreateRama = async (data: CreateRamaFormData) => {
+  const handleCreateRama = async (data: CreateRamaData) => {
     try {
       await organigramaService.createRama(tenantSlug, groupSlug, data);
       await loadRamas();
@@ -259,7 +258,7 @@ export default function Organigrama() {
             <SelectValue placeholder="Seleccionar año" />
           </SelectTrigger>
           <SelectContent>
-            {availableYears.map((year) => (
+            {availableYears.filter(year => year !== undefined && year !== null).map((year) => (
               <SelectItem key={year} value={year.toString()}>
                 {year}
               </SelectItem>
