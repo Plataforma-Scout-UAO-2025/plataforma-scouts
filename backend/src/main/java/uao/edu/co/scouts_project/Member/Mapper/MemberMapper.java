@@ -34,7 +34,7 @@ public class MemberMapper {
         dto.setStatus(model.getStatus());
         dto.setAcceptance_date(model.getAcceptance_date() != null ? new Timestamp(model.getAcceptance_date().getTime()) : null);
         dto.setIn_charge_of(model.getIn_charge_of() != null ? new ArrayList<>(model.getIn_charge_of()) : null);
-        dto.setEmergency_phone(model.getEmergencyPhone());
+        dto.setEmergency_phone(model.getEmergency_phone());
         return dto;
     }
 
@@ -67,7 +67,8 @@ public class MemberMapper {
         model.setStatus(dto.getStatus());
         model.setAcceptance_date(dto.getAcceptance_date() != null ? new Timestamp(dto.getAcceptance_date().getTime()) : null);
         model.setIn_charge_of(dto.getIn_charge_of() != null ? new ArrayList<>(dto.getIn_charge_of()) : null);
-        model.setEmergencyPhone(null);
+        model.setEmergency_phone(dto.getEmergency_phone());
+
 
         return model;
     }

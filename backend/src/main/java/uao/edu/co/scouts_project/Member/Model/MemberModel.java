@@ -59,8 +59,8 @@ public class MemberModel {
     private List<Integer> in_charge_of;
 
     @Type(JsonType.class)
-    @Column(columnDefinition = "json")
-    private Map<String, Object> emergencyPhone;
+    @Column(name = "emergency_phone", columnDefinition = "json")
+    private Map<String, Object> emergency_phone;
 
     @Column(nullable = false)
     @UpdateTimestamp

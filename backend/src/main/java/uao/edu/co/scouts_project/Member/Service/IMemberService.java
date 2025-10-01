@@ -15,6 +15,8 @@ public interface IMemberService {
 
     Boolean update_status(Integer member_id, String status);
 
+    Boolean update_role(Integer member_id, String role);
+
     Optional<MemberModel> update_member_by_id(Integer member_id, MemberModel miembroUpdateDto);
 
     List<MemberModel> list_members_by_status(String status);

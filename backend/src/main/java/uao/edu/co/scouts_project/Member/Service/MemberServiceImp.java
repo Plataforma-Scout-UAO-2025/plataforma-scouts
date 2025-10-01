@@ -124,6 +124,44 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
+    @Override
+    public Boolean update_role(Integer member_id, String role) {
+        Optional<MemberModel> memberOpt = miembroRepository.findById(member_id);
+
+        if (memberOpt.isEmpty()) {
+            log.warn("Intento de actualizar rol para miembro inexistente con ID {}", member_id);
+            return false;
+        }
+        MemberModel member = memberOpt.get();
+
+        if (member.getRole() != null && member.getRole().equalsIgnoreCase(role)) {
+            log.info("El miembro {} ya tiene el rol {}", member_id, role);
+            return false;
+        }
+
+        try {
+            switch (role.toUpperCase()) {
+                case "SCOUT" -> {
+                    member.setRole("SCOUT");
+                }
+                case "JEFE" -> {
+                    member.setRole("JEFE");
+                }
+
+                default -> {
+                    log.warn("Rol {} no reconocido para miembro {}", role, member_id);
+                    return false;
+                }
+            }
+
+            miembroRepository.save(member);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error actualizando rol del miembro {}: {}", member_id, e.getMessage());
+            return false;
+        }
+    }
 
 
     @Override

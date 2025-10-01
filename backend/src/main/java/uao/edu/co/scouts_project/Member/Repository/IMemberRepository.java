@@ -2,6 +2,8 @@ package uao.edu.co.scouts_project.Member.Repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import uao.edu.co.scouts_project.Member.Model.MemberModel;
 
 import java.util.List;
@@ -11,7 +13,8 @@ public interface IMemberRepository extends JpaRepository<MemberModel, Integer> {
 
     Optional<MemberModel> findByIdentification(@NotNull Integer identification);
 
-    List<MemberModel> findByStatus(String status);
+    @Query(value = "SELECT * FROM member WHERE status = :status", nativeQuery = true)
+    List<MemberModel> findByStatus(@Param("status") String status);
 
 
 }

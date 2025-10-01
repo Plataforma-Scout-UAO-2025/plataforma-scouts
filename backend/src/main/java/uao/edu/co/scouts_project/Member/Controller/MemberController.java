@@ -5,10 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.Member.Dto.MemberDto;
+import uao.edu.co.scouts_project.Member.Dto.MemberWithSchoolDto;
 import uao.edu.co.scouts_project.Member.Mapper.MemberMapper;
+import uao.edu.co.scouts_project.Member.Mapper.MemberWithSchoolMapper;
 import uao.edu.co.scouts_project.Member.Model.MemberModel;
+import uao.edu.co.scouts_project.Member.Model.SchoolModel;
+import uao.edu.co.scouts_project.Member.Repository.ISchoolRepository;
 import uao.edu.co.scouts_project.Member.Service.IMemberService;
 
 import java.util.List;
@@ -28,6 +33,7 @@ import java.util.Optional;
  * - GET  /api/members/list_member_by_id/{id}
  * - GET /api/members/list_members_by_status
  * - PUT /api/members/update_member_status/{id}
+ * - PUT /api/members/update_member_role/{id}
  * - PUT /api/members/update_member_by_id/{id}
  *
  *
@@ -40,6 +46,9 @@ public class MemberController {
 
     @Autowired
     private IMemberService memberservice;
+
+    @Autowired
+    private ISchoolRepository schoolRepository;
 
 
     /**
@@ -114,7 +123,7 @@ public class MemberController {
      * - 404 Not Found: No existe un miembro con el ID especificado.
      */
     @GetMapping("/list_member_by_id")
-    public ResponseEntity<?> list_members_by_id(@RequestParam("id") Integer member_id) {
+    public ResponseEntity<?> list_member_by_id(@RequestParam("id") Integer member_id) {
         Optional<MemberModel> memberOpt = memberservice.get_member_by_id(member_id);
 
         if (memberOpt.isEmpty()) {
@@ -137,7 +146,7 @@ public class MemberController {
      * - 400 Bad Request: El estado no es válido.
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
-    @GetMapping("/list_member_by_status")
+    @GetMapping("/list_members_by_status")
     public ResponseEntity<?> list_members_by_status(@RequestParam String status) {
         try {
             List<MemberDto> membersDto = memberservice.list_members_by_status(status)
@@ -173,7 +182,7 @@ public class MemberController {
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
     @PutMapping("/update_member_status/{id}")
-    public ResponseEntity<?> update_status(
+    public ResponseEntity<?> update_member_status(
             @PathVariable("id") Integer member_id,
             @RequestParam String status) {
         try {
@@ -187,6 +196,38 @@ public class MemberController {
             }
         } catch (Exception e) {
             log.error("Error al actualizar el estado del miembro con ID {}", member_id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error interno del servidor"));
+        }
+    }
+
+    /**
+     * Actualiza el rol de un miembro
+     *
+     * @param member_id ID único del miembro.
+     * @param role    Nuevo rol a asignar al miembro.
+     * @return ResponseEntity con un mensaje de éxito o error.
+     * <p>
+     * Posibles respuestas:
+     * - 200 OK: Rol actualizado correctamente.
+     * - 404 Not Found: No existe un miembro con el ID especificado.
+     * - 500 Internal Server Error: Error inesperado en el servidor.
+     */
+    @PutMapping("/update_member_role/{id}")
+    public ResponseEntity<?> update_member_role(
+            @PathVariable("id") Integer member_id,
+            @RequestParam String role) {
+        try {
+            Boolean actualizado = memberservice.update_role(member_id, role);
+
+            if (actualizado) {
+                return ResponseEntity.ok(Map.of("mensaje", "Rol actualizado correctamente"));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "El miembro ya cuenta con dicho rol" + member_id));
+            }
+        } catch (Exception e) {
+            log.error("Error al actualizar el rol del miembro con ID {}", member_id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error interno del servidor"));
         }
@@ -222,6 +263,55 @@ public class MemberController {
             }
         } catch (Exception e) {
             log.error("Error al actualizar el miembro con ID {}", member_id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error interno del servidor"));
+        }
+    }
+
+    /**
+     * Crea un miembro junto con sus datos escolares en una única transacción.
+     * Este endpoint es útil cuando se tiene toda la información disponible.
+     *
+     * @param dto DTO combinado con datos del miembro y escolares
+     * @return ResponseEntity con ambos objetos creados o mensaje de error
+     *
+     * Posibles respuestas:
+     * - 201 Created: Miembro y datos escolares creados exitosamente
+     * - 400 Bad Request: Error de validación en los datos
+     * - 500 Internal Server Error: Error inesperado
+     */
+    @PostMapping("/create_member_with_school")
+    @Transactional
+    public ResponseEntity<?> createMemberWithSchool(@Valid @RequestBody MemberWithSchoolDto dto) {
+        try {
+            log.info("Creando miembro con datos escolares: {}", dto.getIdentification());
+
+            MemberModel member = MemberWithSchoolMapper.toEntity(dto);
+            MemberModel savedMember = memberservice.create_member(member);
+            log.info("Miembro creado con ID: {}", savedMember.getMember_id());
+
+            SchoolModel schoolData = MemberWithSchoolMapper.toSchoolEntity(dto);
+            SchoolModel savedSchool = null;
+
+            if (schoolData != null) {
+                schoolData.setMember(savedMember);
+                savedSchool = schoolRepository.save(schoolData);
+                log.info("Datos escolares creados para member_id: {}", savedMember.getMember_id());
+            }
+
+            MemberWithSchoolDto responseDto = MemberWithSchoolMapper.toDto(savedMember, savedSchool);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "data", responseDto,
+                    "message", "Miembro creado exitosamente"
+            ));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Error de validación: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error al crear miembro con datos escolares", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error interno del servidor"));
         }
