@@ -21,6 +21,7 @@ import Grupos from "./app/routes/grupos/Grupos";
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 import LandingPage from "./app/routes/LandingPage";
 import Requests from "./app/routes/adminGrupal/Requests";
+import Rejected from "./app/routes/adminGrupal/Rejected";
 
 function App() {
   return (
@@ -42,7 +43,7 @@ function App() {
             <Route path="adminGrupal/estados/member" element={<MemberStatements />} />
             <Route path="adminGrupal/registro" element={<PaymentRecords />} />
             <Route path="adminGrupal/solicitudes" element={<Requests />} />
-
+            <Route path="adminGrupal/rechazadas" element={<Rejected />} />
             <Route path="financiero/cuotas/gestion" element={<Gestion />} />
             <Route path="grupos" element={<Grupos />} />
             <Route path="grupos/medical-info" element={<MedicalInfo />} />

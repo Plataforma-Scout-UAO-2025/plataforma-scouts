@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { ChevronDown, ChevronUp, BrushCleaning, Eye } from "lucide-react";
 import {
   Button,
   Table,
@@ -13,7 +14,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/index";
-import { Eye, Check, X, ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Member {
   member_id: number;
@@ -41,31 +40,29 @@ interface Member {
   instruments: string;
   status: string;
 }
-const Requests = () => {
- const [members, setMembers] = useState<Member[]>([]);
- const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+const Rejected = () => {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
   const [openViewModal, setOpenViewModal] = useState(false);
-  const [openRejectModal, setOpenRejectModal] = useState(false);
-  const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // === Filtros ===
   const [isActive, setIsActive] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
-  // Cargar miembros al montar el componente
+  // Cargar miembros rechazados al montar el componente
   useEffect(() => {
-    cargarMiembros();
+    cargarMiembrosRechazados();
   }, []);
 
-  const cargarMiembros = async () => {
+  //  Cargar solo miembros con estado NO_ACEPTADO
+  const cargarMiembrosRechazados = async () => {
     try {
       setLoading(true);
-      // Cargar solo los miembros con estado PENDING
       const response = await fetch(
-        "http://localhost:8081/api/members/list_members_by_status?status=PENDING",
+        "http://localhost:8081/api/members/list_members_by_status?status=NOT_ACCEPTED",
         {
           method: "GET",
           headers: {
@@ -75,25 +72,26 @@ const Requests = () => {
       );
 
       if (!response.ok) {
-        throw new Error("Error al cargar los miembros");
+        throw new Error("Error al cargar los miembros rechazados");
       }
 
       const data = await response.json();
       setMembers(data);
     } catch (error) {
-      console.error("Error al cargar miembros:", error);
-      alert("Error al cargar las solicitudes");
+      console.error("Error al cargar miembros rechazados:", error);
+      alert("Error al cargar las solicitudes rechazadas");
     } finally {
       setLoading(false);
     }
   };
 
-  // Extraer ciudades únicas
+  //  Extraer ciudades únicas de las direcciones
   const cities = useMemo(() => {
     const uniqueCities = [...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean))];
     return uniqueCities.sort();
   }, [members]);
 
+  //  Filtrar miembros por búsqueda y ciudad
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
@@ -109,8 +107,8 @@ const Requests = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  // === VER SOLICITUD ===
-      const handleView = async (member: Member) => {    try {
+  //  Ver detalles del miembro 
+  const handleView = async (member: Member) => {    try {
       setLoading(true);
       const response = await fetch(
         `http://localhost:8081/api/members/list_member_by_id?id=${member.member_id}`,
@@ -137,90 +135,12 @@ const Requests = () => {
     }
   };
 
-  // === ACEPTAR SOLICITUD ===
-  const handleAccept = async (member: Member) => {
-      try {
-      setLoading(true);
-      const response = await fetch(
-        `http://localhost:8081/api/members/update_member_status/${member.member_id}?status=ACCEPTED`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error al aceptar solicitud");
-      }
-
-      alert(`Solicitud de ${member.first_name} ${member.last_name} aceptada exitosamente`);
-      await cargarMiembros();
-    } catch (err: unknown) {
-      console.error("Error al aceptar solicitud:", err);
-      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
-      alert("Error al aceptar la solicitud: " + errorMessage);
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // === RECHAZAR SOLICITUD ===
-const handleReject = (member: Member) => {
-    setSelectedMember(member);
-    setOpenRejectModal(true);
-  };
-
-  const handleSendReject = async () => {
-    if (!selectedMember) return;
-
-    try {
-      setLoading(true);
-
-      const response = await fetch(
-        `http://localhost:8081/api/members/update_member_status/${selectedMember.member_id}?status=NOT_ACCEPTED`,
-        {
-          method: "PUT",
-          headers: {
-           "Content-Type": "application/json" },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al rechazar solicitud");
-      }
-
-      // Cerramos modal y limpiamos campos
-      setOpenRejectModal(false);
-      setRejectReason("");
-      setSelectedMember(null);
-
-      // Abrimos modal de confirmación
-      setOpenConfirmModal(true);
-
-      // Recargamos miembros pendientes
-      await cargarMiembros();
-    } catch (err: unknown) {
-    console.error("Error al rechazar solicitud:", err);
-    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
-    alert("Error al rechazar la solicitud: " + errorMessage);
-
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="mx-4">
       <header className="flex flex-col mb-4">
-        <p className="text-5xl font-bold text-primary">Solicitudes</p>
+        <p className="text-5xl font-bold text-primary">Solicitudes Rechazadas</p>
         <p className="text-2xl text-text font-medium my-5">
-          Aquí se mostrarán las solicitudes.
+          Aquí se mostrarán las solicitudes rechazadas.
         </p>
       </header>
 
@@ -270,7 +190,7 @@ const handleReject = (member: Member) => {
         </div>
       </section>
 
-      {/* Tabla de miembros */}
+      {/* Tabla de miembros rechazados */}
       <section className="mt-6 space-y-4">
         <div className="border-3 border-primary rounded-lg overflow-hidden">
           <Table className="text-sm">
@@ -281,13 +201,14 @@ const handleReject = (member: Member) => {
                 <TableHead className="font-bold text-primary">Apellidos</TableHead>
                 <TableHead className="font-bold text-primary">Identificación</TableHead>
                 <TableHead className="font-bold text-primary">Ciudad</TableHead>
+                <TableHead className="font-bold text-primary">Estado</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && members.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-text text-lg">Cargando...</p>
                   </TableCell>
                 </TableRow>
@@ -299,41 +220,28 @@ const handleReject = (member: Member) => {
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
                     <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                        {member.status}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          variant="primary"
-                          size="icon"
-                          title="Ver"
-                          onClick={() => handleView(member)}
-                        >
-                          <Eye size={18} />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          title="Aceptar"
-                          onClick={() => handleAccept(member)}
-                        >
-                          <Check size={18} />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          title="Rechazar"
-                          onClick={() => handleReject(member)}
-                        >
-                          <X size={18} />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="primary"
+                        size="icon"
+                        title="Ver"
+                        onClick={() => handleView(member)}
+                      >
+                        <Eye size={18} />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-text text-lg">
-                      No se encontraron solicitudes que coincidan con los filtros.
+                      No se encontraron solicitudes rechazadas.
                     </p>
                   </TableCell>
                 </TableRow>
@@ -343,11 +251,11 @@ const handleReject = (member: Member) => {
         </div>
       </section>
 
-      {/* Modal ver formulario */}
+      {/* Modal ver detalles */}
       <Dialog open={openViewModal} onOpenChange={setOpenViewModal}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Formulario del usuario</DialogTitle>
+            <DialogTitle>Detalles del miembro rechazado</DialogTitle>
           </DialogHeader>
           {loading ? (
             <p>Cargando...</p>
@@ -368,7 +276,7 @@ const handleReject = (member: Member) => {
                 <p><b>Pasatiempos:</b> {selectedMember.hobbies}</p>
                 <p><b>Deportes:</b> {selectedMember.sports}</p>
                 <p><b>Instrumentos:</b> {selectedMember.instruments}</p>
-                <p><b>Estado:</b> {selectedMember.status}</p>
+                <p><b>Estado:</b> <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">{selectedMember.status}</span></p>
               </div>
             )
           )}
@@ -377,46 +285,8 @@ const handleReject = (member: Member) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Modal rechazo */}
-      <Dialog open={openRejectModal} onOpenChange={setOpenRejectModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Rechazar solicitud</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-600">Escribe las razones del rechazo:</p>
-          <Textarea
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="Razones del rechazo..."
-          />
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setOpenRejectModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSendReject} disabled={loading}>
-              {loading ? "Enviando..." : "Enviar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal confirmación */}
-      <Dialog open={openConfirmModal} onOpenChange={setOpenConfirmModal}>
-        <DialogContent className="max-w-sm text-center">
-          <DialogHeader>
-            <DialogTitle>Mensaje enviado</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-600">
-            El comentario fue enviado correctamente.
-          </p>
-          <DialogFooter>
-            <Button onClick={() => setOpenConfirmModal(false)}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
-export default Requests;
+export default Rejected;

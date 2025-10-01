@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Input,
@@ -14,6 +14,13 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/index";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Pencil,
   Trash,
   ChevronDown,
@@ -22,32 +29,122 @@ import {
   Plus,
   User,
   Medal,
+  Eye,
 } from "lucide-react";
-import { membersData, branchCounts, cities } from "@/lib/mockObjects";
+import { branchCounts } from "@/lib/mockObjects";
 
+interface Member {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  identification: string;
+  document_type: string;
+  birth_date: string;
+  address: string;
+  phone: string;
+  gender: string;
+  weight: string;
+  height: string;
+  hobbies: string;
+  sports: string;
+  instruments: string;
+  status: string;
+}
 const TeamMembers = () => {
+  // Estados para los datos del backend
+ const [members, setMembers] = useState<Member[]>([]);
+ const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  const [openViewModal, setOpenViewModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [isActive, setIsActive] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
+  // Cargar miembros aceptados al montar el componente
+  useEffect(() => {
+    cargarMiembrosAceptados();
+  }, []);
+
+  const cargarMiembrosAceptados = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        "http://localhost:8081/api/members/list_members_by_status?status=ACCEPTED",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al cargar los miembros aceptados");
+      }
+
+      const data = await response.json();
+      setMembers(data);
+    } catch (error) {
+      console.error("Error al cargar miembros aceptados:", error);
+      alert("Error al cargar los miembros");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Extraer ciudades únicas de las direcciones
+  const cities = useMemo(() => {
+    const uniqueCities = [...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean))];
+    return uniqueCities.sort();
+  }, [members]);
+
+  // Filtrar miembros por búsqueda y ciudad
   const filteredMembers = useMemo(() => {
-    return membersData.filter((member) => {
+    return members.filter((member) => {
+      const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
       const matchesSearch =
         searchFilter === "" ||
-        member.firstName.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        member.lastName.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        member.identification
-          .toLowerCase()
-          .includes(searchFilter.toLowerCase()) ||
-        member.branch.toLowerCase().includes(searchFilter.toLowerCase());
+        fullName.includes(searchFilter.toLowerCase()) ||
+        member.identification?.toString().includes(searchFilter.toLowerCase());
 
       const matchesCity =
-        cityFilter === "" ||
-        member.city.toLowerCase() === cityFilter.toLowerCase();
+        cityFilter === "" || member.address?.toLowerCase().includes(cityFilter.toLowerCase());
 
       return matchesSearch && matchesCity;
     });
-  }, [searchFilter, cityFilter]);
+  }, [members, searchFilter, cityFilter]);
+
+  // Ver detalles del miembro
+  const handleView = async (member: Member) => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `http://localhost:8081/api/members/list_member_by_id?id=${member.member_id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al cargar datos del miembro");
+      }
+
+      const data = await response.json();
+      setSelectedMember(data);
+      setOpenViewModal(true);
+    } catch (err) {
+      console.error("Error al cargar datos del miembro:", err);
+      alert("Error al cargar los detalles del miembro");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="mx-4">
@@ -72,7 +169,7 @@ const TeamMembers = () => {
         ))}
       </section>
 
-      {/* Filtros de búsqueda */}
+      {/* Filtros de búsqueda - MODIFICADO */}
       <section className="my-8 flex justify-between flex-col md:flex-row gap-4 md:gap-6">
         <div className="flex w-2/3 gap-4">
           <Input
@@ -124,7 +221,7 @@ const TeamMembers = () => {
         </div>
       </section>
 
-      {/* Tabla de miembros */}
+      {/* Tabla de miembros - MODIFICADO */}
       <section className="mt-6">
         <div className="border-3 border-primary rounded-lg overflow-hidden">
           <Table className="text-sm">
@@ -150,20 +247,36 @@ const TeamMembers = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMembers.length > 0 ? (
+              {loading && members.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
+                    <p className="text-text text-lg">Cargando...</p>
+                  </TableCell>
+                </TableRow>
+              ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <TableRow key={member.id} className="border-primary">
+                  <TableRow key={member.member_id} className="border-primary">
                     <TableCell className="pl-4 font-medium">
-                      {member.id}
+                      {member.member_id}
                     </TableCell>
-                    <TableCell>{member.firstName}</TableCell>
-                    <TableCell>{member.lastName}</TableCell>
+                    <TableCell>{member.first_name}</TableCell>
+                    <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
-                    <TableCell>{member.createdAt}</TableCell>
-                    <TableCell>{member.status}</TableCell>
-                    <TableCell>{member.city}</TableCell>
-                    <TableCell>{member.branch}</TableCell>
+                    <TableCell>{member.birth_date || "N/A"}</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                        {member.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
                     <TableCell className="text-right">
+                      <Button 
+                        variant="iconbutton" 
+                        size="icon"
+                        onClick={() => handleView(member)}
+                      >
+                        <Eye />
+                      </Button>
                       <Button variant="iconbutton" size="icon">
                         <User />
                       </Button>
@@ -202,7 +315,7 @@ const TeamMembers = () => {
         <section className="flex justify-between items-center mt-4">
           <div className="flex justify-start mt-3 gap-2">
             <p className="text-sm text-text self-center ml-4">
-              Mostrando {filteredMembers.length} de {membersData.length}{" "}
+              Mostrando {filteredMembers.length} de {members.length}{" "}
               miembros
             </p>
           </div>
@@ -213,6 +326,41 @@ const TeamMembers = () => {
           </div>
         </section>
       </section>
+
+      {/* Modal ver detalles */}
+      <Dialog open={openViewModal} onOpenChange={setOpenViewModal}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalles del Miembro</DialogTitle>
+          </DialogHeader>
+          {loading ? (
+            <p>Cargando...</p>
+          ) : (
+            selectedMember && (
+              <div className="space-y-2 text-sm">
+                <p><b>Nombres:</b> {selectedMember.first_name}</p>
+                <p><b>Apellidos:</b> {selectedMember.last_name}</p>
+                <p><b>Correo:</b> {selectedMember.email}</p>
+                <p><b>Tipo Documento:</b> {selectedMember.document_type}</p>
+                <p><b>Número Documento:</b> {selectedMember.identification}</p>
+                <p><b>Fecha Nacimiento:</b> {selectedMember.birth_date}</p>
+                <p><b>Dirección:</b> {selectedMember.address}</p>
+                <p><b>Teléfono:</b> {selectedMember.phone}</p>
+                <p><b>Sexo:</b> {selectedMember.gender}</p>
+                <p><b>Peso:</b> {selectedMember.weight}</p>
+                <p><b>Estatura:</b> {selectedMember.height}</p>
+                <p><b>Pasatiempos:</b> {selectedMember.hobbies}</p>
+                <p><b>Deportes:</b> {selectedMember.sports}</p>
+                <p><b>Instrumentos:</b> {selectedMember.instruments}</p>
+                <p><b>Estado:</b> <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">{selectedMember.status}</span></p>
+              </div>
+            )
+          )}
+          <DialogFooter>
+            <Button onClick={() => setOpenViewModal(false)}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -74,7 +74,7 @@ interface CrearMiembroData {
 
 interface CrearMiembroResponse {
   member_id: number;
-  [key: string]: any;
+  [key: string]: number;
 }
 
 function ScoutEnrollment() {
@@ -135,9 +135,7 @@ function ScoutEnrollment() {
     return edad;
   };
 
-  interface ChangeEvent
-    extends React.ChangeEvent<HTMLInputElement | HTMLSelectElement> {}
-
+type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
   const handlePersonalChange = (e: ChangeEvent) => {
     const { name, value } = e.target;
     setDatosPersonales((prev) => ({ ...prev, [name]: value }));
@@ -186,7 +184,7 @@ function ScoutEnrollment() {
   ): Promise<CrearMiembroResponse> => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/members/create_member",
+        "http://localhost:8081/api/members/create_member",
         {
           method: "POST",
           headers: {
@@ -321,8 +319,10 @@ function ScoutEnrollment() {
 
       // Mostrar modal de éxito
       setShowModal(true);
-    } catch (error: any) {
-      alert("Error al enviar la solicitud: " + error.message);
+      } catch (error: unknown) {
+    console.error("Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+    alert("Error al enviar la solicitud: " + errorMessage);
     } finally {
       setLoading(false);
     }

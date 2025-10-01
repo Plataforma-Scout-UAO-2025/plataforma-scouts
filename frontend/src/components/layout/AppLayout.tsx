@@ -64,8 +64,16 @@ const adminGrupalItems: MenuItem[] = [
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/adminGrupal/miembros" },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/adminGrupal/insignias" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/adminGrupal/eventos" },
-  { id: "solicitudes", label: "Solicitudes", icon: <CalendarDays />, href: "/app/adminGrupal/solicitudes" },
+  {
+      id: "solicitudes",
+      label: "solicitudes",
+      icon: <DollarSign />,
+      submenu: [
+        { id: "solicitudes-pendientes", label: "Pendientes", icon: <BarChart3 />, href: "/app/adminGrupal/solicitudes" },
+        { id: "solicitudes-rechazado", label: "Rechazadas", icon: <BarChart3 />, href: "/app/adminGrupal/rechazadas" },
 
+      ],
+    },
   {
     id: "finanzas",
     label: "Finanzas",

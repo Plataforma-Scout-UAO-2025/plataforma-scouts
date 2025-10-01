@@ -1,9 +1,10 @@
-import { FaShieldAlt, FaMountain, FaUsers, FaArrowRight, FaShip } from "react-icons/fa";
+import { FaShieldAlt, FaBullseye, FaMountain, FaUsers, FaArrowRight, FaBinoculars, FaShip } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import home from "@/assets/Home.png";
 import cachorros from "@/assets/cachorros.jpg";
 import lobatos from "@/assets/lobatos.jpeg";
 import webelos from "@/assets/webelos.jpg";
+import Logo from "@/assets/logo.png"; 
 import scout from "@/assets/scout.jpg";
 
 const values = [
@@ -29,30 +30,45 @@ const values = [
   },
    
 ];
+const mision = [ 
+  {
+   icon: <FaBullseye  size={32} className="text-red-600" />,
+    title: "Misión",
+    desc: "Promover el desarrollo personal y colectivo a través de experiencias de aprendizaje, aventura y servicio, fomentando los valores de integridad, compromiso y hermandad. Nuestro propósito es preparar a cada miembro para enfrentar los retos de la vida con liderazgo, solidaridad y respeto hacia los demás y la naturaleza.",
+  },
+  {
+    icon: <FaBinoculars  size={32} className="text-pink-800" />,
+    title: "Visión",
+    desc: "Ser una comunidad scout reconocida por formar líderes íntegros, solidarios y comprometidos con la sociedad y el medio ambiente, inspirando a las nuevas generaciones a vivir con valentía, servicio y espíritu aventurero.",
+  },
+  
+   
+   
+];
 
 const grupos = [
   {
     section: "Sección Menor",
     image: cachorros,
-    title: "Cachorros (5–7 años)",
+    title: "Cachorros",
     desc: "Primeros pasos en el mundo scout a través de juegos, cuentos y actividades divertidas."
   },
   {
     section: "Sección Menor",
     image: lobatos,
-    title: "Lobatos (7–10 años)",
+    title: "Lobatos",
     desc: "Desarrollo de habilidades básicas y aventuras al aire libre en un ambiente seguro y divertido."
   },
   {
     section: "Sección Intermedia",
     image: webelos,
-    title: "Webelos (11–12 años)",
+    title: "Webelos",
     desc: "Exploración y aventuras más desafiantes, desarrollando independencia y liderazgo."
   },
   {
     section: "Sección Mayor",
     image: scout,
-    title: "Scout (13–17 años)",
+    title: "Scout ",
     desc: "Preparación para la vida adulta a través de proyectos de servicio comunitario y liderazgo."
   }
 ];
@@ -105,18 +121,23 @@ useEffect(() => {
     <div className="font-sans bg-white min-h-screen">
       {/* Navbar fija */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 shadow-sm bg-[rgba(26,65,52,1)]">
-        <div className="flex items-center gap-2">
-          <FaShieldAlt size={28} className="text-[#419679]" />
-          <span className="font-bold text-xl text-[#FFFAF3] ">
+        <div className="flex items-center gap-1">
+          <img 
+            src={Logo}
+            alt="Logo ASRP"
+            className="h-10 w-12 object-cover rounded-full"
+          />
+          <span className="font-bold text-xl text-[#FFFAF3]">
             ASRP
           </span>
         </div>
+
         <div className="flex gap-8">
           <a href="#inicio" className={navBtnClass("inicio")}>
             Inicio
           </a>
           <a href="#about" className={navBtnClass("about")}>
-            About
+            Nosotros
           </a>
           <a href="#grupos" className={navBtnClass("grupos")}>
             Grupo
@@ -216,6 +237,30 @@ useEffect(() => {
             </div>
           ))}
         </div>
+        <div className="mt-16">
+         <div className="flex justify-center mb-3">
+        <span className="inline-block bg-[#f7f7f7] text-gray-700 mb-8 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+          ¿Cuál es nuestro propósito y nuestro sueño?
+        </span>
+         </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-16 text-center">
+          Más que un propósito, un camino hacia el futuro
+        </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-80 mx-40"> 
+        {mision.map((v) => (
+            <div
+              key={v.title}
+              className="bg-white rounded-xl p-6 flex flex-col items-center shadow-xl hover:shadow-2xl transition"
+            >
+              {v.icon}
+              <h3 className="mt-4 text-xl font-semibold text-gray-800">
+                {v.title}
+              </h3>
+              <p className="mt-2 text-gray-600 text-center">{v.desc}</p>
+            </div>
+        ))}
+      </div>
+      </div>
       </section>
 
       {/* Grupos */}
