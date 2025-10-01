@@ -8,7 +8,7 @@ public interface ISchoolService {
 
     SchoolModel create_school(SchoolModel school);
 
-    List<SchoolModel> list_schools();
+    List<SchoolModel> find_by_identification(Integer member_id);
 
     Optional<SchoolModel> update_school_by_id(Long id, SchoolModel miembroUpdateDto);
 

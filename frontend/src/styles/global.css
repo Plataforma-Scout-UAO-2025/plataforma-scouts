@@ -35,7 +35,9 @@ html {
   --muted-foreground: oklch(55.553% 0.00006 271.152);
   --accent: #EDEDED;
   --accent-foreground: #717171;
+  --text-color: #282828;
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-hover: oklch(33.609% 0.12216 26.88);
   --border: oklch(0.922 0 0);
   --input: #1a4134;
   --ring: oklch(0.708 0 0);
@@ -97,11 +99,13 @@ body {
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-text: var(--text-color);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

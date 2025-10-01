@@ -6,9 +6,10 @@ import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import uao.edu.co.scouts_project.Member.Model.Enums.Estado;
 import uao.edu.co.scouts_project.Member.Model.MemberModel;
 import uao.edu.co.scouts_project.Member.Repository.IMemberRepository;
+
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,9 +25,13 @@ public class MemberServiceImp implements IMemberService {
     @Override
     public MemberModel create_member(MemberModel miembro) {
         try {
-            if (miembroRepository.findById(miembro.getMember_id()).isPresent()) {
-                throw new Exception("Ya existe un miembro con la identificación " + miembro.getMember_id());
+            if (miembroRepository.findByIdentification(miembro.getIdentification()).isPresent()) {
+                throw new Exception("Ya existe un miembro con la identificación " + miembro.getIdentification());
             }
+            if (miembro.getStatus() == null || miembro.getStatus().isBlank() || miembro.getStatus().equalsIgnoreCase("EMPTY")) {
+                miembro.setStatus("PENDING");
+            }
+
             this.miembroRepository.save(miembro);
             log.info(" Miembro preregistrado: {}", miembro);
         } catch (Exception e) {
@@ -42,8 +47,8 @@ public class MemberServiceImp implements IMemberService {
         return miembros.stream()
                 .filter(Objects::nonNull)
                 .sorted(Comparator
-                        .comparing(MemberModel::getLastname, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
-                        .thenComparing(MemberModel::getFirstname, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                        .comparing(MemberModel::getLast_name, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(MemberModel::getFirst_name, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .collect(Collectors.toList());
     }
 
@@ -57,10 +62,10 @@ public class MemberServiceImp implements IMemberService {
 
         if (maybeMember.isPresent()) {
             MemberModel m = maybeMember.get();
-            if (m.getFirstname() == null || m.getLastname() == null) {
+            if (m.getFirst_name() == null || m.getLast_name() == null) {
                 log.warn("Member found (id={}) with incomplete data", member_id);
             } else {
-                log.info("Member found: id={}, firstname={} lastname={}", member_id, m.getFirstname(), m.getLastname());
+                log.info("Member found: id={}, firstname={} lastname={}", member_id, m.getFirst_name(), m.getLast_name());
             }
         } else {
             log.info("Member not found: id={}", member_id);
@@ -71,34 +76,91 @@ public class MemberServiceImp implements IMemberService {
 
 
     @Override
-    public Boolean update_status(Integer member_id, Estado nuevoEstado) {
+    public Boolean update_status(Integer member_id, String nuevoStatus) {
         Optional<MemberModel> memberOpt = miembroRepository.findById(member_id);
 
         if (memberOpt.isEmpty()) {
             log.warn("Intento de actualizar estado para miembro inexistente con ID {}", member_id);
             return false;
         }
-        MemberModel member = (MemberModel) memberOpt.get();
 
-        if (member.getStatus() == nuevoEstado) {
-            log.info("El miembro {} ya tiene el estado {}", member_id, nuevoEstado);
+        MemberModel member = memberOpt.get();
+
+        // Verificar si ya tiene el mismo estado
+        if (member.getStatus() != null && member.getStatus().equalsIgnoreCase(nuevoStatus)) {
+            log.info("El miembro {} ya tiene el estado {}", member_id, nuevoStatus);
             return false;
         }
 
-        switch (nuevoEstado) {
-            case ACCEPTED -> {
-                log.info("Miembro {} aceptado", member_id);
-                member.setStatus(Estado.valueOf(String.valueOf(Estado.ACCEPTED)));
+        try {
+            switch (nuevoStatus.toUpperCase()) {
+                case "ACCEPTED" -> {
+                    log.info("Miembro {} aceptado", member_id);
+                    member.setStatus("ACCEPTED");
+                    member.setAcceptance_date(new Timestamp(System.currentTimeMillis()));
+                }
+                case "NOT_ACCEPTED" -> {
+                    log.info("Miembro {} no aceptado", member_id);
+                    member.setStatus("NOT_ACCEPTED");
+                    member.setAcceptance_date(null);
+                }
+                case "PENDING" -> {
+                    log.info("Miembro {} pendiente", member_id);
+                    member.setStatus("PENDING");
+                    member.setAcceptance_date(null);
+                }
+                default -> {
+                    log.warn("Estado {} no reconocido para miembro {}", nuevoStatus, member_id);
+                    return false;
+                }
             }
-            case NOT_ACCEPTED -> {
-                log.info("Miembro {} no aceptado", member_id);
-                member.setStatus(Estado.valueOf(String.valueOf(Estado.NOT_ACCEPTED)));
-                member.setAcceptance_date(null);
-            }
+
+            miembroRepository.save(member);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error actualizando estado del miembro {}: {}", member_id, e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean update_role(Integer member_id, String role) {
+        Optional<MemberModel> memberOpt = miembroRepository.findById(member_id);
+
+        if (memberOpt.isEmpty()) {
+            log.warn("Intento de actualizar rol para miembro inexistente con ID {}", member_id);
+            return false;
+        }
+        MemberModel member = memberOpt.get();
+
+        if (member.getRole() != null && member.getRole().equalsIgnoreCase(role)) {
+            log.info("El miembro {} ya tiene el rol {}", member_id, role);
+            return false;
         }
 
-        miembroRepository.save(member);
-        return true;
+        try {
+            switch (role.toUpperCase()) {
+                case "SCOUT" -> {
+                    member.setRole("SCOUT");
+                }
+                case "JEFE" -> {
+                    member.setRole("JEFE");
+                }
+
+                default -> {
+                    log.warn("Rol {} no reconocido para miembro {}", role, member_id);
+                    return false;
+                }
+            }
+
+            miembroRepository.save(member);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error actualizando rol del miembro {}: {}", member_id, e.getMessage());
+            return false;
+        }
     }
 
 
@@ -138,9 +200,9 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
-    public List<MemberModel> list_members_by_status(Estado estado) {
-        log.info("Listando miembros con estado {}", estado);
-        return miembroRepository.findByEstado(estado);
+    public List<MemberModel> list_members_by_status(String status) {
+        log.info("Listando miembros con estado {}", status);
+        return miembroRepository.findByStatus(status);
     }
 
 

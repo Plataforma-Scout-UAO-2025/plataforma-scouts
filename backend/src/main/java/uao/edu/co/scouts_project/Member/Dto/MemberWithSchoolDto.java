@@ -1,9 +1,6 @@
 package uao.edu.co.scouts_project.Member.Dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -11,11 +8,7 @@ import java.util.Date;
 import java.util.Map;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class MemberDto {
-
-    private Integer member_id;
+public class MemberWithSchoolDto {
     private Integer subgroup_id;
     private String first_name;
     private String last_name;
@@ -36,7 +29,10 @@ public class MemberDto {
     private String status;
     private Timestamp acceptance_date;
     private ArrayList<Integer> in_charge_of;
-    @JsonProperty("emergency_phone")  // <-- Mapea el JSON camelCase al campo snake_case
     private Map<String, Object> emergency_phone;
 
+    private String institution;
+    private String course;
+    private String calendar;
+    private String shift;
 }
