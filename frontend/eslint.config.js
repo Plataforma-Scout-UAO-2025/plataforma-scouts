@@ -20,4 +20,12 @@ export default tseslint.config([
       globals: globals.browser,
     },
   },
+  // Deshabilitar regla de react-refresh para archivos dentro de ui/ que exportan componentes y utilidades
+  // https://github.com/shadcn-ui/ui/issues/7736
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
