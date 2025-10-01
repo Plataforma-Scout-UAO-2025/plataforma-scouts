@@ -15,6 +15,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Estructura para contactos de emergencia
+interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
+}
+
 interface PersonalData {
   firstname: string;
   lastname: string;
@@ -33,7 +40,7 @@ interface PersonalData {
   instruments: string;
   grupo: string;
   rama: string;
-  emergency_phone: string;
+  emergency_contacts: EmergencyContact[];
 }
 
 interface SchoolData {
@@ -45,8 +52,8 @@ interface SchoolData {
 
 interface CrearMiembroData {
   subgroup_id: number;
-  firstname: string;
-  lastname: string;
+  first_name: string;
+  last_name: string;
   age: number;
   role: string;
   identification: number;
@@ -56,33 +63,19 @@ interface CrearMiembroData {
   birth_date: string;
   address: string;
   phone: string;
-  weight: number;
-  height: number;
+  weight: string;
+  height: string;
   hobbies: string;
   sports: string;
   instruments: string;
   status: string;
-  emergency_phone: string;
+  emergencyPhone: Record<string, EmergencyContact>;
 }
 
 interface CrearMiembroResponse {
   member_id: number;
   [key: string]: any;
 }
-/*
-const ramasPorEdad = [
-  { nombre: "Cachorros", min: 5, max: 7 },
-  { nombre: "Lobatos", min: 7, max: 10 },
-  { nombre: "Webelos", min: 11, max: 12 },
-  { nombre: "Scout", min: 13, max: 17 },
-];
-
-const subgruposPorRama = {
-  Cachorros: { "Centinelas 113": 1, "803 Chiminigagua": 2 },
-  Lobatos: { "Centinelas 113": 3, "803 Chiminigagua": 4 },
-  Webelos: { "Centinelas 113": 5, "803 Chiminigagua": 6 },
-  Scout: { "Centinelas 113": 7, "803 Chiminigagua": 8 },
-};*/
 
 function ScoutEnrollment() {
   // Datos del miembro
@@ -104,7 +97,10 @@ function ScoutEnrollment() {
     instruments: "",
     grupo: "",
     rama: "",
-    emergency_phone: "",
+    emergency_contacts: [
+      { name: "", relationship: "", phone: "" },
+      { name: "", relationship: "", phone: "" },
+    ],
   });
 
   // Datos escolares
@@ -139,15 +135,6 @@ function ScoutEnrollment() {
     return edad;
   };
 
-  // Obtiene las ramas permitidas según la edad
-  /*const ramasDisponibles = () => {
-    const edad = calcularEdad(datosPersonales.birth_date);
-    if (!edad) return [];
-    return ramasPorEdad
-      .filter((r) => edad >= r.min && edad <= r.max)
-      .map((r) => r.nombre);
-  };*/
-
   interface ChangeEvent
     extends React.ChangeEvent<HTMLInputElement | HTMLSelectElement> {}
 
@@ -161,17 +148,53 @@ function ScoutEnrollment() {
     setDatosEscolares((prev: SchoolData) => ({ ...prev, [name]: value }));
   };
 
+  const handleEmergencyContactChange = (
+    index: number,
+    field: keyof EmergencyContact,
+    value: string
+  ) => {
+    setDatosPersonales((prev) => {
+      const newContacts = [...prev.emergency_contacts];
+      newContacts[index] = { ...newContacts[index], [field]: value };
+      return { ...prev, emergency_contacts: newContacts };
+    });
+  };
+
+  const addEmergencyContact = () => {
+    setDatosPersonales((prev) => ({
+      ...prev,
+      emergency_contacts: [
+        ...prev.emergency_contacts,
+        { name: "", relationship: "", phone: "" },
+      ],
+    }));
+  };
+
+  const removeEmergencyContact = (index: number) => {
+    if (datosPersonales.emergency_contacts.length > 1) {
+      setDatosPersonales((prev) => ({
+        ...prev,
+        emergency_contacts: prev.emergency_contacts.filter(
+          (_, i) => i !== index
+        ),
+      }));
+    }
+  };
+
   const crearMiembro = async (
     memberData: CrearMiembroData
   ): Promise<CrearMiembroResponse> => {
     try {
-      const response = await fetch("/api/member/crear_miembro", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(memberData),
-      });
+      const response = await fetch(
+        "http://localhost:8080/api/members/create_member",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(memberData),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -185,7 +208,9 @@ function ScoutEnrollment() {
     }
   };
 
-  const crearDatosEscolares = async (schoolData: SchoolData) => {
+  const crearDatosEscolares = async (
+    schoolData: SchoolData & { member_id: number }
+  ) => {
     try {
       const response = await fetch("/api/school/crear_datos_escolares", {
         method: "POST",
@@ -210,27 +235,46 @@ function ScoutEnrollment() {
   };
 
   const transformarDatos = (data: PersonalData): CrearMiembroData => {
-    const edad = calcularEdad(datosPersonales.birth_date);
+    const edad = calcularEdad(data.birth_date);
+
+    // Mapear nombre del grupo a subgroup_id
+    const grupoASubgroupId: Record<string, number> = {
+      "Centinelas 113": 1,
+      "803 Chiminigagua": 2,
+    };
+
+    // Transformar emergency_contacts a emergencyPhone
+    const emergencyPhone: Record<string, EmergencyContact> = {};
+    data.emergency_contacts.forEach((contact, index) => {
+      if (contact.name && contact.phone) {
+        emergencyPhone[`contact${index + 1}`] = {
+          name: contact.name,
+          relationship: contact.relationship,
+          phone: contact.phone,
+        };
+      }
+    });
+
     return {
-      subgroup_id: Number(data.grupo),
-      firstname: data.firstname,
-      lastname: data.lastname,
+      subgroup_id: grupoASubgroupId[data.grupo] || 1,
+      first_name: data.firstname,
+      last_name: data.lastname,
       age: edad,
-      role: "MIEMBRO",
+      role: "Scout",
       identification: Number(data.identification),
       document_type: data.document_type,
       email: data.email,
       gender: data.gender,
-      birth_date: new Date(data.birth_date).toISOString().split("T")[0], // formato yyyy-MM-dd
+      birth_date: data.birth_date,
       address: data.address,
       phone: data.phone,
-      weight: Number(data.weight),
-      height: Number(data.height),
+      weight: data.weight,
+      height: data.height,
       hobbies: data.hobbies,
       sports: data.sports,
       instruments: data.instruments,
       status: "PENDING",
-      emergency_phone: data.emergency_phone,
+      emergencyPhone: emergencyPhone,
     };
   };
 
@@ -238,6 +282,11 @@ function ScoutEnrollment() {
     e.preventDefault();
 
     if (pagina === 1) {
+      // Validar que los correos coincidan
+      if (datosPersonales.email !== datosPersonales.confirmarCorreo) {
+        alert("Los correos electrónicos no coinciden");
+        return;
+      }
       // Después de la primera página, preguntar si quiere incluir datos escolares
       setShowSchoolDialog(true);
       return;
@@ -417,30 +466,6 @@ function ScoutEnrollment() {
         />
       </div>
 
-      {/* Rama */}
-      {/* {datosPersonales.grupo && datosPersonales.birth_date && (
-        <div>
-          <Label className="mb-1" htmlFor="rama">
-            Rama *
-          </Label>
-          <select
-            id="rama"
-            name="rama"
-            value={datosPersonales.rama}
-            onChange={handlePersonalChange}
-            className="border border-primary rounded w-full h-10 px-2 bg-white"
-            required
-          >
-            <option value="">Selecciona...</option>
-            {ramasDisponibles().map((rama) => (
-              <option key={rama} value={rama}>
-                {rama}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}*/}
-
       {/* Dirección */}
       <div>
         <Label className="mb-1" htmlFor="address">
@@ -465,21 +490,6 @@ function ScoutEnrollment() {
           id="phone"
           name="phone"
           value={datosPersonales.phone}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-          required
-        />
-      </div>
-
-      {/* Teléfono de emergencia */}
-      <div>
-        <Label className="mb-1" htmlFor="emergency_phone">
-          Teléfono de emergencia *
-        </Label>
-        <Input
-          id="emergency_phone"
-          name="emergency_phone"
-          value={datosPersonales.emergency_phone}
           onChange={handlePersonalChange}
           className="border border-primary"
           required
@@ -533,6 +543,87 @@ function ScoutEnrollment() {
           type="number"
           step="0.1"
         />
+      </div>
+
+      {/* Contactos de emergencia */}
+      <div className="col-span-2">
+        <h3 className="text-lg font-semibold mb-4 text-primary">
+          Contactos de emergencia *
+        </h3>
+        {datosPersonales.emergency_contacts.map((contact, index) => (
+          <div
+            key={index}
+            className="mb-4 p-4 border border-primary rounded-lg"
+          >
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="font-medium">Contacto {index + 1}</h4>
+              {datosPersonales.emergency_contacts.length > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removeEmergencyContact(index)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  Eliminar
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor={`contact-name-${index}`}>Nombre *</Label>
+                <Input
+                  id={`contact-name-${index}`}
+                  value={contact.name}
+                  onChange={(e) =>
+                    handleEmergencyContactChange(index, "name", e.target.value)
+                  }
+                  className="border border-primary"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor={`contact-relationship-${index}`}>
+                  Parentesco *
+                </Label>
+                <Input
+                  id={`contact-relationship-${index}`}
+                  value={contact.relationship}
+                  onChange={(e) =>
+                    handleEmergencyContactChange(
+                      index,
+                      "relationship",
+                      e.target.value
+                    )
+                  }
+                  className="border border-primary"
+                  placeholder="Ej: Madre, Padre, Tío"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor={`contact-phone-${index}`}>Teléfono *</Label>
+                <Input
+                  id={`contact-phone-${index}`}
+                  value={contact.phone}
+                  onChange={(e) =>
+                    handleEmergencyContactChange(index, "phone", e.target.value)
+                  }
+                  className="border border-primary"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addEmergencyContact}
+          className="w-full"
+        >
+          + Agregar otro contacto de emergencia
+        </Button>
       </div>
     </>
   );
