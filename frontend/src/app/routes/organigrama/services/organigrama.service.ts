@@ -1,4 +1,4 @@
-import type { Rama, CreateRamaData, UpdateRamaData, CreateSubramaData, UpdateSubramaData, Subrama } from '../types/rama.type';
+import type { Rama, CreateRamaData, UpdateRamaData, CreateSubramaData, UpdateSubramaData, Subrama, BackendRama, BackendSubrama } from '../types/rama.type';
 import { apiClient } from './apiClient';
 import { buildApiPath } from '../hooks/useTenantParams';
 import {
@@ -71,7 +71,7 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
     console.log('✅ [OrganigramaService] Rama obtenida exitosamente', { id: rama.id });
     return rama;
   } catch (error: unknown) {
-    if (error?.status === 404) {
+    if ((error as any)?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Rama no encontrada', { id });
       return null;
     }
@@ -112,7 +112,7 @@ export const updateRama = async (tenantSlug: string, groupSlug: string, data: Up
     console.log('✅ [OrganigramaService] Rama actualizada exitosamente', { id: rama.id });
     return rama;
   } catch (error: unknown) {
-    if (error?.status === 404) {
+    if ((error as any)?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Rama no encontrada para actualizar', { id: data.id });
       return null;
     }
@@ -132,7 +132,7 @@ export const deleteRama = async (tenantSlug: string, groupSlug: string, id: stri
     console.log('✅ [OrganigramaService] Rama eliminada exitosamente', { id });
     return true;
   } catch (error: unknown) {
-    if (error?.status === 404) {
+    if ((error as any)?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Rama no encontrada para eliminar', { id });
       return false;
     }
@@ -193,9 +193,9 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     const endpoint = buildApiPath(tenantSlug, groupSlug, 'sections', sectionId, 'subgroups', subgroupId);
     
     const backendData = {
-      subgroupName: data.nombre,
-      subgroupDescription: data.descripcion,
-      subgroupGalleryObjectIds: [],
+      name: data.nombre,
+      description: data.descripcion,
+      galleryObjectIds: [],
       isActive: data.estado === 'activa'
     };
     
@@ -223,7 +223,7 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
     console.log('✅ [OrganigramaService] Subrama eliminada exitosamente', { id });
     return true;
   } catch (error: unknown) {
-    if (error?.status === 404) {
+    if ((error as any)?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Subrama no encontrada para eliminar', { id });
       return false;
     }
@@ -262,7 +262,7 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
     console.log('✅ [OrganigramaService] Subrama obtenida exitosamente', { id: subrama.id });
     return subrama;
   } catch (error: unknown) {
-    if (error?.status === 404) {
+    if ((error as any)?.status === 404) {
       console.warn('⚠️ [OrganigramaService] Subrama no encontrada', { id });
       return null;
     }

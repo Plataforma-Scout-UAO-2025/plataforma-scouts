@@ -39,8 +39,10 @@ export interface CreateRamaBackendData {
 }
 
 export interface CreateSubramaBackendData {
-  subgroupName: string;
-  subgroupDescription?: string;
+  name: string;
+  description?: string;
+  galleryObjectIds: string[];
+  isActive: boolean;
 }
 export interface UpdateRamaBackendData {
   name?: string;
@@ -50,8 +52,10 @@ export interface UpdateRamaBackendData {
 }
 
 export interface UpdateSubramaBackendData {
-  subgroupName?: string;
-  subgroupDescription?: string;
+  name?: string;
+  description?: string;
+  galleryObjectIds?: string[];
+  isActive?: boolean;
 }
 
 export interface CreateRamaData {

@@ -124,8 +124,10 @@ export const mapFrontendUpdateRamaToBackend = (frontendData: UpdateRamaData): Up
 // Mapear datos del frontend al formato que espera el backend para crear Subramas
 export const mapFrontendCreateSubramaToBackend = (frontendData: CreateSubramaData): CreateSubramaBackendData => {
   return {
-    subgroupName: frontendData.nombre,
-    subgroupDescription: frontendData.descripcion
+    name: frontendData.nombre,
+    description: frontendData.descripcion,
+    galleryObjectIds: [],
+    isActive: true
   };
 };
 
@@ -134,12 +136,16 @@ export const mapFrontendUpdateSubramaToBackend = (frontendData: UpdateSubramaDat
   const backendData: UpdateSubramaBackendData = {};
   
   if (frontendData.nombre !== undefined) {
-    backendData.subgroupName = frontendData.nombre;
+    backendData.name = frontendData.nombre;
   }
   
   if (frontendData.descripcion !== undefined) {
-    backendData.subgroupDescription = frontendData.descripcion;
+    backendData.description = frontendData.descripcion;
   }
+  
+  // Siempre incluir estos campos según las instrucciones  
+  backendData.galleryObjectIds = [];
+  backendData.isActive = frontendData.estado === 'activa';
   
   return backendData;
 };
