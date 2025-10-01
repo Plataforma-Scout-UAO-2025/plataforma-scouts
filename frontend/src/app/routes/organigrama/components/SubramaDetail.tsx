@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import type { Subrama } from "../types/rama.type";
 import * as organigramaService from "../services/organigrama.service";
 import { useTenantParams } from "../hooks/useTenantParams";
+// Importar utilidades de debug
+import '../utils/storage-debug';
 
 export default function SubramaDetail() {
   const { id } = useParams<{ id: string }>();
@@ -38,7 +40,7 @@ export default function SubramaDetail() {
         const preview = URL.createObjectURL(file);
         setImagenPrincipal(preview);
 
-        const publicUrl = await organigramaService.uploadSubgroupIcon(
+        const publicUrl = await organigramaService.uploadSubgroupMainImage(
           tenantSlug,
           groupSlug,
           subrama.ramaId || subrama.section_id,
@@ -108,6 +110,33 @@ export default function SubramaDetail() {
           if (subramaEncontrada) {
             setSubrama(subramaEncontrada);
             console.log("✅ [SubramaDetail] Subrama cargada:", subramaEncontrada);
+
+            // 📸 Cargar imágenes existentes
+            try {
+              const { StorageService } = await import('../services/storage.service');
+              
+              // Cargar imagen principal si existe
+              if (subramaEncontrada.imagenPrincipalObjectId) {
+                const mainImageUrl = StorageService.getImageUrl(subramaEncontrada.imagenPrincipalObjectId);
+                if (mainImageUrl) {
+                  setImagenPrincipal(mainImageUrl);
+                  console.log("📸 [SubramaDetail] Imagen principal cargada desde localStorage");
+                }
+              } else if (subramaEncontrada.imagenPrincipal) {
+                setImagenPrincipal(subramaEncontrada.imagenPrincipal);
+                console.log("📸 [SubramaDetail] Imagen principal cargada desde URL directa");
+              }
+
+              // Cargar galería si existe
+              if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
+                const galleryUrls = StorageService.getSubramaGalleryUrls(subramaEncontrada.id);
+                setGaleriaFotos(galleryUrls);
+                console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería`);
+              }
+              
+            } catch (error) {
+              console.error('❌ [SubramaDetail] Error cargando imágenes:', error);
+            }
           } else {
             console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);
           }

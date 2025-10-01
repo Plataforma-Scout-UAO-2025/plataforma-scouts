@@ -397,3 +397,112 @@ export const getMockDataStats = () => {
     totalItems: ramas.length + subramas.length
   };
 };
+
+// 📸 Función utilitaria para actualizar imágenes de subramas
+export const mockUpdateSubramaImage = async (
+  subramaId: string, 
+  imageType: 'icono' | 'imagenPrincipal', 
+  objectId: string, 
+  url: string
+): Promise<void> => {
+  console.log(`📸 [MockService] Actualizando ${imageType} de subrama ${subramaId}`);
+  
+  // Actualizar en localStorage de subramas independiente
+  const subramas = getStoredSubramas();
+  const subramaIndex = subramas.findIndex(s => s.id === subramaId || s.subgroup_id === subramaId);
+  
+  if (subramaIndex !== -1) {
+    if (imageType === 'icono') {
+      subramas[subramaIndex].iconoObjectId = objectId;
+      subramas[subramaIndex].icono = url;
+    } else if (imageType === 'imagenPrincipal') {
+      subramas[subramaIndex].imagenPrincipalObjectId = objectId;
+      subramas[subramaIndex].imagenPrincipal = url;
+    }
+    saveStoredSubramas(subramas);
+  }
+  
+  // Actualizar también en las ramas (estructura anidada)
+  const ramas = getStoredRamas();
+  let updated = false;
+  
+  for (const rama of ramas) {
+    if (rama.subramas) {
+      const subramaInRamaIndex = rama.subramas.findIndex(s => s.id === subramaId || s.subgroup_id === subramaId);
+      if (subramaInRamaIndex !== -1) {
+        if (imageType === 'icono') {
+          rama.subramas[subramaInRamaIndex].iconoObjectId = objectId;
+          rama.subramas[subramaInRamaIndex].icono = url;
+        } else if (imageType === 'imagenPrincipal') {
+          rama.subramas[subramaInRamaIndex].imagenPrincipalObjectId = objectId;
+          rama.subramas[subramaInRamaIndex].imagenPrincipal = url;
+        }
+        updated = true;
+        break;
+      }
+    }
+  }
+  
+  if (updated) {
+    try {
+      saveStoredRamas(ramas);
+      console.log(`✅ [MockService] ${imageType} de subrama ${subramaId} actualizada en ambas estructuras`);
+    } catch (quotaError) {
+      console.warn(`⚠️ [MockService] Error de cuota al actualizar ramas, continuando con actualización de subramas únicamente`);
+      // Al menos la actualización de subramas independientes ya se hizo arriba
+    }
+  } else {
+    console.warn(`⚠️ [MockService] No se encontró subrama ${subramaId} para actualizar ${imageType}`);
+  }
+};
+
+// 📸 Función utilitaria para actualizar galería de subramas
+export const mockUpdateSubramaGallery = async (
+  subramaId: string, 
+  objectIds: string[]
+): Promise<void> => {
+  console.log(`📸 [MockService] Actualizando galería de subrama ${subramaId} con ${objectIds.length} imágenes`);
+  
+  // Actualizar en localStorage de subramas independiente
+  const subramas = getStoredSubramas();
+  const subramaIndex = subramas.findIndex(s => s.id === subramaId || s.subgroup_id === subramaId);
+  
+  if (subramaIndex !== -1) {
+    // Añadir a la galería existente
+    if (!subramas[subramaIndex].subgroupGalleryObjectIds) {
+      subramas[subramaIndex].subgroupGalleryObjectIds = [];
+    }
+    subramas[subramaIndex].subgroupGalleryObjectIds.push(...objectIds);
+    saveStoredSubramas(subramas);
+  }
+  
+  // Actualizar también en las ramas (estructura anidada)
+  const ramas = getStoredRamas();
+  let updated = false;
+  
+  for (const rama of ramas) {
+    if (rama.subramas) {
+      const subramaInRamaIndex = rama.subramas.findIndex(s => s.id === subramaId || s.subgroup_id === subramaId);
+      if (subramaInRamaIndex !== -1) {
+        // Añadir a la galería existente
+        if (!rama.subramas[subramaInRamaIndex].subgroupGalleryObjectIds) {
+          rama.subramas[subramaInRamaIndex].subgroupGalleryObjectIds = [];
+        }
+        rama.subramas[subramaInRamaIndex].subgroupGalleryObjectIds.push(...objectIds);
+        updated = true;
+        break;
+      }
+    }
+  }
+  
+  if (updated) {
+    try {
+      saveStoredRamas(ramas);
+      console.log(`✅ [MockService] Galería de subrama ${subramaId} actualizada en ambas estructuras`);
+    } catch (quotaError) {
+      console.warn(`⚠️ [MockService] Error de cuota al actualizar ramas, continuando con actualización de subramas únicamente`);
+    }
+  } else {
+    console.warn(`⚠️ [MockService] No se encontró subrama ${subramaId} para actualizar galería`);
+  }
+};

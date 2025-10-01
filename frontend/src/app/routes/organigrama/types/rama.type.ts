@@ -22,12 +22,15 @@ export interface Subrama {
   subgroup_id: string; 
   subgroupName: string;
   subgroupDescription?: string;
+  subgroupGalleryObjectIds?: string[]; // IDs de imágenes de galería en localStorage
   section_id: string; 
   id: string; 
   nombre: string;
   descripcion?: string;
   icono?: string;
   iconoObjectId?: string; // ID para la imagen en localStorage
+  imagenPrincipal?: string; // URL de la imagen principal
+  imagenPrincipalObjectId?: string; // ID para la imagen principal en localStorage
   ramaId: string;
   lider?: string;
   estado: 'activa' | 'inactiva';

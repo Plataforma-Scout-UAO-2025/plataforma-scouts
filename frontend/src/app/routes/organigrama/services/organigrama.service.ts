@@ -186,22 +186,67 @@ export const uploadSectionMainImage = async (
 };
 
 export const uploadSubgroupIcon = async (
-  tenantSlug: string,
-  groupSlug: string, 
-  sectionId: string,
+  _tenantSlug: string,
+  _groupSlug: string, 
+  _sectionId: string,
   subgroupId: string,
   file: File
 ): Promise<string> => {
   if (USE_MOCK_API) {
-    console.log('🎭 [OrganigramaService] Simulando carga de icono de subgrupo:', file.name);
-    // Simular delay de carga
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Retornar URL simulada
-    return `https://mock-storage.com/subgroup-icons/${sectionId}/${subgroupId}/${file.name}`;
-  } else {
-    // TODO: Implementar carga real
-    throw new Error('Carga de archivos no implementada para API real');
+    console.log('📤 [MockService] Subiendo icono de subgrupo...');
+    
+    try {
+      // Usar StorageService para manejar la persistencia real
+      const { StorageService } = await import('./storage.service');
+      const objectId = await StorageService.uploadSubramaIcon(file, subgroupId);
+      const url = StorageService.getImageUrl(objectId);
+      
+      // Actualizar la subrama en el mock para guardar la referencia
+      const { mockUpdateSubramaImage } = await import('./organigrama.mock.service');
+      await mockUpdateSubramaImage(subgroupId, 'icono', objectId, url || '');
+      
+      console.log('✅ [MockService] Icono de subgrupo subido con éxito:', objectId);
+      return url || ''; // Retornar la URL para mostrar inmediatamente
+    } catch (error) {
+      console.error('❌ [MockService] Error subiendo icono de subgrupo:', error);
+      throw error;
+    }
   }
+
+  // TODO: Implementar upload real cuando se conecte con el backend
+  throw new Error('Real API not implemented yet');
+};
+
+export const uploadSubgroupMainImage = async (
+  _tenantSlug: string,
+  _groupSlug: string,
+  _sectionId: string,
+  subgroupId: string,
+  file: File
+): Promise<string> => {
+  if (USE_MOCK_API) {
+    console.log('📤 [MockService] Subiendo imagen principal de subgrupo...');
+    
+    try {
+      // Usar StorageService para manejar la persistencia real
+      const { StorageService } = await import('./storage.service');
+      const objectId = await StorageService.uploadSubramaMainImage(file, subgroupId);
+      const url = StorageService.getImageUrl(objectId);
+      
+      // Actualizar la subrama en el mock para guardar la referencia
+      const { mockUpdateSubramaImage } = await import('./organigrama.mock.service');
+      await mockUpdateSubramaImage(subgroupId, 'imagenPrincipal', objectId, url || '');
+      
+      console.log('✅ [MockService] Imagen principal de subgrupo subida con éxito:', objectId);
+      return url || ''; // Retornar la URL para mostrar inmediatamente
+    } catch (error) {
+      console.error('❌ [MockService] Error subiendo imagen principal de subgrupo:', error);
+      throw error;
+    }
+  }
+
+  // TODO: Implementar upload real cuando se conecte con el backend
+  throw new Error('Real API not implemented yet');
 };
 
 export const uploadGalleryImages = async (
@@ -237,18 +282,30 @@ export const uploadSubgroupGalleryImages = async (
   _tenantSlug: string,
   _groupSlug: string,
   _sectionId: string,
-  _subgroupId: string,
-  _files: File[]
+  subgroupId: string,
+  files: File[]
 ): Promise<string[]> => {
   if (USE_MOCK_API) {
-    // Simular upload con delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('📤 [MockService] Subiendo imágenes de galería de subgrupo...');
     
-    // Generar URLs mock para cada imagen
-    const urls = _files.map((_, index) => `https://mock-api.example.com/images/subgroup-gallery-${_subgroupId}-${index + 1}.jpg`);
-    
-    console.log('📸 [MockService] Subgroup gallery images simuladas:', urls);
-    return urls;
+    try {
+      // Usar StorageService para manejar la persistencia real
+      const { StorageService } = await import('./storage.service');
+      const objectIds = await StorageService.uploadSubramaGallery(files, subgroupId);
+      
+      // Actualizar la subrama en el mock para guardar las referencias
+      const { mockUpdateSubramaGallery } = await import('./organigrama.mock.service');
+      await mockUpdateSubramaGallery(subgroupId, objectIds);
+      
+      // Devolver las URLs para mostrar inmediatamente
+      const urls = objectIds.map(id => StorageService.getImageUrl(id)).filter(url => url !== null) as string[];
+      
+      console.log('✅ [MockService] Imágenes de galería de subgrupo subidas con éxito:', urls.length);
+      return urls;
+    } catch (error) {
+      console.error('❌ [MockService] Error subiendo galería de subgrupo:', error);
+      throw error;
+    }
   }
 
   // TODO: Implementar upload real cuando se conecte con el backend
