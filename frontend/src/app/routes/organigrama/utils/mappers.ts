@@ -8,7 +8,9 @@ import type {
   CreateRamaBackendData,
   UpdateRamaBackendData,
   CreateSubramaBackendData,
-  UpdateSubramaBackendData
+  UpdateSubramaBackendData,
+  BackendRama,
+  BackendSubrama
 } from '../types/rama.type';
 
 // Mapear datos del backend a formato frontend para Ramas
@@ -18,7 +20,8 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
                      backendRama.id ||
                      backendRama.sectionId ||
                      backendRama.ID ||
-                     backendRama.Section_ID;
+                     backendRama.Section_ID ||
+                     '';
   const mappedRama = {
     section_id: possibleId,
     sectionName: backendRama.sectionName || backendRama.name || '',
@@ -92,9 +95,10 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
 // Mapear datos del frontend al formato que espera el backend para crear Ramas
 export const mapFrontendCreateRamaToBackend = (frontendData: CreateRamaData): CreateRamaBackendData => {
   return {
-    sectionName: frontendData.nombre,
-    sectionDescription: frontendData.descripcion,
-    sectionGalleryObjectIds: []
+    name: frontendData.nombre,
+    description: frontendData.descripcion,
+    iconObjectId: null,
+    galleryObjectIds: []
   };
 };
 
@@ -103,12 +107,16 @@ export const mapFrontendUpdateRamaToBackend = (frontendData: UpdateRamaData): Up
   const backendData: UpdateRamaBackendData = {};
   
   if (frontendData.nombre !== undefined) {
-    backendData.sectionName = frontendData.nombre;
+    backendData.name = frontendData.nombre;
   }
   
   if (frontendData.descripcion !== undefined) {
-    backendData.sectionDescription = frontendData.descripcion;
+    backendData.description = frontendData.descripcion;
   }
+  
+  // Siempre incluir estos campos según las instrucciones
+  backendData.iconObjectId = null;
+  backendData.galleryObjectIds = [];
   
   return backendData;
 };

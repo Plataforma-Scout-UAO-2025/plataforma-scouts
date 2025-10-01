@@ -32,9 +32,10 @@ export interface Subrama {
 }
 
 export interface CreateRamaBackendData {
-  sectionName: string;
-  sectionDescription?: string;
-  sectionGalleryObjectIds: string[];
+  name: string;
+  description?: string;
+  iconObjectId: null;
+  galleryObjectIds: string[];
 }
 
 export interface CreateSubramaBackendData {
@@ -42,9 +43,10 @@ export interface CreateSubramaBackendData {
   subgroupDescription?: string;
 }
 export interface UpdateRamaBackendData {
-  sectionName?: string;
-  sectionDescription?: string;
-  sectionGalleryObjectIds?: string[];
+  name?: string;
+  description?: string;
+  iconObjectId?: null;
+  galleryObjectIds?: string[];
 }
 
 export interface UpdateSubramaBackendData {
@@ -84,4 +86,48 @@ export interface UpdateSubramaData {
   lider?: string;
   estado?: 'activa' | 'inactiva';
   ramaId?: string;
+}
+
+// Tipos para las respuestas del backend
+export interface BackendRama {
+  sectionId?: string;
+  section_id?: string;
+  id?: string;
+  ID?: string;
+  Section_ID?: string;
+  name?: string;
+  sectionName?: string;
+  description?: string;
+  sectionDescription?: string;
+  iconObjectUrl?: string;
+  galleryObjectUrls?: string[];
+  sectionGalleryObjectIds?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  minAge?: number;
+  maxAge?: number;
+}
+
+export interface BackendSubrama {
+  subgroup_id?: string;
+  subgroupId?: string;
+  id?: string;
+  ID?: string;
+  subgroupIdLegacy?: string;
+  subgroupName?: string;
+  subgroup_name?: string;
+  name?: string;
+  nombre?: string;
+  subgroupDescription?: string;
+  subgroup_description?: string;
+  description?: string;
+  section_id?: string;
+  sectionId?: string;
+  leader?: string;
+  leaderName?: string;
+  isActive?: boolean;
+  status?: string;
+  createdAt?: string;
+  memberCount?: number;
+  members?: number;
 }
