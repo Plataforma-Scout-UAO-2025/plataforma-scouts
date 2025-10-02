@@ -52,6 +52,12 @@ const Rejected = () => {
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
+  const statusLabels: Record<string, string> = {
+    PENDING: "Pendiente",
+    ACCEPTED: "Aceptado",
+    NOT_ACCEPTED: "Rechazado",
+};
+
   // Cargar miembros rechazados al montar el componente
   useEffect(() => {
     cargarMiembrosRechazados();
@@ -221,8 +227,8 @@ const Rejected = () => {
                     <TableCell>{member.identification}</TableCell>
                     <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
                     <TableCell>
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
-                        {member.status}
+                      <span className="py-1 rounded font-medium bg-red-100 text-red-800">
+                        {statusLabels[member.status] || member.status}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

@@ -56,6 +56,14 @@ const Requests = () => {
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
+
+  const statusLabels: Record<string, string> = {
+    PENDING: "Pendiente",
+    ACCEPTED: "Aceptado",
+    NOT_ACCEPTED: "Rechazado",
+};
+
+
   useEffect(() => {
     cargarMiembros();
   }, []);
@@ -300,6 +308,7 @@ const Requests = () => {
                 <TableHead className="font-bold text-primary">Apellidos</TableHead>
                 <TableHead className="font-bold text-primary">Identificación</TableHead>
                 <TableHead className="font-bold text-primary">Ciudad</TableHead>
+                <TableHead className="font-bold text-primary">Estado</TableHead>
                 <TableHead className="text-center font-bold text-primary">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -318,6 +327,12 @@ const Requests = () => {
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
                     <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
+                   <TableCell>
+                      <span className="py-1 rounded font-medium bg-gray-300 text-gray-800">
+                        {statusLabels[member.status] || member.status}
+                      </span>
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <div className="flex justify-center gap-2">
                         <Button

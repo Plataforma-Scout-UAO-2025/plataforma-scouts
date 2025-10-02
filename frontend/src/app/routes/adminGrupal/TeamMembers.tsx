@@ -62,6 +62,12 @@ const TeamMembers = () => {
   const [isActive, setIsActive] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
+  const statusLabels: Record<string, string> = {
+  PENDING: "Pendiente",
+  ACCEPTED: "Aceptado",
+  NOT_ACCEPTED: "Rechazado",
+};
+
 
   // Cargar miembros aceptados al montar el componente
   useEffect(() => {
@@ -263,9 +269,9 @@ const TeamMembers = () => {
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
                     <TableCell>{member.birth_date || "N/A"}</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                        {member.status}
+                     <TableCell>
+                      <span className="py-1 rounded font-medium bg-green-100 text-green-800">
+                        {statusLabels[member.status] || member.status}
                       </span>
                     </TableCell>
                     <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
