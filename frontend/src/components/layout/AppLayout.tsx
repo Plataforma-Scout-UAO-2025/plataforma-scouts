@@ -13,28 +13,61 @@ import {
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { LineChart, Boxes, CalendarDays, Settings, HelpCircle, LogOut } from "lucide-react"
+import {
+  LineChart,
+  Boxes,
+  CalendarDays,
+  Settings,
+  HelpCircle,
+  LogOut,
+  Users,
+  Award,
+  ChevronRight,
+  Network,
+} from "lucide-react"
 import { Outlet, Link, useLocation } from "react-router-dom"
-import type { ReactNode } from "react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import LogoutButton from "@/components/auth/LogoutButton"
+import type { ReactNode } from "react"
 import { useAuth0 } from '@auth0/auth0-react';
+
+type SubMenuItem = {
+  id: string
+  label: string
+  icon: ReactNode
+  href?: string
+  submenu?: SubMenuItem[]
+}
 
 type MenuItem = {
   id: string
   label: string
   icon: ReactNode
   href?: string
+  submenu?: SubMenuItem[]
 }
 
-const mainItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
-  { id: "tropa", label: "Tropa", icon: <Boxes />, href: "/app/tropa" },
+//const mainItems: MenuItem[] = [
+//  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/home" },
+//  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
+//]
+
+const adminGlobalItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard-global" },
+]
+
+const adminGrupalItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
+  { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
+  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
+  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
-  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
-
 ]
 
 const bottomItems: MenuItem[] = [
@@ -44,9 +77,12 @@ const bottomItems: MenuItem[] = [
 
 export default function AppLayout() {
   const location = useLocation()
+  const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal')
+  const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems
   const { user } = useAuth0();
 
   const isActive = (href: string) => {
+    if (!href) return false
     if (href === "/app") {
       return location.pathname === "/app"
     }
@@ -59,6 +95,7 @@ export default function AppLayout() {
         className="bg-primary text-primary-foreground"
         collapsible="offcanvas"
       >
+        {/* Header */}
         <SidebarHeader className="p-4 bg-primary">
           <div className="flex items-center gap-3">
             <img
@@ -74,37 +111,78 @@ export default function AppLayout() {
           <SidebarSeparator className="my-4 bg-white/20" />
         </SidebarHeader>
 
+        {/* Menu */}
         <SidebarContent className="px-2 bg-primary">
           <SidebarGroup>
             <SidebarGroupLabel className="sr-only">Menú principal</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {mainItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={item.href ? isActive(item.href) : false}
-                      className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[active=true]:bg-white/20 data-[active=true]:font-semibold data-[active=true]:text-white"
-                    >
-                      {item.href ? (
-                        <Link to={item.href}>
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </Link>
-                      ) : (
-                        <div>
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </div>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {menuItems.map((item) =>
+                  item.submenu ? (
+                    <Collapsible key={item.id} defaultOpen className="group/collapsible">
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[state=open]:bg-white/20 data-[state=open]:font-semibold data-[state=open]:text-white">
+                            {item.icon}
+                            <span>{item.label}</span>
+                            <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.submenu.map((sub) => (
+                              <SidebarMenuSubItem key={sub.id}>
+                                <SidebarMenuButton
+                                  asChild
+                                  isActive={sub.href ? isActive(sub.href) : false}
+                                  className="text-sm h-10 px-3 rounded-md hover:bg-white/10 data-[active=true]:bg-white/20 data-[active=true]:font-medium data-[active=true]:text-white"
+                                >
+                                  {sub.href ? (
+                                    <Link to={sub.href}>
+                                      {sub.icon}
+                                      <span>{sub.label}</span>
+                                    </Link>
+                                  ) : (
+                                    <div>
+                                      {sub.icon}
+                                      <span>{sub.label}</span>
+                                    </div>
+                                  )}
+                                </SidebarMenuButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  ) : (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={item.href ? isActive(item.href) : false}
+                        className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[active=true]:bg-white/20 data-[active=true]:font-semibold data-[active=true]:text-white"
+                      >
+                        {item.href ? (
+                          <Link to={item.href}>
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </Link>
+                        ) : (
+                          <div>
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </div>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
+        {/* Footer */}
         <SidebarFooter className="mt-auto px-2 pb-4 bg-primary">
           <Separator className="bg-white/20 mb-4" />
           <SidebarMenu>
@@ -126,6 +204,7 @@ export default function AppLayout() {
         </SidebarFooter>
       </Sidebar>
 
+      {/* Contenido principal */}
       <SidebarInset className="flex flex-col h-screen">
         <header className="flex h-14 items-center gap-2 border-b px-4 flex-shrink-0">
           <SidebarTrigger />
@@ -138,5 +217,3 @@ export default function AppLayout() {
     </SidebarProvider>
   )
 }
-
-
