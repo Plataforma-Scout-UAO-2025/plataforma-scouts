@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.Member.Model;
+package uao.edu.co.scouts_project.member.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SubgroupModel {
+public class Subgroup {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer subgroup_id;
+    private Long subgroupId;
 
 }

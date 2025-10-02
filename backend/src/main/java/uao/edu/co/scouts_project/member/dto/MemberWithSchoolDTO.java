@@ -1,14 +1,11 @@
-package uao.edu.co.scouts_project.Member.Dto;
+package uao.edu.co.scouts_project.member.dto;
 
-import lombok.Data;
-
-import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Map;
 
-@Data
-public class MemberWithSchoolDto {
+public class MemberWithSchoolDTO {
+    
     private Integer subgroup_id;
     private String first_name;
     private String last_name;
@@ -18,7 +15,7 @@ public class MemberWithSchoolDto {
     private String document_type;
     private String email;
     private String gender;
-    private Date birthDate;
+    private LocalDate birthDate;
     private String address;
     private String phone;
     private String weight;
@@ -27,9 +24,9 @@ public class MemberWithSchoolDto {
     private String sports;
     private String instruments;
     private String status;
-    private Timestamp acceptance_date;
-    private ArrayList<Integer> in_charge_of;
-    private Map<String, Object> emergency_phone;
+    private LocalDate acceptanceDate;
+    private ArrayList<Integer> inChargeOf;
+    private Map<String, Object> emergencyContact;
 
     private String institution;
     private String course;

@@ -1,24 +1,22 @@
-package uao.edu.co.scouts_project.Member.Model;
+package uao.edu.co.scouts_project.member.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 @Entity
-@Table(name = "School_Data")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
-public class SchoolModel {
+public class SchoolData {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer school_data_id;
+    private Long schoolDataId;
 
     @OneToOne
     @JoinColumn(name = "member_id", referencedColumnName = "member_id", nullable = false)
-
-    private MemberModel member;
+    private Member member;
     private String institution;
     private String course;
     private String calendar;
