@@ -13,7 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/index";
-import { Eye, Check, X, ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
+import { Eye, ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -41,21 +41,21 @@ interface Member {
   instruments: string;
   status: string;
 }
+
 const Requests = () => {
- const [members, setMembers] = useState<Member[]>([]);
- const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [openViewModal, setOpenViewModal] = useState(false);
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // === Filtros ===
+  // Filtros
   const [isActive, setIsActive] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
-  // Cargar miembros al montar el componente
   useEffect(() => {
     cargarMiembros();
   }, []);
@@ -63,7 +63,6 @@ const Requests = () => {
   const cargarMiembros = async () => {
     try {
       setLoading(true);
-      // Cargar solo los miembros con estado PENDING
       const response = await fetch(
         "http://localhost:8081/api/members/list_members_by_status?status=PENDING",
         {
@@ -88,7 +87,6 @@ const Requests = () => {
     }
   };
 
-  // Extraer ciudades únicas
   const cities = useMemo(() => {
     const uniqueCities = [...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean))];
     return uniqueCities.sort();
@@ -109,8 +107,9 @@ const Requests = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  // === VER SOLICITUD ===
-      const handleView = async (member: Member) => {    try {
+  // VER SOLICITUD
+  const handleView = async (member: Member) => {
+    try {
       setLoading(true);
       const response = await fetch(
         `http://localhost:8081/api/members/list_member_by_id?id=${member.member_id}`,
@@ -137,12 +136,14 @@ const Requests = () => {
     }
   };
 
-  // === ACEPTAR SOLICITUD ===
-  const handleAccept = async (member: Member) => {
-      try {
+  // ACEPTAR DESDE EL MODAL
+  const handleAcceptFromModal = async () => {
+    if (!selectedMember) return;
+
+    try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8081/api/members/update_member_status/${member.member_id}?status=ACCEPTED`,
+        `http://localhost:8081/api/members/update_member_status/${selectedMember.member_id}?status=ACCEPTED`,
         {
           method: "PUT",
           headers: {
@@ -156,26 +157,38 @@ const Requests = () => {
         throw new Error(errorData.error || "Error al aceptar solicitud");
       }
 
-      alert(`Solicitud de ${member.first_name} ${member.last_name} aceptada exitosamente`);
+      // Cerrar modal
+      setOpenViewModal(false);
+      setSelectedMember(null);
+
+      alert(`Solicitud de ${selectedMember.first_name} ${selectedMember.last_name} aceptada exitosamente`);
+      
+      // Recargar lista
       await cargarMiembros();
     } catch (err: unknown) {
       console.error("Error al aceptar solicitud:", err);
       const errorMessage = err instanceof Error ? err.message : "Error desconocido";
       alert("Error al aceptar la solicitud: " + errorMessage);
-
     } finally {
       setLoading(false);
     }
   };
 
-  // === RECHAZAR SOLICITUD ===
-const handleReject = (member: Member) => {
-    setSelectedMember(member);
+  // ABRIR MODAL DE RECHAZO
+  const handleRejectFromModal = () => {
+    // Cerrar modal de vista y abrir modal de rechazo
+    setOpenViewModal(false);
     setOpenRejectModal(true);
   };
 
+  // ENVIAR RECHAZO
   const handleSendReject = async () => {
     if (!selectedMember) return;
+
+    if (!rejectReason.trim()) {
+      alert("Por favor, ingresa una razón para el rechazo");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -185,7 +198,8 @@ const handleReject = (member: Member) => {
         {
           method: "PUT",
           headers: {
-           "Content-Type": "application/json" },
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -194,22 +208,18 @@ const handleReject = (member: Member) => {
         throw new Error(errorData.error || "Error al rechazar solicitud");
       }
 
-      // Cerramos modal y limpiamos campos
+      // Cerrar modales y limpiar
       setOpenRejectModal(false);
       setRejectReason("");
       setSelectedMember(null);
-
-      // Abrimos modal de confirmación
       setOpenConfirmModal(true);
 
-      // Recargamos miembros pendientes
+      // Recargar miembros
       await cargarMiembros();
     } catch (err: unknown) {
-    console.error("Error al rechazar solicitud:", err);
-    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
-    alert("Error al rechazar la solicitud: " + errorMessage);
-
-
+      console.error("Error al rechazar solicitud:", err);
+      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+      alert("Error al rechazar la solicitud: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -220,7 +230,7 @@ const handleReject = (member: Member) => {
       <header className="flex flex-col mb-4">
         <p className="text-5xl font-bold text-primary">Solicitudes</p>
         <p className="text-2xl text-text font-medium my-5">
-          Aquí se mostrarán las solicitudes.
+          Aquí se mostrarán las solicitudes pendientes.
         </p>
       </header>
 
@@ -229,7 +239,7 @@ const handleReject = (member: Member) => {
         <div className="flex w-full md:w-2/3 gap-4">
           <Input
             type="text"
-            placeholder="Buscar..."
+            placeholder="Buscar por nombre, apellido o documento..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             className="w-2/3 flex h-auto border-primary"
@@ -268,6 +278,15 @@ const handleReject = (member: Member) => {
             <BrushCleaning size={16} /> Limpiar
           </Button>
         </div>
+
+        <Button
+          variant="outline"
+          onClick={cargarMiembros}
+          disabled={loading}
+          className="px-4"
+        >
+          {loading ? "Cargando..." : "Actualizar"}
+        </Button>
       </section>
 
       {/* Tabla de miembros */}
@@ -281,14 +300,14 @@ const handleReject = (member: Member) => {
                 <TableHead className="font-bold text-primary">Apellidos</TableHead>
                 <TableHead className="font-bold text-primary">Identificación</TableHead>
                 <TableHead className="font-bold text-primary">Ciudad</TableHead>
-                <TableHead className="text-right"></TableHead>
+                <TableHead className="text-center font-bold text-primary">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && members.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
-                    <p className="text-text text-lg">Cargando...</p>
+                    <p className="text-text text-lg">Cargando solicitudes...</p>
                   </TableCell>
                 </TableRow>
               ) : filteredMembers.length > 0 ? (
@@ -303,27 +322,12 @@ const handleReject = (member: Member) => {
                       <div className="flex justify-center gap-2">
                         <Button
                           variant="primary"
-                          size="icon"
-                          title="Ver"
+                          size="sm"
+                          title="Ver detalles"
                           onClick={() => handleView(member)}
+                          disabled={loading}
                         >
-                          <Eye size={18} />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          title="Aceptar"
-                          onClick={() => handleAccept(member)}
-                        >
-                          <Check size={18} />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          title="Rechazar"
-                          onClick={() => handleReject(member)}
-                        >
-                          <X size={18} />
+                          <Eye size={16} />
                         </Button>
                       </div>
                     </TableCell>
@@ -343,11 +347,11 @@ const handleReject = (member: Member) => {
         </div>
       </section>
 
-      {/* Modal ver formulario */}
+      {/* Modal ver formulario con botones de acción */}
       <Dialog open={openViewModal} onOpenChange={setOpenViewModal}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Formulario del usuario</DialogTitle>
+            <DialogTitle>Detalles de la solicitud</DialogTitle>
           </DialogHeader>
           {loading ? (
             <p>Cargando...</p>
@@ -363,17 +367,31 @@ const handleReject = (member: Member) => {
                 <p><b>Dirección:</b> {selectedMember.address}</p>
                 <p><b>Teléfono:</b> {selectedMember.phone}</p>
                 <p><b>Sexo:</b> {selectedMember.gender}</p>
-                <p><b>Peso:</b> {selectedMember.weight}</p>
-                <p><b>Estatura:</b> {selectedMember.height}</p>
-                <p><b>Pasatiempos:</b> {selectedMember.hobbies}</p>
-                <p><b>Deportes:</b> {selectedMember.sports}</p>
-                <p><b>Instrumentos:</b> {selectedMember.instruments}</p>
+                <p><b>Peso:</b> {selectedMember.weight} kg</p>
+                <p><b>Estatura:</b> {selectedMember.height} cm</p>
+                <p><b>Pasatiempos:</b> {selectedMember.hobbies || "N/A"}</p>
+                <p><b>Deportes:</b> {selectedMember.sports || "N/A"}</p>
+                <p><b>Instrumentos:</b> {selectedMember.instruments || "N/A"}</p>
                 <p><b>Estado:</b> {selectedMember.status}</p>
               </div>
             )
           )}
-          <DialogFooter>
-            <Button onClick={() => setOpenViewModal(false)}>Cerrar</Button>
+          <DialogFooter className="flex gap-2 sm:gap-2">
+        
+            <Button 
+              variant="destructive" 
+              onClick={handleRejectFromModal}
+              disabled={loading}
+            >
+              Rechazar
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleAcceptFromModal}
+              disabled={loading}
+            >
+              {loading ? "Procesando..." : "Aceptar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -384,17 +402,34 @@ const handleReject = (member: Member) => {
           <DialogHeader>
             <DialogTitle>Rechazar solicitud</DialogTitle>
           </DialogHeader>
+          {selectedMember && (
+            <p className="text-sm mb-2">
+              ¿Estás seguro de rechazar la solicitud de <b>{selectedMember.first_name} {selectedMember.last_name}</b>?
+            </p>
+          )}
           <p className="text-sm text-gray-600">Escribe las razones del rechazo:</p>
           <Textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder="Razones del rechazo..."
+            className="min-h-[100px]"
           />
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setOpenRejectModal(false)}>
+            <Button 
+              variant="secondary" 
+              onClick={() => {
+                setOpenRejectModal(false);
+                setRejectReason("");
+              }}
+              disabled={loading}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleSendReject} disabled={loading}>
+            <Button 
+              variant="primary"
+              onClick={handleSendReject} 
+              disabled={loading}
+            >
               {loading ? "Enviando..." : "Enviar"}
             </Button>
           </DialogFooter>
@@ -405,10 +440,10 @@ const handleReject = (member: Member) => {
       <Dialog open={openConfirmModal} onOpenChange={setOpenConfirmModal}>
         <DialogContent className="max-w-sm text-center">
           <DialogHeader>
-            <DialogTitle>Mensaje enviado</DialogTitle>
+            <DialogTitle>Solicitud procesada</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-600">
-            El comentario fue enviado correctamente.
+            La solicitud ha sido rechazada correctamente.
           </p>
           <DialogFooter>
             <Button onClick={() => setOpenConfirmModal(false)}>Cerrar</Button>

@@ -169,7 +169,7 @@ const TeamMembers = () => {
         ))}
       </section>
 
-      {/* Filtros de búsqueda - MODIFICADO */}
+      {/* Filtros de búsqueda */}
       <section className="my-8 flex justify-between flex-col md:flex-row gap-4 md:gap-6">
         <div className="flex w-2/3 gap-4">
           <Input
@@ -221,7 +221,7 @@ const TeamMembers = () => {
         </div>
       </section>
 
-      {/* Tabla de miembros - MODIFICADO */}
+      {/* Tabla de miembros */}
       <section className="mt-6">
         <div className="border-3 border-primary rounded-lg overflow-hidden">
           <Table className="text-sm">
