@@ -56,6 +56,8 @@ public class Member {
     private String hobbies;
     private String sports;
     private String instruments;
+    private boolean isActive;
+
 
     @Column(nullable = false)
     private String status;

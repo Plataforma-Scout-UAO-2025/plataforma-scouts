@@ -22,6 +22,7 @@ public class MemberDTO {
     private String phone;
     private String weight;
     private String height;
+    private boolean isActive;
     private String hobbies;
     private String sports;
     private String instruments;
