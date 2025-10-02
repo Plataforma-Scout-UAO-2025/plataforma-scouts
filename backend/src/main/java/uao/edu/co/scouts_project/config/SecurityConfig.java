@@ -1,6 +1,6 @@
 //Este codigo sirve para desactivar spring security
 
-package uao.edu.co.scouts_project.Config;
+package uao.edu.co.scouts_project.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
