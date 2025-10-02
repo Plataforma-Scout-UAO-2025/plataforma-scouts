@@ -31,7 +31,7 @@ public class AuthorizationFacade {
     }
 
     /**
-     * Resuelve las authorities resultantes de un JWT considerando:
+     * Resuelve las authorities resultantes de un JWT considerando lo siguiente:
      * 1. Claim "permissions" directo si viene poblado (se mapea a SCOPE_<perm>).\n
      * 2. Fallback: consulta remota de permisos/roles vía PermissionQueryPort usando sub o user_id.
      */
