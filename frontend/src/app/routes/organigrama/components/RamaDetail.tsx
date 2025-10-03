@@ -117,12 +117,20 @@ export default function RamaDetail() {
         file
       );
 
+      // Pequeño delay para que el backend procese la asociación
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Recargar la rama para obtener la imagen actualizada
+      console.log('🔄 [RamaDetail] Recargando rama para obtener icono actualizado...');
       const updatedRama = await organigramaService.getRamaById(tenantSlug, groupSlug, rama.id);
       if (updatedRama) {
         setRama(updatedRama);
         console.log('✅ [RamaDetail] Icono actualizado correctamente');
+        console.log('🔍 [RamaDetail] Nuevo icono URL:', updatedRama.icono);
         toast.success('Ícono actualizado correctamente');
+      } else {
+        console.warn('⚠️ [RamaDetail] No se pudo recargar la rama');
+        toast.error('Error recargando los datos de la rama');
       }
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo ícono:', err);
@@ -196,15 +204,23 @@ export default function RamaDetail() {
         if (data) {
           setRama(data);
           
+          console.log('🔍 [RamaDetail] Datos completos de la rama:', {
+            id: data.id,
+            nombre: data.nombre,
+            imagenPrincipal: data.imagenPrincipal,
+            sectionGalleryObjectIds: data.sectionGalleryObjectIds
+          });
+          
           // Cargar imagen principal existente
           const mainImageUrl = getMainImageUrl(data);
           setImagenPrincipal(mainImageUrl);
           
-          // Cargar imágenes de galería existentes
-          const galleryUrls = StorageService.getRamaGalleryUrls(data.id);
+          // Cargar imágenes de galería desde el backend
+          const galleryUrls = data.sectionGalleryObjectIds || [];
           setGaleriaFotos(galleryUrls);
           
           console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
+          console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
         }
       } catch (err) {
         console.error('❌ [RamaDetail] Error cargando rama:', err);
