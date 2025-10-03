@@ -104,27 +104,17 @@ public class Group {
 
     @PrePersist
     public void prePersist() {
-        if (this.socialLinks == null) {
-            this.socialLinks = new HashMap<>();
-        }
-        if (this.config == null) {
-            this.config = new HashMap<>();
-        }
-        if (this.isActive == null) {
-            this.isActive = true;
-        }
+        if (this.socialLinks == null) this.socialLinks = new HashMap<>();
+        if (this.config == null) this.config = new HashMap<>();
+        if (this.isActive == null) this.isActive = Boolean.TRUE;
     }
 
     @PreUpdate
     public void preUpdate() {
-        // @UpdateTimestamp se encarga del updatedAt automáticamente
-        if (this.socialLinks == null) {
-            this.socialLinks = new HashMap<>();
-        }
-        if (this.config == null) {
-            this.config = new HashMap<>();
-        }
+        if (this.socialLinks == null) this.socialLinks = new HashMap<>();
+        if (this.config == null) this.config = new HashMap<>();
     }
+
 
     // Getters and Setters
     public Long getGroupId() { return groupId; }

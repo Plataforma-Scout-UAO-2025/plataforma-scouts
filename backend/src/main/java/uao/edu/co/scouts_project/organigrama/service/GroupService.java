@@ -163,18 +163,21 @@ public class GroupService {
     
     // Método `toResponseDTO` sobrecargado: uno para carga masiva (más eficiente)
     private GroupResponseDTO toResponseDTO(Group group, Map<UUID, String> urlMap) {
-        // Búsquedas súper rápidas en el mapa, sin tocar la base de datos
-        String logoUrl = urlMap.get(group.getLogoObjectId());
-        String scarfUrl = urlMap.get(group.getScarfObjectId());
+         Map<UUID, String> safe = (urlMap != null) ? urlMap : Map.of();
+         String logoUrl  = (group.getLogoObjectId()  != null) ? safe.get(group.getLogoObjectId())  : null;
+         String scarfUrl = (group.getScarfObjectId() != null) ? safe.get(group.getScarfObjectId()) : null;
 
-        return new GroupResponseDTO(
-            group.getGroupId(), group.getTenantId(), group.getSlug(), group.getName(),
-            group.getDistrict(), group.getIdentifierNumber(), group.getAddress(), group.getPhone(),
-            group.getEmail(), group.getFoundedIn(), group.getMotto(), group.getMission(),
-            group.getVision(), group.getHistory(), logoUrl, scarfUrl, group.getSocialLinks(),
-            group.getConfig(), group.getIsActive(), group.getStatus(),
-            group.getCreatedAt(), group.getUpdatedAt()
-        );
+         Map<String, Object> social = (group.getSocialLinks() != null) ? group.getSocialLinks() : Map.of();
+         Map<String, Object> conf   = (group.getConfig()       != null) ? group.getConfig()       : Map.of();
+
+         return new GroupResponseDTO(
+             group.getGroupId(), group.getTenantId(), group.getSlug(), group.getName(),
+             group.getDistrict(), group.getIdentifierNumber(), group.getAddress(), group.getPhone(),
+             group.getEmail(), group.getFoundedIn(), group.getMotto(), group.getMission(),
+             group.getVision(), group.getHistory(), logoUrl, scarfUrl, social,
+             conf, group.getIsActive(), group.getStatus(),
+             group.getCreatedAt(), group.getUpdatedAt()
+         );
     }
     
     // Y otro para casos de un solo objeto, que llama al servicio de carga masiva internamente
