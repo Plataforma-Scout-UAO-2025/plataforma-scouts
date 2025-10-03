@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { withAuthenticationRequired } from "@auth0/auth0-react";
+import { useAuth0Api } from "./hooks/useAuth0Api";
 
 // Routes imports
 // import Login from "./app/routes/Login";
@@ -19,6 +20,9 @@ const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal"; // Simulac
 const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
 
 function App() {
+  // Configurar la integración entre Auth0 y Axios
+  useAuth0Api();
+
   return (
     <BrowserRouter>
       <div className="h-screen w-screen">
