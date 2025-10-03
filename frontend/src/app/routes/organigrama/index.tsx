@@ -30,8 +30,9 @@ import { useTenantParams } from './hooks/useTenantParams';
 export default function Organigrama() {
   const [ramas, setRamas] = useState<Rama[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingYears, setIsLoadingYears] = useState(true);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
+  const [selectedYear, setSelectedYear] = useState<string>('');
   const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
   const [createSubramaModalOpen, setCreateSubramaModalOpen] = useState(false);
   const [editRamaModalOpen, setEditRamaModalOpen] = useState(false);
@@ -50,39 +51,79 @@ export default function Organigrama() {
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
   const successTimeoutRef = useRef<number | null>(null);
   
+  // Control de carga para evitar llamadas duplicadas
+  const isLoadingRamasRef = useRef(false);
+  const isLoadingYearsRef = useRef(false);
+  
   const { error, handleError, clearError } = useApiError();
   
   const { tenantSlug, groupSlug } = useTenantParams();
 
   const loadAvailableYears = useCallback(async () => {
+    if (!tenantSlug || !groupSlug || isLoadingYearsRef.current) return;
+    
     try {
+      isLoadingYearsRef.current = true;
+      setIsLoadingYears(true);
+      console.log('🔄 [Organigrama] Cargando años disponibles...');
+      
       const years = await organigramaService.getAvailableYears(tenantSlug, groupSlug);
       setAvailableYears(years);
+      
+      // Establecer automáticamente el primer año si no hay uno seleccionado
+      if (!selectedYear && years.length > 0) {
+        setSelectedYear(years[0].toString());
+      }
+      
+      console.log('✅ [Organigrama] Años cargados exitosamente:', years.length);
     } catch (error) {
+      console.error('❌ [Organigrama] Error cargando años:', error);
       handleError(error);
       setAvailableYears([new Date().getFullYear()]);
+    } finally {
+      setIsLoadingYears(false);
+      isLoadingYearsRef.current = false;
     }
   }, [tenantSlug, groupSlug, handleError]);
 
   const loadRamas = useCallback(async () => {
+    if (!tenantSlug || !groupSlug || isLoadingRamasRef.current) return;
+    
     try {
+      isLoadingRamasRef.current = true;
       setIsLoading(true);
-      const data = await organigramaService.getRamas(tenantSlug, groupSlug, selectedYear);
+      console.log('🔄 [Organigrama] Cargando ramas...', { selectedYear });
+      
+      // Convertir selectedYear a number si no está vacío, sino undefined
+      const yearFilter = selectedYear ? parseInt(selectedYear) : undefined;
+      const data = await organigramaService.getRamas(tenantSlug, groupSlug, yearFilter);
       setRamas(data);
+      
+      console.log('✅ [Organigrama] Ramas cargadas exitosamente:', data.length);
     } catch (error) {
+      console.error('❌ [Organigrama] Error cargando ramas:', error);
       handleError(error);
     } finally {
       setIsLoading(false);
+      isLoadingRamasRef.current = false;
     }
   }, [tenantSlug, groupSlug, selectedYear, handleError]);
 
+  // Cargar años disponibles solo una vez al montar el componente
   useEffect(() => {
-    loadAvailableYears();
-  }, [loadAvailableYears]);
+    if (tenantSlug && groupSlug) {
+      console.log('🚀 [Organigrama] Inicializando carga de años...');
+      loadAvailableYears();
+    }
+  }, [tenantSlug, groupSlug]); // Removido loadAvailableYears de las dependencias para evitar re-ejecutar
 
+  // Cargar ramas cuando cambien los parámetros de filtrado
   useEffect(() => {
-    loadRamas();
-  }, [loadRamas]);
+    if (tenantSlug && groupSlug) {
+      console.log('🚀 [Organigrama] Inicializando carga de ramas...');
+      loadRamas();
+    }
+  }, [tenantSlug, groupSlug, selectedYear]); // Removido loadRamas de las dependencias para evitar re-ejecutar
 
   // ====== RAMAS ======
   const handleCreateRama = async (data: CreateRamaData) => {
@@ -259,8 +300,8 @@ export default function Organigrama() {
       {/* Controles de filtrado */}
       <div className="flex items-center space-x-4">
         <Select
-          value={selectedYear ? String(selectedYear) : undefined}
-          onValueChange={(value: string) => setSelectedYear(parseInt(value))}
+          value={selectedYear}
+          onValueChange={(value: string) => setSelectedYear(value)}
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Seleccionar año" />

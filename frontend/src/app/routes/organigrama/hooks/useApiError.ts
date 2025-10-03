@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ApiError } from '../services/apiClient';
 
 interface ErrorState {
@@ -14,7 +14,7 @@ export const useApiError = () => {
     type: 'error'
   });
 
-  const handleError = (error: unknown) => {
+  const handleError = useCallback((error: unknown) => {
     console.error('Error de API:', error);
     
     if (error instanceof ApiError) {
@@ -74,11 +74,11 @@ export const useApiError = () => {
         type: 'error'
       });
     }
-  };
+  }, []);
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setError({ hasError: false, message: '', type: 'error' });
-  };
+  }, []);
 
   return {
     error,

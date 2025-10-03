@@ -269,14 +269,20 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
 
 // Funciones auxiliares
 export const getAvailableYears = async (tenantSlug: string, groupSlug: string): Promise<number[]> => {
-  console.log('🔄 [OrganigramaService] Obteniendo años disponibles');
+  console.log('🔄 [OrganigramaService] Obteniendo años disponibles - OPTIMIZADO');
   
   try {
-    const ramas = await getRamas(tenantSlug, groupSlug);
-    const years = [...new Set(ramas.map(rama => rama.año).filter(año => año !== undefined && año !== null))];
+    // OPTIMIZACIÓN: Solo obtenemos las ramas SIN subramas para calcular años
+    // Esto evita el bucle infinito y mejora el rendimiento
+    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
+    const backendRamas = await apiClient.get<BackendRama[]>(endpoint);
+    
+    // Extraer años directamente de los datos del backend sin mapear subramas
+    const ramasSimples = backendRamas.map(mapBackendRamaToFrontend);
+    const years = [...new Set(ramasSimples.map(rama => rama.año).filter(año => año !== undefined && año !== null))];
     const sortedYears = years.sort((a, b) => b - a);
     
-    console.log('✅ [OrganigramaService] Años disponibles:', sortedYears);
+    console.log('✅ [OrganigramaService] Años disponibles (optimizado):', sortedYears);
     return sortedYears;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error obteniendo años:', error);
