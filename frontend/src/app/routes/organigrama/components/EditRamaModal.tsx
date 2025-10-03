@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, Loader2 } from 'lucide-react';
 import { uploadSectionIcon } from '../services/organigrama.service';
 import {
   Dialog,
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useApiError } from '../hooks/useApiError';
 import type { Rama, UpdateRamaData } from '../types/rama.type';
 
 interface EditRamaModalProps {
@@ -19,6 +20,7 @@ interface EditRamaModalProps {
   onOpenChange: (open: boolean) => void;
   rama: Rama | null;
   onSubmit: (data: UpdateRamaData) => Promise<void>;
+  onSuccess?: () => void; // Callback para refrescar datos
 }
 
 export default function EditRamaModal({
@@ -26,10 +28,12 @@ export default function EditRamaModal({
   onOpenChange,
   rama,
   onSubmit,
+  onSuccess,
 }: EditRamaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
+  const { error, handleError, clearError } = useApiError();
   const [formData, setFormData] = useState<UpdateRamaData>({
     id: '',
     nombre: '',
@@ -55,12 +59,22 @@ export default function EditRamaModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Limpiar errores previos
+    clearError();
+    
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
       onOpenChange(false);
+      
+      // Llamar callback de éxito para refrescar datos
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error('❌ Error al editar rama:', error);
+      handleError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -141,7 +155,7 @@ export default function EditRamaModal({
                     // Para edición sí tenemos rama.id
                     const url = await uploadSectionIcon('', '', rama.id, file);
                     setImagenUrl(url);
-                    setFormData(prev => ({ ...prev, // @ts-expect-error: `icono` property type mismatch with `url`
+                    setFormData(prev => ({ ...prev, 
                       icono: url }));
                   } catch (err) {
                     console.error('Error subiendo imagen:', err);
@@ -165,6 +179,13 @@ export default function EditRamaModal({
             />
           </div>
 
+          {/* Mostrar error si existe */}
+          {error.hasError && (
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-destructive">{error.message}</p>
+            </div>
+          )}
+
           {/* Botones */}
           <div className="flex justify-end gap-3 pt-4">
             <Button
@@ -181,7 +202,14 @@ export default function EditRamaModal({
               disabled={isSubmitting} 
               className="bg-primary hover:bg-primary-hover text-primary-foreground"
             >
-              {isSubmitting ? 'Guardando...' : 'Guardar Rama'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                'Guardar Rama'
+              )}
             </Button>
           </div>
         </form>

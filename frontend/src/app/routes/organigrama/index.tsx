@@ -286,6 +286,7 @@ export default function Organigrama() {
         open={createRamaModalOpen}
         onOpenChange={setCreateRamaModalOpen}
         onSubmit={handleCreateRama}
+        onSuccess={loadRamas}
       />
 
       <CreateSubramaModal
@@ -300,6 +301,7 @@ export default function Organigrama() {
         onOpenChange={setEditRamaModalOpen}
         rama={ramaSeleccionada}
         onSubmit={handleSubmitEditRama}
+        onSuccess={loadRamas}
       />
 
       <EditSubramaModal
@@ -314,6 +316,7 @@ export default function Organigrama() {
         open={confirmDeleteOpen}
         onClose={() => setConfirmDeleteOpen(false)}
         onConfirm={confirmDelete}
+        onSuccess={loadRamas}
         title={`Confirmar Eliminación de ${
           deleteTarget?.type === 'rama' ? 'Rama' : 'Subrama'
         }`}

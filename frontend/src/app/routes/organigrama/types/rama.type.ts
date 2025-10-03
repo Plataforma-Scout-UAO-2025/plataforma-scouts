@@ -106,17 +106,20 @@ export interface UpdateSubramaData {
 
 // Tipos para las respuestas del backend
 export interface BackendRama {
-  sectionId?: string;
+  sectionId?: string | number;
   section_id?: string;
   id?: string;
   ID?: string;
   Section_ID?: string;
+  tenantId?: number;
+  groupId?: number;
   name?: string;
   sectionName?: string;
   description?: string;
   sectionDescription?: string;
-  iconObjectUrl?: string;
+  iconObjectUrl?: string | null;
   iconObjectId?: string;
+  photoPrincipalUrl?: string | null;
   galleryObjectUrls?: string[];
   galleryObjectIds?: string[];
   sectionGalleryObjectIds?: string[];

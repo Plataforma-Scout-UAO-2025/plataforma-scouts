@@ -27,46 +27,77 @@ export default function RamaDetail() {
   const handleMainImageClick = () => mainImageInputRef.current?.click();
   const handleGalleryClick = () => galleryInputRef.current?.click();
 
-  // Función para obtener la URL correcta del icono
+  // Función optimizada para obtener la URL correcta del icono (prioriza URLs directas del backend)
   const getIconUrl = (rama: Rama): string => {
-    // Si hay iconoObjectId, usar el StorageService
+    // PRIORIDAD 1: URL directa del backend (campo optimizado)
+    if (rama.icono && !rama.icono.startsWith('data:') && rama.icono.includes('http')) {
+      console.log('✅ [RamaDetail] Usando URL directa del backend para icono:', rama.icono);
+      return rama.icono;
+    }
+    
+    // PRIORIDAD 2: URL de datos (data:image/...) - para compatibilidad
+    if (rama.icono && rama.icono.startsWith('data:')) {
+      console.log('✅ [RamaDetail] Usando data URL para icono');
+      return rama.icono;
+    }
+    
+    // PRIORIDAD 3: Fallback al StorageService (legacy)
     if (rama.iconoObjectId) {
       const imageUrl = StorageService.getImageUrl(rama.iconoObjectId);
-      if (imageUrl) return imageUrl;
+      if (imageUrl) {
+        console.log('✅ [RamaDetail] Usando StorageService para icono (legacy)');
+        return imageUrl;
+      }
     }
     
-    // Si el icono es una URL de datos (data:image/...), usarla directamente
-    if (rama.icono && rama.icono.startsWith('data:')) {
-      return rama.icono;
-    }
-    
-    // Si hay una URL normal en icono, usarla
+    // PRIORIDAD 4: Cualquier URL en campo icono
     if (rama.icono) {
+      console.log('✅ [RamaDetail] Usando campo icono como URL:', rama.icono);
       return rama.icono;
     }
     
-    // Fallback
+    console.log('⚠️ [RamaDetail] No hay icono disponible para rama:', rama.nombre);
     return '';
   };
 
-  // Función para obtener la URL correcta de la imagen principal
+  // Función optimizada para obtener la URL correcta de la imagen principal
   const getMainImageUrl = (rama: Rama): string => {
-    // Si hay imagenPrincipalObjectId, usar el StorageService
+    console.log('🔍 [RamaDetail] Analizando imagen principal para:', rama.nombre);
+    console.log('🔍 [RamaDetail] rama.imagenPrincipal:', rama.imagenPrincipal);
+    
+    // PRIORIDAD 1: URL directa del backend (campo optimizado)
+    if (rama.imagenPrincipal && !rama.imagenPrincipal.startsWith('data:') && rama.imagenPrincipal.includes('http')) {
+      console.log('✅ [RamaDetail] Usando URL directa del backend para imagen principal:', rama.imagenPrincipal);
+      return rama.imagenPrincipal;
+    }
+    
+    // PRIORIDAD 2: URL de datos (data:image/...) - para compatibilidad
+    if (rama.imagenPrincipal && rama.imagenPrincipal.startsWith('data:')) {
+      console.log('✅ [RamaDetail] Usando data URL para imagen principal');
+      return rama.imagenPrincipal;
+    }
+    
+    // PRIORIDAD 3: Fallback al StorageService (legacy)
     if (rama.imagenPrincipalObjectId) {
       const imageUrl = StorageService.getImageUrl(rama.imagenPrincipalObjectId);
-      if (imageUrl) return imageUrl;
+      if (imageUrl) {
+        console.log('✅ [RamaDetail] Usando StorageService para imagen principal (legacy)');
+        return imageUrl;
+      }
     }
     
-    // Si la imagenPrincipal es una URL de datos (data:image/...), usarla directamente
-    if (rama.imagenPrincipal && rama.imagenPrincipal.startsWith('data:')) {
-      return rama.imagenPrincipal;
-    }
-    
-    // Si hay una URL normal en imagenPrincipal, usarla
+    // PRIORIDAD 4: Cualquier URL en campo imagenPrincipal
     if (rama.imagenPrincipal) {
+      console.log('✅ [RamaDetail] Usando campo imagenPrincipal como URL:', rama.imagenPrincipal);
       return rama.imagenPrincipal;
     }
     
+    console.log('⚠️ [RamaDetail] No hay imagen principal - usando placeholder para rama:', rama.nombre);
+    console.log('📊 [RamaDetail] Estado rama.imagenPrincipal:', { 
+      value: rama.imagenPrincipal, 
+      type: typeof rama.imagenPrincipal, 
+      isEmpty: rama.imagenPrincipal === '' || rama.imagenPrincipal === null 
+    });
     // Fallback a una imagen placeholder
     return 'https://placehold.co/800x300/e2e8f0/94a3b8?text=Sin+imagen';
   };
@@ -106,7 +137,7 @@ export default function RamaDetail() {
     try {
       console.log('🔄 [RamaDetail] Subiendo imagen principal:', file.name);
       
-      // Subir archivo usando el nuevo sistema
+      // Subir archivo usando la función específica para imagen principal
       await organigramaService.uploadSectionMainImage(
         tenantSlug,
         groupSlug,

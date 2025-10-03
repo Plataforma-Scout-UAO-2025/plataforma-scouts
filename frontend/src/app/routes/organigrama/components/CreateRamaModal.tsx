@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useApiError } from '../hooks/useApiError';
 import type { CreateRamaFormData } from '../schemas/rama.schema';
 import type { CreateRamaData } from '../types/rama.type';
 
@@ -18,17 +19,20 @@ interface CreateRamaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateRamaData) => Promise<void>;
+  onSuccess?: () => void; // Callback para refrescar datos en la página principal
 }
 
 export default function CreateRamaModal({
   open,
   onOpenChange,
   onSubmit,
+  onSuccess,
 }: CreateRamaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { error, handleError, clearError } = useApiError();
   const [formData, setFormData] = useState<CreateRamaFormData>({
     nombre: '',
     descripcion: '',
@@ -39,6 +43,10 @@ export default function CreateRamaModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Limpiar errores previos
+    clearError();
+    
     setIsSubmitting(true);
     try {
       // Crear el objeto de datos incluyendo el archivo de imagen si existe
@@ -49,7 +57,8 @@ export default function CreateRamaModal({
       };
       
       await onSubmit(dataWithFile);
-      // Reset form
+      
+      // Reset form después del éxito
       setFormData({
         nombre: '',
         descripcion: '',
@@ -60,8 +69,14 @@ export default function CreateRamaModal({
       setSelectedFile(null);
       setImagenUrl(null);
       onOpenChange(false);
+      
+      // Llamar callback de éxito para refrescar datos
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error('Error al crear rama:', error);
+      handleError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -193,6 +208,13 @@ export default function CreateRamaModal({
             />
           </div>
 
+          {/* Mostrar error si existe */}
+          {error.hasError && (
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-destructive">{error.message}</p>
+            </div>
+          )}
+
           {/* Botones de Acción */}
           <div className="flex justify-end space-x-3 pt-4">
             <Button
@@ -209,7 +231,14 @@ export default function CreateRamaModal({
               disabled={isSubmitting}
               className="px-6 py-2 bg-primary hover:bg-primary-hover text-primary-foreground"
             >
-              {isSubmitting ? 'Guardando...' : 'Guardar Rama'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                'Guardar Rama'
+              )}
             </Button>
           </div>
         </form>
