@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { withAuthenticationRequired } from "@auth0/auth0-react";
+import { useAuth0ApiWrapper } from "./hooks/useAuth0ApiWrapper";
 
 // Routes imports
 // import Login from "./app/routes/Login";
@@ -19,6 +20,8 @@ const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal"; // Simulac
 const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
 
 function App() {
+  useAuth0ApiWrapper();
+
   return (
     <BrowserRouter>
       <div className="h-screen w-screen">
