@@ -65,6 +65,9 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
 
 // Mapear datos del backend a formato frontend para Subramas
 export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Subrama => {
+  // 🔍 LOG DETALLADO: Ver qué campos exactos recibimos del backend para subramas
+  console.log('🔄 [Mapper] Input del backend para SUBRAMA:', JSON.stringify(backendSubrama, null, 2));
+  
   // Intentar extraer el ID canonical que provee el backend desde varios nombres posibles
   const rawId = backendSubrama.subgroup_id ?? backendSubrama.subgroupId ?? backendSubrama.id ?? backendSubrama.ID ?? backendSubrama.subgroupIdLegacy;
 
@@ -94,7 +97,18 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
     backendSubrama.nombre ||
     '';
 
-  return {
+  // 🔍 CRÍTICO: Extraer URLs de imágenes (igual que en mapBackendRamaToFrontend)
+  const iconUrl = backendSubrama.iconObjectUrl || '';
+  const photoPrincipalUrl = backendSubrama.photoPrincipalUrl || '';
+  const galleryUrls = backendSubrama.galleryObjectUrls || [];
+
+  // 🔍 LOG DETALLADO: Ver qué URLs estamos extrayendo para subramas
+  console.log('🔍 [Mapper] URLs extraídas para SUBRAMA:');
+  console.log('   - iconUrl:', iconUrl);
+  console.log('   - photoPrincipalUrl:', photoPrincipalUrl);
+  console.log('   - galleryUrls:', galleryUrls);
+
+  const mappedSubrama = {
     // Si el backend provee un identificador canonical, úsalo; si no, usar el id consistente generado
     subgroup_id: extractedId ?? consistentId,
     subgroupName: nameFromBackend,
@@ -104,12 +118,23 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
     id: consistentId,
     nombre: nameFromBackend,
     descripcion: backendSubrama.subgroupDescription || backendSubrama.subgroup_description || backendSubrama.description,
+    icono: iconUrl, // URL directa del backend
+    iconoObjectId: '', // No se usa con URLs directas
+    imagenPrincipal: photoPrincipalUrl, // URL directa del backend
+    imagenPrincipalObjectId: '', // No se usa con URLs directas
     ramaId: backendSubrama.section_id || backendSubrama.sectionId || '', // Mapear section_id a ramaId
     lider: backendSubrama.leader || backendSubrama.leaderName || '',
     estado: (backendSubrama.isActive === false || backendSubrama.status === 'inactive') ? 'inactiva' as const : 'activa' as const,
     fechaCreacion: backendSubrama.createdAt || new Date().toISOString().split('T')[0],
     numeroMiembros: backendSubrama.memberCount || backendSubrama.members || 0
   };
+
+  console.log('🔄 [Mapper] Subrama mapeada final:', { 
+    backend: { name: backendSubrama.subgroupName, subgroupId: backendSubrama.subgroup_id || backendSubrama.subgroupId },
+    frontend: { nombre: mappedSubrama.nombre, id: mappedSubrama.id, icono: mappedSubrama.icono, imagenPrincipal: mappedSubrama.imagenPrincipal }
+  });
+
+  return mappedSubrama;
 };
 
 // Mapear datos del frontend al formato que espera el backend para crear Ramas

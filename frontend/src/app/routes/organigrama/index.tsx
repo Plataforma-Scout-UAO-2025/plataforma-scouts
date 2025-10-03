@@ -17,7 +17,7 @@ import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import SuccessModal from './components/SuccessModal';
 import ErrorAlert from './components/ErrorAlert';
 import OrganigramaLoader from './components/OrganigramaLoader';
-import type { Rama, Subrama, CreateRamaData } from './types/rama.type';
+import type { Rama, Subrama, CreateRamaData, UpdateSubramaData } from './types/rama.type';
 import type {
   CreateSubramaFormData,
   UpdateRamaFormData,
@@ -143,7 +143,15 @@ export default function Organigrama() {
   const handleSubmitEditSubrama = async (data: UpdateSubramaFormData) => {
     if (!subramaSeleccionada) return;
     try {
-  await organigramaService.updateSubrama(tenantSlug, groupSlug, { ...data, id: subramaSeleccionada.id, subgroup_id: String(subramaSeleccionada.subgroup_id), ramaId: subramaSeleccionada.ramaId });
+      // Crear el objeto UpdateSubramaData con la estructura correcta
+      const updateData: UpdateSubramaData = {
+        id: subramaSeleccionada.id,
+        subgroup_id: subramaSeleccionada.subgroup_id,
+        ramaId: subramaSeleccionada.ramaId,
+        ...data // Los datos del formulario
+      };
+      
+      await organigramaService.updateSubrama(tenantSlug, groupSlug, updateData);
       await loadRamas();
       showSuccess('Subrama actualizada con éxito');
     } catch (error) {

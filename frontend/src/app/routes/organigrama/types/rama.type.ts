@@ -151,4 +151,11 @@ export interface BackendSubrama {
   createdAt?: string;
   memberCount?: number;
   members?: number;
+  // Campos de imágenes (añadidos)
+  iconObjectUrl?: string | null;
+  photoPrincipalUrl?: string | null;
+  galleryObjectUrls?: string[];
+  iconObjectId?: string;
+  photoPrincipalObjectId?: string;
+  galleryObjectIds?: string[];
 }

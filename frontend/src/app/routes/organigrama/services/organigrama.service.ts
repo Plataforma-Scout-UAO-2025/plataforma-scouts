@@ -46,10 +46,25 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
     // Transformar datos del backend al formato frontend
     const ramas = backendRamas.map(mapBackendRamaToFrontend);
     
-    // Filtrar por año si se especifica
-    const ramasFiltradas = año ? ramas.filter((rama: Rama) => rama.año === año) : ramas;
+    // 🔄 PASO CRÍTICO: Hidratar cada rama con sus subramas
+    console.log('🔄 [OrganigramaService] Hidratando ramas con sus subramas...');
+    const ramasConSubramas = await Promise.all(
+      ramas.map(async (rama) => {
+        try {
+          const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
+          return { ...rama, subramas };
+        } catch (error) {
+          console.warn(`⚠️ [OrganigramaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, error);
+          return { ...rama, subramas: [] };
+        }
+      })
+    );
     
-    console.log('✅ [OrganigramaService] Ramas obtenidas y mapeadas:', ramasFiltradas.length);
+    // Filtrar por año si se especifica
+    const ramasFiltradas = año ? ramasConSubramas.filter((rama: Rama) => rama.año === año) : ramasConSubramas;
+    
+    console.log('✅ [OrganigramaService] Ramas hidratadas con subramas:', ramasFiltradas.length);
+    console.log('📊 [OrganigramaService] Subramas totales:', ramasFiltradas.reduce((total, rama) => total + rama.subramas.length, 0));
     return ramasFiltradas;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error obteniendo ramas:', error);
@@ -65,7 +80,17 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
     const backendRama = await apiClient.get<BackendRama>(endpoint);
     
     const rama = mapBackendRamaToFrontend(backendRama);
-    console.log('✅ [OrganigramaService] Rama obtenida:', rama.nombre);
+    
+    // 🔄 Hidratar rama con sus subramas
+    try {
+      const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
+      rama.subramas = subramas;
+      console.log('✅ [OrganigramaService] Rama obtenida con', subramas.length, 'subramas:', rama.nombre);
+    } catch (subramaError) {
+      console.warn(`⚠️ [OrganigramaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, subramaError);
+      rama.subramas = [];
+    }
+    
     return rama;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error obteniendo rama por ID:', error);
