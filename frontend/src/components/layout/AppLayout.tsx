@@ -31,7 +31,6 @@ import {
 } from "lucide-react"
 import { Outlet, Link, useLocation } from "react-router-dom"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import LogoutButton from "@/components/auth/LogoutButton"
 import type { ReactNode } from "react"
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -197,7 +196,7 @@ export default function AppLayout() {
                   onClick={item.id === "logout" ? handleLogout : undefined}
                 >
                   {item.id === "logout" ? (
-                    <LogoutButton />
+                    <><LogOut /><span>Cerrar sesión</span></>
                   ) : (
                     <>
                       {item.icon}
