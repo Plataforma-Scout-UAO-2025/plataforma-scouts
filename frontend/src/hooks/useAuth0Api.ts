@@ -15,11 +15,7 @@ export const useAuth0Api = () => {
       // Configurar el proveedor de tokens de Auth0 en axios
       setAuth0TokenProvider(async () => {
         try {
-          const token = await getAccessTokenSilently({
-            authorizationParams: {
-              audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-            },
-          });
+          const token = await getAccessTokenSilently();
           return token;
         } catch (error) {
           console.error('Error al obtener el token de Auth0:', error);
