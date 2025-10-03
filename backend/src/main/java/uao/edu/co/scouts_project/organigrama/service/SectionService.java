@@ -49,8 +49,8 @@ public class SectionService {
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
             
-        // 3. UNA SOLA consulta para obtener todas las URLs
-        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(allImageIds);
+        // 3. UNA SOLA consulta para obtener todas las URLs (con verificación de null)
+        Map<UUID, String> urlMap = getUrlMapFromIds(allImageIds);
 
         // 4. Construir las respuestas usando el mapa eficiente
         return sections.stream()
@@ -80,12 +80,14 @@ public class SectionService {
     public SectionResponseDTO updateSection(String tenantSlug, String groupSlug, Long sectionId, SectionDTO dto) {
         Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
         
-        if (dto.iconObjectId() != null && !Objects.equals(dto.iconObjectId(), section.getIconObjectId())) {
-            storageService.deleteFileByObjectId(section.getIconObjectId());
-        }
-        if (dto.galleryObjectIds() != null) {
-            if (section.getGalleryObjectIds() != null) {
-                Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
+        if (storageService != null) {
+            if (dto.iconObjectId() != null && !Objects.equals(dto.iconObjectId(), section.getIconObjectId())) {
+                storageService.deleteFileByObjectId(section.getIconObjectId());
+            }
+            if (dto.galleryObjectIds() != null) {
+                if (section.getGalleryObjectIds() != null) {
+                    Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
+                }
             }
         }
 
@@ -98,9 +100,11 @@ public class SectionService {
     public void deleteSection(String tenantSlug, String groupSlug, Long sectionId) {
         Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
         
-        storageService.deleteFileByObjectId(section.getIconObjectId());
-        if (section.getGalleryObjectIds() != null) {
-            Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
+        if (storageService != null) {
+            storageService.deleteFileByObjectId(section.getIconObjectId());
+            if (section.getGalleryObjectIds() != null) {
+                Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
+            }
         }
         
         sectionRepository.delete(section);
@@ -111,7 +115,7 @@ public class SectionService {
         Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
         
         UUID iconIdToDelete = section.getIconObjectId();
-        if (iconIdToDelete != null) {
+        if (iconIdToDelete != null && storageService != null) {
             storageService.deleteFileByObjectId(iconIdToDelete);
             section.setIconObjectId(null);
             sectionRepository.save(section);
@@ -128,7 +132,9 @@ public class SectionService {
         List<UUID> galleryIdList = new ArrayList<>(Arrays.asList(galleryIds));
         
         if (galleryIdList.remove(objectId)) {
-            storageService.deleteFileByObjectId(objectId);
+            if (storageService != null) {
+                storageService.deleteFileByObjectId(objectId);
+            }
             section.setGalleryObjectIds(galleryIdList.toArray(new UUID[0]));
             sectionRepository.save(section);
         }
@@ -148,18 +154,24 @@ public class SectionService {
     }
     
     private void mapDtoToEntity(SectionDTO dto, Section section) {
-        if (dto.name() != null) section.setName(dto.name());
-        if (dto.description() != null) section.setDescription(dto.description());
-        if (dto.iconObjectId() != null) section.setIconObjectId(dto.iconObjectId());
-        if (dto.galleryObjectIds() != null) section.setGalleryObjectIds(dto.galleryObjectIds());
+        section.setName(dto.name());
+        section.setDescription(dto.description());
+        section.setIconObjectId(dto.iconObjectId());
+        
+        // Convertir List<UUID> a UUID[]
+        if (dto.galleryObjectIds() != null) {
+        section.setGalleryObjectIds(dto.galleryObjectIds());
+        } else {
+            section.setGalleryObjectIds(new UUID[0]);
+        }
     }
     
     // Versión para carga masiva
     private SectionResponseDTO toResponseDTO(Section section, Map<UUID, String> urlMap) {
-        String iconUrl = urlMap.get(section.getIconObjectId());
+        String iconUrl = urlMap != null ? urlMap.get(section.getIconObjectId()) : null;
         
         List<String> galleryUrls;
-        if (section.getGalleryObjectIds() != null && section.getGalleryObjectIds().length > 0) {
+        if (section.getGalleryObjectIds() != null && section.getGalleryObjectIds().length > 0 && urlMap != null) {
             galleryUrls = Arrays.stream(section.getGalleryObjectIds())
                                 .map(urlMap::get) // Búsqueda eficiente en el mapa
                                 .filter(Objects::nonNull)
@@ -185,11 +197,33 @@ public class SectionService {
             ids.addAll(Arrays.asList(section.getGalleryObjectIds()));
         }
         
-        if (ids.isEmpty()) {
+        if (ids.isEmpty() || storageService == null) {
             return toResponseDTO(section, Collections.emptyMap());
         }
         
-        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
-        return toResponseDTO(section, urlMap);
+        try {
+            Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
+            return toResponseDTO(section, urlMap != null ? urlMap : Collections.emptyMap());
+        } catch (Exception e) {
+            System.err.println("Error obteniendo URLs del servicio de almacenamiento: " + e.getMessage());
+            return toResponseDTO(section, Collections.emptyMap());
+        }
+    }
+    
+    /**
+     * Método auxiliar para obtener URLs de forma segura desde el servicio de almacenamiento
+     */
+    private Map<UUID, String> getUrlMapFromIds(Set<UUID> imageIds) {
+        if (imageIds.isEmpty() || storageService == null) {
+            return Collections.emptyMap();
+        }
+        
+        try {
+            Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(imageIds);
+            return urlMap != null ? urlMap : Collections.emptyMap();
+        } catch (Exception e) {
+            System.err.println("Error obteniendo URLs del servicio de almacenamiento: " + e.getMessage());
+            return Collections.emptyMap();
+        }
     }
 }

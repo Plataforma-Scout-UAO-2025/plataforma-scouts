@@ -14,7 +14,7 @@ import uao.edu.co.scouts_project.organigrama.service.SectionService;
 
 import java.net.URI;
 import java.util.List;
-import java.util.UUID; // <-- IMPORTADO
+import java.util.UUID; 
 
 @Tag(name = "Sections", description = "Operaciones CRUD para la gestión de secciones/ramas scouts (Manada, Tropa, Comunidad, Clan)")
 @RestController

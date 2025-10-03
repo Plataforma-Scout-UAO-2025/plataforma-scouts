@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,6 +29,6 @@ public record GroupDTO(
     Map<String, Object> config,
     Boolean isActive,
     String status,
-    Instant createdAt,
-    Instant updatedAt
+    LocalDateTime createdAt,    
+    LocalDateTime updatedAt  
 ) {}

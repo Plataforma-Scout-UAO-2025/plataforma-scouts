@@ -2,6 +2,8 @@ package uao.edu.co.scouts_project.organigrama.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.Instant;
@@ -33,14 +35,16 @@ public class Section {
     private UUID iconObjectId;
     
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "gallery_object_id", columnDefinition = "uuid[]", nullable = false)
-    private java.util.UUID[] galleryObjectIds;
+    @Column(name = "gallery_object_id", columnDefinition = "uuid[]") 
+    private UUID[] galleryObjectIds;
     
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private Instant createdAt;
     
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt = Instant.now();
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
     
     // Constructors
     public Section() {}
@@ -49,6 +53,7 @@ public class Section {
         this.tenantId = tenantId;
         this.groupId = groupId;
         this.name = name;
+        this.galleryObjectIds = new UUID[0];
     }
     
     // Getters and Setters

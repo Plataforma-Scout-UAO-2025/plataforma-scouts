@@ -2,6 +2,7 @@ package uao.edu.co.scouts_project.organigrama.dto;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public record GroupResponseDTO(
@@ -25,6 +26,6 @@ public record GroupResponseDTO(
     Map<String, Object> config,
     Boolean isActive,
     String status,
-    Instant createdAt,
-    Instant updatedAt
+    LocalDateTime createdAt,    
+    LocalDateTime updatedAt  
 ) {}
