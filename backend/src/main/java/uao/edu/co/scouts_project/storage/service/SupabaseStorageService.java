@@ -90,6 +90,27 @@ public class SupabaseStorageService {
     }
     
     /**
+     * Reemplaza/actualiza un archivo existente en Supabase Storage.
+     * Usa el método PUT según la documentación oficial de Supabase.
+     * @param objectId El UUID del objeto a reemplazar.
+     * @param newFile El nuevo archivo que reemplazará al existente.
+     * @return El UUID del objeto actualizado (mismo que el original).
+     */
+    public UUID replaceFileByObjectId(UUID objectId, MultipartFile newFile) {
+        if (objectId == null) {
+            throw new IllegalArgumentException("El objectId no puede ser nulo");
+        }
+        
+        StorageObject existingObject = storageObjectRepository.findById(objectId)
+            .orElseThrow(() -> new RuntimeException("Objeto no encontrado con ID: " + objectId));
+        
+        // Reemplazar usando PUT en la misma ruta
+        replaceFile(newFile, existingObject.getName(), existingObject.getBucketId());
+        
+        return objectId; // El UUID permanece igual, solo cambia el contenido
+    }
+
+    /**
      * Elimina un archivo de Supabase Storage usando su UUID.
      * @param objectId El UUID del objeto a eliminar.
      */
@@ -114,6 +135,7 @@ public class SupabaseStorageService {
             
             HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
             
+            @SuppressWarnings("rawtypes")
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
             
             if (!response.getStatusCode().is2xxSuccessful()) {
@@ -128,15 +150,63 @@ public class SupabaseStorageService {
         return supabaseProperties.getStorageUrl() + "/object/public/" + bucket + "/" + fileName;
     }
 
+    /**
+     * Reemplaza un archivo existente usando PUT.
+     * Según la documentación oficial de Supabase: "Replace an existing file".
+     * @param file Nuevo archivo.
+     * @param objectPath Ruta completa del archivo a reemplazar.
+     * @param bucket Nombre del bucket.
+     */
+    private void replaceFile(MultipartFile file, String objectPath, String bucket) {
+        try {
+            // PUT /storage/v1/object/{bucket}/{path}
+            String url = supabaseProperties.getStorageUrl() + "/object/" + bucket + "/" + objectPath;
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + supabaseProperties.getServiceRoleKey());
+            headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+            headers.set("x-upsert", "true"); // Permite sobrescribir si existe
+            
+            HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
+            
+            @SuppressWarnings("rawtypes")
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+            
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Error al reemplazar archivo: " + response.getStatusCode());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error al leer el archivo", e);
+        }
+    }
+
+    /**
+     * Elimina un archivo usando DELETE.
+     * Según la documentación oficial: DELETE /storage/v1/object/{bucket}/{wildcard}
+     * donde wildcard es la ruta completa del archivo.
+     * @param fileName Ruta completa del archivo (path) dentro del bucket.
+     * @param bucket Nombre del bucket.
+     * @return true si se eliminó exitosamente.
+     */
     private boolean deleteFile(String fileName, String bucket) {
         if (fileName == null || bucket == null) return false;
+        
+        // DELETE /storage/v1/object/{bucket}/{path}
         String url = supabaseProperties.getStorageUrl() + "/object/" + bucket + "/" + fileName;
         
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + supabaseProperties.getServiceRoleKey());
+        headers.set("apikey", supabaseProperties.getServiceRoleKey());
+        
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         
-        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);
-        return response.getStatusCode().is2xxSuccessful();
+        try {
+            ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            // Log del error pero no lanzar excepción (operación idempotente)
+            System.err.println("Error al eliminar archivo: " + fileName + " - " + e.getMessage());
+            return false;
+        }
     }
 }

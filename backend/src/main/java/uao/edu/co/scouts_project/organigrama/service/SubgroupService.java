@@ -123,11 +123,18 @@ public class SubgroupService {
             existing.setPhotoPrincipal(dto.photoPrincipal());
         }
         if (dto.galleryObjectIds() != null) {
-            if (existing.getGalleryObjectIds() != null) {
-                Arrays.stream(existing.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
+            UUID[] oldArr = existing.getGalleryObjectIds() != null ? existing.getGalleryObjectIds() : new UUID[0];
+            Set<UUID> oldSet = new HashSet<>(Arrays.asList(oldArr));
+            Set<UUID> newSet = new HashSet<>(Arrays.asList(dto.galleryObjectIds()));
+
+            if (storageService != null) {
+                oldSet.stream()
+                    .filter(id -> !newSet.contains(id))
+                    .forEach(storageService::deleteFileByObjectId);
             }
-            existing.setGalleryObjectIds(dto.galleryObjectIds());
+            existing.setGalleryObjectIds(newSet.toArray(UUID[]::new));
         }
+
         if (dto.isActive() != null) {
             existing.setIsActive(dto.isActive());
         }

@@ -112,6 +112,8 @@ public class SectionController {
         return ResponseEntity.noContent().build();
     }
 
+    
+
     // ============== ENDPOINTS PARA ELIMINACIÓN DE IMÁGENES INDIVIDUALES ==============
 
     @Operation(summary = "Eliminar imagen del ícono de una sección", description = "Elimina el archivo del ícono de Supabase y desvincula el ID de la sección.")

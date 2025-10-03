@@ -91,9 +91,22 @@ public class SectionService {
                 storageService.deleteFileByObjectId(section.getPhotoPrincipal());
             }
             if (dto.galleryObjectIds() != null) {
-                if (section.getGalleryObjectIds() != null) {
-                    Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
+                UUID[] oldArr = section.getGalleryObjectIds() != null ? section.getGalleryObjectIds() : new UUID[0];
+                Set<UUID> oldSet = new HashSet<>(Arrays.asList(oldArr));
+                Set<UUID> newSet = new HashSet<>(Arrays.asList(dto.galleryObjectIds()));
+
+                // Solo borrar los que ya no están en la nueva lista
+                if (storageService != null) {
+                    oldSet.stream()
+                        .filter(id -> !newSet.contains(id))
+                        .forEach(storageService::deleteFileByObjectId);
                 }
+
+                // Actualizar a la lista nueva (conservará los IDs no eliminados)
+                section.setGalleryObjectIds(newSet.toArray(UUID[]::new));
+            }
+            else {
+                // No tocar gallery cuando viene null
             }
         }
 
@@ -214,13 +227,13 @@ public class SectionService {
         if (section.getIconObjectId() != null) {
             ids.add(section.getIconObjectId());
         }
+        if (section.getPhotoPrincipal() != null) {
+            ids.add(section.getPhotoPrincipal());
+        }
         if (section.getGalleryObjectIds() != null) {
             ids.addAll(Arrays.asList(section.getGalleryObjectIds()));
         }
-        
-        if (ids.isEmpty() || storageService == null) {
-            return toResponseDTO(section, Collections.emptyMap());
-        }
+
         
         try {
             Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
