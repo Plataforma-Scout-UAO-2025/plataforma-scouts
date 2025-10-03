@@ -10,6 +10,7 @@ public record SubgroupResponseDTO(
     Long sectionId,
     String name,
     String description,
+    String photoPrincipalUrl,
     List<String> galleryObjectUrls, 
     Boolean isActive,
     Instant createdAt,

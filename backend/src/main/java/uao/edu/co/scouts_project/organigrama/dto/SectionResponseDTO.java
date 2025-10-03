@@ -9,7 +9,8 @@ public record SectionResponseDTO(
     Long groupId,
     String name,
     String description,
-    String iconObjectUrl,       
+    String iconObjectUrl,
+    String photoPrincipalUrl,
     List<String> galleryObjectUrls, 
     Instant createdAt,
     Instant updatedAt

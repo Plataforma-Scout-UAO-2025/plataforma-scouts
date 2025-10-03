@@ -15,6 +15,7 @@ import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -49,11 +50,13 @@ public class SubgroupService {
         List<Subgroup> subgroups = subgroupRepository.findByTenantIdAndGroupIdAndSectionId(
             tenant.getTenantId(), group.getGroupId(), sectionId);
 
-        // 2. Recolectar TODOS los UUIDs de TODAS las galerías
+        // 2. Recolectar TODOS los UUIDs de TODAS las imágenes (fotos principales y galerías)
         Set<UUID> allImageIds = subgroups.stream()
-            .map(Subgroup::getGalleryObjectIds)
+            .flatMap(subgroup -> {
+                Stream<UUID> galleryStream = (subgroup.getGalleryObjectIds() != null) ? Arrays.stream(subgroup.getGalleryObjectIds()) : Stream.empty();
+                return Stream.concat(Stream.of(subgroup.getPhotoPrincipal()), galleryStream);
+            })
             .filter(Objects::nonNull)
-            .flatMap(Arrays::stream)
             .collect(Collectors.toSet());
         
         // 3. UNA SOLA consulta para obtener todas las URLs
@@ -87,6 +90,7 @@ public class SubgroupService {
         subgroup.setSectionId(sectionId);
         subgroup.setName(dto.name());
         subgroup.setDescription(dto.description());
+        subgroup.setPhotoPrincipal(dto.photoPrincipal());
 
         if (dto.galleryObjectIds() != null) {
             subgroup.setGalleryObjectIds(dto.galleryObjectIds());
@@ -114,6 +118,10 @@ public class SubgroupService {
         if (dto.description() != null) {
             existing.setDescription(dto.description());
         }
+        if (dto.photoPrincipal() != null && !Objects.equals(dto.photoPrincipal(), existing.getPhotoPrincipal())) {
+            storageService.deleteFileByObjectId(existing.getPhotoPrincipal());
+            existing.setPhotoPrincipal(dto.photoPrincipal());
+        }
         if (dto.galleryObjectIds() != null) {
             if (existing.getGalleryObjectIds() != null) {
                 Arrays.stream(existing.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
@@ -133,6 +141,7 @@ public class SubgroupService {
     public void deleteSubgroup(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
         Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
         
+        storageService.deleteFileByObjectId(subgroup.getPhotoPrincipal());
         if (subgroup.getGalleryObjectIds() != null) {
             Arrays.stream(subgroup.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
         }
@@ -152,6 +161,18 @@ public class SubgroupService {
         if (galleryIdList.remove(objectId)) {
             storageService.deleteFileByObjectId(objectId);
             subgroup.setGalleryObjectIds(galleryIdList.toArray(new UUID[0]));
+            subgroupRepository.save(subgroup);
+        }
+    }
+
+    @Transactional
+    public void deletePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+        
+        UUID photoPrincipalIdToDelete = subgroup.getPhotoPrincipal();
+        if (photoPrincipalIdToDelete != null) {
+            storageService.deleteFileByObjectId(photoPrincipalIdToDelete);
+            subgroup.setPhotoPrincipal(null);
             subgroupRepository.save(subgroup);
         }
     }
@@ -181,6 +202,8 @@ public class SubgroupService {
 
     // Versión para carga masiva
     private SubgroupResponseDTO toResponseDTO(Subgroup subgroup, Map<UUID, String> urlMap) {
+        String photoPrincipalUrl = urlMap != null ? urlMap.get(subgroup.getPhotoPrincipal()) : null;
+        
         List<String> galleryUrls;
         if (subgroup.getGalleryObjectIds() != null && subgroup.getGalleryObjectIds().length > 0) {
             galleryUrls = Arrays.stream(subgroup.getGalleryObjectIds())
@@ -194,13 +217,16 @@ public class SubgroupService {
         return new SubgroupResponseDTO(
                 subgroup.getSubgroupId(), subgroup.getTenantId(), subgroup.getGroupId(),
                 subgroup.getSectionId(), subgroup.getName(), subgroup.getDescription(),
-                galleryUrls, subgroup.getIsActive(), subgroup.getCreatedAt(), subgroup.getUpdatedAt()
+                photoPrincipalUrl, galleryUrls, subgroup.getIsActive(), subgroup.getCreatedAt(), subgroup.getUpdatedAt()
         );
     }
 
     // Versión para un solo objeto
     private SubgroupResponseDTO toResponseDTO(Subgroup subgroup) {
         Set<UUID> ids = new HashSet<>();
+        if (subgroup.getPhotoPrincipal() != null) {
+            ids.add(subgroup.getPhotoPrincipal());
+        }
         if (subgroup.getGalleryObjectIds() != null) {
             ids.addAll(Arrays.asList(subgroup.getGalleryObjectIds()));
         }

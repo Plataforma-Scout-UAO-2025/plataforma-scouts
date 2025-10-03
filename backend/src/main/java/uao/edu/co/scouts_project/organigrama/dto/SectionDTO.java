@@ -11,6 +11,7 @@ public record SectionDTO(
     @NotBlank String name,
     String description,
     UUID iconObjectId,
+    UUID photoPrincipal,
     UUID[] galleryObjectIds,
     Instant createdAt,
     Instant updatedAt

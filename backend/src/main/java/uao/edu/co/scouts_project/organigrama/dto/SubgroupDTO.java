@@ -11,6 +11,7 @@ public record SubgroupDTO(
     Long sectionId,
     @NotBlank String name,
     String description,
+    UUID photoPrincipal,
     UUID[] galleryObjectIds,
     Boolean isActive,
     Instant createdAt,

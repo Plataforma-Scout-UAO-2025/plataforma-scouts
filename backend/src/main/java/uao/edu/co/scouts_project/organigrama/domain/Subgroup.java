@@ -32,6 +32,9 @@ public class Subgroup {
     @Column(name = "description")
     private String description;
     
+    @Column(name = "photo_principal")
+    private UUID photoPrincipal;
+    
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "gallery_object_id", columnDefinition = "uuid[]")
     private UUID[] galleryObjectIds = new UUID[0]; // Inicializar con array vacío
@@ -73,6 +76,9 @@ public class Subgroup {
     
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public UUID getPhotoPrincipal() { return photoPrincipal; }
+    public void setPhotoPrincipal(UUID photoPrincipal) { this.photoPrincipal = photoPrincipal; }
 
     public UUID[] getGalleryObjectIds() { return galleryObjectIds; }
     public void setGalleryObjectIds(UUID[] galleryObjectIds) { this.galleryObjectIds = galleryObjectIds; }

@@ -34,6 +34,9 @@ public class Section {
     @Column(name = "icon_object_id")
     private UUID iconObjectId;
     
+    @Column(name = "photo_principal")
+    private UUID photoPrincipal;
+    
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "gallery_object_id", columnDefinition = "uuid[]") 
     private UUID[] galleryObjectIds;
@@ -74,6 +77,9 @@ public class Section {
     
     public UUID getIconObjectId() { return iconObjectId; }
     public void setIconObjectId(UUID iconObjectId) { this.iconObjectId = iconObjectId; }
+    
+    public UUID getPhotoPrincipal() { return photoPrincipal; }
+    public void setPhotoPrincipal(UUID photoPrincipal) { this.photoPrincipal = photoPrincipal; }
     
     public UUID[] getGalleryObjectIds() { return galleryObjectIds; }
     public void setGalleryObjectIds(UUID[] galleryObjectIds) { this.galleryObjectIds = galleryObjectIds; }

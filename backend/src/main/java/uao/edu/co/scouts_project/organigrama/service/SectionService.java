@@ -40,11 +40,14 @@ public class SectionService {
         // 1. Obtener todas las secciones en una consulta
         List<Section> sections = sectionRepository.findByTenantIdAndGroupId(group.getTenantId(), group.getGroupId());
 
-        // 2. Recolectar TODOS los UUIDs de todas las imágenes (íconos y galerías)
+        // 2. Recolectar TODOS los UUIDs de todas las imágenes (íconos, fotos principales y galerías)
         Set<UUID> allImageIds = sections.stream()
             .flatMap(section -> {
                 Stream<UUID> galleryStream = (section.getGalleryObjectIds() != null) ? Arrays.stream(section.getGalleryObjectIds()) : Stream.empty();
-                return Stream.concat(Stream.of(section.getIconObjectId()), galleryStream);
+                return Stream.of(Stream.of(section.getIconObjectId()), 
+                                Stream.of(section.getPhotoPrincipal()), 
+                                galleryStream)
+                        .flatMap(s -> s);
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
@@ -84,6 +87,9 @@ public class SectionService {
             if (dto.iconObjectId() != null && !Objects.equals(dto.iconObjectId(), section.getIconObjectId())) {
                 storageService.deleteFileByObjectId(section.getIconObjectId());
             }
+            if (dto.photoPrincipal() != null && !Objects.equals(dto.photoPrincipal(), section.getPhotoPrincipal())) {
+                storageService.deleteFileByObjectId(section.getPhotoPrincipal());
+            }
             if (dto.galleryObjectIds() != null) {
                 if (section.getGalleryObjectIds() != null) {
                     Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
@@ -102,6 +108,7 @@ public class SectionService {
         
         if (storageService != null) {
             storageService.deleteFileByObjectId(section.getIconObjectId());
+            storageService.deleteFileByObjectId(section.getPhotoPrincipal());
             if (section.getGalleryObjectIds() != null) {
                 Arrays.stream(section.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
             }
@@ -121,7 +128,19 @@ public class SectionService {
             sectionRepository.save(section);
         }
     }
-    
+
+    @Transactional
+    public void deletePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
+        
+        UUID photoPrincipalIdToDelete = section.getPhotoPrincipal();
+        if (photoPrincipalIdToDelete != null && storageService != null) {
+            storageService.deleteFileByObjectId(photoPrincipalIdToDelete);
+            section.setPhotoPrincipal(null);
+            sectionRepository.save(section);
+        }
+    }
+
     @Transactional
     public void deleteGalleryImageById(String tenantSlug, String groupSlug, Long sectionId, UUID objectId) {
         Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
@@ -157,6 +176,7 @@ public class SectionService {
         section.setName(dto.name());
         section.setDescription(dto.description());
         section.setIconObjectId(dto.iconObjectId());
+        section.setPhotoPrincipal(dto.photoPrincipal());
         
         // Convertir List<UUID> a UUID[]
         if (dto.galleryObjectIds() != null) {
@@ -169,6 +189,7 @@ public class SectionService {
     // Versión para carga masiva
     private SectionResponseDTO toResponseDTO(Section section, Map<UUID, String> urlMap) {
         String iconUrl = urlMap != null ? urlMap.get(section.getIconObjectId()) : null;
+        String photoPrincipalUrl = urlMap != null ? urlMap.get(section.getPhotoPrincipal()) : null;
         
         List<String> galleryUrls;
         if (section.getGalleryObjectIds() != null && section.getGalleryObjectIds().length > 0 && urlMap != null) {
@@ -182,7 +203,7 @@ public class SectionService {
 
         return new SectionResponseDTO(
             section.getSectionId(), section.getTenantId(), section.getGroupId(), section.getName(),
-            section.getDescription(), iconUrl, galleryUrls,
+            section.getDescription(), iconUrl, photoPrincipalUrl, galleryUrls,
             section.getCreatedAt(), section.getUpdatedAt()
         );
     }
