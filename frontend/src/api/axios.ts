@@ -25,14 +25,4 @@ api.interceptors.request.use(
   }
 );
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.warn("Token expirado o inválido. Auth0 manejará la re-autenticación.");
-    }
-    return Promise.reject(error);
-  }
-);
-
 export default api;
