@@ -38,7 +38,7 @@ export const cleanupStorage = (): void => {
 
 // Hacer las funciones disponibles globalmente
 if (typeof window !== 'undefined') {
-  (window as any).organigramaDebug = {
+  (window as Window & { organigramaDebug?: Record<string, unknown> }).organigramaDebug = {
     logStorageStats,
     cleanupStorage,
     getStats: () => StorageService.getStorageStats()

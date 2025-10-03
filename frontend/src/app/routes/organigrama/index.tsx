@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,15 +54,7 @@ export default function Organigrama() {
   
   const { tenantSlug, groupSlug } = useTenantParams();
 
-  useEffect(() => {
-    loadAvailableYears();
-  }, []);
-
-  useEffect(() => {
-    loadRamas();
-  }, [selectedYear]);
-
-  const loadAvailableYears = async () => {
+  const loadAvailableYears = useCallback(async () => {
     try {
       const years = await organigramaService.getAvailableYears(tenantSlug, groupSlug);
       setAvailableYears(years);
@@ -70,9 +62,9 @@ export default function Organigrama() {
       handleError(error);
       setAvailableYears([new Date().getFullYear()]);
     }
-  };
+  }, [tenantSlug, groupSlug, handleError]);
 
-  const loadRamas = async () => {
+  const loadRamas = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await organigramaService.getRamas(tenantSlug, groupSlug, selectedYear);
@@ -82,7 +74,15 @@ export default function Organigrama() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tenantSlug, groupSlug, selectedYear, handleError]);
+
+  useEffect(() => {
+    loadAvailableYears();
+  }, [loadAvailableYears]);
+
+  useEffect(() => {
+    loadRamas();
+  }, [loadRamas]);
 
   // ====== RAMAS ======
   const handleCreateRama = async (data: CreateRamaData) => {

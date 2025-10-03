@@ -34,7 +34,7 @@ export default function RamaList({
       setExpandedItems([ramas[0].section_id.toString()]);
     }
   
-  }, [ramas]);
+  }, [ramas, expandedItems.length]);
   const navigate = useNavigate();
 
   const handleToggleExpansion = (ramaId: string) => {

@@ -62,7 +62,7 @@ export const cleanupOldImages = (): void => {
   const imageKeys: string[] = [];
   
   // Recopilar todas las claves de imágenes
-  for (let key in localStorage) {
+  for (const key in localStorage) {
     if (key.startsWith('organigrama_images_')) {
       imageKeys.push(key);
     }
