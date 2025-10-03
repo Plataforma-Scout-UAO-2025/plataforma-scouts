@@ -79,7 +79,11 @@ export default function AppLayout() {
   const location = useLocation()
   const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal')
   const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems
-  const { user } = useAuth0();
+  const { user, logout } = useAuth0();
+
+  const handleLogout = () => {
+    logout({ logoutParams: { returnTo: window.location.origin } });
+  };
 
   const isActive = (href: string) => {
     if (!href) return false
@@ -188,7 +192,10 @@ export default function AppLayout() {
           <SidebarMenu>
             {bottomItems.map((item) => (
               <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton className="h-12 px-3 rounded-lg hover:bg-white/10">
+                <SidebarMenuButton 
+                  className="h-12 px-3 rounded-lg hover:bg-white/10"
+                  onClick={item.id === "logout" ? handleLogout : undefined}
+                >
                   {item.id === "logout" ? (
                     <LogoutButton />
                   ) : (
