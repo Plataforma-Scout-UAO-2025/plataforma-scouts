@@ -19,7 +19,7 @@ import java.util.UUID;
 public class StorageController {
 
     private final SupabaseStorageService storageService;
-    private static final String BUCKET_NAME = "media"; 
+    private static final String BUCKET_NAME = "images"; 
 
     public StorageController(SupabaseStorageService storageService) {
         this.storageService = storageService;
