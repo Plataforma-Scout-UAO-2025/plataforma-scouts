@@ -19,6 +19,16 @@ import {
   mapFrontendUpdateSubramaToBackend
 } from '../utils/mappers';
 
+// Configuración de endpoints PATCH específicos
+const PATCH_ENDPOINTS = {
+  ICON: (tenantSlug: string, groupSlug: string, sectionId: string) => 
+    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/icon`,
+  MAIN_IMAGE: (tenantSlug: string, groupSlug: string, sectionId: string) => 
+    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/photo-principal`,
+  GALLERY: (tenantSlug: string, groupSlug: string, sectionId: string) => 
+    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery`
+};
+
 // Integración directa con backend real - NO MÁS MOCKS
 console.log('🔄 [OrganigramaService] Iniciado en modo backend real');
 
@@ -320,37 +330,23 @@ export const uploadSectionIcon = async (
     
     const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
     
-    // Paso 2: Obtener los datos actuales del backend 
-    console.log('🔄 [OrganigramaService] Obteniendo datos actuales de la sección...');
-    const currentBackendData = await apiClient.get<any>(`/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`);
+    // Paso 2: Usar endpoint PATCH específico para icono
+    console.log('🔄 [OrganigramaService] Asociando icono usando endpoint PATCH específico...');
+    const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
     
-    // Paso 3: Extraer IDs actuales de las URLs para preservarlos
-    const currentPhotoPrincipalId = extractObjectIdFromUrl(currentBackendData.photoPrincipalUrl);
-    const currentGalleryIds = extractObjectIdsFromUrls(currentBackendData.galleryObjectUrls || []);
-    
-    console.log('🔍 [OrganigramaService] IDs actuales extraídos para preservar:', {
-      photoPrincipalId: currentPhotoPrincipalId, 
-      galleryIds: currentGalleryIds
-    });
-    
-    // Paso 4: Construir payload preservando valores actuales + nuevo icono
-    const sectionUpdatePayload = {
-      name: currentBackendData.name, // Campo obligatorio (@NotBlank)
-      description: currentBackendData.description || '',
-      iconObjectId: uploadResponse.objectId, // NUEVO icono
-      photoPrincipal: currentPhotoPrincipalId, // PRESERVAR imagen principal actual
-      galleryObjectIds: currentGalleryIds // PRESERVAR galería actual
+    // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
+    const iconPayload = {
+      objectId: uploadResponse.objectId
     };
     
-    console.log('🔄 [OrganigramaService] Actualizando sección con payload completo:', sectionUpdatePayload);
+    console.log('🔄 [OrganigramaService] PATCH payload para icono:', iconPayload);
     
     try {
-      const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
-      await apiClient.put(endpoint, sectionUpdatePayload);
-      console.log('✅ [OrganigramaService] Icono asociado correctamente con el backend');
-    } catch (updateError) {
-      console.error('❌ [OrganigramaService] Error actualizando sección:', updateError);
-      throw updateError;
+      await apiClient.patch(patchEndpoint, iconPayload);
+      console.log('✅ [OrganigramaService] Icono asociado correctamente con endpoint PATCH');
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para icono:', patchError);
+      throw patchError;
     }
     
     console.log('✅ [OrganigramaService] Icono de sección subido con éxito');
@@ -379,37 +375,23 @@ export const uploadSectionMainImage = async (
     
     const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
     
-    // Paso 2: Obtener los datos actuales del backend 
-    console.log('🔄 [OrganigramaService] Obteniendo datos actuales de la sección...');
-    const currentBackendData = await apiClient.get<any>(`/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`);
+    // Paso 2: Usar endpoint PATCH específico para imagen principal
+    console.log('🔄 [OrganigramaService] Asociando imagen principal usando endpoint PATCH específico...');
+    const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
     
-    // Paso 3: Extraer IDs actuales de las URLs para preservarlos
-    const currentIconId = extractObjectIdFromUrl(currentBackendData.iconObjectUrl);
-    const currentGalleryIds = extractObjectIdsFromUrls(currentBackendData.galleryObjectUrls || []);
-    
-    console.log('🔍 [OrganigramaService] IDs actuales extraídos para preservar:', {
-      iconId: currentIconId,
-      galleryIds: currentGalleryIds
-    });
-    
-    // Paso 4: Construir payload preservando valores actuales + nueva imagen principal
-    const sectionUpdatePayload = {
-      name: currentBackendData.name, // Campo obligatorio (@NotBlank)
-      description: currentBackendData.description || '',
-      iconObjectId: currentIconId, // PRESERVAR icono actual
-      photoPrincipal: uploadResponse.objectId, // NUEVA imagen principal
-      galleryObjectIds: currentGalleryIds // PRESERVAR galería actual
+    // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
+    const mainImagePayload = {
+      objectId: uploadResponse.objectId
     };
     
-    console.log('🔄 [OrganigramaService] Actualizando sección con imagen principal:', sectionUpdatePayload);
+    console.log('� [OrganigramaService] PATCH payload para imagen principal:', mainImagePayload);
     
     try {
-      const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
-      await apiClient.put(endpoint, sectionUpdatePayload);
-      console.log('✅ [OrganigramaService] Imagen principal asociada correctamente con el backend');
-    } catch (updateError) {
-      console.error('❌ [OrganigramaService] Error actualizando sección con imagen principal:', updateError);
-      throw updateError;
+      await apiClient.patch(patchEndpoint, mainImagePayload);
+      console.log('✅ [OrganigramaService] Imagen principal asociada correctamente con endpoint PATCH');
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para imagen principal:', patchError);
+      throw patchError;
     }
     
     console.log('✅ [OrganigramaService] Imagen principal de sección subida con éxito');
@@ -444,42 +426,23 @@ export const uploadGalleryImages = async (
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }
     
-    // Paso 2: Obtener los datos actuales del backend
-    console.log('🔄 [OrganigramaService] Obteniendo datos actuales de la sección...');
-    const currentBackendData = await apiClient.get<any>(`/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`);
+    // Paso 2: Usar endpoint PATCH específico para galería
+    console.log('🔄 [OrganigramaService] Asociando galería usando endpoint PATCH específico...');
+    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
     
-    // Paso 3: Extraer IDs actuales de las URLs para preservarlos
-    const currentIconId = extractObjectIdFromUrl(currentBackendData.iconObjectUrl);
-    const currentPhotoPrincipalId = extractObjectIdFromUrl(currentBackendData.photoPrincipalUrl);
-    const currentGalleryIds = extractObjectIdsFromUrls(currentBackendData.galleryObjectUrls || []);
-    
-    // Paso 4: Combinar galería actual + nuevas imágenes
-    const combinedGalleryIds = [...currentGalleryIds, ...objectIds];
-    
-    console.log('🔍 [OrganigramaService] IDs para galería:', {
-      actuales: currentGalleryIds,
-      nuevos: objectIds,
-      combinados: combinedGalleryIds
-    });
-    
-    // Paso 5: Construir payload preservando valores actuales + nueva galería
-    const sectionUpdatePayload = {
-      name: currentBackendData.name, // Campo obligatorio (@NotBlank)
-      description: currentBackendData.description || '',
-      iconObjectId: currentIconId, // PRESERVAR icono actual
-      photoPrincipal: currentPhotoPrincipalId, // PRESERVAR imagen principal actual
-      galleryObjectIds: combinedGalleryIds // COMBINAR galería actual + nuevas
+    // Basándome en el patrón de los otros endpoints, el payload sería una lista de objectIds
+    const galleryPayload = {
+      galleryObjectIds: objectIds
     };
     
-    console.log('🔄 [OrganigramaService] Actualizando sección con nueva galería:', sectionUpdatePayload);
+    console.log('� [OrganigramaService] PATCH payload para galería:', galleryPayload);
     
     try {
-      const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
-      await apiClient.put(endpoint, sectionUpdatePayload);
-      console.log('✅ [OrganigramaService] Galería asociada correctamente con el backend');
-    } catch (updateError) {
-      console.error('❌ [OrganigramaService] Error actualizando sección con galería:', updateError);
-      throw updateError;
+      await apiClient.patch(patchEndpoint, galleryPayload);
+      console.log('✅ [OrganigramaService] Galería asociada correctamente con endpoint PATCH');
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para galería:', patchError);
+      throw patchError;
     }
     
     console.log('✅ [OrganigramaService] Imágenes de galería subidas con éxito');
