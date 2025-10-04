@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.organigrama.dto.SectionDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdateImageRequest;
 import uao.edu.co.scouts_project.organigrama.service.SectionService;
 
 import java.net.URI;
@@ -149,6 +150,48 @@ public class SectionController {
         @Parameter(description = "ID (UUID) del objeto de storage a eliminar")
         @PathVariable UUID objectId) { // <-- PARÁMETRO AÑADIDO
         sectionService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, objectId); // <-- LLAMADA CORREGIDA
+        return ResponseEntity.noContent().build();
+    }
+    
+    // ============== NUEVOS ENDPOINTS PATCH PARA ACTUALIZACIÓN INDIVIDUAL ==============
+    
+    @Operation(summary = "Actualizar solo el ícono de una sección", description = "Actualiza únicamente la imagen del ícono sin modificar otros campos de la sección. Elimina automáticamente el ícono anterior de Supabase.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Ícono actualizado exitosamente"),
+        @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo o sección no encontrado")
+    })
+    @PatchMapping("/{sectionId}/icon")
+    public ResponseEntity<Void> updateIcon(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId,
+        @Parameter(description = "UUID del nuevo ícono en Supabase Storage")
+        @Valid @RequestBody UpdateImageRequest request) {
+        sectionService.updateIcon(tenantSlug, groupSlug, sectionId, request.objectId());
+        return ResponseEntity.noContent().build();
+    }
+    
+    @Operation(summary = "Actualizar solo la foto principal de una sección", description = "Actualiza únicamente la imagen de la foto principal sin modificar otros campos de la sección. Elimina automáticamente la foto anterior de Supabase.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Foto principal actualizada exitosamente"),
+        @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo o sección no encontrado")
+    })
+    @PatchMapping("/{sectionId}/photo-principal")
+    public ResponseEntity<Void> updatePhotoPrincipal(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId,
+        @Parameter(description = "UUID de la nueva foto principal en Supabase Storage")
+        @Valid @RequestBody UpdateImageRequest request) {
+        sectionService.updatePhotoPrincipal(tenantSlug, groupSlug, sectionId, request.objectId());
         return ResponseEntity.noContent().build();
     }
 }

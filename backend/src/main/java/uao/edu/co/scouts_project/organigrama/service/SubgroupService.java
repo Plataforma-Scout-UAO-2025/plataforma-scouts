@@ -184,6 +184,19 @@ public class SubgroupService {
         }
     }
     
+    @Transactional
+    public void updatePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId, UUID photoObjectId) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+        
+        // Eliminar foto anterior si existe y es diferente
+        if (subgroup.getPhotoPrincipal() != null && !subgroup.getPhotoPrincipal().equals(photoObjectId)) {
+            storageService.deleteFileByObjectId(subgroup.getPhotoPrincipal());
+        }
+        
+        subgroup.setPhotoPrincipal(photoObjectId);
+        subgroupRepository.save(subgroup);
+    }
+    
     private Subgroup findSubgroupOrThrow(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
         validateHierarchy(tenantSlug, groupSlug, sectionId);
         Subgroup subgroup = subgroupRepository.findById(subgroupId)

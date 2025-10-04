@@ -131,6 +131,34 @@ public class GroupService {
         }
     }
     
+    @Transactional
+    public void updateLogo(String tenantSlug, String groupSlug, UUID logoObjectId) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
+        
+        // Eliminar logo anterior si existe y es diferente
+        if (group.getLogoObjectId() != null && !group.getLogoObjectId().equals(logoObjectId)) {
+            storageService.deleteFileByObjectId(group.getLogoObjectId());
+        }
+        
+        group.setLogoObjectId(logoObjectId);
+        groupRepository.save(group);
+    }
+    
+    @Transactional
+    public void updateScarf(String tenantSlug, String groupSlug, UUID scarfObjectId) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
+        
+        // Eliminar pañolón anterior si existe y es diferente
+        if (group.getScarfObjectId() != null && !group.getScarfObjectId().equals(scarfObjectId)) {
+            storageService.deleteFileByObjectId(group.getScarfObjectId());
+        }
+        
+        group.setScarfObjectId(scarfObjectId);
+        groupRepository.save(group);
+    }
+    
     private Group findGroupOrThrow(Long tenantId, String groupSlug) {
         return groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
             .orElseThrow(() -> new IllegalArgumentException("Group not found with slug: " + groupSlug));

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdateImageRequest;
 import uao.edu.co.scouts_project.organigrama.service.GroupService;
 
 import java.net.URI;
@@ -82,6 +83,44 @@ public class GroupController {
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug) {
         groupService.deleteScarfImage(tenantSlug, groupSlug);
+        return ResponseEntity.noContent().build();
+    }
+    
+    // ============== NUEVOS ENDPOINTS PATCH PARA ACTUALIZACIÓN INDIVIDUAL ==============
+    
+    @Operation(summary = "Actualizar solo el logo de un grupo", description = "Actualiza únicamente la imagen del logo sin modificar otros campos del grupo. Elimina automáticamente el logo anterior de Supabase.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Logo actualizado exitosamente"),
+        @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
+        @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
+    })
+    @PatchMapping("/{groupSlug}/logo")
+    public ResponseEntity<Void> updateLogo(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "UUID del nuevo logo en Supabase Storage")
+        @Valid @RequestBody UpdateImageRequest request) {
+        groupService.updateLogo(tenantSlug, groupSlug, request.objectId());
+        return ResponseEntity.noContent().build();
+    }
+    
+    @Operation(summary = "Actualizar solo el pañolón de un grupo", description = "Actualiza únicamente la imagen del pañolón sin modificar otros campos del grupo. Elimina automáticamente el pañolón anterior de Supabase.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Pañolón actualizado exitosamente"),
+        @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
+        @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
+    })
+    @PatchMapping("/{groupSlug}/scarf")
+    public ResponseEntity<Void> updateScarf(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "UUID del nuevo pañolón en Supabase Storage")
+        @Valid @RequestBody UpdateImageRequest request) {
+        groupService.updateScarf(tenantSlug, groupSlug, request.objectId());
         return ResponseEntity.noContent().build();
     }
 }

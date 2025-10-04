@@ -171,6 +171,36 @@ public class SectionService {
             sectionRepository.save(section);
         }
     }
+    
+    @Transactional
+    public void updateIcon(String tenantSlug, String groupSlug, Long sectionId, UUID iconObjectId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
+        
+        // Eliminar ícono anterior si existe y es diferente
+        if (section.getIconObjectId() != null && !section.getIconObjectId().equals(iconObjectId)) {
+            if (storageService != null) {
+                storageService.deleteFileByObjectId(section.getIconObjectId());
+            }
+        }
+        
+        section.setIconObjectId(iconObjectId);
+        sectionRepository.save(section);
+    }
+    
+    @Transactional
+    public void updatePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId, UUID photoObjectId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
+        
+        // Eliminar foto anterior si existe y es diferente
+        if (section.getPhotoPrincipal() != null && !section.getPhotoPrincipal().equals(photoObjectId)) {
+            if (storageService != null) {
+                storageService.deleteFileByObjectId(section.getPhotoPrincipal());
+            }
+        }
+        
+        section.setPhotoPrincipal(photoObjectId);
+        sectionRepository.save(section);
+    }
 
     private Section findSectionOrThrow(String tenantSlug, String groupSlug, Long sectionId) {
         Group group = getGroupBySlug(tenantSlug, groupSlug);

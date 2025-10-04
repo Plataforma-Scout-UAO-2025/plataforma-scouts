@@ -8,8 +8,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdateImageRequest;
 import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
 
 import java.net.URI;
@@ -124,6 +126,8 @@ public class SubgroupController {
         return ResponseEntity.noContent().build();
     }
 
+
+
     // ============== ENDPOINT PARA ELIMINACIÓN DE IMAGEN INDIVIDUAL DE LA GALERÍA ==============
 
     @Operation(summary = "Eliminar una imagen específica de la galería de un subgrupo", description = "Elimina un archivo específico de la galería de Supabase y desvincula su ID del subgrupo.")
@@ -144,6 +148,30 @@ public class SubgroupController {
         @Parameter(description = "ID (UUID) del objeto de storage a eliminar")
         @PathVariable UUID objectId) { // <-- PARÁMETRO AÑADIDO
         subgroupService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, subgroupId, objectId); // <-- LLAMADA CORREGIDA
+        return ResponseEntity.noContent().build();
+    }
+    
+    // ============== NUEVO ENDPOINT PATCH PARA ACTUALIZACIÓN INDIVIDUAL ==============
+    
+    @Operation(summary = "Actualizar solo la foto principal de un subgrupo", description = "Actualiza únicamente la imagen de la foto principal sin modificar otros campos del subgrupo. Elimina automáticamente la foto anterior de Supabase.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Foto principal actualizada exitosamente"),
+        @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo, sección o subgrupo no encontrado")
+    })
+    @PatchMapping("/{subgroupId}/photo-principal")
+    public ResponseEntity<Void> updatePhotoPrincipal(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId,
+        @Parameter(description = "ID único del subgrupo", example = "1")
+        @PathVariable Long subgroupId,
+        @Parameter(description = "UUID de la nueva foto principal en Supabase Storage")
+        @Valid @RequestBody UpdateImageRequest request) {
+        subgroupService.updatePhotoPrincipal(tenantSlug, groupSlug, sectionId, subgroupId, request.objectId());
         return ResponseEntity.noContent().build();
     }
 }
