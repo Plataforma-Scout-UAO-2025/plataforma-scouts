@@ -16,10 +16,12 @@ import uao.edu.co.scouts_project.organigrama.service.SectionService;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID; 
+import java.util.Map;
+
 
 @Tag(name = "Sections", description = "Operaciones CRUD para la gestión de secciones/ramas scouts (Manada, Tropa, Comunidad, Clan)")
 @RestController
-@RequestMapping("/api/tenants/{tenantSlug}/groups/{groupSlug}/sections")
+@RequestMapping("/api/v1/tenants/{tenantSlug}/groups/{groupSlug}/sections")
 public class SectionController {
     
     private final SectionService sectionService;
@@ -41,6 +43,27 @@ public class SectionController {
         @PathVariable String groupSlug) {
         return sectionService.getSectionsByGroup(tenantSlug, groupSlug);
     }
+
+    @Operation(
+    summary = "Obtener una rama con sus subramas",
+    description = "Devuelve la sección (rama) y la lista de subgrupos asociados."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo o sección no encontrado")
+    })
+    @GetMapping("/{sectionId}/with-subgroups")
+    public Map<String, Object> getSectionWithSubgroups(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId
+    ) {
+        return sectionService.getSectionWithSubgroups(tenantSlug, groupSlug, sectionId);
+    }
+
     
     @Operation(summary = "Obtener sección por ID", description = "Retorna una sección específica por su ID dentro de un grupo")
     @ApiResponses(value = {
@@ -74,7 +97,7 @@ public class SectionController {
         @Parameter(description = "Datos de la sección a crear")
         @Valid @RequestBody SectionDTO dto) {
         SectionResponseDTO created = sectionService.createSection(tenantSlug, groupSlug, dto);
-        return ResponseEntity.created(URI.create("/api/tenants/" + tenantSlug + "/groups/" + groupSlug + "/sections/" + created.sectionId())).body(created);
+        return ResponseEntity.created(URI.create("/api/v1/tenants/" + tenantSlug + "/groups/" + groupSlug + "/sections/" + created.sectionId())).body(created);
     }
     
     @Operation(summary = "Actualizar sección", description = "Actualiza los datos de una sección existente")

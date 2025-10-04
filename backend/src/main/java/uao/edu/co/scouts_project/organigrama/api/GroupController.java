@@ -18,7 +18,7 @@ import java.util.List;
 
 @Tag(name = "Groups", description = "Operaciones CRUD para la gestión de grupos scouts dentro de un tenant")
 @RestController
-@RequestMapping("/api/tenants/{tenantSlug}/groups")
+@RequestMapping("/api/v1/tenants/{tenantSlug}/groups")
 public class GroupController {
     
     private final GroupService groupService;
@@ -40,7 +40,7 @@ public class GroupController {
     @PostMapping
     public ResponseEntity<GroupResponseDTO> createGroup(@PathVariable String tenantSlug, @Valid @RequestBody GroupDTO dto) {
         GroupResponseDTO created = groupService.createGroup(tenantSlug, dto);
-        return ResponseEntity.created(URI.create("/api/tenants/" + tenantSlug + "/groups/" + created.slug())).body(created);
+        return ResponseEntity.created(URI.create("/api/v1/tenants/" + tenantSlug + "/groups/" + created.slug())).body(created);
     }
     
     @PutMapping("/{groupSlug}")

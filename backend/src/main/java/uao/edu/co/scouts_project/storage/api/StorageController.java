@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/storage")
+@RequestMapping("/api/v1/storage")
 @Tag(name = "Storage", description = "Endpoints para la gestión de archivos")
 public class StorageController {
 
@@ -26,7 +26,7 @@ public class StorageController {
     }
 
     @PostMapping("/upload")
-    @Operation(summary = "Subir un archivo", description = "Sube un archivo al bucket 'media' y devuelve su UUID único.")
+    @Operation(summary = "Subir un archivo", description = "Sube un archivo al bucket 'images' y devuelve su UUID único.")
     public ResponseEntity<Map<String, UUID>> uploadFile(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().build();
