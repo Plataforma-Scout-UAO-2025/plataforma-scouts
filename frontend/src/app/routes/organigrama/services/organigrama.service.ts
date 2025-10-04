@@ -470,27 +470,252 @@ export const uploadGalleryImages = async (
     console.log('🔄 [OrganigramaService] Asociando galería usando endpoint PATCH específico...');
     const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
     
-    // Basándome en el patrón de los otros endpoints, el payload sería una lista de objectIds
+    // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
     const galleryPayload = {
-      galleryObjectIds: objectIds
+      operations: objectIds.map(objectId => ({
+        op: "add",
+        newValue: objectId
+      }))
     };
     
-    console.log('� [OrganigramaService] PATCH payload para galería:', galleryPayload);
+    console.log('🔄 [OrganigramaService] PATCH payload para galería (formato operations):', galleryPayload);
     
     try {
       await apiClient.patch(patchEndpoint, galleryPayload);
       console.log('✅ [OrganigramaService] Galería asociada correctamente con endpoint PATCH');
+      
+      // Obtener los datos actualizados de la rama para tener las URLs correctas
+      console.log('🔄 [OrganigramaService] Obteniendo datos actualizados de la rama después de agregar a galería...');
+      const updatedRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+      
+      if (updatedRama && updatedRama.sectionGalleryObjectIds && updatedRama.sectionGalleryObjectIds.length > 0) {
+        // Retornar las URLs de la galería actualizada del backend
+        console.log('✅ [OrganigramaService] URLs de galería actualizadas obtenidas del backend');
+        console.log('📸 [OrganigramaService] Galería completa actual:', updatedRama.sectionGalleryObjectIds);
+        return updatedRama.sectionGalleryObjectIds; // URLs reales del backend
+      } else {
+        console.warn('⚠️ [OrganigramaService] No se pudieron obtener URLs actualizadas, usando URLs del upload');
+        return urls; // Fallback a URLs del upload inicial
+      }
     } catch (patchError) {
       console.error('❌ [OrganigramaService] Error en endpoint PATCH para galería:', patchError);
+      console.error('❌ [OrganigramaService] Payload enviado:', JSON.stringify(galleryPayload, null, 2));
+      console.error('❌ [OrganigramaService] Endpoint usado:', patchEndpoint);
       throw patchError;
     }
     
     console.log('✅ [OrganigramaService] Imágenes de galería subidas con éxito');
-    console.log('📝 [OrganigramaService] ObjectIds guardados:', objectIds);
-    
-    return urls; // Retornar URLs para mostrar inmediatamente
   } catch (error) {
     console.error('❌ [OrganigramaService] Error subiendo galería:', error);
+    throw error;
+  }
+};
+
+// Función para agregar una nueva imagen a la galería de una rama
+// Basada en la guía del backend usando operaciones
+export const addGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  file: File
+): Promise<string> => {
+  console.log('📤 [OrganigramaService] Agregando imagen a galería...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    sectionId,
+    fileName: file.name,
+    fileSize: file.size
+  });
+  
+  try {
+    // Paso 1: Subir el archivo
+    console.log('🔄 [OrganigramaService] Subiendo nueva imagen...');
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    console.log('✅ [OrganigramaService] Nueva imagen subida, objectId:', uploadResponse.objectId);
+    
+    // Paso 2: Usar endpoint PATCH para agregar a la galería
+    console.log('🔄 [OrganigramaService] Agregando imagen a galería usando endpoint PATCH...');
+    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
+    
+    // Crear el payload de operación según la guía del backend
+    const addPayload = {
+      operations: [
+        {
+          op: "add",
+          newValue: uploadResponse.objectId
+        }
+      ]
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para agregar imagen:', addPayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, addPayload);
+      console.log('✅ [OrganigramaService] Imagen agregada correctamente a galería');
+      
+      return uploadResponse.url || uploadResponse.objectId;
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para agregar imagen:', patchError);
+      throw patchError;
+    }
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error agregando imagen a galería:', error);
+    throw error;
+  }
+};
+
+// Función helper para obtener los UUIDs de las imágenes de galería de una rama
+// Útil para identificar qué imagen quieres reemplazar
+export const getGalleryImageUuids = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string
+): Promise<string[]> => {
+  console.log('🔍 [OrganigramaService] Obteniendo UUIDs de galería para sección:', sectionId);
+  
+  try {
+    const rama = await getRamaById(tenantSlug, groupSlug, sectionId);
+    if (rama && rama.sectionGalleryObjectIds) {
+      console.log('✅ [OrganigramaService] UUIDs de galería obtenidos:', rama.sectionGalleryObjectIds);
+      return rama.sectionGalleryObjectIds;
+    }
+    console.log('ℹ️ [OrganigramaService] No hay imágenes en la galería');
+    return [];
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error obteniendo UUIDs de galería:', error);
+    return [];
+  }
+};
+
+// Función para reemplazar una imagen específica en la galería de una rama
+// 
+// EJEMPLO DE USO COMPLETO:
+// 
+// 1. Obtener los UUIDs de las imágenes actuales:
+//    const uuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
+//    console.log('Imágenes actuales:', uuids); // ['uuid-1', 'uuid-2', 'uuid-3']
+// 
+// 2. Seleccionar qué imagen reemplazar (por ejemplo, la segunda imagen):
+//    const targetUuid = uuids[1]; // 'uuid-2'
+// 
+// 3. Reemplazar con la nueva imagen:
+//    const file = event.target.files?.[0];
+//    const newUrl = await replaceGalleryImage(tenantSlug, groupSlug, sectionId, targetUuid, file);
+//    console.log('Nueva URL:', newUrl);
+//
+export const replaceGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  targetImageUuid: string,
+  newFile: File
+): Promise<string> => {
+  console.log('🔄 [OrganigramaService] Reemplazando imagen en galería...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    sectionId,
+    targetImageUuid,
+    newFileName: newFile.name,
+    newFileSize: newFile.size
+  });
+  
+  try {
+    // Paso 1: Subir el nuevo archivo
+    console.log('🔄 [OrganigramaService] Subiendo nueva imagen...');
+    const formData = new FormData();
+    formData.append('file', newFile);
+    
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    console.log('✅ [OrganigramaService] Nueva imagen subida, objectId:', uploadResponse.objectId);
+    
+    // Paso 2: Usar endpoint PATCH para reemplazar la imagen en la galería
+    console.log('🔄 [OrganigramaService] Reemplazando imagen en galería usando endpoint PATCH...');
+    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
+    
+    // Crear el payload de operación según la especificación del backend
+    const replacePayload = {
+      operations: [
+        {
+          op: "replace" as const,
+          targetUuid: targetImageUuid,
+          newValue: uploadResponse.objectId
+        }
+      ]
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para reemplazar imagen:', replacePayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, replacePayload);
+      console.log('✅ [OrganigramaService] Imagen reemplazada correctamente en galería');
+      
+      // Obtener datos actualizados de la rama para tener las URLs correctas
+      console.log('🔄 [OrganigramaService] Obteniendo datos actualizados de la rama...');
+      const updatedRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+      
+      if (updatedRama && updatedRama.sectionGalleryObjectIds.length > 0) {
+        // Buscar la nueva URL en la galería actualizada
+        // Como el backend reemplaza en el mismo índice, podemos retornar la URL del upload
+        console.log('✅ [OrganigramaService] Datos actualizados obtenidos');
+        return uploadResponse.url || uploadResponse.objectId;
+      } else {
+        console.warn('⚠️ [OrganigramaService] No se pudieron obtener datos actualizados, usando URL del upload');
+        return uploadResponse.url || uploadResponse.objectId;
+      }
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para reemplazar imagen:', patchError);
+      throw patchError;
+    }
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error reemplazando imagen en galería:', error);
+    throw error;
+  }
+};
+
+// Función para eliminar una imagen de la galería de una rama
+// Basada en la guía del backend usando operaciones
+export const removeGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  targetImageUuid: string
+): Promise<void> => {
+  console.log('🗑️ [OrganigramaService] Eliminando imagen de galería...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    sectionId,
+    targetImageUuid
+  });
+  
+  try {
+    // Usar endpoint PATCH para eliminar de la galería
+    console.log('🔄 [OrganigramaService] Eliminando imagen de galería usando endpoint PATCH...');
+    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
+    
+    // Crear el payload de operación según la guía del backend
+    const removePayload = {
+      operations: [
+        {
+          op: "remove",
+          targetUuid: targetImageUuid
+        }
+      ]
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para eliminar imagen:', removePayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, removePayload);
+      console.log('✅ [OrganigramaService] Imagen eliminada correctamente de galería');
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para eliminar imagen:', patchError);
+      throw patchError;
+    }
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error eliminando imagen de galería:', error);
     throw error;
   }
 };

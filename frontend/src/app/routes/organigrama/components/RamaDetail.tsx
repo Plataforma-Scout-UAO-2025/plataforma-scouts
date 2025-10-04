@@ -178,15 +178,16 @@ export default function RamaDetail() {
       console.log('🔄 [RamaDetail] Subiendo galería:', files.length, 'archivos');
       
       // Subir las imágenes usando el nuevo sistema
-      const uploadedUrls = await organigramaService.uploadGalleryImages(
+      await organigramaService.uploadGalleryImages(
         tenantSlug, 
         groupSlug, 
         rama.section_id, 
         files
       );
 
-      // Añadir las nuevas URLs a la galería existente
-      setGaleriaFotos(prev => [...prev, ...uploadedUrls]);
+      // Refrescar todos los datos de la rama para obtener la galería actualizada
+      console.log('🔄 [RamaDetail] Refrescando datos de la rama después de subir galería...');
+      await fetchRama();
       
       console.log('✅ [RamaDetail] Galería actualizada correctamente');
       toast.success('Galería actualizada correctamente');
@@ -196,38 +197,39 @@ export default function RamaDetail() {
     }
   };
 
-  useEffect(() => {
-    const fetchRama = async () => {
-      try {
-        if (!id) return;
-        const data = await organigramaService.getRamaById(tenantSlug, groupSlug, id);
-        if (data) {
-          setRama(data);
-          
-          console.log('🔍 [RamaDetail] Datos completos de la rama:', {
-            id: data.id,
-            nombre: data.nombre,
-            imagenPrincipal: data.imagenPrincipal,
-            sectionGalleryObjectIds: data.sectionGalleryObjectIds
-          });
-          
-          // Cargar imagen principal existente
-          const mainImageUrl = getMainImageUrl(data);
-          setImagenPrincipal(mainImageUrl);
-          
-          // Cargar imágenes de galería desde el backend
-          const galleryUrls = data.sectionGalleryObjectIds || [];
-          setGaleriaFotos(galleryUrls);
-          
-          console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
-          console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
-        }
-      } catch (err) {
-        console.error('❌ [RamaDetail] Error cargando rama:', err);
-      } finally {
-        setLoading(false);
+  const fetchRama = async () => {
+    try {
+      if (!id) return;
+      const data = await organigramaService.getRamaById(tenantSlug, groupSlug, id);
+      if (data) {
+        setRama(data);
+        
+        console.log('🔍 [RamaDetail] Datos completos de la rama:', {
+          id: data.id,
+          nombre: data.nombre,
+          imagenPrincipal: data.imagenPrincipal,
+          sectionGalleryObjectIds: data.sectionGalleryObjectIds
+        });
+        
+        // Cargar imagen principal existente
+        const mainImageUrl = getMainImageUrl(data);
+        setImagenPrincipal(mainImageUrl);
+        
+        // Cargar imágenes de galería desde el backend
+        const galleryUrls = data.sectionGalleryObjectIds || [];
+        setGaleriaFotos(galleryUrls);
+        
+        console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
+        console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
       }
-    };
+    } catch (err) {
+      console.error('❌ [RamaDetail] Error cargando rama:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchRama();
   }, [id, tenantSlug, groupSlug]);
 

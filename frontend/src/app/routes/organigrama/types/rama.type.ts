@@ -69,6 +69,27 @@ export interface UpdateSubramaMainImageData {
   objectId: string;
 }
 
+// Tipos para operaciones de galería según la guía del backend
+export interface GalleryReplaceOperation {
+  op: "replace";
+  targetUuid: string;
+  newValue: string;
+}
+
+export interface GalleryAddOperation {
+  op: "add";
+  newValue: string;
+}
+
+export interface GalleryRemoveOperation {
+  op: "remove";
+  targetUuid: string;
+}
+
+export interface GalleryUpdatePayload {
+  operations: (GalleryReplaceOperation | GalleryAddOperation | GalleryRemoveOperation)[];
+}
+
 export interface CreateRamaData {
   nombre: string;
   descripcion?: string;
