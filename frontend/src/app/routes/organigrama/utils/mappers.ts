@@ -113,6 +113,7 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
     subgroup_id: extractedId ?? consistentId,
     subgroupName: nameFromBackend,
     subgroupDescription: backendSubrama.subgroupDescription || backendSubrama.subgroup_description || backendSubrama.description,
+    subgroupGalleryObjectIds: galleryUrls, // ✨ AGREGAR URLs de galería 
     section_id: backendSubrama.section_id || backendSubrama.sectionId || '',
     // Mapeo para retrocompatibilidad con el frontend
     id: consistentId,
@@ -131,7 +132,13 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
 
   console.log('🔄 [Mapper] Subrama mapeada final:', { 
     backend: { name: backendSubrama.subgroupName, subgroupId: backendSubrama.subgroup_id || backendSubrama.subgroupId },
-    frontend: { nombre: mappedSubrama.nombre, id: mappedSubrama.id, icono: mappedSubrama.icono, imagenPrincipal: mappedSubrama.imagenPrincipal }
+    frontend: { 
+      nombre: mappedSubrama.nombre, 
+      id: mappedSubrama.id, 
+      icono: mappedSubrama.icono, 
+      imagenPrincipal: mappedSubrama.imagenPrincipal,
+      galleryCount: mappedSubrama.subgroupGalleryObjectIds?.length || 0
+    }
   });
 
   return mappedSubrama;

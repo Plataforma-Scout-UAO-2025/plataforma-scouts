@@ -64,29 +64,31 @@ export default function SubramaDetail() {
   const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length > 0 && subrama) {
+      const previews = files.map(f => URL.createObjectURL(f));
+      setGaleriaFotos(prev => [...prev, ...previews]);
+      
       try {
         console.log('🔄 [SubramaDetail] Subiendo fotos a la galería:', files.length);
 
-        const previews = files.map(f => URL.createObjectURL(f));
-        setGaleriaFotos(prev => [...prev, ...previews]);
-
-        const uploadedUrls = await organigramaService.uploadGalleryImages(
+        await organigramaService.uploadSubramaGalleryImages(
           tenantSlug,
           groupSlug,
-          subrama.ramaId || subrama.section_id,
+          subrama.section_id,
+          subrama.subgroup_id,
           files
         );
 
-        // Reemplazar previews por URLs reales
-        setGaleriaFotos(prev => {
-          const remaining = prev.slice(0, prev.length - previews.length);
-          return [...remaining, ...uploadedUrls];
-        });
-
         console.log('✅ [SubramaDetail] Fotos de galería subidas correctamente');
+        console.log('🔄 [SubramaDetail] Refrescando datos completos de la subrama...');
+        
+        // Recargar datos completos de la subrama para sincronizar con backend
+        await fetchSubrama();
+        
+        console.log('✅ [SubramaDetail] Datos de subrama actualizados después del upload');
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo fotos de galería:', error);
-        setGaleriaFotos(prev => prev.slice(0, -files.length));
+        // Limpiar previews en caso de error
+        setGaleriaFotos(prev => prev.slice(0, -previews.length));
       }
     }
   };
@@ -148,16 +150,14 @@ export default function SubramaDetail() {
             console.log("ℹ️ [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.nombre);
           }
 
-          // Cargar galería si existe (legacy por ahora)
-          try {
-            const { StorageService } = await import('../services/storage.service');
-            if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
-              const galleryUrls = StorageService.getSubramaGalleryUrls(subramaEncontrada.id);
-              setGaleriaFotos(galleryUrls);
-              console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería`);
-            }
-          } catch (error) {
-            console.error('❌ [SubramaDetail] Error cargando galería:', error);
+          // Cargar galería desde backend (URLs directas)
+          if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
+            setGaleriaFotos(subramaEncontrada.subgroupGalleryObjectIds);
+            console.log(`📸 [SubramaDetail] Cargadas ${subramaEncontrada.subgroupGalleryObjectIds.length} imágenes de galería desde backend`);
+            console.log('🔗 [SubramaDetail] URLs de galería:', subramaEncontrada.subgroupGalleryObjectIds);
+          } else {
+            console.log('ℹ️ [SubramaDetail] No hay imágenes en la galería de la subrama');
+            setGaleriaFotos([]);
           }
         } else {
           console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);

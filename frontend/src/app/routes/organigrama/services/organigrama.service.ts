@@ -346,6 +346,63 @@ const extractObjectIdsFromUrls = (urls: string[]): string[] => {
   return urls.map(extractObjectIdFromUrl).filter(Boolean) as string[];
 };
 
+// Función de diagnóstico para verificar comportamiento del backend con imágenes
+export const diagnoseBatchImageUpload = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  file: File
+): Promise<{ uploaded: number; returned: number; details: any }> => {
+  console.log('🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...');
+  console.log('📝 [DIAGNÓSTICO] Archivo:', {
+    name: file.name,
+    size: file.size,
+    type: file.type
+  });
+
+  try {
+    // Paso 1: Subir archivo individual
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    console.log('✅ [DIAGNÓSTICO] Upload exitoso, objectId:', uploadResponse.objectId);
+
+    // Paso 2: Agregar a galería usando PATCH
+    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+    const addPayload = {
+      operations: [{ op: "add", newValue: uploadResponse.objectId }]
+    };
+
+    await apiClient.patch(patchEndpoint, addPayload);
+    console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
+
+    // Paso 3: Verificar resultado
+    const updatedRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+    const resultCount = updatedRama?.sectionGalleryObjectIds?.length || 0;
+
+    const result = {
+      uploaded: 1,
+      returned: resultCount,
+      details: {
+        originalObjectId: uploadResponse.objectId,
+        returnedUrls: updatedRama?.sectionGalleryObjectIds || [],
+        isProbablyMultiVariant: resultCount > 1
+      }
+    };
+
+    console.log('🔬 [DIAGNÓSTICO] RESULTADO FINAL:', result);
+    return result;
+
+  } catch (error) {
+    console.error('❌ [DIAGNÓSTICO] Error:', error);
+    throw error;
+  }
+};
+
+// Función helper para hacer el diagnóstico accesible desde la consola del navegador
+(globalThis as any).diagnosticImageUpload = diagnoseBatchImageUpload;
+
 // Funciones de carga de archivos - Implementación de dos pasos según backend
 export const uploadSectionIcon = async (
   tenantSlug: string,
@@ -553,10 +610,54 @@ export const addGalleryImage = async (
     };
     
     console.log('🔄 [OrganigramaService] PATCH payload para agregar imagen:', addPayload);
+    console.log('📝 [OrganigramaService] ANÁLISIS DETALLADO (RAMA):');
+    console.log('   - Subiendo UNA imagen con objectId:', uploadResponse.objectId);
+    console.log('   - Esperamos que backend maneje solo esta imagen...');
     
     try {
       await apiClient.patch(patchEndpoint, addPayload);
       console.log('✅ [OrganigramaService] Imagen agregada correctamente a galería');
+      
+      // Obtener datos actualizados para verificar cuántas imágenes devuelve el backend
+      console.log('🔍 [OrganigramaService] Verificando resultado en backend para RAMA...');
+      const updatedRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+      
+      if (updatedRama && updatedRama.sectionGalleryObjectIds) {
+        console.log('🔍 [OrganigramaService] RESULTADO BACKEND (RAMA):');
+        console.log('   - Subimos: 1 imagen');
+        console.log('   - Backend devolvió:', updatedRama.sectionGalleryObjectIds.length, 'URLs');
+        console.log('   - URLs devueltas:', updatedRama.sectionGalleryObjectIds);
+        
+        // Análisis detallado de URLs
+        console.log('🔍 [OrganigramaService] ANÁLISIS DE URLs:');
+        updatedRama.sectionGalleryObjectIds.forEach((url, index) => {
+          const uuidMatch = url.match(/\/([a-f0-9-]{36})\.[a-zA-Z0-9]+$/);
+          const uuid = uuidMatch ? uuidMatch[1] : 'unknown';
+          console.log(`   ${index + 1}. UUID: ${uuid}`);
+          console.log(`      URL: ${url}`);
+        });
+        
+        // Verificar si todas las URLs tienen el mismo UUID (variantes) o UUIDs diferentes (imágenes distintas)
+        const uuids = updatedRama.sectionGalleryObjectIds.map(url => {
+          const match = url.match(/\/([a-f0-9-]{36})\.[a-zA-Z0-9]+$/);
+          return match ? match[1] : null;
+        }).filter(Boolean);
+        
+        const uniqueUuids = [...new Set(uuids)];
+        
+        if (uniqueUuids.length === 1) {
+          console.log('💡 [OrganigramaService] DIAGNÓSTICO: Todas las URLs tienen el mismo UUID →', uniqueUuids[0]);
+          console.log('💡 [OrganigramaService] CAUSA PROBABLE: Backend genera múltiples variantes (thumbnails, formatos, resoluciones)');
+        } else {
+          console.log('⚠️ [OrganigramaService] DIAGNÓSTICO: URLs tienen UUIDs diferentes →', uniqueUuids);
+          console.log('⚠️ [OrganigramaService] CAUSA PROBABLE: Backend está creando múltiples imágenes independientes');
+        }
+        
+        if (updatedRama.sectionGalleryObjectIds.length > 1) {
+          console.log('⚠️ [OrganigramaService] CONFIRMADO: Backend está generando múltiples variantes automáticamente');
+          console.log('💡 [OrganigramaService] Supabase probablemente está configurado para generar thumbnails/resoluciones');
+        }
+      }
       
       return uploadResponse.url || uploadResponse.objectId;
     } catch (patchError) {
@@ -828,6 +929,14 @@ export const uploadSubramaGalleryImages = async (
     };
     
     console.log('🔄 [OrganigramaService] PATCH payload para galería de subrama (formato operations):', galleryPayload);
+    console.log('📝 [OrganigramaService] Subiendo', files.length, 'archivo(s) con objectIds:', objectIds);
+    
+    // Obtener estado inicial para comparación
+    const initialSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+    const initialGalleryUrls = initialSubrama?.subgroupGalleryObjectIds || [];
+    const initialCount = initialGalleryUrls.length;
+    console.log('📊 [OrganigramaService] Estado inicial - galería subrama tiene:', initialCount, 'imágenes');
+    console.log('📋 [OrganigramaService] URLs iniciales:', initialGalleryUrls);
     
     try {
       await apiClient.patch(patchEndpoint, galleryPayload);
@@ -837,10 +946,46 @@ export const uploadSubramaGalleryImages = async (
       console.log('🔄 [OrganigramaService] Obteniendo datos actualizados de la subrama después de agregar a galería...');
       const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
       
+      console.log('🔍 [OrganigramaService] Subrama actualizada recibida:', {
+        hasSubgroupGalleryObjectIds: !!(updatedSubrama?.subgroupGalleryObjectIds),
+        galleryCount: updatedSubrama?.subgroupGalleryObjectIds?.length || 0,
+        galleryUrls: updatedSubrama?.subgroupGalleryObjectIds || []
+      });
+      
       if (updatedSubrama && updatedSubrama.subgroupGalleryObjectIds && updatedSubrama.subgroupGalleryObjectIds.length > 0) {
+        const finalCount = updatedSubrama.subgroupGalleryObjectIds.length;
+        const addedCount = finalCount - initialCount;
+        
         // Retornar las URLs de la galería actualizada del backend
         console.log('✅ [OrganigramaService] URLs de galería de subrama actualizadas obtenidas del backend');
         console.log('📸 [OrganigramaService] Galería completa actual de subrama:', updatedSubrama.subgroupGalleryObjectIds);
+        console.log('🔍 [OrganigramaService] ANÁLISIS SUBRAMA:');
+        console.log(`   - Archivos subidos: ${files.length}`);
+        console.log(`   - Imágenes agregadas al backend: ${addedCount}`);
+        console.log(`   - Total en galería ahora: ${finalCount}`);
+        
+        if (addedCount > files.length) {
+          console.log('⚠️ [OrganigramaService] MÚLTIPLES VARIANTES DETECTADAS');
+          console.log('💡 [OrganigramaService] Backend está generando', Math.round(addedCount / files.length), 'variantes por imagen');
+          console.log('🎯 [OrganigramaService] Esto es normal si Supabase está configurado para thumbnails/optimización');
+          
+          // Análisis de UUIDs para confirmar si son variantes o imágenes diferentes
+          const recentUrls = updatedSubrama.subgroupGalleryObjectIds.slice(-addedCount);
+          const uuids = recentUrls.map(url => {
+            const match = url.match(/\/([a-f0-9-]{36})\.[a-zA-Z0-9]+$/);
+            return match ? match[1] : null;
+          }).filter(Boolean);
+          
+          const uniqueUuids = [...new Set(uuids)];
+          console.log('🔍 [OrganigramaService] UUIDs únicos en imágenes recientes:', uniqueUuids.length);
+          
+          if (uniqueUuids.length === files.length) {
+            console.log('✅ [OrganigramaService] CONFIRMADO: Backend genera múltiples variantes por imagen original');
+          } else {
+            console.log('⚠️ [OrganigramaService] INESPERADO: Patrón de UUIDs no coincide con expectativa');
+          }
+        }
+        
         return updatedSubrama.subgroupGalleryObjectIds; // URLs reales del backend
       } else {
         console.warn('⚠️ [OrganigramaService] No se pudieron obtener URLs actualizadas de subrama, usando URLs del upload');
@@ -901,10 +1046,29 @@ export const addSubramaGalleryImage = async (
     };
     
     console.log('🔄 [OrganigramaService] PATCH payload para agregar imagen a subrama:', addPayload);
+    console.log('📝 [OrganigramaService] ANÁLISIS DETALLADO:');
+    console.log('   - Subiendo UNA imagen con objectId:', uploadResponse.objectId);
+    console.log('   - Esperamos que backend maneje solo esta imagen...');
     
     try {
       await apiClient.patch(patchEndpoint, addPayload);
       console.log('✅ [OrganigramaService] Imagen agregada correctamente a galería de subrama');
+      
+      // Obtener datos actualizados para verificar cuántas imágenes devuelve el backend
+      console.log('🔍 [OrganigramaService] Verificando resultado en backend...');
+      const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+      
+      if (updatedSubrama && updatedSubrama.subgroupGalleryObjectIds) {
+        console.log('🔍 [OrganigramaService] RESULTADO BACKEND:');
+        console.log('   - Subimos: 1 imagen');
+        console.log('   - Backend devolvió:', updatedSubrama.subgroupGalleryObjectIds.length, 'URLs');
+        console.log('   - URLs devueltas:', updatedSubrama.subgroupGalleryObjectIds);
+        
+        if (updatedSubrama.subgroupGalleryObjectIds.length > 1) {
+          console.log('⚠️ [OrganigramaService] POSIBLE CAUSA: Backend está generando variantes automáticamente (thumbnails, diferentes resoluciones, etc.)');
+          console.log('💡 [OrganigramaService] Esto podría ser normal si Supabase está configurado para generar múltiples versiones');
+        }
+      }
       
       return uploadResponse.url || uploadResponse.objectId;
     } catch (patchError) {
