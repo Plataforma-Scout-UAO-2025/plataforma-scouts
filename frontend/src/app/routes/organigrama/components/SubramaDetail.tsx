@@ -50,6 +50,10 @@ export default function SubramaDetail() {
 
         setImagenPrincipal(publicUrl);
         console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
+        
+        // Refrescar datos de la subrama para asegurar sincronización
+        console.log('🔄 [SubramaDetail] Refrescando datos de la subrama...');
+        await fetchSubrama();
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
         setImagenPrincipal('');
@@ -87,88 +91,88 @@ export default function SubramaDetail() {
     }
   };
 
-  useEffect(() => {
-    const fetchSubrama = async () => {
-      try {
-        if (id) {
-          console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
-          
-          
-          const ramas = await organigramaService.getRamas(tenantSlug, groupSlug);
-          
-          let subramaEncontrada: Subrama | null = null;
-          
-          for (const rama of ramas) {
-            const subramaInRama = rama.subramas.find(s => s.id === id);
-            if (subramaInRama) {
-              subramaEncontrada = subramaInRama;
-              break;
-            }
+  const fetchSubrama = async () => {
+    try {
+      if (id) {
+        console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
+        
+        const ramas = await organigramaService.getRamas(tenantSlug, groupSlug);
+        
+        let subramaEncontrada: Subrama | null = null;
+        
+        for (const rama of ramas) {
+          const subramaInRama = rama.subramas.find(s => s.id === id);
+          if (subramaInRama) {
+            subramaEncontrada = subramaInRama;
+            break;
           }
+        }
+        
+        if (subramaEncontrada) {
+          setSubrama(subramaEncontrada);
+          console.log("✅ [SubramaDetail] Subrama cargada:", subramaEncontrada);
+
+          // 📸 Cargar imágenes existentes (PRIORIZAR URLs directas del backend)
+          console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.nombre);
+          console.log("🔍 [SubramaDetail] subrama.imagenPrincipal:", subramaEncontrada.imagenPrincipal);
           
-          if (subramaEncontrada) {
-            setSubrama(subramaEncontrada);
-            console.log("✅ [SubramaDetail] Subrama cargada:", subramaEncontrada);
-
-            // 📸 Cargar imágenes existentes (PRIORIZAR URLs directas del backend)
-            console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.nombre);
-            console.log("🔍 [SubramaDetail] subrama.imagenPrincipal:", subramaEncontrada.imagenPrincipal);
-            
-            // PRIORIDAD 1: URL directa del backend (campo optimizado)
-            if (subramaEncontrada.imagenPrincipal && !subramaEncontrada.imagenPrincipal.startsWith('data:') && subramaEncontrada.imagenPrincipal.includes('http')) {
-              setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-              console.log("✅ [SubramaDetail] Usando URL directa del backend para imagen principal:", subramaEncontrada.imagenPrincipal);
-            }
-            // PRIORIDAD 2: Fallback al StorageService (legacy)
-            else if (subramaEncontrada.imagenPrincipalObjectId) {
-              try {
-                const { StorageService } = await import('../services/storage.service');
-                const mainImageUrl = StorageService.getImageUrl(subramaEncontrada.imagenPrincipalObjectId);
-                if (mainImageUrl) {
-                  setImagenPrincipal(mainImageUrl);
-                  console.log("✅ [SubramaDetail] Usando StorageService para imagen principal (legacy)");
-                }
-              } catch (error) {
-                console.error('❌ [SubramaDetail] Error cargando imagen desde StorageService:', error);
-              }
-            }
-            // PRIORIDAD 3: URL de datos (data:image/...)
-            else if (subramaEncontrada.imagenPrincipal && subramaEncontrada.imagenPrincipal.startsWith('data:')) {
-              setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-              console.log("✅ [SubramaDetail] Usando data URL para imagen principal");
-            }
-            // PRIORIDAD 4: Cualquier URL en campo imagenPrincipal
-            else if (subramaEncontrada.imagenPrincipal) {
-              setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-              console.log("✅ [SubramaDetail] Usando campo imagenPrincipal como URL:", subramaEncontrada.imagenPrincipal);
-            }
-            else {
-              console.log("ℹ️ [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.nombre);
-            }
-
-            // Cargar galería si existe (legacy por ahora)
+          // PRIORIDAD 1: URL directa del backend (campo optimizado)
+          if (subramaEncontrada.imagenPrincipal && !subramaEncontrada.imagenPrincipal.startsWith('data:') && subramaEncontrada.imagenPrincipal.includes('http')) {
+            setImagenPrincipal(subramaEncontrada.imagenPrincipal);
+            console.log("✅ [SubramaDetail] Usando URL directa del backend para imagen principal:", subramaEncontrada.imagenPrincipal);
+          }
+          // PRIORIDAD 2: Fallback al StorageService (legacy)
+          else if (subramaEncontrada.imagenPrincipalObjectId) {
             try {
               const { StorageService } = await import('../services/storage.service');
-              if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
-                const galleryUrls = StorageService.getSubramaGalleryUrls(subramaEncontrada.id);
-                setGaleriaFotos(galleryUrls);
-                console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería`);
+              const mainImageUrl = StorageService.getImageUrl(subramaEncontrada.imagenPrincipalObjectId);
+              if (mainImageUrl) {
+                setImagenPrincipal(mainImageUrl);
+                console.log("✅ [SubramaDetail] Usando StorageService para imagen principal (legacy)");
               }
             } catch (error) {
-              console.error('❌ [SubramaDetail] Error cargando galería:', error);
+              console.error('❌ [SubramaDetail] Error cargando imagen desde StorageService:', error);
             }
-          } else {
-            console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);
+          }
+          // PRIORIDAD 3: URL de datos (data:image/...)
+          else if (subramaEncontrada.imagenPrincipal && subramaEncontrada.imagenPrincipal.startsWith('data:')) {
+            setImagenPrincipal(subramaEncontrada.imagenPrincipal);
+            console.log("✅ [SubramaDetail] Usando data URL para imagen principal");
+          }
+          // PRIORIDAD 4: Cualquier URL en campo imagenPrincipal
+          else if (subramaEncontrada.imagenPrincipal) {
+            setImagenPrincipal(subramaEncontrada.imagenPrincipal);
+            console.log("✅ [SubramaDetail] Usando campo imagenPrincipal como URL:", subramaEncontrada.imagenPrincipal);
+          }
+          else {
+            console.log("ℹ️ [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.nombre);
+          }
+
+          // Cargar galería si existe (legacy por ahora)
+          try {
+            const { StorageService } = await import('../services/storage.service');
+            if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
+              const galleryUrls = StorageService.getSubramaGalleryUrls(subramaEncontrada.id);
+              setGaleriaFotos(galleryUrls);
+              console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería`);
+            }
+          } catch (error) {
+            console.error('❌ [SubramaDetail] Error cargando galería:', error);
           }
         } else {
-          console.error("❌ [SubramaDetail] ID de subrama no proporcionado");
+          console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);
         }
-      } catch (error) {
-        console.error("❌ [SubramaDetail] Error cargando subrama:", error);
-      } finally {
-        setLoading(false);
+      } else {
+        console.error("❌ [SubramaDetail] ID de subrama no proporcionado");
       }
-    };
+    } catch (error) {
+      console.error("❌ [SubramaDetail] Error cargando subrama:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchSubrama();
   }, [id, tenantSlug, groupSlug]);
 

@@ -492,14 +492,24 @@ export const updateSubramaMainImage = async (
     try {
       await apiClient.patch(patchEndpoint, mainImagePayload);
       console.log('✅ [OrganigramaService] Foto principal de subrama asociada correctamente con endpoint PATCH');
+      
+      // Paso 3: Obtener los datos actualizados de la subrama para tener la URL correcta
+      console.log('🔄 [OrganigramaService] Obteniendo datos actualizados de la subrama...');
+      const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+      
+      if (updatedSubrama && updatedSubrama.imagenPrincipal) {
+        console.log('✅ [OrganigramaService] URL de imagen principal obtenida del backend:', updatedSubrama.imagenPrincipal);
+        return updatedSubrama.imagenPrincipal;
+      } else {
+        console.warn('⚠️ [OrganigramaService] No se pudo obtener la URL actualizada, usando URL del upload');
+        return uploadResponse.url || uploadResponse.objectId;
+      }
     } catch (patchError) {
       console.error('❌ [OrganigramaService] Error en endpoint PATCH para foto principal de subrama:', patchError);
       throw patchError;
     }
     
     console.log('✅ [OrganigramaService] Foto principal de subrama actualizada con éxito');
-    
-    return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
     console.error('❌ [OrganigramaService] Error actualizando foto principal de subrama:', error);
     throw error;
