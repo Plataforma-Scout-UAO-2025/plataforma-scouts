@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Tag(name = "Sections", description = "Operaciones CRUD para la gestión de secciones/ramas scouts (Manada, Tropa, Comunidad, Clan)")
 @RestController
-@RequestMapping("/api/tenants/{tenantSlug}/groups/{groupSlug}/sections")
+@RequestMapping("/api/v1/tenants/{tenantSlug}/groups/{groupSlug}/sections")
 public class SectionController {
     
     private final SectionService sectionService;
@@ -74,7 +74,7 @@ public class SectionController {
         @Parameter(description = "Datos de la sección a crear")
         @Valid @RequestBody SectionDTO dto) {
         SectionResponseDTO created = sectionService.createSection(tenantSlug, groupSlug, dto);
-        return ResponseEntity.created(URI.create("/api/tenants/" + tenantSlug + "/groups/" + groupSlug + "/sections/" + created.sectionId())).body(created);
+        return ResponseEntity.created(URI.create("/api/v1/tenants/" + tenantSlug + "/groups/" + groupSlug + "/sections/" + created.sectionId())).body(created);
     }
     
     @Operation(summary = "Actualizar sección", description = "Actualiza los datos de una sección existente")

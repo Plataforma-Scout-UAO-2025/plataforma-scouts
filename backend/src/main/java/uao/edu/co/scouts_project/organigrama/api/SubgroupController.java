@@ -20,7 +20,7 @@ import java.util.UUID; // <-- IMPORTADO
 
 @Tag(name = "Subgroups", description = "Operaciones CRUD para la gestión de subgrupos scouts (Seisenes, Patrullas, Equipos, Tribus)")
 @RestController
-@RequestMapping("/api/tenants/{tenantSlug}/groups/{groupSlug}/sections/{sectionId}/subgroups")
+@RequestMapping("/api/v1/tenants/{tenantSlug}/groups/{groupSlug}/sections/{sectionId}/subgroups")
 public class SubgroupController {
     
     private final SubgroupService subgroupService;
@@ -81,7 +81,7 @@ public class SubgroupController {
         @Parameter(description = "Datos del subgrupo a crear")
         @Valid @RequestBody SubgroupDTO dto) {
         SubgroupResponseDTO created = subgroupService.createSubgroup(tenantSlug, groupSlug, sectionId, dto);
-        String location = "/api/tenants/" + tenantSlug + "/groups/" + groupSlug + 
+        String location = "/api/v1/tenants/" + tenantSlug + "/groups/" + groupSlug +
                          "/sections/" + sectionId + "/subgroups/" + created.subgroupId();
         return ResponseEntity.created(URI.create(location)).body(created);
     }

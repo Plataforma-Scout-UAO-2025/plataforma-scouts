@@ -15,7 +15,7 @@ import java.util.List;
 
 @Tag(name = "Tenants", description = "Operaciones CRUD para la gestión de tenants/organizaciones")
 @RestController
-@RequestMapping("/api/tenants")
+@RequestMapping("/api/v1/tenants")
 public class TenantController {
     
     private final TenantService tenantService;
@@ -56,7 +56,7 @@ public class TenantController {
         @Parameter(description = "Datos del tenant a crear")
         @Valid @RequestBody TenantDTO dto) {
         TenantDTO created = tenantService.createTenant(dto);
-        return ResponseEntity.created(URI.create("/api/tenants/" + created.slug())).body(created);
+        return ResponseEntity.created(URI.create("/api/v1/tenants/" + created.slug())).body(created);
     }
     
     @Operation(summary = "Actualizar tenant", description = "Actualiza los datos de un tenant existente")
