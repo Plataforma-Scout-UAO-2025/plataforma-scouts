@@ -26,7 +26,9 @@ const PATCH_ENDPOINTS = {
   MAIN_IMAGE: (tenantSlug: string, groupSlug: string, sectionId: string) => 
     `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/photo-principal`,
   GALLERY: (tenantSlug: string, groupSlug: string, sectionId: string) => 
-    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery`
+    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery`,
+  SUBRAMA_MAIN_IMAGE: (tenantSlug: string, groupSlug: string, sectionId: string, subgroupId: string) => 
+    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}/photo-principal`
 };
 
 // Integración directa con backend real - NO MÁS MOCKS
@@ -451,6 +453,55 @@ export const uploadGalleryImages = async (
     return urls; // Retornar URLs para mostrar inmediatamente
   } catch (error) {
     console.error('❌ [OrganigramaService] Error subiendo galería:', error);
+    throw error;
+  }
+};
+
+// Función para actualizar la foto principal de una subrama
+// Ejemplo de uso:
+// const file = event.target.files?.[0];
+// const url = await updateSubramaMainImage(tenantSlug, groupSlug, sectionId, subgroupId, file);
+export const updateSubramaMainImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  file: File
+): Promise<string> => {
+  console.log('📤 [OrganigramaService] Actualizando foto principal de subrama...');
+  
+  try {
+    // Paso 1: Subir el archivo
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    console.log('✅ [OrganigramaService] Archivo subido, objectId:', uploadResponse.objectId);
+    
+    // Paso 2: Usar endpoint PATCH específico para foto principal de subrama
+    console.log('🔄 [OrganigramaService] Asociando foto principal de subrama usando endpoint PATCH específico...');
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_MAIN_IMAGE(tenantSlug, groupSlug, sectionId, subgroupId);
+    
+    // Basándome en el patrón de los otros endpoints, el payload sería un objectId
+    const mainImagePayload = {
+      objectId: uploadResponse.objectId
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para foto principal de subrama:', mainImagePayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, mainImagePayload);
+      console.log('✅ [OrganigramaService] Foto principal de subrama asociada correctamente con endpoint PATCH');
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para foto principal de subrama:', patchError);
+      throw patchError;
+    }
+    
+    console.log('✅ [OrganigramaService] Foto principal de subrama actualizada con éxito');
+    
+    return uploadResponse.url || uploadResponse.objectId;
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error actualizando foto principal de subrama:', error);
     throw error;
   }
 };

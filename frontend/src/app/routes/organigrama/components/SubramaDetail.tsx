@@ -40,10 +40,11 @@ export default function SubramaDetail() {
         const preview = URL.createObjectURL(file);
         setImagenPrincipal(preview);
 
-        const publicUrl = await organigramaService.uploadSectionMainImage(
+        const publicUrl = await organigramaService.updateSubramaMainImage(
           tenantSlug,
           groupSlug,
-          subrama.ramaId || subrama.section_id,
+          subrama.section_id,
+          subrama.subgroup_id,
           file
         );
 

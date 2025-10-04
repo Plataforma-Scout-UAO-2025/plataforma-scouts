@@ -65,6 +65,10 @@ export interface UpdateSubramaBackendData {
   isActive?: boolean;
 }
 
+export interface UpdateSubramaMainImageData {
+  objectId: string;
+}
+
 export interface CreateRamaData {
   nombre: string;
   descripcion?: string;
