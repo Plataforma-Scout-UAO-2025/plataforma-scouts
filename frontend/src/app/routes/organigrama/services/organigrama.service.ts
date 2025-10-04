@@ -28,7 +28,9 @@ const PATCH_ENDPOINTS = {
   GALLERY: (tenantSlug: string, groupSlug: string, sectionId: string) => 
     `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery`,
   SUBRAMA_MAIN_IMAGE: (tenantSlug: string, groupSlug: string, sectionId: string, subgroupId: string) => 
-    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}/photo-principal`
+    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}/photo-principal`,
+  SUBRAMA_GALLERY: (tenantSlug: string, groupSlug: string, sectionId: string, subgroupId: string) => 
+    `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}/gallery`
 };
 
 // Integración directa con backend real - NO MÁS MOCKS
@@ -776,6 +778,282 @@ export const updateSubramaMainImage = async (
   } catch (error) {
     console.error('❌ [OrganigramaService] Error actualizando foto principal de subrama:', error);
     throw error;
+  }
+};
+
+// ============================================================================
+// FUNCIONES DE GALERÍA PARA SUBRAMAS
+// ============================================================================
+
+// Función para subir múltiples imágenes a la galería de una subrama
+export const uploadSubramaGalleryImages = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  files: File[]
+): Promise<string[]> => {
+  console.log('📤 [OrganigramaService] Subiendo imágenes de galería de subrama...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    sectionId,
+    subgroupId,
+    filesCount: files.length
+  });
+  
+  try {
+    const objectIds: string[] = [];
+    const urls: string[] = [];
+    
+    // Paso 1: Subir cada archivo individualmente
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+      objectIds.push(uploadResponse.objectId);
+      urls.push(uploadResponse.url || uploadResponse.objectId);
+    }
+    
+    // Paso 2: Usar endpoint PATCH específico para galería de subrama
+    console.log('🔄 [OrganigramaService] Asociando galería de subrama usando endpoint PATCH específico...');
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
+    
+    // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
+    const galleryPayload = {
+      operations: objectIds.map(objectId => ({
+        op: "add",
+        newValue: objectId
+      }))
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para galería de subrama (formato operations):', galleryPayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, galleryPayload);
+      console.log('✅ [OrganigramaService] Galería de subrama asociada correctamente con endpoint PATCH');
+      
+      // Obtener los datos actualizados de la subrama para tener las URLs correctas
+      console.log('🔄 [OrganigramaService] Obteniendo datos actualizados de la subrama después de agregar a galería...');
+      const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+      
+      if (updatedSubrama && updatedSubrama.subgroupGalleryObjectIds && updatedSubrama.subgroupGalleryObjectIds.length > 0) {
+        // Retornar las URLs de la galería actualizada del backend
+        console.log('✅ [OrganigramaService] URLs de galería de subrama actualizadas obtenidas del backend');
+        console.log('📸 [OrganigramaService] Galería completa actual de subrama:', updatedSubrama.subgroupGalleryObjectIds);
+        return updatedSubrama.subgroupGalleryObjectIds; // URLs reales del backend
+      } else {
+        console.warn('⚠️ [OrganigramaService] No se pudieron obtener URLs actualizadas de subrama, usando URLs del upload');
+        return urls; // Fallback a URLs del upload inicial
+      }
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para galería de subrama:', patchError);
+      console.error('❌ [OrganigramaService] Payload enviado:', JSON.stringify(galleryPayload, null, 2));
+      console.error('❌ [OrganigramaService] Endpoint usado:', patchEndpoint);
+      throw patchError;
+    }
+    
+    console.log('✅ [OrganigramaService] Imágenes de galería de subrama subidas con éxito');
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error subiendo galería de subrama:', error);
+    throw error;
+  }
+};
+
+// Función para agregar una nueva imagen a la galería de una subrama
+export const addSubramaGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  file: File
+): Promise<string> => {
+  console.log('📤 [OrganigramaService] Agregando imagen a galería de subrama...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    sectionId,
+    subgroupId,
+    fileName: file.name,
+    fileSize: file.size
+  });
+  
+  try {
+    // Paso 1: Subir el archivo
+    console.log('🔄 [OrganigramaService] Subiendo nueva imagen...');
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    console.log('✅ [OrganigramaService] Nueva imagen subida, objectId:', uploadResponse.objectId);
+    
+    // Paso 2: Usar endpoint PATCH para agregar a la galería de subrama
+    console.log('🔄 [OrganigramaService] Agregando imagen a galería de subrama usando endpoint PATCH...');
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
+    
+    // Crear el payload de operación según la guía del backend
+    const addPayload = {
+      operations: [
+        {
+          op: "add",
+          newValue: uploadResponse.objectId
+        }
+      ]
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para agregar imagen a subrama:', addPayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, addPayload);
+      console.log('✅ [OrganigramaService] Imagen agregada correctamente a galería de subrama');
+      
+      return uploadResponse.url || uploadResponse.objectId;
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para agregar imagen a subrama:', patchError);
+      throw patchError;
+    }
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error agregando imagen a galería de subrama:', error);
+    throw error;
+  }
+};
+
+// Función para reemplazar una imagen específica en la galería de una subrama
+export const replaceSubramaGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  targetImageUuid: string,
+  newFile: File
+): Promise<string> => {
+  console.log('🔄 [OrganigramaService] Reemplazando imagen en galería de subrama...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    sectionId,
+    subgroupId,
+    targetImageUuid,
+    newFileName: newFile.name,
+    newFileSize: newFile.size
+  });
+  
+  try {
+    // Paso 1: Subir el nuevo archivo
+    console.log('🔄 [OrganigramaService] Subiendo nueva imagen...');
+    const formData = new FormData();
+    formData.append('file', newFile);
+    
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    console.log('✅ [OrganigramaService] Nueva imagen subida, objectId:', uploadResponse.objectId);
+    
+    // Paso 2: Usar endpoint PATCH para reemplazar la imagen en la galería de subrama
+    console.log('🔄 [OrganigramaService] Reemplazando imagen en galería de subrama usando endpoint PATCH...');
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
+    
+    // Crear el payload de operación según la guía del backend
+    const replacePayload = {
+      operations: [
+        {
+          op: "replace",
+          targetUuid: targetImageUuid,
+          newValue: uploadResponse.objectId
+        }
+      ]
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para reemplazar imagen en subrama:', replacePayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, replacePayload);
+      console.log('✅ [OrganigramaService] Imagen reemplazada correctamente en galería de subrama');
+      
+      // Obtener datos actualizados de la subrama para tener las URLs correctas
+      console.log('🔄 [OrganigramaService] Obteniendo datos actualizados de la subrama...');
+      const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+      
+      if (updatedSubrama && updatedSubrama.subgroupGalleryObjectIds && updatedSubrama.subgroupGalleryObjectIds.length > 0) {
+        // Como el backend reemplaza en el mismo índice, podemos retornar la URL del upload
+        console.log('✅ [OrganigramaService] Datos actualizados de subrama obtenidos');
+        return uploadResponse.url || uploadResponse.objectId;
+      } else {
+        console.warn('⚠️ [OrganigramaService] No se pudieron obtener datos actualizados de subrama, usando URL del upload');
+        return uploadResponse.url || uploadResponse.objectId;
+      }
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para reemplazar imagen en subrama:', patchError);
+      throw patchError;
+    }
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error reemplazando imagen en galería de subrama:', error);
+    throw error;
+  }
+};
+
+// Función para eliminar una imagen de la galería de una subrama
+export const removeSubramaGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  targetImageUuid: string
+): Promise<void> => {
+  console.log('🗑️ [OrganigramaService] Eliminando imagen de galería de subrama...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    sectionId,
+    subgroupId,
+    targetImageUuid
+  });
+  
+  try {
+    // Usar endpoint PATCH para eliminar de la galería de subrama
+    console.log('🔄 [OrganigramaService] Eliminando imagen de galería de subrama usando endpoint PATCH...');
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
+    
+    // Crear el payload de operación según la guía del backend
+    const removePayload = {
+      operations: [
+        {
+          op: "remove",
+          targetUuid: targetImageUuid
+        }
+      ]
+    };
+    
+    console.log('🔄 [OrganigramaService] PATCH payload para eliminar imagen de subrama:', removePayload);
+    
+    try {
+      await apiClient.patch(patchEndpoint, removePayload);
+      console.log('✅ [OrganigramaService] Imagen eliminada correctamente de galería de subrama');
+    } catch (patchError) {
+      console.error('❌ [OrganigramaService] Error en endpoint PATCH para eliminar imagen de subrama:', patchError);
+      throw patchError;
+    }
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error eliminando imagen de galería de subrama:', error);
+    throw error;
+  }
+};
+
+// Función helper para obtener los UUIDs de las imágenes de galería de una subrama
+export const getSubramaGalleryImageUuids = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string
+): Promise<string[]> => {
+  console.log('🔍 [OrganigramaService] Obteniendo UUIDs de galería para subrama:', subgroupId);
+  
+  try {
+    const subrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+    if (subrama && subrama.subgroupGalleryObjectIds) {
+      console.log('✅ [OrganigramaService] UUIDs de galería de subrama obtenidos:', subrama.subgroupGalleryObjectIds);
+      return subrama.subgroupGalleryObjectIds;
+    }
+    console.log('ℹ️ [OrganigramaService] No hay imágenes en la galería de subrama');
+    return [];
+  } catch (error) {
+    console.error('❌ [OrganigramaService] Error obteniendo UUIDs de galería de subrama:', error);
+    return [];
   }
 };
 
