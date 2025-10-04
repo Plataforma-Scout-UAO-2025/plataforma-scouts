@@ -13,6 +13,9 @@ import uao.edu.co.scouts_project.organigrama.repo.SectionRepository;
 import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
+import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
+import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,14 +27,18 @@ public class SectionService {
     private final GroupRepository groupRepository;
     private final TenantRepository tenantRepository;
     private final SupabaseStorageService storageService;
+    private final SubgroupService subgroupService;
+
 
     public SectionService(SectionRepository sectionRepository, GroupRepository groupRepository, 
                           TenantRepository tenantRepository, 
-                          @Qualifier("organigramaStorageService") SupabaseStorageService storageService) {
+                          @Qualifier("organigramaStorageService") SupabaseStorageService storageService,
+                          SubgroupService subgroupService) {
         this.sectionRepository = sectionRepository;
         this.groupRepository = groupRepository;
         this.tenantRepository = tenantRepository;
         this.storageService = storageService;
+        this.subgroupService = subgroupService;
     }
     
     @Transactional(readOnly = true)
@@ -66,6 +73,17 @@ public class SectionService {
         Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
         return toResponseDTO(section);
     }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSectionWithSubgroups(String tenantSlug, String groupSlug, Long sectionId) {
+        SectionResponseDTO section = getSectionById(tenantSlug, groupSlug, sectionId);
+        List<SubgroupResponseDTO> subgroups = subgroupService.getSubgroupsBySection(tenantSlug, groupSlug, sectionId);
+        return Map.of(
+            "section", section,
+            "subgroups", subgroups
+        );
+    }
+
     
     @Transactional
     public SectionResponseDTO createSection(String tenantSlug, String groupSlug, SectionDTO dto) {
