@@ -30,7 +30,7 @@ import { useTenantParams } from './hooks/useTenantParams';
 export default function Organigrama() {
   const [ramas, setRamas] = useState<Rama[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingYears, setIsLoadingYears] = useState(true);
+  const [, setIsLoadingYears] = useState(true);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
@@ -202,7 +202,9 @@ export default function Organigrama() {
   };
 
   const handleDeleteSubrama = (subrama: Subrama) => {
-    const sectionId = subrama.section_id || subrama.ramaId || '';
+    // Preferir section_id (snake_case) devuelto por la API, si no usar ramaId.
+    // Si ninguno existe, dejar undefined (no usar cadena vacía) para detectar falta explícita.
+    const sectionId = subrama.section_id ?? subrama.ramaId ?? undefined;
     setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre, sectionId });
     setConfirmDeleteOpen(true);
   };
@@ -211,11 +213,23 @@ export default function Organigrama() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
+      // Proteger contra llamadas sin tenant/group
+      if (!tenantSlug || !groupSlug) {
+        handleError(new Error('Tenant o group no disponibles para eliminar.'));
+        setConfirmDeleteOpen(false);
+        return;
+      }
       if (deleteTarget.type === 'rama') {
         await organigramaService.deleteRama(tenantSlug, groupSlug, deleteTarget.id);
       } else {
         const sectionId = deleteTarget.sectionId;
         if (!sectionId) {
+          // Solo usar el fallback si el id tiene el formato esperado (contiene '-')
+          if (!deleteTarget.id || !deleteTarget.id.includes('-')) {
+            handleError(new Error('No se puede determinar sectionId para eliminar la subrama.')); 
+            setConfirmDeleteOpen(false);
+            return;
+          }
           const fallbackSectionId = deleteTarget.id.split('-')[0];
           console.warn('⚠️ [Organigrama] sectionId no disponible en deleteTarget, usando fallback', { fallbackSectionId });
           await organigramaService.deleteSubrama(tenantSlug, groupSlug, fallbackSectionId, deleteTarget.id);
