@@ -112,23 +112,51 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
 
 export const createRama = async (tenantSlug: string, groupSlug: string, data: CreateRamaData): Promise<Rama> => {
   console.log('🔄 [OrganigramaService] Creando nueva rama:', data.nombre);
+  console.log('📝 [OrganigramaService] Datos recibidos:', {
+    nombre: data.nombre,
+    descripcion: data.descripcion,
+    tieneIconFile: !!data.iconFile,
+    iconFileName: data.iconFile?.name,
+    tieneGalleryFiles: !!data.galleryFiles && data.galleryFiles.length > 0
+  });
   
   try {
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendCreateRamaToBackend(data);
+    console.log('📤 [OrganigramaService] Enviando al backend:', backendData);
     
     // Crear la rama
     const backendRama = await apiClient.post<BackendRama>(endpoint, backendData);
     
+    // Extraer el ID de la sección creada (puede venir como sectionId o section_id)
+    const sectionId = String(backendRama.sectionId || backendRama.section_id || backendRama.id || '');
+    console.log('✅ [OrganigramaService] Rama creada con ID:', sectionId);
+    
     // Si hay archivos de imagen, subirlos después de crear la rama
-    if (data.iconFile && backendRama.section_id) {
-      await uploadSectionIcon(tenantSlug, groupSlug, backendRama.section_id, data.iconFile);
+    if (data.iconFile && sectionId) {
+      console.log('🔄 [OrganigramaService] Subiendo icono para la rama recién creada...');
+      await uploadSectionIcon(tenantSlug, groupSlug, sectionId, data.iconFile);
+      console.log('✅ [OrganigramaService] Icono subido exitosamente');
+    } else {
+      console.log('ℹ️ [OrganigramaService] No hay icono para subir o sectionId inválido');
     }
     
-    if (data.galleryFiles && data.galleryFiles.length > 0 && backendRama.section_id) {
-      await uploadGalleryImages(tenantSlug, groupSlug, backendRama.section_id, data.galleryFiles);
+    if (data.galleryFiles && data.galleryFiles.length > 0 && sectionId) {
+      console.log('🔄 [OrganigramaService] Subiendo galería para la rama recién creada...');
+      await uploadGalleryImages(tenantSlug, groupSlug, sectionId, data.galleryFiles);
+      console.log('✅ [OrganigramaService] Galería subida exitosamente');
+    }
+    
+    // Obtener los datos actualizados de la rama después de subir las imágenes
+    if (sectionId && (data.iconFile || (data.galleryFiles && data.galleryFiles.length > 0))) {
+      console.log('🔄 [OrganigramaService] Obteniendo datos actualizados de la rama después de subir imágenes...');
+      const updatedRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+      if (updatedRama) {
+        console.log('✅ [OrganigramaService] Rama creada y actualizada con imágenes:', updatedRama.nombre);
+        return updatedRama;
+      }
     }
     
     const rama = mapBackendRamaToFrontend(backendRama);
@@ -324,17 +352,27 @@ export const uploadSectionIcon = async (
   file: File
 ): Promise<string> => {
   console.log('📤 [OrganigramaService] Subiendo icono de sección...');
+  console.log('📝 [OrganigramaService] Parámetros:', {
+    tenantSlug,
+    groupSlug,
+    sectionId,
+    fileName: file.name,
+    fileSize: file.size
+  });
   
   try {
     // Paso 1: Subir archivo al sistema de archivos
     const formData = new FormData();
     formData.append('file', file);
     
+    console.log('🔄 [OrganigramaService] Subiendo archivo al storage...');
     const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    console.log('✅ [OrganigramaService] Archivo subido, objectId:', uploadResponse.objectId);
     
     // Paso 2: Usar endpoint PATCH específico para icono
     console.log('🔄 [OrganigramaService] Asociando icono usando endpoint PATCH específico...');
     const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
+    console.log('📍 [OrganigramaService] Endpoint PATCH:', patchEndpoint);
     
     // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
     const iconPayload = {
@@ -352,7 +390,7 @@ export const uploadSectionIcon = async (
     }
     
     console.log('✅ [OrganigramaService] Icono de sección subido con éxito');
-    console.log('� [OrganigramaService] ObjectId guardado:', uploadResponse.objectId);
+    console.log('📝 [OrganigramaService] ObjectId guardado:', uploadResponse.objectId);
     
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
