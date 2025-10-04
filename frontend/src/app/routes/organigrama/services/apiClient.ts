@@ -1,7 +1,23 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+// Normalizar base URL y asegurar que use la versión v1 del API.
+// Si VITE_API_BASE_URL está definida, la usamos; si no, usamos localhost.
+// Eliminamos cualquier slash final y añadimos '/api/v1' para apuntar a la nueva ruta.
+const RAW_API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+// Mantener la base host-only. Normalizaremos '/api/v1' en los endpoints para evitar duplicados
+const API_BASE_URL = RAW_API_BASE.replace(/\/$/, '');
+
+// Normaliza el endpoint para que apunte a /api/v1 sin duplicados.
+const normalizeEndpoint = (endpoint: string) => {
+  if (!endpoint) return '/api/v1';
+  // Asegurar prefijo '/'
+  let e = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+  if (e.startsWith('/api/v1')) return e; // ya correcto
+  if (e.startsWith('/api')) return e.replace(/^\/api/, '/api/v1');
+  // No empieza por /api -> añadir /api/v1 delante
+  return '/api/v1' + e;
+};
 
 export class ApiError extends Error {
   public status: number;
@@ -63,35 +79,46 @@ axiosInstance.interceptors.request.use(
 export const apiClient = {
   // Métodos HTTP simplificados usando Axios
   async get<T>(endpoint: string): Promise<T> {
-    const response = await axiosInstance.get<T>(endpoint);
+    const normalized = normalizeEndpoint(endpoint);
+    console.log(`[ApiClient] GET full-url: ${API_BASE_URL}${normalized}`);
+    const response = await axiosInstance.get<T>(normalized);
     return response.data;
   },
 
   async post<T>(endpoint: string, data: unknown): Promise<T> {
-    const response = await axiosInstance.post<T>(endpoint, data);
+    const normalized = normalizeEndpoint(endpoint);
+    console.log(`[ApiClient] POST full-url: ${API_BASE_URL}${normalized}`);
+    const response = await axiosInstance.post<T>(normalized, data);
     return response.data;
   },
 
   async put<T>(endpoint: string, data: unknown): Promise<T> {
-    const response = await axiosInstance.put<T>(endpoint, data);
+    const normalized = normalizeEndpoint(endpoint);
+    console.log(`[ApiClient] PUT full-url: ${API_BASE_URL}${normalized}`);
+    const response = await axiosInstance.put<T>(normalized, data);
     return response.data;
   },
 
   async delete<T>(endpoint: string): Promise<T> {
-    const response = await axiosInstance.delete<T>(endpoint);
+    const normalized = normalizeEndpoint(endpoint);
+    console.log(`[ApiClient] DELETE full-url: ${API_BASE_URL}${normalized}`);
+    const response = await axiosInstance.delete<T>(normalized);
     return response.data;
   },
 
   async patch<T>(endpoint: string, data: unknown): Promise<T> {
-    const response = await axiosInstance.patch<T>(endpoint, data);
+    const normalized = normalizeEndpoint(endpoint);
+    console.log(`[ApiClient] PATCH full-url: ${API_BASE_URL}${normalized}`);
+    const response = await axiosInstance.patch<T>(normalized, data);
     return response.data;
   },
 
   async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
     try {
-      console.log(`🔄 [ApiClient] POST (FormData) ${endpoint}`);
+      const normalized = normalizeEndpoint(endpoint);
+      console.log(`🔄 [ApiClient] POST (FormData) full-url: ${API_BASE_URL}${normalized}`);
       
-      const response = await axiosInstance.post<T>(endpoint, formData, {
+      const response = await axiosInstance.post<T>(normalized, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
