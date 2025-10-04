@@ -102,6 +102,13 @@
 			<version>3.8.1</version> 
 		</dependency>
 
+		<!-- JSON Patch (RFC 6902) para operaciones PATCH en arrays -->
+		<dependency>
+			<groupId>com.github.java-json-tools</groupId>
+			<artifactId>json-patch</artifactId>
+			<version>1.13</version>
+		</dependency>
+
 		<!-- H2 Database for testing -->
 		<dependency>
 			<groupId>com.h2database</groupId>
