@@ -23,7 +23,7 @@ import type {
   UpdateRamaFormData,
   UpdateSubramaFormData,
 } from './schemas/rama.schema';
-import * as organigramaService from './services/organigrama.service';
+import * as organigramaService from './services';
 import { useApiError } from './hooks/useApiError';
 import { useTenantParams } from './hooks/useTenantParams';
 

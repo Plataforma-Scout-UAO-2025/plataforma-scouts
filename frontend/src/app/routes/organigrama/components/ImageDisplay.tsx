@@ -11,7 +11,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ rama }) => {
 
   // Obtener URL del icono - priorizar iconoObjectId, luego icono directo
   const getIconUrl = (): string | null => {
-    // Si hay iconoObjectId, usar el StorageService
+    // Si hay iconoObjectId, usar el hook refactorizado
     if (rama.iconoObjectId) {
       return getImageUrl(rama.iconoObjectId);
     }

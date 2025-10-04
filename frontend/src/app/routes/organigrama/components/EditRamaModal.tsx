@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, Loader2 } from 'lucide-react';
-import { uploadSectionIcon } from '../services/organigrama.service';
+import { uploadSectionIcon } from '../services';
 import {
   Dialog,
   DialogContent,

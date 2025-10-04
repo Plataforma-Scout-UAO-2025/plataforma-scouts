@@ -5,8 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import type { Rama } from "../types/rama.type";
-import * as organigramaService from "../services/organigrama.service";
-import { StorageService } from "../services/storage.service";
+import * as organigramaService from "../services";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 
@@ -41,16 +40,7 @@ export default function RamaDetail() {
       return rama.icono;
     }
     
-    // PRIORIDAD 3: Fallback al StorageService (legacy)
-    if (rama.iconoObjectId) {
-      const imageUrl = StorageService.getImageUrl(rama.iconoObjectId);
-      if (imageUrl) {
-        console.log('✅ [RamaDetail] Usando StorageService para icono (legacy)');
-        return imageUrl;
-      }
-    }
-    
-    // PRIORIDAD 4: Cualquier URL en campo icono
+    // PRIORIDAD 3: Cualquier URL en campo icono
     if (rama.icono) {
       console.log('✅ [RamaDetail] Usando campo icono como URL:', rama.icono);
       return rama.icono;
@@ -77,16 +67,7 @@ export default function RamaDetail() {
       return rama.imagenPrincipal;
     }
     
-    // PRIORIDAD 3: Fallback al StorageService (legacy)
-    if (rama.imagenPrincipalObjectId) {
-      const imageUrl = StorageService.getImageUrl(rama.imagenPrincipalObjectId);
-      if (imageUrl) {
-        console.log('✅ [RamaDetail] Usando StorageService para imagen principal (legacy)');
-        return imageUrl;
-      }
-    }
-    
-    // PRIORIDAD 4: Cualquier URL en campo imagenPrincipal
+    // PRIORIDAD 3: Cualquier URL en campo imagenPrincipal
     if (rama.imagenPrincipal) {
       console.log('✅ [RamaDetail] Usando campo imagenPrincipal como URL:', rama.imagenPrincipal);
       return rama.imagenPrincipal;

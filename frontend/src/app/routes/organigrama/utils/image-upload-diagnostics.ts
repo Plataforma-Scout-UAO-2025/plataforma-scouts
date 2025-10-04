@@ -6,7 +6,7 @@
  */
 
 import { apiClient } from '../services/apiClient';
-import { getRamaById } from '../services/organigrama.service';
+import { getRamaById } from '../services';
 
 interface UploadDiagnostic {
   fileInfo: {

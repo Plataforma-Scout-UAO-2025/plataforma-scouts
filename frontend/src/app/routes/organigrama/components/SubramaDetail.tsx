@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Subrama } from "../types/rama.type";
-import * as organigramaService from "../services/organigrama.service";
+import * as organigramaService from "../services";
 import { useTenantParams } from "../hooks/useTenantParams";
-// Importar utilidades de debug
-import '../utils/storage-debug';
 
 export default function SubramaDetail() {
   const { id } = useParams<{ id: string }>();
@@ -103,7 +101,7 @@ export default function SubramaDetail() {
         let subramaEncontrada: Subrama | null = null;
         
         for (const rama of ramas) {
-          const subramaInRama = rama.subramas.find(s => s.id === id);
+          const subramaInRama = rama.subramas.find((s: Subrama) => s.id === id);
           if (subramaInRama) {
             subramaEncontrada = subramaInRama;
             break;
@@ -123,20 +121,7 @@ export default function SubramaDetail() {
             setImagenPrincipal(subramaEncontrada.imagenPrincipal);
             console.log("✅ [SubramaDetail] Usando URL directa del backend para imagen principal:", subramaEncontrada.imagenPrincipal);
           }
-          // PRIORIDAD 2: Fallback al StorageService (legacy)
-          else if (subramaEncontrada.imagenPrincipalObjectId) {
-            try {
-              const { StorageService } = await import('../services/storage.service');
-              const mainImageUrl = StorageService.getImageUrl(subramaEncontrada.imagenPrincipalObjectId);
-              if (mainImageUrl) {
-                setImagenPrincipal(mainImageUrl);
-                console.log("✅ [SubramaDetail] Usando StorageService para imagen principal (legacy)");
-              }
-            } catch (error) {
-              console.error('❌ [SubramaDetail] Error cargando imagen desde StorageService:', error);
-            }
-          }
-          // PRIORIDAD 3: URL de datos (data:image/...)
+          // PRIORIDAD 2: URL de datos (data:image/...)
           else if (subramaEncontrada.imagenPrincipal && subramaEncontrada.imagenPrincipal.startsWith('data:')) {
             setImagenPrincipal(subramaEncontrada.imagenPrincipal);
             console.log("✅ [SubramaDetail] Usando data URL para imagen principal");
