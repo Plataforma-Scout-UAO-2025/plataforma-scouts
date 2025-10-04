@@ -94,6 +94,10 @@
   			<artifactId>java-dotenv</artifactId>
   			<version>5.2.2</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+  			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
 
 		<!-- H2 Database for testing -->
 		<dependency>

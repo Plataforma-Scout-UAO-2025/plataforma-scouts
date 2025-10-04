@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: http://localhost:8080/api/v1/finanzas/cuotas
+  url: http://localhost:8080/api/v1/finanzas/fees
   body: json
   auth: inherit
 }
@@ -17,16 +17,47 @@ headers {
 
 body:json {
   {
-    "nombre": "Cuota 1",
-    "monto": "150000",
-    "periodicidad": "Mensual",
-    "tipoCuota": "Ordinaria",
-    "fechaLimitePago": "2025-09-30", 
-    "medioPago": "PSE",
-    "aplicaA": "Grupo Scout Alfa"
+    "tenant_id":1,
+    "name": "Mensualidad",
+    "description": "Cuota Plastico 2025",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-01-30"
   }
 }
 
 settings {
   encodeUrl: true
+}
+
+docs {
+  
+    "tenant_id": BigINT,
+    
+    "amount": numeric,
+    
+    "name": text,
+    
+    "description": text,
+    
+    "periodicity": text = "SINGLE" | "MONTH" | "QUARTER" | "YEAR",
+    
+    "scope": text ="ALL" | "SCOUT" | "SUBGROUP" | "SECTION",
+    
+    "start_date": LocalDate,
+    
+    "end_date": LocalDate,
+    
+    "member": BigINT -> NULLABLE if scope ≠ "SCOUT",
+    
+    "subgroup_id": BigINT -> NULLABLE if scope ≠ "SUBGROUP",
+        
+    "subgroup_name": text -> NULLABLE if scope ≠ "SUBGROUP",
+    
+    "section_id": BigINT -> NULLABLE if scope ≠ "SECTION",
+    
+    "section_name": text -> NULLABLE if scope ≠ "SECTION",
+  
 }

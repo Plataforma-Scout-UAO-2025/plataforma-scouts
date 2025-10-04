@@ -27,16 +27,15 @@ public class SecurityConfig {
     public SecurityFilterChain developmentFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            // Sin CORS para desarrollo - usar Postman/Swagger
+            .cors(cors -> {}) // Para desarrollo
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/v1/**").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll() // en dev deja TODO abierto
             );
-        
         return http.build();
     }
 
