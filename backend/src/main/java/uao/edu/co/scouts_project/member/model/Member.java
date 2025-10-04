@@ -3,7 +3,7 @@ package uao.edu.co.scouts_project.member.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
@@ -28,7 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import uao.edu.co.scouts_project.member.shared.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 
 @Builder
 @Entity
@@ -43,7 +43,7 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
 
-    private Long userId;
+    private UUID userId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "subgroup_id", referencedColumnName = "subgroup_id", nullable = false)
@@ -76,18 +76,17 @@ public class Member {
     private String instruments;
     private Boolean isActive;
 
-
     @Column(nullable = false)
     private String status;
 
     private LocalDate acceptanceDate;
 
-    @Column(name = "in_charge_of", nullable = false)
+    @Column(name = "in_charge_of", nullable = true)
     private List<Integer> inChargeOf;
 
     @Type(JsonType.class)
-    @Column(name = "emergencyContact")
-    private Map<String, Object> emergencyContact;
+    @Column(name = "emergency_contact", columnDefinition = "jsonb")
+    private List<EmergencyContact> emergencyContact;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -102,7 +101,17 @@ public class Member {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long subgroupId;
+    }
 
+    @Entity
+    public static class EmergencyContact {
+        
+        @NotNull
+        private String name;
+        @NotNull
+        private String relationship;
+        @NotNull
+        private String phone;
     }
 
 }

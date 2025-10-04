@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.member.shared;
+package uao.edu.co.scouts_project.member.shared.enums;
 
 public enum DocumentType {
     CC,
