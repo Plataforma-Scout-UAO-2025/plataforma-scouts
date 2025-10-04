@@ -197,6 +197,80 @@ public class SubgroupService {
         subgroupRepository.save(subgroup);
     }
     
+    @Transactional
+    public void patchGallery(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId,
+                            List<uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest.PatchOperation> operations) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+        
+        UUID[] currentGallery = subgroup.getGalleryObjectIds();
+        if (currentGallery == null) {
+            currentGallery = new UUID[0];
+        }
+        
+        // Convertir array a lista mutable para aplicar las operaciones
+        List<UUID> galleryList = new ArrayList<>(Arrays.asList(currentGallery));
+        
+        // Aplicar cada operación
+        for (var operation : operations) {
+            String op = operation.op();
+            UUID targetUuid = operation.targetUuid();
+            UUID newValue = operation.newValue();
+            
+            switch (op) {
+                case "replace" -> {
+                    // Buscar el índice del UUID objetivo
+                    if (targetUuid == null) {
+                        throw new IllegalArgumentException("targetUuid es requerido para operación 'replace'");
+                    }
+                    if (newValue == null) {
+                        throw new IllegalArgumentException("newValue es requerido para operación 'replace'");
+                    }
+                    
+                    int index = galleryList.indexOf(targetUuid);
+                    if (index == -1) {
+                        throw new IllegalArgumentException("Imagen no encontrada en la galería: " + targetUuid);
+                    }
+                    
+                    // Eliminar imagen antigua de Supabase
+                    if (storageService != null) {
+                        storageService.deleteFileByObjectId(targetUuid);
+                    }
+                    
+                    // Reemplazar en el mismo índice
+                    galleryList.set(index, newValue);
+                }
+                case "add" -> {
+                    // Agregar nueva imagen al final
+                    if (newValue == null) {
+                        throw new IllegalArgumentException("newValue es requerido para operación 'add'");
+                    }
+                    galleryList.add(newValue);
+                }
+                case "remove" -> {
+                    // Buscar y eliminar por UUID
+                    if (targetUuid == null) {
+                        throw new IllegalArgumentException("targetUuid es requerido para operación 'remove'");
+                    }
+                    
+                    boolean removed = galleryList.remove(targetUuid);
+                    if (!removed) {
+                        throw new IllegalArgumentException("Imagen no encontrada en la galería: " + targetUuid);
+                    }
+                    
+                    // Eliminar de Supabase
+                    if (storageService != null) {
+                        storageService.deleteFileByObjectId(targetUuid);
+                    }
+                }
+                default -> throw new IllegalArgumentException("Operación no soportada: " + op + ". Operaciones válidas: replace, add, remove");
+            }
+        }
+        
+        // Guardar el array actualizado
+        subgroup.setGalleryObjectIds(galleryList.toArray(new UUID[0]));
+        subgroupRepository.save(subgroup);
+    }
+    
     private Subgroup findSubgroupOrThrow(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
         validateHierarchy(tenantSlug, groupSlug, sectionId);
         Subgroup subgroup = subgroupRepository.findById(subgroupId)

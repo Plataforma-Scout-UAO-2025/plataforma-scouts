@@ -194,4 +194,28 @@ public class SectionController {
         sectionService.updatePhotoPrincipal(tenantSlug, groupSlug, sectionId, request.objectId());
         return ResponseEntity.noContent().build();
     }
+    
+    @Operation(summary = "Modificar imágenes de la galería", 
+               description = "Permite reemplazar, agregar o eliminar imágenes de la galería por UUID. " +
+                             "El backend encuentra automáticamente el índice de la imagen. " +
+                             "Operaciones: replace (reemplazar), add (agregar nueva), remove (eliminar). " +
+                             "Elimina automáticamente las imágenes reemplazadas/eliminadas de Supabase.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Operaciones aplicadas exitosamente"),
+        @ApiResponse(responseCode = "400", description = "UUID no encontrado o operación inválida"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo o sección no encontrado")
+    })
+    @PatchMapping("/{sectionId}/gallery")
+    public ResponseEntity<Void> patchGallery(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId,
+        @Parameter(description = "Operaciones JSON Patch a aplicar")
+        @Valid @RequestBody uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest request) {
+        sectionService.patchGallery(tenantSlug, groupSlug, sectionId, request.operations());
+        return ResponseEntity.noContent().build();
+    }
 }
