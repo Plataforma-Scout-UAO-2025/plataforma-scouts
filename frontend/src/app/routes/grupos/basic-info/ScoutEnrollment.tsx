@@ -14,76 +14,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type {
+  PersonalData,
+  SchoolData,
+  EmergencyContact,
+  CreateMemberRequest,
+  CreateMemberResponse,
+  CreateSchoolDataRequest,
+  ChangeEvent,
+  EmergencyContactField,
+} from "./types/enrollment.type";
+import { GROUP_TO_SUBGROUP_ID } from "./types/enrollment.type";
 
-// Estructura para contactos de emergencia
-interface EmergencyContact {
-  name: string;
-  relationship: string;
-  phone: string;
-}
-
-interface PersonalData {
-  firstname: string;
-  lastname: string;
-  email: string;
-  confirmarCorreo: string;
-  document_type: string;
-  identification: string;
-  birth_date: string;
-  address: string;
-  phone: string;
-  gender: string;
-  weight: string;
-  height: string;
-  hobbies: string;
-  sports: string;
-  instruments: string;
-  grupo: string;
-  rama: string;
-  emergency_contacts: EmergencyContact[];
-}
-
-interface SchoolData {
-  institution: string;
-  course: string;
-  calendar: string;
-  shift: string;
-}
-
-interface CrearMiembroData {
-  subgroup_id: number;
-  first_name: string;
-  last_name: string;
-  age: number;
-  role: string;
-  identification: number;
-  document_type: string;
-  email: string;
-  gender: string;
-  birth_date: string;
-  address: string;
-  phone: string;
-  weight: string;
-  height: string;
-  hobbies: string;
-  sports: string;
-  instruments: string;
-  status: string;
-  emergencyPhone: Record<string, EmergencyContact>;
-}
-
-interface CrearMiembroResponse {
-  member_id: number;
-  [key: string]: number;
-}
+const backendUrl = "http://localhost:8080/api/members";
 
 function ScoutEnrollment() {
-  // Datos del miembro
+  const navigate = useNavigate();
+
+  // Estados del formulario
   const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     firstname: "",
     lastname: "",
     email: "",
-    confirmarCorreo: "",
+    confirm_email: "",
     document_type: "",
     identification: "",
     birth_date: "",
@@ -95,35 +48,28 @@ function ScoutEnrollment() {
     hobbies: "",
     sports: "",
     instruments: "",
-    grupo: "",
-    rama: "",
+    group: "",
     emergency_contacts: [
       { name: "", relationship: "", phone: "" },
       { name: "", relationship: "", phone: "" },
     ],
   });
 
-  // Datos escolares
-  const [datosEscolares, setDatosEscolares] = useState({
+  const [datosEscolares, setDatosEscolares] = useState<SchoolData>({
     institution: "",
     course: "",
     calendar: "",
     shift: "",
   });
 
-  const [pagina, setPagina] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [showSchoolDialog, setShowSchoolDialog] = useState(false);
-  const [incluirDatosEscolares, setIncluirDatosEscolares] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [pagina, setPagina] = useState<number>(1);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showSchoolDialog, setShowSchoolDialog] = useState<boolean>(false);
+  const [incluirDatosEscolares, setIncluirDatosEscolares] =
+    useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  // Calcula la edad a partir de la fecha de nacimiento
-  interface CalcularEdad {
-    (fecha: string): number;
-  }
-
-  const calcularEdad: CalcularEdad = (fecha) => {
+  const calcularEdad = (fecha: string): number => {
     if (!fecha) return 0;
     const hoy = new Date();
     const nacimiento = new Date(fecha);
@@ -135,22 +81,57 @@ function ScoutEnrollment() {
     return edad;
   };
 
-type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
-  const handlePersonalChange = (e: ChangeEvent) => {
+  const transformarDatos = (data: PersonalData): CreateMemberRequest => {
+    const edad = calcularEdad(data.birth_date);
+
+    const emergencyPhone: Record<string, EmergencyContact> = {};
+    data.emergency_contacts.forEach((contact, index) => {
+      if (contact.name && contact.phone) {
+        emergencyPhone[`contact${index + 1}`] = {
+          name: contact.name,
+          relationship: contact.relationship,
+          phone: contact.phone,
+        };
+      }
+    });
+
+    return {
+      subgroup_id: GROUP_TO_SUBGROUP_ID[data.group] || 1,
+      first_name: data.firstname,
+      last_name: data.lastname,
+      age: edad,
+      identification: Number(data.identification),
+      document_type: data.document_type,
+      email: data.email,
+      gender: data.gender,
+      birth_date: data.birth_date,
+      address: data.address,
+      phone: data.phone,
+      weight: data.weight,
+      height: data.height,
+      hobbies: data.hobbies,
+      sports: data.sports,
+      instruments: data.instruments,
+      status: "PENDING",
+      emergency_phone: emergencyPhone,
+    };
+  };
+
+  const handlePersonalChange = (e: ChangeEvent): void => {
     const { name, value } = e.target;
     setDatosPersonales((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSchoolChange = (e: ChangeEvent) => {
+  const handleSchoolChange = (e: ChangeEvent): void => {
     const { name, value } = e.target;
-    setDatosEscolares((prev: SchoolData) => ({ ...prev, [name]: value }));
+    setDatosEscolares((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleEmergencyContactChange = (
     index: number,
-    field: keyof EmergencyContact,
+    field: EmergencyContactField,
     value: string
-  ) => {
+  ): void => {
     setDatosPersonales((prev) => {
       const newContacts = [...prev.emergency_contacts];
       newContacts[index] = { ...newContacts[index], [field]: value };
@@ -158,7 +139,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
     });
   };
 
-  const addEmergencyContact = () => {
+  const addEmergencyContact = (): void => {
     setDatosPersonales((prev) => ({
       ...prev,
       emergency_contacts: [
@@ -168,7 +149,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
     }));
   };
 
-  const removeEmergencyContact = (index: number) => {
+  const removeEmergencyContact = (index: number): void => {
     if (datosPersonales.emergency_contacts.length > 1) {
       setDatosPersonales((prev) => ({
         ...prev,
@@ -180,19 +161,16 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
   };
 
   const crearMiembro = async (
-    memberData: CrearMiembroData
-  ): Promise<CrearMiembroResponse> => {
+    memberData: CreateMemberRequest
+  ): Promise<CreateMemberResponse> => {
     try {
-      const response = await fetch(
-        "http://localhost:8081/api/members/create_member",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(memberData),
-        }
-      );
+      const response = await fetch(`${backendUrl}/create_member`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(memberData),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -207,10 +185,10 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
   };
 
   const crearDatosEscolares = async (
-    schoolData: SchoolData & { member_id: number }
-  ) => {
+    schoolData: CreateSchoolDataRequest
+  ): Promise<void> => {
     try {
-      const response = await fetch("/api/school/crear_datos_escolares", {
+      const response = await fetch(`${backendUrl}/create_member_with_school`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -225,67 +203,21 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
         );
       }
 
-      return await response.json();
+      await response.json();
     } catch (error) {
       console.error("Error:", error);
       throw error;
     }
   };
 
-  const transformarDatos = (data: PersonalData): CrearMiembroData => {
-    const edad = calcularEdad(data.birth_date);
-
-    // Mapear nombre del grupo a subgroup_id
-    const grupoASubgroupId: Record<string, number> = {
-      "Centinelas 113": 1,
-      "803 Chiminigagua": 2,
-    };
-
-    // Transformar emergency_contacts a emergencyPhone
-    const emergencyPhone: Record<string, EmergencyContact> = {};
-    data.emergency_contacts.forEach((contact, index) => {
-      if (contact.name && contact.phone) {
-        emergencyPhone[`contact${index + 1}`] = {
-          name: contact.name,
-          relationship: contact.relationship,
-          phone: contact.phone,
-        };
-      }
-    });
-
-    return {
-      subgroup_id: grupoASubgroupId[data.grupo] || 1,
-      first_name: data.firstname,
-      last_name: data.lastname,
-      age: edad,
-      role: "Scout",
-      identification: Number(data.identification),
-      document_type: data.document_type,
-      email: data.email,
-      gender: data.gender,
-      birth_date: data.birth_date,
-      address: data.address,
-      phone: data.phone,
-      weight: data.weight,
-      height: data.height,
-      hobbies: data.hobbies,
-      sports: data.sports,
-      instruments: data.instruments,
-      status: "PENDING",
-      emergencyPhone: emergencyPhone,
-    };
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     if (pagina === 1) {
-      // Validar que los correos coincidan
-      if (datosPersonales.email !== datosPersonales.confirmarCorreo) {
+      if (datosPersonales.email !== datosPersonales.confirm_email) {
         alert("Los correos electrónicos no coinciden");
         return;
       }
-      // Después de la primera página, preguntar si quiere incluir datos escolares
       setShowSchoolDialog(true);
       return;
     }
@@ -297,51 +229,39 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
 
     setLoading(true);
     try {
-      // Conversión de datos personales
       const memberData = transformarDatos(datosPersonales);
-
       const miembroCreado = await crearMiembro(memberData);
 
       if (
         incluirDatosEscolares &&
         (datosEscolares.institution || datosEscolares.course)
       ) {
-        const schoolData = {
+        const schoolData: CreateSchoolDataRequest = {
           member_id: miembroCreado.member_id,
-          institution: datosEscolares.institution,
-          course: datosEscolares.course,
-          calendar: datosEscolares.calendar,
-          shift: datosEscolares.shift,
+          ...datosEscolares,
         };
-
         await crearDatosEscolares(schoolData);
       }
 
-      // Mostrar modal de éxito
       setShowModal(true);
-      } catch (error: unknown) {
-    console.error("Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
-    alert("Error al enviar la solicitud: " + errorMessage);
+    } catch (error: unknown) {
+      console.error("Error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
+      alert("Error al enviar la solicitud: " + errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSchoolDialogResponse = (incluir: boolean) => {
+  const handleSchoolDialogResponse = (incluir: boolean): void => {
     setIncluirDatosEscolares(incluir);
     setShowSchoolDialog(false);
-
-    if (incluir) {
-      setPagina(2);
-    } else {
-      setPagina(3);
-    }
+    setPagina(incluir ? 2 : 3);
   };
 
   const camposPagina1 = (
     <>
-      {/* Nombres */}
       <div>
         <Label className="mb-1" htmlFor="firstname">
           Nombres *
@@ -355,7 +275,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           required
         />
       </div>
-      {/* Apellidos */}
+
       <div>
         <Label className="mb-1" htmlFor="lastname">
           Apellidos *
@@ -369,7 +289,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           required
         />
       </div>
-      {/* Correo */}
+
       <div>
         <Label className="mb-1" htmlFor="email">
           Correo electrónico *
@@ -384,22 +304,22 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           required
         />
       </div>
-      {/* Confirmar correo */}
+
       <div>
-        <Label className="mb-1" htmlFor="confirmarCorreo">
+        <Label className="mb-1" htmlFor="confirm_email">
           Confirmar correo *
         </Label>
         <Input
           type="email"
-          id="confirmarCorreo"
-          name="confirmarCorreo"
-          value={datosPersonales.confirmarCorreo}
+          id="confirm_email"
+          name="confirm_email"
+          value={datosPersonales.confirm_email}
           onChange={handlePersonalChange}
           className="border border-primary"
           required
         />
       </div>
-      {/* Documento */}
+
       <div>
         <Label className="mb-1" htmlFor="document_type">
           Tipo de documento *
@@ -415,6 +335,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           <option value="">Selecciona...</option>
           <option value="CC">Cédula de ciudadanía (CC)</option>
           <option value="TI">Tarjeta de identidad (TI)</option>
+          <option value="CE">Cédula de extranjería (CE)</option>
         </select>
       </div>
       <div>
@@ -430,16 +351,14 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           required
         />
       </div>
-
-      {/* Grupo */}
       <div>
-        <Label className="mb-1" htmlFor="grupo">
+        <Label className="mb-1" htmlFor="group">
           Grupo *
         </Label>
         <select
-          id="grupo"
-          name="grupo"
-          value={datosPersonales.grupo}
+          id="group"
+          name="group"
+          value={datosPersonales.group}
           onChange={handlePersonalChange}
           className="border border-primary rounded w-full h-10 px-2 bg-white"
           required
@@ -449,8 +368,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           <option value="803 Chiminigagua">803 Chiminigagua</option>
         </select>
       </div>
-
-      {/* Fecha de nacimiento */}
       <div>
         <Label className="mb-1" htmlFor="birth_date">
           Fecha de nacimiento *
@@ -465,8 +382,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           required
         />
       </div>
-
-      {/* Dirección */}
       <div>
         <Label className="mb-1" htmlFor="address">
           Dirección *
@@ -480,8 +395,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           required
         />
       </div>
-
-      {/* Teléfono */}
       <div>
         <Label className="mb-1" htmlFor="phone">
           Teléfono *
@@ -495,8 +408,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           required
         />
       </div>
-
-      {/* Sexo */}
       <div>
         <Label className="mb-1" htmlFor="gender">
           Sexo *
@@ -514,8 +425,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           <option value="Masculino">Masculino</option>
         </select>
       </div>
-
-      {/* Peso y estatura */}
       <div>
         <Label className="mb-1" htmlFor="weight">
           Peso (kg)
@@ -545,7 +454,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
         />
       </div>
 
-      {/* Contactos de emergencia */}
       <div className="col-span-2">
         <h3 className="text-lg font-semibold mb-4 text-primary">
           Contactos de emergencia *
@@ -630,7 +538,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
 
   const camposPagina2 = (
     <>
-      {/* Datos escolares */}
       <div>
         <Label className="mb-1" htmlFor="institution">
           Institución educativa *
@@ -693,7 +600,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
 
   const camposPagina3 = (
     <>
-      {/* Pasatiempos */}
       <div>
         <Label className="mb-1" htmlFor="hobbies">
           Pasatiempos
@@ -706,7 +612,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           className="border border-primary"
         />
       </div>
-      {/* Deportes */}
       <div>
         <Label className="mb-1" htmlFor="sports">
           Deportes
@@ -719,7 +624,6 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           className="border border-primary"
         />
       </div>
-      {/* Instrumentos */}
       <div>
         <Label className="mb-1" htmlFor="instruments">
           Instrumentos
@@ -766,7 +670,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
         <h2 className="text-xl font-semibold mb-6">{getTituloPagina()}</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
           {getCamposPagina()}
-          {/* Botones */}
+
           <div className="col-span-2 flex justify-between mt-6">
             {pagina === 1 ? (
               <Button
@@ -797,13 +701,12 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
             </Button>
           </div>
         </form>
-        {/* Barra de progreso */}
+
         <div className="mt-8">
           <Progress className="h-2 rounded-full" value={progreso} />
         </div>
       </div>
 
-      {/* Modal para preguntar sobre datos escolares */}
       <AlertDialog open={showSchoolDialog} onOpenChange={setShowSchoolDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -816,16 +719,15 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
             <AlertDialogCancel
               onClick={() => handleSchoolDialogResponse(false)}
             >
-              No, continuar.
+              No, continuar
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => handleSchoolDialogResponse(true)}>
-              Sí, incluir.
+              Sí, incluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Modal de confirmación */}
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
@@ -835,7 +737,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement>;
           }}
         >
           <div className="bg-[#FFFAF3] rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
-            <h3 className="text-xl font-bold mb-4 text-green-700">
+            <h3 className="text-xl font-bold mb-4 text-primary">
               ¡Solicitud enviada!
             </h3>
             <p className="mb-6 text-gray-700">

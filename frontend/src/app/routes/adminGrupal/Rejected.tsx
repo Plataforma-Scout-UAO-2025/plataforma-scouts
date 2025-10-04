@@ -40,7 +40,7 @@ interface Member {
   instruments: string;
   status: string;
 }
-
+const backendUrl = "http://localhost:8080/api/members";
 const Rejected = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -56,7 +56,7 @@ const Rejected = () => {
     PENDING: "Pendiente",
     ACCEPTED: "Aceptado",
     NOT_ACCEPTED: "Rechazado",
-};
+  };
 
   // Cargar miembros rechazados al montar el componente
   useEffect(() => {
@@ -68,7 +68,7 @@ const Rejected = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        "http://localhost:8081/api/members/list_members_by_status?status=NOT_ACCEPTED",
+        `${backendUrl}/list_members_by_status?status=NOT_ACCEPTED`,
         {
           method: "GET",
           headers: {
@@ -93,7 +93,9 @@ const Rejected = () => {
 
   //  Extraer ciudades únicas de las direcciones
   const cities = useMemo(() => {
-    const uniqueCities = [...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean))];
+    const uniqueCities = [
+      ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
+    ];
     return uniqueCities.sort();
   }, [members]);
 
@@ -107,17 +109,19 @@ const Rejected = () => {
         member.identification?.toString().includes(searchFilter.toLowerCase());
 
       const matchesCity =
-        cityFilter === "" || member.address?.toLowerCase().includes(cityFilter.toLowerCase());
+        cityFilter === "" ||
+        member.address?.toLowerCase().includes(cityFilter.toLowerCase());
 
       return matchesSearch && matchesCity;
     });
   }, [members, searchFilter, cityFilter]);
 
-  //  Ver detalles del miembro 
-  const handleView = async (member: Member) => {    try {
+  //  Ver detalles del miembro
+  const handleView = async (member: Member) => {
+    try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8081/api/members/list_member_by_id?id=${member.member_id}`,
+        `${backendUrl}/list_member_by_id?id=${member.member_id}`,
         {
           method: "GET",
           headers: {
@@ -144,7 +148,9 @@ const Rejected = () => {
   return (
     <div className="mx-4">
       <header className="flex flex-col mb-4">
-        <p className="text-5xl font-bold text-primary">Solicitudes Rechazadas</p>
+        <p className="text-5xl font-bold text-primary">
+          Solicitudes Rechazadas
+        </p>
         <p className="text-2xl text-text font-medium my-5">
           Aquí se mostrarán las solicitudes rechazadas.
         </p>
@@ -202,10 +208,18 @@ const Rejected = () => {
           <Table className="text-sm">
             <TableHeader className="text-primary">
               <TableRow className="border-b border-primary hover:bg-transparent">
-                <TableHead className="pl-4 font-bold text-primary">Id</TableHead>
-                <TableHead className="font-bold text-primary">Nombres</TableHead>
-                <TableHead className="font-bold text-primary">Apellidos</TableHead>
-                <TableHead className="font-bold text-primary">Identificación</TableHead>
+                <TableHead className="pl-4 font-bold text-primary">
+                  Id
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Nombres
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Apellidos
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Identificación
+                </TableHead>
                 <TableHead className="font-bold text-primary">Ciudad</TableHead>
                 <TableHead className="font-bold text-primary">Estado</TableHead>
                 <TableHead className="text-right"></TableHead>
@@ -221,11 +235,15 @@ const Rejected = () => {
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
                   <TableRow key={member.member_id} className="border-primary">
-                    <TableCell className="pl-4 font-medium">{member.member_id}</TableCell>
+                    <TableCell className="pl-4 font-medium">
+                      {member.member_id}
+                    </TableCell>
                     <TableCell>{member.first_name}</TableCell>
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
-                    <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
+                    <TableCell>
+                      {member.address?.split(",")[0] || "N/A"}
+                    </TableCell>
                     <TableCell>
                       <span className="py-1 rounded font-medium bg-red-100 text-red-800">
                         {statusLabels[member.status] || member.status}
@@ -268,21 +286,54 @@ const Rejected = () => {
           ) : (
             selectedMember && (
               <div className="space-y-2 text-sm">
-                <p><b>Nombres:</b> {selectedMember.first_name}</p>
-                <p><b>Apellidos:</b> {selectedMember.last_name}</p>
-                <p><b>Correo:</b> {selectedMember.email}</p>
-                <p><b>Tipo Documento:</b> {selectedMember.document_type}</p>
-                <p><b>Número Documento:</b> {selectedMember.identification}</p>
-                <p><b>Fecha Nacimiento:</b> {selectedMember.birth_date}</p>
-                <p><b>Dirección:</b> {selectedMember.address}</p>
-                <p><b>Teléfono:</b> {selectedMember.phone}</p>
-                <p><b>Sexo:</b> {selectedMember.gender}</p>
-                <p><b>Peso:</b> {selectedMember.weight}</p>
-                <p><b>Estatura:</b> {selectedMember.height}</p>
-                <p><b>Pasatiempos:</b> {selectedMember.hobbies}</p>
-                <p><b>Deportes:</b> {selectedMember.sports}</p>
-                <p><b>Instrumentos:</b> {selectedMember.instruments}</p>
-                <p><b>Estado:</b> <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">{selectedMember.status}</span></p>
+                <p>
+                  <b>Nombres:</b> {selectedMember.first_name}
+                </p>
+                <p>
+                  <b>Apellidos:</b> {selectedMember.last_name}
+                </p>
+                <p>
+                  <b>Correo:</b> {selectedMember.email}
+                </p>
+                <p>
+                  <b>Tipo Documento:</b> {selectedMember.document_type}
+                </p>
+                <p>
+                  <b>Número Documento:</b> {selectedMember.identification}
+                </p>
+                <p>
+                  <b>Fecha Nacimiento:</b> {selectedMember.birth_date}
+                </p>
+                <p>
+                  <b>Dirección:</b> {selectedMember.address}
+                </p>
+                <p>
+                  <b>Teléfono:</b> {selectedMember.phone}
+                </p>
+                <p>
+                  <b>Sexo:</b> {selectedMember.gender}
+                </p>
+                <p>
+                  <b>Peso:</b> {selectedMember.weight}
+                </p>
+                <p>
+                  <b>Estatura:</b> {selectedMember.height}
+                </p>
+                <p>
+                  <b>Pasatiempos:</b> {selectedMember.hobbies}
+                </p>
+                <p>
+                  <b>Deportes:</b> {selectedMember.sports}
+                </p>
+                <p>
+                  <b>Instrumentos:</b> {selectedMember.instruments}
+                </p>
+                <p>
+                  <b>Estado:</b>{" "}
+                  <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                    {statusLabels[selectedMember.status]}
+                  </span>
+                </p>
               </div>
             )
           )}

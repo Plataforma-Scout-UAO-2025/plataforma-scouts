@@ -29,7 +29,6 @@ import {
   Plus,
   User,
   Medal,
-  Eye,
 } from "lucide-react";
 import { branchCounts } from "@/lib/mockObjects";
 
@@ -50,11 +49,13 @@ interface Member {
   sports: string;
   instruments: string;
   status: string;
+  acceptance_date: string;
 }
+const backendUrl = "http://localhost:8080/api/members";
 const TeamMembers = () => {
   // Estados para los datos del backend
- const [members, setMembers] = useState<Member[]>([]);
- const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const [openViewModal, setOpenViewModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,11 +64,10 @@ const TeamMembers = () => {
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const statusLabels: Record<string, string> = {
-  PENDING: "Pendiente",
-  ACCEPTED: "Aceptado",
-  NOT_ACCEPTED: "Rechazado",
-};
-
+    PENDING: "Pendiente",
+    ACCEPTED: "Aceptado",
+    NOT_ACCEPTED: "Rechazado",
+  };
 
   // Cargar miembros aceptados al montar el componente
   useEffect(() => {
@@ -78,7 +78,7 @@ const TeamMembers = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        "http://localhost:8081/api/members/list_members_by_status?status=ACCEPTED",
+        `${backendUrl}/list_members_by_status?status=ACCEPTED`,
         {
           method: "GET",
           headers: {
@@ -100,10 +100,41 @@ const TeamMembers = () => {
       setLoading(false);
     }
   };
+  const formatDate = (
+    isoDate: string | null | undefined,
+    includeTime: boolean = true
+  ): string => {
+    if (!isoDate) return "N/A";
 
+    try {
+      const date = new Date(isoDate);
+
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) return "Fecha inválida";
+
+      const options: Intl.DateTimeFormatOptions = {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        ...(includeTime && {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }),
+      };
+
+      return new Intl.DateTimeFormat("es-CO", options).format(date);
+    } catch (error) {
+      console.error("Error al formatear fecha:", error);
+      return "Error de formato";
+    }
+  };
   // Extraer ciudades únicas de las direcciones
   const cities = useMemo(() => {
-    const uniqueCities = [...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean))];
+    const uniqueCities = [
+      ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
+    ];
     return uniqueCities.sort();
   }, [members]);
 
@@ -117,7 +148,8 @@ const TeamMembers = () => {
         member.identification?.toString().includes(searchFilter.toLowerCase());
 
       const matchesCity =
-        cityFilter === "" || member.address?.toLowerCase().includes(cityFilter.toLowerCase());
+        cityFilter === "" ||
+        member.address?.toLowerCase().includes(cityFilter.toLowerCase());
 
       return matchesSearch && matchesCity;
     });
@@ -128,7 +160,7 @@ const TeamMembers = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8081/api/members/list_member_by_id?id=${member.member_id}`,
+        `${backendUrl}/list_member_by_id?id=${member.member_id}`,
         {
           method: "GET",
           headers: {
@@ -268,41 +300,39 @@ const TeamMembers = () => {
                     <TableCell>{member.first_name}</TableCell>
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
-                    <TableCell>{member.birth_date || "N/A"}</TableCell>
-                     <TableCell>
+                    <TableCell>{formatDate(member.acceptance_date)}</TableCell>
+                    <TableCell>
                       <span className="py-1 rounded font-medium bg-green-100 text-green-800">
                         {statusLabels[member.status] || member.status}
                       </span>
                     </TableCell>
-                    <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
+                    <TableCell>
+                      {member.address?.split(",")[0] || "N/A"}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="iconbutton" 
-                        size="icon"
-                        onClick={() => handleView(member)}
-                      >
-                        <Eye />
-                      </Button>
-                      <Button variant="iconbutton" size="icon">
-                        <User />
-                      </Button>
-                      <Button variant="iconbutton" size="icon">
-                        <Medal />
-                      </Button>
-                      <Button
-                        variant="iconbutton"
-                        size="icon"
-                        className="text-secondary hover:text-blue-800"
-                      >
-                        <Pencil />
-                      </Button>
-                      <Button
-                        variant="iconbutton"
-                        size="icon"
-                        className="text-destructive hover:text-destructive-hover"
-                      >
-                        <Trash />
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          title="Ver detalles"
+                          onClick={() => handleView(member)}
+                        >
+                          <User />
+                        </Button>
+                        <Button variant="secondary" size="sm" title="Editar">
+                          <Pencil />
+                        </Button>
+                        <Button variant="outline" size="sm" title="Insignias">
+                          <Medal />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          title="Eliminar"
+                        >
+                          <Trash />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -321,8 +351,7 @@ const TeamMembers = () => {
         <section className="flex justify-between items-center mt-4">
           <div className="flex justify-start mt-3 gap-2">
             <p className="text-sm text-text self-center ml-4">
-              Mostrando {filteredMembers.length} de {members.length}{" "}
-              miembros
+              Mostrando {filteredMembers.length} de {members.length} miembros
             </p>
           </div>
 
@@ -344,21 +373,54 @@ const TeamMembers = () => {
           ) : (
             selectedMember && (
               <div className="space-y-2 text-sm">
-                <p><b>Nombres:</b> {selectedMember.first_name}</p>
-                <p><b>Apellidos:</b> {selectedMember.last_name}</p>
-                <p><b>Correo:</b> {selectedMember.email}</p>
-                <p><b>Tipo Documento:</b> {selectedMember.document_type}</p>
-                <p><b>Número Documento:</b> {selectedMember.identification}</p>
-                <p><b>Fecha Nacimiento:</b> {selectedMember.birth_date}</p>
-                <p><b>Dirección:</b> {selectedMember.address}</p>
-                <p><b>Teléfono:</b> {selectedMember.phone}</p>
-                <p><b>Sexo:</b> {selectedMember.gender}</p>
-                <p><b>Peso:</b> {selectedMember.weight}</p>
-                <p><b>Estatura:</b> {selectedMember.height}</p>
-                <p><b>Pasatiempos:</b> {selectedMember.hobbies}</p>
-                <p><b>Deportes:</b> {selectedMember.sports}</p>
-                <p><b>Instrumentos:</b> {selectedMember.instruments}</p>
-                <p><b>Estado:</b> <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">{selectedMember.status}</span></p>
+                <p>
+                  <b>Nombres:</b> {selectedMember.first_name}
+                </p>
+                <p>
+                  <b>Apellidos:</b> {selectedMember.last_name}
+                </p>
+                <p>
+                  <b>Correo:</b> {selectedMember.email}
+                </p>
+                <p>
+                  <b>Tipo Documento:</b> {selectedMember.document_type}
+                </p>
+                <p>
+                  <b>Número Documento:</b> {selectedMember.identification}
+                </p>
+                <p>
+                  <b>Fecha Nacimiento:</b> {selectedMember.birth_date}
+                </p>
+                <p>
+                  <b>Dirección:</b> {selectedMember.address}
+                </p>
+                <p>
+                  <b>Teléfono:</b> {selectedMember.phone}
+                </p>
+                <p>
+                  <b>Sexo:</b> {selectedMember.gender}
+                </p>
+                <p>
+                  <b>Peso:</b> {selectedMember.weight}
+                </p>
+                <p>
+                  <b>Estatura:</b> {selectedMember.height}
+                </p>
+                <p>
+                  <b>Pasatiempos:</b> {selectedMember.hobbies}
+                </p>
+                <p>
+                  <b>Deportes:</b> {selectedMember.sports}
+                </p>
+                <p>
+                  <b>Instrumentos:</b> {selectedMember.instruments}
+                </p>
+                <p>
+                  <b>Estado:</b>{" "}
+                  <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                    {statusLabels[selectedMember.status]}
+                  </span>
+                </p>
               </div>
             )
           )}

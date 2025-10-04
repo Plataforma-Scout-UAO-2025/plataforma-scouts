@@ -41,7 +41,7 @@ interface Member {
   instruments: string;
   status: string;
 }
-
+const backendUrl = "http://localhost:8080/api/members";
 const Requests = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -56,13 +56,11 @@ const Requests = () => {
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
-
   const statusLabels: Record<string, string> = {
     PENDING: "Pendiente",
     ACCEPTED: "Aceptado",
     NOT_ACCEPTED: "Rechazado",
-};
-
+  };
 
   useEffect(() => {
     cargarMiembros();
@@ -72,7 +70,7 @@ const Requests = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        "http://localhost:8081/api/members/list_members_by_status?status=PENDING",
+        `${backendUrl}/list_members_by_status?status=PENDING`,
         {
           method: "GET",
           headers: {
@@ -96,7 +94,9 @@ const Requests = () => {
   };
 
   const cities = useMemo(() => {
-    const uniqueCities = [...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean))];
+    const uniqueCities = [
+      ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
+    ];
     return uniqueCities.sort();
   }, [members]);
 
@@ -109,7 +109,8 @@ const Requests = () => {
         member.identification?.toString().includes(searchFilter.toLowerCase());
 
       const matchesCity =
-        cityFilter === "" || member.address?.toLowerCase().includes(cityFilter.toLowerCase());
+        cityFilter === "" ||
+        member.address?.toLowerCase().includes(cityFilter.toLowerCase());
 
       return matchesSearch && matchesCity;
     });
@@ -120,7 +121,7 @@ const Requests = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8081/api/members/list_member_by_id?id=${member.member_id}`,
+        `${backendUrl}/list_member_by_id?id=${member.member_id}`,
         {
           method: "GET",
           headers: {
@@ -151,7 +152,7 @@ const Requests = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8081/api/members/update_member_status/${selectedMember.member_id}?status=ACCEPTED`,
+        `${backendUrl}/update_member_status/${selectedMember.member_id}?status=ACCEPTED`,
         {
           method: "PUT",
           headers: {
@@ -169,13 +170,16 @@ const Requests = () => {
       setOpenViewModal(false);
       setSelectedMember(null);
 
-      alert(`Solicitud de ${selectedMember.first_name} ${selectedMember.last_name} aceptada exitosamente`);
-      
+      alert(
+        `Solicitud de ${selectedMember.first_name} ${selectedMember.last_name} aceptada exitosamente`
+      );
+
       // Recargar lista
       await cargarMiembros();
     } catch (err: unknown) {
       console.error("Error al aceptar solicitud:", err);
-      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Error desconocido";
       alert("Error al aceptar la solicitud: " + errorMessage);
     } finally {
       setLoading(false);
@@ -202,7 +206,7 @@ const Requests = () => {
       setLoading(true);
 
       const response = await fetch(
-        `http://localhost:8081/api/members/update_member_status/${selectedMember.member_id}?status=NOT_ACCEPTED`,
+        `${backendUrl}/update_member_status/${selectedMember.member_id}?status=NOT_ACCEPTED`,
         {
           method: "PUT",
           headers: {
@@ -226,7 +230,8 @@ const Requests = () => {
       await cargarMiembros();
     } catch (err: unknown) {
       console.error("Error al rechazar solicitud:", err);
-      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+      const errorMessage =
+        err instanceof Error ? err.message : "Error desconocido";
       alert("Error al rechazar la solicitud: " + errorMessage);
     } finally {
       setLoading(false);
@@ -303,13 +308,23 @@ const Requests = () => {
           <Table className="text-sm">
             <TableHeader className="text-primary">
               <TableRow className="border-b border-primary hover:bg-transparent">
-                <TableHead className="pl-4 font-bold text-primary">Id</TableHead>
-                <TableHead className="font-bold text-primary">Nombres</TableHead>
-                <TableHead className="font-bold text-primary">Apellidos</TableHead>
-                <TableHead className="font-bold text-primary">Identificación</TableHead>
+                <TableHead className="pl-4 font-bold text-primary">
+                  Id
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Nombres
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Apellidos
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Identificación
+                </TableHead>
                 <TableHead className="font-bold text-primary">Ciudad</TableHead>
                 <TableHead className="font-bold text-primary">Estado</TableHead>
-                <TableHead className="text-center font-bold text-primary">Acciones</TableHead>
+                <TableHead className="text-center font-bold text-primary">
+                  Acciones
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -322,12 +337,16 @@ const Requests = () => {
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
                   <TableRow key={member.member_id} className="border-primary">
-                    <TableCell className="pl-4 font-medium">{member.member_id}</TableCell>
+                    <TableCell className="pl-4 font-medium">
+                      {member.member_id}
+                    </TableCell>
                     <TableCell>{member.first_name}</TableCell>
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
-                    <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
-                   <TableCell>
+                    <TableCell>
+                      {member.address?.split(",")[0] || "N/A"}
+                    </TableCell>
+                    <TableCell>
                       <span className="py-1 rounded font-medium bg-gray-300 text-gray-800">
                         {statusLabels[member.status] || member.status}
                       </span>
@@ -352,7 +371,8 @@ const Requests = () => {
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
                     <p className="text-text text-lg">
-                      No se encontraron solicitudes que coincidan con los filtros.
+                      No se encontraron solicitudes que coincidan con los
+                      filtros.
                     </p>
                   </TableCell>
                 </TableRow>
@@ -373,35 +393,67 @@ const Requests = () => {
           ) : (
             selectedMember && (
               <div className="space-y-2 text-sm">
-                <p><b>Nombres:</b> {selectedMember.first_name}</p>
-                <p><b>Apellidos:</b> {selectedMember.last_name}</p>
-                <p><b>Correo:</b> {selectedMember.email}</p>
-                <p><b>Tipo Documento:</b> {selectedMember.document_type}</p>
-                <p><b>Número Documento:</b> {selectedMember.identification}</p>
-                <p><b>Fecha Nacimiento:</b> {selectedMember.birth_date}</p>
-                <p><b>Dirección:</b> {selectedMember.address}</p>
-                <p><b>Teléfono:</b> {selectedMember.phone}</p>
-                <p><b>Sexo:</b> {selectedMember.gender}</p>
-                <p><b>Peso:</b> {selectedMember.weight} kg</p>
-                <p><b>Estatura:</b> {selectedMember.height} cm</p>
-                <p><b>Pasatiempos:</b> {selectedMember.hobbies || "N/A"}</p>
-                <p><b>Deportes:</b> {selectedMember.sports || "N/A"}</p>
-                <p><b>Instrumentos:</b> {selectedMember.instruments || "N/A"}</p>
-                <p><b>Estado:</b> {selectedMember.status}</p>
+                <p>
+                  <b>Nombres:</b> {selectedMember.first_name}
+                </p>
+                <p>
+                  <b>Apellidos:</b> {selectedMember.last_name}
+                </p>
+                <p>
+                  <b>Correo:</b> {selectedMember.email}
+                </p>
+                <p>
+                  <b>Tipo Documento:</b> {selectedMember.document_type}
+                </p>
+                <p>
+                  <b>Número Documento:</b> {selectedMember.identification}
+                </p>
+                <p>
+                  <b>Fecha Nacimiento:</b> {selectedMember.birth_date}
+                </p>
+                <p>
+                  <b>Dirección:</b> {selectedMember.address}
+                </p>
+                <p>
+                  <b>Teléfono:</b> {selectedMember.phone}
+                </p>
+                <p>
+                  <b>Sexo:</b> {selectedMember.gender}
+                </p>
+                <p>
+                  <b>Peso:</b> {selectedMember.weight} kg
+                </p>
+                <p>
+                  <b>Estatura:</b> {selectedMember.height} cm
+                </p>
+                <p>
+                  <b>Pasatiempos:</b> {selectedMember.hobbies || "N/A"}
+                </p>
+                <p>
+                  <b>Deportes:</b> {selectedMember.sports || "N/A"}
+                </p>
+                <p>
+                  <b>Instrumentos:</b> {selectedMember.instruments || "N/A"}
+                </p>
+                <p>
+                  <b>Estado:</b>{" "}
+                  <span className="px-2 py-1 rounded text-xs font-medium bg-gray-300 text-gray-800">
+                    {statusLabels[selectedMember.status]}
+                  </span>
+                </p>
               </div>
             )
           )}
           <DialogFooter className="flex gap-2 sm:gap-2">
-        
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleRejectFromModal}
               disabled={loading}
             >
               Rechazar
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               onClick={handleAcceptFromModal}
               disabled={loading}
             >
@@ -419,10 +471,16 @@ const Requests = () => {
           </DialogHeader>
           {selectedMember && (
             <p className="text-sm mb-2">
-              ¿Estás seguro de rechazar la solicitud de <b>{selectedMember.first_name} {selectedMember.last_name}</b>?
+              ¿Estás seguro de rechazar la solicitud de{" "}
+              <b>
+                {selectedMember.first_name} {selectedMember.last_name}
+              </b>
+              ?
             </p>
           )}
-          <p className="text-sm text-gray-600">Escribe las razones del rechazo:</p>
+          <p className="text-sm text-gray-600">
+            Escribe las razones del rechazo:
+          </p>
           <Textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
@@ -430,8 +488,8 @@ const Requests = () => {
             className="min-h-[100px]"
           />
           <DialogFooter>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => {
                 setOpenRejectModal(false);
                 setRejectReason("");
@@ -440,9 +498,9 @@ const Requests = () => {
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               variant="primary"
-              onClick={handleSendReject} 
+              onClick={handleSendReject}
               disabled={loading}
             >
               {loading ? "Enviando..." : "Enviar"}
