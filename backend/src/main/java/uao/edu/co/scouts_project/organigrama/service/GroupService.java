@@ -159,7 +159,7 @@ public class GroupService {
         groupRepository.save(group);
     }
     
-    private Group findGroupOrThrow(Long tenantId, String groupSlug) {
+    private Group findGroupOrThrow(String tenantId, String groupSlug) {
         return groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
             .orElseThrow(() -> new IllegalArgumentException("Group not found with slug: " + groupSlug));
     }

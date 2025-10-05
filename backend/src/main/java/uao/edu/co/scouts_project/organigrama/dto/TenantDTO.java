@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 
 public record TenantDTO(
-    Long tenantId,
+    String tenantId,
     @NotBlank String slug,
     String status,
     Instant createdAt,

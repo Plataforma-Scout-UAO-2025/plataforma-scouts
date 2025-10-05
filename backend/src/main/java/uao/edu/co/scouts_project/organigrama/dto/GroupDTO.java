@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public record GroupDTO(
     Long groupId,
-    Long tenantId,
+    String tenantId,
     @NotBlank String slug,
     @NotBlank String name,
     String district,

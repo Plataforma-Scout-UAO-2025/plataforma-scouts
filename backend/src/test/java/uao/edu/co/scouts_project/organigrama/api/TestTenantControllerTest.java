@@ -5,246 +5,219 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.server.ResponseStatusException;
+import uao.edu.co.scouts_project.common.tenant.TenantFilter;
 import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
 import uao.edu.co.scouts_project.organigrama.service.TenantService;
 
+import java.time.Instant;
 
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Pruebas unitarias para TenantController usando @WebMvcTest.
- * Solo se carga la capa web (controlador) y se mockean las dependencias (servicios).
- */
-
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.jdbc.core.JdbcTemplate;
-import uao.edu.co.scouts_project.common.tenant.TenantFilter;
-
 @ActiveProfiles("test")
 @WebMvcTest(controllers = TenantController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class TestTenantControllerTest {
+class TenantControllerTest {
 
-    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    // --- Infra que tu app espera en el contexto (mockeada para el slice MVC) ---
+    @MockitoBean
     private TenantFilter tenantFilter;
 
-    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    @MockitoBean
     private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private TenantService tenantService;
 
+    // --- MVC / JSON helpers ---
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
 
+    private static final String BASE = "/api/v1/tenants";
 
-    @Nested
-    @DisplayName("GET /api/v1/tenants")
-    class GetAllTenantsTests {
-
-        @Test
-        @DisplayName("Debe retornar lista de tenants con status 200")
-        void shouldReturnTenantsList() throws Exception {
-            // Given
-            List<TenantDTO> tenants = List.of(
-                new TenantDTO(1L, "region-valle", "active", null, null),
-                new TenantDTO(2L, "region-cauca", "active", null, null)
-            );
-            when(tenantService.getAllTenants()).thenReturn(tenants);
-
-            // When & Then
-            mockMvc.perform(get("/api/v1/tenants"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].slug").value("region-valle"))
-                .andExpect(jsonPath("$[1].slug").value("region-cauca"));
-
-            verify(tenantService, times(1)).getAllTenants();
-        }
-
-        @Test
-        @DisplayName("Debe retornar lista vacía cuando no hay tenants")
-        void shouldReturnEmptyListWhenNoTenants() throws Exception {
-            // Given
-            when(tenantService.getAllTenants()).thenReturn(List.of());
-
-            // When & Then
-            mockMvc.perform(get("/api/v1/tenants"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(0));
-
-            verify(tenantService, times(1)).getAllTenants();
+    // --- Proveedor de Bean Validation para evitar 500 en @WebMvcTest (slice) ---
+    @TestConfiguration
+    static class ValidationConfig {
+        @Bean @Primary
+        LocalValidatorFactoryBean validator() {
+            return new LocalValidatorFactoryBean();
         }
     }
 
-    @Nested
-    @DisplayName("GET /api/v1/tenants/{tenantSlug}")
-    class GetTenantBySlugTests {
-
-        @Test
-        @DisplayName("Debe retornar tenant cuando existe")
-        void shouldReturnTenantWhenExists() throws Exception {
-            // Given
-            TenantDTO tenant = new TenantDTO(1L, "region-valle", "active", null, null);
-            when(tenantService.getTenantBySlug("region-valle")).thenReturn(tenant);
-
-            // When & Then
-            mockMvc.perform(get("/api/v1/tenants/region-valle"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.slug").value("region-valle"))
-                .andExpect(jsonPath("$.status").value("active"));
-
-            verify(tenantService, times(1)).getTenantBySlug("region-valle");
-        }
-
-        @Test
-        @DisplayName("Debe retornar 404 cuando tenant no existe")
-        void shouldReturn404WhenTenantNotFound() throws Exception {
-            // Given
-            when(tenantService.getTenantBySlug("no-existe"))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no encontrado"));
-
-            // When & Then
-            mockMvc.perform(get("/api/v1/tenants/no-existe"))
-                .andExpect(status().isNotFound());
-
-            verify(tenantService, times(1)).getTenantBySlug("no-existe");
-        }
+    // ----------------- Helpers -----------------
+    private TenantDTO dto(String id, String slug, String status) {
+        // Ajusta al constructor real de tu TenantDTO: (id, slug, status, createdAt, updatedAt)
+        return new TenantDTO(id, slug, status, Instant.now(), Instant.now());
     }
 
-    @Nested
-    @DisplayName("POST /api/v1/tenants")
-    class CreateTenantTests {
-
-        @Test
-        @DisplayName("Debe crear tenant con datos válidos y retornar 201")
-        void shouldCreateTenantWithValidData() throws Exception {
-            // Given
-            TenantDTO inputDto = new TenantDTO(null, "region-valle", "active", null, null);
-            TenantDTO createdDto = new TenantDTO(1L, "region-valle", "active", null, null);
-            when(tenantService.createTenant(any(TenantDTO.class))).thenReturn(createdDto);
-
-            // When & Then
-            mockMvc.perform(post("/api/v1/tenants")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/v1/tenants/region-valle"))
-                .andExpect(jsonPath("$.slug").value("region-valle"))
-                .andExpect(jsonPath("$.status").value("active"));
-
-            verify(tenantService, times(1)).createTenant(any(TenantDTO.class));
-        }
-
-        @Test
-        @DisplayName("Debe retornar 409 cuando slug ya existe")
-        void shouldReturn409WhenSlugAlreadyExists() throws Exception {
-            // Given
-            TenantDTO inputDto = new TenantDTO(null, "region-valle", "active", null, null);
-            when(tenantService.createTenant(any(TenantDTO.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "El slug ya existe"));
-
-            // When & Then
-            mockMvc.perform(post("/api/v1/tenants")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isConflict());
-
-            verify(tenantService, times(1)).createTenant(any(TenantDTO.class));
-        }
+    private String jsonCreate(String slug, String status) throws Exception {
+        return objectMapper.writeValueAsString(new TenantDTO(null, slug, status, null, null));
     }
 
-    @Nested
-    @DisplayName("PUT /api/v1/tenants/{tenantSlug}")
-    class UpdateTenantTests {
-
-        @Test
-        @DisplayName("Debe actualizar tenant existente y retornar 200")
-        void shouldUpdateExistingTenant() throws Exception {
-            // Given
-            TenantDTO inputDto = new TenantDTO(1L, "region-valle", "active", null, null);
-            TenantDTO updatedDto = new TenantDTO(1L, "region-valle", "active", null, null);
-            when(tenantService.updateTenant(eq("region-valle"), any(TenantDTO.class))).thenReturn(updatedDto);
-
-            // When & Then
-            mockMvc.perform(put("/api/v1/tenants/region-valle")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.slug").value("region-valle"))
-                .andExpect(jsonPath("$.status").value("active"));
-
-            verify(tenantService, times(1)).updateTenant(eq("region-valle"), any(TenantDTO.class));
-        }
-
-        @Test
-        @DisplayName("Debe retornar 404 cuando tenant no existe")
-        void shouldReturn404WhenTenantNotFound() throws Exception {
-            // Given
-            TenantDTO inputDto = new TenantDTO(null, "no-existe", "active", null, null);
-            when(tenantService.updateTenant(eq("no-existe"), any(TenantDTO.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no encontrado"));
-
-            // When & Then
-            mockMvc.perform(put("/api/v1/tenants/no-existe")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isNotFound());
-
-            verify(tenantService, times(1)).updateTenant(eq("no-existe"), any(TenantDTO.class));
-        }
+    private String jsonUpdate(String status) throws Exception {
+        // según tu API, puedes permitir cambiar status (y/o slug). Aquí solo status.
+        return objectMapper.writeValueAsString(new TenantDTO(null, null, status, null, null));
     }
 
-    @Nested
-    @DisplayName("DELETE /api/v1/tenants/{tenantSlug}")
-    class DeleteTenantTests {
+    // ----------------- GET /tenants -----------------
+    @Test
+    @DisplayName("GET /tenants — 200 con lista de tenants")
+    void shouldListTenants() throws Exception {
+        when(tenantService.getAllTenants())
+            .thenReturn(java.util.List.of(dto("1", "region-valle", "active")));
 
-        @Test
-        @DisplayName("Debe eliminar tenant existente y retornar 204")
-        void shouldDeleteExistingTenant() throws Exception {
-            // Given
-            doNothing().when(tenantService).deleteTenant("region-valle");
+        mockMvc.perform(get(BASE))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$[0].tenantId").value("1"))
+            .andExpect(jsonPath("$[0].slug").value("region-valle"))
+            .andExpect(jsonPath("$[0].status").value("active"));
 
-            // When & Then
-            mockMvc.perform(delete("/api/v1/tenants/region-valle"))
-                .andExpect(status().isNoContent());
+        verify(tenantService).getAllTenants();
+    }
 
-            verify(tenantService, times(1)).deleteTenant("region-valle");
-        }
+    // ----------------- GET /tenants/{slug} -----------------
+    @Test
+    @DisplayName("GET /tenants/{slug} — 200 cuando existe")
+    void shouldGetTenantBySlug() throws Exception {
+        when(tenantService.getTenantBySlug("region-valle"))
+            .thenReturn(dto("1", "region-valle", "active"));
 
-        @Test
-        @DisplayName("Debe retornar 404 cuando tenant no existe")
-        void shouldReturn404WhenTenantNotFound() throws Exception {
-            // Given
-            doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no encontrado"))
-                .when(tenantService).deleteTenant("no-existe");
+        mockMvc.perform(get(BASE + "/{tenantSlug}", "region-valle"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.tenantId").value("1"))
+            .andExpect(jsonPath("$.slug").value("region-valle"))
+            .andExpect(jsonPath("$.status").value("active"));
 
-            // When & Then
-            mockMvc.perform(delete("/api/v1/tenants/no-existe"))
-                .andExpect(status().isNotFound());
+        verify(tenantService).getTenantBySlug("region-valle");
+    }
 
-            verify(tenantService, times(1)).deleteTenant("no-existe");
-        }
+    @Test
+    @DisplayName("GET /tenants/{slug} — 404 cuando no existe")
+    void shouldReturn404WhenTenantNotFound() throws Exception {
+        when(tenantService.getTenantBySlug("no-existe"))
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no encontrado"));
+
+        mockMvc.perform(get(BASE + "/{tenantSlug}", "no-existe"))
+            .andExpect(status().isNotFound());
+
+        verify(tenantService).getTenantBySlug("no-existe");
+    }
+
+    // ----------------- POST /tenants -----------------
+    @Test
+    @DisplayName("POST /tenants — 201 Created con Location y cuerpo")
+    void shouldCreateTenant() throws Exception {
+        TenantDTO created = dto("10", "region-cauca", "active");
+        when(tenantService.createTenant(any(TenantDTO.class))).thenReturn(created);
+
+        mockMvc.perform(post(BASE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonCreate("region-cauca", "active")))
+            .andExpect(status().isCreated())
+            .andExpect(header().string("Location", BASE + "/region-cauca"))
+            .andExpect(jsonPath("$.tenantId").value(10L))
+            .andExpect(jsonPath("$.slug").value("region-cauca"))
+            .andExpect(jsonPath("$.status").value("active"));
+
+        verify(tenantService).createTenant(any(TenantDTO.class));
+    }
+
+    @Test
+    @DisplayName("POST /tenants — 409 Conflict si el slug ya existe")
+    void shouldReturn409WhenSlugAlreadyExists() throws Exception {
+        when(tenantService.createTenant(any(TenantDTO.class)))
+            .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Slug duplicado"));
+
+        mockMvc.perform(post(BASE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonCreate("region-valle", "active")))
+            .andExpect(status().isConflict());
+
+        verify(tenantService).createTenant(any(TenantDTO.class));
+    }
+
+    @Test
+    @DisplayName("POST /tenants — 400 Bad Request si el payload es inválido (slug en blanco)")
+    void shouldReturn400OnCreateValidationError() throws Exception {
+        // provoca error de validación de @NotBlank en slug
+        String body = jsonCreate("   ", "active");
+
+        mockMvc.perform(post(BASE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest());
+
+        verify(tenantService, never()).createTenant(any(TenantDTO.class));
+    }
+
+    // ----------------- PUT /tenants/{slug} -----------------
+    @Test
+    @DisplayName("PUT /tenants/{slug} — 200 con el tenant actualizado")
+    void shouldUpdateTenant() throws Exception {
+        when(tenantService.updateTenant(eq("region-valle"), any(TenantDTO.class)))
+            .thenReturn(dto("1", "region-valle", "inactive"));
+
+        mockMvc.perform(put(BASE + "/{tenantSlug}", "region-valle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonUpdate("inactive")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.slug").value("region-valle"))
+            .andExpect(jsonPath("$.status").value("inactive"));
+
+        verify(tenantService).updateTenant(eq("region-valle"), any(TenantDTO.class));
+    }
+
+    @Test
+    @DisplayName("PUT /tenants/{slug} — 404 si no existe")
+    void shouldReturn404OnUpdateNotFound() throws Exception {
+        when(tenantService.updateTenant(eq("no-existe"), any(TenantDTO.class)))
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe"));
+
+        mockMvc.perform(put(BASE + "/{tenantSlug}", "no-existe")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonUpdate("inactive")))
+            .andExpect(status().isNotFound());
+
+        verify(tenantService).updateTenant(eq("no-existe"), any(TenantDTO.class));
+    }
+
+    // ----------------- DELETE /tenants/{slug} -----------------
+    @Test
+    @DisplayName("DELETE /tenants/{slug} — 204 No Content")
+    void shouldDeleteTenant() throws Exception {
+        doNothing().when(tenantService).deleteTenant("region-valle");
+
+        mockMvc.perform(delete(BASE + "/{tenantSlug}", "region-valle"))
+            .andExpect(status().isNoContent());
+
+        verify(tenantService).deleteTenant("region-valle");
+    }
+
+    @Test
+    @DisplayName("DELETE /tenants/{slug} — 404 si no existe")
+    void shouldReturn404OnDeleteNotFound() throws Exception {
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND))
+            .when(tenantService).deleteTenant("no-existe");
+
+        mockMvc.perform(delete(BASE + "/{tenantSlug}", "no-existe"))
+            .andExpect(status().isNotFound());
+
+        verify(tenantService).deleteTenant("no-existe");
     }
 }

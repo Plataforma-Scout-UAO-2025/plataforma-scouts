@@ -23,7 +23,7 @@ public class Group {
     private Long groupId;
     
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
+    private String tenantId;
     
     @NotBlank
     @Column(name = "slug", nullable = false)
@@ -96,7 +96,7 @@ public class Group {
         // Dejar que @PrePersist inicialice los campos
     }
     
-    public Group(Long tenantId, String slug, String name) {
+    public Group(String tenantId, String slug, String name) {
         this.tenantId = tenantId;
         this.slug = slug;
         this.name = name;
@@ -120,8 +120,8 @@ public class Group {
     public Long getGroupId() { return groupId; }
     public void setGroupId(Long groupId) { this.groupId = groupId; }
     
-    public Long getTenantId() { return tenantId; }
-    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }

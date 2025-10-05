@@ -9,9 +9,8 @@ import java.time.Instant;
 public class Tenant {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tenant_id")
-    private Long tenantId;
+    private String tenantId;
     
     @NotBlank
     @Column(name = "slug", nullable = false, unique = true)
@@ -34,8 +33,8 @@ public class Tenant {
     }
     
     // Getters and Setters
-    public Long getTenantId() { return tenantId; }
-    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }

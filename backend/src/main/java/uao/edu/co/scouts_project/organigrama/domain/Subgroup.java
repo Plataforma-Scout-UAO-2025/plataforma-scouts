@@ -17,7 +17,7 @@ public class Subgroup {
     private Long subgroupId;
     
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
+    private String tenantId;
     
     @Column(name = "group_id", nullable = false)
     private Long groupId;
@@ -51,7 +51,7 @@ public class Subgroup {
     // Constructors
     public Subgroup() {}
     
-    public Subgroup(Long tenantId, Long groupId, Long sectionId, String name) {
+    public Subgroup(String tenantId, Long groupId, Long sectionId, String name) {
         this.tenantId = tenantId;
         this.groupId = groupId;
         this.sectionId = sectionId;
@@ -62,8 +62,8 @@ public class Subgroup {
     public Long getSubgroupId() { return subgroupId; }
     public void setSubgroupId(Long subgroupId) { this.subgroupId = subgroupId; }
     
-    public Long getTenantId() { return tenantId; }
-    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     
     public Long getGroupId() { return groupId; }
     public void setGroupId(Long groupId) { this.groupId = groupId; }

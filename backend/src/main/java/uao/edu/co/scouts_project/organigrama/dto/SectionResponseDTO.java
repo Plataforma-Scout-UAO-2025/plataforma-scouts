@@ -5,7 +5,7 @@ import java.util.List;
 
 public record SectionResponseDTO(
     Long sectionId,
-    Long tenantId,
+    String tenantId,
     Long groupId,
     String name,
     String description,

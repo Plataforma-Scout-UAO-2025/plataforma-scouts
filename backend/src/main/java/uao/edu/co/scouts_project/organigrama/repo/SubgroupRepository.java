@@ -8,9 +8,9 @@ import java.util.Optional;
 
 @Repository
 public interface SubgroupRepository extends JpaRepository<Subgroup, Long> {
-    List<Subgroup> findByTenantIdAndGroupIdAndSectionId(Long tenantId, Long groupId, Long sectionId);
-    Optional<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndSubgroupId(Long tenantId, Long groupId, Long sectionId, Long subgroupId);
+    List<Subgroup> findByTenantIdAndGroupIdAndSectionId(String tenantId, Long groupId, Long sectionId);
+    Optional<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndSubgroupId(String tenantId, Long groupId, Long sectionId, Long subgroupId);
     Optional<Subgroup> findBySectionIdAndName(Long sectionId, String name);
     boolean existsBySectionIdAndName(Long sectionId, String name);
-    List<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndIsActive(Long tenantId, Long groupId, Long sectionId, Boolean isActive);
+    List<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndIsActive(String tenantId, Long groupId, Long sectionId, Boolean isActive);
 }

@@ -19,7 +19,7 @@ public class Section {
     private Long sectionId;
     
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
+    private String tenantId;
     
     @Column(name = "group_id", nullable = false)
     private Long groupId;
@@ -52,7 +52,7 @@ public class Section {
     // Constructors
     public Section() {}
     
-    public Section(Long tenantId, Long groupId, String name) {
+    public Section(String tenantId, Long groupId, String name) {
         this.tenantId = tenantId;
         this.groupId = groupId;
         this.name = name;
@@ -63,8 +63,8 @@ public class Section {
     public Long getSectionId() { return sectionId; }
     public void setSectionId(Long sectionId) { this.sectionId = sectionId; }
     
-    public Long getTenantId() { return tenantId; }
-    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     
     public Long getGroupId() { return groupId; }
     public void setGroupId(Long groupId) { this.groupId = groupId; }

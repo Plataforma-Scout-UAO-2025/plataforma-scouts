@@ -7,7 +7,7 @@ import java.util.Map;
 
 public record GroupResponseDTO(
     Long groupId,
-    Long tenantId,
+    String tenantId,
     String slug,
     String name,
     String district,

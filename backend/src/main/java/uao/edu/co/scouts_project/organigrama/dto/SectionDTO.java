@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record SectionDTO(
     Long sectionId,
-    Long tenantId,
+    String tenantId,
     Long groupId,
     @NotBlank String name,
     String description,
