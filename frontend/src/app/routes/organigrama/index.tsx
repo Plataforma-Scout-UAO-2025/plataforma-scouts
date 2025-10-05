@@ -27,6 +27,18 @@ import * as organigramaService from './services';
 import { useApiError } from './hooks/useApiError';
 import { useTenantParams } from './hooks/useTenantParams';
 
+// ⬇️ Nuevo: menú y funciones de exportación
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  exportarOrganigramaPDF,
+  exportarOrganigramaExcel,
+} from './utils/exportarOrganigrama';
+
 export default function Organigrama() {
   const [ramas, setRamas] = useState<Rama[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -246,6 +258,16 @@ export default function Organigrama() {
     }
   };
 
+  // ====== EXPORTAR ORGANIGRAMA ======
+  const handleExportPDF = () => {
+    const anio = selectedYear ? parseInt(selectedYear) : undefined;
+    exportarOrganigramaPDF(ramas, { anio, colorHex: '#1A4134' });
+  };
+
+  const handleExportExcel = () => {
+    exportarOrganigramaExcel(ramas);
+  };
+
   // ====== UTIL ======
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
@@ -292,14 +314,33 @@ export default function Organigrama() {
             Administra la estructura de ramas y subramas de tu grupo scout
           </p>
         </div>
-        <Button
-          onClick={() => setCreateRamaModalOpen(true)}
-          disabled={isLoading}
-          aria-busy={isLoading}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Crear Nueva Rama
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* ⬇️ Nuevo: Exportar organigrama */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Exportar organigrama
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={handleExportPDF}>
+                Exportar en PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>
+                Exportar en Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            onClick={() => setCreateRamaModalOpen(true)}
+            disabled={isLoading}
+            aria-busy={isLoading}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Crear Nueva Rama
+          </Button>
+        </div>
       </div>
 
       {/* Mostrar errores de la API (si los hay) */}

@@ -32,7 +32,9 @@ export {
   diagnoseBatchImageUpload,
   uploadSectionIcon,
   uploadSectionMainImage,
-  uploadGalleryImages
+  uploadGalleryImages,
+  removeSectionIcon,
+  removeSectionMainImage
 } from './image-upload-core.service';
 
 // Gestión avanzada de galería de Ramas
@@ -50,7 +52,8 @@ export {
   addSubramaGalleryImage,
   replaceSubramaGalleryImage,
   removeSubramaGalleryImage,
-  getSubramaGalleryImageUuids
+  getSubramaGalleryImageUuids,
+  removeSubramaMainImage
 } from './subrama-image.service';
 
 // Constantes y configuraciones
@@ -60,24 +63,26 @@ export { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 // UTILIDADES Y HELPERS
 // ============================================================================
 
-// Función utilitaria para extraer objectId de una URL de Supabase
+// ✅ Función robusta para extraer UUIDs de URLs de Supabase
 export const extractObjectIdFromUrl = (url: string): string | null => {
   if (!url) return null;
-  
-  // Patron: https://xxx.supabase.co/storage/v1/object/public/images/organigrama/[UUID].extension
-  const match = url.match(/\/([a-f0-9-]{36})\.[a-zA-Z0-9]+$/);
-  return match ? match[1] : null;
+  // Buscar cualquier UUID válido (36 caracteres)
+  const match = url.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+  return match ? match[0] : null;
 };
 
-// Función utilitaria para extraer múltiples objectIds de un array de URLs
+// Extrae múltiples UUIDs desde un array de URLs
 export const extractObjectIdsFromUrls = (urls: string[]): string[] => {
-  return urls.map(extractObjectIdFromUrl).filter(Boolean) as string[];
+  return urls
+    .map(extractObjectIdFromUrl)
+    .filter((id): id is string => id !== null);
 };
 
-// Función de limpieza (no aplicable al backend real)
+// Limpieza local (solo placeholder)
 export const clearAllStorageData = (): void => {
   console.warn('clearAllStorageData no está disponible en modo backend real');
 };
+
 
 // ============================================================================
 // INFORMACIÓN DE LA REFACTORIZACIÓN

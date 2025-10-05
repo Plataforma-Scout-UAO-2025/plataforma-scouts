@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import type { Subrama } from "../types/rama.type";
 import * as organigramaService from "../services";
 import { useTenantParams } from "../hooks/useTenantParams";
+import { toast } from "sonner";
+import FotoModal from "../components/FotoModal";
+
 
 export default function SubramaDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +19,12 @@ export default function SubramaDetail() {
   const [loading, setLoading] = useState(true);
   const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
   const [galeriaFotos, setGaleriaFotos] = useState<string[]>([]);
+  // ===== Modal de fotos =====
+  const [fotoModalOpen, setFotoModalOpen] = useState(false);
+  const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
+  const [fotoTipo, setFotoTipo] = useState<"principal" | "galeria" | null>(null);
+  const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
+
 
   // Referencias para inputs de archivos
   const mainImageInputRef = useRef<HTMLInputElement>(null);
@@ -88,6 +97,87 @@ export default function SubramaDetail() {
         // Limpiar previews en caso de error
         setGaleriaFotos(prev => prev.slice(0, -previews.length));
       }
+    }
+  };
+
+  // Abrir modal según tipo de imagen
+  const openMainImageModal = () => {
+    if (!imagenPrincipal) return;
+    setFotoTipo("principal");
+    setFotoSeleccionada(imagenPrincipal);
+    setFotoModalOpen(true);
+  };
+
+  const openGalleryModal = (url: string) => {
+    setFotoTipo("galeria");
+    setFotoSeleccionada(url);
+    setGaleriaObjetivo(url);
+    setFotoModalOpen(true);
+  };
+
+  const handleReplaceFoto = async (file: File) => {
+    if (!subrama || !fotoTipo) return;
+
+    try {
+      if (fotoTipo === "principal") {
+        await organigramaService.updateSubramaMainImage(
+          tenantSlug,
+          groupSlug,
+          subrama.section_id,
+          subrama.subgroup_id,
+          file
+        );
+      } else if (fotoTipo === "galeria") {
+        const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+        await organigramaService.replaceSubramaGalleryImage(
+          tenantSlug,
+          groupSlug,
+          subrama.section_id,
+          subrama.subgroup_id,
+          cleanUuid,
+          file
+        );
+      }
+
+      toast.success("Foto actualizada correctamente");
+      setFotoModalOpen(false);
+      await fetchSubrama();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al actualizar la foto");
+    }
+  };
+
+  const handleDeleteFoto = async () => {
+    if (!subrama || !fotoTipo) return;
+
+    try {
+      if (fotoTipo === "principal") {
+        // 🧩 NUEVO: eliminar imagen principal
+        await organigramaService.removeSubramaMainImage(
+          tenantSlug,
+          groupSlug,
+          subrama.section_id,
+          subrama.subgroup_id
+        );
+      } else if (fotoTipo === "galeria") {
+        // 🧠 Extraer UUID limpio
+        const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+        await organigramaService.removeSubramaGalleryImage(
+          tenantSlug,
+          groupSlug,
+          subrama.section_id,
+          subrama.subgroup_id,
+          cleanUuid
+        );
+      }
+
+      toast.success("Foto eliminada correctamente");
+      setFotoModalOpen(false);
+      await fetchSubrama();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al eliminar la foto");
     }
   };
 
@@ -229,7 +319,7 @@ export default function SubramaDetail() {
           </Button>
         </div>
 
-        <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100">
+        <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100" onClick={openMainImageModal}>
           {imagenPrincipal ? (
             <img
               src={imagenPrincipal}
@@ -302,7 +392,7 @@ export default function SubramaDetail() {
         </div>
         <div className="grid grid-cols-3 gap-2">
           {galeriaFotos.map((src, idx) => (
-            <div key={idx} className="relative">
+            <div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}>
               <img
                 src={src}
                 alt={`Foto ${idx + 1}`}
@@ -323,6 +413,18 @@ export default function SubramaDetail() {
           aria-label="Subir fotos a la galería"
         />
       </Card>
+      <FotoModal
+        open={fotoModalOpen}
+        onClose={() => setFotoModalOpen(false)}
+        titulo={
+          fotoTipo === "principal"
+            ? `Foto principal de ${subrama?.nombre ?? ""}`
+            : `Foto de galería - ${subrama?.nombre ?? ""}`
+        }
+        imageUrl={fotoSeleccionada}
+        onReplace={handleReplaceFoto}
+        onDelete={handleDeleteFoto}
+      />
     </div>
   );
 }

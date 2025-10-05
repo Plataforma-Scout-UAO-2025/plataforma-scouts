@@ -214,3 +214,51 @@ export const uploadGalleryImages = async (
     throw error;
   }
 };
+
+// ==========================================================
+// 🗑️ Eliminar ícono de sección (PATCH remove)
+// ==========================================================
+export const removeSectionIcon = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string
+): Promise<void> => {
+  console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...");
+
+  const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
+  const payload = {
+    operations: [
+      {
+        op: "remove",
+        targetUuid: null,
+      },
+    ],
+  };
+
+  await apiClient.patch(patchEndpoint, payload);
+  console.log("✅ Ícono eliminado correctamente de la sección");
+};
+
+// ==========================================================
+// 🗑️ Eliminar imagen principal de sección (PATCH remove)
+// ==========================================================
+export const removeSectionMainImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string
+): Promise<void> => {
+  console.log("🗑️ [ImageUploadService] Eliminando imagen principal de sección...");
+
+  const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
+  const payload = {
+    operations: [
+      {
+        op: "remove",
+        targetUuid: null,
+      },
+    ],
+  };
+
+  await apiClient.patch(patchEndpoint, payload);
+  console.log("✅ Imagen principal eliminada correctamente de la sección");
+};
