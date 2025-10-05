@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.medicalrecord;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,11 +16,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,40 +29,75 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
+@EqualsAndHashCode
 public class MedicalRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "medical_record_id")
+    private Long medicalRecordId;
 
-    @OneToOne
-    @JoinColumn(name = "member_id", referencedColumnName = "member_id", nullable = false)
-    private Long memberId;
+    @NotNull
+    @Column(name = "user_id", nullable = false)
+    private String userId;
 
-    @NotBlank
+    @NotNull
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
+
+    @Column(name = "blood_type")
     private String bloodType;
 
     private String eps;
     private String allergies;
+
+    @Column(name = "chronic_diseases")
     private String chronicDiseases;
+
+    @Column(name = "physical_restrictions")
     private String physicalRestrictions;
+
+    @Column(name = "surgical_history")
     private String surgicalHistory;
-    
-    @NotNull
-    private boolean active;
+
+    private Boolean active;
 
     @Type(JsonType.class)
-    @Column(columnDefinition = "jsonb")
-    private List<String> medicationsDetail;
-    private List<String> vaccinesDetail;
+    @Column(name = "medication_details", columnDefinition = "jsonb")
+    private List<MedicationDetail> medicationDetails;
+
+    @Type(JsonType.class)
+    @Column(name = "vaccine_details", columnDefinition = "jsonb")
+    private List<VaccineDetail> vaccineDetails;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false, updatable = true)
     @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    @EqualsAndHashCode
+    public static class MedicationDetail {
+        private String name;
+        private String intakeFrequency;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    @EqualsAndHashCode
+    public static class VaccineDetail {
+        private String name;
+        private LocalDate date;
+    }
 
 }
