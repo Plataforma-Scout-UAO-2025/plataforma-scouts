@@ -5,7 +5,7 @@ CREATE TABLE member (
   member_id bigserial PRIMARY KEY,
   user_id text NOT NULL,
   tenant_id text NOT NULL,
-  attendant_id bigint,
+  guardian_id int8,
   relationship text,
   subgroup_id bigint NOT NULL,
   role text NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE member (
   document_type text,
   email text,
   gender text,
-  birth_day date,
+  birth_date date,
   address text,
   phone text,
   weight text,
@@ -32,7 +32,6 @@ CREATE TABLE member (
   updated_at timestamp DEFAULT now(),
   CONSTRAINT fk_member_tenant FOREIGN KEY (tenant_id) REFERENCES tenant (tenant_id),
   CONSTRAINT fk_member_subgroup FOREIGN KEY (subgroup_id) REFERENCES subgroup (subgroup_id),
-  CONSTRAINT fk_member_attendant FOREIGN KEY (attendant_id) REFERENCES member (member_id),
   CONSTRAINT uq_member_identification_per_tenant UNIQUE (tenant_id, identification)
 );
 
@@ -40,7 +39,7 @@ CREATE TABLE member (
 CREATE INDEX idx_member_tenant_id ON member(tenant_id);
 CREATE INDEX idx_member_subgroup_id ON member(subgroup_id);
 CREATE INDEX idx_member_tenant_subgroup_id ON member(tenant_id, subgroup_id);
-CREATE INDEX idx_member_attendant_id ON member(attendant_id);
+CREATE INDEX idx_member_guardian_id ON member(guardian_id);
 
 -- =======================
 -- MEDICAL RECORD
