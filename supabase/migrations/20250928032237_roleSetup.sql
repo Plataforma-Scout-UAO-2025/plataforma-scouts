@@ -8,7 +8,7 @@ BEGIN
         SELECT FROM pg_catalog.pg_roles
         WHERE rolname = 'reader'
     ) THEN
-        CREATE ROLE reader WITH LOGIN PASSWORD 'placeHolder';
+        CREATE ROLE reader WITH LOGIN PASSWORD '${READER_PASS}';
     END IF;
 END
 $$;
@@ -23,7 +23,7 @@ BEGIN
         SELECT FROM pg_catalog.pg_roles
         WHERE rolname = 'api_user'
     ) THEN
-        CREATE ROLE api_user WITH LOGIN PASSWORD 'placeHolder';
+        CREATE ROLE api_user WITH LOGIN PASSWORD '${API_USER_PASS}';
     END IF;
 END
 $$;
@@ -39,7 +39,7 @@ BEGIN
         WHERE rolname = 'dba'
     ) THEN
         -- Using the variable in the password definition
-        CREATE ROLE dba WITH LOGIN PASSWORD '${DBA_PASSWORD}';
+        CREATE ROLE dba WITH LOGIN PASSWORD '${DBA_PASS}';
     END IF;
 END
 $$;
@@ -66,11 +66,14 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO reader;
 -- Default Privileges for reader
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO reader;
 
--- Grants for api_user
+-- Grants for api_user (data manipulation only, no schema changes)
+GRANT USAGE ON SCHEMA public TO api_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO api_user;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO api_user;
 
--- Default Privileges for api_user
+-- Default Privileges for api_user (future tables and sequences)
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO api_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO api_user;
 
 -- Grants for authenticated
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
