@@ -3,7 +3,7 @@
 -- =======================
 CREATE TABLE account (
   account_id bigserial PRIMARY KEY,
-  tenant_id  bigint NOT NULL,
+  tenant_id  text NOT NULL,
   member_id  bigint NOT NULL,
   currency   text   NOT NULL DEFAULT 'COP',
   created_at timestamp NOT NULL DEFAULT now(),
@@ -18,7 +18,7 @@ CREATE TABLE account (
 -- =======================
 CREATE TABLE concept (
   concept_id  bigserial PRIMARY KEY,
-  tenant_id   bigint NOT NULL,
+  tenant_id   text NOT NULL,
   name        text   NOT NULL,
   CONSTRAINT fk_concept_tenant FOREIGN KEY (tenant_id) REFERENCES tenant(tenant_id)
 );
@@ -28,7 +28,7 @@ CREATE TABLE concept (
 -- =======================
 CREATE TABLE fee_plan (
   fee_plan_id      bigserial PRIMARY KEY,
-  tenant_id        bigint NOT NULL,
+  tenant_id        text NOT NULL,
   concept_id       bigint NOT NULL REFERENCES concept(concept_id),
   amount           numeric(12,2) NOT NULL CHECK (amount >= 0),
   periodicity      text   NOT NULL CHECK (periodicity IN ('SINGLE','MONTH','QUARTER','YEAR')),
@@ -50,7 +50,7 @@ CREATE TABLE fee_plan (
 -- =======================
 CREATE TABLE installment (
   installment_id bigserial PRIMARY KEY,
-  tenant_id      bigint NOT NULL,
+  tenant_id      text NOT NULL,
   account_id     bigint NOT NULL REFERENCES account(account_id) ON DELETE CASCADE,
   concept_id     bigint NOT NULL REFERENCES concept(concept_id),
   due_date       date   NOT NULL,

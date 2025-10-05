@@ -1,6 +1,13 @@
- -- bucket creation
+-- Bucket creation (idempotent - safe to run multiple times)
+
+-- Insert buckets only if they don't exist
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('images', 'images', true), ('files', 'files', false);
+VALUES ('images', 'images', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('files', 'files', false)
+ON CONFLICT (id) DO NOTHING;
 
 -- MIME types and file size limits for 'images' and 'files' buckets
 UPDATE storage.buckets

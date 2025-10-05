@@ -2,7 +2,7 @@
 -- TENANT
 -- =======================
 CREATE TABLE tenant (
-  tenant_id bigserial PRIMARY KEY,
+  tenant_id text PRIMARY KEY,
   slug text UNIQUE NOT NULL,
   status text NOT NULL,
   created_at timestamp DEFAULT now(),
@@ -14,13 +14,13 @@ CREATE TABLE tenant (
 -- =======================
 CREATE TABLE groups (
   group_id bigserial PRIMARY KEY,
-  tenant_id bigint NOT NULL,
+  tenant_id text NOT NULL,
   slug text NOT NULL,
   name text NOT NULL,
   district text,
   identifier_number text,
   address text,
-  phone varchar(20),
+  phone text,
   email text,
   founded_in date,
   motto text,
@@ -49,7 +49,7 @@ CREATE INDEX idx_groups_tenant_slug ON groups(tenant_id, slug);
 CREATE TABLE section (
   section_id bigserial PRIMARY KEY,
   group_id bigint NOT NULL,
-  tenant_id bigint NOT NULL,
+  tenant_id text NOT NULL,
   name text NOT NULL,
   description text,
   icon_object_id uuid,
@@ -71,7 +71,7 @@ CREATE INDEX idx_section_tenant_group_id ON section(tenant_id, group_id);
 -- =======================
 CREATE TABLE subgroup (
   subgroup_id bigserial PRIMARY KEY,
-  tenant_id bigint NOT NULL,
+  tenant_id text NOT NULL,
   group_id bigint NOT NULL,
   section_id bigint NOT NULL,
   name text NOT NULL,
