@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { DialogDescription } from "@/components/ui/dialog";
 
 interface FotoModalProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface FotoModalProps {
   imageUrl: string | null;
   onReplace: (file: File) => Promise<void>;
   onDelete: () => Promise<void>;
+  onCancelUpload?: () => void;
 }
 
 export default function FotoModal({
@@ -24,24 +26,31 @@ export default function FotoModal({
   imageUrl,
   onReplace,
   onDelete,
+  onCancelUpload,
 }: FotoModalProps) {
   const [preview, setPreview] = useState<string | null>(imageUrl);
   const [isProcessing, setIsProcessing] = useState(false);
+  const createdObjectUrlRef = useRef<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsProcessing(true);
-
+    // crear preview inmediato usando object URL para mayor rendimiento
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
-      await onReplace(file);
+      const obj = URL.createObjectURL(file);
+      // revocar previo si existía
+      if (createdObjectUrlRef.current) {
+        try { URL.revokeObjectURL(createdObjectUrlRef.current); } catch { /* ignore */ }
+      }
+      createdObjectUrlRef.current = obj;
+      setPreview(obj);
+      // delegar subida al padre; no await aquí para que el modal no bloquee la UI
+      setIsProcessing(true);
+      void onReplace(file).finally(() => {
+        setIsProcessing(false);
+      });
     } catch (err) {
-      console.error("❌ Error reemplazando foto:", err);
-    } finally {
-      setIsProcessing(false);
+      console.error("❌ Error creando preview de foto:", err);
     }
   };
 
@@ -58,6 +67,20 @@ export default function FotoModal({
     }
   };
 
+  useEffect(() => {
+    // si imageUrl cambia desde el padre y no es blob, actualizar preview
+    if (imageUrl && !imageUrl.startsWith('blob:')) {
+      setPreview(imageUrl);
+    }
+    // cuando se cierre el modal, revocar cualquier object URL creado
+    return () => {
+      if (createdObjectUrlRef.current) {
+        try { URL.revokeObjectURL(createdObjectUrlRef.current); } catch { /* ignore */ }
+        createdObjectUrlRef.current = null;
+      }
+    };
+  }, [imageUrl]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -65,9 +88,10 @@ export default function FotoModal({
           <DialogTitle className="text-lg font-semibold text-[#1A4134]">
             {titulo}
           </DialogTitle>
+          <DialogDescription>Editar o eliminar la imagen seleccionada.</DialogDescription>
         </DialogHeader>
 
-        <div className="flex justify-center items-center mt-4">
+        <div className="flex justify-center items-center mt-4 relative">
           {preview ? (
             <img
               src={preview}
@@ -78,9 +102,9 @@ export default function FotoModal({
             <div className="text-gray-400 text-sm">No hay foto disponible</div>
           )}
         </div>
-
-        <DialogFooter className="flex justify-between items-center pt-4">
-          <Button variant="outline" onClick={onClose}>
+        
+  <DialogFooter className="flex justify-between items-center pt-4">
+          <Button variant="outline" onClick={() => { if (onCancelUpload) { onCancelUpload(); } onClose(); }}>
             Cancelar
           </Button>
           <div className="flex gap-2">
@@ -108,6 +132,7 @@ export default function FotoModal({
           type="file"
           accept="image/*"
           className="hidden"
+          aria-label="Seleccionar imagen"
           onChange={handleFileChange}
         />
       </DialogContent>

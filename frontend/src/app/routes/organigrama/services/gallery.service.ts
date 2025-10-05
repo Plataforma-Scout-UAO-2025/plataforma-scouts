@@ -26,6 +26,7 @@ export const addGalleryImage = async (
   groupSlug: string,
   sectionId: string,
   file: File
+  , signal?: AbortSignal
 ): Promise<string> => {
   console.log('📤 [GalleryService] Agregando imagen a galería...');
   console.log('📝 [GalleryService] Parámetros:', { sectionId, fileName: file.name });
@@ -37,7 +38,9 @@ export const addGalleryImage = async (
 
     const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
       '/api/storage/upload',
-      formData
+      formData,
+      undefined,
+      signal
     );
     console.log('✅ [GalleryService] Nueva imagen subida, objectId:', uploadResponse.objectId);
 
@@ -93,6 +96,7 @@ export const replaceGalleryImage = async (
   sectionId: string,
   targetImageUuid: string,
   newFile: File
+  , signal?: AbortSignal
 ): Promise<string> => {
   console.log('🔄 [GalleryService] Reemplazando imagen en galería...');
   console.log('🧾 Parámetros iniciales:', {
@@ -117,7 +121,9 @@ export const replaceGalleryImage = async (
 
     const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
       '/api/storage/upload',
-      formData
+      formData,
+      undefined,
+      signal
     );
     console.log('✅ [GalleryService] Nueva imagen subida:', uploadResponse.objectId);
 

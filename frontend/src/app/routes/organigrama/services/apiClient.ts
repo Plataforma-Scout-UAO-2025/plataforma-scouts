@@ -113,12 +113,12 @@ export const apiClient = {
     return response.data;
   },
 
-  async postFormData<T>(endpoint: string, formData: FormData, onUploadProgress?: (percent: number) => void): Promise<T> {
+  async postFormData<T>(endpoint: string, formData: FormData, onUploadProgress?: (percent: number) => void, signal?: AbortSignal): Promise<T> {
     // Nota: añadimos un parámetro opcional onUploadProgress para permitir
     // seguimiento del progreso de subida desde los módulos que lo requieran.
     // Esta función mantiene compatibilidad hacia atrás: el tercer argumento
     // es opcional y la llamada existente sin él sigue funcionando.
-  async function _doPost( onUploadProgressLocal?: (percent: number) => void ) {
+  async function _doPost( onUploadProgressLocal?: (percent: number) => void, signalLocal?: AbortSignal ) {
       try {
         const normalized = normalizeEndpoint(endpoint);
         console.log(`🔄 [ApiClient] POST (FormData) full-url: ${API_BASE_URL}${normalized}`);
@@ -128,6 +128,7 @@ export const apiClient = {
             'Content-Type': 'multipart/form-data'
           },
           timeout: 30000, // 30 segundos para uploads
+          signal: signalLocal,
           onUploadProgress: (progressEvent: AxiosProgressEvent) => {
             const loaded = progressEvent?.loaded;
             const total = progressEvent?.total;
@@ -145,6 +146,12 @@ export const apiClient = {
         console.log(`✅ [ApiClient] POST (FormData) ${endpoint} - Éxito`, response.data);
         return response.data;
       } catch (error) {
+        // Detectar cancelación explícita del request (AbortController)
+        const errAny = error as any;
+        if (errAny?.code === 'ERR_CANCELED' || errAny?.message === 'canceled') {
+          console.warn(`⚠️ [ApiClient] POST (FormData) ${endpoint} - Cancelado por el usuario`);
+          throw new Error('UploadCanceled');
+        }
         if (error instanceof AxiosError) {
           const status = error.response?.status || 0;
           const statusText = error.response?.statusText || 'Upload Error';
@@ -157,7 +164,7 @@ export const apiClient = {
       }
     }
 
-    // Ejecutar la subida pasando el callback opcional recibido.
-    return (await _doPost(onUploadProgress)) as unknown as T;
+    // Ejecutar la subida pasando el callback opcional recibido y la señal
+    return (await _doPost(onUploadProgress, signal)) as unknown as T;
   }
 };

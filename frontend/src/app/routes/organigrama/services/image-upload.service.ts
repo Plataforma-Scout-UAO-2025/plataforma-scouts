@@ -70,7 +70,8 @@ export const uploadSectionIcon = async (
   groupSlug: string,
   sectionId: string,
   file: File,
-  onFileProgress?: (fileName: string, percent: number) => void
+  onFileProgress?: (fileName: string, percent: number) => void,
+  signal?: AbortSignal
 ): Promise<string> => {
   console.log('📤 [ImageUploadService] Subiendo icono de sección...');
   console.log('📝 [ImageUploadService] Parámetros:', {
@@ -90,7 +91,8 @@ export const uploadSectionIcon = async (
     const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
       '/api/storage/upload',
       formData,
-      (percent) => onFileProgress?.(file.name, percent)
+      (percent) => onFileProgress?.(file.name, percent),
+      signal
     );
     console.log('✅ [ImageUploadService] Archivo subido, objectId:', uploadResponse.objectId);
     
@@ -131,7 +133,8 @@ export const uploadSectionMainImage = async (
   sectionId: string,
   file: File
   ,
-  onFileProgress?: (fileName: string, percent: number) => void
+  onFileProgress?: (fileName: string, percent: number) => void,
+  signal?: AbortSignal
 ): Promise<string> => {
   console.log('📤 [ImageUploadService] Subiendo imagen principal de sección...');
   
@@ -143,7 +146,8 @@ export const uploadSectionMainImage = async (
     const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
       '/api/storage/upload',
       formData,
-      (percent) => onFileProgress?.(file.name, percent)
+      (percent) => onFileProgress?.(file.name, percent),
+      signal
     );
     
     // Paso 2: Usar endpoint PATCH específico para imagen principal
@@ -183,6 +187,7 @@ export const uploadGalleryImages = async (
   ,
   onFileProgress?: (fileName: string, percent: number) => void,
   onOverallProgress?: (percent: number) => void
+  , signal?: AbortSignal
 ): Promise<string[]> => {
   console.log('📤 [ImageUploadService] Subiendo imágenes de galería...');
   
@@ -211,7 +216,8 @@ export const uploadGalleryImages = async (
           const sum = Object.values(perFileProgress).reduce((a, b) => a + b, 0);
           const overall = Math.round(sum / totalFiles);
           onOverallProgress?.(overall);
-        }
+        },
+        signal
       );
 
       objectIds.push(uploadResponse.objectId);

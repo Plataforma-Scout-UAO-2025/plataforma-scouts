@@ -32,6 +32,7 @@ export default function RamaDetail() {
   // Previews locales (object URLs) para mostrar preview inmediato
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [galleryLocalPreviews, setGalleryLocalPreviews] = useState<string[]>([]);
+  const uploadControllerRef = useRef<AbortController | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainImageInputRef = useRef<HTMLInputElement>(null);
@@ -74,17 +75,34 @@ export default function RamaDetail() {
       setUploading(true);
       setUploadPercent(0);
       setCurrentUploadingFile(file.name);
+      // Crear un AbortController por cada operación de reemplazo
+      if (uploadControllerRef.current) {
+        try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
+      }
+      const controller = new AbortController();
+      uploadControllerRef.current = controller;
       if (fotoTipo === "icono") {
         await organigramaService.uploadSectionIcon(tenantSlug, groupSlug, rama.section_id, file, (fileName, percent) => {
           setCurrentUploadingFile(fileName);
-          setUploadPercent(percent);
-        });
+          const display = percent >= 100 ? 99 : Math.floor(percent);
+          setUploadPercent(display);
+          if (percent >= 100 && !uploadCompleteAnnounced) {
+            setUploadCompleteAnnounced(true);
+            toast('Subida completada. Procesando en servidor...');
+          }
+        }, controller.signal);
       } else if (fotoTipo === "principal") {
         await organigramaService.uploadSectionMainImage(tenantSlug, groupSlug, rama.section_id, file, (fileName, percent) => {
           setCurrentUploadingFile(fileName);
-          setUploadPercent(percent);
-        });
+          const display = percent >= 100 ? 99 : Math.floor(percent);
+          setUploadPercent(display);
+          if (percent >= 100 && !uploadCompleteAnnounced) {
+            setUploadCompleteAnnounced(true);
+            toast('Subida completada. Procesando en servidor...');
+          }
+        }, controller.signal);
       } else if (fotoTipo === "galeria") {
+        // para reemplazos de galería también pasamos la señal si el servicio lo soporta
         const targetUuid = extractObjectIdFromUrl(galeriaObjetivo);
         if (!targetUuid) {
           toast.error("No se pudo obtener el UUID de la imagen seleccionada");
@@ -98,7 +116,8 @@ export default function RamaDetail() {
           groupSlug,
           rama.section_id,
           targetUuid,
-          file
+          file,
+          controller.signal
         );
       }
 
@@ -107,12 +126,38 @@ export default function RamaDetail() {
       await fetchRama();
     } catch (error) {
       console.error(error);
-      toast.error("Error al actualizar la foto");
+      if ((error as Error).message === 'UploadCanceled') {
+        toast('Subida cancelada');
+      } else {
+        toast.error("Error al actualizar la foto");
+      }
     }
     finally {
       setUploading(false);
       setUploadPercent(0);
       setCurrentUploadingFile(null);
+      // limpiar controller
+      if (uploadControllerRef.current) {
+        uploadControllerRef.current = null;
+      }
+    }
+  };
+
+  const handleCancelUpload = () => {
+    if (uploadControllerRef.current) {
+      try {
+        uploadControllerRef.current.abort();
+        toast('Cancelando subida...');
+      } catch (e) {
+        console.warn('Error abortando upload', e);
+      }
+      setUploading(false);
+      setUploadPercent(0);
+      setCurrentUploadingFile(null);
+      // si había un preview temporal, revertirlo
+      if (fotoTipo === 'icono' && iconPreview && rama) {
+        setIconPreview(getIconUrl(rama) || null);
+      }
     }
   };
 
@@ -207,7 +252,9 @@ export default function RamaDetail() {
   const makeDisplaySrc = (src: string | null | undefined) => {
     if (!src) return null;
     if (src.startsWith('blob:') || src.startsWith('data:')) return src;
-    return `${src}?v=${imageRefreshToken}`;
+    // Si la URL ya tiene query params (p.ej. placehold.co?text=...), usar &v= en lugar de ?v=
+    const separator = src.includes('?') ? '&' : '?';
+    return `${src}${separator}v=${imageRefreshToken}`;
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -590,7 +637,8 @@ export default function RamaDetail() {
         }
         imageUrl={fotoSeleccionada}
         onReplace={handleReplaceFoto}
-        onDelete={handleDeleteFoto}              
+        onDelete={handleDeleteFoto}
+        onCancelUpload={handleCancelUpload}
       />
     </div>
   );
