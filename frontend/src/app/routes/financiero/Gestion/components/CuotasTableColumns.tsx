@@ -99,18 +99,11 @@ export const columns: ColumnDef<Cuota>[] = [
       accessorKey: "member",
       header: "Aplica a",
       cell: ({ row }) => {
-        const member = row.getValue("member") as Cuota["member"];
         const scope = row.original.scope;
 
-        if (scope === "SCOUT" && member) {
-          return (
-            <div className="text-sm">
-              {member.first_name} {member.last_name}
-            </div>
-          );
-        }
+        const value = row.original.associated_to ? row.original.associated_to.name : scopeTranslations[scope] || scope;
 
-        return <div>{scopeTranslations[scope] || scope}</div>;
+        return <div>{value}</div>;
       },
     },
     {

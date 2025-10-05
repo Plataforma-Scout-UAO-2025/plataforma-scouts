@@ -1,5 +1,3 @@
-import type { MemberPaymentDto } from "./pago.type";
-
 export type Periodicity = "SINGLE" | "MONTH" | "QUARTER" | "YEAR";
 export type Scope = "ALL" | "SCOUT" | "SUBGROUP" | "SECTION";
 
@@ -11,13 +9,15 @@ export interface CreateCuotaDto {
   scope: Scope;
   start_date: Date;
   end_date?: Date;
-  // Solo cuando el scope es SCOUT
-  target_member_id?: number;
+  // Solo cuando el scope es SCOUT, SUBGROUP o SECTION
+  user_id?: number;
+  subgroup_id?: number;
+  section_id?: number;
 }
 
 // Editar y ver cuota
 export type Cuota = {
-  fee_plan_id: string;
+  fee_id: string;
   amount: number;
   name: string
   description: string;
@@ -25,5 +25,8 @@ export type Cuota = {
   scope: Scope;
   start_date: Date;
   end_date?: Date;
-  member: MemberPaymentDto;
+  associated_to: {
+    id: string;
+    name: string;
+  } | null;
 };

@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash } from "lucide-react";
-import type { Cuota } from "../types/cuota.type";
+import type { Cuota } from "@/types/cuota.type";
 import { toast, type ExternalToast } from "sonner";
 import axios from "axios";
 
@@ -21,9 +21,10 @@ interface DeleteCuotaModalProps {
 
 export default function DeleteCuotaModal({ cuota }: DeleteCuotaModalProps) {
   const handleDelete = async () => {
-    console.log("Eliminando cuota:", cuota.id);
+    console.log("Eliminando cuota:", cuota.fee_id);
     try{
-      const response = await axios.delete(import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + cuota.id);
+      // Cambiar el ID 1 por el tenant_id cuando esté disponible
+      const response = await axios.delete(import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + "1" + "/" + cuota.fee_id);
       if(response.status === 204) {
         toast.success("Cuota eliminada correctamente");
         window.location.reload();
@@ -48,7 +49,7 @@ export default function DeleteCuotaModal({ cuota }: DeleteCuotaModalProps) {
           <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
           <AlertDialogDescription>
             Esta acción no se puede deshacer. Esto eliminará permanentemente la cuota{" "}
-            <strong>"{cuota.nombre}"</strong> del sistema.
+            <strong>"{cuota.name}"</strong> del sistema y <b>todos sus pagos asociados.</b>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -7,7 +7,8 @@ import {
   ChevronRightIcon,
 } from "lucide-react"
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
-
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 
@@ -39,6 +40,19 @@ function Calendar({
         formatMonthDropdown: (date) =>
           date.toLocaleString("default", { month: "short" }),
         ...formatters,
+      }}
+      labels={{
+        labelDayButton: (date, { today, selected }) => {
+          let label = format(date, "PPPP", { locale: es });
+          if (today) label = `Hoy, ${label}`;
+          if (selected) label = `${label}, seleccionado`;
+          return label;
+        },
+        labelWeekNumber: (weekNumber) => `Semana ${weekNumber}`,
+        labelNext: () => "Mes siguiente",
+        labelPrevious: () => "Mes anterior",
+        labelMonthDropdown: () => "Selecciona el mes",
+        labelYearDropdown: () => "Selecciona el año",
       }}
       classNames={{
         root: cn("w-fit", defaultClassNames.root),

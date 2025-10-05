@@ -37,7 +37,8 @@ export default function EditCuotaModal({ cuota }: EditCuotaModalProps) {
         <CreateCuotaForm
           open={open}
           setOpen={setOpen}
-          cuotaId={cuota.fee_plan_id}
+          cuotaId={cuota.fee_id}
+          isEditMode={true}
           defaultValues={{
             name: cuota.name,
             description: cuota.description,
@@ -46,9 +47,7 @@ export default function EditCuotaModal({ cuota }: EditCuotaModalProps) {
             scope: cuota.scope,
             start_date: cuota.start_date,
             end_date: cuota.end_date,
-            ...(cuota.scope === "SCOUT" && cuota.member && {
-              target_member_id: cuota.member.member_id,
-            }),
+            associated_to: cuota.associated_to,
           }}
           submitButtonText="Actualizar cuota"
         />

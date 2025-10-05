@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import {
-  CreateCuotaFormSchema,
+  createCuotaFormSchema,
   type CreateCuotaFormValues,
 } from "../schemas/CreateCuotaForm.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,53 +32,12 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast, type ExternalToast } from "sonner";
 import axios from "axios";
-import type { MemberPaymentDto } from "@/types/pago.type";
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
-
-// Datos mockeados de scouts
-const mockScouts: MemberPaymentDto[] = [
-  {
-    member_id: 1,
-    tenant_id: 1,
-    first_name: "Juan",
-    last_name: "Pérez",
-    subgroup: "Lobatos",
-    age: 12,
-  },
-  {
-    member_id: 2,
-    tenant_id: 1,
-    first_name: "María",
-    last_name: "García",
-    subgroup: "Lobatos",
-    age: 11,
-  },
-  {
-    member_id: 3,
-    tenant_id: 1,
-    first_name: "Carlos",
-    last_name: "Rodríguez",
-    subgroup: "Scouts",
-    age: 14,
-  },
-  {
-    member_id: 4,
-    tenant_id: 1,
-    first_name: "Ana",
-    last_name: "López",
-    subgroup: "Scouts",
-    age: 13,
-  },
-  {
-    member_id: 5,
-    tenant_id: 1,
-    first_name: "Pedro",
-    last_name: "Martínez",
-    subgroup: "Rovers",
-    age: 16,
-  },
-];
+import type { Subgroup } from "@/types/subgroup.type";
+import type { Section } from "@/types/section.type";
+import type { Member } from "@/types/member.type";
+import { mockMembers, mockSections, mockSubgroups } from "../constants/mock";
 
 interface CreateCuotaFormProps {
   open: boolean;
@@ -86,6 +45,7 @@ interface CreateCuotaFormProps {
   defaultValues?: Partial<CreateCuotaFormValues>;
   submitButtonText?: string;
   cuotaId?: string; // ID para edición
+  isEditMode?: boolean; // Nueva prop para indicar si es modo edición
 }
 
 export default function CreateCuotaForm({
@@ -93,12 +53,61 @@ export default function CreateCuotaForm({
   defaultValues,
   submitButtonText = "Crear cuota",
   cuotaId,
+  isEditMode = false,
 }: CreateCuotaFormProps) {
-  const [showTargetMemberField, setShowTargetMemberField] = useState(false);
-  const [scouts, setScouts] = useState<MemberPaymentDto[]>([]);
 
+  const [showAssociatedToField, setShowAssociatedToField] = useState(false);
+  // Traer los miembros, subgrupos y secciones del grupo
+  const [subgroups] = useState<Subgroup[]>(mockSubgroups);
+  const [sections] = useState<Section[]>(mockSections);
+  const [members] = useState<Member[]>(mockMembers);
+
+  // useEffect(() => {
+  //   const fetchMembersSubgroupsAndSections = async () => {
+  //     try {
+  //       const response = await axios.get(
+  //         import.meta.env.VITE_BACKEND_URL + "finanzas/fees/members/1"
+  //       );
+  //       if (response.status === 200) {
+  //         setMembers(response.data);
+  //       } else {
+  //         toast.error("Error al traer los miembros:", response.data.message);
+  //       }
+  //     } catch (error) {
+  //       toast.error("Error al traer los miembros:", error as ExternalToast);
+  //       console.error("Error al traer los miembros:", error);
+  //     }
+
+  //     try {
+  //       const response = await axios.get(
+  //         import.meta.env.VITE_BACKEND_URL + "finanzas/fees/subgroups/1"
+  //       );
+  //       setSubgroups(response.data);
+  //     } catch (error) {
+  //       console.error("Error al traer los subgrupos y secciones:", error);
+  //       toast.error(
+  //         "Error al traer los subgrupos y secciones:",
+  //         error as ExternalToast
+  //       );
+  //     }
+  //     try {
+  //       const response = await axios.get(
+  //         import.meta.env.VITE_BACKEND_URL + "finanzas/fees/sections/1"
+  //       );
+  //       setSections(response.data);
+  //     } catch (error) {
+  //       console.error("Error al traer las secciones:", error);
+  //       toast.error("Error al traer las secciones:", error as ExternalToast);
+  //     }
+
+  //   };
+  //   fetchMembersSubgroupsAndSections();
+  // }, []);
+
+  
+  
   const form = useForm<CreateCuotaFormValues>({
-    resolver: zodResolver(CreateCuotaFormSchema),
+    resolver: zodResolver(createCuotaFormSchema(isEditMode)),
     defaultValues: {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
@@ -106,16 +115,16 @@ export default function CreateCuotaForm({
       periodicity: defaultValues?.periodicity || "MONTH",
       scope: defaultValues?.scope || "ALL",
       start_date: defaultValues?.start_date
-        ? (typeof defaultValues.start_date === 'string'
-           ? new Date(defaultValues.start_date)
-           : defaultValues.start_date)
+        ? typeof defaultValues.start_date === "string"
+          ? new Date(defaultValues.start_date)
+          : defaultValues.start_date
         : new Date(),
       end_date: defaultValues?.end_date
-        ? (typeof defaultValues.end_date === 'string'
-           ? new Date(defaultValues.end_date)
-           : defaultValues.end_date)
+        ? typeof defaultValues.end_date === "string"
+          ? new Date(defaultValues.end_date)
+          : defaultValues.end_date
         : undefined,
-      target_member_id: defaultValues?.target_member_id,
+      associated_to: defaultValues?.associated_to || { id: "", name: "" },
     },
   });
 
@@ -123,17 +132,21 @@ export default function CreateCuotaForm({
 
   // Mostrar campo target_member_id solo cuando scope es SCOUT
   useEffect(() => {
-    setShowTargetMemberField(scopeValue === "SCOUT");
-  }, [scopeValue]);
+    // Resetear el campo associated_to cada vez que cambia el scope
+    form.setValue("associated_to", { id: "", name: "" });
 
-  // Cargar scouts mockeados
-  useEffect(() => {
-    setScouts(mockScouts);
-  }, []);
+    // Limpiar valores de campos que no corresponden al scope actual
+    if (scopeValue !== "SCOUT" && scopeValue !== "SUBGROUP" && scopeValue !== "SECTION") {
+      setShowAssociatedToField(false);
+    } else {
+      setShowAssociatedToField(true);
+    }
+  }, [scopeValue, form]);
 
   async function onSubmit(values: CreateCuotaFormValues) {
     // Preparar los datos según el formato esperado por el backend
-    const dataToSend = {
+    const dataToSendCreate = {
+      tenant_id: "1",
       name: values.name,
       description: values.description,
       amount: values.amount,
@@ -141,18 +154,23 @@ export default function CreateCuotaForm({
       scope: values.scope,
       start_date: values.start_date.toISOString(),
       ...(values.end_date && { end_date: values.end_date.toISOString() }),
-      ...(values.scope === "SCOUT" &&
-        values.target_member_id && {
-          target_member_id: values.target_member_id,
-        }),
+      associated_to: values.associated_to,
     };
 
-    if (cuotaId) {
+    if (isEditMode && cuotaId) {
       // Modo edición: incluir el ID de la cuota
       try {
+
+        const dataToSendEdit = {
+          name: values.name,
+          description: values.description,
+          amount: values.amount,
+        };
+        
         const response = await axios.put(
-          import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + cuotaId,
-          dataToSend
+          // Cambiar el 1 por el tenant_id cuando esté disponible
+          import.meta.env.VITE_BACKEND_URL + "finanzas/fees/" + "1" + "/" + cuotaId,
+          dataToSendEdit
         );
 
         if (response.status === 200) {
@@ -169,8 +187,8 @@ export default function CreateCuotaForm({
       // Modo creación: crear nueva cuota
       try {
         const response = await axios.post(
-          import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas",
-          dataToSend
+          import.meta.env.VITE_BACKEND_URL + "finanzas/fees",
+          dataToSendCreate
         );
 
         if (response.status === 201) {
@@ -256,6 +274,7 @@ export default function CreateCuotaForm({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value || ""}
+                    disabled={isEditMode}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecciona una periodicidad" />
@@ -289,6 +308,7 @@ export default function CreateCuotaForm({
                           "w-full pl-3 text-left font-normal",
                           !field.value && "text-muted-foreground"
                         )}
+                        disabled={isEditMode}
                       >
                         {field.value ? (
                           format(field.value, "PPP")
@@ -321,7 +341,7 @@ export default function CreateCuotaForm({
             name="end_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Fecha de fin (opcional)</FormLabel>
+                <FormLabel>Fecha de fin</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -331,6 +351,7 @@ export default function CreateCuotaForm({
                           "w-full pl-3 text-left font-normal",
                           !field.value && "text-muted-foreground"
                         )}
+                        disabled={isEditMode}
                       >
                         {field.value ? (
                           format(field.value, "PPP")
@@ -370,6 +391,7 @@ export default function CreateCuotaForm({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value || ""}
+                    disabled={isEditMode}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecciona un alcance" />
@@ -386,39 +408,103 @@ export default function CreateCuotaForm({
               </FormItem>
             )}
           />
-          {showTargetMemberField && (
+          {showAssociatedToField && (
             <FormField
               control={form.control}
-              name="target_member_id"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Seleccionar Scout</FormLabel>
-                  <Select
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    value={field.value?.toString() || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full col-span-full">
-                        <SelectValue placeholder="Selecciona un scout..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {scouts.map((scout) => (
-                        <SelectItem
-                          key={scout.member_id}
-                          value={scout.member_id.toString()}
-                        >
-                          {scout.member_id} - {scout.first_name}{" "}
-                          {scout.last_name} ({scout.subgroup}, {scout.age} años)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              name="associated_to"
+              render={({ field }) => {
+                // En modo edición, mostrar input readonly si hay un valor
+                if (isEditMode) {
+                  return (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Asociado</FormLabel>
+                      <FormControl>
+                        <Input
+                          value={defaultValues?.associated_to?.name}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }
+
+                // En modo creación, mostrar select
+                const handleValueChange = (value: string) => {
+                  if (scopeValue === "SCOUT") {
+                    const member = members.find(m => m.user_id.toString() === value);
+                    if (member) {
+                      field.onChange({ id: member.user_id.toString(), name: `${member.first_name} ${member.last_name}` });
+                    }
+                  } else if (scopeValue === "SUBGROUP") {
+                    const subgroup = subgroups.find(s => s.id.toString() === value);
+                    if (subgroup) {
+                      field.onChange({ id: subgroup.id.toString(), name: subgroup.name });
+                    }
+                  } else if (scopeValue === "SECTION") {
+                    const section = sections.find(s => s.id.toString() === value);
+                    if (section) {
+                      field.onChange({ id: section.id.toString(), name: section.name });
+                    }
+                  }
+                };
+
+                const getPlaceholder = () => {
+                  switch (scopeValue) {
+                    case "SCOUT": return "Selecciona un scout...";
+                    case "SUBGROUP": return "Selecciona un subgrupo...";
+                    case "SECTION": return "Selecciona una sección...";
+                    default: return "Selecciona un asociado...";
+                  }
+                };
+
+                return (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Seleccionar asociado</FormLabel>
+                    <Select
+                      onValueChange={handleValueChange}
+                      value={field.value?.id || ""}
+                      disabled={isEditMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full col-span-full">
+                          <SelectValue placeholder={getPlaceholder()} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {scopeValue === "SCOUT" && members.map((member) => (
+                          <SelectItem
+                            key={member.user_id}
+                            value={member.user_id.toString()}
+                          >
+                            {member.user_id} - {member.first_name} {member.last_name}
+                          </SelectItem>
+                        ))}
+                        {scopeValue === "SUBGROUP" && subgroups.map((subgroup) => (
+                          <SelectItem
+                            key={subgroup.id}
+                            value={subgroup.id.toString()}
+                          >
+                            {subgroup.id} - {subgroup.name}
+                          </SelectItem>
+                        ))}
+                        {scopeValue === "SECTION" && sections.map((section) => (
+                          <SelectItem
+                            key={section.id}
+                            value={section.id.toString()}
+                          >
+                            {section.id} - {section.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
-          )}
+          )}        
         </div>
 
         <div className="col-span-full flex justify-end mt-4 gap-2">
