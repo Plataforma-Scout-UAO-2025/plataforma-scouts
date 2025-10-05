@@ -8,8 +8,8 @@ import java.util.List;
 
 public class MedicalRecord {
     private final Long id;                       // medical_record_id (BIGINT)
-    private final Long tenantId;                 // opcional
-    private final Long memberId;                 // 1:1 con UNIQUE
+    private final String tenantId;               // <-- String multi-tenant
+    private final Long memberId;                 // 1:1 dentro del tenant
     private final String bloodType;              // obligatorio
     private final String eps;
     private final String allergies;
@@ -22,7 +22,7 @@ public class MedicalRecord {
     private final OffsetDateTime createdAt;
     private final OffsetDateTime updatedAt;
 
-    public MedicalRecord(Long id, Long tenantId, Long memberId, String bloodType,
+    public MedicalRecord(Long id, String tenantId, Long memberId, String bloodType,
                          String eps, String allergies, String chronicDiseases,
                          String physicalRestrictions, String surgicalHistory,
                          Boolean active,
@@ -46,7 +46,7 @@ public class MedicalRecord {
     }
 
     public Long getId() { return id; }
-    public Long getTenantId() { return tenantId; }
+    public String getTenantId() { return tenantId; }
     public Long getMemberId() { return memberId; }
     public String getBloodType() { return bloodType; }
     public String getEps() { return eps; }
