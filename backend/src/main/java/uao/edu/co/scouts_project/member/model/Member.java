@@ -14,6 +14,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -39,12 +41,19 @@ import uao.edu.co.scouts_project.organigram.Subgroup;
 public class Member {
 
     @Id
-    @Column(name = "user_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_id")
+    private Long memberId;
+
+    @NotNull
+    @Column(name = "user_id", nullable = false)
     private String userId;
 
     @NotNull
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
+
+    private Integer guardianId;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -101,11 +110,9 @@ public class Member {
     @Column(name = "acceptance_date")
     private LocalDate acceptanceDate;
 
-    @Column(name = "in_charge_of")
-    private List<Integer> inChargeOf;
 
     @Type(JsonType.class)
-    @Column(name = "emergency_contacts", columnDefinition = "json")
+    @Column(name = "emergency_contacts", columnDefinition = "jsonb")
     private List<EmergencyContact> emergencyContacts;
 
     @CreationTimestamp
