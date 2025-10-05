@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -12,9 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import uao.edu.co.scouts_project.finanzas.fees.dto.CreateCuotaDto;
 import uao.edu.co.scouts_project.finanzas.fees.dto.CuotaDto;
-import uao.edu.co.scouts_project.finanzas.fees.dto.FeeIndexResponse;
+import uao.edu.co.scouts_project.finanzas.fees.dto.IdNameDto;
 import uao.edu.co.scouts_project.finanzas.fees.dto.MemberPaymentDto;
 
 import uao.edu.co.scouts_project.finanzas.fees.mapper.FeeMapper;
@@ -34,7 +35,7 @@ import uao.edu.co.scouts_project.finanzas.fees.repository.IConceptRepository;
 import uao.edu.co.scouts_project.finanzas.fees.repository.IFeePlanRepository;
 import uao.edu.co.scouts_project.finanzas.fees.repository.IInstallmentRepository;
 import uao.edu.co.scouts_project.finanzas.fees.repository.IMemberReadRepository;
-
+import uao.edu.co.scouts_project.finanzas.fees.repository.projection.IdNameProjection;
 import uao.edu.co.scouts_project.finanzas.fees.service.IFeeService;
 
 @Service
@@ -50,12 +51,13 @@ public class FeeServiceImpl implements IFeeService {
   private final FeeMapper mapper;
 
   // ---------------------------------------------------------------------
-  // CREATE (con generación de installments)
+  // CREATE (con generación de installments) - usando associated_to
   // ---------------------------------------------------------------------
   @Override
   public CuotaDto create(CreateCuotaDto dto) {
-    final Long tenantId = dto.tenant_id();
+    final String tenantId = dto.tenant_id();
 
+    // -------- Validaciones básicas --------
     if (dto.end_date().isBefore(dto.start_date())) {
       throw new IllegalArgumentException("end_date must be >= start_date");
     }
@@ -63,17 +65,21 @@ public class FeeServiceImpl implements IFeeService {
         !dto.end_date().equals(dto.start_date())) {
       throw new IllegalArgumentException("For SINGLE periodicity, end_date must equal start_date");
     }
-    if (dto.scope() == FeeScope.SCOUT && dto.target_member_id() == null) {
-      throw new IllegalArgumentException("target_member_id is required for scope=SCOUT");
-    }
-    if (dto.scope() == FeeScope.SECTION && dto.section_id() == null) {
-      throw new IllegalArgumentException("section_id is required for scope=SECTION");
-    }
-    if (dto.scope() == FeeScope.SUBGROUP && dto.subgroup_id() == null) {
-      throw new IllegalArgumentException("subgroup_id is required for scope=SUBGROUP");
+
+    // Validación de associated_to según scope
+    if (dto.scope() == FeeScope.ALL) {
+      if (dto.associated_to() != null && !dto.associated_to().isNull()) {
+        throw new IllegalArgumentException("associated_to must be null when scope=ALL");
+      }
+    } else {
+      // SCOUT | SECTION | SUBGROUP
+      if (dto.associated_to() == null || dto.associated_to().isNull()
+          || !dto.associated_to().hasNonNull("id")) {
+        throw new IllegalArgumentException("associated_to.id is required for scope=" + dto.scope());
+      }
     }
 
-    // Concept (upsert por nombre)
+    // -------- Concept (upsert por nombre) --------
     Concept concept = conceptRepo.findByNameIgnoreCase(dto.name())
         .orElseGet(() -> {
           Concept c = new Concept();
@@ -87,7 +93,7 @@ public class FeeServiceImpl implements IFeeService {
       concept = conceptRepo.save(concept);
     }
 
-    // FeePlan (scope/periodicity como String en la entidad)
+    // -------- FeePlan base --------
     FeePlan fp = new FeePlan();
     fp.setConcept(concept);
     fp.setAmount(dto.amount());
@@ -95,26 +101,74 @@ public class FeeServiceImpl implements IFeeService {
     fp.setScope(dto.scope() != null ? dto.scope().name() : null);
     fp.setStartDate(dto.start_date());
     fp.setEndDate(dto.end_date());
-    fp.setTargetMemberId(dto.target_member_id());
-    feePlanRepo.save(fp);
 
-    // Miembros objetivo (rol SCOUT) según scope
+    fp.setTenantId(tenantId);
+
+    // Tomar associated_to directamente del DTO (enrich opcional del "name" si viene vacío)
+    JsonNode associatedTo = dto.associated_to(); // puede ser null en scope=ALL
+
+    // -------- Resolución de targets según scope --------
+    // Para SCOUT/SECTION/SUBGROUP usaremos el id dentro de associated_to
+    String assocId = (associatedTo != null && !associatedTo.isNull() && associatedTo.hasNonNull("id"))
+        ? associatedTo.get("id").asText()
+        : null;
+
     List<MemberView> targets = switch (dto.scope()) {
       case ALL      -> memberRepo.findScoutsByTenant(tenantId);
-      case SCOUT    -> memberRepo.findScoutById(tenantId, dto.target_member_id());
-      case SECTION  -> memberRepo.findScoutsBySection(tenantId, dto.section_id());
-      case SUBGROUP -> memberRepo.findScoutsBySubgroup(tenantId, dto.subgroup_id());
+      case SCOUT    -> memberRepo.findScoutById(tenantId, assocId);
+      case SECTION  -> {
+        Long sectionId = null;
+        try {
+          sectionId = Long.valueOf(assocId);
+        } catch (NumberFormatException e) {
+          throw new IllegalArgumentException("associated_to.id must be a valid Long for scope=SECTION");
+        }
+        yield memberRepo.findScoutsBySection(tenantId, sectionId);
+      }
+      case SUBGROUP -> {
+        Long subgroupId = null;
+        try {
+          subgroupId = Long.valueOf(assocId);
+        } catch (NumberFormatException e) {
+          throw new IllegalArgumentException("associated_to.id must be a valid Long for scope=SUBGROUP");
+        }
+        yield memberRepo.findScoutsBySubgroup(tenantId, subgroupId);
+      }
     };
 
-    // Calendario por periodicidad
+    if (dto.scope() != FeeScope.ALL && (targets == null || targets.isEmpty())) {
+      throw new IllegalArgumentException("No targets found for the provided associated_to.id / scope.");
+    }
+
+    // Si el scope NO es ALL y el "name" no vino, intentamos enriquecerlo (opcional)
+    if (dto.scope() == FeeScope.SCOUT && associatedTo != null &&
+        (!associatedTo.hasNonNull("name") || associatedTo.get("name").asText().isBlank())) {
+      var t = targets.get(0);
+      String fullName = (t.getFirstName() != null ? t.getFirstName() : "")
+          + (t.getLastName() != null ? " " + t.getLastName() : "");
+      com.fasterxml.jackson.databind.node.ObjectNode n =
+          (associatedTo.isObject() ? (com.fasterxml.jackson.databind.node.ObjectNode) associatedTo
+                                  : new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode());
+      n.put("id", assocId);
+      n.put("name", fullName.trim().isEmpty() ? null : fullName.trim());
+      associatedTo = n;
+    }
+    // (Para SECTION/SUBGROUP podrías enriquecer nombre con consultas auxiliares si lo necesitas)
+
+    fp.setAssociatedTo(associatedTo);
+    feePlanRepo.save(fp);
+
+    // -------- Calendario por periodicidad --------
     List<LocalDate> schedule = buildSchedule(dto.periodicity(), dto.start_date(), dto.end_date());
 
-    // Crear installments: amount se interpreta como valor por cuota
+    // -------- Crear installments (amount = valor por cuota) --------
     for (MemberView m : targets) {
-      Account acc = accountRepo.findByMemberIdAndActiveTrue(m.getMemberId())
+      Account acc = accountRepo.findByUserIdAndActiveTrue(m.getUserId())
           .orElseGet(() -> {
             Account a = new Account();
-            a.setMemberId(m.getMemberId());
+            a.setUserId(m.getUserId());
+            a.setActive(true);
+            a.setTenantId(tenantId);
             return accountRepo.save(a);
           });
 
@@ -126,54 +180,69 @@ public class FeeServiceImpl implements IFeeService {
             due,
             dto.amount()
         );
-        inst.setTenantId(tenantId);
+        inst.setTenantId(tenantId); // propaga tenant al installment
         toCreate.add(inst);
       }
       installmentRepo.saveAll(toCreate);
     }
 
+    // -------- DTO de salida (miembro solo si SCOUT) --------
     MemberPaymentDto member = null;
     if (dto.scope() == FeeScope.SCOUT && !targets.isEmpty()) {
-      member = mapper.toMemberDto(targets.get(0)); // sin jerarquía aquí
+      member = mapper.toMemberDto(targets.get(0));
     }
     return mapper.toCuotaDto(fp, member);
   }
 
   // ---------------------------------------------------------------------
-  // LIST por tenant (incluye subgroup/section id + name)
+  // GET Listados de Cuotas y miembros separados.
   // ---------------------------------------------------------------------
+
+  @Override
   @Transactional(readOnly = true)
-  public FeeIndexResponse listAllByTenant(Long tenantId) {
-    // 1) Traer miembros (rol SCOUT) con jerarquía (subgroup & section)
-    List<MemberPaymentDto> members = memberRepo.findHierarchyByTenant(tenantId).stream()
-        .map(mapper::toMemberDto)   // overload que recibe MemberHierarchyRow
+  public List<CuotaDto> listFeesByTenant(String tenantId) {
+    // FeePlans cuyo Concept pertenece al tenant
+    return feePlanRepo.findByConcept_TenantId(tenantId).stream()
+        .map(mapper::toCuotaDto) // mapea associatedTo directamente
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<MemberPaymentDto> listMembersByTenant(String tenantId) {
+    // Sólo miembros con jerarquía (subgrupo/ sección).
+    return memberRepo.findHierarchyByTenant(tenantId).stream()
+        .map(mapper::toMemberDto)
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------
+  // GET Listados de Subgrupos y Ramas por tenant.
+  // ---------------------------------------------------------------------
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<IdNameDto> listSubgroupsByTenant(String tenantId) {
+    List<IdNameProjection> rows = memberRepo.findDistinctSubgroupsByTenant(tenantId);
+    return rows.stream()
+        .map(r -> new IdNameDto(r.getId(), r.getName()))
         .collect(Collectors.toList());
+  }
 
-    // 2) Traer cuotas del tenant (por tenant del concepto)
-    var fees = feePlanRepo.findByConcept_TenantId(tenantId);
-
-    // 3) Armar respuesta, inyectando miembro si scope=SCOUT y hay target
-    List<CuotaDto> cuotas = fees.stream()
-        .map(fp -> {
-          MemberPaymentDto member = null;
-          if (fp.getTargetMemberId() != null && FeeScope.SCOUT.name().equals(fp.getScope())) {
-            member = members.stream()
-                .filter(m -> Objects.equals(m.member_id(), fp.getTargetMemberId()))
-                .findFirst()
-                .orElse(null);
-          }
-          return mapper.toCuotaDto(fp, member);
-        })
+  @Override
+  @Transactional(readOnly = true)
+  public List<IdNameDto> listSectionsByTenant(String tenantId) {
+    List<IdNameProjection> rows = memberRepo.findDistinctSectionsByTenant(tenantId);
+    return rows.stream()
+        .map(r -> new IdNameDto(r.getId(), r.getName()))
         .collect(Collectors.toList());
-
-    return new FeeIndexResponse(cuotas, members);
   }
 
   // ---------------------------------------------------------------------
   // PATCH
   // ---------------------------------------------------------------------
   @Override
-  public CuotaDto patch(Long feePlanId, CuotaDto patch, Long tenantId) {
+  public CuotaDto patch(Long feePlanId, CuotaDto patch, String tenantId) {
       FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
           .orElseThrow(() -> new NoSuchElementException("FeePlan not found for tenant " + tenantId));
 
@@ -211,7 +280,7 @@ public class FeeServiceImpl implements IFeeService {
   // DELETE
   // ---------------------------------------------------------------------
   @Override
-  public void deleteFeePlan(Long feePlanId, Long tenantId) {
+  public void deleteFeePlan(Long feePlanId, String tenantId) {
       // 1) Validar pertenencia al tenant
       FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
           .orElseThrow(() -> new NoSuchElementException("FeePlan not found for this tenant"));

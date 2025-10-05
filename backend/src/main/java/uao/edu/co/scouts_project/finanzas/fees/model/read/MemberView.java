@@ -9,8 +9,8 @@ import org.hibernate.annotations.Immutable;
 public class MemberView {
 
   @Id
-  @Column(name = "member_id")   // <-- AQUÍ el fix: usar member_id
-  private Long memberId;
+  @Column(name = "user_id") 
+  private String userId;
 
   @Column(name = "first_name")
   private String firstName;
@@ -25,16 +25,16 @@ public class MemberView {
   private Long subgroup;
 
   @Column(name = "tenant_id")
-  private Long tenantId;
+  private String tenantId;
 
   // JPA necesita ctor por defecto (al menos protected)
   protected MemberView() {}
 
   // getters
-  public Long getMemberId() { return memberId; }
+  public String getUserId() { return userId; }
   public String getFirstName() { return firstName; }
   public String getLastName() { return lastName; }
   public Integer getAge() { return age; }
   public Long getSubgroup() { return subgroup; }
-  public Long getTenantId() { return tenantId; }
+  public String getTenantId() { return tenantId; }
 }

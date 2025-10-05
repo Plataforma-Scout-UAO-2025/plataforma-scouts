@@ -21,7 +21,7 @@ public class FeeMapper {
     public MemberPaymentDto toMemberDto(MemberView v) {
         if (v == null) return null;
         return new MemberPaymentDto(
-            v.getMemberId(),     // member_id
+            v.getUserId(),     // user_id
             v.getFirstName(),    // first_name
             v.getLastName(),     // last_name
             v.getSubgroup(),     // subgroup_id
@@ -39,7 +39,7 @@ public class FeeMapper {
     public MemberPaymentDto toMemberDto(MemberHierarchyRow r) {
         if (r == null) return null;
         return new MemberPaymentDto(
-            r.getMemberId(),
+            r.getUserId(),
             r.getFirstName(),
             r.getLastName(),
             r.getSubgroupId(),
@@ -69,7 +69,7 @@ public class FeeMapper {
             scope,
             fp.getStartDate(),
             fp.getEndDate(),
-            memberOrNull // puede ser null si scope != SCOUT o no hay targetMember
+            fp.getAssociatedTo() // puede ser null si scope != SCOUT o no hay targetMember
         );
     }
 

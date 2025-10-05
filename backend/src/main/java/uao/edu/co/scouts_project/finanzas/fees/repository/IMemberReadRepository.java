@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import uao.edu.co.scouts_project.finanzas.fees.model.read.MemberView;
+import uao.edu.co.scouts_project.finanzas.fees.repository.projection.IdNameProjection;
 import uao.edu.co.scouts_project.finanzas.fees.repository.projection.MemberHierarchyRow;
 
 public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
@@ -15,15 +16,15 @@ public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
       where m.tenant_id = :tenantId
         and m.role = 'SCOUT'
       """, nativeQuery = true)
-  List<MemberView> findScoutsByTenant(Long tenantId);
+  List<MemberView> findScoutsByTenant(String tenantId);
 
   @Query(value = """
       select * from member m
       where m.tenant_id = :tenantId
         and m.role = 'SCOUT'
-        and m.memberid = :memberId
+        and m.user_id = :userId
       """, nativeQuery = true)
-  List<MemberView> findScoutById(Long tenantId, Long memberId);
+  List<MemberView> findScoutById(String tenantId, String userId);
 
   @Query(value = """
       select m.* from member m
@@ -32,7 +33,7 @@ public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
         and m.role = 'SCOUT'
         and sg.section_id = :sectionId
       """, nativeQuery = true)
-  List<MemberView> findScoutsBySection(Long tenantId, Long sectionId);
+  List<MemberView> findScoutsBySection(String tenantId, Long sectionId);
 
   @Query(value = """
       select * from member m
@@ -40,11 +41,11 @@ public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
         and m.role = 'SCOUT'
         and m.subgroup_id = :subgroupId
       """, nativeQuery = true)
-  List<MemberView> findScoutsBySubgroup(Long tenantId, Long subgroupId);
+  List<MemberView> findScoutsBySubgroup(String tenantId, Long subgroupId);
 
     @Query(value = """
       SELECT
-        m.member_id      AS memberId,
+        m.user_id      AS userId,
         m.first_name     AS firstName,
         m.last_name      AS lastName,
         m.age            AS age,
@@ -58,8 +59,31 @@ public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
       LEFT JOIN section  s  ON s.section_id = sg.section_id
       WHERE m.tenant_id = :tenantId
         AND m.role = 'SCOUT'
-      ORDER BY m.member_id
+      ORDER BY m.user_id
       """, nativeQuery = true)
-  List<MemberHierarchyRow> findHierarchyByTenant(@Param("tenantId") Long tenantId);
+  List<MemberHierarchyRow> findHierarchyByTenant(@Param("tenantId") String tenantId);
   
+  @Query(value = """
+      SELECT DISTINCT
+        sg.subgroup_id AS id,
+        sg.name        AS name
+      FROM member mv
+      JOIN subgroup sg       ON sg.subgroup_id = mv.subgroup_id
+      WHERE sg.tenant_id = :tenantId
+      ORDER BY name
+      """, nativeQuery = true)
+  List<IdNameProjection> findDistinctSubgroupsByTenant(@Param("tenantId") String tenantId);
+
+  @Query(value = """
+      SELECT DISTINCT
+        se.section_id AS id,
+        se.name       AS name
+      FROM member mv
+      JOIN subgroup sg ON sg.subgroup_id = mv.subgroup_id
+      JOIN section  se ON se.section_id  = sg.section_id
+      WHERE se.tenant_id = :tenantId
+      ORDER BY name
+      """, nativeQuery = true)
+  List<IdNameProjection> findDistinctSectionsByTenant(@Param("tenantId") String tenantId);
+
 }

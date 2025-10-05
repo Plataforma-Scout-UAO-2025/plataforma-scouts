@@ -10,7 +10,7 @@ public class Concept {
   @Column(name = "concept_id")
   @SequenceGenerator(
       name = "concept_seq_gen",
-      sequenceName = "concept_concept_id_seq", // <-- tal cual
+      sequenceName = "concept_concept_id_seq",
       allocationSize = 1                        
   )
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "concept_seq_gen")
@@ -23,7 +23,7 @@ public class Concept {
   private String description;
 
   @Column(name = "tenant_id")
-  private Long tenantId;
+  private String tenantId;
 
   // getters y setters
   public Long getConceptId() {
@@ -46,11 +46,11 @@ public class Concept {
     this.description = description;
   }
 
-  public Long getTenantId() {
+  public String getTenantId() {
     return tenantId;
   }
 
-  public void setTenantId(Long tenantId) {
+  public void setTenantId(String tenantId) {
     this.tenantId = tenantId;
   }
 

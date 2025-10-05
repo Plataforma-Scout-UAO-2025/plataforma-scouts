@@ -10,6 +10,6 @@ import uao.edu.co.scouts_project.finanzas.fees.model.FeePlan;
 
 public interface IFeePlanRepository extends JpaRepository<FeePlan, Long> {
         boolean existsByConcept(Concept concept);
-        List<FeePlan> findByConcept_TenantId(Long tenantId);
-        Optional<FeePlan> findByFeePlanIdAndConcept_TenantId(Long feePlanId, Long tenantId);
+        List<FeePlan> findByConcept_TenantId(String tenantId);
+        Optional<FeePlan> findByFeePlanIdAndConcept_TenantId(Long feePlanId, String tenantId);
 }

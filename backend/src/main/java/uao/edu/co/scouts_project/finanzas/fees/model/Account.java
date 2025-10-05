@@ -11,8 +11,11 @@ public class Account {
   @Column(name = "account_id")
   private Long accountId;
 
-  @Column(name = "member_id", nullable = false, unique = true)
-  private Long memberId;
+  @Column(name = "tenant_id", nullable = false)
+  private String tenantId; 
+
+  @Column(name = "user_id", nullable = false, unique = true)
+  private String userId;
 
   @Column(name = "currency", nullable = false)
   private String currency = "COP";
@@ -24,8 +27,10 @@ public class Account {
   private boolean active = true;
 
   public Long getAccountId() { return accountId; }
-  public Long getMemberId() { return memberId; }
-  public void setMemberId(Long memberId) { this.memberId = memberId; }
+  public String getTenantId() { return tenantId; }
+  public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+  public String getUserId() { return userId; }
+  public void setUserId(String userId) { this.userId = userId; }
   public String getCurrency() { return currency; }
   public void setCurrency(String currency) { this.currency = currency; }
   public Instant getCreatedAt() { return createdAt; }

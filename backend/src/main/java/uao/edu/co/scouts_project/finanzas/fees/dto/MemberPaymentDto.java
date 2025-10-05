@@ -1,7 +1,7 @@
 package uao.edu.co.scouts_project.finanzas.fees.dto;
 
 public record MemberPaymentDto(
-    Long member_id,
+    String user_id,
     String first_name,
     String last_name,
     Long subgroup_id,

@@ -4,6 +4,11 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 @Entity
 @Table(name = "fee_plan")
 public class FeePlan {
@@ -14,7 +19,7 @@ public class FeePlan {
     private Long feePlanId;
 
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId = 1L; // mientras manejamos multi-tenant
+    private String tenantId; 
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "concept_id", nullable = false)
@@ -37,12 +42,12 @@ public class FeePlan {
     @Column(name = "proratable", columnDefinition = "boolean default false", nullable = false)
     private boolean proratable = false;
 
-    // text en DB (con constraint de valores válidos)
     @Column(name = "scope", columnDefinition = "text", nullable = false)
     private String scope;
 
-    @Column(name = "target_member_id")
-    private Long targetMemberId;
+    @Column(name = "associated_to", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private JsonNode associatedTo;
 
   // getters y setters
   public Long getFeePlanId() {
@@ -97,12 +102,12 @@ public class FeePlan {
     this.scope = scope;
   }
 
-  public Long getTargetMemberId() {
-    return targetMemberId;
+  public String getTenantId() { 
+    return tenantId; 
   }
-
-  public void setTargetMemberId(Long targetMemberId) {
-    this.targetMemberId = targetMemberId;
+  
+  public void setTenantId(String tenantId) { 
+    this.tenantId = tenantId; 
   }
 
   public String getPeriodicity() {
@@ -112,4 +117,13 @@ public class FeePlan {
   public void setPeriodicity(String periodicity) {
     this.periodicity = periodicity;
   }
+
+  public JsonNode getAssociatedTo() {
+    return associatedTo;
+  }
+
+  public void setAssociatedTo(JsonNode associatedTo) {
+      this.associatedTo = associatedTo;
+  }
+
 }

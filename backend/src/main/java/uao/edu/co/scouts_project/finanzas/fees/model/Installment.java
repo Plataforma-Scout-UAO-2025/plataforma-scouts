@@ -17,7 +17,7 @@ public class Installment {
   private Long installmentId;
 
   @Column(name = "tenant_id", nullable = false)
-  private Long tenantId; 
+  private String tenantId; 
 
   @Column(name = "account_id", nullable = false)
   private Long accountId;
@@ -59,9 +59,9 @@ public class Installment {
   public String getStatus() { return status; }
   public BigDecimal getBalance() { return balance; }
   public JsonNode getPayments() { return payments; }
-  public Long getTenantId() { return tenantId; }
+  public String getTenantId() { return tenantId; }
 
   public void setStatus(String status) { this.status = status; }
   public void setAmount(BigDecimal amount) { this.amount = amount; }
-  public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+  public void setTenantId(String tenantId) { this.tenantId = tenantId; }
 }

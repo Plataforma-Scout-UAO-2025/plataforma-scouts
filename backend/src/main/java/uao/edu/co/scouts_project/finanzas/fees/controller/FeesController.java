@@ -3,6 +3,9 @@ package uao.edu.co.scouts_project.finanzas.fees.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,16 +27,38 @@ public class FeesController {
     return ResponseEntity.status(201).body(created);
   }
 
-  @Operation(summary = "Listar cuotas y miembros de un tenant")
+  // -------- LIST: cuotas por tenant (con associatedTo) ----------
+  @Operation(summary = "Listar cuotas de un tenant")
   @GetMapping("/{tenantId}")
-  public FeeIndexResponse list(@PathVariable Long tenantId) {
-    return feeService.listAllByTenant(tenantId);
+  public List<CuotaDto> listFeesByTenant(@PathVariable String tenantId) {
+    return feeService.listFeesByTenant(tenantId);
+  }
+
+  // -------- LIST: miembros por tenant (con jerarquía) ----------
+  @Operation(summary = "Listar miembros Scout de un tenant")
+  @GetMapping("/members/{tenantId}")
+  public List<MemberPaymentDto> listMembersByTenant(@PathVariable String tenantId) {
+    return feeService.listMembersByTenant(tenantId);
+  }
+
+  // -------- LIST: secciones por tenant ----------
+
+  @GetMapping("/sections/{tenantId}")
+  public List<IdNameDto> listSections(@PathVariable String tenantId) {
+    return feeService.listSectionsByTenant(tenantId);
+  }
+
+  // -------- LIST: subgrupos por tenant ----------
+
+  @GetMapping("/subgroups/{tenantId}")
+  public List<IdNameDto> listSubgroups(@PathVariable String tenantId) {
+    return feeService.listSubgroupsByTenant(tenantId);
   }
 
   @Operation(summary = "Editar atrbutos no disruptivos, si se necesita editar periodicidad, scope o fechas, se debe crear un nuevo fee_plan")
   @PatchMapping("/{tenantId}/{feePlanId}")
   public ResponseEntity<CuotaDto> patch(
-    @PathVariable Long tenantId,
+    @PathVariable String tenantId,
     @PathVariable Long feePlanId,
     @RequestBody CuotaDto patchDto) {
     return ResponseEntity.ok(feeService.patch(feePlanId, patchDto, tenantId));
@@ -42,7 +67,7 @@ public class FeesController {
   @Operation(summary = "Eliminar FeePlan/Concept/installment a partir del fee_plan_id, se eliminan todas las entidades relacionadas a el fee_plan, usar con cuidado.")
   @DeleteMapping("/{tenantId}/{feePlanId}")
   public ResponseEntity<Void> delete(
-    @PathVariable Long tenantId,
+    @PathVariable String tenantId,
     @PathVariable Long feePlanId) {
     feeService.deleteFeePlan(feePlanId, tenantId);
     return ResponseEntity.noContent().build();

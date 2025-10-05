@@ -17,14 +17,18 @@ headers {
 
 body:json {
   {
-    "tenant_id":1,
-    "name": "Mensualidad",
-    "description": "Cuota Plastico 2025",
+    "tenant_id": "3263470f-eb40-4e86-b4fb-8d2c111348d0",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
     "amount": 50000,
     "periodicity": "MONTH",
-    "scope": "ALL",
-    "start_date": "2025-10-01",
-    "end_date": "2026-01-30"
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2025-06-01",
+    "associated_to": {
+      "id": "72b0e16c-84d4-4e49-838b-d473e2e000b0",
+      "name": "Camila Mendoza"
+    }
   }
 }
 
@@ -53,11 +57,7 @@ docs {
     "member": BigINT -> NULLABLE if scope ≠ "SCOUT",
     
     "subgroup_id": BigINT -> NULLABLE if scope ≠ "SUBGROUP",
-        
-    "subgroup_name": text -> NULLABLE if scope ≠ "SUBGROUP",
-    
+          
     "section_id": BigINT -> NULLABLE if scope ≠ "SECTION",
     
-    "section_name": text -> NULLABLE if scope ≠ "SECTION",
-  
 }
