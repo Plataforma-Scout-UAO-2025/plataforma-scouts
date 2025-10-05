@@ -13,8 +13,11 @@ import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 import Home from "./app/routes/Home";
+import AcudientesPage from "./app/routes/AcudientesPage";
+import FinancieroAcudientes from "./app/routes/acudientes/financiero/FinancieroAcudientes";
+import EventosAcudientes from "./app/routes/acudientes/eventos/EventosAcudientes";
 
-const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal"; // Simulación de rol actual del usuario
+const currentUserRole: "adminGrupal" | "adminGlobal" | "acudiente" = "acudiente"; // Simulación de rol actual del usuario
 
 // Protected components
 const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
@@ -30,6 +33,12 @@ function App() {
           {/* Se quitan las rutas de login y register pues todo será manejado desde Auth0
           <Route path="/login" element={<ProtectedLogin />} />
           <Route path="/register" element={<ProtectedRegister />} /> */}
+          
+          {/* Rutas independientes para acudientes */}
+          <Route path="/acudientes" element={<AcudientesPage />} />
+          <Route path="/acudientes/financiero" element={<FinancieroAcudientes />} />
+          <Route path="/acudientes/eventos" element={<EventosAcudientes />} />
+          
           <Route path="/app" element={<ProtectedAppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
