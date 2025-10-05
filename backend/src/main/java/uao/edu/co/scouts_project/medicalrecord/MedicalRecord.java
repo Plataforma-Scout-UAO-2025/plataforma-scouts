@@ -38,12 +38,12 @@ public class MedicalRecord {
     private Long medicalRecordId;
 
     @NotNull
-    @Column(name = "user_id", nullable = false)
-    private String userId;
-
-    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
+
+    @NotNull
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
 
     @Column(name = "blood_type")
     private String bloodType;
@@ -63,12 +63,12 @@ public class MedicalRecord {
     private Boolean active;
 
     @Type(JsonType.class)
-    @Column(name = "medication_details", columnDefinition = "jsonb")
-    private List<MedicationDetail> medicationDetails;
+    @Column(name = "medications_detail", columnDefinition = "jsonb")
+    private List<MedicationDetail> medicationsDetail;
 
     @Type(JsonType.class)
-    @Column(name = "vaccine_details", columnDefinition = "jsonb")
-    private List<VaccineDetail> vaccineDetails;
+    @Column(name = "vaccines_detail", columnDefinition = "jsonb")
+    private List<VaccineDetail> vaccinesDetail;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
