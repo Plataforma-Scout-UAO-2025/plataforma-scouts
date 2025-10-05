@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.4</version>
+		<version>3.5.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>uao.edu.co</groupId>
@@ -49,11 +49,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.2.0</version>
-        </dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.5</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
@@ -101,12 +101,27 @@
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>com.vladmihalcea</groupId>
-            <artifactId>hibernate-types-60</artifactId> <!-- para Hibernate 6.x -->
-            <version>2.21.1</version>
-        </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.okta.spring</groupId>
+			<artifactId>okta-spring-boot-starter</artifactId>
+			<version>3.0.5</version>
+		</dependency>
+		<dependency>
+			<groupId>com.auth0</groupId>
+			<artifactId>auth0</artifactId>
+			<version>1.42.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.auth0</groupId>
+			<artifactId>mvc-auth-commons</artifactId>
+			<version>1.9.1</version>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -138,6 +153,39 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.10</version>
+				<configuration>
+					<excludes>
+						<!-- Main Application Class -->
+						<exclude>**/ScoutsProjectApplication.class</exclude>
+						
+						<!-- Configuration Classes -->
+						<exclude>**/config/**</exclude>
+						<exclude>**/infrastructure/security/SecurityConfig.class</exclude>
+						
+						<!-- DTOs (Data Transfer Objects) -->
+						<exclude>**/dto/**</exclude>
+						
+						<!-- Entity/Model Classes (JPA Entities with Lombok) -->
+						<exclude>**/model/**</exclude>
+						<exclude>**/organigram/**</exclude>
+						<exclude>**/medicalrecord/MedicalRecord.class</exclude>
+						<exclude>**/medicalrecord/MedicalRecord$*.class</exclude>
+						
+						<!-- Enums -->
+						<exclude>**/enums/**</exclude>
+						<exclude>**/shared/enums/**</exclude>
+						
+						<!-- Ports/Interfaces (no implementation logic) -->
+						<exclude>**/domain/port/**</exclude>
+						
+						<!-- Test/Mock Controllers (development only) -->
+						<exclude>**/web/controller/MockTestAuthzController.class</exclude>
+						<exclude>**/common/controller/TestController.class</exclude>
+						
+						<!-- Repository Interfaces (Spring Data JPA auto-implemented) -->
+						<exclude>**/repository/**</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>

@@ -26,21 +26,20 @@ import {
   LogOut,
   Users,
   Award,
-  DollarSign,
-  BarChart3,
-  FileText,
-  CreditCard,
   ChevronRight,
+  Network,
 } from "lucide-react"
 import { Outlet, Link, useLocation } from "react-router-dom"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import type { ReactNode } from "react"
+import { useAuth0 } from '@auth0/auth0-react';
 
 type SubMenuItem = {
   id: string
   label: string
   icon: ReactNode
   href?: string
+  submenu?: SubMenuItem[]
 }
 
 type MenuItem = {
@@ -51,39 +50,23 @@ type MenuItem = {
   submenu?: SubMenuItem[]
 }
 
-const mainItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
-  { id: "tropa", label: "Tropa", icon: <Boxes />, href: "/app/tropa" },
-  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
-  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
+//const mainItems: MenuItem[] = [
+//  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/home" },
+//  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
+//]
+
+const adminGlobalItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard-global" },
 ]
 
 const adminGrupalItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/adminGrupal/" },
-  { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/adminGrupal/miembros" },
-  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/adminGrupal/insignias" },
-  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/adminGrupal/eventos" },
-  {
-      id: "solicitudes",
-      label: "solicitudes",
-      icon: <DollarSign />,
-      submenu: [
-        { id: "solicitudes-pendientes", label: "Pendientes", icon: <BarChart3 />, href: "/app/adminGrupal/solicitudes" },
-        { id: "solicitudes-rechazado", label: "Rechazadas", icon: <BarChart3 />, href: "/app/adminGrupal/rechazadas" },
-
-      ],
-    },
-  {
-    id: "finanzas",
-    label: "Finanzas",
-    icon: <DollarSign />,
-    submenu: [
-      { id: "finanzas-dashboard", label: "Dashboard", icon: <BarChart3 />, href: "/app/adminGrupal/finanzas" },
-      { id: "finanzas-estados", label: "Estados de cuenta", icon: <FileText />, href: "/app/adminGrupal/estados" },
-      { id: "finanzas-registros", label: "Registros de pago", icon: <CreditCard />, href: "/app/adminGrupal/registro" },
-    ],
-  },
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
+  { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
+  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
+  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
 ]
 
 const bottomItems: MenuItem[] = [
@@ -93,21 +76,21 @@ const bottomItems: MenuItem[] = [
 
 export default function AppLayout() {
   const location = useLocation()
-  const role = "adminGrupal" // <-- reemplazar con rol dinámico desde auth
-  const menuItems = role === "adminGrupal" ? adminGrupalItems : mainItems
+  const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal')
+  const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems
+  const { user, logout } = useAuth0();
 
-  // Función para saber si una ruta está activa
-const isActive = (href?: string) => {
-  if (!href) return false
+  const handleLogout = () => {
+    logout({ logoutParams: { returnTo: window.location.origin } });
+  };
 
-  // Caso especial: inicio exacto
-  if (href === "/app" || href === "/app/adminGrupal/" ) {
-    return location.pathname === href
+  const isActive = (href: string) => {
+    if (!href) return false
+    if (href === "/app") {
+      return location.pathname === "/app"
+    }
+    return location.pathname.startsWith(href)
   }
-
-  // Para el resto: empieza con el href
-  return location.pathname.startsWith(href)
-}
 
   return (
     <SidebarProvider>
@@ -119,12 +102,12 @@ const isActive = (href?: string) => {
         <SidebarHeader className="p-4 bg-primary">
           <div className="flex items-center gap-3">
             <img
-              src="https://i.pravatar.cc/80?img=12"
+              src={user?.picture}
               alt="avatar"
               className="size-10 rounded-full object-cover"
             />
             <div className="leading-tight">
-              <div className="text-base font-semibold">Juan Esteban Torres</div>
+              <div className="text-base font-semibold">{user?.nickname}</div>
               <div className="text-xs opacity-80">MANADA KUNA</div>
             </div>
           </div>
@@ -139,19 +122,10 @@ const isActive = (href?: string) => {
               <SidebarMenu>
                 {menuItems.map((item) =>
                   item.submenu ? (
-                    <Collapsible
-                      key={item.id}
-                      defaultOpen={item.submenu.some((sub) => isActive(sub.href))}
-                      className="group/collapsible"
-                    >
+                    <Collapsible key={item.id} defaultOpen className="group/collapsible">
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton
-                            className="text-base h-12 px-3 rounded-lg hover:bg-white/10 
-                                       data-[state=open]:bg-white/20 
-                                       data-[state=open]:font-semibold 
-                                       data-[state=open]:text-white"
-                          >
+                          <SidebarMenuButton className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[state=open]:bg-white/20 data-[state=open]:font-semibold data-[state=open]:text-white">
                             {item.icon}
                             <span>{item.label}</span>
                             <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
@@ -163,11 +137,8 @@ const isActive = (href?: string) => {
                               <SidebarMenuSubItem key={sub.id}>
                                 <SidebarMenuButton
                                   asChild
-                                  data-active={isActive(sub.href) || undefined}
-                                  className="text-sm h-10 px-3 rounded-md hover:bg-white/10 
-                                             data-[active=true]:bg-white/20 
-                                             data-[active=true]:font-medium 
-                                             data-[active=true]:text-white"
+                                  isActive={sub.href ? isActive(sub.href) : false}
+                                  className="text-sm h-10 px-3 rounded-md hover:bg-white/10 data-[active=true]:bg-white/20 data-[active=true]:font-medium data-[active=true]:text-white"
                                 >
                                   {sub.href ? (
                                     <Link to={sub.href}>
@@ -191,11 +162,8 @@ const isActive = (href?: string) => {
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         asChild
-                        data-active={isActive(item.href) || undefined}
-                        className="text-base h-12 px-3 rounded-lg hover:bg-white/10 
-                                   data-[active=true]:bg-white/20 
-                                   data-[active=true]:font-semibold 
-                                   data-[active=true]:text-white"
+                        isActive={item.href ? isActive(item.href) : false}
+                        className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[active=true]:bg-white/20 data-[active=true]:font-semibold data-[active=true]:text-white"
                       >
                         {item.href ? (
                           <Link to={item.href}>
@@ -223,9 +191,18 @@ const isActive = (href?: string) => {
           <SidebarMenu>
             {bottomItems.map((item) => (
               <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton className="h-12 px-3 rounded-lg hover:bg-white/10">
-                  {item.icon}
-                  <span>{item.label}</span>
+                <SidebarMenuButton 
+                  className="h-12 px-3 rounded-lg hover:bg-white/10"
+                  onClick={item.id === "logout" ? handleLogout : undefined}
+                >
+                  {item.id === "logout" ? (
+                    <><LogOut /><span>Cerrar sesión</span></>
+                  ) : (
+                    <>
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}

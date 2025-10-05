@@ -32,3 +32,14 @@ tests {
     expect(body.message).to.equal('Aplicación funcionando correctamente');
   });
 }
+
+docs {
+  Nombre: Verificación de estado de la aplicación (Health Check)
+  Endpoint: /api/v1/test/health
+  HU relacionadas: N/A
+  Descripción: Test que verifica que la aplicación esté funcionando correctamente y responda adecuadamente
+  Respuesta esperada: Status 200 con mensaje de confirmación y timestamp
+  Estructura del body de salida: {status: string, message: string, timestamp: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}
