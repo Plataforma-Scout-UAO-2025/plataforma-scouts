@@ -26,8 +26,8 @@ public class SchoolData {
     @Column(name = "school_data_id")
     private Long schoolDataId;
 
-    @Column(name = "user_id", nullable = false)
-    private String userId;
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
 
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
