@@ -120,7 +120,12 @@
 			<artifactId>mvc-auth-commons</artifactId>
 			<version>1.9.1</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-60</artifactId>
+            <version>3.7.0</version>
+        </dependency>
+    </dependencies>
 
 	<build>
 		<plugins>

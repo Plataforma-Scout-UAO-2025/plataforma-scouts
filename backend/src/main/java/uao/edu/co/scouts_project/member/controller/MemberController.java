@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.member.Controller;
+package uao.edu.co.scouts_project.member.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -7,14 +7,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import uao.edu.co.scouts_project.member.Dto.MemberDto;
-import uao.edu.co.scouts_project.member.Dto.MemberWithSchoolDto;
-import uao.edu.co.scouts_project.member.Mapper.MemberMapper;
-import uao.edu.co.scouts_project.member.Mapper.MemberWithSchoolMapper;
-import uao.edu.co.scouts_project.member.Model.MemberModel;
-import uao.edu.co.scouts_project.member.Model.SchoolModel;
-import uao.edu.co.scouts_project.member.Repository.ISchoolRepository;
-import uao.edu.co.scouts_project.member.Service.IMemberService;
+import uao.edu.co.scouts_project.member.dto.MemberDto;
+import uao.edu.co.scouts_project.member.dto.CreateMemberWithSchoolDto;
+import uao.edu.co.scouts_project.member.dto.SchoolDataDto;
+import uao.edu.co.scouts_project.member.mapper.MemberMapper;
+import uao.edu.co.scouts_project.member.mapper.SchoolDataMapper;
+import uao.edu.co.scouts_project.member.model.Member;
+import uao.edu.co.scouts_project.member.model.SchoolData;
+import uao.edu.co.scouts_project.member.repository.ISchoolRepository;
+import uao.edu.co.scouts_project.member.service.IMemberService;
 
 import java.util.List;
 import java.util.Map;
@@ -29,14 +30,12 @@ import java.util.Optional;
  *
  * Endpoints disponibles:
  * - POST /api/members/create_member
- * - GET  /api/members/list_members
- * - GET  /api/members/list_member_by_id/{id}
+ * - POST /api/members/create_member_with_school
+ * - GET /api/members/list_members
+ * - GET /api/members/list_member_by_id/{id}
  * - GET /api/members/list_members_by_status
  * - PUT /api/members/update_member_status/{id}
- * - PUT /api/members/update_member_role/{id}
  * - PUT /api/members/update_member_by_id/{id}
- *
- *
  */
 
 @Slf4j
@@ -62,14 +61,13 @@ public class MemberController {
      * - 400 Bad Request: Error de validación en los datos de entrada.
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
-
     @PostMapping("/create_member")
     public ResponseEntity<?> create_member(@Valid @RequestBody MemberDto miembroDto) {
         try {
             log.info("Recibida solicitud de pre registro para miembro: {}", miembroDto.getIdentification());
 
-            MemberModel miembro = MemberMapper.toEntity(miembroDto);
-            MemberModel miembroRegistrado = memberservice.create_member(miembro);
+            Member miembro = MemberMapper.toEntity(miembroDto);
+            Member miembroRegistrado = memberservice.create_member(miembro);
             MemberDto miembroRegistradoDto = MemberMapper.toDto(miembroRegistrado);
 
             log.info("Miembro creado exitosamente: {}", miembroRegistradoDto.getIdentification());
@@ -80,6 +78,68 @@ public class MemberController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.error("Error inesperado al crear el miembro", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error interno del servidor"));
+        }
+    }
+
+
+
+    /**
+     * Crea un nuevo miembro en el sistema junto a sus datos escolares
+     *
+     * @param request DTo combinado con la información el miembro y su escuela a registrar
+     * @return ResponseEntity con el estado de la operación y el objeto creado.
+     * <p>
+     * Posibles respuestas:
+     * - 201 Created: Miembro creado exitosamente.
+     * - 400 Bad Request: Error de validación en los datos de entrada.
+     * - 500 Internal Server Error: Error inesperado en el servidor.
+     */
+    @PostMapping("/create_member_with_school")
+    @Transactional
+    public ResponseEntity<?> create_member_with_school(
+            @Valid @RequestBody CreateMemberWithSchoolDto request) {
+        try {
+            MemberDto memberDto = request.getMember();
+            SchoolDataDto schoolDto = request.getSchool();
+
+            log.info("Creando miembro con identificación: {}", memberDto.getIdentification());
+
+            Member miembro = MemberMapper.toEntity(memberDto);
+            Member savedMember = memberservice.create_member(miembro);
+
+            log.info("Miembro creado con ID: {}", savedMember.getMemberId());
+
+            SchoolData schoolData = SchoolDataMapper.toEntity(
+                    schoolDto,
+                    savedMember.getMemberId(),
+                    savedMember.getTenantId()
+            );
+
+            SchoolData savedSchool = schoolRepository.save(schoolData);
+
+            log.info("Datos escolares creados para member_id: {}", savedMember.getMemberId());
+
+            Map<String, Object> response = Map.of(
+                    "member", MemberMapper.toDto(savedMember),
+                    "school", SchoolDataMapper.toDto(savedSchool),
+                    "message", "Miembro y datos escolares creados exitosamente"
+            );
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Error de validación: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+
+        } catch (SecurityException e) {
+            log.error("Error de seguridad: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+
+        } catch (Exception e) {
+            log.error("Error al crear miembro con datos escolares", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error interno del servidor"));
         }
@@ -123,8 +183,8 @@ public class MemberController {
      * - 404 Not Found: No existe un miembro con el ID especificado.
      */
     @GetMapping("/list_member_by_id")
-    public ResponseEntity<?> list_member_by_id(@RequestParam("id") Integer member_id) {
-        Optional<MemberModel> memberOpt = memberservice.get_member_by_id(member_id);
+    public ResponseEntity<?> list_member_by_id(@RequestParam("id") Long member_id) {
+        Optional<Member> memberOpt = memberservice.get_member_by_id(member_id);
 
         if (memberOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -201,37 +261,6 @@ public class MemberController {
         }
     }
 
-    /**
-     * Actualiza el rol de un miembro
-     *
-     * @param member_id ID único del miembro.
-     * @param role    Nuevo rol a asignar al miembro.
-     * @return ResponseEntity con un mensaje de éxito o error.
-     * <p>
-     * Posibles respuestas:
-     * - 200 OK: Rol actualizado correctamente.
-     * - 404 Not Found: No existe un miembro con el ID especificado.
-     * - 500 Internal Server Error: Error inesperado en el servidor.
-     */
-    @PutMapping("/update_member_role/{id}")
-    public ResponseEntity<?> update_member_role(
-            @PathVariable("id") Integer member_id,
-            @RequestParam String role) {
-        try {
-            Boolean actualizado = memberservice.update_role(member_id, role);
-
-            if (actualizado) {
-                return ResponseEntity.ok(Map.of("mensaje", "Rol actualizado correctamente"));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "El miembro ya cuenta con dicho rol" + member_id));
-            }
-        } catch (Exception e) {
-            log.error("Error al actualizar el rol del miembro con ID {}", member_id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error interno del servidor"));
-        }
-    }
 
     /**
      * Actualiza la información de un miembro existente.
@@ -250,9 +279,9 @@ public class MemberController {
             @PathVariable("id") Integer member_id,
             @Valid @RequestBody MemberDto memberUpdateDto) {
         try {
-            MemberModel miembroUpdate = MemberMapper.toEntity(memberUpdateDto);
+            Member miembroUpdate = MemberMapper.toEntity(memberUpdateDto);
 
-            Optional<MemberModel> miembroActualizado =
+            Optional<Member> miembroActualizado =
                     memberservice.update_member_by_id(member_id, miembroUpdate);
 
             if (miembroActualizado.isPresent()) {
@@ -268,54 +297,7 @@ public class MemberController {
         }
     }
 
-    /**
-     * Crea un miembro junto con sus datos escolares en una única transacción.
-     * Este endpoint es útil cuando se tiene toda la información disponible.
-     *
-     * @param dto DTO combinado con datos del miembro y escolares
-     * @return ResponseEntity con ambos objetos creados o mensaje de error
-     *
-     * Posibles respuestas:
-     * - 201 Created: Miembro y datos escolares creados exitosamente
-     * - 400 Bad Request: Error de validación en los datos
-     * - 500 Internal Server Error: Error inesperado
-     */
-    @PostMapping("/create_member_with_school")
-    @Transactional
-    public ResponseEntity<?> createMemberWithSchool(@Valid @RequestBody MemberWithSchoolDto dto) {
-        try {
-            log.info("Creando miembro con datos escolares: {}", dto.getIdentification());
 
-            MemberModel member = MemberWithSchoolMapper.toEntity(dto);
-            MemberModel savedMember = memberservice.create_member(member);
-            log.info("Miembro creado con ID: {}", savedMember.getMember_id());
-
-            SchoolModel schoolData = MemberWithSchoolMapper.toSchoolEntity(dto);
-            SchoolModel savedSchool = null;
-
-            if (schoolData != null) {
-                schoolData.setMember(savedMember);
-                savedSchool = schoolRepository.save(schoolData);
-                log.info("Datos escolares creados para member_id: {}", savedMember.getMember_id());
-            }
-
-            MemberWithSchoolDto responseDto = MemberWithSchoolMapper.toDto(savedMember, savedSchool);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                    "data", responseDto,
-                    "message", "Miembro creado exitosamente"
-            ));
-
-        } catch (IllegalArgumentException e) {
-            log.warn("Error de validación: {}", e.getMessage());
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            log.error("Error al crear miembro con datos escolares", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error interno del servidor"));
-        }
-    }
 }
 
 

@@ -36,6 +36,20 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/mock/scouts/list").hasAuthority("SCOPE_read:scouts-list")
                         .requestMatchers("/api/v1/mock/scouts/add/member").hasAuthority("SCOPE_write:scout-member")
                         .requestMatchers("/api/v1/mock/scouts/member").hasAuthority("SCOPE_read:scout-member")
+
+
+                        // Crear miembros (SCOPE_write:member)
+                        .requestMatchers("/api/members/create_member").hasAuthority("SCOPE_write:member")
+                        .requestMatchers("/api/members/create_member_with_school").hasAuthority("SCOPE_write:member")
+
+                        // Listar miembros (SCOPE_read:members)
+                        .requestMatchers("/api/members/list_members").hasAuthority("SCOPE_read:members")
+                        .requestMatchers("/api/members/list_member_by_id").hasAuthority("SCOPE_read:member")
+                        .requestMatchers("/api/members/list_members_by_status").hasAuthority("SCOPE_read:members")
+
+                        // Actualizar miembros (SCOPE_update:member)
+                        .requestMatchers("/api/members/update_member_status/**").hasAuthority("SCOPE_update:member-status")
+                        .requestMatchers("/api/members/update_member_by_id/**").hasAuthority("SCOPE_update:member")
                 )
                 .cors(withDefaults())
                 .oauth2ResourceServer(oauth2 -> oauth2
