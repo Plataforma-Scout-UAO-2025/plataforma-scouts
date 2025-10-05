@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Upload, Users } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,21 @@ export default function SubramaDetail() {
   const [loading, setLoading] = useState(true);
   const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
   const [galeriaFotos, setGaleriaFotos] = useState<string[]>([]);
+  // Token para forzar recarga de imágenes (cache-busting)
+  const [imageRefreshToken, setImageRefreshToken] = useState<number>(Date.now());
+  // Helper para display src (añade cache-bust si es URL remota)
+  const makeDisplaySrc = (src: string | null | undefined) => {
+    if (!src) return null;
+    if (src.startsWith('blob:') || src.startsWith('data:')) return src;
+    const separator = src.includes('?') ? '&' : '?';
+    return `${src}${separator}v=${imageRefreshToken}`;
+  };
+  // Estados para mostrar progreso de subida (replicar como en RamaDetail)
+  const [uploading, setUploading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState(0);
+  const [currentUploadingFile, setCurrentUploadingFile] = useState<string | null>(null);
+  const [uploadCompleteAnnounced, setUploadCompleteAnnounced] = useState(false);
+  const uploadControllerRef = useRef<AbortController | null>(null);
   // ===== Modal de fotos =====
   const [fotoModalOpen, setFotoModalOpen] = useState(false);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
@@ -43,27 +59,78 @@ export default function SubramaDetail() {
     if (file && subrama) {
       try {
         console.log('🔄 [SubramaDetail] Subiendo imagen principal:', file.name);
-
         const preview = URL.createObjectURL(file);
         setImagenPrincipal(preview);
 
-        const publicUrl = await organigramaService.updateSubramaMainImage(
+        // Preparar AbortController y estados de progreso
+        if (uploadControllerRef.current) {
+          try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
+        }
+        const controller = new AbortController();
+        uploadControllerRef.current = controller;
+
+        setUploading(true);
+        setUploadPercent(0);
+        setUploadCompleteAnnounced(false);
+        setCurrentUploadingFile(file.name);
+
+        await organigramaService.updateSubramaMainImage(
           tenantSlug,
           groupSlug,
           subrama.section_id,
           subrama.subgroup_id,
-          file
+          file,
+          (fileName, percent) => {
+            setCurrentUploadingFile(fileName);
+            const display = percent >= 100 ? 99 : Math.floor(percent);
+            setUploadPercent(display);
+            if (percent >= 100 && !uploadCompleteAnnounced) {
+              setUploadCompleteAnnounced(true);
+              toast('Subida completada. Procesando en servidor...');
+            }
+          },
+          controller.signal
         );
 
-        setImagenPrincipal(publicUrl);
-        console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
-        
-        // Refrescar datos de la subrama para asegurar sincronización
-        console.log('🔄 [SubramaDetail] Refrescando datos de la subrama...');
-        await fetchSubrama();
+  // Refrescar datos de la subrama para asegurar sincronización
+  console.log('🔄 [SubramaDetail] Refrescando datos de la subrama...');
+  await fetchSubrama();
+  // Obtener la subrama actualizada directamente para obtener la URL definitiva
+  try {
+    const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, subrama.section_id, subrama.subgroup_id);
+    if (updated && updated.imagenPrincipal) {
+      // Actualizar visualmente con cache-bust igual que RamaDetail
+      setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
+      setUploadPercent(100);
+      toast.success('Imagen principal actualizada correctamente');
+      console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
+    } else {
+      // marcar 100% y refrescar token aunque no tengamos URL directa
+      setUploadPercent(100);
+      setImageRefreshToken(Date.now());
+      console.log('✅ [SubramaDetail] Imagen principal actualizada (sin URL devuelta)');
+    }
+  } catch (err) {
+    console.warn('⚠️ [SubramaDetail] No se pudo obtener subrama actualizada tras upload:', err);
+    setUploadPercent(100);
+    setImageRefreshToken(Date.now());
+  }
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
+        if ((error as Error).message === 'UploadCanceled') {
+          toast('Subida cancelada');
+        } else {
+          toast.error('Error subiendo la imagen principal');
+        }
         setImagenPrincipal('');
+      } finally {
+        try { /* nothing to revoke here - previews are revoked by FotoModal when needed */ } catch { /* ignore */ }
+        setUploading(false);
+        setUploadPercent(0);
+        setCurrentUploadingFile(null);
+        if (uploadControllerRef.current) {
+          uploadControllerRef.current = null;
+        }
       }
     }
   };
@@ -145,6 +212,20 @@ export default function SubramaDetail() {
     } catch (error) {
       console.error(error);
       toast.error("Error al actualizar la foto");
+    }
+  };
+
+  const handleCancelUpload = () => {
+    if (uploadControllerRef.current) {
+      try {
+        uploadControllerRef.current.abort();
+        toast('Cancelando subida...');
+      } catch (e) {
+        console.warn('Error abortando upload', e);
+      }
+      setUploading(false);
+      setUploadPercent(0);
+      setCurrentUploadingFile(null);
     }
   };
 
@@ -282,6 +363,27 @@ export default function SubramaDetail() {
 
   return (
     <div className="space-y-6">
+      {uploading && (
+        <div className="fixed left-1/2 -translate-x-1/2 top-20 w-11/12 max-w-2xl z-50">
+          <div className="bg-card border border-border p-3 rounded-md shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm text-primary">
+                {currentUploadingFile ? `Subiendo: ${currentUploadingFile}` : 'Subiendo archivos...'}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {uploadPercent}%
+              </div>
+            </div>
+            <Progress value={uploadPercent} />
+            {uploadPercent >= 100 && uploadCompleteAnnounced && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round"></path></svg>
+                Procesando en servidor...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* Cabecera */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -321,12 +423,15 @@ export default function SubramaDetail() {
 
         <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100" onClick={openMainImageModal}>
           {imagenPrincipal ? (
-            <img
-              src={imagenPrincipal}
-              alt={subrama.nombre}
-              className="object-contain w-full h-full"
-            />
-          ) : (
+              <>
+                <img
+                  src={makeDisplaySrc(imagenPrincipal) || undefined}
+                  alt={subrama.nombre}
+                  className="object-contain w-full h-full"
+                />
+                {/* El progreso ahora se muestra en el modal flotante superior (como en RamaDetail) */}
+              </>
+            ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
               <div className="text-center">
                 <Users className="w-16 h-16 text-primary mx-auto mb-2" />
@@ -424,6 +529,7 @@ export default function SubramaDetail() {
         imageUrl={fotoSeleccionada}
         onReplace={handleReplaceFoto}
         onDelete={handleDeleteFoto}
+        onCancelUpload={handleCancelUpload}
       />
     </div>
   );

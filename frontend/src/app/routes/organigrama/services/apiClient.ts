@@ -41,6 +41,9 @@ const axiosInstance: AxiosInstance = axios.create({
   }
 });
 
+// Permitir envío de cookies por defecto (por si la API usa sesiones cookie)
+axiosInstance.defaults.withCredentials = true;
+
 // Interceptor de respuesta para manejo de errores
 axiosInstance.interceptors.response.use(
   (response) => {
@@ -67,6 +70,9 @@ axiosInstance.interceptors.response.use(
 // Interceptor de request para logging
 axiosInstance.interceptors.request.use(
   (config) => {
+    // No usar localStorage ni almacenar tokens en el navegador para los uploads.
+    // La autenticación/autoría debe gestionarse por el backend (Supabase) y no
+    // desde storage del cliente. Aquí sólo hacemos logging de la petición.
     console.log(`🔄 [ApiClient] ${config.method?.toUpperCase()} ${config.url}`, config.data || '');
     return config;
   },
@@ -128,6 +134,9 @@ export const apiClient = {
             'Content-Type': 'multipart/form-data'
           },
           timeout: 30000, // 30 segundos para uploads
+          // Para evitar problemas con servidores que no esperan cookies/credenciales
+          // en endpoints de upload, enviamos explícitamente sin credenciales.
+          withCredentials: false,
           signal: signalLocal,
           onUploadProgress: (progressEvent: AxiosProgressEvent) => {
             const loaded = progressEvent?.loaded;
@@ -155,7 +164,25 @@ export const apiClient = {
         if (error instanceof AxiosError) {
           const status = error.response?.status || 0;
           const statusText = error.response?.statusText || 'Upload Error';
-          console.error(`❌ [ApiClient] POST (FormData) ${endpoint} - Error:`, error);
+          console.error(`❌ [ApiClient] POST (FormData) ${endpoint} - Error:`, error, 'response.data=', error.response?.data, 'response.headers=', error.response?.headers);
+
+          // Diagnóstico adicional en caso de 403: intentar con fetch (sin credenciales) para comparar respuesta
+          if (status === 403) {
+            try {
+              const fullUrl = API_BASE_URL + normalizeEndpoint(endpoint);
+              console.log(`🧪 [ApiClient] Ejecutando intento diagnóstico FETCH a ${fullUrl} (credentials: omit)`);
+              const fetchResp = await fetch(fullUrl, {
+                method: 'POST',
+                body: formData as any,
+                credentials: 'omit',
+                signal: signalLocal as any
+              });
+              const text = await fetchResp.text();
+              console.log('🧪 [ApiClient] Resultado diagnóstico FETCH:', { status: fetchResp.status, statusText: fetchResp.statusText, body: text, headers: Array.from(fetchResp.headers.entries()) });
+            } catch (fetchErr) {
+              console.warn('🧪 [ApiClient] Error en intento diagnóstico FETCH:', fetchErr);
+            }
+          }
           throw new ApiError(status, statusText, `Error ${status}: ${statusText}`);
         }
 

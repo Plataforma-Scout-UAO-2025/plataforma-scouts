@@ -10,7 +10,9 @@ export const updateSubramaMainImage = async (
   groupSlug: string,
   sectionId: string,
   subgroupId: string,
-  file: File
+  file: File,
+  onFileProgress?: (fileName: string, percent: number) => void,
+  signal?: AbortSignal
 ): Promise<string> => {
   console.log('📤 [SubramaImageService] Actualizando foto principal de subrama...');
 
@@ -18,7 +20,12 @@ export const updateSubramaMainImage = async (
     // 1️⃣ Subir el archivo a storage
     const formData = new FormData();
     formData.append('file', file);
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+      '/api/storage/upload',
+      formData,
+      (percent) => onFileProgress?.(file.name, percent),
+      signal
+    );
     console.log('✅ Archivo subido:', uploadResponse.objectId);
 
     // 2️⃣ PATCH al endpoint de imagen principal

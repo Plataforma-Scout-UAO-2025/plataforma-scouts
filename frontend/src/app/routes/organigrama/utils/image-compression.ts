@@ -59,22 +59,8 @@ export const compressImage = (
  * Limpia localStorage de imágenes antiguas si está lleno
  */
 export const cleanupOldImages = (): void => {
-  const imageKeys: string[] = [];
-  
-  // Recopilar todas las claves de imágenes
-  for (const key in localStorage) {
-    if (key.startsWith('organigrama_images_')) {
-      imageKeys.push(key);
-    }
-  }
-
-  // Si hay más de 20 imágenes, eliminar las más antiguas
-  if (imageKeys.length > 20) {
-    const keysToRemove = imageKeys.slice(0, imageKeys.length - 20);
-    keysToRemove.forEach(key => {
-      localStorage.removeItem(key);
-    });
-    
-    console.log(`🧹 [ImageCompression] ${keysToRemove.length} imágenes antiguas eliminadas`);
-  }
+  // La gestión de almacenamiento y limpieza se delega al backend (Supabase).
+  // Evitar cualquier uso de localStorage para imágenes en el navegador.
+  // Esta función queda como no-op informativa.
+  console.log('🧹 [ImageCompression] Limpieza de imágenes deshabilitada en cliente; usar backend para gestión de objetos.');
 };
