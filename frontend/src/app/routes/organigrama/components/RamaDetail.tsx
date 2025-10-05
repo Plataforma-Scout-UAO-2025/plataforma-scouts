@@ -26,8 +26,12 @@ export default function RamaDetail() {
   const [uploading, setUploading] = useState(false);
   const [uploadPercent, setUploadPercent] = useState(0);
   const [currentUploadingFile, setCurrentUploadingFile] = useState<string | null>(null);
+  const [uploadCompleteAnnounced, setUploadCompleteAnnounced] = useState(false);
   // Token para forzar recarga de imágenes (cache-busting)
   const [imageRefreshToken, setImageRefreshToken] = useState<number>(Date.now());
+  // Previews locales (object URLs) para mostrar preview inmediato
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [galleryLocalPreviews, setGalleryLocalPreviews] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainImageInputRef = useRef<HTMLInputElement>(null);
@@ -199,13 +203,24 @@ export default function RamaDetail() {
     return 'https://placehold.co/800x300/e2e8f0/94a3b8?text=Sin+imagen';
   };
 
+  // Helper para display src (añade cache-bust si es URL remota)
+  const makeDisplaySrc = (src: string | null | undefined) => {
+    if (!src) return null;
+    if (src.startsWith('blob:') || src.startsWith('data:')) return src;
+    return `${src}?v=${imageRefreshToken}`;
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !rama) return;
 
+    const preview = URL.createObjectURL(file);
+    const previousIcon = getIconUrl(rama) || null;
     try {
-      console.log('🔄 [RamaDetail] Subiendo icono de rama:', file.name);
+      // Mostrar preview local inmediato
+  setIconPreview(preview);
       setUploading(true);
+  setUploadCompleteAnnounced(false);
       setCurrentUploadingFile(file.name);
       setUploadPercent(0);
 
@@ -215,9 +230,14 @@ export default function RamaDetail() {
         groupSlug,
         rama.section_id,
         file,
-        (fileName, percent) => {
+        (fileName: string, percent: number) => {
           setCurrentUploadingFile(fileName);
-          setUploadPercent(percent);
+          const display = percent >= 100 ? 99 : Math.floor(percent);
+          setUploadPercent(display);
+          if (percent >= 100 && !uploadCompleteAnnounced) {
+            setUploadCompleteAnnounced(true);
+            toast('Subida completada. Procesando en servidor...');
+          }
         }
       );
 
@@ -229,6 +249,8 @@ export default function RamaDetail() {
       const updatedRama = await organigramaService.getRamaById(tenantSlug, groupSlug, rama.id);
       if (updatedRama) {
         setRama(updatedRama);
+        // marcar 100% visualmente cuando el backend confirma
+        setUploadPercent(100);
         console.log('✅ [RamaDetail] Icono actualizado correctamente');
         console.log('🔍 [RamaDetail] Nuevo icono URL:', updatedRama.icono);
         toast.success('Ícono actualizado correctamente');
@@ -240,9 +262,11 @@ export default function RamaDetail() {
       setImageRefreshToken(Date.now());
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo ícono:', err);
+      // Revertir preview en caso de error
+      setIconPreview(previousIcon);
       toast.error('Error subiendo el ícono');
-    }
-    finally {
+    } finally {
+      try { URL.revokeObjectURL(preview); } catch (e) { console.warn('Could not revoke object URL for icon preview', e); }
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -252,10 +276,14 @@ export default function RamaDetail() {
   const handleMainImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !rama) return;
-
+    const preview = URL.createObjectURL(file);
+    const previousMain = imagenPrincipal;
     try {
       console.log('🔄 [RamaDetail] Subiendo imagen principal:', file.name);
-      setUploading(true);
+  // mostrar preview inmediato
+  setImagenPrincipal(preview);
+  setUploading(true);
+  setUploadCompleteAnnounced(false);
       setCurrentUploadingFile(file.name);
       setUploadPercent(0);
 
@@ -265,9 +293,14 @@ export default function RamaDetail() {
         groupSlug,
         rama.section_id,
         file,
-        (fileName, percent) => {
+        (fileName: string, percent: number) => {
           setCurrentUploadingFile(fileName);
-          setUploadPercent(percent);
+          const display = percent >= 100 ? 99 : Math.floor(percent);
+          setUploadPercent(display);
+          if (percent >= 100 && !uploadCompleteAnnounced) {
+            setUploadCompleteAnnounced(true);
+            toast('Subida completada. Procesando en servidor...');
+          }
         }
       );
 
@@ -277,18 +310,20 @@ export default function RamaDetail() {
         setRama(updatedRama);
         // Actualizar también el estado local de imagen principal
         const mainImageUrl = getMainImageUrl(updatedRama);
-        setImagenPrincipal(mainImageUrl);
-        // Forzar refresh visual de imágenes (cache-busting)
-        setImageRefreshToken(Date.now());
-        
+        setImagenPrincipal(`${mainImageUrl}?v=${Date.now()}`);
+        // marcar 100% visualmente cuando el backend confirma
+        setUploadPercent(100);
         console.log('✅ [RamaDetail] Imagen principal actualizada correctamente');
         toast.success('Imagen principal actualizada correctamente');
       }
+      setImageRefreshToken(Date.now());
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo imagen principal:', err);
+      // revertir preview si falla
+      setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
-    }
-    finally {
+    } finally {
+      try { URL.revokeObjectURL(preview); } catch (e) { console.warn('Could not revoke object URL for main image preview', e); }
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -301,9 +336,15 @@ export default function RamaDetail() {
 
     try {
       console.log('🔄 [RamaDetail] Subiendo galería:', files.length, 'archivos');
-      setUploading(true);
-      setUploadPercent(0);
-      setCurrentUploadingFile(null);
+  setUploading(true);
+  setUploadCompleteAnnounced(false);
+  setUploadPercent(0);
+  setCurrentUploadingFile(null);
+
+      // crear previews locales y agregarlas temporalmente
+      const previews = files.map(f => URL.createObjectURL(f));
+      setGalleryLocalPreviews(prev => [...prev, ...previews]);
+      setGaleriaFotos(prev => [...prev, ...previews]);
 
       // Subir las imágenes usando el nuevo sistema (con progreso individual y global)
       await organigramaService.uploadGalleryImages(
@@ -311,12 +352,22 @@ export default function RamaDetail() {
         groupSlug,
         rama.section_id,
         files,
-        (fileName, percent) => {
+        (fileName: string, percent: number) => {
           setCurrentUploadingFile(fileName);
-          setUploadPercent(percent);
+          const display = percent >= 100 ? 99 : Math.floor(percent);
+          setUploadPercent(display);
+          if (percent >= 100 && !uploadCompleteAnnounced) {
+            setUploadCompleteAnnounced(true);
+            toast('Subida completada. Procesando en servidor...');
+          }
         },
-        (overallPercent) => {
-          setUploadPercent(overallPercent);
+        (overallPercent: number) => {
+          const display = overallPercent >= 100 ? 99 : Math.floor(overallPercent);
+          setUploadPercent(display);
+          if (overallPercent >= 100 && !uploadCompleteAnnounced) {
+            setUploadCompleteAnnounced(true);
+            toast('Subida completada. Procesando en servidor...');
+          }
         }
       );
 
@@ -324,12 +375,27 @@ export default function RamaDetail() {
       console.log('🔄 [RamaDetail] Refrescando datos de la rama después de subir galería...');
       await fetchRama();
       
-      console.log('✅ [RamaDetail] Galería actualizada correctamente');
-      toast.success('Galería actualizada correctamente');
-  // Forzar refresh visual de imágenes (cache-busting)
-  setImageRefreshToken(Date.now());
+  console.log('✅ [RamaDetail] Galería actualizada correctamente');
+  // marcar 100% visualmente cuando el backend confirma
+  setUploadPercent(100);
+  toast.success('Galería actualizada correctamente');
+      // Forzar refresh visual de imágenes (cache-busting)
+      setImageRefreshToken(Date.now());
+
+      // revocar previews locales
+      for (const p of previews) {
+        try { URL.revokeObjectURL(p); } catch (e) { console.warn('Could not revoke object URL for gallery preview', e); }
+      }
+      setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
       console.error('❌ [RamaDetail] Error subiendo galería:', err);
+      // remover previews locales en caso de fallo
+      const addedPreviews = galleryLocalPreviews.slice(-files.length);
+      setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
+      for (const p of addedPreviews) {
+        try { URL.revokeObjectURL(p); } catch (e) { console.warn('Could not revoke object URL for gallery preview (error case)', e); }
+      }
+      setGalleryLocalPreviews(prev => prev.slice(0, -files.length));
       toast.error('Error subiendo la galería');
     }
     finally {
@@ -390,10 +456,20 @@ export default function RamaDetail() {
         <div className="fixed left-1/2 -translate-x-1/2 top-20 w-11/12 max-w-2xl z-50">
           <div className="bg-card border border-border p-3 rounded-md shadow">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-primary">{currentUploadingFile ? `Subiendo: ${currentUploadingFile}` : 'Subiendo archivos...'}</div>
-              <div className="text-sm text-muted-foreground">{uploadPercent}%</div>
+              <div className="text-sm text-primary">
+                {currentUploadingFile ? `Subiendo: ${currentUploadingFile}` : 'Subiendo archivos...'}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {uploadPercent}%
+              </div>
             </div>
             <Progress value={uploadPercent} />
+            {uploadPercent >= 100 && uploadCompleteAnnounced && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round"></path></svg>
+                Procesando en servidor...
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -402,9 +478,9 @@ export default function RamaDetail() {
           <h1 className="text-2xl font-bold text-primary">Detalles de {rama.nombre} – {rama.año}</h1>
           <div className="relative">
             <div className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors" onClick={openIconModal}>
-              {rama && getIconUrl(rama) ? (
+              {rama && (iconPreview || getIconUrl(rama)) ? (
                 <img 
-                  src={`${getIconUrl(rama)}?v=${imageRefreshToken}`} 
+                  src={iconPreview ? iconPreview : makeDisplaySrc(getIconUrl(rama))!} 
                   alt={`Ícono de ${rama.nombre}`} 
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -442,7 +518,7 @@ export default function RamaDetail() {
           <Button size="sm" variant="outline" onClick={handleMainImageClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Foto <Upload className="w-4 h-4"/></Button>
         </div>
         <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100" onClick={openMainImageModal}>
-          <img src={`${imagenPrincipal}?v=${imageRefreshToken}`} alt={rama.nombre} className="object-contain w-full h-full" />
+          <img src={makeDisplaySrc(imagenPrincipal) || undefined} alt={rama.nombre} className="object-contain w-full h-full" />
         </div>
         <input ref={mainImageInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="hidden" aria-label="Subir imagen principal" />
         <p className="text-sm text-muted-foreground">{rama.descripcion || "Sin descripción"}</p>
@@ -489,7 +565,17 @@ export default function RamaDetail() {
           <h2 className="text-lg font-semibold text-primary">Galería de fotos – {rama.año}</h2>
           <Button size="sm" variant="outline" onClick={handleGalleryClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Fotos <Upload className="w-4 h-4"/></Button>
         </div>
-  <div className="grid grid-cols-3 gap-2">{galeriaFotos.map((src, idx)=>(<div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}><img src={`${src}?v=${imageRefreshToken}`} alt={`Foto ${idx+1}`} className="rounded-lg object-cover w-full h-[300px]"/></div>))}</div>
+        <div className="grid grid-cols-3 gap-2">
+          {galeriaFotos.map((src, idx) => (
+            <div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}>
+              <img
+                src={makeDisplaySrc(src) || undefined}
+                alt={`Foto ${idx+1}`}
+                className="rounded-lg object-cover w-full h-[300px]"
+              />
+            </div>
+          ))}
+        </div>
         <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryChange} className="hidden" aria-label="Subir fotos a la galería" />
       </Card>
       <FotoModal
