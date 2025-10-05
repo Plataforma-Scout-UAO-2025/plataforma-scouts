@@ -158,6 +158,39 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.10</version>
+				<configuration>
+					<excludes>
+						<!-- Main Application Class -->
+						<exclude>**/ScoutsProjectApplication.class</exclude>
+						
+						<!-- Configuration Classes -->
+						<exclude>**/config/**</exclude>
+						<exclude>**/infrastructure/security/SecurityConfig.class</exclude>
+						
+						<!-- DTOs (Data Transfer Objects) -->
+						<exclude>**/dto/**</exclude>
+						
+						<!-- Entity/Model Classes (JPA Entities with Lombok) -->
+						<exclude>**/model/**</exclude>
+						<exclude>**/organigram/**</exclude>
+						<exclude>**/medicalrecord/MedicalRecord.class</exclude>
+						<exclude>**/medicalrecord/MedicalRecord$*.class</exclude>
+						
+						<!-- Enums -->
+						<exclude>**/enums/**</exclude>
+						<exclude>**/shared/enums/**</exclude>
+						
+						<!-- Ports/Interfaces (no implementation logic) -->
+						<exclude>**/domain/port/**</exclude>
+						
+						<!-- Test/Mock Controllers (development only) -->
+						<exclude>**/web/controller/MockTestAuthzController.class</exclude>
+						<exclude>**/common/controller/TestController.class</exclude>
+						
+						<!-- Repository Interfaces (Spring Data JPA auto-implemented) -->
+						<exclude>**/repository/**</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>
