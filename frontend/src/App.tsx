@@ -28,7 +28,7 @@ function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          <Route path="/" element={<LandingPage/>} />
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/app" element={<AppLayout />}>
@@ -40,14 +40,16 @@ function App() {
             <Route path="adminGrupal/eventos" element={<Events />} />
             <Route path="adminGrupal/finanzas" element={<FinanceDashboard />} />
             <Route path="adminGrupal/estados" element={<AccountStatements />} />
-            <Route path="adminGrupal/estados/member" element={<MemberStatements />} />
+            <Route
+              path="adminGrupal/estados/member"
+              element={<MemberStatements />}
+            />
             <Route path="adminGrupal/registro" element={<PaymentRecords />} />
             <Route path="adminGrupal/solicitudes" element={<Requests />} />
             <Route path="adminGrupal/rechazadas" element={<Rejected />} />
             <Route path="financiero/cuotas/gestion" element={<Gestion />} />
             <Route path="grupos" element={<Grupos />} />
             <Route path="grupos/medical-info" element={<MedicalInfo />} />
-
           </Route>
           {/* Agrega más rutas aquí */}
           <Route path="/inscription" element={<ScoutEnrollment />} />
@@ -55,7 +57,7 @@ function App() {
       </div>
       <Toaster />
     </BrowserRouter>
-  )
+  );
 }
 
 export default App;
