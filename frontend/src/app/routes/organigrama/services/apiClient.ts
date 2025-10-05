@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, type AxiosProgressEvent } from 'axios';
 import type { AxiosInstance } from 'axios';
 
 // Normalizar base URL y asegurar que use la versión v1 del API.
@@ -12,7 +12,7 @@ const API_BASE_URL = RAW_API_BASE.replace(/\/$/, '');
 const normalizeEndpoint = (endpoint: string) => {
   if (!endpoint) return '/api/v1';
   // Asegurar prefijo '/'
-  let e = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+  const e = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
   if (e.startsWith('/api/v1')) return e; // ya correcto
   if (e.startsWith('/api')) return e.replace(/^\/api/, '/api/v1');
   // No empieza por /api -> añadir /api/v1 delante
@@ -113,30 +113,51 @@ export const apiClient = {
     return response.data;
   },
 
-  async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-    try {
-      const normalized = normalizeEndpoint(endpoint);
-      console.log(`🔄 [ApiClient] POST (FormData) full-url: ${API_BASE_URL}${normalized}`);
-      
-      const response = await axiosInstance.post<T>(normalized, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        timeout: 30000 // 30 segundos para uploads
-      });
-      
-      console.log(`✅ [ApiClient] POST (FormData) ${endpoint} - Éxito`, response.data);
-      return response.data;
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        const status = error.response?.status || 0;
-        const statusText = error.response?.statusText || 'Upload Error';
-        console.error(`❌ [ApiClient] POST (FormData) ${endpoint} - Error:`, error);
-        throw new ApiError(status, statusText, `Error ${status}: ${statusText}`);
+  async postFormData<T>(endpoint: string, formData: FormData, onUploadProgress?: (percent: number) => void): Promise<T> {
+    // Nota: añadimos un parámetro opcional onUploadProgress para permitir
+    // seguimiento del progreso de subida desde los módulos que lo requieran.
+    // Esta función mantiene compatibilidad hacia atrás: el tercer argumento
+    // es opcional y la llamada existente sin él sigue funcionando.
+  async function _doPost( onUploadProgressLocal?: (percent: number) => void ) {
+      try {
+        const normalized = normalizeEndpoint(endpoint);
+        console.log(`🔄 [ApiClient] POST (FormData) full-url: ${API_BASE_URL}${normalized}`);
+
+        const response = await axiosInstance.post<T>(normalized, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 30000, // 30 segundos para uploads
+          onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+            const loaded = progressEvent?.loaded;
+            const total = progressEvent?.total;
+            if (onUploadProgressLocal && typeof loaded === 'number' && typeof total === 'number' && total > 0) {
+              const percent = Math.round((loaded / total) * 100);
+              try {
+                onUploadProgressLocal(percent);
+              } catch (err) {
+                console.warn('[ApiClient] onUploadProgress callback error', err);
+              }
+            }
+          }
+        });
+
+        console.log(`✅ [ApiClient] POST (FormData) ${endpoint} - Éxito`, response.data);
+        return response.data;
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          const status = error.response?.status || 0;
+          const statusText = error.response?.statusText || 'Upload Error';
+          console.error(`❌ [ApiClient] POST (FormData) ${endpoint} - Error:`, error);
+          throw new ApiError(status, statusText, `Error ${status}: ${statusText}`);
+        }
+
+        console.error(`❌ [ApiClient] POST (FormData) ${endpoint} - Error de red:`, error);
+        throw new Error(`Error de conexión en upload: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       }
-      
-      console.error(`❌ [ApiClient] POST (FormData) ${endpoint} - Error de red:`, error);
-      throw new Error(`Error de conexión en upload: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
+
+    // Ejecutar la subida pasando el callback opcional recibido.
+    return (await _doPost(onUploadProgress)) as unknown as T;
   }
 };

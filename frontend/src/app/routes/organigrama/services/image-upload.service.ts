@@ -69,7 +69,8 @@ export const uploadSectionIcon = async (
   tenantSlug: string,
   groupSlug: string,
   sectionId: string,
-  file: File
+  file: File,
+  onFileProgress?: (fileName: string, percent: number) => void
 ): Promise<string> => {
   console.log('📤 [ImageUploadService] Subiendo icono de sección...');
   console.log('📝 [ImageUploadService] Parámetros:', {
@@ -86,7 +87,11 @@ export const uploadSectionIcon = async (
     formData.append('file', file);
     
     console.log('🔄 [ImageUploadService] Subiendo archivo al storage...');
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+      '/api/storage/upload',
+      formData,
+      (percent) => onFileProgress?.(file.name, percent)
+    );
     console.log('✅ [ImageUploadService] Archivo subido, objectId:', uploadResponse.objectId);
     
     // Paso 2: Usar endpoint PATCH específico para icono
@@ -125,6 +130,8 @@ export const uploadSectionMainImage = async (
   groupSlug: string,
   sectionId: string,
   file: File
+  ,
+  onFileProgress?: (fileName: string, percent: number) => void
 ): Promise<string> => {
   console.log('📤 [ImageUploadService] Subiendo imagen principal de sección...');
   
@@ -133,7 +140,11 @@ export const uploadSectionMainImage = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+      '/api/storage/upload',
+      formData,
+      (percent) => onFileProgress?.(file.name, percent)
+    );
     
     // Paso 2: Usar endpoint PATCH específico para imagen principal
     console.log('🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico...');
@@ -169,6 +180,9 @@ export const uploadGalleryImages = async (
   groupSlug: string,
   sectionId: string,
   files: File[]
+  ,
+  onFileProgress?: (fileName: string, percent: number) => void,
+  onOverallProgress?: (percent: number) => void
 ): Promise<string[]> => {
   console.log('📤 [ImageUploadService] Subiendo imágenes de galería...');
   
@@ -177,11 +191,29 @@ export const uploadGalleryImages = async (
     const urls: string[] = [];
     
     // Paso 1: Subir cada archivo individualmente
+    // Para calcular progreso general, acumulamos el avance de cada archivo
+    const perFileProgress: Record<string, number> = {};
+    const totalFiles = files.length;
+
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-      
-      const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+
+      const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+        '/api/storage/upload',
+        formData,
+        (percent) => {
+          perFileProgress[file.name] = percent;
+          // Reportar progreso individual
+          onFileProgress?.(file.name, percent);
+
+          // Calcular progreso general como promedio simple
+          const sum = Object.values(perFileProgress).reduce((a, b) => a + b, 0);
+          const overall = Math.round(sum / totalFiles);
+          onOverallProgress?.(overall);
+        }
+      );
+
       objectIds.push(uploadResponse.objectId);
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }
