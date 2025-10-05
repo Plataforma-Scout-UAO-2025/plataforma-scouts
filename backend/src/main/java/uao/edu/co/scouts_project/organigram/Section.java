@@ -1,7 +1,6 @@
 package uao.edu.co.scouts_project.organigram;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -53,8 +52,8 @@ public class Section {
     @Column(name = "icon_object_id")
     private UUID iconObjectId;
 
-    @Column(name = "gallery_object_id", columnDefinition = "uuid[]")
-    private List<UUID> galleryObjectId;
+    @Column(name = "gallery_object_id")
+    private UUID galleryObjectId;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -63,9 +62,6 @@ public class Section {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    @Column(name = "photo_principal")
-    private UUID photoPrincipal;
 
     @NotNull
     @Column(name = "tenant_id", nullable = false)
