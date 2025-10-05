@@ -32,6 +32,7 @@ CREATE TABLE member (
   updated_at timestamp DEFAULT now(),
   CONSTRAINT fk_member_tenant FOREIGN KEY (tenant_id) REFERENCES tenant (tenant_id),
   CONSTRAINT fk_member_subgroup FOREIGN KEY (subgroup_id) REFERENCES subgroup (subgroup_id),
+  CONSTRAINT fk_member_attendant FOREIGN KEY (attendant_id) REFERENCES member (member_id),
   CONSTRAINT uq_member_identification_per_tenant UNIQUE (tenant_id, identification)
 );
 
@@ -39,6 +40,7 @@ CREATE TABLE member (
 CREATE INDEX idx_member_tenant_id ON member(tenant_id);
 CREATE INDEX idx_member_subgroup_id ON member(subgroup_id);
 CREATE INDEX idx_member_tenant_subgroup_id ON member(tenant_id, subgroup_id);
+CREATE INDEX idx_member_attendant_id ON member(attendant_id);
 
 -- =======================
 -- MEDICAL RECORD
