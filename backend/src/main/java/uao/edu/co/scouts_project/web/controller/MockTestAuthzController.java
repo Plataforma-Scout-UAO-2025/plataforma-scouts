@@ -15,7 +15,7 @@ public class MockTestAuthzController {
 
         String name = getCurrentUsername();
 
-        return format("Access for authenticated user with permission 'read:scouts-list', for user %s", name);
+        return format("Access for authenticated user with roles [ACUDIENTE, DEV_SUPPORT], for user %s", name);
     }
 
     @PostMapping("/add/member")
@@ -23,7 +23,7 @@ public class MockTestAuthzController {
 
         String name = getCurrentUsername();
 
-        return format("Access for authenticated user with permission 'write:scout-member', for user %s", name);
+        return format("Access for authenticated user with roles [TESORERO], for user %s", name);
     }
 
     @GetMapping("/member")
@@ -31,7 +31,7 @@ public class MockTestAuthzController {
 
         String name = getCurrentUsername();
 
-        return format("Access for authenticated user with permission 'read:scout-member', for user %s", name);
+        return format("Access for authenticated user with roles [DEV_SUPPORT], for user %s", name);
     }
 
     static String getCurrentUsername() {
