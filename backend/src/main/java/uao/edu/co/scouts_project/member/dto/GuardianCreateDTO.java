@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -14,19 +16,40 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GuardianDTO {
-    private String userId;
+public class GuardianCreateDTO {
+    @NotNull
     private String tenantId;
+
+    @NotNull
     private String subgroupId;
+
+    @NotNull
     private String firstName;
+
+    @NotNull
     private String lastName;
+
     private Integer age;
+
+    @NotNull
     private String identification;
+
     private DocumentType documentType;
+
+    @Email
+    private String email;
+
+    private String gender;
+    private LocalDate birthDate;
+    private String address;
     private String phone;
     private Boolean isActive;
+
+    @NotNull
     private String relationship;
+
     private Status status;
     private LocalDate acceptanceDate;
-    private List<MemberSummaryDTO> membersInCharge;
+    private List<String> memberIdsInCharge;
+    private List<EmergencyContactDTO> emergencyContacts;
 }

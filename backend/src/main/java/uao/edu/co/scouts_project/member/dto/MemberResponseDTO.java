@@ -4,29 +4,26 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GuardianDTO {
+public class MemberResponseDTO {
     private String userId;
-    private String tenantId;
-    private String subgroupId;
     private String firstName;
     private String lastName;
     private Integer age;
-    private String identification;
-    private DocumentType documentType;
+    private String role;
+    private String email;
+    private String gender;
+    private LocalDate birthDate;
     private String phone;
     private Boolean isActive;
-    private String relationship;
     private Status status;
     private LocalDate acceptanceDate;
-    private List<MemberSummaryDTO> membersInCharge;
+    private String subgroupName;
 }
