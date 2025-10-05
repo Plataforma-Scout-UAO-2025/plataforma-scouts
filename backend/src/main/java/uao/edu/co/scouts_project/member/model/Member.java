@@ -3,7 +3,6 @@ package uao.edu.co.scouts_project.member.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
@@ -15,8 +14,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -29,6 +26,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
+import uao.edu.co.scouts_project.organigram.Subgroup;
 
 @Builder
 @Entity
@@ -40,33 +39,48 @@ import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 public class Member {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long memberId;
+    @Column(name = "user_id")
+    private String userId;
 
-    private UUID userId;
+    @NotNull
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "subgroup_id", referencedColumnName = "subgroup_id", nullable = false)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subgroup_id", nullable = false)
     private Subgroup subgroup;
 
+    @NotNull
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+
+    @NotNull
+    @Column(name = "last_name", nullable = false)
     private String lastName;
-    
-    @NotNull
+
     private Integer age;
+
+    @NotNull
+    @Column(nullable = false)
     private String role;
-    
+
     @NotNull
+    @Column(nullable = false)
     private String identification;
-    
-    @NotNull
+
+    @Column(name = "document_type")
     @Enumerated(EnumType.STRING)
     private DocumentType documentType;
 
     @Email
     private String email;
+
     private String gender;
+
+    @Column(name = "birth_date")
     private LocalDate birthDate;
+
     private String address;
     private String phone;
     private String weight;
@@ -74,38 +88,42 @@ public class Member {
     private String hobbies;
     private String sports;
     private String instruments;
+
+    @Column(name = "is_active")
     private Boolean isActive;
 
-    @Column(nullable = false)
-    private String status;
+    private String relationship;
 
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    @Column(name = "acceptance_date")
     private LocalDate acceptanceDate;
 
-    @Column(name = "in_charge_of", nullable = true)
+    @Column(name = "in_charge_of")
     private List<Integer> inChargeOf;
 
     @Type(JsonType.class)
-    @Column(name = "emergency_contact", columnDefinition = "jsonb")
-    private List<EmergencyContact> emergencyContact;
+    @Column(name = "emergency_contacts", columnDefinition = "json")
+    private List<EmergencyContact> emergencyContacts;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false, updatable = true)
     @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Entity
-    public static class Subgroup {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long subgroupId;
-    }
-
-    @Entity
+    @EqualsAndHashCode
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class EmergencyContact {
-        
+
         @NotNull
         private String name;
         @NotNull
