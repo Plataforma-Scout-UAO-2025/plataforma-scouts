@@ -55,6 +55,5 @@ build/
 plataforma-scouts.code-workspace
 
 ### supabase
-supabase/seeds/*.sql
-supabase/.temp/
+supabase/seeds/
 supabase/.temp/
