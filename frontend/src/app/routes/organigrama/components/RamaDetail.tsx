@@ -6,8 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import type { Rama } from "../types/rama.type";
 import * as organigramaService from "../services";
+import { extractObjectIdFromUrl } from "../services";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
+import FotoModal from "../components/FotoModal";
+
 
 export default function RamaDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +24,97 @@ export default function RamaDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainImageInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+
+    // ===== Modal de fotos =====
+  const [fotoModalOpen, setFotoModalOpen] = useState(false);
+  const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
+  const [fotoTipo, setFotoTipo] = useState<"icono" | "principal" | "galeria" | null>(null);
+  const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
+
+  // Abrir modal según tipo de imagen
+  const openIconModal = () => {
+    if (!rama) return;
+    const url = getIconUrl(rama);
+    if (!url) return;
+    setFotoTipo("icono");
+    setFotoSeleccionada(url);
+    setFotoModalOpen(true);
+  };
+
+  const openMainImageModal = () => {
+    if (!imagenPrincipal) return;
+    setFotoTipo("principal");
+    setFotoSeleccionada(imagenPrincipal);
+    setFotoModalOpen(true);
+  };
+
+  const openGalleryModal = (url: string) => {
+    setFotoTipo("galeria");
+    setFotoSeleccionada(url);
+    setGaleriaObjetivo(url);
+    setFotoModalOpen(true);
+  };
+
+  // Reemplazar o eliminar foto desde modal
+  const handleReplaceFoto = async (file: File) => {
+    if (!rama || !fotoTipo) return;
+    try {
+      if (fotoTipo === "icono") {
+        await organigramaService.uploadSectionIcon(tenantSlug, groupSlug, rama.section_id, file);
+      } else if (fotoTipo === "principal") {
+        await organigramaService.uploadSectionMainImage(tenantSlug, groupSlug, rama.section_id, file);
+      } else if (fotoTipo === "galeria") {
+        const targetUuid = extractObjectIdFromUrl(galeriaObjetivo);
+        if (!targetUuid) {
+          toast.error("No se pudo obtener el UUID de la imagen seleccionada");
+          return;
+        }
+
+        console.log("🎯 UUID extraído para reemplazo:", targetUuid);
+
+        await organigramaService.replaceGalleryImage(
+          tenantSlug,
+          groupSlug,
+          rama.section_id,
+          targetUuid,
+          file
+        );
+      }
+
+      toast.success("Foto actualizada correctamente");
+      setFotoModalOpen(false);
+      await fetchRama();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al actualizar la foto");
+    }
+  };
+
+  const handleDeleteFoto = async () => {
+    if (!rama || !fotoTipo) return;
+
+    try {
+      if (fotoTipo === "icono") {
+        await organigramaService.removeSectionIcon(tenantSlug, groupSlug, rama.section_id);
+      } else if (fotoTipo === "principal") {
+        await organigramaService.removeSectionMainImage(tenantSlug, groupSlug, rama.section_id);
+      } else if (fotoTipo === "galeria") {
+        await organigramaService.removeGalleryImage(
+          tenantSlug,
+          groupSlug,
+          rama.section_id,
+          galeriaObjetivo
+        );
+      }
+
+      toast.success("Foto eliminada correctamente");
+      setFotoModalOpen(false);
+      await fetchRama();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al eliminar la foto");
+    }
+  };
 
   const handleIconClick = () => fileInputRef.current?.click();
   const handleMainImageClick = () => mainImageInputRef.current?.click();
@@ -229,7 +323,7 @@ export default function RamaDetail() {
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold text-primary">Detalles de {rama.nombre} – {rama.año}</h1>
           <div className="relative">
-            <div className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors" onClick={handleIconClick}>
+            <div className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors" onClick={openIconModal}>
               {rama && getIconUrl(rama) ? (
                 <img 
                   src={getIconUrl(rama)} 
@@ -269,7 +363,7 @@ export default function RamaDetail() {
           <h2 className="text-lg font-semibold text-primary">Información Principal</h2>
           <Button size="sm" variant="outline" onClick={handleMainImageClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Foto <Upload className="w-4 h-4"/></Button>
         </div>
-        <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100">
+        <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100" onClick={openMainImageModal}>
           <img src={imagenPrincipal} alt={rama.nombre} className="object-contain w-full h-full" />
         </div>
         <input ref={mainImageInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="hidden" aria-label="Subir imagen principal" />
@@ -317,9 +411,23 @@ export default function RamaDetail() {
           <h2 className="text-lg font-semibold text-primary">Galería de fotos – {rama.año}</h2>
           <Button size="sm" variant="outline" onClick={handleGalleryClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Fotos <Upload className="w-4 h-4"/></Button>
         </div>
-        <div className="grid grid-cols-3 gap-2">{galeriaFotos.map((src, idx)=>(<div key={idx} className="relative"><img src={src} alt={`Foto ${idx+1}`} className="rounded-lg object-cover w-full h-[300px]"/></div>))}</div>
+        <div className="grid grid-cols-3 gap-2">{galeriaFotos.map((src, idx)=>(<div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}><img src={src} alt={`Foto ${idx+1}`} className="rounded-lg object-cover w-full h-[300px]"/></div>))}</div>
         <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryChange} className="hidden" aria-label="Subir fotos a la galería" />
       </Card>
+      <FotoModal
+        open={fotoModalOpen}
+        onClose={() => setFotoModalOpen(false)}
+        titulo={
+          fotoTipo === "icono"
+            ? `Ícono de ${rama?.nombre ?? ""}`
+            : fotoTipo === "principal"
+            ? `Foto principal de ${rama?.nombre ?? ""}`
+            : `Foto de galeria - ${rama?.nombre ?? ""}`
+        }
+        imageUrl={fotoSeleccionada}
+        onReplace={handleReplaceFoto}
+        onDelete={handleDeleteFoto}              
+      />
     </div>
   );
 }

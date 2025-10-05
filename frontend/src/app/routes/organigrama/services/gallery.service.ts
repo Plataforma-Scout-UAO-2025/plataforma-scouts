@@ -1,14 +1,26 @@
 import { apiClient } from './apiClient';
 import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 
-// Función auxiliar para obtener rama sin dependencias circulares
+// ===============================================================
+// 🔧 Función auxiliar: obtiene una rama sin dependencias circulares
+// ===============================================================
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
   const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
   return await apiClient.get<any>(endpoint);
 };
 
-// Función para agregar una nueva imagen a la galería de una rama
-// Basada en la guía del backend usando operaciones
+// ===============================================================
+// 🧩 Función auxiliar: extraer UUID válido desde string o URL
+// ===============================================================
+const extractUuidFromString = (value: string): string | null => {
+  if (!value) return null;
+  const match = value.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
+  return match ? match[0] : null;
+};
+
+// ===============================================================
+// 🖼️ Agregar nueva imagen a galería
+// ===============================================================
 export const addGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -16,106 +28,48 @@ export const addGalleryImage = async (
   file: File
 ): Promise<string> => {
   console.log('📤 [GalleryService] Agregando imagen a galería...');
-  console.log('📝 [GalleryService] Parámetros:', {
-    sectionId,
-    fileName: file.name,
-    fileSize: file.size
-  });
-  
+  console.log('📝 [GalleryService] Parámetros:', { sectionId, fileName: file.name });
+
   try {
-    // Paso 1: Subir el archivo
-    console.log('🔄 [GalleryService] Subiendo nueva imagen...');
+    // 1️⃣ Subir archivo a Supabase
     const formData = new FormData();
     formData.append('file', file);
-    
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+      '/api/storage/upload',
+      formData
+    );
     console.log('✅ [GalleryService] Nueva imagen subida, objectId:', uploadResponse.objectId);
-    
-    // Paso 2: Usar endpoint PATCH para agregar a la galería
-    console.log('🔄 [GalleryService] Agregando imagen a galería usando endpoint PATCH...');
+
+    // 2️⃣ Validar UUID del nuevo objeto
+    const newUuid = extractUuidFromString(uploadResponse.objectId);
+    if (!newUuid) throw new Error('Upload did not return a valid UUID');
+
+    // 3️⃣ Enviar PATCH para agregar imagen
     const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
-    console.log('📍 [GalleryService] Endpoint PATCH:', patchEndpoint);
-    
-    // Crear el payload de operación según la guía del backend
-    const addPayload = {
-      operations: [
-        {
-          op: "add",
-          newValue: uploadResponse.objectId
-        }
-      ]
-    };
-    
-    console.log('🔄 [GalleryService] PATCH payload para agregar imagen:', addPayload);
-    console.log('📝 [GalleryService] ANÁLISIS DETALLADO (RAMA):');
-    console.log('   - Subiendo UNA imagen con objectId:', uploadResponse.objectId);
-    console.log('   - Esperamos que backend maneje solo esta imagen...');
-    
-    try {
-      await apiClient.patch(patchEndpoint, addPayload);
-      console.log('✅ [GalleryService] Imagen agregada correctamente a galería');
-      
-      // Obtener datos actualizados para verificar cuántas imágenes devuelve el backend
-      console.log('🔍 [GalleryService] Verificando resultado en backend para RAMA...');
-      const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-      
-      if (updatedRama && updatedRama.sectionGalleryObjectIds) {
-        console.log('🔍 [GalleryService] RESULTADO BACKEND (RAMA):');
-        console.log('   - Subimos: 1 imagen');
-        console.log('   - Backend devolvió:', updatedRama.sectionGalleryObjectIds.length, 'URLs');
-        console.log('   - URLs devueltas:', updatedRama.sectionGalleryObjectIds);
-        
-        // Análisis detallado de URLs
-        console.log('🔍 [GalleryService] ANÁLISIS DE URLs:');
-        updatedRama.sectionGalleryObjectIds.forEach((url: string, index: number) => {
-          const uuidMatch = url.match(/\/([a-f0-9-]{36})\.[a-zA-Z0-9]+$/);
-          const uuid = uuidMatch ? uuidMatch[1] : 'unknown';
-          console.log(`   ${index + 1}. UUID: ${uuid}`);
-          console.log(`      URL: ${url}`);
-        });
-        
-        // Verificar si todas las URLs tienen el mismo UUID (variantes) o UUIDs diferentes (imágenes distintas)
-        const uuids = updatedRama.sectionGalleryObjectIds.map((url: string) => {
-          const match = url.match(/\/([a-f0-9-]{36})\.[a-zA-Z0-9]+$/);
-          return match ? match[1] : null;
-        }).filter(Boolean);
-        
-        const uniqueUuids = [...new Set(uuids)];
-        
-        if (uniqueUuids.length === 1) {
-          console.log('💡 [GalleryService] DIAGNÓSTICO: Todas las URLs tienen el mismo UUID →', uniqueUuids[0]);
-          console.log('💡 [GalleryService] CAUSA PROBABLE: Backend genera múltiples variantes (thumbnails, formatos, resoluciones)');
-        } else {
-          console.log('⚠️ [GalleryService] DIAGNÓSTICO: URLs tienen UUIDs diferentes →', uniqueUuids);
-          console.log('⚠️ [GalleryService] CAUSA PROBABLE: Backend está creando múltiples imágenes independientes');
-        }
-        
-        if (updatedRama.sectionGalleryObjectIds.length > 1) {
-          console.log('⚠️ [GalleryService] CONFIRMADO: Backend está generando múltiples variantes automáticamente');
-          console.log('💡 [GalleryService] Supabase probablemente está configurado para generar thumbnails/resoluciones');
-        }
-      }
-      
-      return uploadResponse.url || uploadResponse.objectId;
-    } catch (patchError) {
-      console.error('❌ [GalleryService] Error en endpoint PATCH para agregar imagen:', patchError);
-      throw patchError;
-    }
+    const addPayload = { operations: [{ op: 'add', newValue: newUuid }] };
+
+    console.log('📦 [GalleryService] PATCH payload para agregar imagen:', addPayload);
+    await apiClient.patch(patchEndpoint, addPayload);
+
+    console.log('✅ [GalleryService] Imagen agregada correctamente a galería');
+    return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
     console.error('❌ [GalleryService] Error agregando imagen a galería:', error);
     throw error;
   }
 };
 
-// Función helper para obtener los UUIDs de las imágenes de galería de una rama
-// Útil para identificar qué imagen quieres reemplazar
+// ===============================================================
+// 🔍 Obtener UUIDs actuales de la galería
+// ===============================================================
 export const getGalleryImageUuids = async (
   tenantSlug: string,
   groupSlug: string,
   sectionId: string
 ): Promise<string[]> => {
   console.log('🔍 [GalleryService] Obteniendo UUIDs de galería para sección:', sectionId);
-  
+
   try {
     const rama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
     if (rama && rama.sectionGalleryObjectIds) {
@@ -130,22 +84,9 @@ export const getGalleryImageUuids = async (
   }
 };
 
-// Función para reemplazar una imagen específica en la galería de una rama
-// 
-// EJEMPLO DE USO COMPLETO:
-// 
-// 1. Obtener los UUIDs de las imágenes actuales:
-//    const uuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
-//    console.log('Imágenes actuales:', uuids); // ['uuid-1', 'uuid-2', 'uuid-3']
-// 
-// 2. Seleccionar qué imagen reemplazar (por ejemplo, la segunda imagen):
-//    const targetUuid = uuids[1]; // 'uuid-2'
-// 
-// 3. Reemplazar con la nueva imagen:
-//    const file = event.target.files?.[0];
-//    const newUrl = await replaceGalleryImage(tenantSlug, groupSlug, sectionId, targetUuid, file);
-//    console.log('Nueva URL:', newUrl);
-//
+// ===============================================================
+// 🔄 Reemplazar imagen específica en galería
+// ===============================================================
 export const replaceGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -154,69 +95,62 @@ export const replaceGalleryImage = async (
   newFile: File
 ): Promise<string> => {
   console.log('🔄 [GalleryService] Reemplazando imagen en galería...');
-  console.log('📝 [GalleryService] Parámetros:', {
+  console.log('🧾 Parámetros iniciales:', {
     sectionId,
     targetImageUuid,
     newFileName: newFile.name,
     newFileSize: newFile.size
   });
-  
+
   try {
-    // Paso 1: Subir el nuevo archivo
-    console.log('🔄 [GalleryService] Subiendo nueva imagen...');
+    // 1️⃣ Extraer y validar UUID de la imagen objetivo
+    const validTargetUuid = extractUuidFromString(targetImageUuid);
+    if (!validTargetUuid) {
+      console.error('❌ [GalleryService] UUID inválido detectado. Abortando PATCH.');
+      throw new Error('Invalid UUID format detected');
+    }
+
+    // 2️⃣ Subir el nuevo archivo
+    console.log('📤 [GalleryService] Subiendo nueva imagen...');
     const formData = new FormData();
     formData.append('file', newFile);
-    
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
-    console.log('✅ [GalleryService] Nueva imagen subida, objectId:', uploadResponse.objectId);
-    
-    // Paso 2: Usar endpoint PATCH para reemplazar la imagen en la galería
-    console.log('🔄 [GalleryService] Reemplazando imagen en galería usando endpoint PATCH...');
+
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+      '/api/storage/upload',
+      formData
+    );
+    console.log('✅ [GalleryService] Nueva imagen subida:', uploadResponse.objectId);
+
+    // 3️⃣ Validar UUID del nuevo archivo
+    const newUuid = extractUuidFromString(uploadResponse.objectId);
+    if (!newUuid) throw new Error('Upload did not return a valid UUID');
+
+    // 4️⃣ Crear payload y enviar PATCH
     const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
-    console.log('📍 [GalleryService] Endpoint PATCH:', patchEndpoint);
-    
-    // Crear el payload de operación según la especificación del backend
     const replacePayload = {
       operations: [
         {
-          op: "replace" as const,
-          targetUuid: targetImageUuid,
-          newValue: uploadResponse.objectId
+          op: 'replace' as const,
+          targetUuid: validTargetUuid,
+          newValue: newUuid
         }
       ]
     };
-    
-    console.log('🔄 [GalleryService] PATCH payload para reemplazar imagen:', replacePayload);
-    
-    try {
-      await apiClient.patch(patchEndpoint, replacePayload);
-      console.log('✅ [GalleryService] Imagen reemplazada correctamente en galería');
-      
-      // Obtener datos actualizados de la rama para tener las URLs correctas
-      console.log('🔄 [GalleryService] Obteniendo datos actualizados de la rama...');
-      const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-      
-      if (updatedRama && updatedRama.sectionGalleryObjectIds.length > 0) {
-        // Buscar la nueva URL en la galería actualizada
-        // Como el backend reemplaza en el mismo índice, podemos retornar la URL del upload
-        console.log('✅ [GalleryService] Datos actualizados obtenidos');
-        return uploadResponse.url || uploadResponse.objectId;
-      } else {
-        console.warn('⚠️ [GalleryService] No se pudieron obtener datos actualizados, usando URL del upload');
-        return uploadResponse.url || uploadResponse.objectId;
-      }
-    } catch (patchError) {
-      console.error('❌ [GalleryService] Error en endpoint PATCH para reemplazar imagen:', patchError);
-      throw patchError;
-    }
+
+    console.log('📦 [GalleryService] PATCH payload para reemplazar imagen:', replacePayload);
+    await apiClient.patch(patchEndpoint, replacePayload);
+    console.log('✅ [GalleryService] Imagen reemplazada correctamente');
+
+    return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
     console.error('❌ [GalleryService] Error reemplazando imagen en galería:', error);
     throw error;
   }
 };
 
-// Función para eliminar una imagen de la galería de una rama
-// Basada en la guía del backend usando operaciones
+// ===============================================================
+// 🗑️ Eliminar imagen de galería
+// ===============================================================
 export const removeGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -224,36 +158,22 @@ export const removeGalleryImage = async (
   targetImageUuid: string
 ): Promise<void> => {
   console.log('🗑️ [GalleryService] Eliminando imagen de galería...');
-  console.log('📝 [GalleryService] Parámetros:', {
-    sectionId,
-    targetImageUuid
-  });
-  
+  console.log('🧾 Parámetros:', { sectionId, targetImageUuid });
+
   try {
-    // Usar endpoint PATCH para eliminar de la galería
-    console.log('🔄 [GalleryService] Eliminando imagen de galería usando endpoint PATCH...');
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
-    console.log('📍 [GalleryService] Endpoint PATCH:', patchEndpoint);
-    
-    // Crear el payload de operación según la guía del backend
-    const removePayload = {
-      operations: [
-        {
-          op: "remove",
-          targetUuid: targetImageUuid
-        }
-      ]
-    };
-    
-    console.log('🔄 [GalleryService] PATCH payload para eliminar imagen:', removePayload);
-    
-    try {
-      await apiClient.patch(patchEndpoint, removePayload);
-      console.log('✅ [GalleryService] Imagen eliminada correctamente de galería');
-    } catch (patchError) {
-      console.error('❌ [GalleryService] Error en endpoint PATCH para eliminar imagen:', patchError);
-      throw patchError;
+    const validTargetUuid = extractUuidFromString(targetImageUuid);
+    if (!validTargetUuid) {
+      console.error('❌ [GalleryService] UUID inválido detectado. Abortando eliminación.');
+      throw new Error('Invalid UUID format detected');
     }
+
+    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+    const removePayload = { operations: [{ op: 'remove', targetUuid: validTargetUuid }] };
+
+    console.log('📦 [GalleryService] PATCH payload para eliminar imagen:', removePayload);
+    await apiClient.patch(patchEndpoint, removePayload);
+
+    console.log('✅ [GalleryService] Imagen eliminada correctamente');
   } catch (error) {
     console.error('❌ [GalleryService] Error eliminando imagen de galería:', error);
     throw error;
