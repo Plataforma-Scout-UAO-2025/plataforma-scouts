@@ -1,0 +1,45 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseurl}}api/v1/test/health
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has correct structure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('status', 'UP');
+    expect(body).to.have.property('message');
+    expect(body).to.have.property('timestamp');
+  });
+  
+  test("Response message is correct", function() {
+    const body = res.getBody();
+    expect(body.message).to.equal('Aplicación funcionando correctamente');
+  });
+}
+
+docs {
+  Nombre: Verificación de estado de la aplicación (Health Check)
+  Endpoint: /api/v1/test/health
+  HU relacionadas: N/A
+  Descripción: Test que verifica que la aplicación esté funcionando correctamente y responda adecuadamente
+  Respuesta esperada: Status 200 con mensaje de confirmación y timestamp
+  Estructura del body de salida: {status: string, message: string, timestamp: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}

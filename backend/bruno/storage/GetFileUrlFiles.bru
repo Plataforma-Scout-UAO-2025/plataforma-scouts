@@ -1,0 +1,45 @@
+meta {
+  name: Get File URL - Files
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseurl}}api/v1/test/file-url?fileName=sample-document.pdf&bucket=files
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has correct structure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('fileName', 'sample-document.pdf');
+    expect(body).to.have.property('bucket', 'files');
+    expect(body).to.have.property('fileUrl');
+  });
+  
+  test("File URL is valid", function() {
+    const body = res.getBody();
+    expect(body.fileUrl).to.be.a('string');
+    expect(body.fileUrl).to.contain('storage/v1/object/public/files/sample-document.pdf');
+  });
+}
+
+docs {
+  Nombre: Obtener URL de acceso a documento
+  Endpoint: /api/v1/test/file-url
+  HU relacionadas: 
+  Descripción: Test que verifica la generación correcta de URLs de acceso para archivos de documentos
+  Respuesta esperada: Status 200 con información del archivo y URL de acceso válida
+  Estructura del body de salida: {fileName: string, bucket: string, fileUrl: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}

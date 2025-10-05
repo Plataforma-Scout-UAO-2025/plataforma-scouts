@@ -1,0 +1,54 @@
+meta {
+  name: Upload Image - Large File
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseurl}}api/v1/test/upload/image
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  file: @file(./test-files/large-image.jpg)
+}
+
+tests {
+  test("Status code is 200 or 413", function() {
+    const status = res.getStatus();
+    expect([200, 413]).to.include(status);
+  });
+  
+  test("If success, response has correct structure", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property('message', 'Archivo subido exitosamente');
+      expect(body).to.have.property('bucket', 'images');
+      expect(body.size).to.be.greaterThan(1000000); // > 1MB
+    }
+  });
+  
+  test("If error, response indicates file too large", function() {
+    if (res.getStatus() === 413) {
+      const body = res.getBody();
+      expect(body).to.have.property('error');
+    }
+  });
+}
+
+docs {
+  Nombre: Validación de subida de imagen de gran tamaño
+  Endpoint: /api/v1/test/upload/image
+  HU relacionadas: 
+  Descripción: Test que verifica el comportamiento al subir archivos de gran tamaño, esperando éxito o error de límite
+  Respuesta esperada: Status 200 (éxito) o 413 (archivo demasiado grande) - ACTUAL: 403 (problema de autenticación)
+  Estructura del body de entrada: archivo multipart de gran tamaño
+  Estructura del body de salida: {message: string, ...} o {error: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}

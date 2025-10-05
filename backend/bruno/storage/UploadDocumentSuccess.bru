@@ -1,0 +1,69 @@
+meta {
+  name: Upload Document - Success
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseurl}}api/v1/test/upload/document
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  file: @file(./test-files/sample-document.pdf)
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has correct structure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('message', 'Archivo subido exitosamente');
+    expect(body).to.have.property('fileName');
+    expect(body).to.have.property('originalName');
+    expect(body).to.have.property('fileUrl');
+    expect(body).to.have.property('bucket', 'files');
+    expect(body).to.have.property('size');
+    expect(body).to.have.property('contentType');
+  });
+  
+  test("File name is generated correctly", function() {
+    const body = res.getBody();
+    expect(body.fileName).to.contain('sample-document.pdf');
+    expect(body.originalName).to.equal('sample-document.pdf');
+  });
+  
+  test("File URL is valid", function() {
+    const body = res.getBody();
+    expect(body.fileUrl).to.be.a('string');
+    expect(body.fileUrl).to.contain('storage/v1/object/public/files/');
+  });
+  
+  test("Content type is document", function() {
+    const body = res.getBody();
+    expect(body.contentType).to.contain('application/pdf');
+  });
+  
+  test("File size is positive", function() {
+    const body = res.getBody();
+    expect(body.size).to.be.greaterThan(0);
+  });
+}
+
+docs {
+  Nombre: Subida exitosa de documento PDF
+  Endpoint: /api/v1/test/upload/document
+  HU relacionadas: 
+  Descripción: Test que verifica la subida correcta de archivos PDF al bucket de documentos
+  Respuesta esperada: Status 200 con información del archivo subido y URL de acceso
+  Estructura del body de salida: {message: string, fileName: string, originalName: string, fileUrl: string, bucket: string, size: number, contentType: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}
