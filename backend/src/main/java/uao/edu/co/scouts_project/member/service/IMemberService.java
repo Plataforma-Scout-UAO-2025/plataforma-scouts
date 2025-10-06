@@ -14,9 +14,10 @@ public interface IMemberService {
 
     Optional<Member> get_member_by_id(Long member_id);
 
-    Boolean update_status(Long memberId, Status status);
+    List<Member> list_members_by_status(String status);
 
-    Member update_member_by_id(Long memberId, Member member);
+    Boolean update_status(Long memberId, Status enumStatus);
 
-    List<Member> list_members_by_status(Status status);
+    Member update_member_by_id(Long memberId, Member memberUpdate);
+
 }

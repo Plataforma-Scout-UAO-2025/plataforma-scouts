@@ -95,13 +95,40 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
-    public Boolean update_status(Long memberId, Status newStatus) {
+    public List<Member> list_members_by_status(String status) {
+        if (status == null || status.isBlank()) {
+            log.warn("Null or blank status provided for member search");
+            throw new IllegalArgumentException("Status cannot be null or blank");
+        }
+
+        Status enumStatus;
+        try {
+            enumStatus = Status.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status received: {}", status);
+            throw new IllegalArgumentException("Invalid status value: " + status);
+        }
+
+        log.info("Listing members with status: {}", enumStatus);
+
+        List<Member> members = memberRepository.findByStatus(enumStatus);
+
+        return members.stream()
+                .filter(Objects::nonNull)
+                .sorted(Comparator
+                        .comparing(Member::getLastName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(Member::getFirstName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Boolean update_status(Long memberId, Status enumStatus) {
         if (memberId == null || memberId <= 0) {
             log.warn("Invalid member ID for status update: {}", memberId);
             throw new IllegalArgumentException("Invalid member ID: " + memberId);
         }
 
-        if (newStatus == null) {
+        if (enumStatus == null) {
             log.warn("Null status provided for member ID: {}", memberId);
             throw new IllegalArgumentException("Status cannot be null");
         }
@@ -112,27 +139,26 @@ public class MemberServiceImp implements IMemberService {
                     return new IllegalArgumentException("Member not found with ID: " + memberId);
                 });
 
-        if (member.getStatus() == newStatus) {
-            log.info("Member {} already has status {}", memberId, newStatus);
+        if (member.getStatus() == enumStatus) {
+            log.info("Member {} already has status {}", memberId, enumStatus);
             return false;
         }
 
-        member.setStatus(newStatus);
+        member.setStatus(enumStatus);
 
-        switch (newStatus) {
+        switch (enumStatus) {
             case APPROVED -> {
                 log.info("Member {} approved", memberId);
                 member.setAcceptanceDate(LocalDate.now());
             }
             case REJECTED, PENDING -> {
-                log.info("Member {} status changed to {}", memberId, newStatus);
+                log.info("Member {} status changed to {}", memberId, enumStatus);
                 member.setAcceptanceDate(null);
             }
         }
 
         memberRepository.save(member);
-        log.info("Member {} status updated to {}", memberId, newStatus);
-
+        log.info("Member {} status updated to {}", memberId, enumStatus);
         return true;
     }
 
@@ -144,8 +170,6 @@ public class MemberServiceImp implements IMemberService {
             throw new IllegalArgumentException("Invalid member ID: " + memberId);
         }
 
-        validateMemberData(memberUpdate);
-
         Member existingMember = memberRepository.findById(memberId)
                 .orElseThrow(() -> {
                     log.warn("Attempt to update non-existent member with ID: {}", memberId);
@@ -154,35 +178,15 @@ public class MemberServiceImp implements IMemberService {
 
         log.info("Starting update for member with ID: {}", memberId);
 
-        // Copiar solo propiedades no nulas
         BeanUtils.copyProperties(memberUpdate, existingMember, getNullPropertyNames(memberUpdate));
-
-        // Preservar campos del sistema
         existingMember.setMemberId(memberId);
 
         Member updatedMember = memberRepository.save(existingMember);
         log.info("Member updated successfully with ID: {}", memberId);
-
         return updatedMember;
     }
 
-    @Override
-    public List<Member> list_members_by_status(Status status) {
-        if (status == null) {
-            log.warn("Null status provided for member search");
-            throw new IllegalArgumentException("Status cannot be null");
-        }
 
-        log.info("Listing members with status: {}", status);
-        List<Member> members = memberRepository.findByStatus(status);
-
-        return members.stream()
-                .filter(Objects::nonNull)
-                .sorted(Comparator
-                        .comparing(Member::getLastName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
-                        .thenComparing(Member::getFirstName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
-                .collect(Collectors.toList());
-    }
 
     /**
      * Valida que los datos obligatorios del miembro estén presentes

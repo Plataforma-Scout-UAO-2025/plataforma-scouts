@@ -16,25 +16,25 @@ import java.util.List;
 @NoArgsConstructor
 public class MemberDto {
 
-    @JsonProperty("member_id")
+    @JsonProperty("memberId")
     private Long memberId;
 
-    @JsonProperty("user_id")
+    @JsonProperty("userId")
     private String userId;
 
-    @JsonProperty("tenant_id")
+    @JsonProperty("tenantId")
     private String tenantId;
 
-    @JsonProperty("guardian_id")
+    @JsonProperty("guardianId")
     private Integer guardianId;
 
-    @JsonProperty("subgroup_id")
+    @JsonProperty("subgroupId")
     private Long subgroupId;
 
-    @JsonProperty("first_name")
+    @JsonProperty("firstName")
     private String firstName;
 
-    @JsonProperty("last_name")
+    @JsonProperty("lastName")
     private String lastName;
 
     private Integer age;

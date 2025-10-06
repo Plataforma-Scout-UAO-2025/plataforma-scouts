@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ISchoolRepository extends JpaRepository<SchoolData, Long> {
 
-    @Query("SELECT s FROM SchoolData s WHERE s.member.member_id = :memberId")
-    List<SchoolData> findByMemberId(@Param("memberId") Integer memberId);
+    @Query("SELECT s FROM SchoolData s WHERE s.memberId = :memberId")
+    List<SchoolData> findByMemberId(@Param("memberId") Long memberId);
 
 }

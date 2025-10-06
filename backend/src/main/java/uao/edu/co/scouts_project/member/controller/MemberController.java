@@ -18,17 +18,16 @@ import uao.edu.co.scouts_project.member.repository.ISchoolRepository;
 import uao.edu.co.scouts_project.member.service.IMemberService;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Controlador REST para la gestión de members.
- *
  * Expone endpoints para crear, listar, actualizar members
  * de la base de datos. Utiliza DTOs para la comunicación
  * entre capas y mantiene la conversión con un Mapper.
- *
  * Endpoints disponibles:
  * - POST /api/members/create_member
  * - POST /api/members/create_member_with_school
@@ -197,7 +196,7 @@ public class MemberController {
 
 
     /**
-     * Lista los members filtrados por estado (ACEPTADO o NO_ACEPTADO).
+     * Lista los members filtrados por estado (PENDING, REJECTED o APPROVED).
      *
      * @param status Estado de los members a listar.
      * @return ResponseEntity con la lista de members en formato DTO o un mensaje de error.
@@ -208,7 +207,7 @@ public class MemberController {
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
     @GetMapping("/list_members_by_status")
-    public ResponseEntity<?> list_members_by_status(@RequestParam Status status) {
+    public ResponseEntity<?> list_members_by_status(@RequestParam String status) {
         try {
             List<MemberDto> membersDto = memberservice.list_members_by_status(status)
                     .stream()
@@ -219,7 +218,7 @@ public class MemberController {
         } catch (IllegalArgumentException e) {
             log.warn("Estado inválido recibido: {}", status);
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Estado inválido: " + status));
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.error("Error al listar los members por estado {}", status, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -230,8 +229,9 @@ public class MemberController {
 
 
 
+
     /**
-     * Actualiza el estado de un miembro (ACEPTADO o NO_ACEPTADO).
+     * Actualiza el estado de un miembro (PENDING, REJECTED o APPROVED).
      *
      * @param memberId ID único del miembro.
      * @param status    Nuevo estado a asignar al miembro.
@@ -245,9 +245,15 @@ public class MemberController {
     @PutMapping("/update_member_status/{id}")
     public ResponseEntity<?> update_member_status(
             @PathVariable("id") Long memberId,
-            @RequestParam Status status) {
+            @RequestParam String status) {
+
         try {
-            Boolean actualizado = memberservice.update_status(memberId, status);
+            Status enumStatus = Arrays.stream(Status.values())
+                    .filter(s -> s.name().equalsIgnoreCase(status))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Estado inválido: " + status));
+
+            Boolean actualizado = memberservice.update_status(memberId, enumStatus);
 
             if (actualizado) {
                 return ResponseEntity.ok(Map.of("mensaje", "Estado actualizado correctamente"));
@@ -255,12 +261,20 @@ public class MemberController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Miembro no encontrado con ID " + memberId));
             }
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Estado inválido recibido: {}", status);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+
         } catch (Exception e) {
             log.error("Error al actualizar el estado del miembro con ID {}", memberId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error interno del servidor"));
         }
     }
+
+
 
 
     /**
