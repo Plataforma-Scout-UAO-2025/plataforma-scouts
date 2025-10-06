@@ -1,12 +1,14 @@
 package uao.edu.co.scouts_project.member.service;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import uao.edu.co.scouts_project.infrastructure.security.JwtUtilService;
+import org.springframework.util.StringUtils;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
@@ -14,7 +16,6 @@ import uao.edu.co.scouts_project.member.shared.enums.Status;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Slf4j
 @Service
@@ -24,46 +25,45 @@ public class MemberServiceImp implements IMemberService {
     @Autowired
     private IMemberRepository memberRepository;
 
-    @Autowired
-    private JwtUtilService jwtUtilService;
-
     @Override
     public Member create_member(Member miembro) {
+        // Validaciones de entrada
+        validateMemberData(miembro);
+
         try {
             Optional<Member> existingMember = memberRepository.findByIdentification(miembro.getIdentification());
             if (existingMember.isPresent()) {
-                log.warn("Intento de crear miembro duplicado con identificación: {}", miembro.getIdentification());
-                throw new IllegalArgumentException("Ya existe un miembro con la identificación " + miembro.getIdentification());
+                log.warn("Attempt to create duplicate member with identification: {}", miembro.getIdentification());
+                throw new IllegalArgumentException("A member with identification " + miembro.getIdentification() + " already exists");
             }
 
-            String userId = jwtUtilService.getCurrentUserId();
-            String tenantId = jwtUtilService.getCurrentTenantId();
-
-            log.info("Creando miembro - Usuario autenticado: {} | Tenant: {}", userId, tenantId);
-
+            String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+            log.info("Creating member - Authenticated user: {}", userId);
 
             miembro.setUserId(userId);
-            miembro.setTenantId(tenantId);
+
+            if (miembro.getStatus() == null) {
+                miembro.setStatus(Status.PENDING);
+            }
 
             Member savedMember = memberRepository.save(miembro);
-            log.info("Miembro creado exitosamente con ID: {}", savedMember.getMemberId());
+            log.info("Member created successfully with ID: {}", savedMember.getMemberId());
 
             return savedMember;
 
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error inesperado al crear el miembro", e);
-            throw new RuntimeException("Error interno al crear el miembro", e);
+            log.error("Unexpected error creating member", e);
+            throw new RuntimeException("Internal error creating member", e);
         }
     }
 
-
     @Override
     public List<Member> list_members() {
-        List<Member> miembros = memberRepository.findAll();
-        log.info("Recuperados {} miembros desde la BD", miembros.size());
-        return miembros.stream()
+        List<Member> members = memberRepository.findAll();
+        log.info("Retrieved {} members from database", members.size());
+        return members.stream()
                 .filter(Objects::nonNull)
                 .sorted(Comparator
                         .comparing(Member::getLastName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
@@ -72,100 +72,141 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
-    public Optional<Member> get_member_by_id(Long member_id) {
-        if (member_id == null || member_id <= 0) {
-            log.warn("Invalid search by id: {}", member_id);
+    public Optional<Member> get_member_by_id(Long memberId) {
+        if (memberId == null || memberId <= 0) {
+            log.warn("Invalid member ID for search: {}", memberId);
             return Optional.empty();
         }
-        Optional<Member> maybeMember = memberRepository.findById(member_id);
+
+        Optional<Member> maybeMember = memberRepository.findById(memberId);
 
         if (maybeMember.isPresent()) {
             Member m = maybeMember.get();
             if (m.getFirstName() == null || m.getLastName() == null) {
-                log.warn("Member found (id={}) with incomplete data", member_id);
+                log.warn("Member found (id={}) with incomplete data", memberId);
             } else {
-                log.info("Member found: id={}, firstname={} lastname={}", member_id, m.getFirstName(), m.getLastName());
+                log.info("Member found: id={}, firstname={}, lastname={}", memberId, m.getFirstName(), m.getLastName());
             }
         } else {
-            log.info("Member not found: id={}", member_id);
+            log.info("Member not found: id={}", memberId);
         }
 
         return maybeMember;
     }
 
-
     @Override
-    public Boolean update_status(Integer memberId, String nuevoStatus) {
-        Optional<Member> memberOpt = memberRepository.findById(memberId);
+    public Boolean update_status(Long memberId, Status newStatus) {
+        if (memberId == null || memberId <= 0) {
+            log.warn("Invalid member ID for status update: {}", memberId);
+            throw new IllegalArgumentException("Invalid member ID: " + memberId);
+        }
 
-        if (memberOpt.isEmpty()) {
-            log.warn("Intento de actualizar estado para miembro inexistente con ID {}", memberId);
+        if (newStatus == null) {
+            log.warn("Null status provided for member ID: {}", memberId);
+            throw new IllegalArgumentException("Status cannot be null");
+        }
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> {
+                    log.warn("Attempt to update status for non-existent member with ID: {}", memberId);
+                    return new IllegalArgumentException("Member not found with ID: " + memberId);
+                });
+
+        if (member.getStatus() == newStatus) {
+            log.info("Member {} already has status {}", memberId, newStatus);
             return false;
         }
 
-        Member member = memberOpt.get();
+        member.setStatus(newStatus);
 
-        try {
-            Status statusEnum = Status.valueOf(nuevoStatus.toUpperCase());
-
-            if (member.getStatus() == statusEnum) {
-                log.info("El miembro {} ya tiene el estado {}", memberId, statusEnum);
-                return false;
+        switch (newStatus) {
+            case APPROVED -> {
+                log.info("Member {} approved", memberId);
+                member.setAcceptanceDate(LocalDate.now());
             }
-
-            member.setStatus(statusEnum);
-
-            switch (statusEnum) {
-                case APPROVED -> {
-                    log.info("Miembro {} aprobado", memberId);
-                    member.setAcceptanceDate(LocalDate.now());
-                }
-                case REJECTED -> {
-                    log.info("Miembro {} rechazado", memberId);
-                    member.setAcceptanceDate(null);
-                }
-                case PENDING -> {
-                    log.info("Miembro {} pendiente", memberId);
-                    member.setAcceptanceDate(null);
-                }
+            case REJECTED, PENDING -> {
+                log.info("Member {} status changed to {}", memberId, newStatus);
+                member.setAcceptanceDate(null);
             }
-
-            memberRepository.save(member);
-            log.info("Estado del miembro {} actualizado a {}", memberId, statusEnum);
-            return true;
-
-        } catch (IllegalArgumentException e) {
-            log.warn("Estado '{}' no reconocido para miembro {}. Valores válidos: {}",
-                    nuevoStatus, memberId, Arrays.toString(Status.values()));
-            return false;
-        } catch (Exception e) {
-            log.error("Error actualizando estado del miembro {}: {}", memberId, e.getMessage(), e);
-            return false;
         }
+
+        memberRepository.save(member);
+        log.info("Member {} status updated to {}", memberId, newStatus);
+
+        return true;
     }
 
 
-
     @Override
-    public Optional<Member> update_member_by_id(Integer idMiembro, Member miembroUpdate) {
-        if (idMiembro == null || idMiembro <= 0) {
-            log.warn("Intento de actualización con ID inválido: {}", idMiembro);
-            return Optional.empty();
+    public Member update_member_by_id(Long memberId, Member memberUpdate) {
+        if (memberId == null || memberId <= 0) {
+            log.warn("Attempt to update with invalid ID: {}", memberId);
+            throw new IllegalArgumentException("Invalid member ID: " + memberId);
         }
 
-        return memberRepository.findById(idMiembro).map(miembroExistente -> {
-            log.info("Iniciando actualización del miembro con ID: {}", idMiembro);
+        validateMemberData(memberUpdate);
 
-            BeanUtils.copyProperties(miembroUpdate, miembroExistente, getNullPropertyNames(miembroUpdate));
-            Member miembroActualizado = memberRepository.save(miembroExistente);
-            log.info("Miembro actualizado correctamente con ID {}", idMiembro);
+        Member existingMember = memberRepository.findById(memberId)
+                .orElseThrow(() -> {
+                    log.warn("Attempt to update non-existent member with ID: {}", memberId);
+                    return new IllegalArgumentException("Member not found with ID: " + memberId);
+                });
 
-            return miembroActualizado;
-        });
+        log.info("Starting update for member with ID: {}", memberId);
+
+        // Copiar solo propiedades no nulas
+        BeanUtils.copyProperties(memberUpdate, existingMember, getNullPropertyNames(memberUpdate));
+
+        // Preservar campos del sistema
+        existingMember.setMemberId(memberId);
+
+        Member updatedMember = memberRepository.save(existingMember);
+        log.info("Member updated successfully with ID: {}", memberId);
+
+        return updatedMember;
+    }
+
+    @Override
+    public List<Member> list_members_by_status(Status status) {
+        if (status == null) {
+            log.warn("Null status provided for member search");
+            throw new IllegalArgumentException("Status cannot be null");
+        }
+
+        log.info("Listing members with status: {}", status);
+        List<Member> members = memberRepository.findByStatus(status);
+
+        return members.stream()
+                .filter(Objects::nonNull)
+                .sorted(Comparator
+                        .comparing(Member::getLastName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(Member::getFirstName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .collect(Collectors.toList());
     }
 
     /**
-     * Retorna los nombres de las propiedades nulas en un objeto (para ignorarlas en el copyProperties).
+     * Valida que los datos obligatorios del miembro estén presentes
+     */
+    private void validateMemberData(Member member) {
+        if (member == null) {
+            throw new IllegalArgumentException("Member cannot be null");
+        }
+
+        if (!StringUtils.hasText(member.getFirstName())) {
+            throw new IllegalArgumentException("First name is required");
+        }
+
+        if (!StringUtils.hasText(member.getLastName())) {
+            throw new IllegalArgumentException("Last name is required");
+        }
+
+        if (!StringUtils.hasText(member.getIdentification())) {
+            throw new IllegalArgumentException("Identification is required");
+        }
+    }
+
+    /**
+     * Returns the names of null properties in an object (to ignore them in copyProperties)
      */
     private String[] getNullPropertyNames(Object source) {
         final BeanWrapper src = new BeanWrapperImpl(source);
@@ -178,20 +219,12 @@ public class MemberServiceImp implements IMemberService {
                 emptyNames.add(pd.getName());
             }
         }
+
+        // Siempre ignorar estos campos del sistema
+        emptyNames.add("memberId");
+        emptyNames.add("userId");
+        emptyNames.add("createdAt");
+
         return emptyNames.toArray(new String[0]);
     }
-
-    @Override
-    public List<Member> list_members_by_status(String status) {
-        log.info("Listando miembros con estado {}", status);
-        return memberRepository.findByStatus(status);
-    }
-
-
-
-
-
 }
-
-
-

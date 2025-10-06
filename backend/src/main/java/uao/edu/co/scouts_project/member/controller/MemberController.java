@@ -16,6 +16,7 @@ import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.model.SchoolData;
 import uao.edu.co.scouts_project.member.repository.ISchoolRepository;
 import uao.edu.co.scouts_project.member.service.IMemberService;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 
 import java.util.List;
 import java.util.Map;
@@ -207,7 +208,7 @@ public class MemberController {
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
     @GetMapping("/list_members_by_status")
-    public ResponseEntity<?> list_members_by_status(@RequestParam String status) {
+    public ResponseEntity<?> list_members_by_status(@RequestParam Status status) {
         try {
             List<MemberDto> membersDto = memberservice.list_members_by_status(status)
                     .stream()
@@ -232,7 +233,7 @@ public class MemberController {
     /**
      * Actualiza el estado de un miembro (ACEPTADO o NO_ACEPTADO).
      *
-     * @param member_id ID único del miembro.
+     * @param memberId ID único del miembro.
      * @param status    Nuevo estado a asignar al miembro.
      * @return ResponseEntity con un mensaje de éxito o error.
      * <p>
@@ -243,19 +244,19 @@ public class MemberController {
      */
     @PutMapping("/update_member_status/{id}")
     public ResponseEntity<?> update_member_status(
-            @PathVariable("id") Integer member_id,
-            @RequestParam String status) {
+            @PathVariable("id") Long memberId,
+            @RequestParam Status status) {
         try {
-            Boolean actualizado = memberservice.update_status(member_id, status);
+            Boolean actualizado = memberservice.update_status(memberId, status);
 
             if (actualizado) {
                 return ResponseEntity.ok(Map.of("mensaje", "Estado actualizado correctamente"));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Miembro no encontrado con ID " + member_id));
+                        .body(Map.of("error", "Miembro no encontrado con ID " + memberId));
             }
         } catch (Exception e) {
-            log.error("Error al actualizar el estado del miembro con ID {}", member_id, e);
+            log.error("Error al actualizar el estado del miembro con ID {}", memberId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error interno del servidor"));
         }
@@ -264,7 +265,7 @@ public class MemberController {
 
     /**
      * Actualiza la información de un miembro existente.
-     * @param member_id        ID único del miembro a actualizar.
+     * @param memberId        ID único del miembro a actualizar.
      * @param memberUpdateDto Datos nuevos del miembro en formato DTO.
      * @return ResponseEntity con el miembro actualizado en formato DTO o un mensaje de error.
      * <p>
@@ -276,22 +277,22 @@ public class MemberController {
 
     @PutMapping("/update_member_by_id/{id}")
     public ResponseEntity<?> update_member_by_id(
-            @PathVariable("id") Integer member_id,
+            @PathVariable("id") Long memberId,
             @Valid @RequestBody MemberDto memberUpdateDto) {
         try {
             Member miembroUpdate = MemberMapper.toEntity(memberUpdateDto);
 
             Optional<Member> miembroActualizado =
-                    memberservice.update_member_by_id(member_id, miembroUpdate);
+                    Optional.ofNullable(memberservice.update_member_by_id(memberId, miembroUpdate));
 
             if (miembroActualizado.isPresent()) {
                 return ResponseEntity.ok(MemberMapper.toDto(miembroActualizado.get()));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Miembro no encontrado con ID " + member_id));
+                        .body(Map.of("error", "Miembro no encontrado con ID " + memberId));
             }
         } catch (Exception e) {
-            log.error("Error al actualizar el miembro con ID {}", member_id, e);
+            log.error("Error al actualizar el miembro con ID {}", memberId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error interno del servidor"));
         }
