@@ -44,10 +44,13 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
       ramas.map(async (rama) => {
         try {
           const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
-          return { ...rama, subramas };
+          // Populate both canonical and legacy-compatible fields so consumers using
+          // (rama.subgroups ?? rama.subramas) won't pick an empty array from the
+          // pre-initialized `subgroups: []` and miss the hydrated subramas.
+          return { ...rama, subramas, subgroups: subramas };
         } catch (error) {
           console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre ?? rama.name}:`, error);
-          return { ...rama, subramas: [] };
+          return { ...rama, subramas: [], subgroups: [] };
         }
       })
     );
@@ -80,11 +83,15 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
     // 🔄 Hidratar rama con sus subramas
     try {
       const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
+      // Ensure both fields are populated so components that check the canonical
+      // `subgroups` property don't mistakenly use the pre-initialized empty array.
       rama.subramas = subramas;
+      rama.subgroups = subramas;
       console.log('✅ [RamaService] Rama obtenida con', subramas.length, 'subramas:', rama.nombre);
     } catch (subramaError) {
       console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, subramaError);
       rama.subramas = [];
+      rama.subgroups = [];
     }
     
     return rama;
