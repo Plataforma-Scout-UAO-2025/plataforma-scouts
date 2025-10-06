@@ -67,6 +67,7 @@ export default function RamaList({
   const ramaKey = String(rama.sectionId ?? rama.section_id ?? rama.id ?? '');
   const ramaDisplayName = rama.name ?? rama.nombre ?? '';
   const ramaEstado = rama.estado ?? (rama.status === 'active' ? 'activa' : 'inactiva');
+  const ramaIsActive = (rama.estado !== undefined ? String(rama.estado) === 'activa' : rama.status === 'active');
 
         return (
           <AccordionItem key={ramaKey} value={ramaKey} className="border rounded-lg shadow-sm bg-white">
@@ -78,7 +79,10 @@ export default function RamaList({
                   <div className="text-left">
                     <div className="flex items-center space-x-2">
                       <span className="font-medium text-foreground">Rama: {ramaDisplayName}</span>
-                      <Badge variant={ramaEstado === 'activa' ? 'default' : 'secondary'} className="text-xs">{ramaEstado}</Badge>
+                    
+                      {ramaEstado !== 'activa' ? (
+                        <Badge variant={ramaIsActive ? 'default' : 'secondary'} className="text-xs">{ramaEstado}</Badge>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -112,6 +116,7 @@ export default function RamaList({
                       const subgroupKey = String(subrama.subgroup_id ?? subrama.id ?? '');
                       const subramaDisplayName = subrama.name ?? subrama.nombre ?? '';
                       const subramaEstado = subrama.estado ?? (subrama.status === 'active' ? 'activa' : 'inactiva');
+                      const subramaIsActive = (subrama.estado !== undefined ? String(subrama.estado) === 'activa' : subrama.status === 'active');
 
                       return (
                         <div key={`subrama-${ramaKey}-${subgroupKey}-${index}`} className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm">
@@ -120,7 +125,10 @@ export default function RamaList({
                             <div>
                               <div className="flex items-center space-x-2">
                                 <span className="font-medium text-sm">Subrama: {subramaDisplayName}</span>
-                                <Badge variant={subramaEstado === 'activa' ? 'default' : 'secondary'} className="text-xs">{subramaEstado}</Badge>
+                                
+                                {subramaEstado !== 'activa' ? (
+                                  <Badge variant={subramaIsActive ? 'default' : 'secondary'} className="text-xs">{subramaEstado}</Badge>
+                                ) : null}
                               </div>
                             </div>
                           </div>
