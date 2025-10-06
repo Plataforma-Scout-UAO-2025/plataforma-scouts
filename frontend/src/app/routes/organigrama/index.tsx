@@ -20,8 +20,10 @@ import OrganigramaLoader from './components/OrganigramaLoader';
 import type { Rama, Subrama, CreateRamaData, UpdateSubramaData } from './types/rama.type';
 import type { CreateSubramaFormData, UpdateRamaFormData, UpdateSubramaFormData } from './schemas/rama.schema';
 import { useTenantParams } from './hooks/useTenantParams';
-import useOrganigrama from './hooks/useOrganigrama';
-import * as organigramaService from './services';
+import useOrganigramaData from './hooks/useOrganigramaData';
+import useOrganigramaActions from './hooks/useOrganigramaActions';
+import useOrganigramaExport from './hooks/useOrganigramaExport';
+import { useApiError } from './hooks/useApiError';
 
 import {
   DropdownMenu,
@@ -56,17 +58,17 @@ export default function Organigrama() {
     selectedYear,
     setSelectedYear,
     loadRamas,
-    handleCreateRama: hookHandleCreateRama,
-    handleSubmitEditRama: hookHandleSubmitEditRama,
-    handleSubmitSubrama: hookHandleSubmitSubrama,
-    handleSubmitEditSubrama: hookHandleSubmitEditSubrama,
-    // confirmDelete: hookConfirmDelete,
-    handleExportPDF: hookHandleExportPDF,
-    handleExportExcel: hookHandleExportExcel,
-    error,
-    clearError,
-    handleError: hookHandleError,
-  } = useOrganigrama(tenantSlug, groupSlug);
+  } = useOrganigramaData(tenantSlug, groupSlug);
+
+  const { error, handleError, clearError } = useApiError();
+
+  const { createRama, updateRama, createSubrama, updateSubrama, deleteRama, deleteSubrama } =
+    useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSuccess: () => {
+      setSuccessOpen(true);
+    }, handleError });
+
+  const { exportPDF, exportExcel } = useOrganigramaExport(ramas, selectedYear);
+  
 
   // sincronizar estados locales de éxito con el hook (el componente mantiene control visual del modal)
   // Inicialmente no migramos por completo la UI del éxito para mantener cambios mínimos.
@@ -74,7 +76,7 @@ export default function Organigrama() {
   // ====== RAMAS ======
   // Usar el handler del hook para crear ramas (mantener wrapper para compatibilidad)
   const handleCreateRama = async (data: CreateRamaData) => {
-    return hookHandleCreateRama(data);
+    return createRama(data);
   };
 
   const handleEditRama = (rama: Rama) => {
@@ -86,9 +88,9 @@ export default function Organigrama() {
     if (!ramaSeleccionada) return;
     try {
       const payload = { ...data, id: ramaSeleccionada.id };
-      await hookHandleSubmitEditRama(payload as any);
+      await updateRama(payload as any);
     } catch (err) {
-      hookHandleError(err);
+      handleError(err);
       throw err;
     }
   };
@@ -105,7 +107,7 @@ export default function Organigrama() {
   };
 
   const handleSubmitSubrama = async (data: CreateSubramaFormData) => {
-    return hookHandleSubmitSubrama(data);
+    return createSubrama(data);
   };
 
   const handleEditSubrama = (subrama: Subrama) => {
@@ -122,9 +124,9 @@ export default function Organigrama() {
         ramaId: subramaSeleccionada.ramaId,
         ...data,
       };
-      await hookHandleSubmitEditSubrama(updateData as any);
+      await updateSubrama(updateData as any);
     } catch (err) {
-      hookHandleError(err);
+      handleError(err);
       throw err;
     }
   };
@@ -139,40 +141,39 @@ export default function Organigrama() {
   const onConfirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      // Proteger contra llamadas sin tenant/group
       if (!tenantSlug || !groupSlug) {
-        hookHandleError(new Error('Tenant o group no disponibles para eliminar.'));
+        handleError(new Error('Tenant o group no disponibles para eliminar.'));
         setConfirmDeleteOpen(false);
         return;
       }
       if (deleteTarget.type === 'rama') {
-        await organigramaService.deleteRama(tenantSlug, groupSlug, deleteTarget.id);
+        await deleteRama(deleteTarget.id);
       } else {
         const sectionId = deleteTarget.sectionId;
         if (!sectionId) {
           if (!deleteTarget.id || !deleteTarget.id.includes('-')) {
-            hookHandleError(new Error('No se puede determinar sectionId para eliminar la subrama.'));
+            handleError(new Error('No se puede determinar sectionId para eliminar la subrama.'));
             setConfirmDeleteOpen(false);
             return;
           }
           const fallbackSectionId = deleteTarget.id.split('-')[0];
           console.warn('⚠️ [Organigrama] sectionId no disponible en deleteTarget, usando fallback', { fallbackSectionId });
-          await organigramaService.deleteSubrama(tenantSlug, groupSlug, fallbackSectionId, deleteTarget.id);
+          await deleteSubrama(fallbackSectionId, deleteTarget.id);
         } else {
-          await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, deleteTarget.id);
+          await deleteSubrama(sectionId, deleteTarget.id);
         }
       }
-      await loadRamas();
-      hookHandleError(null); // limpiar errores previos
+      // loadRamas es llamado por las acciones
+      handleError(null); // limpiar errores previos
     } catch (err) {
       // @ts-ignore
-      hookHandleError(err);
+      handleError(err);
     }
   };
 
   // ====== EXPORTAR ORGANIGRAMA ======
-  const handleExportPDF = () => hookHandleExportPDF();
-  const handleExportExcel = () => hookHandleExportExcel();
+  const handleExportPDF = () => exportPDF();
+  const handleExportExcel = () => exportExcel();
 
   // ====== UTIL ======
 
