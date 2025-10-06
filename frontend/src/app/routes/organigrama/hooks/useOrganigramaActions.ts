@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import * as organigramaService from '../services';
 import type { CreateRamaData } from '../types/rama.type';
 import type { CreateSubramaFormData, UpdateRamaFormData, UpdateSubramaFormData } from '../schemas/rama.schema';
@@ -7,17 +7,56 @@ type ActionsParams = {
   tenantSlug?: string;
   groupSlug?: string;
   loadRamas: () => Promise<void>;
-  showSuccess: (msg: string) => void;
+  showSuccess?: (msg: string) => void;
   handleError: (err: any) => void;
 };
 
 export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSuccess, handleError }: ActionsParams) {
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const successTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const showSuccessLocal = useCallback((msg: string) => {
+    setSuccessMessage(msg);
+    setSuccessOpen(true);
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+    successTimeoutRef.current = window.setTimeout(() => {
+      setSuccessOpen(false);
+      successTimeoutRef.current = null;
+    }, 2000);
+    // también invocar callback externo si fue proveído (compatibilidad)
+    try {
+      if (showSuccess) showSuccess(msg);
+    } catch (e) {
+      // noop
+    }
+  }, [showSuccess]);
+
+  const closeSuccess = useCallback(() => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    setSuccessOpen(false);
+  }, []);
+
   const createRama = useCallback(async (data: CreateRamaData) => {
     try {
       if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
       await organigramaService.createRama(tenantSlug, groupSlug, data);
       await loadRamas();
-      showSuccess('Rama creada con éxito');
+      showSuccessLocal('Rama creada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
@@ -30,7 +69,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       // @ts-ignore
       await organigramaService.updateRama(tenantSlug, groupSlug, data);
       await loadRamas();
-      showSuccess('Rama actualizada con éxito');
+      showSuccessLocal('Rama actualizada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
@@ -42,7 +81,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
       await organigramaService.createSubrama(tenantSlug, groupSlug, data.ramaId, data);
       await loadRamas();
-      showSuccess('Subrama creada con éxito');
+      showSuccessLocal('Subrama creada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
@@ -55,7 +94,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       // @ts-ignore
       await organigramaService.updateSubrama(tenantSlug, groupSlug, data);
       await loadRamas();
-      showSuccess('Subrama actualizada con éxito');
+      showSuccessLocal('Subrama actualizada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
@@ -67,7 +106,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     try {
       await organigramaService.deleteRama(tenantSlug, groupSlug, id);
       await loadRamas();
-      showSuccess('Rama eliminada con éxito');
+      showSuccessLocal('Rama eliminada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
@@ -79,7 +118,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     try {
       await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, id);
       await loadRamas();
-      showSuccess('Subrama eliminada con éxito');
+      showSuccessLocal('Subrama eliminada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
@@ -93,6 +132,9 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     updateSubrama,
     deleteRama,
     deleteSubrama,
+    successOpen,
+    successMessage,
+    closeSuccess,
   };
 }
 
