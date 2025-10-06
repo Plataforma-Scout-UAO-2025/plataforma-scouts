@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,11 +40,14 @@ class FeeServiceImplTest {
   @Mock IAccountRepository accountRepo;
   @Mock IInstallmentRepository installmentRepo;
 
-  @Spy  FeeMapper mapper; // <= usamos implementación real del mapper
+  @Spy  FeeMapper mapper;
 
   @InjectMocks FeeServiceImpl service;
 
   private final ObjectMapper om = new ObjectMapper();
+
+  @Captor
+  private ArgumentCaptor<List<Installment>> installmentsCaptor;
 
   @BeforeEach
   void setup() { }
@@ -247,7 +249,6 @@ class FeeServiceImplTest {
     // Target
     MemberView mv = mock(MemberView.class);
     when(mv.getMemberId()).thenReturn(777L);
-    // si tu normalización usa first/last name, puedes stubbearlos
     when(mv.getFirstName()).thenReturn("Camila");
     when(mv.getLastName()).thenReturn("Mendoza");
     when(memberRepo.findScoutById("org_TENANT", 777L)).thenReturn(List.of(mv));
@@ -341,7 +342,6 @@ class FeeServiceImplTest {
     ArgumentCaptor<List<Installment>> cap = ArgumentCaptor.forClass(List.class);
     verify(installmentRepo).saveAll(cap.capture());
 
-    // según tu buildSchedule(YEAR) cuenta años inclusivos (ver tu helper)
     assertThat(cap.getValue().size()).isGreaterThanOrEqualTo(3);
   }
 
@@ -425,7 +425,6 @@ class FeeServiceImplTest {
 
     // mapper leniente para evitar problemas de overloading
     CuotaDto cuotaMock = mock(CuotaDto.class);
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), any(MemberPaymentDto.class));
     doReturn(cuotaMock).when(mapper)
     .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberPaymentDto>isNull());
 
@@ -472,30 +471,46 @@ void create_SCOUT_lanzaError_siAssociatedIdNoEsLong() {
   }
 
 
-  @Test
-  void create_SUBGROUP_lanzaError_siAssociatedIdNoEsLong() {
-    var at = om.createObjectNode();
-    at.put("id", "abc"); // no numérico
-    at.put("name", "Subgrupo X");
+@Test
+void create_SUBGROUP_lanzaError_siAssociatedIdNoEsLong() {
+  // Arrange: associated_to con id no-numérico, pero con name para no fallar por nombre
+  ObjectNode at = om.createObjectNode();
+  at.put("id", "NO_LONG");
+  at.put("name", "Subgrupo Alfa");
 
-    var dto = new CreateCuotaDto(
-        "org_TENANT", "Cuota", "desc", new BigDecimal("1.00"),
-        uao.edu.co.scouts_project.finanzas.fees.model.enums.Periodicity.SINGLE,
-        FeeScope.SUBGROUP,
-        LocalDate.parse("2025-01-01"),
-        LocalDate.parse("2025-01-01"),
-        at
-    );
+  CreateCuotaDto dto = new CreateCuotaDto(
+      "org_TENANT",
+      "Cuota",                     // nombre del concepto
+      "desc",
+      new BigDecimal("1.00"),
+      uao.edu.co.scouts_project.finanzas.fees.model.enums.Periodicity.SINGLE,
+      uao.edu.co.scouts_project.finanzas.fees.model.enums.FeeScope.SUBGROUP,
+      LocalDate.parse("2025-01-01"),
+      LocalDate.parse("2025-01-01"),
+      at
+  );
 
-    assertThatThrownBy(() -> service.create(dto))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("associated_to.id must be a valid Long for scope=SUBGROUP");
-  }
+  // Simular concepto existente para evitar NPE en el upsert
+  Concept concept = new Concept();
+  concept.setConceptId(1L);
+  concept.setTenantId("org_TENANT");
+  concept.setName("Cuota");
+  concept.setDescription("desc");
+  when(conceptRepo.findByNameIgnoreCase("Cuota")).thenReturn(Optional.of(concept));
+
+  // Act + Assert
+  assertThatThrownBy(() -> service.create(dto))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("associated_to.id must be a valid Long for scope=SUBGROUP");
+
+  // No debe llegar a consultar miembros, porque falla antes al parsear el id
+  verify(memberRepo, never()).findScoutsBySubgroup(anyString(), anyLong());
+}
 
   @Test
   void create_lanzaError_siAssociatedToNoEsObjetoJson() {
-    // array en vez de objeto
-    JsonNode notObject = om.createArrayNode().add("x");
+    // associated_to NO es objeto: ValueNode (string)
+    var at = om.getNodeFactory().textNode("no-obj");
 
     var dto = new CreateCuotaDto(
         "org_TENANT", "Cuota", "desc", new BigDecimal("1.00"),
@@ -503,13 +518,17 @@ void create_SCOUT_lanzaError_siAssociatedIdNoEsLong() {
         FeeScope.SECTION,
         LocalDate.parse("2025-01-01"),
         LocalDate.parse("2025-01-01"),
-        notObject
+        at
     );
 
     assertThatThrownBy(() -> service.create(dto))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("associated_to must be a JSON object when scope=SECTION");
+        .hasMessageContaining("associated_to.id is required for scope=SECTION");
+
+    verify(memberRepo, never()).findScoutsBySection(anyString(), anyLong());
   }
+
+
 
   @Test
   void create_lanzaError_siAssociatedToIdVacio() {
@@ -526,9 +545,20 @@ void create_SCOUT_lanzaError_siAssociatedIdNoEsLong() {
         at
     );
 
+    // stub del Concept para evitar NPE en el upsert
+    Concept concept = new Concept();
+    concept.setConceptId(123L);
+    concept.setTenantId("org_TENANT");
+    concept.setName("Cuota");
+    concept.setDescription("desc");
+    when(conceptRepo.findByNameIgnoreCase("Cuota")).thenReturn(Optional.of(concept));
+
     assertThatThrownBy(() -> service.create(dto))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("associated_to.id is required and non-empty");
+        .hasMessageContaining("associated_to.id must be a valid Long for scope=SECTION");
+
+    // Y confirmar que no se llegó a pedir miembros
+    verify(memberRepo, never()).findScoutsBySection(anyString(), anyLong());
   }
 
   @Test
@@ -607,8 +637,6 @@ void create_SCOUT_lanzaError_siAssociatedIdNoEsLong() {
     when(feePlanRepo.save(any(FeePlan.class))).thenAnswer(inv -> inv.getArgument(0));
 
     CuotaDto cuotaMock = mock(CuotaDto.class);
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), any(MemberPaymentDto.class));
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class));
     doReturn(cuotaMock).when(mapper)
     .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberPaymentDto>isNull());
 
@@ -653,31 +681,34 @@ void create_SCOUT_lanzaError_siAssociatedIdNoEsLong() {
     assertThat(out).extracting("name").containsExactly("Manada", "Tropa");
   }
 
-@Test
-void patch_soloActualizaConcepto_cuandoAmountEsNull() {
-  var fp = new FeePlan();
-  var c  = new Concept(); c.setConceptId(55L);
-  fp.setConcept(c);
+  @Test
+  void patch_soloActualizaConcepto_cuandoAmountEsNull() {
+    var fp = new FeePlan();
+    var c  = new Concept(); c.setConceptId(55L);
+    fp.setConcept(c);
 
-  when(feePlanRepo.findByFeePlanIdAndConcept_TenantId(9L, "org_TENANT"))
-      .thenReturn(Optional.of(fp));
+    when(feePlanRepo.findByFeePlanIdAndConcept_TenantId(9L, "org_TENANT"))
+        .thenReturn(Optional.of(fp));
 
-  var patch = new CuotaDto(9L, null, "Nuevo Nombre", "Nueva Desc",
-      null, null, null, null, null);
+    var patch = new CuotaDto(9L, null, "Nuevo Nombre", "Nueva Desc",
+        null, null, null, null, null);
 
-  CuotaDto cuotaMock = mock(CuotaDto.class);
-  doReturn(cuotaMock).when(mapper)
-    .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberView>isNull());
+    // ✅ Stub correcto: overload de 2 parámetros con segundo null (MemberPaymentDto)
+    CuotaDto cuotaMock = mock(CuotaDto.class);
+    doReturn(cuotaMock)
+        .when(mapper)
+        .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberPaymentDto>isNull());
 
-  var out = service.patch(9L, patch, "org_TENANT");
+    var out = service.patch(9L, patch, "org_TENANT");
 
-  assertThat(out).isNotNull();
-  verify(conceptRepo).save(argThat(x ->
-      "Nuevo Nombre".equals(x.getName()) && "Nueva Desc".equals(x.getDescription())
-  ));
-  verify(installmentRepo, never()).findByConceptId(anyLong());
-  verify(installmentRepo, never()).saveAll(anyList());
-}
+    assertThat(out).isNotNull();
+    verify(conceptRepo).save(argThat(x ->
+        "Nuevo Nombre".equals(x.getName()) && "Nueva Desc".equals(x.getDescription())
+    ));
+    verify(installmentRepo, never()).findByConceptId(anyLong());
+    verify(installmentRepo, never()).saveAll(anyList());
+  }
+
 
   @Test
   void patch_actualizaMonto_yPropagaInstallments() {
@@ -687,25 +718,30 @@ void patch_soloActualizaConcepto_cuandoAmountEsNull() {
 
     when(feePlanRepo.findByFeePlanIdAndConcept_TenantId(7L, "org_TENANT"))
         .thenReturn(Optional.of(fp));
-    when(installmentRepo.findByConceptId(77L)).thenReturn(List.of(new Installment(), new Installment()));
+    when(installmentRepo.findByConceptId(77L))
+        .thenReturn(List.of(new Installment(), new Installment()));
 
     var patch = new CuotaDto(7L, new BigDecimal("123.45"), null, null,
         null, null, null, null, null);
 
     CuotaDto cuotaMock = mock(CuotaDto.class);
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberView>isNull());
+    doReturn(cuotaMock)
+        .when(mapper)
+        .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberPaymentDto>isNull());
 
     var out = service.patch(7L, patch, "org_TENANT");
 
     assertThat(out).isNotNull();
     verify(feePlanRepo).save(fp);
     verify(installmentRepo).findByConceptId(77L);
-    // capturar que instalments recibieron nuevo monto
-    ArgumentCaptor<List<Installment>> cap = ArgumentCaptor.forClass(List.class);
-    verify(installmentRepo).saveAll(cap.capture());
-    assertThat(cap.getValue()).hasSize(2);
+
+    // capturar que installments recibieron nuevo monto (USANDO @Captor)
+    verify(installmentRepo).saveAll(installmentsCaptor.capture());
+    assertThat(installmentsCaptor.getValue()).hasSize(2);
   }
 
+
+  
   @Test
   void create_ALL_periodicidad_QUARTER_generatesFechasTrimestrales() {
     var dto = new CreateCuotaDto(
@@ -724,25 +760,22 @@ void patch_soloActualizaConcepto_cuandoAmountEsNull() {
     when(mv.getMemberId()).thenReturn(500L);
     when(memberRepo.findScoutsByTenant("org_TENANT")).thenReturn(List.of(mv));
 
-    Account acc = new Account(); acc.setAccountId(11L); acc.setMemberId(500L); acc.setTenantId("org_TENANT"); acc.setActive(true);
+    Account acc = new Account(); acc.setAccountId(11L); acc.setMemberId(500L);
+    acc.setTenantId("org_TENANT"); acc.setActive(true);
     when(accountRepo.findByMemberIdAndActiveTrue(500L)).thenReturn(Optional.of(acc));
+
     when(feePlanRepo.save(any(FeePlan.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    // mapper leniente
     CuotaDto cuotaMock = mock(CuotaDto.class);
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), any(MemberPaymentDto.class));
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class));
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberView>isNull());
+    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberPaymentDto>isNull());
 
     service.create(dto);
 
-    ArgumentCaptor<List<Installment>> cap = ArgumentCaptor.forClass(List.class);
-    verify(installmentRepo).saveAll(cap.capture());
+    // capturar la lista de installments (USANDO @Captor)
+    verify(installmentRepo).saveAll(installmentsCaptor.capture());
     // 2025-01-01, 2025-04-01, 2025-07-01, 2025-10-01 => 4
-    assertThat(cap.getValue()).hasSize(4);
+    assertThat(installmentsCaptor.getValue()).hasSize(4);
   }
-
-
 
 }
 
