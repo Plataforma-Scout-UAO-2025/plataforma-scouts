@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.organigrama.repo;
+package uao.edu.co.scouts_project.organigrama.repository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,7 +8,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import uao.edu.co.scouts_project.organigrama.model.Tenant;
-import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 
 import java.time.Instant;
 import java.util.Optional;
