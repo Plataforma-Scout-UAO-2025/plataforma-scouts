@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -425,7 +426,8 @@ class FeeServiceImplTest {
     // mapper leniente para evitar problemas de overloading
     CuotaDto cuotaMock = mock(CuotaDto.class);
     doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), any(MemberPaymentDto.class));
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), isNull());
+    doReturn(cuotaMock).when(mapper)
+    .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberPaymentDto>isNull());
 
     var out = service.create(dto);
 
@@ -433,25 +435,42 @@ class FeeServiceImplTest {
     verify(conceptRepo, atLeast(1)).save(argThat(c -> "org_TENANT".equals(c.getTenantId())));
   }
 
-  @Test
-  void create_SCOUT_lanzaError_siAssociatedIdNoEsLong() {
-    var at = om.createObjectNode();
-    at.put("id", "no-num"); // provoca NumberFormatException
-    at.put("name", "Cami");
+@Test
+void create_SCOUT_lanzaError_siAssociatedIdNoEsLong() {
+  // Arrange: associated_to con id no-numérico, pero con name para que no falle por eso
+  ObjectNode at = om.createObjectNode();
+  at.put("id", "NO_LONG");
+  at.put("name", "Scout X");
 
-    var dto = new CreateCuotaDto(
-        "org_TENANT", "Cuota", "desc", new BigDecimal("1.00"),
-        uao.edu.co.scouts_project.finanzas.fees.model.enums.Periodicity.SINGLE,
-        FeeScope.SCOUT,
-        LocalDate.parse("2025-01-01"),
-        LocalDate.parse("2025-01-01"),
-        at
-    );
+  CreateCuotaDto dto = new CreateCuotaDto(
+      "org_TENANT",
+      "Cuota",
+      "desc",
+      new BigDecimal("1.00"),
+      uao.edu.co.scouts_project.finanzas.fees.model.enums.Periodicity.SINGLE,
+      uao.edu.co.scouts_project.finanzas.fees.model.enums.FeeScope.SCOUT,
+      LocalDate.parse("2025-01-01"),
+      LocalDate.parse("2025-01-01"),
+      at
+  );
 
-    assertThatThrownBy(() -> service.create(dto))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("associated_to.id must be a valid Long for scope=SCOUT");
+  // Simular que el concepto ya existe para evitar el NPE en el upsert
+  Concept concept = new Concept();
+  concept.setConceptId(1L);
+  concept.setTenantId("org_TENANT");
+  concept.setName("Cuota");
+  concept.setDescription("desc");
+  when(conceptRepo.findByNameIgnoreCase("Cuota")).thenReturn(Optional.of(concept));
+
+  // Act + Assert
+  assertThatThrownBy(() -> service.create(dto))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("associated_to.id must be a valid Long for scope=SCOUT");
+
+  // Y no debería intentar buscar miembros si ya falló en el parseo del id
+  verify(memberRepo, never()).findScoutById(anyString(), anyLong());
   }
+
 
   @Test
   void create_SUBGROUP_lanzaError_siAssociatedIdNoEsLong() {
@@ -590,7 +609,8 @@ class FeeServiceImplTest {
     CuotaDto cuotaMock = mock(CuotaDto.class);
     doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), any(MemberPaymentDto.class));
     doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class));
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), isNull());
+    doReturn(cuotaMock).when(mapper)
+    .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberPaymentDto>isNull());
 
     var out = service.create(dto);
     assertThat(out).isNotNull();
@@ -646,7 +666,8 @@ void patch_soloActualizaConcepto_cuandoAmountEsNull() {
       null, null, null, null, null);
 
   CuotaDto cuotaMock = mock(CuotaDto.class);
-  doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), isNull());
+  doReturn(cuotaMock).when(mapper)
+    .toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberView>isNull());
 
   var out = service.patch(9L, patch, "org_TENANT");
 
@@ -672,7 +693,7 @@ void patch_soloActualizaConcepto_cuandoAmountEsNull() {
         null, null, null, null, null);
 
     CuotaDto cuotaMock = mock(CuotaDto.class);
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), isNull());
+    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberView>isNull());
 
     var out = service.patch(7L, patch, "org_TENANT");
 
@@ -711,7 +732,7 @@ void patch_soloActualizaConcepto_cuandoAmountEsNull() {
     CuotaDto cuotaMock = mock(CuotaDto.class);
     doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), any(MemberPaymentDto.class));
     doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class));
-    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), isNull());
+    doReturn(cuotaMock).when(mapper).toCuotaDto(any(FeePlan.class), ArgumentMatchers.<MemberView>isNull());
 
     service.create(dto);
 
@@ -722,6 +743,6 @@ void patch_soloActualizaConcepto_cuandoAmountEsNull() {
   }
 
 
-  
+
 }
 
