@@ -33,6 +33,9 @@ import { Outlet, Link, useLocation } from "react-router-dom"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import type { ReactNode } from "react"
 import { useAuth0 } from '@auth0/auth0-react';
+import { RoleProvider, useRoleContext } from '@/context/RoleContext';
+import FullScreenLoader from '@/components/common/FullScreenLoader';
+import FullScreenError from '@/components/common/FullScreenError';
 
 type SubMenuItem = {
   id: string
@@ -74,11 +77,12 @@ const bottomItems: MenuItem[] = [
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
 ]
 
-export default function AppLayout() {
+function AppLayoutContent() {
   const location = useLocation()
   const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal')
   const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems
   const { user, logout } = useAuth0();
+  const { status, currentUserRoleLabel, error, retry } = useRoleContext();
 
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } });
@@ -90,6 +94,18 @@ export default function AppLayout() {
       return location.pathname === "/app"
     }
     return location.pathname.startsWith(href)
+  }
+
+  if (status === 'idle' || status === 'loading') {
+    return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;
+  }
+  if (status === 'error') {
+    return (
+      <FullScreenError
+        message={error || 'No pudimos cargar tu rol. Por favor intenta más tarde o recarga la página.'}
+        onRetry={retry}
+      />
+    );
   }
 
   return (
@@ -109,6 +125,7 @@ export default function AppLayout() {
             <div className="leading-tight">
               <div className="text-base font-semibold">{user?.nickname}</div>
               <div className="text-xs opacity-80">MANADA KUNA</div>
+              <div className="text-xs opacity-80">{currentUserRoleLabel}</div>
             </div>
           </div>
           <SidebarSeparator className="my-4 bg-white/20" />
@@ -222,4 +239,12 @@ export default function AppLayout() {
       </SidebarInset>
     </SidebarProvider>
   )
+}
+
+export default function AppLayout() {
+  return (
+    <RoleProvider>
+      <AppLayoutContent />
+    </RoleProvider>
+  );
 }
