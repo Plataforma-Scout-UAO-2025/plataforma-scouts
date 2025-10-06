@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// Select de año eliminado temporalmente por requerimiento del stakeholder.
+// Si se requiere restaurarlo más adelante, descomentar la importación y el bloque JSX correspondiente.
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from '@/components/ui/select';
 import RamaList from './components/RamaList';
 import CreateRamaModal from './components/CreateRamaModal';
 import CreateSubramaModal from './components/CreateSubramaModal';
@@ -61,9 +63,7 @@ export default function Organigrama() {
   const {
     ramas,
     isLoading,
-    availableYears,
     selectedYear,
-    setSelectedYear,
     loadRamas,
   } = useOrganigramaData(tenantSlug, groupSlug);
 
@@ -208,6 +208,9 @@ export default function Organigrama() {
       {error.hasError && <ErrorAlert message={error.message} type={error.type} onClose={clearError} />}
 
       {/* Controles de filtrado */}
+      {/* Select de año eliminado temporalmente por el stakeholder. Si se necesita restaurarlo,
+          descomentar el bloque JSX y la import correspondiente en la cabecera del archivo. */}
+      {/*
       <div className="flex items-center space-x-4">
         <Select value={selectedYear} onValueChange={(value: string) => setSelectedYear(value)}>
           <SelectTrigger className="w-48">
@@ -222,6 +225,7 @@ export default function Organigrama() {
           </SelectContent>
         </Select>
       </div>
+      */}
 
       {/* Lista de ramas */}
       {isLoading ? (
