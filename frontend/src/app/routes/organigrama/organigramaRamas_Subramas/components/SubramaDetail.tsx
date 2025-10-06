@@ -8,7 +8,7 @@ import type { Subrama } from "../types/rama.type";
 import * as organigramaService from "../services";
 import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
-import FotoModal from "../components/FotoModal";
+import FotoModal from "./FotoModal";
 
 
 export default function SubramaDetail() {

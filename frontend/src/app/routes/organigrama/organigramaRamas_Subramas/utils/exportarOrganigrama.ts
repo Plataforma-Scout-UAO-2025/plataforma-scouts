@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import type { Rama, Subrama } from "../types/rama.type";
 
 type ExportPDFOpts = {
@@ -98,79 +97,38 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
   }
 };
 
-/** Exporta Excel en 2 hojas: Ramas y Subramas */
-export const exportarOrganigramaExcel = (ramas: Rama[]) => {
+/** Exporta CSV con estructura Rama→Subrama (separador ';' para Excel en español) */
+export const exportarOrganigramaCSV = (ramas: Rama[]) => {
   try {
-    const hojaRamas = ramas.map((r) => ({
-      Rama: r.nombre,
-      Estado: r.estado ?? "",
-      "Descripción Rama": r.descripcion ?? "",
-      "Edad mínima": r.edadMinima ?? "",
-      "Edad máxima": r.edadMaxima ?? "",
-      Año: (r as any).año ?? (r as any).ano ?? "",
-      "Total subramas": r.subramas?.length ?? 0,
-      "ID Rama": r.id,
-      "Section ID": r.section_id,
-    }));
+    const sep = ";";
+    const filas: string[] = [];
+    filas.push(["Rama", "Subrama", "Estado"].join(sep));
 
-    const hojaSubramas: Array<{
-      Rama: string;
-      "ID Rama": string;
-      Subrama: string;
-      Estado: string;
-      "Descripción Subrama": string;
-      "ID Subrama": string;
-      "Subgroup ID": string | number | "";
-    }> = [];
+    const quote = (val: string) => `"${(val ?? "").replace(/"/g, '""')}"`;
 
     for (const r of ramas) {
       if (r.subramas && r.subramas.length > 0) {
         for (const s of r.subramas as Subrama[]) {
-          hojaSubramas.push({
-            Rama: r.nombre,
-            "ID Rama": r.id,
-            Subrama: s.nombre,
-            Estado: s.estado ?? "",
-            "Descripción Subrama": s.descripcion ?? "",
-            "ID Subrama": s.id,
-            "Subgroup ID": (s.subgroup_id as any) ?? "",
-          });
+          const rama = quote(r.nombre);
+          const subrama = quote(s.nombre);
+          const estado = quote(s.estado ?? "");
+          filas.push([rama, subrama, estado].join(sep));
         }
       } else {
-        hojaSubramas.push({
-          Rama: r.nombre,
-          "ID Rama": r.id,
-          Subrama: "— (Sin subramas)",
-          Estado: "",
-          "Descripción Subrama": "",
-          "ID Subrama": "",
-          "Subgroup ID": "",
-        });
+        const rama = quote(r.nombre);
+        const subrama = quote("— (Sin subramas)");
+        const estado = quote(r.estado ?? "");
+        filas.push([rama, subrama, estado].join(sep));
       }
     }
 
-    const wb = XLSX.utils.book_new();
-    const wsRamas = XLSX.utils.json_to_sheet(hojaRamas);
-    const wsSubs = XLSX.utils.json_to_sheet(hojaSubramas);
+    // BOM para que Excel reconozca UTF-8 correctamente
+    const csvContent = "\uFEFF" + filas.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    downloadBlob("organigrama.csv", blob);
 
-    const fitCols = (ws: XLSX.WorkSheet, headers: string[]) => {
-      const cols = headers.map((h) => ({ wch: Math.max(12, h.length + 2) }));
-      (ws as any)["!cols"] = cols;
-    };
-    if (hojaRamas.length) fitCols(wsRamas, Object.keys(hojaRamas[0]));
-    if (hojaSubramas.length) fitCols(wsSubs, Object.keys(hojaSubramas[0]));
-
-    XLSX.utils.book_append_sheet(wb, wsRamas, "Ramas");
-    XLSX.utils.book_append_sheet(wb, wsSubs, "Subramas");
-
-    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([buf], {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    downloadBlob("organigrama.xlsx", blob);
+    console.log("✅ CSV exportado correctamente");
   } catch (e) {
-    console.error("❌ Error exportando Excel:", e);
+    console.error("❌ Error exportando CSV:", e);
   }
 };

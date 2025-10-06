@@ -9,7 +9,7 @@ import * as organigramaService from "../services";
 import { extractObjectIdFromUrl } from "../services";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
-import FotoModal from "../components/FotoModal";
+import FotoModal from "./FotoModal";
 
 
 export default function RamaDetail() {

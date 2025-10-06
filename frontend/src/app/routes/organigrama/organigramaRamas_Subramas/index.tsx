@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from "react-router-dom";
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   exportarOrganigramaPDF,
-  exportarOrganigramaExcel,
+  exportarOrganigramaCSV,
 } from './utils/exportarOrganigrama';
 
 export default function Organigrama() {
@@ -52,6 +53,7 @@ export default function Organigrama() {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate()
   const [deleteTarget, setDeleteTarget] = useState<{
     type: 'rama' | 'subrama';
     id: string;
@@ -68,12 +70,10 @@ export default function Organigrama() {
   const isLoadingYearsRef = useRef(false);
   
   const { error, handleError, clearError } = useApiError();
-  
   const { tenantSlug, groupSlug } = useTenantParams();
 
   const loadAvailableYears = useCallback(async () => {
     if (!tenantSlug || !groupSlug || isLoadingYearsRef.current) return;
-    
     try {
       isLoadingYearsRef.current = true;
       setIsLoadingYears(true);
@@ -100,7 +100,6 @@ export default function Organigrama() {
 
   const loadRamas = useCallback(async () => {
     if (!tenantSlug || !groupSlug || isLoadingRamasRef.current) return;
-    
     try {
       isLoadingRamasRef.current = true;
       setIsLoading(true);
@@ -121,21 +120,19 @@ export default function Organigrama() {
     }
   }, [tenantSlug, groupSlug, selectedYear, handleError]);
 
-  // Cargar años disponibles solo una vez al montar el componente
   useEffect(() => {
     if (tenantSlug && groupSlug) {
       console.log('🚀 [Organigrama] Inicializando carga de años...');
       loadAvailableYears();
     }
-  }, [tenantSlug, groupSlug]); // Removido loadAvailableYears de las dependencias para evitar re-ejecutar
+  }, [tenantSlug, groupSlug]);
 
-  // Cargar ramas cuando cambien los parámetros de filtrado
   useEffect(() => {
     if (tenantSlug && groupSlug) {
       console.log('🚀 [Organigrama] Inicializando carga de ramas...');
       loadRamas();
     }
-  }, [tenantSlug, groupSlug, selectedYear]); // Removido loadRamas de las dependencias para evitar re-ejecutar
+  }, [tenantSlug, groupSlug, selectedYear]);
 
   // ====== RAMAS ======
   const handleCreateRama = async (data: CreateRamaData) => {
@@ -196,14 +193,12 @@ export default function Organigrama() {
   const handleSubmitEditSubrama = async (data: UpdateSubramaFormData) => {
     if (!subramaSeleccionada) return;
     try {
-      // Crear el objeto UpdateSubramaData con la estructura correcta
       const updateData: UpdateSubramaData = {
         id: subramaSeleccionada.id,
         subgroup_id: subramaSeleccionada.subgroup_id,
         ramaId: subramaSeleccionada.ramaId,
-        ...data // Los datos del formulario
+        ...data,
       };
-      
       await organigramaService.updateSubrama(tenantSlug, groupSlug, updateData);
       await loadRamas();
       showSuccess('Subrama actualizada con éxito');
@@ -214,8 +209,6 @@ export default function Organigrama() {
   };
 
   const handleDeleteSubrama = (subrama: Subrama) => {
-    // Preferir section_id (snake_case) devuelto por la API, si no usar ramaId.
-    // Si ninguno existe, dejar undefined (no usar cadena vacía) para detectar falta explícita.
     const sectionId = subrama.section_id ?? subrama.ramaId ?? undefined;
     setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre, sectionId });
     setConfirmDeleteOpen(true);
@@ -225,7 +218,6 @@ export default function Organigrama() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      // Proteger contra llamadas sin tenant/group
       if (!tenantSlug || !groupSlug) {
         handleError(new Error('Tenant o group no disponibles para eliminar.'));
         setConfirmDeleteOpen(false);
@@ -236,23 +228,20 @@ export default function Organigrama() {
       } else {
         const sectionId = deleteTarget.sectionId;
         if (!sectionId) {
-          // Solo usar el fallback si el id tiene el formato esperado (contiene '-')
           if (!deleteTarget.id || !deleteTarget.id.includes('-')) {
-            handleError(new Error('No se puede determinar sectionId para eliminar la subrama.')); 
+            handleError(new Error('No se puede determinar sectionId para eliminar la subrama.'));
             setConfirmDeleteOpen(false);
             return;
           }
           const fallbackSectionId = deleteTarget.id.split('-')[0];
-          console.warn('⚠️ [Organigrama] sectionId no disponible en deleteTarget, usando fallback', { fallbackSectionId });
+          console.warn('⚠️ [Organigrama] sectionId no disponible, usando fallback', { fallbackSectionId });
           await organigramaService.deleteSubrama(tenantSlug, groupSlug, fallbackSectionId, deleteTarget.id);
         } else {
           await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, deleteTarget.id);
         }
       }
       await loadRamas();
-      showSuccess(
-        `${deleteTarget.type === 'rama' ? 'Rama' : 'Subrama'} eliminada con éxito`
-      );
+      showSuccess(`${deleteTarget.type === 'rama' ? 'Rama' : 'Subrama'} eliminada con éxito`);
     } catch (error) {
       handleError(error);
     }
@@ -264,15 +253,14 @@ export default function Organigrama() {
     exportarOrganigramaPDF(ramas, { anio, colorHex: '#1A4134' });
   };
 
-  const handleExportExcel = () => {
-    exportarOrganigramaExcel(ramas);
+  const handleExportCSV = () => {
+    exportarOrganigramaCSV(ramas);
   };
 
   // ====== UTIL ======
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     setSuccessOpen(true);
-    // Limpiar cualquier timeout previo antes de crear uno nuevo
     if (successTimeoutRef.current) {
       clearTimeout(successTimeoutRef.current);
     }
@@ -282,7 +270,6 @@ export default function Organigrama() {
     }, 2000);
   };
 
-  // Handler para cerrar el modal de éxito y limpiar timeout asociado
   const closeSuccess = () => {
     if (successTimeoutRef.current) {
       clearTimeout(successTimeoutRef.current);
@@ -291,7 +278,6 @@ export default function Organigrama() {
     setSuccessOpen(false);
   };
 
-  // Cleanup: limpiar timeout si el componente se desmonta
   useEffect(() => {
     return () => {
       if (successTimeoutRef.current) {
@@ -300,7 +286,6 @@ export default function Organigrama() {
       }
     };
   }, []);
-
 
   return (
     <div className="space-y-6">
@@ -315,19 +300,17 @@ export default function Organigrama() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* ⬇️ Nuevo: Exportar organigrama */}
+          {/* ⬇️ Exportar organigrama */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Exportar organigrama
-              </Button>
+              <Button variant="outline">Exportar organigrama</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={handleExportPDF}>
                 Exportar en PDF
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel}>
-                Exportar en Excel
+              <DropdownMenuItem onClick={handleExportCSV}>
+                Exportar en CSV
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -343,30 +326,26 @@ export default function Organigrama() {
         </div>
       </div>
 
-      {/* Mostrar errores de la API (si los hay) */}
+      {/* Mostrar errores de la API */}
       {error.hasError && (
-        <ErrorAlert 
-          message={error.message} 
-          type={error.type} 
-          onClose={clearError} 
-        />
+        <ErrorAlert message={error.message} type={error.type} onClose={clearError} />
       )}
 
       {/* Controles de filtrado */}
       <div className="flex items-center space-x-4">
-        <Select
-          value={selectedYear}
-          onValueChange={(value: string) => setSelectedYear(value)}
-        >
+        <Button variant="outline" onClick={() => navigate("/app/organigrama")} className="text-sm">Anterior</Button>
+        <Select value={selectedYear} onValueChange={(value: string) => setSelectedYear(value)}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Seleccionar año" />
           </SelectTrigger>
           <SelectContent>
-            {availableYears.filter(year => year !== undefined && year !== null).map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
+            {availableYears
+              .filter(year => year !== undefined && year !== null)
+              .map(year => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>
@@ -392,14 +371,12 @@ export default function Organigrama() {
         onSubmit={handleCreateRama}
         onSuccess={loadRamas}
       />
-
       <CreateSubramaModal
         open={createSubramaModalOpen}
         onOpenChange={setCreateSubramaModalOpen}
         ramaId={selectedRamaId}
         onSubmit={handleSubmitSubrama}
       />
-
       <EditRamaModal
         open={editRamaModalOpen}
         onOpenChange={setEditRamaModalOpen}
@@ -407,7 +384,6 @@ export default function Organigrama() {
         onSubmit={handleSubmitEditRama}
         onSuccess={loadRamas}
       />
-
       <EditSubramaModal
         open={editSubramaModalOpen}
         onOpenChange={setEditSubramaModalOpen}
@@ -421,22 +397,12 @@ export default function Organigrama() {
         onClose={() => setConfirmDeleteOpen(false)}
         onConfirm={confirmDelete}
         onSuccess={loadRamas}
-        title={`Confirmar Eliminación de ${
-          deleteTarget?.type === 'rama' ? 'Rama' : 'Subrama'
-        }`}
+        title={`Confirmar Eliminación de ${deleteTarget?.type === 'rama' ? 'Rama' : 'Subrama'}`}
         message={`¿Estás seguro de que quieres eliminar ${
           deleteTarget?.type === 'rama' ? 'la rama' : 'la subrama'
         } "${deleteTarget?.name}"?`}
       />
-
-      <SuccessModal
-        open={successOpen}
-        message={successMessage}
-        onClose={closeSuccess}
-      />
+      <SuccessModal open={successOpen} message={successMessage} onClose={closeSuccess} />
     </div>
   );
 }
-
-
-
