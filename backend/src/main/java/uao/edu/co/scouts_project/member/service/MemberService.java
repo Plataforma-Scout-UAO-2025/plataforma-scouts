@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.common.service;
+package uao.edu.co.scouts_project.member.service;
 
 import uao.edu.co.scouts_project.member.dto.GuardianDTO;
 import uao.edu.co.scouts_project.member.dto.GuardianCreateDTO;

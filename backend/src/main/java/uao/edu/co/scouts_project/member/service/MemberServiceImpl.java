@@ -1,13 +1,13 @@
-package uao.edu.co.scouts_project.common.service;
+package uao.edu.co.scouts_project.member.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uao.edu.co.scouts_project.common.repository.MemberRepository;
 import uao.edu.co.scouts_project.member.dto.*;
 import uao.edu.co.scouts_project.member.model.Member;
+import uao.edu.co.scouts_project.member.repository.MemberRepository;
 import uao.edu.co.scouts_project.organigram.Subgroup;
 
 import java.util.List;
@@ -362,7 +362,7 @@ public class MemberServiceImpl implements MemberService {
 
     private Member convertToGuardianEntity(GuardianCreateDTO dto) {
         Subgroup subgroup = new Subgroup();
-        subgroup.setId(dto.getSubgroupId());
+        subgroup.setSubgroupId(dto.getSubgroupId());
 
         return Member.builder()
                 .tenantId(dto.getTenantId())

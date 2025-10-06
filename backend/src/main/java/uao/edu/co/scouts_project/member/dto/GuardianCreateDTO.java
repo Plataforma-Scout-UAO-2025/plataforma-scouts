@@ -21,7 +21,7 @@ public class GuardianCreateDTO {
     private String tenantId;
 
     @NotNull
-    private String subgroupId;
+    private Long subgroupId;
 
     @NotNull
     private String firstName;
