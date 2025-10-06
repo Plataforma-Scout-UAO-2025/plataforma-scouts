@@ -46,7 +46,9 @@ export {
   addGalleryImage,
   getGalleryImageUuids,
   replaceGalleryImage,
-  removeGalleryImage
+  removeGalleryImage,
+  deleteGalleryImageById,
+  resolveGalleryItem
 } from './gallery.service';
 
 // Gestión de imágenes de Subramas

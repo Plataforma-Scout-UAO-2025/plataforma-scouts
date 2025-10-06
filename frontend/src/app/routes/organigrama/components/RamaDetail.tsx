@@ -7,7 +7,8 @@ import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
-import { extractObjectIdFromUrl } from "../services";
+import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
+import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 import FotoModal from "../components/FotoModal";
@@ -33,6 +34,17 @@ export default function RamaDetail() {
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [galleryLocalPreviews, setGalleryLocalPreviews] = useState<string[]>([]);
   const uploadControllerRef = useRef<AbortController | null>(null);
+  // Hook de acciones (incluye acciones de galería)
+  const { addGalleryImage, replaceGalleryImage, removeGalleryImage, isLoadingGallery } = useOrganigramaActions({
+    tenantSlug,
+    groupSlug,
+    // loadRamas: en este componente recargamos la rama actual
+    loadRamas: async () => { await fetchRama(); },
+    handleError: (err: unknown) => {
+      console.error('Error en acción de organigrama:', err);
+      toast.error('Error en operación de organigrama');
+    }
+  });
   // Helpers to safely read legacy alias fields from objects
   const getLegacyString = (obj: unknown, key: string): string | undefined => {
     if (!obj) return undefined;
@@ -56,6 +68,7 @@ export default function RamaDetail() {
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
   const [fotoTipo, setFotoTipo] = useState<"icono" | "principal" | "galeria" | null>(null);
   const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
+  const [galeriaObjetivoId, setGaleriaObjetivoId] = useState<string | null>(null);
 
   // Abrir modal según tipo de imagen
   const openIconModal = () => {
@@ -78,6 +91,14 @@ export default function RamaDetail() {
     setFotoTipo("galeria");
     setFotoSeleccionada(url);
     setGaleriaObjetivo(url);
+    // Try to resolve the gallery object's id (gallery[].id) from rama.gallery if available
+    try {
+      const maybeUuidInUrl = extractObjectIdFromUrl(url);
+      const galleryObj = (rama as any)?.gallery?.find((g: any) => g?.url && maybeUuidInUrl && g.url.includes(maybeUuidInUrl));
+      setGaleriaObjetivoId(galleryObj?.id ?? null);
+    } catch (e) {
+      setGaleriaObjetivoId(null);
+    }
     setFotoModalOpen(true);
   };
 
@@ -117,24 +138,35 @@ export default function RamaDetail() {
           }
         }, controller.signal);
       } else if (fotoTipo === "galeria") {
-        // para reemplazos de galería también pasamos la señal si el servicio lo soporta
-        const targetUuid = extractObjectIdFromUrl(galeriaObjetivo);
-        if (!targetUuid) {
-          toast.error("No se pudo obtener el UUID de la imagen seleccionada");
-          return;
+        // para reemplazos de galería preferimos usar el gallery[].id (galeriaObjetivoId)
+        let targetId = galeriaObjetivoId ?? null;
+        if (!targetId) {
+          try {
+            const resolved = await resolveGalleryItem(
+              tenantSlug,
+              groupSlug,
+              String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id),
+              galeriaObjetivo
+            );
+            if (resolved?.id) {
+              targetId = resolved.id;
+              setGaleriaObjetivoId(resolved.id);
+            }
+          } catch (e) {
+            console.error('❌ [RamaDetail] Error resolviendo id para reemplazo de galería:', e);
+          }
         }
 
-        console.log("🎯 UUID extraído para reemplazo:", targetUuid);
-
-  const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
-        await organigramaService.replaceGalleryImage(
-          tenantSlug,
-          groupSlug,
-          sectionId,
-          targetUuid,
-          file,
-          controller.signal
-        );
+        const targetIdOrUuid = targetId ?? extractObjectIdFromUrl(galeriaObjetivo);
+        const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
+        if (!targetIdOrUuid) {
+          toast.error("No se pudo obtener el identificador de la imagen seleccionada");
+          return;
+        }
+        if (!targetId) {
+          console.warn('⚠️ [RamaDetail] Usando UUID extraído de la URL como fallback para reemplazo:', targetIdOrUuid);
+        }
+        await replaceGalleryImage(sectionId, targetIdOrUuid, file);
       }
 
       toast.success("Foto actualizada correctamente");
@@ -189,12 +221,21 @@ export default function RamaDetail() {
         await organigramaService.removeSectionMainImage(tenantSlug, groupSlug, sectionId);
       } else if (fotoTipo === "galeria") {
         const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
-        await organigramaService.removeGalleryImage(
-          tenantSlug,
-          groupSlug,
-          sectionId,
-          galeriaObjetivo
-        );
+        let resolvedObjectId = galeriaObjetivoId ?? null;
+        if (!resolvedObjectId) {
+          try {
+            const resolved = await resolveGalleryItem(tenantSlug, groupSlug, sectionId, galeriaObjetivo);
+            if (resolved?.id) {
+              resolvedObjectId = resolved.id;
+              setGaleriaObjetivoId(resolved.id);
+            }
+          } catch (e) {
+            console.error('❌ [RamaDetail] Error resolviendo id para eliminación de galería:', e);
+          }
+        }
+
+        const finalTarget = resolvedObjectId ?? galeriaObjetivo;
+        await removeGalleryImage(sectionId, finalTarget, false);
       }
 
       toast.success("Foto eliminada correctamente");
@@ -376,30 +417,11 @@ export default function RamaDetail() {
       setGalleryLocalPreviews(prev => [...prev, ...previews]);
       setGaleriaFotos(prev => [...prev, ...previews]);
 
-      // Subir las imágenes usando el nuevo sistema (con progreso individual y global)
-  await organigramaService.uploadGalleryImages(
-  tenantSlug,
-  groupSlug,
-  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
-        files,
-        (fileName: string, percent: number) => {
-          setCurrentUploadingFile(fileName);
-          const display = percent >= 100 ? 99 : Math.floor(percent);
-          setUploadPercent(display);
-          if (percent >= 100 && !uploadCompleteAnnounced) {
-            setUploadCompleteAnnounced(true);
-            toast('Subida completada. Procesando en servidor...');
-          }
-        },
-        (overallPercent: number) => {
-          const display = overallPercent >= 100 ? 99 : Math.floor(overallPercent);
-          setUploadPercent(display);
-          if (overallPercent >= 100 && !uploadCompleteAnnounced) {
-            setUploadCompleteAnnounced(true);
-            toast('Subida completada. Procesando en servidor...');
-          }
-        }
-      );
+      // Subir las imágenes usando las acciones del hook (uno a uno)
+      const sectionId = String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id);
+      for (const f of files) {
+        await addGalleryImage(sectionId, f);
+      }
 
       // Refrescar todos los datos de la rama para obtener la galería actualizada
       console.log('🔄 [RamaDetail] Refrescando datos de la rama después de subir galería...');
@@ -596,6 +618,9 @@ export default function RamaDetail() {
           <Button size="sm" variant="outline" onClick={handleGalleryClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Fotos <Upload className="w-4 h-4"/></Button>
         </div>
         <div className="grid grid-cols-3 gap-2">
+          {isLoadingGallery && (
+            <div className="col-span-3 text-center text-sm text-muted-foreground">Actualizando galería...</div>
+          )}
           {galeriaFotos.map((src, idx) => (
             <div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}>
               <img
@@ -610,7 +635,11 @@ export default function RamaDetail() {
       </Card>
       <FotoModal
         open={fotoModalOpen}
-        onClose={() => setFotoModalOpen(false)}
+        onClose={() => {
+          setFotoModalOpen(false);
+          setGaleriaObjetivo("");
+          setGaleriaObjetivoId(null);
+        }}
         titulo={
           fotoTipo === "icono"
             ? `Ícono de ${rama?.nombre ?? ""}`
