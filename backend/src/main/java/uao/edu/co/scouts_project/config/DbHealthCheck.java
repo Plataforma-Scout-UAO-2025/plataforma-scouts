@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.Config;
+package uao.edu.co.scouts_project.config;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;

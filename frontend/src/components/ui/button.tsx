@@ -16,9 +16,9 @@ const buttonVariants = cva(
         iconbutton:
           "text-accent-strong hover:text-primary",
         outline:
-          "border bg-background border-primary text-primary shadow-xs hover:bg-primary/80 hover:text-white dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border bg-background border-primary text-primary shadow-xs hover:bg-primary/80 hover:text-white",
         ghost:
-          "hover:bg-secondary/80 hover:text-white dark:hover:bg-accent/50",
+          "hover:bg-secondary/80 hover:text-white",
         link: "text-primary underline-offset-4 hover:underline",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/70",

@@ -1,4 +1,5 @@
-import { X } from 'lucide-react';
+import { useState } from "react";
+import { X, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -6,15 +7,17 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useApiError } from "../hooks/useApiError";
 
 interface ConfirmDeleteModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   title: string;
   message: string;
+  onSuccess?: () => void; // Callback para refrescar datos
 }
 
 export default function ConfirmDeleteModal({
@@ -23,12 +26,37 @@ export default function ConfirmDeleteModal({
   onConfirm,
   title,
   message,
+  onSuccess,
 }: ConfirmDeleteModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { error, handleError, clearError } = useApiError();
+
+  const handleConfirm = async () => {
+    clearError();
+    setIsDeleting(true);
+
+    try {
+      await onConfirm();
+      onClose();
+
+      // Llamar callback de éxito para refrescar datos
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      handleError(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md w-full">
         <DialogHeader className="flex items-center justify-between pb-4">
-          <DialogTitle className="text-xl font-bold text-primary">{title}</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-primary">
+            {title}
+          </DialogTitle>
           <DialogClose asChild>
             <Button size="icon" variant="ghost" className="h-6 w-6 p-0">
               <X className="h-4 w-4 text-muted-foreground" />
@@ -44,27 +72,38 @@ export default function ConfirmDeleteModal({
           Esta acción es permanente y no se puede deshacer.
         </div>
 
+        {/* Mostrar error si existe */}
+        {error.hasError && (
+          <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 mb-4">
+            <p className="text-sm text-destructive">{error.message}</p>
+          </div>
+        )}
+
         <div className="flex justify-end gap-3">
           <Button
             variant="outline"
             onClick={onClose}
+            disabled={isDeleting}
             className="border border-secondary text-secondary hover:bg-accent"
           >
             Cancelar
           </Button>
           <Button
             className="bg-primary text-primary-foreground hover:bg-primary-hover"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={handleConfirm}
+            disabled={isDeleting}
           >
-            Eliminar
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Eliminando...
+              </>
+            ) : (
+              "Eliminar"
+            )}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-
-

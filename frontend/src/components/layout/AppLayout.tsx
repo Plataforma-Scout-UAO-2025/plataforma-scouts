@@ -37,7 +37,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import LogoutButton from "@/components/auth/LogoutButton";
 import type { ReactNode } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -57,14 +56,45 @@ type MenuItem = {
   submenu?: SubMenuItem[];
 };
 
-const mainItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
-  { id: "tropa", label: "Tropa", icon: <Boxes />, href: "/app/tropa" },
+//const mainItems: MenuItem[] = [
+//  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/home" },
+//  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
+//]
+
+const adminGlobalItems: MenuItem[] = [
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard-global",
+  },
+];
+
+const adminGrupalItems: MenuItem[] = [
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
   {
     id: "organigrama",
     label: "Organigrama",
     icon: <Network />,
     href: "/app/organigrama",
+  },
+  { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
+  {
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: <Boxes />,
+    href: "/app/solicitudes",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
   },
   {
     id: "eventos",
@@ -79,45 +109,6 @@ const mainItems: MenuItem[] = [
     href: "/app/financiero/cuotas",
   },
   {
-    id: "info-medica",
-    label: "Grupos",
-    icon: <Settings />,
-    href: "/app/grupos",
-  },
-];
-
-const adminGrupalItems: MenuItem[] = [
-  {
-    id: "inicio",
-    label: "Inicio",
-    icon: <LineChart />,
-    href: "/app/adminGrupal/",
-  },
-  {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Users />,
-    href: "/app/adminGrupal/organigrama",
-  },
-  {
-    id: "miembros",
-    label: "Miembros",
-    icon: <Users />,
-    href: "/app/adminGrupal/miembros",
-  },
-  {
-    id: "insignias",
-    label: "Insignias",
-    icon: <Award />,
-    href: "/app/adminGrupal/insignias",
-  },
-  {
-    id: "eventos",
-    label: "Eventos",
-    icon: <CalendarDays />,
-    href: "/app/adminGrupal/eventos",
-  },
-  {
     id: "solicitudes",
     label: "solicitudes",
     icon: <DollarSign />,
@@ -126,13 +117,13 @@ const adminGrupalItems: MenuItem[] = [
         id: "solicitudes-pendientes",
         label: "Pendientes",
         icon: <BarChart3 />,
-        href: "/app/adminGrupal/solicitudes",
+        href: "/app/solicitudes",
       },
       {
         id: "solicitudes-rechazado",
         label: "Rechazadas",
         icon: <BarChart3 />,
-        href: "/app/adminGrupal/rechazadas",
+        href: "/app/solicitudes/rechazadas",
       },
     ],
   },
@@ -144,10 +135,14 @@ const bottomItems: MenuItem[] = [
 ];
 
 export default function AppLayout() {
-  const location = useLocation(); // <-- reemplazar con rol dinámico desde auth
-  const isAdminGrupalRoute = location.pathname.startsWith("/app/adminGrupal");
-  const menuItems = isAdminGrupalRoute ? adminGrupalItems : mainItems;
-  const { user } = useAuth0();
+  const location = useLocation();
+  const isAdminGlobalRoute = location.pathname.startsWith("/app/adminGlobal");
+  const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems;
+  const { user, logout } = useAuth0();
+
+  const handleLogout = () => {
+    logout({ logoutParams: { returnTo: window.location.origin } });
+  };
 
   const isActive = (href: string) => {
     if (!href) return false;
@@ -264,9 +259,15 @@ export default function AppLayout() {
           <SidebarMenu>
             {bottomItems.map((item) => (
               <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton className="h-12 px-3 rounded-lg hover:bg-white/10">
+                <SidebarMenuButton
+                  className="h-12 px-3 rounded-lg hover:bg-white/10"
+                  onClick={item.id === "logout" ? handleLogout : undefined}
+                >
                   {item.id === "logout" ? (
-                    <LogoutButton />
+                    <>
+                      <LogOut />
+                      <span>Cerrar sesión</span>
+                    </>
                   ) : (
                     <>
                       {item.icon}

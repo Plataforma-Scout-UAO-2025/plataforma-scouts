@@ -65,6 +65,34 @@ export interface UpdateSubramaBackendData {
   isActive?: boolean;
 }
 
+<<<<<<< HEAD
+=======
+export interface UpdateSubramaMainImageData {
+  objectId: string;
+}
+
+// Tipos para operaciones de galería según la guía del backend
+export interface GalleryReplaceOperation {
+  op: "replace";
+  targetUuid: string;
+  newValue: string;
+}
+
+export interface GalleryAddOperation {
+  op: "add";
+  newValue: string;
+}
+
+export interface GalleryRemoveOperation {
+  op: "remove";
+  targetUuid: string;
+}
+
+export interface GalleryUpdatePayload {
+  operations: (GalleryReplaceOperation | GalleryAddOperation | GalleryRemoveOperation)[];
+}
+
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 export interface CreateRamaData {
   nombre: string;
   descripcion?: string;
@@ -106,17 +134,32 @@ export interface UpdateSubramaData {
 
 // Tipos para las respuestas del backend
 export interface BackendRama {
+<<<<<<< HEAD
   sectionId?: string;
+=======
+  sectionId?: string | number;
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
   section_id?: string;
   id?: string;
   ID?: string;
   Section_ID?: string;
+<<<<<<< HEAD
+=======
+  tenantId?: number;
+  groupId?: number;
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
   name?: string;
   sectionName?: string;
   description?: string;
   sectionDescription?: string;
+<<<<<<< HEAD
   iconObjectUrl?: string;
   iconObjectId?: string;
+=======
+  iconObjectUrl?: string | null;
+  iconObjectId?: string;
+  photoPrincipalUrl?: string | null;
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
   galleryObjectUrls?: string[];
   galleryObjectIds?: string[];
   sectionGalleryObjectIds?: string[];
@@ -148,4 +191,14 @@ export interface BackendSubrama {
   createdAt?: string;
   memberCount?: number;
   members?: number;
+<<<<<<< HEAD
+=======
+  // Campos de imágenes (añadidos)
+  iconObjectUrl?: string | null;
+  photoPrincipalUrl?: string | null;
+  galleryObjectUrls?: string[];
+  iconObjectId?: string;
+  photoPrincipalObjectId?: string;
+  galleryObjectIds?: string[];
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 }

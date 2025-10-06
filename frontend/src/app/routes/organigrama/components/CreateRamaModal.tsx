@@ -1,37 +1,41 @@
-import { useState } from 'react';
-import { X, Upload } from 'lucide-react';
+import { useState } from "react";
+import { X, Upload, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import type { CreateRamaFormData } from '../schemas/rama.schema';
-import type { CreateRamaData } from '../types/rama.type';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useApiError } from "../hooks/useApiError";
+import type { CreateRamaFormData } from "../schemas/rama.schema";
+import type { CreateRamaData } from "../types/rama.type";
 
 interface CreateRamaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateRamaData) => Promise<void>;
+  onSuccess?: () => void; // Callback para refrescar datos en la página principal
 }
 
 export default function CreateRamaModal({
   open,
   onOpenChange,
   onSubmit,
+  onSuccess,
 }: CreateRamaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { error, handleError, clearError } = useApiError();
   const [formData, setFormData] = useState<CreateRamaFormData>({
-    nombre: '',
-    descripcion: '',
+    nombre: "",
+    descripcion: "",
     edadMinima: 7,
     edadMaxima: 10,
     año: new Date().getFullYear(),
@@ -39,20 +43,25 @@ export default function CreateRamaModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Limpiar errores previos
+    clearError();
+
     setIsSubmitting(true);
     try {
       // Crear el objeto de datos incluyendo el archivo de imagen si existe
       const dataWithFile = {
         ...formData,
         iconFile: selectedFile || undefined,
-        galleryFiles: undefined
+        galleryFiles: undefined,
       };
-      
+
       await onSubmit(dataWithFile);
-      // Reset form
+
+      // Reset form después del éxito
       setFormData({
-        nombre: '',
-        descripcion: '',
+        nombre: "",
+        descripcion: "",
         edadMinima: 7,
         edadMaxima: 10,
         año: new Date().getFullYear(),
@@ -60,8 +69,14 @@ export default function CreateRamaModal({
       setSelectedFile(null);
       setImagenUrl(null);
       onOpenChange(false);
+
+      // Llamar callback de éxito para refrescar datos
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
-      console.error('Error al crear rama:', error);
+      console.error("Error al crear rama:", error);
+      handleError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -70,8 +85,8 @@ export default function CreateRamaModal({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setFormData({
-        nombre: '',
-        descripcion: '',
+        nombre: "",
+        descripcion: "",
         edadMinima: 7,
         edadMaxima: 10,
         año: new Date().getFullYear(),
@@ -104,7 +119,7 @@ export default function CreateRamaModal({
             <X className="h-4 w-4 text-muted-foreground" />
           </Button>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Campo Nombre de la Rama */}
           <div className="space-y-2">
@@ -115,7 +130,7 @@ export default function CreateRamaModal({
               id="nombre"
               value={formData.nombre}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData(prev => ({ ...prev, nombre: e.target.value }))
+                setFormData((prev) => ({ ...prev, nombre: e.target.value }))
               }
               className="w-full bg-card border border-border rounded-md focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
               required
@@ -131,16 +146,29 @@ export default function CreateRamaModal({
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => document.getElementById('icono-file-create')?.click()}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('icono-file-create')?.click(); }}
+                onClick={() =>
+                  document.getElementById("icono-file-create")?.click()
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ")
+                    document.getElementById("icono-file-create")?.click();
+                }}
                 className="w-full bg-card border border-border rounded-md px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-accent"
               >
-                <div className="text-muted-foreground">Seleccionar icono (Opcional)</div>
+                <div className="text-muted-foreground">
+                  Seleccionar icono (Opcional)
+                </div>
                 <div className="flex items-center gap-3">
                   {isUploading ? (
-                    <div className="text-sm text-muted-foreground">Subiendo...</div>
+                    <div className="text-sm text-muted-foreground">
+                      Subiendo...
+                    </div>
                   ) : imagenUrl ? (
-                    <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
+                    <img
+                      src={imagenUrl}
+                      alt="icono"
+                      className="h-8 w-8 rounded object-cover"
+                    />
                   ) : (
                     <Upload className="w-4 h-4 text-muted-foreground" />
                   )}
@@ -154,24 +182,24 @@ export default function CreateRamaModal({
                 className="hidden"
                 title="Seleccionar icono"
                 aria-label="Seleccionar icono"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    
-                    setIsUploading(true);
-                    try {
-                      // Almacenar el archivo para enviarlo después en el submit
-                      setSelectedFile(file);
-                      
-                      // Crear una URL temporal para mostrar la preview
-                      const previewUrl = URL.createObjectURL(file);
-                      setImagenUrl(previewUrl);
-                    } catch (err) {
-                      console.error('Error procesando imagen:', err);
-                    } finally {
-                      setIsUploading(false);
-                    }
-                  }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  setIsUploading(true);
+                  try {
+                    // Almacenar el archivo para enviarlo después en el submit
+                    setSelectedFile(file);
+
+                    // Crear una URL temporal para mostrar la preview
+                    const previewUrl = URL.createObjectURL(file);
+                    setImagenUrl(previewUrl);
+                  } catch (err) {
+                    console.error("Error procesando imagen:", err);
+                  } finally {
+                    setIsUploading(false);
+                  }
+                }}
               />
             </div>
           </div>
@@ -186,12 +214,22 @@ export default function CreateRamaModal({
               placeholder="Descripción opcional de la rama..."
               value={formData.descripcion}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData(prev => ({ ...prev, descripcion: e.target.value }))
+                setFormData((prev) => ({
+                  ...prev,
+                  descripcion: e.target.value,
+                }))
               }
               className="w-full bg-background border border-border rounded-md resize-none focus:ring-primary focus:border-primary min-h-[100px] placeholder:text-muted-foreground"
               rows={4}
             />
           </div>
+
+          {/* Mostrar error si existe */}
+          {error.hasError && (
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-destructive">{error.message}</p>
+            </div>
+          )}
 
           {/* Botones de Acción */}
           <div className="flex justify-end space-x-3 pt-4">
@@ -204,12 +242,19 @@ export default function CreateRamaModal({
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSubmitting}
               className="px-6 py-2 bg-primary hover:bg-primary-hover text-primary-foreground"
             >
-              {isSubmitting ? 'Guardando...' : 'Guardar Rama'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                "Guardar Rama"
+              )}
             </Button>
           </div>
         </form>
