@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/api/axios';
 import { buildRoleInfo, RawRole, getRoleLabel } from '@/roles/roles';
@@ -15,7 +15,7 @@ interface RoleContextValue {
   retry: () => void;
 }
 
-const RoleContext = createContext<RoleContextValue | undefined>(undefined);
+export const RoleContext = createContext<RoleContextValue | undefined>(undefined);
 
 interface FetchResult {
   roles: string[];
@@ -65,10 +65,10 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUserRole(result.selected ?? RawRole.GUEST);
       setStatus('success');
     } catch (e) {
-      console.error('Error al obtener roles:', e);
+      console.error('Servicio interrumpido por falta de conexión');
       setRoles([]);
       setCurrentUserRole(RawRole.GUEST);
-      setError('No se pudo obtener tu rol. Intenta recargar.');
+      setError('Estamos teniendo problemas de conexión. Por favor intenta más tarde.');
       setStatus('error');
     } finally {
       fetchingRef.current = false;
@@ -101,9 +101,3 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 };
-
-export function useRoleContext(): RoleContextValue {
-  const ctx = useContext(RoleContext);
-  if (!ctx) throw new Error('useRoleContext debe usarse dentro de RoleProvider');
-  return ctx;
-}
