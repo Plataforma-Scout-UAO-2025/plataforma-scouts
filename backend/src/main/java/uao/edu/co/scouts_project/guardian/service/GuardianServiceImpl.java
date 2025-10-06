@@ -26,105 +26,7 @@ public class GuardianServiceImpl implements GuardianService {
         this.memberRepository = memberRepository;
     }
 
-    // ======= MÉTODOS PARA MEMBER =======
-    @Override
-    @Transactional(readOnly = true)
-    public List<MemberResponseDTO> findAll() {
-        logger.info("Listado de miembros");
-        return memberRepository.findAll().stream()
-                .filter(member -> !"GUARDIAN".equals(member.getRole()) && !"ACUDIENTE".equals(member.getRole()))
-                .map(this::convertToMemberResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public MemberResponseDTO findMemberById(String id) {
-        logger.info("Buscando miembro por id: {}", id);
-        return memberRepository.findById(id)
-                .filter(member -> !"GUARDIAN".equals(member.getRole()) && !"ACUDIENTE".equals(member.getRole()))
-                .map(this::convertToMemberResponseDTO)
-                .orElse(null);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<MemberResponseDTO> findMemberByStatus(boolean active) {
-        logger.info("Buscando miembros por estado: {}", active);
-        return memberRepository.findByIsActive(active).stream()
-                .filter(member -> !"GUARDIAN".equals(member.getRole()) && !"ACUDIENTE".equals(member.getRole()))
-                .map(this::convertToMemberResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public MemberResponseDTO saveMember(MemberCreateDTO memberCreateDTO) {
-        logger.info("Creando nuevo miembro");
-        Member member = convertToMemberEntity(memberCreateDTO);
-        Member savedMember = memberRepository.save(member);
-        logger.info("Miembro creado con ID: {}", savedMember.getUserId());
-        return convertToMemberResponseDTO(savedMember);
-    }
-
-    @Override
-    @Transactional
-    public MemberResponseDTO updateMemberById(String memberId, MemberCreateDTO memberCreateDTO) {
-        Member existingMember = memberRepository.findById(memberId).orElse(null);
-        if (existingMember != null && !isGuardian(existingMember)) {
-            updateMemberFields(existingMember, memberCreateDTO);
-            Member savedMember = memberRepository.save(existingMember);
-            logger.info("Miembro {} actualizado", memberId);
-            return convertToMemberResponseDTO(savedMember);
-        } else {
-            logger.warn("Miembro con ID {} no encontrado para actualizar", memberId);
-            return null;
-        }
-    }
-
-    @Override
-    @Transactional
-    public MemberResponseDTO updateMemberRole(String memberId, String newRole) {
-        Member member = memberRepository.findById(memberId).orElse(null);
-        if (member != null) {
-            member.setRole(newRole);
-            Member savedMember = memberRepository.save(member);
-            logger.info("Rol del miembro {} actualizado a: {}", memberId, newRole);
-            return convertToMemberResponseDTO(savedMember);
-        } else {
-            logger.warn("Miembro con ID {} no encontrado para actualizar rol", memberId);
-            return null;
-        }
-    }
-
-    @Override
-    @Transactional
-    public MemberResponseDTO updateMemberStatus(String memberId, boolean isActive) {
-        Member member = memberRepository.findById(memberId).orElse(null);
-        if (member != null) {
-            member.setIsActive(isActive);
-            Member savedMember = memberRepository.save(member);
-            logger.info("Estado del miembro {} actualizado a: {}", memberId, isActive);
-            return convertToMemberResponseDTO(savedMember);
-        }
-        logger.warn("Miembro con ID {} no encontrado para actualizar estado", memberId);
-        return null;
-    }
-
-    @Override
-    @Transactional
-    public boolean deleteMemberById(String memberId) {
-        if (memberRepository.existsById(memberId)) {
-            memberRepository.deleteById(memberId);
-            logger.info("Miembro con ID {} eliminado", memberId);
-            return true;
-        } else {
-            logger.warn("Miembro con ID {} no encontrado para eliminar", memberId);
-            return false;
-        }
-    }
-
-    // ======= MÉTODOS PARA GUARDIAN =======
+    
     @Override
     @Transactional(readOnly = true)
     public List<GuardianDTO> findAllGuardians() {
@@ -267,24 +169,6 @@ public class GuardianServiceImpl implements GuardianService {
                 .collect(Collectors.toList());
     }
 
-    // ======= MÉTODOS DE CONVERSIÓN =======
-    private MemberResponseDTO convertToMemberResponseDTO(Member member) {
-        return MemberResponseDTO.builder()
-                .userId(member.getUserId())
-                .firstName(member.getFirstName())
-                .lastName(member.getLastName())
-                .age(member.getAge())
-                .role(member.getRole())
-                .email(member.getEmail())
-                .gender(member.getGender())
-                .birthDate(member.getBirthDate())
-                .phone(member.getPhone())
-                .isActive(member.getIsActive())
-                .status(member.getStatus())
-                .acceptanceDate(member.getAcceptanceDate())
-                .subgroupName(member.getSubgroup() != null ? member.getSubgroup().getName() : null)
-                .build();
-    }
 
     private GuardianDTO convertToGuardianDTO(Member member) {
         List<MemberSummaryDTO> membersInCharge = new ArrayList<>();
