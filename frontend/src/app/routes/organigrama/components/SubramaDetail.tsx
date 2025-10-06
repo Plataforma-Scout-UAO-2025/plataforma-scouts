@@ -19,7 +19,8 @@ export default function SubramaDetail() {
   const [subrama, setSubrama] = useState<Subrama | null>(null);
   const [loading, setLoading] = useState(true);
   const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
-  const [galeriaFotos, setGaleriaFotos] = useState<string[]>([]);
+  // Galería deshabilitada por requerimiento: mantener estado comentado para posible restauración
+  // const [galeriaFotos, setGaleriaFotos] = useState<string[]>([]);
   // Token para forzar recarga de imágenes (cache-busting)
   const [imageRefreshToken, setImageRefreshToken] = useState<number>(Date.now());
   // Helper para display src (añade cache-bust si es URL remota)
@@ -68,20 +69,21 @@ export default function SubramaDetail() {
   const [fotoModalOpen, setFotoModalOpen] = useState(false);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
   const [fotoTipo, setFotoTipo] = useState<"principal" | "galeria" | null>(null);
-  const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
+  // const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>(""); // galería deshabilitada
 
 
   // Referencias para inputs de archivos
   const mainImageInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  // const galleryInputRef = useRef<HTMLInputElement>(null); // galería deshabilitada
 
   const handleMainImageClick = () => {
     mainImageInputRef.current?.click();
   };
 
-  const handleGalleryClick = () => {
-    galleryInputRef.current?.click();
-  };
+  // Galería deshabilitada
+  // const handleGalleryClick = () => {
+  //   galleryInputRef.current?.click();
+  // };
 
   const handleMainImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -212,17 +214,16 @@ export default function SubramaDetail() {
     }
   };
 
+  // Galería deshabilitada: handler de cambio de input comentado para desactivar subida de imágenes
+  /*
   const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length > 0 && subrama) {
       const previews = files.map(f => URL.createObjectURL(f));
       setGaleriaFotos(prev => [...prev, ...previews]);
-      
       try {
-        console.log('🔄 [SubramaDetail] Subiendo fotos a la galería:', files.length);
-
-  const sectionIdForUpload = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-  const subgroupIdForUpload = subrama.subgroup_id ?? subrama.id ?? '';
+        const sectionIdForUpload = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+        const subgroupIdForUpload = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.uploadSubramaGalleryImages(
           tenantSlug,
           groupSlug,
@@ -230,21 +231,13 @@ export default function SubramaDetail() {
           String(subgroupIdForUpload),
           files
         );
-
-        console.log('✅ [SubramaDetail] Fotos de galería subidas correctamente');
-        console.log('🔄 [SubramaDetail] Refrescando datos completos de la subrama...');
-        
-        // Recargar datos completos de la subrama para sincronizar con backend
         await fetchSubrama();
-        
-        console.log('✅ [SubramaDetail] Datos de subrama actualizados después del upload');
       } catch (error) {
-        console.error('❌ [SubramaDetail] Error subiendo fotos de galería:', error);
-        // Limpiar previews en caso de error
         setGaleriaFotos(prev => prev.slice(0, -previews.length));
       }
     }
   };
+  */
 
   // Abrir modal según tipo de imagen
   const openMainImageModal = () => {
@@ -254,12 +247,15 @@ export default function SubramaDetail() {
     setFotoModalOpen(true);
   };
 
+  // Galería deshabilitada: función para abrir modal de galería comentada
+  /*
   const openGalleryModal = (url: string) => {
     setFotoTipo("galeria");
     setFotoSeleccionada(url);
     setGaleriaObjetivo(url);
     setFotoModalOpen(true);
   };
+  */
 
   const handleReplaceFoto = async (file: File) => {
     if (!subrama || !fotoTipo) return;
@@ -380,7 +376,8 @@ export default function SubramaDetail() {
 
         // Si es galería, usar el servicio de reemplazo de galería (sin progreso complejo por ahora)
     try {
-      const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+  // galeriaObjetivo está deshabilitado; usar fallback vacío
+  const cleanUuid = ''.match(/[0-9a-fA-F-]{36}/)?.[0] || '';
   const sectionIdReplace = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
   const subgroupIdReplace = subrama.subgroup_id ?? subrama.id ?? '';
       await organigramaService.replaceSubramaGalleryImage(
@@ -460,7 +457,8 @@ export default function SubramaDetail() {
         );
       } else if (fotoTipo === "galeria") {
         // 🧠 Extraer UUID limpio
-        const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+  // galeriaObjetivo está deshabilitado; usar fallback vacío
+  const cleanUuid = ''.match(/[0-9a-fA-F-]{36}/)?.[0] || '';
   const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
   const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.removeSubramaGalleryImage(
@@ -552,12 +550,12 @@ export default function SubramaDetail() {
           // Cargar galería desde backend (URLs directas)
           const galleryUrls = subramaEncontrada.galleryObjectIds ?? subramaEncontrada.subgroupGalleryObjectIds ?? [];
           if (galleryUrls && galleryUrls.length > 0) {
-            setGaleriaFotos(galleryUrls);
+            // setGaleriaFotos(galleryUrls);
             console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería desde backend`);
             console.log('🔗 [SubramaDetail] URLs de galería:', galleryUrls);
           } else {
             console.log('ℹ️ [SubramaDetail] No hay imágenes en la galería de la subrama');
-            setGaleriaFotos([]);
+            // setGaleriaFotos([]);
           }
         } else {
           console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);
@@ -719,45 +717,7 @@ export default function SubramaDetail() {
         </div>
       </Card>
 
-      {/* Galería */}
-      <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-primary">
-            Galería de fotos
-          </h2>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleGalleryClick}
-            className="border border-primary text-primary hover:bg-accent flex items-center gap-2"
-          >
-            Añadir Fotos
-            <Upload className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {galeriaFotos.map((src, idx) => (
-            <div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}>
-              <img
-                src={src}
-                alt={`Foto ${idx + 1}`}
-                className="rounded-lg object-cover w-full h-[300px]"
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Input oculto para galería */}
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleGalleryChange}
-          className="hidden"
-          aria-label="Subir fotos a la galería"
-        />
-      </Card>
+      {/* Galería eliminada: sección removida por requerimiento */}
       <FotoModal
         open={fotoModalOpen}
         onClose={() => setFotoModalOpen(false)}
