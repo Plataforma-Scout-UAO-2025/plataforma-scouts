@@ -11,25 +11,25 @@ import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.organigrama.dto.SectionDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdateImageRequest;
+import uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest;
 import uao.edu.co.scouts_project.organigrama.service.SectionService;
 
 import java.net.URI;
 import java.util.List;
-import java.util.UUID; 
 import java.util.Map;
-
+import java.util.UUID;
 
 @Tag(name = "Sections", description = "Operaciones CRUD para la gestión de secciones/ramas scouts (Manada, Tropa, Comunidad, Clan)")
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantSlug}/groups/{groupSlug}/sections")
 public class SectionController {
-    
+
     private final SectionService sectionService;
-    
+
     public SectionController(SectionService sectionService) {
         this.sectionService = sectionService;
     }
-    
+
     @Operation(summary = "Obtener secciones por grupo", description = "Retorna todas las secciones/ramas scouts de un grupo específico")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lista de secciones obtenida exitosamente"),
@@ -45,8 +45,8 @@ public class SectionController {
     }
 
     @Operation(
-    summary = "Obtener una rama con sus subramas",
-    description = "Devuelve la sección (rama) y la lista de subgrupos asociados."
+        summary = "Obtener una rama con sus subramas",
+        description = "Devuelve la sección (rama) y la lista de subgrupos asociados."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
@@ -64,7 +64,6 @@ public class SectionController {
         return sectionService.getSectionWithSubgroups(tenantSlug, groupSlug, sectionId);
     }
 
-    
     @Operation(summary = "Obtener sección por ID", description = "Retorna una sección específica por su ID dentro de un grupo")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Sección encontrada exitosamente"),
@@ -80,7 +79,7 @@ public class SectionController {
         @PathVariable Long sectionId) {
         return sectionService.getSectionById(tenantSlug, groupSlug, sectionId);
     }
-    
+
     @Operation(summary = "Crear nueva sección", description = "Crea nueva sección/rama scout (Manada, Tropa, Comunidad, Clan) dentro de un grupo")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Sección creada exitosamente"),
@@ -97,9 +96,11 @@ public class SectionController {
         @Parameter(description = "Datos de la sección a crear")
         @Valid @RequestBody SectionDTO dto) {
         SectionResponseDTO created = sectionService.createSection(tenantSlug, groupSlug, dto);
-        return ResponseEntity.created(URI.create("/api/v1/tenants/" + tenantSlug + "/groups/" + groupSlug + "/sections/" + created.sectionId())).body(created);
+        return ResponseEntity
+            .created(URI.create("/api/v1/tenants/" + tenantSlug + "/groups/" + groupSlug + "/sections/" + created.sectionId()))
+            .body(created);
     }
-    
+
     @Operation(summary = "Actualizar sección", description = "Actualiza los datos de una sección existente")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Sección actualizada exitosamente"),
@@ -118,7 +119,7 @@ public class SectionController {
         @Valid @RequestBody SectionDTO dto) {
         return sectionService.updateSection(tenantSlug, groupSlug, sectionId, dto);
     }
-    
+
     @Operation(summary = "Eliminar sección", description = "Elimina una sección del sistema, incluyendo todas sus imágenes asociadas.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Sección eliminada exitosamente"),
@@ -135,8 +136,6 @@ public class SectionController {
         sectionService.deleteSection(tenantSlug, groupSlug, sectionId);
         return ResponseEntity.noContent().build();
     }
-
-    
 
     // ============== ENDPOINTS PARA ELIMINACIÓN DE IMÁGENES INDIVIDUALES ==============
 
@@ -157,13 +156,14 @@ public class SectionController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Eliminar una imagen específica de la galería de una sección", description = "Elimina un archivo específico de la galería de Supabase y desvincula su ID de la sección.")
+    @Operation(summary = "Eliminar una imagen específica de la galería de una sección",
+               description = "Desvincula una imagen (por UUID) de la galería de la sección. Opcionalmente, borra el objeto del storage si `deleteFromStorage=true`.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Imagen de la galería eliminada exitosamente"),
+        @ApiResponse(responseCode = "200", description = "Recurso actualizado devuelto"),
         @ApiResponse(responseCode = "404", description = "Tenant, grupo, sección o imagen no encontrada")
     })
-    @DeleteMapping("/{sectionId}/gallery/{objectId}") // <-- RUTA CORREGIDA
-    public ResponseEntity<Void> deleteGalleryImageById( // <-- MÉTODO CORREGIDO
+    @DeleteMapping("/{sectionId}/gallery/{objectId}")
+    public ResponseEntity<SectionResponseDTO> deleteGalleryImageById(
         @Parameter(description = "Identificador único del tenant", example = "region-valle")
         @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
@@ -171,13 +171,18 @@ public class SectionController {
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
         @Parameter(description = "ID (UUID) del objeto de storage a eliminar")
-        @PathVariable UUID objectId) { // <-- PARÁMETRO AÑADIDO
-        sectionService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, objectId); // <-- LLAMADA CORREGIDA
-        return ResponseEntity.noContent().build();
+        @PathVariable UUID objectId,
+        @Parameter(description = "Si es true, también borra el objeto del storage")
+        @RequestParam(name = "deleteFromStorage", defaultValue = "false") boolean deleteFromStorage) {
+
+        SectionResponseDTO updated = sectionService.deleteGalleryImageById(
+            tenantSlug, groupSlug, sectionId, objectId, deleteFromStorage
+        );
+        return ResponseEntity.ok(updated);
     }
-    
-    // ============== NUEVOS ENDPOINTS PATCH PARA ACTUALIZACIÓN INDIVIDUAL ==============
-    
+
+    // ============== ENDPOINTS PATCH PARA ACTUALIZACIÓN INDIVIDUAL ==============
+
     @Operation(summary = "Actualizar solo el ícono de una sección", description = "Actualiza únicamente la imagen del ícono sin modificar otros campos de la sección. Elimina automáticamente el ícono anterior de Supabase.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Ícono actualizado exitosamente"),
@@ -197,7 +202,7 @@ public class SectionController {
         sectionService.updateIcon(tenantSlug, groupSlug, sectionId, request.objectId());
         return ResponseEntity.noContent().build();
     }
-    
+
     @Operation(summary = "Actualizar solo la foto principal de una sección", description = "Actualiza únicamente la imagen de la foto principal sin modificar otros campos de la sección. Elimina automáticamente la foto anterior de Supabase.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Foto principal actualizada exitosamente"),
@@ -217,28 +222,32 @@ public class SectionController {
         sectionService.updatePhotoPrincipal(tenantSlug, groupSlug, sectionId, request.objectId());
         return ResponseEntity.noContent().build();
     }
-    
-    @Operation(summary = "Modificar imágenes de la galería", 
-               description = "Permite reemplazar, agregar o eliminar imágenes de la galería por UUID. " +
-                             "El backend encuentra automáticamente el índice de la imagen. " +
-                             "Operaciones: replace (reemplazar), add (agregar nueva), remove (eliminar). " +
-                             "Elimina automáticamente las imágenes reemplazadas/eliminadas de Supabase.")
+
+    @Operation(
+        summary = "Modificar imágenes de la galería",
+        description = "Permite reemplazar, agregar o eliminar imágenes de la galería por UUID. " +
+                      "Operaciones: replace (reemplazar), add (agregar), remove (eliminar). " +
+                      "Devuelve la sección actualizada con la galería en formato estable [{ id, url }]."
+    )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Operaciones aplicadas exitosamente"),
-        @ApiResponse(responseCode = "400", description = "UUID no encontrado o operación inválida"),
+        @ApiResponse(responseCode = "200", description = "Operaciones aplicadas exitosamente y recurso actualizado devuelto"),
+        @ApiResponse(responseCode = "400", description = "UUID faltante/no válido u operación inválida"),
         @ApiResponse(responseCode = "404", description = "Tenant, grupo o sección no encontrado")
     })
     @PatchMapping("/{sectionId}/gallery")
-    public ResponseEntity<Void> patchGallery(
+    public ResponseEntity<SectionResponseDTO> patchGallery(
         @Parameter(description = "Identificador único del tenant", example = "region-valle")
         @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
-        @Parameter(description = "Operaciones JSON Patch a aplicar")
-        @Valid @RequestBody uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest request) {
-        sectionService.patchGallery(tenantSlug, groupSlug, sectionId, request.operations());
-        return ResponseEntity.noContent().build();
+        @Parameter(description = "Operaciones a aplicar sobre la galería")
+        @Valid @RequestBody GalleryPatchRequest request) {
+
+        SectionResponseDTO updated = sectionService.patchGalleryAndReturn(
+            tenantSlug, groupSlug, sectionId, request.operations()
+        );
+        return ResponseEntity.ok(updated);
     }
 }

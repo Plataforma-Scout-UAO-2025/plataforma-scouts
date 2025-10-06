@@ -2,8 +2,9 @@ package uao.edu.co.scouts_project.organigrama.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+// TODO: GALERÍA DE FOTOS - Imports temporalmente comentados
+// import org.hibernate.annotations.JdbcTypeCode;
+// import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -35,9 +36,10 @@ public class Subgroup {
     @Column(name = "photo_principal")
     private UUID photoPrincipal;
     
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "gallery_object_id", columnDefinition = "uuid[]")
-    private UUID[] galleryObjectIds = new UUID[0]; // Inicializar con array vacío
+    // TODO: GALERÍA DE FOTOS - Funcionalidad temporalmente deshabilitada
+    // @JdbcTypeCode(SqlTypes.ARRAY)
+    // @Column(name = "gallery_object_id", columnDefinition = "uuid[]")
+    // private UUID[] galleryObjectIds = new UUID[0]; // Inicializar con array vacío
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -80,8 +82,9 @@ public class Subgroup {
     public UUID getPhotoPrincipal() { return photoPrincipal; }
     public void setPhotoPrincipal(UUID photoPrincipal) { this.photoPrincipal = photoPrincipal; }
 
-    public UUID[] getGalleryObjectIds() { return galleryObjectIds; }
-    public void setGalleryObjectIds(UUID[] galleryObjectIds) { this.galleryObjectIds = galleryObjectIds; }
+    // TODO: GALERÍA DE FOTOS - Getters y setters temporalmente deshabilitados
+    // public UUID[] getGalleryObjectIds() { return galleryObjectIds; }
+    // public void setGalleryObjectIds(UUID[] galleryObjectIds) { this.galleryObjectIds = galleryObjectIds; }
 
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }

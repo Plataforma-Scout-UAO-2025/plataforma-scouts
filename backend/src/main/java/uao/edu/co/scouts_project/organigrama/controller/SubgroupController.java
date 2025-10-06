@@ -16,7 +16,8 @@ import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
 
 import java.net.URI;
 import java.util.List;
-import java.util.UUID; // <-- IMPORTADO
+// TODO: GALERÍA DE FOTOS - Import temporalmente comentado
+// import java.util.UUID; // <-- IMPORTADO
 
 @Tag(name = "Subgroups", description = "Operaciones CRUD para la gestión de subgrupos scouts (Seisenes, Patrullas, Equipos, Tribus)")
 @RestController
@@ -129,8 +130,9 @@ public class SubgroupController {
 
 
     // ============== ENDPOINT PARA ELIMINACIÓN DE IMAGEN INDIVIDUAL DE LA GALERÍA ==============
+    // TODO: GALERÍA DE FOTOS - Endpoint temporalmente deshabilitado
 
-    @Operation(summary = "Eliminar una imagen específica de la galería de un subgrupo", description = "Elimina un archivo específico de la galería de Supabase y desvincula su ID del subgrupo.")
+    /*@Operation(summary = "Eliminar una imagen específica de la galería de un subgrupo", description = "Elimina un archivo específico de la galería de Supabase y desvincula su ID del subgrupo.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Imagen de la galería eliminada exitosamente"),
         @ApiResponse(responseCode = "404", description = "Tenant, grupo, sección, subgrupo o imagen no encontrada")
@@ -149,7 +151,7 @@ public class SubgroupController {
         @PathVariable UUID objectId) { // <-- PARÁMETRO AÑADIDO
         subgroupService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, subgroupId, objectId); // <-- LLAMADA CORREGIDA
         return ResponseEntity.noContent().build();
-    }
+    }*/
     
     // ============== NUEVO ENDPOINT PATCH PARA ACTUALIZACIÓN INDIVIDUAL ==============
     
@@ -175,7 +177,8 @@ public class SubgroupController {
         return ResponseEntity.noContent().build();
     }
     
-    @Operation(summary = "Modificar imágenes de la galería", 
+    // TODO: GALERÍA DE FOTOS - Endpoint temporalmente deshabilitado
+    /*@Operation(summary = "Modificar imágenes de la galería", 
                description = "Permite reemplazar, agregar o eliminar imágenes de la galería por UUID. " +
                              "El backend encuentra automáticamente el índice de la imagen. " +
                              "Operaciones: replace (reemplazar), add (agregar nueva), remove (eliminar). " +
@@ -199,5 +202,5 @@ public class SubgroupController {
         @Valid @RequestBody uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest request) {
         subgroupService.patchGallery(tenantSlug, groupSlug, sectionId, subgroupId, request.operations());
         return ResponseEntity.noContent().build();
-    }
+    }*/
 }
