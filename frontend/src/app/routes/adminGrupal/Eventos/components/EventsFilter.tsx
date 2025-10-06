@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   Label,
   Input,
@@ -13,34 +13,37 @@ import {
   PopoverTrigger,
 } from "@/components/ui/index";
 import { ChevronDown, ChevronUp, CalendarIcon } from "lucide-react";
-import { eventsData, cities } from "@/lib/mockObjects";
+import { cities } from "@/lib/mockObjects";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-const Events = () => {
+interface EventsFilterProps {
+  nameFilter: string;
+  setNameFilter: (value: string) => void;
+  locationFilter: string;
+  setLocationFilter: (value: string) => void;
+  date: Date | undefined;
+  setDate: (date: Date | undefined) => void;
+}
+
+const EventsFilter = ({
+  nameFilter,
+  setNameFilter,
+  locationFilter,
+  setLocationFilter,
+  date,
+  setDate,
+}: EventsFilterProps) => {
   const [isActive, setIsActive] = useState(false);
-  const [date, setDate] = useState<Date>();
-  const [nameFilter, setNameFilter] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
 
-  const filteredEvents = useMemo(() => {
-    return eventsData.filter((event) => {
-      const matchesName =
-        nameFilter === "" ||
-        event.name.toLowerCase().includes(nameFilter.toLowerCase());
-
-      const matchesLocation =
-        locationFilter === "" ||
-        event.location.toLowerCase().includes(locationFilter.toLowerCase());
-
-      const matchesDate = !date || event.date === format(date, "dd/MM/yyyy");
-
-      return matchesName && matchesLocation && matchesDate;
-    });
-  }, [nameFilter, locationFilter, date]);
+  const clearFilters = () => {
+    setNameFilter("");
+    setLocationFilter("");
+    setDate(undefined);
+  };
 
   return (
-    <div className="mx-4">
+    <>
       <header className="flex flex-col mb-4">
         <p className="text-5xl font-bold text-primary">Gestión de Eventos</p>
         <p className="text-2xl text-text mx-10 my-5">Buscar Evento</p>
@@ -112,69 +115,14 @@ const Events = () => {
           <Button
             variant="primary"
             className="h-9 px-3 flex"
-            onClick={() => {
-              setNameFilter("");
-              setLocationFilter("");
-              setDate(undefined);
-            }}
+            onClick={clearFilters}
           >
             Limpiar
           </Button>
         </div>
       </section>
-      <section className="flex flex-col md:flex-row">
-        <div className="w-full h-auto mt-4">
-          <p className="text-2xl text-primary mx-10 my-5">
-            Próximos eventos ({filteredEvents.length})
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mx-10">
-            {filteredEvents.length > 0 ? (
-              filteredEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-accent rounded-xl shadow-md p-6"
-                >
-                  <div className="flex mb-4">
-                    <div>
-                      <p className="text-lg text-text font-bold mb-2">
-                        Nombre del evento: {event.name}
-                      </p>
-                      <p className="text-sm text-primary mb-1">
-                        Evento #{event.id}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 mb-4">
-                    <p className="text-sm text-text">
-                      <span className="font-medium">Lugar del evento:</span>{" "}
-                      {event.location}
-                    </p>
-                    <p className="text-sm text-text">
-                      <span className="font-medium">Hora de inicio:</span>{" "}
-                      {event.startTime}
-                    </p>
-                    <p className="text-sm text-text">
-                      <span className="font-medium">Fecha del evento:</span>{" "}
-                      {event.date}
-                    </p>
-                  </div>
-                  <Button variant="primary" className="mt-3">
-                    Inscribirme
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8">
-                <p className="text-text text-lg">
-                  No se encontraron eventos que coincidan con los filtros.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-    </div>
+    </>
   );
 };
 
-export default Events;
+export default EventsFilter;

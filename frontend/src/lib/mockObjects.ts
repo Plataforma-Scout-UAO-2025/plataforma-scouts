@@ -127,11 +127,11 @@ export const paymentMetrics = [
 
 export const membersData = [
   {
-    id: "1",
-    firstName: "José Alberto",
-    lastName: "Gutierrez Jimenez",
+    member_id: "1",
+    first_name: "José Alberto",
+    last_name: "Gutierrez Jimenez",
     identification: "CC 1059901379",
-    createdAt: "13 ago 2025 4:30pm",
+    acceptance_date: "13 ago 2025 4:30pm",
     status: "Activo",
     statusAccount: "En mora",
     city: "Cali",
@@ -161,11 +161,11 @@ export const membersData = [
     ],
   },
   {
-    id: "2",
-    firstName: "María de los Ángeles",
-    lastName: "Ruiz Fernández",
+    member_id: "2",
+    first_name: "María de los Ángeles",
+    last_name: "Ruiz Fernández",
     identification: "CC 11231231902310",
-    createdAt: "15 jul 2025 4:00pm",
+    acceptance_date: "15 jul 2025 4:00pm",
     status: "Activo",
     statusAccount: "Al día",
     city: "Jamundí",
@@ -195,11 +195,11 @@ export const membersData = [
     ],
   },
   {
-    id: "3",
-    firstName: "Miguel Ángel",
-    lastName: "Tutistar Rosales",
+    member_id: "3",
+    first_name: "Miguel Ángel",
+    last_name: "Tutistar Rosales",
     identification: "CC 11231231902310",
-    createdAt: "31 jun 2025 2:10pm",
+    acceptance_date: "31 jun 2025 2:10pm",
     status: "Activo",
     statusAccount: "Al día",
     city: "Dagua",
@@ -222,11 +222,11 @@ export const membersData = [
     ],
   },
   {
-    id: "4",
-    firstName: "Richard Andrés",
-    lastName: "Luna Cano",
+    member_id: "4",
+    first_name: "Richard Andrés",
+    last_name: "Luna Cano",
     identification: "CC 11231231902310",
-    createdAt: "05 ago 2025 8:30am",
+    acceptance_date: "05 ago 2025 8:30am",
     status: "Activo",
     statusAccount: "En mora",
     city: "Cali",
@@ -249,11 +249,11 @@ export const membersData = [
     ],
   },
   {
-    id: "5",
-    firstName: "Melany",
-    lastName: "Camacho Ordoñez",
+    member_id: "5",
+    first_name: "Melany",
+    last_name: "Camacho Ordoñez",
     identification: "CC 11231231902310",
-    createdAt: "20 jun 2025 9:40am",
+    acceptance_date: "20 jun 2025 9:40am",
     status: "Activo",
     statusAccount: "Al día",
     city: "Palmira",
@@ -351,7 +351,7 @@ export const eventsData = [
     location: "Comunidad Local",
     startTime: "8:00 AM",
     date: "05/11/2025",
-  }
+  },
 ];
 
 export const badgeStats = [
@@ -360,13 +360,13 @@ export const badgeStats = [
     label: "Insignias Completadas",
   },
   {
-    value: "20", 
+    value: "20",
     label: "En Progreso",
   },
   {
     value: "60",
     label: "Miembros Activos",
-  }
+  },
 ];
 
 export const badgeProgressData = [
@@ -383,30 +383,30 @@ export const badgeProgressData = [
         name: "Expresión artística",
         description: "Conocimientos básicos de arte y expresión",
         progress: 80,
-        status: "En Progreso"
+        status: "En Progreso",
       },
       {
         id: 2,
         name: "Espíritu Scout",
         description: "Conocimientos básicos de escultismo y campamento",
         progress: 60,
-        status: "En Progreso"
+        status: "En Progreso",
       },
       {
         id: 3,
         name: "Académica y de Comunicación",
         description: "Desarrollo académico y liderazgo con enfoque ambiental",
         progress: 90,
-        status: "En Progreso"
+        status: "En Progreso",
       },
       {
         id: 4,
         name: "Salud y Bienestar",
         description: "Conocimientos sobre salud y bienestar",
         progress: 100,
-        status: "Completado"
-      }
-    ]
+        status: "Completado",
+      },
+    ],
   },
   {
     memberId: 2,
@@ -421,23 +421,23 @@ export const badgeProgressData = [
         name: "Liderazgo",
         description: "Desarrollo de habilidades de liderazgo",
         progress: 40,
-        status: "En Progreso"
+        status: "En Progreso",
       },
       {
         id: 2,
         name: "Trabajo en equipo",
         description: "Fomentar el trabajo en equipo y la colaboración",
         progress: 60,
-        status: "En Progreso"
+        status: "En Progreso",
       },
       {
         id: 3,
         name: "Comunicación",
         description: "Mejorar las habilidades de comunicación",
         progress: 90,
-        status: "En Progreso"
-      }
-    ]
+        status: "En Progreso",
+      },
+    ],
   },
   {
     memberId: 3,
@@ -452,22 +452,142 @@ export const badgeProgressData = [
         name: "Naturaleza",
         description: "Conocimientos sobre flora y fauna",
         progress: 25,
-        status: "En Progreso"
+        status: "En Progreso",
       },
       {
         id: 2,
         name: "Supervivencia",
         description: "Técnicas de supervivencia en la naturaleza",
         progress: 50,
-        status: "En Progreso"
+        status: "En Progreso",
       },
       {
         id: 3,
         name: "Exploración",
         description: "Habilidades de exploración y orientación",
         progress: 75,
-        status: "En Progreso"
-      }
-    ]
-  }
+        status: "En Progreso",
+      },
+    ],
+  },
 ];
+
+export const filesData = [
+  {
+    id: "1",
+    name: "Manual Scout Centinelas 113.pdf",
+    type: "file" as const,
+    size: 2500000, // 2.5MB
+    uploadDate: "2025-09-20T10:30:00Z",
+    uploadedBy: "Admin Principal",
+    category: "documentos" as const,
+    description: "Manual oficial del grupo scout",
+    fileType: "pdf",
+    url: "/files/manual-scout.pdf",
+  },
+  {
+    id: "2",
+    name: "Formularios",
+    type: "folder" as const,
+    uploadDate: "2025-09-15T14:20:00Z",
+    uploadedBy: "Admin Principal",
+    category: "formularios" as const,
+    description: "Carpeta con todos los formularios oficiales",
+  },
+  {
+    id: "3",
+    name: "Autorizacion Campamento.docx",
+    type: "file" as const,
+    size: 156000, // 156KB
+    uploadDate: "2025-09-18T09:15:00Z",
+    uploadedBy: "María González",
+    category: "formularios" as const,
+    description: "Formato de autorización para campamentos",
+    fileType: "docx",
+    url: "/files/autorizacion-campamento.docx",
+    parentId: "2",
+  },
+  {
+    id: "4",
+    name: "Fotos Campamento Verano 2025",
+    type: "folder" as const,
+    uploadDate: "2025-08-25T16:45:00Z",
+    uploadedBy: "Carlos Ruiz",
+    category: "imagenes" as const,
+    description: "Fotografías del campamento de verano",
+  },
+  {
+    id: "5",
+    name: "IMG_001.jpg",
+    type: "file" as const,
+    size: 3200000, // 3.2MB
+    uploadDate: "2025-08-25T16:50:00Z",
+    uploadedBy: "Carlos Ruiz",
+    category: "imagenes" as const,
+    description: "Ceremonia de apertura del campamento",
+    fileType: "jpg",
+    url: "/files/img_001.jpg",
+    parentId: "4",
+  },
+  {
+    id: "6",
+    name: "Reglamento Interno 2025.pdf",
+    type: "file" as const,
+    size: 890000, // 890KB
+    uploadDate: "2025-09-10T11:20:00Z",
+    uploadedBy: "Admin Principal",
+    category: "documentos" as const,
+    description: "Reglamento interno actualizado para 2025",
+    fileType: "pdf",
+    url: "/files/reglamento-2025.pdf",
+  },
+  {
+    id: "7",
+    name: "Presentacion Padres de Familia.pptx",
+    type: "file" as const,
+    size: 15600000, // 15.6MB
+    uploadDate: "2025-09-12T15:30:00Z",
+    uploadedBy: "Ana Martínez",
+    category: "presentaciones" as const,
+    description: "Presentación para reunión de padres de familia",
+    fileType: "pptx",
+    url: "/files/presentacion-padres.pptx",
+  },
+  {
+    id: "8",
+    name: "Video Actividades Scouts.mp4",
+    type: "file" as const,
+    size: 45000000, // 45MB
+    uploadDate: "2025-09-05T13:10:00Z",
+    uploadedBy: "Diego López",
+    category: "videos" as const,
+    description: "Video promocional de actividades del grupo",
+    fileType: "mp4",
+    url: "/files/video-actividades.mp4",
+  },
+  {
+    id: "9",
+    name: "Inventario Materiales.xlsx",
+    type: "file" as const,
+    size: 78000, // 78KB
+    uploadDate: "2025-09-08T08:45:00Z",
+    uploadedBy: "Luis Fernández",
+    category: "otros" as const,
+    description: "Inventario de materiales y equipos del grupo",
+    fileType: "xlsx",
+    url: "/files/inventario-materiales.xlsx",
+  },
+];
+
+export const fileStats = {
+  totalFiles: 7,
+  totalSize: 69374000, // ~69MB
+  categoryCounts: {
+    documentos: 2,
+    formularios: 1,
+    imagenes: 1,
+    videos: 1,
+    presentaciones: 1,
+    otros: 1,
+  },
+};

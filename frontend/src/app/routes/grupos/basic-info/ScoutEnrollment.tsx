@@ -17,21 +17,17 @@ import {
 import type {
   PersonalData,
   SchoolData,
-  EmergencyContact,
   CreateMemberRequest,
-  CreateMemberResponse,
   CreateSchoolDataRequest,
   ChangeEvent,
   EmergencyContactField,
 } from "./types/enrollment.type";
-import { GROUP_TO_SUBGROUP_ID } from "./types/enrollment.type";
-
-const backendUrl = "http://localhost:8080/api/members";
+import { enrollmentService } from "@/api/services/enrollment.service";
+import { transformarDatos } from "./utils/enrollment.utils";
 
 function ScoutEnrollment() {
   const navigate = useNavigate();
 
-  // Estados del formulario
   const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     firstname: "",
     lastname: "",
@@ -49,10 +45,7 @@ function ScoutEnrollment() {
     sports: "",
     instruments: "",
     group: "",
-    emergency_contacts: [
-      { name: "", relationship: "", phone: "" },
-      { name: "", relationship: "", phone: "" },
-    ],
+    emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
 
   const [datosEscolares, setDatosEscolares] = useState<SchoolData>({
@@ -63,60 +56,13 @@ function ScoutEnrollment() {
   });
 
   const [pagina, setPagina] = useState<number>(1);
-  const [showModal, setShowModal] = useState<boolean>(false);
   const [showSchoolDialog, setShowSchoolDialog] = useState<boolean>(false);
   const [incluirDatosEscolares, setIncluirDatosEscolares] =
     useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const calcularEdad = (fecha: string): number => {
-    if (!fecha) return 0;
-    const hoy = new Date();
-    const nacimiento = new Date(fecha);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const m = hoy.getMonth() - nacimiento.getMonth();
-    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-    return edad;
-  };
-
-  const transformarDatos = (data: PersonalData): CreateMemberRequest => {
-    const edad = calcularEdad(data.birth_date);
-
-    const emergencyPhone: Record<string, EmergencyContact> = {};
-    data.emergency_contacts.forEach((contact, index) => {
-      if (contact.name && contact.phone) {
-        emergencyPhone[`contact${index + 1}`] = {
-          name: contact.name,
-          relationship: contact.relationship,
-          phone: contact.phone,
-        };
-      }
-    });
-
-    return {
-      subgroup_id: GROUP_TO_SUBGROUP_ID[data.group] || 1,
-      first_name: data.firstname,
-      last_name: data.lastname,
-      age: edad,
-      identification: Number(data.identification),
-      document_type: data.document_type,
-      email: data.email,
-      gender: data.gender,
-      birth_date: data.birth_date,
-      address: data.address,
-      phone: data.phone,
-      weight: data.weight,
-      height: data.height,
-      hobbies: data.hobbies,
-      sports: data.sports,
-      instruments: data.instruments,
-      status: "PENDING",
-      emergency_phone: emergencyPhone,
-    };
-  };
-
+  // 📘 Handlers
   const handlePersonalChange = (e: ChangeEvent): void => {
     const { name, value } = e.target;
     setDatosPersonales((prev) => ({ ...prev, [name]: value }));
@@ -160,77 +106,29 @@ function ScoutEnrollment() {
     }
   };
 
-  const crearMiembro = async (
-    memberData: CreateMemberRequest
-  ): Promise<CreateMemberResponse> => {
-    try {
-      const response = await fetch(`${backendUrl}/create_member`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(memberData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error al crear el miembro");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error:", error);
-      throw error;
-    }
-  };
-
-  const crearDatosEscolares = async (
-    schoolData: CreateSchoolDataRequest
-  ): Promise<void> => {
-    try {
-      const response = await fetch(`${backendUrl}/create_member_with_school`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(schoolData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || "Error al crear los datos escolares"
-        );
-      }
-
-      await response.json();
-    } catch (error) {
-      console.error("Error:", error);
-      throw error;
-    }
-  };
-
+  // 🧩 Enviar formulario
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
+    // Página 1 → pasa a intereses
     if (pagina === 1) {
       if (datosPersonales.email !== datosPersonales.confirm_email) {
         alert("Los correos electrónicos no coinciden");
         return;
       }
-      setShowSchoolDialog(true);
+      setPagina(2);
       return;
     }
 
-    if (pagina === 2 && incluirDatosEscolares) {
-      setPagina(3);
+    if (pagina === 2) {
+      setShowSchoolDialog(true);
       return;
     }
 
     setLoading(true);
     try {
-      const memberData = transformarDatos(datosPersonales);
-      const miembroCreado = await crearMiembro(memberData);
+      const memberData: CreateMemberRequest = transformarDatos(datosPersonales);
+      const miembroCreado = await enrollmentService.createMember(memberData);
 
       if (
         incluirDatosEscolares &&
@@ -240,15 +138,15 @@ function ScoutEnrollment() {
           member_id: miembroCreado.member_id,
           ...datosEscolares,
         };
-        await crearDatosEscolares(schoolData);
+        await enrollmentService.createMemberWithSchool(schoolData);
       }
 
       setShowModal(true);
-    } catch (error: unknown) {
-      console.error("Error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
-      alert("Error al enviar la solicitud: " + errorMessage);
+    } catch (error: any) {
+      alert(
+        "Error al enviar la solicitud: " +
+          (error.message || "Error desconocido")
+      );
     } finally {
       setLoading(false);
     }
@@ -257,73 +155,65 @@ function ScoutEnrollment() {
   const handleSchoolDialogResponse = (incluir: boolean): void => {
     setIncluirDatosEscolares(incluir);
     setShowSchoolDialog(false);
-    setPagina(incluir ? 2 : 3);
+    if (incluir) {
+      setPagina(3);
+    } else {
+      // Si no incluye, envía directamente
+      handleSubmit(new Event("submit") as unknown as React.FormEvent);
+    }
   };
 
+  // -------------------
+  // 🧩 Campos por página
+  // -------------------
+
+  // Página 1: Datos personales
   const camposPagina1 = (
     <>
       <div>
-        <Label className="mb-1" htmlFor="firstname">
-          Nombres *
-        </Label>
+        <Label htmlFor="firstname">Nombres *</Label>
         <Input
           id="firstname"
           name="firstname"
           value={datosPersonales.firstname}
           onChange={handlePersonalChange}
-          className="border border-primary"
           required
         />
       </div>
-
       <div>
-        <Label className="mb-1" htmlFor="lastname">
-          Apellidos *
-        </Label>
+        <Label htmlFor="lastname">Apellidos *</Label>
         <Input
           id="lastname"
           name="lastname"
           value={datosPersonales.lastname}
           onChange={handlePersonalChange}
-          className="border border-primary"
           required
         />
       </div>
-
       <div>
-        <Label className="mb-1" htmlFor="email">
-          Correo electrónico *
-        </Label>
+        <Label htmlFor="email">Correo electrónico *</Label>
         <Input
-          type="email"
           id="email"
           name="email"
+          type="email"
           value={datosPersonales.email}
           onChange={handlePersonalChange}
-          className="border border-primary"
           required
         />
       </div>
-
       <div>
-        <Label className="mb-1" htmlFor="confirm_email">
-          Confirmar correo *
-        </Label>
+        <Label htmlFor="confirm_email">Confirmar correo *</Label>
         <Input
-          type="email"
           id="confirm_email"
           name="confirm_email"
+          type="email"
           value={datosPersonales.confirm_email}
           onChange={handlePersonalChange}
-          className="border border-primary"
           required
         />
       </div>
-
       <div>
-        <Label className="mb-1" htmlFor="document_type">
-          Tipo de documento *
-        </Label>
+        <Label htmlFor="document_type">Tipo de documento *</Label>
         <select
           id="document_type"
           name="document_type"
@@ -333,28 +223,88 @@ function ScoutEnrollment() {
           required
         >
           <option value="">Selecciona...</option>
-          <option value="CC">Cédula de ciudadanía (CC)</option>
-          <option value="TI">Tarjeta de identidad (TI)</option>
-          <option value="CE">Cédula de extranjería (CE)</option>
+          <option value="CC">Cédula de Ciudadanía</option>
+          <option value="TI">Tarjeta de Identidad</option>
+          <option value="CE">Cédula de Extranjería</option>
         </select>
       </div>
       <div>
-        <Label className="mb-1" htmlFor="identification">
-          Número de documento *
-        </Label>
+        <Label htmlFor="identification">Número de documento *</Label>
         <Input
           id="identification"
           name="identification"
           value={datosPersonales.identification}
           onChange={handlePersonalChange}
-          className="border border-primary"
           required
         />
       </div>
       <div>
-        <Label className="mb-1" htmlFor="group">
-          Grupo *
-        </Label>
+        <Label htmlFor="birth_date">Fecha de nacimiento *</Label>
+        <Input
+          id="birth_date"
+          name="birth_date"
+          type="date"
+          value={datosPersonales.birth_date}
+          onChange={handlePersonalChange}
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="gender">Género *</Label>
+        <select
+          id="gender"
+          name="gender"
+          value={datosPersonales.gender}
+          onChange={handlePersonalChange}
+          className="border border-primary rounded w-full h-10 px-2 bg-white"
+          required
+        >
+          <option value="">Selecciona...</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Femenino">Femenino</option>
+        </select>
+      </div>
+      <div>
+        <Label htmlFor="address">Dirección *</Label>
+        <Input
+          id="address"
+          name="address"
+          value={datosPersonales.address}
+          onChange={handlePersonalChange}
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="phone">Teléfono *</Label>
+        <Input
+          id="phone"
+          name="phone"
+          type="tel"
+          value={datosPersonales.phone}
+          onChange={handlePersonalChange}
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="weight">Peso (kg)</Label>
+        <Input
+          id="weight"
+          name="weight"
+          value={datosPersonales.weight}
+          onChange={handlePersonalChange}
+        />
+      </div>
+      <div>
+        <Label htmlFor="height">Altura (cm)</Label>
+        <Input
+          id="height"
+          name="height"
+          value={datosPersonales.height}
+          onChange={handlePersonalChange}
+        />
+      </div>
+      <div className="col-span-2">
+        <Label htmlFor="group">Grupo scout *</Label>
         <select
           id="group"
           name="group"
@@ -368,158 +318,67 @@ function ScoutEnrollment() {
           <option value="803 Chiminigagua">803 Chiminigagua</option>
         </select>
       </div>
-      <div>
-        <Label className="mb-1" htmlFor="birth_date">
-          Fecha de nacimiento *
-        </Label>
-        <Input
-          type="date"
-          id="birth_date"
-          name="birth_date"
-          value={datosPersonales.birth_date}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-          required
-        />
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="address">
-          Dirección *
-        </Label>
-        <Input
-          id="address"
-          name="address"
-          value={datosPersonales.address}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-          required
-        />
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="phone">
-          Teléfono *
-        </Label>
-        <Input
-          id="phone"
-          name="phone"
-          value={datosPersonales.phone}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-          required
-        />
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="gender">
-          Sexo *
-        </Label>
-        <select
-          id="gender"
-          name="gender"
-          value={datosPersonales.gender}
-          onChange={handlePersonalChange}
-          className="border border-primary rounded w-full h-10 px-2 bg-white"
-          required
-        >
-          <option value="">Selecciona...</option>
-          <option value="Femenino">Femenino</option>
-          <option value="Masculino">Masculino</option>
-        </select>
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="weight">
-          Peso (kg)
-        </Label>
-        <Input
-          id="weight"
-          name="weight"
-          value={datosPersonales.weight}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-          type="number"
-          step="0.1"
-        />
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="height">
-          Estatura (cm)
-        </Label>
-        <Input
-          id="height"
-          name="height"
-          value={datosPersonales.height}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-          type="number"
-          step="0.1"
-        />
-      </div>
 
-      <div className="col-span-2">
-        <h3 className="text-lg font-semibold mb-4 text-primary">
+      {/* Contactos de emergencia */}
+      <div className="col-span-2 mt-4">
+        <h3 className="text-lg font-semibold mb-3">
           Contactos de emergencia *
         </h3>
         {datosPersonales.emergency_contacts.map((contact, index) => (
           <div
             key={index}
-            className="mb-4 p-4 border border-primary rounded-lg"
+            className="grid grid-cols-3 gap-4 mb-4 p-4 border rounded-lg"
           >
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium">Contacto {index + 1}</h4>
-              {datosPersonales.emergency_contacts.length > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeEmergencyContact(index)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  Eliminar
-                </Button>
-              )}
+            <div>
+              <Label htmlFor={`contact_name_${index}`}>Nombre</Label>
+              <Input
+                id={`contact_name_${index}`}
+                value={contact.name}
+                onChange={(e) =>
+                  handleEmergencyContactChange(index, "name", e.target.value)
+                }
+                required
+              />
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor={`contact-name-${index}`}>Nombre *</Label>
+            <div>
+              <Label htmlFor={`contact_relationship_${index}`}>
+                Parentesco
+              </Label>
+              <Input
+                id={`contact_relationship_${index}`}
+                value={contact.relationship}
+                onChange={(e) =>
+                  handleEmergencyContactChange(
+                    index,
+                    "relationship",
+                    e.target.value
+                  )
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor={`contact_phone_${index}`}>Teléfono</Label>
+              <div className="flex gap-2">
                 <Input
-                  id={`contact-name-${index}`}
-                  value={contact.name}
-                  onChange={(e) =>
-                    handleEmergencyContactChange(index, "name", e.target.value)
-                  }
-                  className="border border-primary"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor={`contact-relationship-${index}`}>
-                  Parentesco *
-                </Label>
-                <Input
-                  id={`contact-relationship-${index}`}
-                  value={contact.relationship}
-                  onChange={(e) =>
-                    handleEmergencyContactChange(
-                      index,
-                      "relationship",
-                      e.target.value
-                    )
-                  }
-                  className="border border-primary"
-                  placeholder="Ej: Madre, Padre, Tío"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor={`contact-phone-${index}`}>Teléfono *</Label>
-                <Input
-                  id={`contact-phone-${index}`}
+                  id={`contact_phone_${index}`}
+                  type="tel"
                   value={contact.phone}
                   onChange={(e) =>
                     handleEmergencyContactChange(index, "phone", e.target.value)
                   }
-                  className="border border-primary"
                   required
                 />
+                {datosPersonales.emergency_contacts.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => removeEmergencyContact(index)}
+                  >
+                    X
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -530,56 +389,84 @@ function ScoutEnrollment() {
           onClick={addEmergencyContact}
           className="w-full"
         >
-          + Agregar otro contacto de emergencia
+          + Agregar contacto
         </Button>
       </div>
     </>
   );
 
+  // Página 2: Intereses y habilidades
   const camposPagina2 = (
     <>
-      <div>
-        <Label className="mb-1" htmlFor="institution">
-          Institución educativa *
-        </Label>
+      <div className="col-span-2">
+        <Label htmlFor="hobbies">Pasatiempos</Label>
+        <Input
+          id="hobbies"
+          name="hobbies"
+          value={datosPersonales.hobbies}
+          onChange={handlePersonalChange}
+          placeholder="Lectura, videojuegos, pintura..."
+        />
+      </div>
+      <div className="col-span-2">
+        <Label htmlFor="sports">Deportes</Label>
+        <Input
+          id="sports"
+          name="sports"
+          value={datosPersonales.sports}
+          onChange={handlePersonalChange}
+          placeholder="Fútbol, natación, ciclismo..."
+        />
+      </div>
+      <div className="col-span-2">
+        <Label htmlFor="instruments">Instrumentos musicales</Label>
+        <Input
+          id="instruments"
+          name="instruments"
+          value={datosPersonales.instruments}
+          onChange={handlePersonalChange}
+          placeholder="Guitarra, piano, flauta..."
+        />
+      </div>
+    </>
+  );
+
+  // Página 3: Datos escolares
+  const camposPagina3 = (
+    <>
+      <div className="col-span-2">
+        <Label htmlFor="institution">Institución educativa *</Label>
         <Input
           id="institution"
           name="institution"
           value={datosEscolares.institution}
           onChange={handleSchoolChange}
-          className="border border-primary"
           required
         />
       </div>
       <div>
-        <Label className="mb-1" htmlFor="course">
-          Curso actual *
-        </Label>
+        <Label htmlFor="course">Curso/Grado actual *</Label>
         <Input
           id="course"
           name="course"
           value={datosEscolares.course}
           onChange={handleSchoolChange}
-          className="border border-primary"
+          placeholder="Ej: 9°, 10°, 11°"
           required
         />
       </div>
       <div>
-        <Label className="mb-1" htmlFor="calendar">
-          Calendario
-        </Label>
+        <Label htmlFor="calendar">Calendario</Label>
         <Input
           id="calendar"
           name="calendar"
           value={datosEscolares.calendar}
           onChange={handleSchoolChange}
-          className="border border-primary"
+          placeholder="A o B"
         />
       </div>
-      <div>
-        <Label className="mb-1" htmlFor="shift">
-          Jornada *
-        </Label>
+      <div className="col-span-2">
+        <Label htmlFor="shift">Jornada *</Label>
         <select
           id="shift"
           name="shift"
@@ -598,47 +485,6 @@ function ScoutEnrollment() {
     </>
   );
 
-  const camposPagina3 = (
-    <>
-      <div>
-        <Label className="mb-1" htmlFor="hobbies">
-          Pasatiempos
-        </Label>
-        <Input
-          id="hobbies"
-          name="hobbies"
-          value={datosPersonales.hobbies}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-        />
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="sports">
-          Deportes
-        </Label>
-        <Input
-          id="sports"
-          name="sports"
-          value={datosPersonales.sports}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-        />
-      </div>
-      <div>
-        <Label className="mb-1" htmlFor="instruments">
-          Instrumentos
-        </Label>
-        <Input
-          id="instruments"
-          name="instruments"
-          value={datosPersonales.instruments}
-          onChange={handlePersonalChange}
-          className="border border-primary"
-        />
-      </div>
-    </>
-  );
-
   const getCamposPagina = () => {
     if (pagina === 1) return camposPagina1;
     if (pagina === 2) return camposPagina2;
@@ -647,79 +493,74 @@ function ScoutEnrollment() {
 
   const getTituloPagina = () => {
     if (pagina === 1) return "Información personal";
-    if (pagina === 2) return "Información escolar";
-    return "Intereses y habilidades";
+    if (pagina === 2) return "Intereses y habilidades";
+    return "Datos escolares";
   };
 
   const totalPaginas = incluirDatosEscolares ? 3 : 2;
-  const paginaActual = pagina > totalPaginas ? totalPaginas : pagina;
-  const progreso = (paginaActual / totalPaginas) * 100;
+  const progreso = (pagina / totalPaginas) * 100;
 
   return (
-    <div className="min-h-screen w-screen bg-background px-20 py-10">
-      <div className="mb-10">
-        <h1 className="text-2xl font-bold mb-10 text-left text-primary">
-          Inscríbete
-        </h1>
-        <p className="mt-2 text-muted-foreground max-w-3xl">
-          Ingrese todos los datos requeridos en este formulario para enviar la
-          solicitud de inscripción.
+    <div className="min-h-screen w-screen bg-background px-4 md:px-20 py-10">
+      <h1 className="text-2xl font-bold text-primary mb-8">
+        Inscríbete al grupo scout
+      </h1>
+
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto"
+      >
+        <h2 className="col-span-full text-xl font-semibold mb-4">
+          {getTituloPagina()}
+        </h2>
+
+        {getCamposPagina()}
+
+        <div className="col-span-full flex justify-between mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              pagina > 1 ? setPagina((p) => p - 1) : navigate("/")
+            }
+          >
+            {pagina > 1 ? "Atrás" : "Cancelar"}
+          </Button>
+
+          <Button type="submit" disabled={loading}>
+            {loading
+              ? "Enviando..."
+              : pagina === totalPaginas
+              ? "Enviar"
+              : "Continuar"}
+          </Button>
+        </div>
+      </form>
+
+      <div className="mt-8 max-w-4xl mx-auto">
+        <Progress value={progreso} className="h-2 rounded-full" />
+        <p className="text-sm text-gray-600 mt-2 text-center">
+          Página {pagina} de {totalPaginas}
         </p>
       </div>
-      <div className="max-w-2xl mx-auto">
-        <h2 className="text-xl font-semibold mb-6">{getTituloPagina()}</h2>
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
-          {getCamposPagina()}
 
-          <div className="col-span-2 flex justify-between mt-6">
-            {pagina === 1 ? (
-              <Button
-                variant="outline"
-                type="button"
-                className="px-10 py-6"
-                onClick={() => navigate("/")}
-              >
-                Cancelar
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                type="button"
-                className="px-10 py-6"
-                onClick={() => setPagina((prev) => prev - 1)}
-              >
-                Atrás
-              </Button>
-            )}
-
-            <Button type="submit" className="px-10 py-6" disabled={loading}>
-              {loading
-                ? "Enviando..."
-                : pagina === totalPaginas
-                ? "Enviar"
-                : "Continuar"}
-            </Button>
-          </div>
-        </form>
-
-        <div className="mt-8">
-          <Progress className="h-2 rounded-full" value={progreso} />
-        </div>
-      </div>
-
+      {/* Diálogo para decidir si incluir datos escolares */}
       <AlertDialog open={showSchoolDialog} onOpenChange={setShowSchoolDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Datos escolares</AlertDialogTitle>
+            <AlertDialogTitle>
+              ¿Deseas incluir información escolar?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Desea incluir información escolar en la inscripción?
+              Estos datos son opcionales pero nos ayudan a conocer mejor al
+              scout. Puedes agregarlos ahora o más adelante.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => handleSchoolDialogResponse(false)}
             >
-              No, continuar
+              No, enviar ahora
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => handleSchoolDialogResponse(true)}>
               Sí, incluir
@@ -728,23 +569,33 @@ function ScoutEnrollment() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Modal de confirmación */}
       {showModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{
-            backdropFilter: "blur(7px)",
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-          }}
-        >
-          <div className="bg-[#FFFAF3] rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
-            <h3 className="text-xl font-bold mb-4 text-primary">
-              ¡Solicitud enviada!
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold mb-2 text-primary">
+              ¡Solicitud enviada con éxito!
             </h3>
             <p className="mb-6 text-gray-700">
-              Un encargado se comunicará contigo pronto.
+              Un encargado revisará tu solicitud y se comunicará contigo pronto.
             </p>
             <Button className="w-full" onClick={() => navigate("/")}>
-              Cerrar
+              Volver al inicio
             </Button>
           </div>
         </div>

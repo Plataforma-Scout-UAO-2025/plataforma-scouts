@@ -21,30 +21,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import type { Member } from "../Miembros/types/member.type";
+import { membersService } from "@/api/services/members.service";
 
-interface Member {
-  member_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  identification: string;
-  document_type: string;
-  birth_date: string;
-  address: string;
-  phone: string;
-  gender: string;
-  weight: string;
-  height: string;
-  hobbies: string;
-  sports: string;
-  instruments: string;
-  status: string;
-}
-const backendUrl = "http://localhost:8080/api/members";
 const Rejected = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-
   const [openViewModal, setOpenViewModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -58,30 +40,11 @@ const Rejected = () => {
     NOT_ACCEPTED: "Rechazado",
   };
 
-  // Cargar miembros rechazados al montar el componente
-  useEffect(() => {
-    cargarMiembrosRechazados();
-  }, []);
-
-  //  Cargar solo miembros con estado NO_ACEPTADO
-  const cargarMiembrosRechazados = async () => {
+  // 🔹 Cargar miembros rechazados
+  const loadRejectedMembers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${backendUrl}/list_members_by_status?status=NOT_ACCEPTED`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al cargar los miembros rechazados");
-      }
-
-      const data = await response.json();
+      const data = await membersService.getByStatus("NOT_ACCEPTED");
       setMembers(data);
     } catch (error) {
       console.error("Error al cargar miembros rechazados:", error);
@@ -91,7 +54,11 @@ const Rejected = () => {
     }
   };
 
-  //  Extraer ciudades únicas de las direcciones
+  useEffect(() => {
+    loadRejectedMembers();
+  }, []);
+
+  // 🔹 Ciudades únicas
   const cities = useMemo(() => {
     const uniqueCities = [
       ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
@@ -99,7 +66,7 @@ const Rejected = () => {
     return uniqueCities.sort();
   }, [members]);
 
-  //  Filtrar miembros por búsqueda y ciudad
+  // 🔹 Filtros
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
@@ -116,25 +83,11 @@ const Rejected = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  //  Ver detalles del miembro
+  // 🔹 Ver detalles
   const handleView = async (member: Member) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${backendUrl}/list_member_by_id?id=${member.member_id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al cargar datos del miembro");
-      }
-
-      const data = await response.json();
+      const data = await membersService.getDetails(member.member_id);
       setSelectedMember(data);
       setOpenViewModal(true);
     } catch (err) {
@@ -202,26 +155,18 @@ const Rejected = () => {
         </div>
       </section>
 
-      {/* Tabla de miembros rechazados */}
+      {/* Tabla */}
       <section className="mt-6 space-y-4">
         <div className="border-3 border-primary rounded-lg overflow-hidden">
           <Table className="text-sm">
             <TableHeader className="text-primary">
-              <TableRow className="border-b border-primary hover:bg-transparent">
-                <TableHead className="pl-4 font-bold text-primary">
-                  Id
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Nombres
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Apellidos
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Identificación
-                </TableHead>
-                <TableHead className="font-bold text-primary">Ciudad</TableHead>
-                <TableHead className="font-bold text-primary">Estado</TableHead>
+              <TableRow className="border-b border-primary">
+                <TableHead className="pl-4 font-bold">Id</TableHead>
+                <TableHead className="font-bold">Nombres</TableHead>
+                <TableHead className="font-bold">Apellidos</TableHead>
+                <TableHead className="font-bold">Identificación</TableHead>
+                <TableHead className="font-bold">Ciudad</TableHead>
+                <TableHead className="font-bold">Estado</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
@@ -229,15 +174,13 @@ const Rejected = () => {
               {loading && members.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
-                    <p className="text-text text-lg">Cargando...</p>
+                    Cargando...
                   </TableCell>
                 </TableRow>
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <TableRow key={member.member_id} className="border-primary">
-                    <TableCell className="pl-4 font-medium">
-                      {member.member_id}
-                    </TableCell>
+                  <TableRow key={member.member_id}>
+                    <TableCell>{member.member_id}</TableCell>
                     <TableCell>{member.first_name}</TableCell>
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
@@ -253,7 +196,6 @@ const Rejected = () => {
                       <Button
                         variant="primary"
                         size="icon"
-                        title="Ver"
                         onClick={() => handleView(member)}
                       >
                         <Eye size={18} />
@@ -264,9 +206,7 @@ const Rejected = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
-                    <p className="text-text text-lg">
-                      No se encontraron solicitudes rechazadas.
-                    </p>
+                    No se encontraron solicitudes rechazadas.
                   </TableCell>
                 </TableRow>
               )}
@@ -275,7 +215,7 @@ const Rejected = () => {
         </div>
       </section>
 
-      {/* Modal ver detalles */}
+      {/* Modal detalles */}
       <Dialog open={openViewModal} onOpenChange={setOpenViewModal}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -296,13 +236,8 @@ const Rejected = () => {
                   <b>Correo:</b> {selectedMember.email}
                 </p>
                 <p>
-                  <b>Tipo Documento:</b> {selectedMember.document_type}
-                </p>
-                <p>
-                  <b>Número Documento:</b> {selectedMember.identification}
-                </p>
-                <p>
-                  <b>Fecha Nacimiento:</b> {selectedMember.birth_date}
+                  <b>Documento:</b> {selectedMember.document_type}{" "}
+                  {selectedMember.identification}
                 </p>
                 <p>
                   <b>Dirección:</b> {selectedMember.address}
@@ -312,21 +247,6 @@ const Rejected = () => {
                 </p>
                 <p>
                   <b>Sexo:</b> {selectedMember.gender}
-                </p>
-                <p>
-                  <b>Peso:</b> {selectedMember.weight}
-                </p>
-                <p>
-                  <b>Estatura:</b> {selectedMember.height}
-                </p>
-                <p>
-                  <b>Pasatiempos:</b> {selectedMember.hobbies}
-                </p>
-                <p>
-                  <b>Deportes:</b> {selectedMember.sports}
-                </p>
-                <p>
-                  <b>Instrumentos:</b> {selectedMember.instruments}
                 </p>
                 <p>
                   <b>Estado:</b>{" "}
