@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { X, Upload, Loader2 } from 'lucide-react';
-import { uploadSectionIcon } from '../services';
+import { useState, useEffect } from "react";
+import { X, Upload, Loader2 } from "lucide-react";
+import { uploadSectionIcon } from "../services";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { useApiError } from '../hooks/useApiError';
-import type { Rama, UpdateRamaData } from '../types/rama.type';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useApiError } from "../hooks/useApiError";
+import type { Rama, UpdateRamaData } from "../types/rama.type";
 
 interface EditRamaModalProps {
   open: boolean;
@@ -35,12 +35,12 @@ export default function EditRamaModal({
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const { error, handleError, clearError } = useApiError();
   const [formData, setFormData] = useState<UpdateRamaData>({
-    id: '',
-    nombre: '',
-    descripcion: '',
+    id: "",
+    nombre: "",
+    descripcion: "",
     edadMinima: 0,
     edadMaxima: 0,
-    estado: 'activa',
+    estado: "activa",
   });
 
   useEffect(() => {
@@ -59,21 +59,21 @@ export default function EditRamaModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Limpiar errores previos
     clearError();
-    
+
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
       onOpenChange(false);
-      
+
       // Llamar callback de éxito para refrescar datos
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error('❌ Error al editar rama:', error);
+      console.error("❌ Error al editar rama:", error);
       handleError(error);
     } finally {
       setIsSubmitting(false);
@@ -84,7 +84,10 @@ export default function EditRamaModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground rounded-xl shadow-lg border border-border" showCloseButton={false}>
+      <DialogContent
+        className="sm:max-w-[425px] bg-card text-card-foreground rounded-xl shadow-lg border border-border"
+        showCloseButton={false}
+      >
         <DialogHeader className="relative pb-4">
           <DialogTitle className="text-2xl font-bold text-primary pr-8">
             Editar Rama
@@ -105,35 +108,55 @@ export default function EditRamaModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Nombre de la Rama */}
           <div className="space-y-2">
-            <Label htmlFor="nombre" className="text-foreground">Nombre de la Rama</Label>
-              <Input
-                id="nombre"
-                value={formData.nombre || ''}
-                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                className="w-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary"
-                required
-              />
+            <Label htmlFor="nombre" className="text-foreground">
+              Nombre de la Rama
+            </Label>
+            <Input
+              id="nombre"
+              value={formData.nombre || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+              className="w-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary"
+              required
+            />
           </div>
 
           {/* Campo Icono */}
           <div className="space-y-2">
-            <Label htmlFor="icono-file-edit" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="icono-file-edit"
+              className="text-sm font-medium text-foreground"
+            >
               Icono
             </Label>
             <div>
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => document.getElementById('icono-file-edit')?.click()}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('icono-file-edit')?.click(); }}
+                onClick={() =>
+                  document.getElementById("icono-file-edit")?.click()
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ")
+                    document.getElementById("icono-file-edit")?.click();
+                }}
                 className="w-full bg-card border border-border rounded-md px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-accent"
               >
-                <div className="text-muted-foreground">Seleccionar icono (Opcional)</div>
+                <div className="text-muted-foreground">
+                  Seleccionar icono (Opcional)
+                </div>
                 <div className="flex items-center gap-3">
                   {isUploading ? (
-                    <div className="text-sm text-muted-foreground">Subiendo...</div>
+                    <div className="text-sm text-muted-foreground">
+                      Subiendo...
+                    </div>
                   ) : imagenUrl ? (
-                    <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
+                    <img
+                      src={imagenUrl}
+                      alt="icono"
+                      className="h-8 w-8 rounded object-cover"
+                    />
                   ) : (
                     <Upload className="w-4 h-4 text-muted-foreground" />
                   )}
@@ -153,12 +176,11 @@ export default function EditRamaModal({
                   setIsUploading(true);
                   try {
                     // Para edición sí tenemos rama.id
-                    const url = await uploadSectionIcon('', '', rama.id, file);
+                    const url = await uploadSectionIcon("", "", rama.id, file);
                     setImagenUrl(url);
-                    setFormData(prev => ({ ...prev, 
-                      icono: url }));
+                    setFormData((prev) => ({ ...prev, icono: url }));
                   } catch (err) {
-                    console.error('Error subiendo imagen:', err);
+                    console.error("Error subiendo imagen:", err);
                   } finally {
                     setIsUploading(false);
                   }
@@ -169,11 +191,15 @@ export default function EditRamaModal({
 
           {/* Descripción */}
           <div className="space-y-2">
-            <Label htmlFor="descripcion" className="text-foreground">Descripción</Label>
+            <Label htmlFor="descripcion" className="text-foreground">
+              Descripción
+            </Label>
             <Textarea
               id="descripcion"
-              value={formData.descripcion || ''}
-              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              value={formData.descripcion || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, descripcion: e.target.value })
+              }
               placeholder="Descripción opcional..."
               className="w-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary resize-none"
             />
@@ -197,9 +223,9 @@ export default function EditRamaModal({
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting} 
+            <Button
+              type="submit"
+              disabled={isSubmitting}
               className="bg-primary hover:bg-primary-hover text-primary-foreground"
             >
               {isSubmitting ? (
@@ -208,7 +234,7 @@ export default function EditRamaModal({
                   Guardando...
                 </>
               ) : (
-                'Guardar Rama'
+                "Guardar Rama"
               )}
             </Button>
           </div>

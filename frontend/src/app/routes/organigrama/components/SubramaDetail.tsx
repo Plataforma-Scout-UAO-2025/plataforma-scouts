@@ -10,21 +10,21 @@ import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
 import FotoModal from "../components/FotoModal";
 
-
 export default function SubramaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { tenantSlug, groupSlug } = useTenantParams();
   const [subrama, setSubrama] = useState<Subrama | null>(null);
   const [loading, setLoading] = useState(true);
-  const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
+  const [imagenPrincipal, setImagenPrincipal] = useState<string>("");
   const [galeriaFotos, setGaleriaFotos] = useState<string[]>([]);
   // ===== Modal de fotos =====
   const [fotoModalOpen, setFotoModalOpen] = useState(false);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
-  const [fotoTipo, setFotoTipo] = useState<"principal" | "galeria" | null>(null);
+  const [fotoTipo, setFotoTipo] = useState<"principal" | "galeria" | null>(
+    null
+  );
   const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
-
 
   // Referencias para inputs de archivos
   const mainImageInputRef = useRef<HTMLInputElement>(null);
@@ -38,11 +38,13 @@ export default function SubramaDetail() {
     galleryInputRef.current?.click();
   };
 
-  const handleMainImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file && subrama) {
       try {
-        console.log('🔄 [SubramaDetail] Subiendo imagen principal:', file.name);
+        console.log("🔄 [SubramaDetail] Subiendo imagen principal:", file.name);
 
         const preview = URL.createObjectURL(file);
         setImagenPrincipal(preview);
@@ -56,26 +58,36 @@ export default function SubramaDetail() {
         );
 
         setImagenPrincipal(publicUrl);
-        console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
-        
+        console.log(
+          "✅ [SubramaDetail] Imagen principal actualizada y persistida"
+        );
+
         // Refrescar datos de la subrama para asegurar sincronización
-        console.log('🔄 [SubramaDetail] Refrescando datos de la subrama...');
+        console.log("🔄 [SubramaDetail] Refrescando datos de la subrama...");
         await fetchSubrama();
       } catch (error) {
-        console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
-        setImagenPrincipal('');
+        console.error(
+          "❌ [SubramaDetail] Error subiendo imagen principal:",
+          error
+        );
+        setImagenPrincipal("");
       }
     }
   };
 
-  const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = Array.from(event.target.files || []);
     if (files.length > 0 && subrama) {
-      const previews = files.map(f => URL.createObjectURL(f));
-      setGaleriaFotos(prev => [...prev, ...previews]);
-      
+      const previews = files.map((f) => URL.createObjectURL(f));
+      setGaleriaFotos((prev) => [...prev, ...previews]);
+
       try {
-        console.log('🔄 [SubramaDetail] Subiendo fotos a la galería:', files.length);
+        console.log(
+          "🔄 [SubramaDetail] Subiendo fotos a la galería:",
+          files.length
+        );
 
         await organigramaService.uploadSubramaGalleryImages(
           tenantSlug,
@@ -85,17 +97,26 @@ export default function SubramaDetail() {
           files
         );
 
-        console.log('✅ [SubramaDetail] Fotos de galería subidas correctamente');
-        console.log('🔄 [SubramaDetail] Refrescando datos completos de la subrama...');
-        
+        console.log(
+          "✅ [SubramaDetail] Fotos de galería subidas correctamente"
+        );
+        console.log(
+          "🔄 [SubramaDetail] Refrescando datos completos de la subrama..."
+        );
+
         // Recargar datos completos de la subrama para sincronizar con backend
         await fetchSubrama();
-        
-        console.log('✅ [SubramaDetail] Datos de subrama actualizados después del upload');
+
+        console.log(
+          "✅ [SubramaDetail] Datos de subrama actualizados después del upload"
+        );
       } catch (error) {
-        console.error('❌ [SubramaDetail] Error subiendo fotos de galería:', error);
+        console.error(
+          "❌ [SubramaDetail] Error subiendo fotos de galería:",
+          error
+        );
         // Limpiar previews en caso de error
-        setGaleriaFotos(prev => prev.slice(0, -previews.length));
+        setGaleriaFotos((prev) => prev.slice(0, -previews.length));
       }
     }
   };
@@ -128,7 +149,8 @@ export default function SubramaDetail() {
           file
         );
       } else if (fotoTipo === "galeria") {
-        const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+        const cleanUuid =
+          galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
         await organigramaService.replaceSubramaGalleryImage(
           tenantSlug,
           groupSlug,
@@ -162,7 +184,8 @@ export default function SubramaDetail() {
         );
       } else if (fotoTipo === "galeria") {
         // 🧠 Extraer UUID limpio
-        const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+        const cleanUuid =
+          galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
         await organigramaService.removeSubramaGalleryImage(
           tenantSlug,
           groupSlug,
@@ -184,12 +207,15 @@ export default function SubramaDetail() {
   const fetchSubrama = async () => {
     try {
       if (id) {
-        console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
-        
+        console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, {
+          tenantSlug,
+          groupSlug,
+        });
+
         const ramas = await organigramaService.getRamas(tenantSlug, groupSlug);
-        
+
         let subramaEncontrada: Subrama | null = null;
-        
+
         for (const rama of ramas) {
           const subramaInRama = rama.subramas.find((s: Subrama) => s.id === id);
           if (subramaInRama) {
@@ -197,45 +223,81 @@ export default function SubramaDetail() {
             break;
           }
         }
-        
+
         if (subramaEncontrada) {
           setSubrama(subramaEncontrada);
           console.log("✅ [SubramaDetail] Subrama cargada:", subramaEncontrada);
 
           // 📸 Cargar imágenes existentes (PRIORIZAR URLs directas del backend)
-          console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.nombre);
-          console.log("🔍 [SubramaDetail] subrama.imagenPrincipal:", subramaEncontrada.imagenPrincipal);
-          
+          console.log(
+            "🔍 [SubramaDetail] Analizando imagen principal para subrama:",
+            subramaEncontrada.nombre
+          );
+          console.log(
+            "🔍 [SubramaDetail] subrama.imagenPrincipal:",
+            subramaEncontrada.imagenPrincipal
+          );
+
           // PRIORIDAD 1: URL directa del backend (campo optimizado)
-          if (subramaEncontrada.imagenPrincipal && !subramaEncontrada.imagenPrincipal.startsWith('data:') && subramaEncontrada.imagenPrincipal.includes('http')) {
+          if (
+            subramaEncontrada.imagenPrincipal &&
+            !subramaEncontrada.imagenPrincipal.startsWith("data:") &&
+            subramaEncontrada.imagenPrincipal.includes("http")
+          ) {
             setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-            console.log("✅ [SubramaDetail] Usando URL directa del backend para imagen principal:", subramaEncontrada.imagenPrincipal);
+            console.log(
+              "✅ [SubramaDetail] Usando URL directa del backend para imagen principal:",
+              subramaEncontrada.imagenPrincipal
+            );
           }
           // PRIORIDAD 2: URL de datos (data:image/...)
-          else if (subramaEncontrada.imagenPrincipal && subramaEncontrada.imagenPrincipal.startsWith('data:')) {
+          else if (
+            subramaEncontrada.imagenPrincipal &&
+            subramaEncontrada.imagenPrincipal.startsWith("data:")
+          ) {
             setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-            console.log("✅ [SubramaDetail] Usando data URL para imagen principal");
+            console.log(
+              "✅ [SubramaDetail] Usando data URL para imagen principal"
+            );
           }
           // PRIORIDAD 4: Cualquier URL en campo imagenPrincipal
           else if (subramaEncontrada.imagenPrincipal) {
             setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-            console.log("✅ [SubramaDetail] Usando campo imagenPrincipal como URL:", subramaEncontrada.imagenPrincipal);
-          }
-          else {
-            console.log("ℹ️ [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.nombre);
+            console.log(
+              "✅ [SubramaDetail] Usando campo imagenPrincipal como URL:",
+              subramaEncontrada.imagenPrincipal
+            );
+          } else {
+            console.log(
+              "ℹ️ [SubramaDetail] No hay imagen principal para subrama:",
+              subramaEncontrada.nombre
+            );
           }
 
           // Cargar galería desde backend (URLs directas)
-          if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
+          if (
+            subramaEncontrada.subgroupGalleryObjectIds &&
+            subramaEncontrada.subgroupGalleryObjectIds.length > 0
+          ) {
             setGaleriaFotos(subramaEncontrada.subgroupGalleryObjectIds);
-            console.log(`📸 [SubramaDetail] Cargadas ${subramaEncontrada.subgroupGalleryObjectIds.length} imágenes de galería desde backend`);
-            console.log('🔗 [SubramaDetail] URLs de galería:', subramaEncontrada.subgroupGalleryObjectIds);
+            console.log(
+              `📸 [SubramaDetail] Cargadas ${subramaEncontrada.subgroupGalleryObjectIds.length} imágenes de galería desde backend`
+            );
+            console.log(
+              "🔗 [SubramaDetail] URLs de galería:",
+              subramaEncontrada.subgroupGalleryObjectIds
+            );
           } else {
-            console.log('ℹ️ [SubramaDetail] No hay imágenes en la galería de la subrama');
+            console.log(
+              "ℹ️ [SubramaDetail] No hay imágenes en la galería de la subrama"
+            );
             setGaleriaFotos([]);
           }
         } else {
-          console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);
+          console.warn(
+            "⚠️ [SubramaDetail] No se encontró la subrama con ID:",
+            id
+          );
         }
       } else {
         console.error("❌ [SubramaDetail] ID de subrama no proporcionado");
@@ -256,7 +318,9 @@ export default function SubramaDetail() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Cargando detalles de la subrama...</p>
+          <p className="text-muted-foreground">
+            Cargando detalles de la subrama...
+          </p>
         </div>
       </div>
     );
@@ -265,12 +329,14 @@ export default function SubramaDetail() {
   if (!subrama) {
     return (
       <div className="text-center mt-6 space-y-4">
-        <p className="text-foreground">No se encontró la subrama con id: {id}</p>
+        <p className="text-foreground">
+          No se encontró la subrama con id: {id}
+        </p>
         <p className="text-muted-foreground">
           Tenant: {tenantSlug} | Group: {groupSlug}
         </p>
         <Button
-          onClick={() => navigate('/app/organigrama')}
+          onClick={() => navigate("/app/organigrama")}
           variant="outline"
           className="mt-4"
         >
@@ -291,7 +357,7 @@ export default function SubramaDetail() {
             </h1>
           </div>
         </div>
-        
+
         {/* Botón Anterior */}
         <div>
           <Button
@@ -307,7 +373,9 @@ export default function SubramaDetail() {
       {/* Información Principal */}
       <Card className="p-4 space-y-4 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-primary">Información Principal</h2>
+          <h2 className="text-lg font-semibold text-primary">
+            Información Principal
+          </h2>
           <Button
             size="sm"
             variant="outline"
@@ -319,7 +387,10 @@ export default function SubramaDetail() {
           </Button>
         </div>
 
-        <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100" onClick={openMainImageModal}>
+        <div
+          className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100"
+          onClick={openMainImageModal}
+        >
           {imagenPrincipal ? (
             <img
               src={imagenPrincipal}
@@ -355,22 +426,23 @@ export default function SubramaDetail() {
 
       {/* Integrantes */}
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-        <h2 className="text-lg font-semibold text-primary">
-          Integrantes
-        </h2>
+        <h2 className="text-lg font-semibold text-primary">Integrantes</h2>
         <div className="flex flex-wrap gap-2">
           {/* ⚠️ Mock temporal */}
-          {["Roberto Restrepo", "Carlos Camargo", "Ana Aguillón", "Mario Mora"].map(
-            (name, idx) => (
-              <Badge
-                key={idx}
-                variant="outline"
-                className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
-              >
-                {name}
-              </Badge>
-            )
-          )}
+          {[
+            "Roberto Restrepo",
+            "Carlos Camargo",
+            "Ana Aguillón",
+            "Mario Mora",
+          ].map((name, idx) => (
+            <Badge
+              key={idx}
+              variant="outline"
+              className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
+            >
+              {name}
+            </Badge>
+          ))}
         </div>
       </Card>
 
@@ -392,7 +464,11 @@ export default function SubramaDetail() {
         </div>
         <div className="grid grid-cols-3 gap-2">
           {galeriaFotos.map((src, idx) => (
-            <div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}>
+            <div
+              key={idx}
+              className="relative cursor-pointer hover:opacity-80"
+              onClick={() => openGalleryModal(src)}
+            >
               <img
                 src={src}
                 alt={`Foto ${idx + 1}`}
@@ -428,7 +504,3 @@ export default function SubramaDetail() {
     </div>
   );
 }
-
-
-
-

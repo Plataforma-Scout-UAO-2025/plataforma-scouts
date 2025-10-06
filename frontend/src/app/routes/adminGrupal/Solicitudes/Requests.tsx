@@ -22,26 +22,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import type { Member } from "../Miembros/types/member.type";
+import { membersService } from "@/api/services/members.service";
 
-interface Member {
-  member_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  identification: string;
-  document_type: string;
-  birth_date: string;
-  address: string;
-  phone: string;
-  gender: string;
-  weight: string;
-  height: string;
-  hobbies: string;
-  sports: string;
-  instruments: string;
-  status: string;
-}
-const backendUrl = "http://localhost:8080/api/members";
 const Requests = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -62,37 +45,25 @@ const Requests = () => {
     NOT_ACCEPTED: "Rechazado",
   };
 
-  useEffect(() => {
-    cargarMiembros();
-  }, []);
-
-  const cargarMiembros = async () => {
+  // 🔹 Cargar solicitudes pendientes
+  const loadPendingMembers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${backendUrl}/list_members_by_status?status=PENDING`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al cargar los miembros");
-      }
-
-      const data = await response.json();
+      const data = await membersService.getByStatus("PENDING");
       setMembers(data);
     } catch (error) {
-      console.error("Error al cargar miembros:", error);
-      alert("Error al cargar las solicitudes");
+      console.error("Error al cargar solicitudes:", error);
+      alert("Error al cargar las solicitudes pendientes");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadPendingMembers();
+  }, []);
+
+  // 🔹 Obtener ciudades únicas
   const cities = useMemo(() => {
     const uniqueCities = [
       ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
@@ -100,6 +71,7 @@ const Requests = () => {
     return uniqueCities.sort();
   }, [members]);
 
+  // 🔹 Filtro combinado
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
@@ -116,123 +88,68 @@ const Requests = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  // VER SOLICITUD
+  // 🔹 Ver detalles
   const handleView = async (member: Member) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${backendUrl}/list_member_by_id?id=${member.member_id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al cargar datos del miembro");
-      }
-
-      const data = await response.json();
+      const data = await membersService.getDetails(member.member_id);
       setSelectedMember(data);
       setOpenViewModal(true);
     } catch (err) {
-      console.error("Error al cargar datos del miembro:", err);
+      console.error("Error al obtener detalles:", err);
       alert("Error al cargar los detalles del miembro");
     } finally {
       setLoading(false);
     }
   };
 
-  // ACEPTAR DESDE EL MODAL
+  // 🔹 Aceptar solicitud
   const handleAcceptFromModal = async () => {
     if (!selectedMember) return;
-
     try {
       setLoading(true);
-      const response = await fetch(
-        `${backendUrl}/update_member_status/${selectedMember.member_id}?status=ACCEPTED`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error al aceptar solicitud");
-      }
-
-      // Cerrar modal
-      setOpenViewModal(false);
-      setSelectedMember(null);
-
+      await membersService.updateStatus(selectedMember.member_id, "ACCEPTED");
       alert(
         `Solicitud de ${selectedMember.first_name} ${selectedMember.last_name} aceptada exitosamente`
       );
-
-      // Recargar lista
-      await cargarMiembros();
-    } catch (err: unknown) {
+      setOpenViewModal(false);
+      setSelectedMember(null);
+      await loadPendingMembers();
+    } catch (err) {
       console.error("Error al aceptar solicitud:", err);
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      alert("Error al aceptar la solicitud: " + errorMessage);
+      alert("Error al aceptar la solicitud");
     } finally {
       setLoading(false);
     }
   };
 
-  // ABRIR MODAL DE RECHAZO
+  // 🔹 Abrir modal de rechazo
   const handleRejectFromModal = () => {
-    // Cerrar modal de vista y abrir modal de rechazo
     setOpenViewModal(false);
     setOpenRejectModal(true);
   };
 
-  // ENVIAR RECHAZO
+  // 🔹 Enviar rechazo
   const handleSendReject = async () => {
     if (!selectedMember) return;
-
     if (!rejectReason.trim()) {
       alert("Por favor, ingresa una razón para el rechazo");
       return;
     }
-
     try {
       setLoading(true);
-
-      const response = await fetch(
-        `${backendUrl}/update_member_status/${selectedMember.member_id}?status=NOT_ACCEPTED`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      await membersService.updateStatus(
+        selectedMember.member_id,
+        "NOT_ACCEPTED"
       );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Error al rechazar solicitud");
-      }
-
-      // Cerrar modales y limpiar
       setOpenRejectModal(false);
       setRejectReason("");
       setSelectedMember(null);
       setOpenConfirmModal(true);
-
-      // Recargar miembros
-      await cargarMiembros();
-    } catch (err: unknown) {
+      await loadPendingMembers();
+    } catch (err) {
       console.error("Error al rechazar solicitud:", err);
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      alert("Error al rechazar la solicitud: " + errorMessage);
+      alert("Error al rechazar la solicitud");
     } finally {
       setLoading(false);
     }
@@ -252,7 +169,7 @@ const Requests = () => {
         <div className="flex w-full md:w-2/3 gap-4">
           <Input
             type="text"
-            placeholder="Buscar por nombre, apellido o documento..."
+            placeholder="Buscar por nombre o documento..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             className="w-2/3 flex h-auto border-primary"
@@ -294,7 +211,7 @@ const Requests = () => {
 
         <Button
           variant="outline"
-          onClick={cargarMiembros}
+          onClick={loadPendingMembers}
           disabled={loading}
           className="px-4"
         >
@@ -302,27 +219,19 @@ const Requests = () => {
         </Button>
       </section>
 
-      {/* Tabla de miembros */}
+      {/* Tabla */}
       <section className="mt-6 space-y-4">
         <div className="border-3 border-primary rounded-lg overflow-hidden">
           <Table className="text-sm">
             <TableHeader className="text-primary">
-              <TableRow className="border-b border-primary hover:bg-transparent">
-                <TableHead className="pl-4 font-bold text-primary">
-                  Id
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Nombres
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Apellidos
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Identificación
-                </TableHead>
-                <TableHead className="font-bold text-primary">Ciudad</TableHead>
-                <TableHead className="font-bold text-primary">Estado</TableHead>
-                <TableHead className="text-center font-bold text-primary">
+              <TableRow className="border-b border-primary">
+                <TableHead className="pl-4 font-bold">Id</TableHead>
+                <TableHead className="font-bold">Nombres</TableHead>
+                <TableHead className="font-bold">Apellidos</TableHead>
+                <TableHead className="font-bold">Identificación</TableHead>
+                <TableHead className="font-bold">Ciudad</TableHead>
+                <TableHead className="font-bold">Estado</TableHead>
+                <TableHead className="text-center font-bold">
                   Acciones
                 </TableHead>
               </TableRow>
@@ -330,16 +239,14 @@ const Requests = () => {
             <TableBody>
               {loading && members.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <p className="text-text text-lg">Cargando solicitudes...</p>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    Cargando solicitudes...
                   </TableCell>
                 </TableRow>
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <TableRow key={member.member_id} className="border-primary">
-                    <TableCell className="pl-4 font-medium">
-                      {member.member_id}
-                    </TableCell>
+                  <TableRow key={member.member_id}>
+                    <TableCell>{member.member_id}</TableCell>
                     <TableCell>{member.first_name}</TableCell>
                     <TableCell>{member.last_name}</TableCell>
                     <TableCell>{member.identification}</TableCell>
@@ -351,29 +258,23 @@ const Requests = () => {
                         {statusLabels[member.status] || member.status}
                       </span>
                     </TableCell>
-
                     <TableCell className="text-right">
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          title="Ver detalles"
-                          onClick={() => handleView(member)}
-                          disabled={loading}
-                        >
-                          <Eye size={16} />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        title="Ver detalles"
+                        onClick={() => handleView(member)}
+                        disabled={loading}
+                      >
+                        <Eye size={16} />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <p className="text-text text-lg">
-                      No se encontraron solicitudes que coincidan con los
-                      filtros.
-                    </p>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    No se encontraron solicitudes pendientes.
                   </TableCell>
                 </TableRow>
               )}
@@ -382,7 +283,7 @@ const Requests = () => {
         </div>
       </section>
 
-      {/* Modal ver formulario con botones de acción */}
+      {/* Modal Ver */}
       <Dialog open={openViewModal} onOpenChange={setOpenViewModal}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -403,13 +304,8 @@ const Requests = () => {
                   <b>Correo:</b> {selectedMember.email}
                 </p>
                 <p>
-                  <b>Tipo Documento:</b> {selectedMember.document_type}
-                </p>
-                <p>
-                  <b>Número Documento:</b> {selectedMember.identification}
-                </p>
-                <p>
-                  <b>Fecha Nacimiento:</b> {selectedMember.birth_date}
+                  <b>Documento:</b> {selectedMember.document_type}{" "}
+                  {selectedMember.identification}
                 </p>
                 <p>
                   <b>Dirección:</b> {selectedMember.address}
@@ -421,25 +317,7 @@ const Requests = () => {
                   <b>Sexo:</b> {selectedMember.gender}
                 </p>
                 <p>
-                  <b>Peso:</b> {selectedMember.weight} kg
-                </p>
-                <p>
-                  <b>Estatura:</b> {selectedMember.height} cm
-                </p>
-                <p>
-                  <b>Pasatiempos:</b> {selectedMember.hobbies || "N/A"}
-                </p>
-                <p>
-                  <b>Deportes:</b> {selectedMember.sports || "N/A"}
-                </p>
-                <p>
-                  <b>Instrumentos:</b> {selectedMember.instruments || "N/A"}
-                </p>
-                <p>
-                  <b>Estado:</b>{" "}
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-gray-300 text-gray-800">
-                    {statusLabels[selectedMember.status]}
-                  </span>
+                  <b>Estado:</b> {statusLabels[selectedMember.status]}
                 </p>
               </div>
             )
@@ -490,10 +368,7 @@ const Requests = () => {
           <DialogFooter>
             <Button
               variant="secondary"
-              onClick={() => {
-                setOpenRejectModal(false);
-                setRejectReason("");
-              }}
+              onClick={() => setOpenRejectModal(false)}
               disabled={loading}
             >
               Cancelar

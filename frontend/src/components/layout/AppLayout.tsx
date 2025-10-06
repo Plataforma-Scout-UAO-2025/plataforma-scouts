@@ -15,8 +15,8 @@ import {
   SidebarTrigger,
   SidebarMenuSub,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import {
   LineChart,
   Boxes,
@@ -26,29 +26,35 @@ import {
   LogOut,
   Users,
   Award,
+  DollarSign,
+  BarChart3,
   ChevronRight,
   Network,
-} from "lucide-react"
-import { Outlet, Link, useLocation } from "react-router-dom"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import type { ReactNode } from "react"
-import { useAuth0 } from '@auth0/auth0-react';
+} from "lucide-react";
+import { Outlet, Link, useLocation } from "react-router-dom";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import type { ReactNode } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
 
 type SubMenuItem = {
-  id: string
-  label: string
-  icon: ReactNode
-  href?: string
-  submenu?: SubMenuItem[]
-}
+  id: string;
+  label: string;
+  icon: ReactNode;
+  href?: string;
+  submenu?: SubMenuItem[];
+};
 
 type MenuItem = {
-  id: string
-  label: string
-  icon: ReactNode
-  href?: string
-  submenu?: SubMenuItem[]
-}
+  id: string;
+  label: string;
+  icon: ReactNode;
+  href?: string;
+  submenu?: SubMenuItem[];
+};
 
 //const mainItems: MenuItem[] = [
 //  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/home" },
@@ -56,28 +62,82 @@ type MenuItem = {
 //]
 
 const adminGlobalItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard-global" },
-]
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard-global",
+  },
+];
 
 const adminGrupalItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
-  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
-  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
-  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
-]
+  {
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: <Boxes />,
+    href: "/app/solicitudes",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "eventos",
+    label: "Eventos",
+    icon: <CalendarDays />,
+    href: "/app/eventos",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <Settings />,
+    href: "/app/financiero/cuotas",
+  },
+  {
+    id: "solicitudes",
+    label: "solicitudes",
+    icon: <DollarSign />,
+    submenu: [
+      {
+        id: "solicitudes-pendientes",
+        label: "Pendientes",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes",
+      },
+      {
+        id: "solicitudes-rechazado",
+        label: "Rechazadas",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes/rechazadas",
+      },
+    ],
+  },
+];
 
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
-]
+];
 
 export default function AppLayout() {
-  const location = useLocation()
-  const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal')
-  const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems
+  const location = useLocation();
+  const isAdminGlobalRoute = location.pathname.startsWith("/app/adminGlobal");
+  const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems;
   const { user, logout } = useAuth0();
 
   const handleLogout = () => {
@@ -85,12 +145,12 @@ export default function AppLayout() {
   };
 
   const isActive = (href: string) => {
-    if (!href) return false
+    if (!href) return false;
     if (href === "/app") {
-      return location.pathname === "/app"
+      return location.pathname === "/app";
     }
-    return location.pathname.startsWith(href)
-  }
+    return location.pathname.startsWith(href);
+  };
 
   return (
     <SidebarProvider>
@@ -117,12 +177,18 @@ export default function AppLayout() {
         {/* Menu */}
         <SidebarContent className="px-2 bg-primary">
           <SidebarGroup>
-            <SidebarGroupLabel className="sr-only">Menú principal</SidebarGroupLabel>
+            <SidebarGroupLabel className="sr-only">
+              Menú principal
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) =>
                   item.submenu ? (
-                    <Collapsible key={item.id} defaultOpen className="group/collapsible">
+                    <Collapsible
+                      key={item.id}
+                      defaultOpen
+                      className="group/collapsible"
+                    >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[state=open]:bg-white/20 data-[state=open]:font-semibold data-[state=open]:text-white">
@@ -137,7 +203,9 @@ export default function AppLayout() {
                               <SidebarMenuSubItem key={sub.id}>
                                 <SidebarMenuButton
                                   asChild
-                                  isActive={sub.href ? isActive(sub.href) : false}
+                                  isActive={
+                                    sub.href ? isActive(sub.href) : false
+                                  }
                                   className="text-sm h-10 px-3 rounded-md hover:bg-white/10 data-[active=true]:bg-white/20 data-[active=true]:font-medium data-[active=true]:text-white"
                                 >
                                   {sub.href ? (
@@ -191,12 +259,15 @@ export default function AppLayout() {
           <SidebarMenu>
             {bottomItems.map((item) => (
               <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton 
+                <SidebarMenuButton
                   className="h-12 px-3 rounded-lg hover:bg-white/10"
                   onClick={item.id === "logout" ? handleLogout : undefined}
                 >
                   {item.id === "logout" ? (
-                    <><LogOut /><span>Cerrar sesión</span></>
+                    <>
+                      <LogOut />
+                      <span>Cerrar sesión</span>
+                    </>
                   ) : (
                     <>
                       {item.icon}
@@ -221,5 +292,5 @@ export default function AppLayout() {
         </main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

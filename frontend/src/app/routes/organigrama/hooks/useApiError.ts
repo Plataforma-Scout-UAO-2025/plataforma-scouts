@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+import { useState } from 'react';
+=======
 import { useState, useCallback } from 'react';
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 import { ApiError } from '../services/apiClient';
 
 interface ErrorState {
@@ -14,7 +18,11 @@ export const useApiError = () => {
     type: 'error'
   });
 
+<<<<<<< HEAD
+  const handleError = (error: unknown) => {
+=======
   const handleError = useCallback((error: unknown) => {
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
     console.error('Error de API:', error);
     
     if (error instanceof ApiError) {
@@ -74,11 +82,19 @@ export const useApiError = () => {
         type: 'error'
       });
     }
+<<<<<<< HEAD
+  };
+
+  const clearError = () => {
+    setError({ hasError: false, message: '', type: 'error' });
+  };
+=======
   }, []);
 
   const clearError = useCallback(() => {
     setError({ hasError: false, message: '', type: 'error' });
   }, []);
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 
   return {
     error,

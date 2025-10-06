@@ -2,7 +2,6 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
-
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -15,7 +14,7 @@ const buttonVariants = cva(
         secondary:
           "border-2 border-secondary bg-transparent text-secondary shadow-xs hover:bg-secondary hover hover:text-white",
         iconbutton:
-          "absolute right-3 top-1/2 -translate-y-1/2 text-accent-strong hover:text-primary",
+          "text-accent-strong hover:text-primary",
         outline:
           "border bg-background border-primary text-primary shadow-xs hover:bg-primary/80 hover:text-white",
         ghost:

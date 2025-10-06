@@ -1,4 +1,8 @@
 @import "tailwindcss";
+<<<<<<< HEAD
+@custom-variant dark (&:is(.dark *));
+=======
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 
 :root {
   font-family: Poppins, sans-serif;
@@ -60,6 +64,22 @@ body {
   min-height: 100vh;
 }
 
+<<<<<<< HEAD
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+=======
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

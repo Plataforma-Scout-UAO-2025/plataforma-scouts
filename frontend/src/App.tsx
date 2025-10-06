@@ -12,7 +12,11 @@ import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
-import Home from "./app/routes/Home";
+//import Home from "./app/routes/Home";
+import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
+import LandingPage from "./app/routes/LandingPage";
+import Requests from "./app/routes/adminGrupal/Solicitudes/Requests";
+import Rejected from "./app/routes/adminGrupal/Solicitudes/Rejected";
 
 const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal"; // Simulación de rol actual del usuario
 
@@ -26,10 +30,11 @@ function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<LandingPage />} />
           {/* Se quitan las rutas de login y register pues todo será manejado desde Auth0
           <Route path="/login" element={<ProtectedLogin />} />
           <Route path="/register" element={<ProtectedRegister />} /> */}
+          <Route path="/inscripcion" element={<ScoutEnrollment />} />
           <Route path="/app" element={<ProtectedAppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
@@ -41,12 +46,13 @@ function App() {
                 <Route path="financiero/cuotas/gestion" element={<Gestion />} />
                 <Route path="grupos" element={<Grupos />} />
                 <Route path="grupos/medical-info" element={<MedicalInfo />} />
+                <Route path="solicitudes" element={<Requests />} />
+                <Route path="solicitudes/rechazadas" element={<Rejected />} />
                 {/* 
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="miembros" element={<TeamMembers />} />
                 <Route path="insignias" element={<Insignias />} />
-                <Route path="eventos" element={<Events />} />
-                <Route path="solicitudes" element={<Requests />} />
+                <Route path="eventos" element={<Events />} />                
                 <Route path="organigrama" element={<Organigrama />} /> 
                 <Route path="organigrama/rama/:id" element={<RamaDetail />} />
                 <Route path="organigrama/subrama/:id" element={<SubramaDetail />} /> */}

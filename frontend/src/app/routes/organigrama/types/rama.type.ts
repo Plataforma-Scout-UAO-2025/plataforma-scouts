@@ -13,18 +13,18 @@ export interface Rama {
   edadMinima: number;
   edadMaxima: number;
   año: number;
-  estado: 'activa' | 'inactiva';
+  estado: "activa" | "inactiva";
   fechaCreacion: string;
   subramas: Subrama[];
 }
 
 export interface Subrama {
-  subgroup_id: string; 
+  subgroup_id: string;
   subgroupName: string;
   subgroupDescription?: string;
   subgroupGalleryObjectIds?: string[]; // IDs de imágenes de galería en localStorage
-  section_id: string; 
-  id: string; 
+  section_id: string;
+  id: string;
   nombre: string;
   descripcion?: string;
   icono?: string;
@@ -33,7 +33,7 @@ export interface Subrama {
   imagenPrincipalObjectId?: string; // ID para la imagen principal en localStorage
   ramaId: string;
   lider?: string;
-  estado: 'activa' | 'inactiva';
+  estado: "activa" | "inactiva";
   fechaCreacion: string;
   numeroMiembros: number;
 }
@@ -87,7 +87,11 @@ export interface GalleryRemoveOperation {
 }
 
 export interface GalleryUpdatePayload {
-  operations: (GalleryReplaceOperation | GalleryAddOperation | GalleryRemoveOperation)[];
+  operations: (
+    | GalleryReplaceOperation
+    | GalleryAddOperation
+    | GalleryRemoveOperation
+  )[];
 }
 
 export interface CreateRamaData {
@@ -106,7 +110,7 @@ export interface UpdateRamaData {
   descripcion?: string;
   edadMinima?: number;
   edadMaxima?: number;
-  estado?: 'activa' | 'inactiva';
+  estado?: "activa" | "inactiva";
   iconFile?: File;
   galleryFiles?: File[];
 }
@@ -125,7 +129,7 @@ export interface UpdateSubramaData {
   nombre?: string;
   descripcion?: string;
   lider?: string;
-  estado?: 'activa' | 'inactiva';
+  estado?: "activa" | "inactiva";
   ramaId?: string;
 }
 
