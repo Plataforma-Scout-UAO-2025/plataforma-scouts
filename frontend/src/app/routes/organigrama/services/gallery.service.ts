@@ -170,8 +170,8 @@ export const getGalleryImageUuids = async (
           const id = String(rec['id'] ?? rec['objectId'] ?? '');
           const uuid = extractUuidFromString(id) || extractUuidFromString(String(rec['url'] ?? ''));
           if (uuid) ids.push(uuid);
-        } catch (e) {
-          // ignore
+        } catch {
+          // ignore malformed item
         }
       }
     }
@@ -208,7 +208,7 @@ export const getGalleryImageUuids = async (
 
     console.log('ℹ️ [GalleryService] No hay imágenes en la galería (no se detectaron UUIDs)');
     return [];
-  } catch (error) {
+    } catch (error) {
     console.error('❌ [GalleryService] Error obteniendo UUIDs de galería:', error);
     return [];
   }
@@ -355,7 +355,7 @@ export const deleteGalleryImageById = async (
       console.log('🔁 [GalleryService] Intentando re-fetch de la sección tras DELETE fallido...');
       const refreshed = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
       const refreshedRec = refreshed as unknown as Record<string, unknown> | undefined;
-      const refreshedGallery: string[] = (refreshedRec?.['gallery'] as unknown[] | undefined)?.map((it: any) => String(it?.id)) ?? [];
+  const refreshedGallery: string[] = (refreshedRec?.['gallery'] as unknown[] | undefined)?.map((it) => String((it as Record<string, unknown>)?.id)) ?? [];
       const refreshedUuids = (refreshedRec?.['galleryObjectIds'] as string[] | undefined) ?? (refreshedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
       const combined = Array.from(new Set([...(refreshedGallery || []), ...(refreshedUuids || [])]));
       console.log('🔍 [GalleryService] UUIDs tras re-fetch:', combined);
@@ -381,23 +381,23 @@ export const deleteGalleryImageById = async (
         let candidateId = validTargetUuid;
 
         // Buscar objeto en gallery cuyo url contenga el UUID objetivo
-        for (const it of galleryArr) {
-          try {
-            const rec = it as unknown as Record<string, unknown>;
-            const url = String(rec['url'] ?? '');
-            const idField = String(rec['id'] ?? '');
-            if (url.includes(validTargetUuid)) {
-              // Si encontramos una entrada cuyo url contiene el UUID, preferimos usar su id
-              if (idField && idField !== validTargetUuid) {
-                console.log('🔎 [GalleryService] Encontrado objeto en gallery; usando su id como candidato para eliminación:', idField, ' (url:', url, ')');
-                candidateId = idField;
-                break;
+          for (const it of galleryArr) {
+            try {
+              const rec = it as unknown as Record<string, unknown>;
+              const url = String(rec['url'] ?? '');
+              const idField = String(rec['id'] ?? '');
+              if (url.includes(validTargetUuid)) {
+                // Si encontramos una entrada cuyo url contiene el UUID, preferimos usar su id
+                if (idField && idField !== validTargetUuid) {
+                  console.log('🔎 [GalleryService] Encontrado objeto en gallery; usando su id como candidato para eliminación:', idField, ' (url:', url, ')');
+                  candidateId = idField;
+                  break;
+                }
               }
+            } catch {
+              // ignore malformed item
             }
-          } catch (e) {
-            // ignore malformed item
           }
-        }
 
         // Intentar DELETE con candidateId
         try {
@@ -429,7 +429,7 @@ export const deleteGalleryImageById = async (
             return resultPut;
           } catch (putErr) {
             console.error('❌ [GalleryService] Reemplazo completo (PUT) también falló:', putErr);
-            const enriched = new Error(`DELETE failed, PATCH fallback failed, and PUT replace failed for UUID ${validTargetUuid} (candidateId ${candidateId}): ${(putErr as any)?.message ?? String(putErr)}`);
+            const enriched = new Error(`DELETE failed, PATCH fallback failed, and PUT replace failed for UUID ${validTargetUuid} (candidateId ${candidateId}): ${(putErr as Error)?.message ?? String(putErr)}`);
             throw enriched;
           }
         }

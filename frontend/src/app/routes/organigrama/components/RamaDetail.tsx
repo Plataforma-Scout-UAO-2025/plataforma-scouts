@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
+import { apiClient } from "../services/apiClient";
 import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
@@ -34,12 +35,57 @@ export default function RamaDetail() {
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [galleryLocalPreviews, setGalleryLocalPreviews] = useState<string[]>([]);
   const uploadControllerRef = useRef<AbortController | null>(null);
+  // fetchRama necesita estar disponible para las acciones; lo definimos con useCallback
+  const fetchRama = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (!id) return;
+      const data = await organigramaService.getRamaById(tenantSlug, groupSlug, String(id));
+      if (data) {
+        setRama(data as Rama);
+        setImagenPrincipal(getMainImageUrl(data as Rama));
+  let galleryUrls = ((data as unknown as Record<string, unknown>)?.['gallery'] ? ((data as unknown as Record<string, unknown>)['gallery'] as Array<Record<string, unknown>>).map(g => String(g.url)) : (data as unknown as Record<string, unknown>)['galleryObjectUrls'] ?? []) as string[];
+        // If mapper didn't provide gallery URLs, try fetching raw backend record as fallback
+        if (galleryUrls.length === 0) {
+          try {
+            const endpoint = `/api/v1/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+            console.log('🔎 [RamaDetail] galleryUrls empty; fetching backend raw endpoint as fallback:', endpoint);
+            const backendRec = await apiClient.get<Record<string, unknown>>(endpoint);
+            if (backendRec) {
+              const fromBackendGallery = (backendRec['gallery'] as unknown[] | undefined) ?? [];
+              if (Array.isArray(fromBackendGallery) && fromBackendGallery.length > 0) {
+                galleryUrls = (fromBackendGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean);
+                console.log('🔎 [RamaDetail] galleryUrls recuperadas desde backend.gallery:', galleryUrls.length);
+              } else {
+                const maybeUrls = (backendRec['galleryObjectUrls'] as string[] | undefined) ?? (backendRec['galleryObjectIds'] as string[] | undefined) ?? (backendRec['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+                if (Array.isArray(maybeUrls) && maybeUrls.length > 0) {
+                  galleryUrls = maybeUrls.map(String).filter(Boolean);
+                  console.log('🔎 [RamaDetail] galleryUrls recuperadas desde backend aliases:', galleryUrls.length);
+                }
+              }
+            }
+          } catch (err) {
+            console.warn('⚠️ [RamaDetail] Fallback GET backend para galería falló:', err);
+          }
+        }
+
+        setGaleriaFotos(galleryUrls);
+        console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
+        console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
+      }
+    } catch (err) {
+      console.error('❌ [RamaDetail] Error cargando rama:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, tenantSlug, groupSlug]);
+
   // Hook de acciones (incluye acciones de galería)
   const { addGalleryImage, replaceGalleryImage, removeGalleryImage, isLoadingGallery } = useOrganigramaActions({
     tenantSlug,
     groupSlug,
     // loadRamas: en este componente recargamos la rama actual
-    loadRamas: async () => { await fetchRama(); },
+    loadRamas: fetchRama,
     handleError: (err: unknown) => {
       console.error('Error en acción de organigrama:', err);
       toast.error('Error en operación de organigrama');
@@ -92,13 +138,12 @@ export default function RamaDetail() {
     setFotoSeleccionada(url);
     setGaleriaObjetivo(url);
     // Try to resolve the gallery object's id (gallery[].id) from rama.gallery if available
-    try {
-      const maybeUuidInUrl = extractObjectIdFromUrl(url);
-      const galleryObj = (rama as any)?.gallery?.find((g: any) => g?.url && maybeUuidInUrl && g.url.includes(maybeUuidInUrl));
-      setGaleriaObjetivoId(galleryObj?.id ?? null);
-    } catch (e) {
-      setGaleriaObjetivoId(null);
-    }
+    const maybeUuidInUrl = extractObjectIdFromUrl(url);
+    const galleryItems = rama?.gallery ?? [];
+    const galleryObj = maybeUuidInUrl
+      ? galleryItems.find((item) => item.url.includes(maybeUuidInUrl))
+      : undefined;
+    setGaleriaObjetivoId(galleryObj?.id ?? null);
     setFotoModalOpen(true);
   };
 
@@ -111,8 +156,8 @@ export default function RamaDetail() {
       setCurrentUploadingFile(file.name);
       // Crear un AbortController por cada operación de reemplazo
       if (uploadControllerRef.current) {
-        try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
-      }
+          try { uploadControllerRef.current.abort(); } catch (_err) { console.warn('Could not abort previous upload controller', _err); }
+        }
       const controller = new AbortController();
       uploadControllerRef.current = controller;
   if (fotoTipo === "icono") {
@@ -152,8 +197,8 @@ export default function RamaDetail() {
               targetId = resolved.id;
               setGaleriaObjetivoId(resolved.id);
             }
-          } catch (e) {
-            console.error('❌ [RamaDetail] Error resolviendo id para reemplazo de galería:', e);
+          } catch (_err) {
+            console.error('❌ [RamaDetail] Error resolviendo id para reemplazo de galería:', _err);
           }
         }
 
@@ -229,8 +274,8 @@ export default function RamaDetail() {
               resolvedObjectId = resolved.id;
               setGaleriaObjetivoId(resolved.id);
             }
-          } catch (e) {
-            console.error('❌ [RamaDetail] Error resolviendo id para eliminación de galería:', e);
+          } catch (_err) {
+            console.error('❌ [RamaDetail] Error resolviendo id para eliminación de galería:', _err);
           }
         }
 
@@ -337,7 +382,7 @@ export default function RamaDetail() {
       setIconPreview(previousIcon);
       toast.error('Error subiendo el ícono');
     } finally {
-      try { URL.revokeObjectURL(preview); } catch (e) { console.warn('Could not revoke object URL for icon preview', e); }
+  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for icon preview', _err); }
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -394,7 +439,7 @@ export default function RamaDetail() {
       setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
     } finally {
-      try { URL.revokeObjectURL(preview); } catch (e) { console.warn('Could not revoke object URL for main image preview', e); }
+  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for main image preview', _err); }
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -436,7 +481,7 @@ export default function RamaDetail() {
 
       // revocar previews locales
       for (const p of previews) {
-        try { URL.revokeObjectURL(p); } catch (e) { console.warn('Could not revoke object URL for gallery preview', e); }
+  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview', _err); }
       }
       setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
@@ -445,7 +490,7 @@ export default function RamaDetail() {
       const addedPreviews = galleryLocalPreviews.slice(-files.length);
       setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
       for (const p of addedPreviews) {
-        try { URL.revokeObjectURL(p); } catch (e) { console.warn('Could not revoke object URL for gallery preview (error case)', e); }
+  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview (error case)', _err); }
       }
       setGalleryLocalPreviews(prev => prev.slice(0, -files.length));
       toast.error('Error subiendo la galería');
@@ -457,41 +502,49 @@ export default function RamaDetail() {
     }
   };
 
-  const fetchRama = async () => {
-    try {
-      if (!id) return;
-      const data = await organigramaService.getRamaById(tenantSlug, groupSlug, id);
-      if (data) {
-        setRama(data);
-        
-        console.log('🔍 [RamaDetail] Datos completos de la rama:', {
-          id: data.id,
-          nombre: data.nombre,
-          imagenPrincipal: data.imagenPrincipal,
-          sectionGalleryObjectIds: data.sectionGalleryObjectIds
-        });
-        
-        // Cargar imagen principal existente
-        const mainImageUrl = getMainImageUrl(data);
-        setImagenPrincipal(mainImageUrl);
-        
-        // Cargar imágenes de galería desde el backend
-        const galleryUrls = data.sectionGalleryObjectIds || [];
-        setGaleriaFotos(galleryUrls);
-        
-        console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
-        console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
-      }
-    } catch (err) {
-      console.error('❌ [RamaDetail] Error cargando rama:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchRama = async () => {
+      try {
+        if (!id) return;
+        const data = await organigramaService.getRamaById(tenantSlug, groupSlug, String(id));
+        if (data) {
+          setRama(data as Rama);
+          setImagenPrincipal(getMainImageUrl(data as Rama));
+          // Intentar extraer URLs de galería desde varias fuentes posibles que el mapper/backend puede usar
+          const rec = data as unknown as Record<string, unknown>;
+          let galleryUrls: string[] = [];
+          if (Array.isArray(rec['gallery']) && (rec['gallery'] as unknown[]).length > 0) {
+            try {
+              galleryUrls = (rec['gallery'] as Array<Record<string, unknown>>).map(g => String(g.url)).filter(u => !!u);
+              console.log('📌 [RamaDetail] Extrayendo gallery.urls desde rec["gallery"]');
+            } catch {
+              galleryUrls = [];
+            }
+          }
+          // Fallbacks: galleryObjectUrls, galleryObjectIds, sectionGalleryObjectIds
+          if (galleryUrls.length === 0) {
+            const maybe1 = (rec['galleryObjectUrls'] ?? rec['galleryObjectIds'] ?? rec['galleryObjectIds'] ?? rec['sectionGalleryObjectIds'] ?? []) as string[];
+            if (Array.isArray(maybe1) && maybe1.length > 0) {
+              galleryUrls = maybe1.map(String).filter(u => !!u);
+              console.log('📌 [RamaDetail] Extrayendo galleryUrls desde alias:', Object.keys(rec).filter(k=>k.toLowerCase().includes('gallery')));
+            }
+          }
+
+          setGaleriaFotos(galleryUrls);
+          // Log para diagnóstico
+          console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
+          console.log('📸 [RamaDetail] URLs de galería del backend (resueltas):', galleryUrls);
+        }
+      } catch (_err) {
+        console.error('❌ [RamaDetail] Error cargando rama:', _err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchRama();
   }, [id, tenantSlug, groupSlug]);
+
 
   if (loading) return <p className="text-center mt-6 text-muted-foreground">Cargando detalles...</p>;
   if (!rama) return (

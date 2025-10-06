@@ -58,7 +58,9 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
     createdAt: backendRama.createdAt ? backendRama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
 
     // gallery
-    galleryObjectIds: galleryUrls,
+      galleryObjectIds: galleryUrls,
+      // canonical gallery array of objects (id + url) if backend provided it
+  gallery: ((backendRama as unknown as Record<string, unknown>)['gallery'] && Array.isArray((backendRama as unknown as Record<string, unknown>)['gallery'])) ? ( (backendRama as unknown as Record<string, unknown>)['gallery'] as unknown[] ).map((g) => { const rec = g as unknown as Record<string, unknown>; return { id: String(rec['id'] ?? rec['objectId'] ?? ''), url: String(rec['url'] ?? '') }; }) : undefined,
 
     // subgroups loaded separately
     subgroups: [],
@@ -77,6 +79,8 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   _mappedRamaAny.imagenPrincipal = mappedRama.mainImageUrl;
   _mappedRamaAny.imagenPrincipalObjectId = mappedRama.mainImageObjectId;
   _mappedRamaAny.sectionGalleryObjectIds = mappedRama.galleryObjectIds ?? [];
+  _mappedRamaAny.gallery = mappedRama.gallery ?? [];
+  _mappedRamaAny.galleryObjectUrls = mappedRama.galleryObjectIds ?? [];
   _mappedRamaAny.subramas = mappedRama.subgroups ?? [];
   _mappedRamaAny.section_id = mappedRama.sectionId;
   _mappedRamaAny.ramaId = mappedRama.sectionId;

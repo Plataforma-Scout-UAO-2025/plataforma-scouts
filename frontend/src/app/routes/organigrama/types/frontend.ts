@@ -32,6 +32,7 @@ export interface Branch {
   estado?: 'activa' | 'inactiva';
   createdAt: string;
   galleryObjectIds: string[];
+  gallery?: Array<{ id: string; url: string }>;
   // legacy alias for gallery object ids
   sectionGalleryObjectIds?: string[];
   // extra compatibility alias used in some legacy code paths
