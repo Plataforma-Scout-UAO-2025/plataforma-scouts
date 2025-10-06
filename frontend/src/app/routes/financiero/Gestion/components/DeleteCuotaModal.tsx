@@ -14,20 +14,25 @@ import { Trash } from "lucide-react";
 import type { Cuota } from "@/types/cuota.type";
 import { toast, type ExternalToast } from "sonner";
 import axios from "axios";
+import { useTenant } from "@/hooks/useTenant";
 
 interface DeleteCuotaModalProps {
   cuota: Cuota;
+  onRefresh?: () => void;
 }
 
-export default function DeleteCuotaModal({ cuota }: DeleteCuotaModalProps) {
+export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalProps) {
+  const { tenantId } = useTenant();
+
   const handleDelete = async () => {
     console.log("Eliminando cuota:", cuota.fee_id);
     try{
-      // Cambiar el ID 1 por el tenant_id cuando esté disponible
-      const response = await axios.delete(import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + "1" + "/" + cuota.fee_id);
+      const response = await axios.delete(
+        `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}/${cuota.fee_id}`
+      );
       if(response.status === 204) {
         toast.success("Cuota eliminada correctamente");
-        window.location.reload();
+        onRefresh?.();
       } else {
         toast.error("Error al eliminar la cuota:", response.data.message);
       }

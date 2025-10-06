@@ -1,30 +1,45 @@
 import { useEffect, useState } from "react";
 import CuotasTable from "./components/CuotasTable";
 import type { Cuota } from "@/types/cuota.type";
-import axios from "axios"; // eslint-disable-line @typescript-eslint/no-unused-vars
+import axios from "axios";
 import { Loader2 } from "lucide-react";
-import { mockCuotas } from "./constants/mock";
+import { useTenant } from "@/hooks/useTenant";
+import { toast } from "sonner";
 
 export default function Gestion() {
   const [cuotas, setCuotas] = useState<Cuota[]>([]);
   const [loading, setLoading] = useState(true);
+  const { tenantId } = useTenant();
+
+  const fetchCuotas = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}`
+      );
+
+      if (response.status === 200) {
+        // Transformar las fechas de string a Date objects
+        const cuotasData = response.data.map((cuota: any) => ({
+          ...cuota,
+          start_date: new Date(cuota.start_date),
+          end_date: cuota.end_date ? new Date(cuota.end_date) : undefined,
+        }));
+        setCuotas(cuotasData);
+      } else {
+        toast.error("Error al cargar las cuotas");
+        console.error("Error al cargar las cuotas:", response.data);
+      }
+    } catch (error) {
+      toast.error("Error al cargar las cuotas");
+      console.error("Error al cargar las cuotas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCuotas = async () => {
-      // TODO: Descomentar cuando el backend esté disponible
-      // const response = await axios.get(
-      //   import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas"
-      // );
-      // setCuotas(response.data);
-
-      // Usando datos mockeados temporalmente
-      setTimeout(() => {
-        setCuotas(mockCuotas);
-        setLoading(false);
-      }, 500); // Simulando delay de carga
-    };
     fetchCuotas();
-  }, []);
+  }, [tenantId]);
 
   return (
     <div>
@@ -42,7 +57,7 @@ export default function Gestion() {
           </p>
         </div>
       </div>
-      <CuotasTable cuotas={cuotas} />
+      <CuotasTable cuotas={cuotas} onRefresh={fetchCuotas} />
       {loading && (
         <div className="flex items-center justify-center">
           <Loader2 className="w-4 h-4 animate-spin" />

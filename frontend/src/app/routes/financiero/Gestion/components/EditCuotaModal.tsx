@@ -14,9 +14,10 @@ import type { Cuota } from "@/types/cuota.type";
 
 interface EditCuotaModalProps {
   cuota: Cuota;
+  onRefresh?: () => void;
 }
 
-export default function EditCuotaModal({ cuota }: EditCuotaModalProps) {
+export default function EditCuotaModal({ cuota, onRefresh }: EditCuotaModalProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,6 +40,7 @@ export default function EditCuotaModal({ cuota }: EditCuotaModalProps) {
           setOpen={setOpen}
           cuotaId={cuota.fee_id}
           isEditMode={true}
+          onRefresh={onRefresh}
           defaultValues={{
             name: cuota.name,
             description: cuota.description,

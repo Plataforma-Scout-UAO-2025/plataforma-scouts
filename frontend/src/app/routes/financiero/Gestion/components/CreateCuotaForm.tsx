@@ -37,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Subgroup } from "@/types/subgroup.type";
 import type { Section } from "@/types/section.type";
 import type { Member } from "@/types/member.type";
-import { mockMembers, mockSections, mockSubgroups } from "../constants/mock";
+import { useTenant } from "@/hooks/useTenant";
 
 interface CreateCuotaFormProps {
   open: boolean;
@@ -46,6 +46,7 @@ interface CreateCuotaFormProps {
   submitButtonText?: string;
   cuotaId?: string; // ID para edición
   isEditMode?: boolean; // Nueva prop para indicar si es modo edición
+  onRefresh?: () => void; // Nueva prop para refrescar la lista
 }
 
 export default function CreateCuotaForm({
@@ -54,55 +55,47 @@ export default function CreateCuotaForm({
   submitButtonText = "Crear cuota",
   cuotaId,
   isEditMode = false,
+  onRefresh,
 }: CreateCuotaFormProps) {
+  const { tenantId } = useTenant();
 
   const [showAssociatedToField, setShowAssociatedToField] = useState(false);
   // Traer los miembros, subgrupos y secciones del grupo
-  const [subgroups] = useState<Subgroup[]>(mockSubgroups);
-  const [sections] = useState<Section[]>(mockSections);
-  const [members] = useState<Member[]>(mockMembers);
+  const [subgroups, setSubgroups] = useState<Subgroup[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
 
-  // useEffect(() => {
-  //   const fetchMembersSubgroupsAndSections = async () => {
-  //     try {
-  //       const response = await axios.get(
-  //         import.meta.env.VITE_BACKEND_URL + "finanzas/fees/members/1"
-  //       );
-  //       if (response.status === 200) {
-  //         setMembers(response.data);
-  //       } else {
-  //         toast.error("Error al traer los miembros:", response.data.message);
-  //       }
-  //     } catch (error) {
-  //       toast.error("Error al traer los miembros:", error as ExternalToast);
-  //       console.error("Error al traer los miembros:", error);
-  //     }
+  useEffect(() => {
+    const fetchMembersSubgroupsAndSections = async () => {
+      // Cargar miembros
+      try {
+        const membersResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}finanzas/fees/members/${tenantId}`);
+        setMembers(membersResponse.data || []);
+      } catch (error) {
+        console.error("Error al cargar miembros:", error);
+        toast.error("Error al cargar miembros del grupo");
+      }
 
-  //     try {
-  //       const response = await axios.get(
-  //         import.meta.env.VITE_BACKEND_URL + "finanzas/fees/subgroups/1"
-  //       );
-  //       setSubgroups(response.data);
-  //     } catch (error) {
-  //       console.error("Error al traer los subgrupos y secciones:", error);
-  //       toast.error(
-  //         "Error al traer los subgrupos y secciones:",
-  //         error as ExternalToast
-  //       );
-  //     }
-  //     try {
-  //       const response = await axios.get(
-  //         import.meta.env.VITE_BACKEND_URL + "finanzas/fees/sections/1"
-  //       );
-  //       setSections(response.data);
-  //     } catch (error) {
-  //       console.error("Error al traer las secciones:", error);
-  //       toast.error("Error al traer las secciones:", error as ExternalToast);
-  //     }
+      // Cargar subgrupos
+      try {
+        const subgroupsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}finanzas/fees/subgroups/${tenantId}`);
+        setSubgroups(subgroupsResponse.data || []);
+      } catch (error) {
+        console.error("Error al cargar subgrupos:", error);
+        toast.error("Error al cargar subgrupos del grupo");
+      }
 
-  //   };
-  //   fetchMembersSubgroupsAndSections();
-  // }, []);
+      // Cargar secciones
+      try {
+        const sectionsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}finanzas/fees/sections/${tenantId}`);
+        setSections(sectionsResponse.data || []);
+      } catch (error) {
+        console.error("Error al cargar secciones:", error);
+        toast.error("Error al cargar secciones del grupo");
+      }
+    };
+    fetchMembersSubgroupsAndSections();
+  }, [tenantId]);
 
   
   
@@ -124,7 +117,7 @@ export default function CreateCuotaForm({
           ? new Date(defaultValues.end_date)
           : defaultValues.end_date
         : undefined,
-      associated_to: defaultValues?.associated_to || { id: "", name: "" },
+      associated_to: defaultValues?.associated_to || null,
     },
   });
 
@@ -133,7 +126,13 @@ export default function CreateCuotaForm({
   // Mostrar campo target_member_id solo cuando scope es SCOUT
   useEffect(() => {
     // Resetear el campo associated_to cada vez que cambia el scope
-    form.setValue("associated_to", { id: "", name: "" });
+    if (scopeValue === "ALL") {
+      // Cuando el scope es ALL, associated_to debe ser null
+      form.setValue("associated_to", null);
+    } else {
+      // Para otros scopes, resetear a valores vacíos
+      form.setValue("associated_to", { id: "", name: "" });
+    }
 
     // Limpiar valores de campos que no corresponden al scope actual
     if (scopeValue !== "SCOUT" && scopeValue !== "SUBGROUP" && scopeValue !== "SECTION") {
@@ -146,36 +145,36 @@ export default function CreateCuotaForm({
   async function onSubmit(values: CreateCuotaFormValues) {
     // Preparar los datos según el formato esperado por el backend
     const dataToSendCreate = {
-      tenant_id: "1",
+      tenant_id: tenantId,
       name: values.name,
       description: values.description,
       amount: values.amount,
       periodicity: values.periodicity,
       scope: values.scope,
-      start_date: values.start_date.toISOString(),
-      ...(values.end_date && { end_date: values.end_date.toISOString() }),
-      associated_to: values.associated_to,
+      start_date: values.start_date.toISOString().split('T')[0], // Formato YYYY-MM-DD
+      ...(values.end_date && { end_date: values.end_date.toISOString().split('T')[0] }),
+      associated_to: values.scope === "ALL" ? null : values.associated_to,
     };
+
 
     if (isEditMode && cuotaId) {
       // Modo edición: incluir el ID de la cuota
       try {
-
         const dataToSendEdit = {
           name: values.name,
           description: values.description,
           amount: values.amount,
         };
-        
-        const response = await axios.put(
-          // Cambiar el 1 por el tenant_id cuando esté disponible
-          import.meta.env.VITE_BACKEND_URL + "finanzas/fees/" + "1" + "/" + cuotaId,
+
+        const response = await axios.patch(
+          `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}/${cuotaId}`,
           dataToSendEdit
         );
 
         if (response.status === 200) {
           toast.success("Cuota actualizada correctamente");
           setOpen(false);
+          onRefresh?.();
         } else {
           toast.error("Error al actualizar la cuota:", response.data.message);
         }
@@ -187,13 +186,14 @@ export default function CreateCuotaForm({
       // Modo creación: crear nueva cuota
       try {
         const response = await axios.post(
-          import.meta.env.VITE_BACKEND_URL + "finanzas/fees",
+          `${import.meta.env.VITE_BACKEND_URL}finanzas/fees`,
           dataToSendCreate
         );
 
         if (response.status === 201) {
           toast.success("Cuota creada correctamente");
           setOpen(false);
+          onRefresh?.();
         } else {
           toast.error("Error al crear la cuota:", response.data.message);
         }
@@ -408,19 +408,25 @@ export default function CreateCuotaForm({
               </FormItem>
             )}
           />
-          {showAssociatedToField && (
+          {(showAssociatedToField || isEditMode) && (
             <FormField
               control={form.control}
               name="associated_to"
               render={({ field }) => {
-                // En modo edición, mostrar input readonly si hay un valor
+                // En modo edición, mostrar input readonly siempre
                 if (isEditMode) {
+                  const displayValue = defaultValues?.associated_to?.name ||
+                    (scopeValue === "ALL" ? "Todos los miembros" :
+                     scopeValue === "SCOUT" ? "Scout específico" :
+                     scopeValue === "SUBGROUP" ? "Subgrupo" :
+                     scopeValue === "SECTION" ? "Sección" : "No especificado");
+
                   return (
                     <FormItem className="md:col-span-2">
                       <FormLabel>Asociado</FormLabel>
                       <FormControl>
                         <Input
-                          value={defaultValues?.associated_to?.name}
+                          value={displayValue}
                           disabled
                           className="bg-muted"
                         />
@@ -433,9 +439,9 @@ export default function CreateCuotaForm({
                 // En modo creación, mostrar select
                 const handleValueChange = (value: string) => {
                   if (scopeValue === "SCOUT") {
-                    const member = members.find(m => m.user_id.toString() === value);
+                    const member = members.find(m => m.member_id.toString() === value);
                     if (member) {
-                      field.onChange({ id: member.user_id.toString(), name: `${member.first_name} ${member.last_name}` });
+                      field.onChange({ id: member.member_id.toString(), name: `${member.first_name} ${member.last_name}` });
                     }
                   } else if (scopeValue === "SUBGROUP") {
                     const subgroup = subgroups.find(s => s.id.toString() === value);
@@ -475,10 +481,10 @@ export default function CreateCuotaForm({
                       <SelectContent>
                         {scopeValue === "SCOUT" && members.map((member) => (
                           <SelectItem
-                            key={member.user_id}
-                            value={member.user_id.toString()}
+                            key={member.member_id}
+                            value={member.member_id.toString()}
                           >
-                            {member.user_id} - {member.first_name} {member.last_name}
+                            {member.member_id} - {member.first_name} {member.last_name}
                           </SelectItem>
                         ))}
                         {scopeValue === "SUBGROUP" && subgroups.map((subgroup) => (

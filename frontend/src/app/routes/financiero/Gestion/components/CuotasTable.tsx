@@ -25,12 +25,14 @@ import {
 } from "@/components/ui/table";
 import CreateCuotaModal from "./CreateCuotaModal";
 import type { Cuota } from "@/types/cuota.type";
-import { columns } from "./CuotasTableColumns";
+import { getColumns } from "./CuotasTableColumns";
 
 export default function CuotasTable({
   cuotas = [],
+  onRefresh,
 }: {
   cuotas?: Cuota[];
+  onRefresh?: () => void;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -42,7 +44,7 @@ export default function CuotasTable({
 
   const table = useReactTable({
     data: cuotas,
-    columns,
+    columns: getColumns(onRefresh),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -74,7 +76,7 @@ export default function CuotasTable({
             className="max-w-sm"
           />
         </div>
-        <CreateCuotaModal />
+        <CreateCuotaModal onRefresh={onRefresh} />
       </div>
       <div className="rounded-md border">
         <Table>
@@ -116,7 +118,7 @@ export default function CuotasTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={getColumns(onRefresh).length}
                   className="h-24 text-center"
                 >
                   No hay resultados.

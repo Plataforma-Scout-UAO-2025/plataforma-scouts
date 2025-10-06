@@ -21,7 +21,7 @@ const scopeTranslations: Record<string, string> = {
   SECTION: "Sección",
 };
 
-export const columns: ColumnDef<Cuota>[] = [
+export const getColumns = (onRefresh?: () => void): ColumnDef<Cuota>[] => [
     {
       accessorKey: "name",
       header: ({ column }) => {
@@ -36,7 +36,7 @@ export const columns: ColumnDef<Cuota>[] = [
         );
       },
       cell: ({ row }) => (
-        <div className="lowercase">{row.getValue("name")}</div>
+        <div>{row.getValue("name")}</div>
       ),
     },
     {
@@ -111,11 +111,11 @@ export const columns: ColumnDef<Cuota>[] = [
       enableHiding: false,
       cell: ({ row }) => {
         const cuota = row.original;
-  
+
         return (
           <div className="flex items-center gap-2">
-            <EditCuotaModal cuota={cuota} />
-            <DeleteCuotaModal cuota={cuota} />
+            <EditCuotaModal cuota={cuota} onRefresh={onRefresh} />
+            <DeleteCuotaModal cuota={cuota} onRefresh={onRefresh} />
           </div>
         );
       },

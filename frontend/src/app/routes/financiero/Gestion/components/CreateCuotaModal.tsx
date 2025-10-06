@@ -11,7 +11,11 @@ import {
 import { Plus } from "lucide-react";
 import CreateCuotaForm from "./CreateCuotaForm";
 
-export default function CreateCuotaModal() {
+interface CreateCuotaModalProps {
+  onRefresh?: () => void;
+}
+
+export default function CreateCuotaModal({ onRefresh }: CreateCuotaModalProps = {}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,6 +39,7 @@ export default function CreateCuotaModal() {
         <CreateCuotaForm
           open={open}
           setOpen={setOpen}
+          onRefresh={onRefresh}
         />
       </DialogContent>
     </Dialog>
