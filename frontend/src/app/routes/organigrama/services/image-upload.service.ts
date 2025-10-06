@@ -271,3 +271,83 @@ export const uploadGalleryImages = async (
     throw error;
   }
 };
+
+// ==========================================================
+// ✅ Operaciones para la galería de SUBRAMAS (replace / remove)
+// ==========================================================
+/**
+ * Reemplaza una imagen específica de la galería de una subrama.
+ * Flujo: subir archivo -> PATCH con op 'replace' apuntando al objectId antiguo (si lo hay)
+ */
+export const replaceSubramaGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  oldObjectId: string | null,
+  file: File
+): Promise<string> => {
+  console.log('🔄 [ImageUploadService] Reemplazando imagen de galería en subrama...', { sectionId, subgroupId, oldObjectId });
+
+  try {
+    // Subir nuevo archivo
+    const formData = new FormData();
+    formData.append('file', file);
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+
+    // Construir payload replace
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    const replaceOp = {
+      operations: [
+        {
+          op: 'replace',
+          targetUuid: oldObjectId ?? null,
+          newValue: uploadResponse.objectId
+        }
+      ]
+    };
+
+    await apiClient.patch(patchEndpoint, replaceOp);
+    console.log('✅ [ImageUploadService] Replace PATCH enviado con éxito');
+
+    // Intentar obtener URL resultante consultando la subrama
+    const updated = await apiClient.get<Record<string, unknown>>(`/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}`);
+    const rec = updated as unknown as Record<string, unknown> | undefined;
+    const galleryUrls = (rec?.['galleryObjectIds'] as string[] | undefined) ?? (rec?.['subgroupGalleryObjectIds'] as string[] | undefined) ?? [];
+    // Devolver la primera URL que coincida con el nuevo objectId si es posible
+    return uploadResponse.url || uploadResponse.objectId || (galleryUrls[0] ?? uploadResponse.objectId);
+  } catch (error) {
+    console.error('❌ [ImageUploadService] Error reemplazando imagen de galería en subrama:', error);
+    throw error;
+  }
+};
+
+/**
+ * Elimina una imagen de la galería de una subrama usando op 'remove' con targetUuid.
+ */
+export const removeSubramaGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  objectIdToRemove: string
+): Promise<void> => {
+  console.log('🗑️ [ImageUploadService] Eliminando imagen de galería en subrama...', { sectionId, subgroupId, objectIdToRemove });
+  try {
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    const payload = {
+      operations: [
+        {
+          op: 'remove',
+          targetUuid: objectIdToRemove
+        }
+      ]
+    };
+
+    await apiClient.patch(patchEndpoint, payload);
+    console.log('✅ [ImageUploadService] Imagen eliminada de la galería de subrama');
+  } catch (error) {
+    console.error('❌ [ImageUploadService] Error eliminando imagen de galería en subrama:', error);
+    throw error;
+  }
+};

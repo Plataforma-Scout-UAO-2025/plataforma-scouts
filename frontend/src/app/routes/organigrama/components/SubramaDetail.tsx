@@ -508,7 +508,7 @@ export default function SubramaDetail() {
       if (id) {
         console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
         
-        const ramas = await organigramaService.getRamas(tenantSlug, groupSlug);
+  const ramas = await organigramaService.getRamasWithSubramas(tenantSlug, groupSlug);
         
         let subramaEncontrada: Subrama | null = null;
         

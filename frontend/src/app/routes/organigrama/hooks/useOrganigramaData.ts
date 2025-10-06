@@ -35,7 +35,9 @@ export function useOrganigramaData(tenantSlug?: string, groupSlug?: string) {
       isLoadingRamasRef.current = true;
       setIsLoading(true);
       const yearFilter = selectedYear ? parseInt(selectedYear) : undefined;
-      const data = await organigramaService.getRamas(tenantSlug, groupSlug, yearFilter);
+  // Use optimized loader: tries a single endpoint that may include subramas
+  // and falls back to the standard loader if not supported by the backend.
+  const data = await organigramaService.getRamasWithSubramas(tenantSlug, groupSlug, yearFilter);
       setRamas(data);
     } catch (err) {
       handleError(err);
