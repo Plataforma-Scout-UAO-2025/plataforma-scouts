@@ -27,7 +27,6 @@ import * as organigramaService from './services';
 import { useApiError } from './hooks/useApiError';
 import { useTenantParams } from './hooks/useTenantParams';
 
-// ⬇️ Nuevo: menú y funciones de exportación
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,7 +62,6 @@ export default function Organigrama() {
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
   const successTimeoutRef = useRef<number | null>(null);
   
-  // Control de carga para evitar llamadas duplicadas
   const isLoadingRamasRef = useRef(false);
   const isLoadingYearsRef = useRef(false);
   
@@ -82,7 +80,6 @@ export default function Organigrama() {
       const years = await organigramaService.getAvailableYears(tenantSlug, groupSlug);
       setAvailableYears(years);
       
-      // Establecer automáticamente el primer año si no hay uno seleccionado
       if (!selectedYear && years.length > 0) {
         setSelectedYear(years[0].toString());
       }
@@ -106,7 +103,6 @@ export default function Organigrama() {
       setIsLoading(true);
       console.log('🔄 [Organigrama] Cargando ramas...', { selectedYear });
       
-      // Convertir selectedYear a number si no está vacío, sino undefined
       const yearFilter = selectedYear ? parseInt(selectedYear) : undefined;
       const data = await organigramaService.getRamas(tenantSlug, groupSlug, yearFilter);
       setRamas(data);
@@ -121,21 +117,19 @@ export default function Organigrama() {
     }
   }, [tenantSlug, groupSlug, selectedYear, handleError]);
 
-  // Cargar años disponibles solo una vez al montar el componente
   useEffect(() => {
     if (tenantSlug && groupSlug) {
       console.log('🚀 [Organigrama] Inicializando carga de años...');
       loadAvailableYears();
     }
-  }, [tenantSlug, groupSlug]); // Removido loadAvailableYears de las dependencias para evitar re-ejecutar
+  }, [tenantSlug, groupSlug]);
 
-  // Cargar ramas cuando cambien los parámetros de filtrado
   useEffect(() => {
     if (tenantSlug && groupSlug) {
       console.log('🚀 [Organigrama] Inicializando carga de ramas...');
       loadRamas();
     }
-  }, [tenantSlug, groupSlug, selectedYear]); // Removido loadRamas de las dependencias para evitar re-ejecutar
+  }, [tenantSlug, groupSlug, selectedYear]);
 
   // ====== RAMAS ======
   const handleCreateRama = async (data: CreateRamaData) => {
@@ -196,12 +190,11 @@ export default function Organigrama() {
   const handleSubmitEditSubrama = async (data: UpdateSubramaFormData) => {
     if (!subramaSeleccionada) return;
     try {
-      // Crear el objeto UpdateSubramaData con la estructura correcta
       const updateData: UpdateSubramaData = {
         id: subramaSeleccionada.id,
         subgroup_id: subramaSeleccionada.subgroup_id,
         ramaId: subramaSeleccionada.ramaId,
-        ...data // Los datos del formulario
+        ...data 
       };
       
       await organigramaService.updateSubrama(tenantSlug, groupSlug, updateData);
@@ -214,8 +207,6 @@ export default function Organigrama() {
   };
 
   const handleDeleteSubrama = (subrama: Subrama) => {
-    // Preferir section_id (snake_case) devuelto por la API, si no usar ramaId.
-    // Si ninguno existe, dejar undefined (no usar cadena vacía) para detectar falta explícita.
     const sectionId = subrama.section_id ?? subrama.ramaId ?? undefined;
     setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre, sectionId });
     setConfirmDeleteOpen(true);

@@ -1,10 +1,3 @@
-/**
- * Utilidades de diagnóstico para problemas de upload de imágenes
- * 
- * PROBLEMA REPORTADO: Al subir 1 imagen, el backend devuelve 4 URLs diferentes
- * Este archivo contiene funciones para diagnosticar el comportamiento del backend
- */
-
 import { apiClient } from '../services/apiClient';
 import { getRamaById } from '../services';
 
