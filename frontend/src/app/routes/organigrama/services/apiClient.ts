@@ -133,7 +133,7 @@ export const apiClient = {
           headers: {
             'Content-Type': 'multipart/form-data'
           },
-          timeout: 30000, // 30 segundos para uploads
+          timeout: 60000, // 60 segundos para uploads (más tolerancia a backend lento)
           // Para evitar problemas con servidores que no esperan cookies/credenciales
           // en endpoints de upload, enviamos explícitamente sin credenciales.
           withCredentials: false,
@@ -166,22 +166,30 @@ export const apiClient = {
           const statusText = error.response?.statusText || 'Upload Error';
           console.error(`❌ [ApiClient] POST (FormData) ${endpoint} - Error:`, error, 'response.data=', error.response?.data, 'response.headers=', error.response?.headers);
 
-          // Diagnóstico adicional en caso de 403: intentar con fetch (sin credenciales) para comparar respuesta
-          if (status === 403) {
-            try {
-              const fullUrl = API_BASE_URL + normalizeEndpoint(endpoint);
-              console.log(`🧪 [ApiClient] Ejecutando intento diagnóstico FETCH a ${fullUrl} (credentials: omit)`);
-              const fetchResp = await fetch(fullUrl, {
-                method: 'POST',
-                body: formData as any,
-                credentials: 'omit',
-                signal: signalLocal as any
-              });
-              const text = await fetchResp.text();
-              console.log('🧪 [ApiClient] Resultado diagnóstico FETCH:', { status: fetchResp.status, statusText: fetchResp.statusText, body: text, headers: Array.from(fetchResp.headers.entries()) });
-            } catch (fetchErr) {
-              console.warn('🧪 [ApiClient] Error en intento diagnóstico FETCH:', fetchErr);
+          // Intentar fallback con fetch (sin credenciales) para comparar/resolver
+          try {
+            const fullUrl = API_BASE_URL + normalizeEndpoint(endpoint);
+            console.log(`🧪 [ApiClient] Ejecutando intento FETCH fallback a ${fullUrl} (credentials: omit)`);
+            const fetchResp = await fetch(fullUrl, {
+              method: 'POST',
+              body: formData as any,
+              credentials: 'omit',
+              signal: signalLocal as any
+            });
+            const text = await fetchResp.text();
+            console.log('🧪 [ApiClient] Resultado FETCH fallback:', { status: fetchResp.status, statusText: fetchResp.statusText, body: text, headers: Array.from(fetchResp.headers.entries()) });
+            if (fetchResp.ok) {
+              try {
+                const json = JSON.parse(text);
+                console.log('🧪 [ApiClient] FETCH fallback succeeded, returning parsed JSON');
+                return json as T;
+              } catch (parseErr) {
+                console.warn('🧪 [ApiClient] FETCH fallback parse error:', parseErr);
+                // Si no es JSON, fallamos y seguiremos lanzando el ApiError
+              }
             }
+          } catch (fetchErr) {
+            console.warn('🧪 [ApiClient] Error en intento FETCH fallback:', fetchErr);
           }
           throw new ApiError(status, statusText, `Error ${status}: ${statusText}`);
         }

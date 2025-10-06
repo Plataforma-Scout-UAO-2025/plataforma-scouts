@@ -243,27 +243,110 @@ export default function SubramaDetail() {
   const handleReplaceFoto = async (file: File) => {
     if (!subrama || !fotoTipo) return;
 
-    try {
-      if (fotoTipo === "principal") {
+    // Si es principal, usar el mismo flujo que el input principal para mostrar progreso
+    if (fotoTipo === 'principal') {
+      const preview = URL.createObjectURL(file);
+      // preparar abort controller
+      if (uploadControllerRef.current) {
+        try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
+      }
+      const controller = new AbortController();
+      uploadControllerRef.current = controller;
+
+      try {
+        setImagenPrincipal(preview);
+        setUploading(true);
+        setUploadPercent(0);
+        setUploadCompleteAnnounced(false);
+        setCurrentUploadingFile(file.name);
+
+        // iniciar simulador por si no se reciben eventos de progreso
+        uploadProgressReceivedRef.current = false;
+        if (uploadIntervalRef.current) {
+          clearInterval(uploadIntervalRef.current);
+          uploadIntervalRef.current = null;
+        }
+        uploadIntervalRef.current = window.setInterval(() => {
+          setUploadPercent(prev => {
+            const next = prev + Math.ceil(Math.random() * 5);
+            return next >= 95 ? 95 : next;
+          });
+        }, 250);
+
         await organigramaService.updateSubramaMainImage(
           tenantSlug,
           groupSlug,
           subrama.section_id,
           subrama.subgroup_id,
-          file
+          file,
+          (fileName, percent) => {
+            uploadProgressReceivedRef.current = true;
+            if (uploadIntervalRef.current) {
+              clearInterval(uploadIntervalRef.current);
+              uploadIntervalRef.current = null;
+            }
+            setCurrentUploadingFile(fileName);
+            const display = percent >= 100 ? 99 : Math.floor(percent);
+            animatePercentTo(display);
+            if (percent >= 100 && !uploadCompleteAnnounced) {
+              setUploadCompleteAnnounced(true);
+              toast('Subida completada. Procesando en servidor...');
+            }
+          },
+          controller.signal
         );
-      } else if (fotoTipo === "galeria") {
-        const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
-        await organigramaService.replaceSubramaGalleryImage(
-          tenantSlug,
-          groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
-          cleanUuid,
-          file
-        );
-      }
 
+        // refrescar y obtener URL definitiva
+        await fetchSubrama();
+        try {
+          const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, subrama.section_id, subrama.subgroup_id);
+          if (updated && updated.imagenPrincipal) {
+            setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
+            setUploadPercent(100);
+            toast.success('Imagen principal actualizada correctamente');
+          } else {
+            setUploadPercent(100);
+            setImageRefreshToken(Date.now());
+          }
+        } catch (err) {
+          console.warn('⚠️ [SubramaDetail] No se pudo obtener subrama actualizada tras replace:', err);
+          setUploadPercent(100);
+          setImageRefreshToken(Date.now());
+        }
+
+        setFotoModalOpen(false);
+      } catch (error) {
+        console.error('❌ [SubramaDetail] Error reemplazando imagen principal desde modal:', error);
+        if ((error as Error).message === 'UploadCanceled') {
+          toast('Subida cancelada');
+        } else {
+          toast.error('Error actualizando la imagen');
+        }
+        setImagenPrincipal('');
+      } finally {
+        try { URL.revokeObjectURL(preview); } catch { /* ignore */ }
+        if (uploadIntervalRef.current) { clearInterval(uploadIntervalRef.current); uploadIntervalRef.current = null; }
+        if (uploadAnimateRef.current) { clearInterval(uploadAnimateRef.current); uploadAnimateRef.current = null; }
+        uploadProgressReceivedRef.current = false;
+        setUploading(false);
+        setUploadPercent(0);
+        setCurrentUploadingFile(null);
+        if (uploadControllerRef.current) { uploadControllerRef.current = null; }
+      }
+      return;
+    }
+
+    // Si es galería, usar el servicio de reemplazo de galería (sin progreso complejo por ahora)
+    try {
+      const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+      await organigramaService.replaceSubramaGalleryImage(
+        tenantSlug,
+        groupSlug,
+        subrama.section_id,
+        subrama.subgroup_id,
+        cleanUuid,
+        file
+      );
       toast.success("Foto actualizada correctamente");
       setFotoModalOpen(false);
       await fetchSubrama();
