@@ -14,7 +14,6 @@ import type { Branch as Rama, Subgroup as Subrama } from '../types/frontend';
 interface RamaListProps {
   ramas: Rama[];
   onEditRama: (rama: Rama) => void;
-  onDeleteRama: (rama: Rama) => void;
   onCreateSubrama: (ramaId: string) => void;
   onEditSubrama: (subrama: Subrama) => void;
   onDeleteSubrama: (subrama: Subrama) => void;
@@ -23,7 +22,6 @@ interface RamaListProps {
 export default function RamaList({
   ramas,
   onEditRama,
-  onDeleteRama,
   onCreateSubrama,
   onEditSubrama,
   onDeleteSubrama,
@@ -95,9 +93,7 @@ export default function RamaList({
                 <Button size="sm" variant="outline" onClick={() => onEditRama(rama)} className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
                   <Edit2 className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="destructive" onClick={() => onDeleteRama(rama)} className="h-8 w-8 p-0">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {/* Botón de eliminar rama removido (ramos fijos según requerimiento del stakeholder) */}
               </div>
             </div>
 

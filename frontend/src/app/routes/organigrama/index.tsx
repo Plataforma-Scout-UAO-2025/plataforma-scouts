@@ -104,10 +104,13 @@ export default function Organigrama() {
     }
   };
 
-  const handleDeleteRama = (rama: Rama) => {
-    setDeleteTarget({ type: 'rama', id: rama.id, name: rama.name ?? rama.nombre ?? '' });
-    setConfirmDeleteOpen(true);
-  };
+  // Función de eliminación de rama deshabilitada temporalmente porque el botón de
+  // eliminar rama fue inhabilitado en la UI. Se mantiene aquí comentada para
+  // facilitar su restauración si se decide re-habilitar la funcionalidad.
+  // const handleDeleteRama = (rama: Rama) => {
+  //   setDeleteTarget({ type: 'rama', id: rama.id, name: rama.name ?? rama.nombre ?? '' });
+  //   setConfirmDeleteOpen(true);
+  // };
 
   // ====== SUBRAMAS ======
   const handleCreateSubrama = (ramaId: string) => {
@@ -234,7 +237,6 @@ export default function Organigrama() {
         <RamaList
           ramas={ramas}
           onEditRama={handleEditRama}
-          onDeleteRama={handleDeleteRama}
           onCreateSubrama={handleCreateSubrama}
           onEditSubrama={handleEditSubrama}
           onDeleteSubrama={handleDeleteSubrama}
