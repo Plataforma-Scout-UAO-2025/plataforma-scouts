@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Upload, Users } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,6 +35,34 @@ export default function SubramaDetail() {
   const [currentUploadingFile, setCurrentUploadingFile] = useState<string | null>(null);
   const [uploadCompleteAnnounced, setUploadCompleteAnnounced] = useState(false);
   const uploadControllerRef = useRef<AbortController | null>(null);
+  const deleteIntervalRef = useRef<number | null>(null);
+  const uploadIntervalRef = useRef<number | null>(null);
+  const uploadProgressReceivedRef = useRef<boolean>(false);
+  const uploadAnimateRef = useRef<number | null>(null);
+
+  const animatePercentTo = (target: number) => {
+    // limpiar cualquier animación previa
+    if (uploadAnimateRef.current) {
+      clearInterval(uploadAnimateRef.current);
+      uploadAnimateRef.current = null;
+    }
+    uploadAnimateRef.current = window.setInterval(() => {
+      setUploadPercent(prev => {
+        if (prev >= target) {
+          if (uploadAnimateRef.current) {
+            clearInterval(uploadAnimateRef.current);
+            uploadAnimateRef.current = null;
+          }
+          return prev;
+        }
+        // incrementar en pasos más pequeños cuando estamos cerca
+        const remaining = target - prev;
+        const step = remaining > 20 ? Math.ceil(remaining * 0.2) : Math.ceil(Math.max(1, remaining * 0.25));
+        const next = prev + step;
+        return next > target ? target : next;
+      });
+    }, 120);
+  };
   // ===== Modal de fotos =====
   const [fotoModalOpen, setFotoModalOpen] = useState(false);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
@@ -58,7 +86,7 @@ export default function SubramaDetail() {
     const file = event.target.files?.[0];
     if (file && subrama) {
       try {
-        console.log('🔄 [SubramaDetail] Subiendo imagen principal:', file.name);
+      console.log('🔄 [SubramaDetail] Subiendo imagen principal:', file.name);
         const preview = URL.createObjectURL(file);
         setImagenPrincipal(preview);
 
@@ -74,6 +102,19 @@ export default function SubramaDetail() {
         setUploadCompleteAnnounced(false);
         setCurrentUploadingFile(file.name);
 
+        // Iniciar progreso simulado por si no llegan eventos de progreso reales
+        uploadProgressReceivedRef.current = false;
+        if (uploadIntervalRef.current) {
+          clearInterval(uploadIntervalRef.current);
+          uploadIntervalRef.current = null;
+        }
+        uploadIntervalRef.current = window.setInterval(() => {
+          setUploadPercent(prev => {
+            const next = prev + Math.ceil(Math.random() * 5);
+            return next >= 95 ? 95 : next;
+          });
+        }, 250);
+
         await organigramaService.updateSubramaMainImage(
           tenantSlug,
           groupSlug,
@@ -81,9 +122,16 @@ export default function SubramaDetail() {
           subrama.subgroup_id,
           file,
           (fileName, percent) => {
+            // cuando llegan eventos reales, cancelar simulado y animar hasta el valor real
+            uploadProgressReceivedRef.current = true;
+            if (uploadIntervalRef.current) {
+              clearInterval(uploadIntervalRef.current);
+              uploadIntervalRef.current = null;
+            }
             setCurrentUploadingFile(fileName);
             const display = percent >= 100 ? 99 : Math.floor(percent);
-            setUploadPercent(display);
+            // animar gradualmente hasta display para evitar saltos bruscos
+            animatePercentTo(display);
             if (percent >= 100 && !uploadCompleteAnnounced) {
               setUploadCompleteAnnounced(true);
               toast('Subida completada. Procesando en servidor...');
@@ -124,13 +172,23 @@ export default function SubramaDetail() {
         }
         setImagenPrincipal('');
       } finally {
-        try { /* nothing to revoke here - previews are revoked by FotoModal when needed */ } catch { /* ignore */ }
-        setUploading(false);
-        setUploadPercent(0);
-        setCurrentUploadingFile(null);
-        if (uploadControllerRef.current) {
-          uploadControllerRef.current = null;
-        }
+          try { /* nothing to revoke here - previews are revoked by FotoModal when needed */ } catch { /* ignore */ }
+          // limpiar intervalo simulado y animaciones si siguen activos
+          if (uploadIntervalRef.current) {
+            clearInterval(uploadIntervalRef.current);
+            uploadIntervalRef.current = null;
+          }
+          if (uploadAnimateRef.current) {
+            clearInterval(uploadAnimateRef.current);
+            uploadAnimateRef.current = null;
+          }
+          uploadProgressReceivedRef.current = false;
+          setUploading(false);
+          setUploadPercent(0);
+          setCurrentUploadingFile(null);
+          if (uploadControllerRef.current) {
+            uploadControllerRef.current = null;
+          }
       }
     }
   };
@@ -233,6 +291,25 @@ export default function SubramaDetail() {
     if (!subrama || !fotoTipo) return;
 
     try {
+      // Mostrar UI de progreso durante la eliminación para dar feedback al usuario
+      setUploading(true);
+      setUploadPercent(0);
+      setUploadCompleteAnnounced(false);
+      setCurrentUploadingFile('Eliminando imagen...');
+
+      // Simular progreso incremental mientras la petición de eliminación ocurre
+      if (deleteIntervalRef.current) {
+        clearInterval(deleteIntervalRef.current);
+        deleteIntervalRef.current = null;
+      }
+      deleteIntervalRef.current = window.setInterval(() => {
+        setUploadPercent(prev => {
+          // incrementar lentamente hasta 94-96%
+          const next = prev + Math.ceil(Math.random() * 4);
+          return next >= 95 ? 95 : next;
+        });
+      }, 300);
+
       if (fotoTipo === "principal") {
         // 🧩 NUEVO: eliminar imagen principal
         await organigramaService.removeSubramaMainImage(
@@ -253,12 +330,34 @@ export default function SubramaDetail() {
         );
       }
 
-      toast.success("Foto eliminada correctamente");
+      // Al completar la petición de eliminación, marcar 100% y anunciar procesamiento
+      if (deleteIntervalRef.current) {
+        clearInterval(deleteIntervalRef.current);
+        deleteIntervalRef.current = null;
+      }
+      setUploadPercent(100);
+      setUploadCompleteAnnounced(true);
+      toast('Subida completada. Procesando en servidor...');
+
       setFotoModalOpen(false);
+      // Refrescar para que el frontend reciba la versión actualizada del backend
       await fetchSubrama();
+      // Mensaje final de éxito cuando el backend confirma la eliminación
+      toast.success("Foto eliminada correctamente");
     } catch (error) {
       console.error(error);
       toast.error("Error al eliminar la foto");
+    }
+    finally {
+      // Asegurarse de limpiar cualquier estado de progreso residual
+      if (deleteIntervalRef.current) {
+        clearInterval(deleteIntervalRef.current);
+        deleteIntervalRef.current = null;
+      }
+      setUploading(false);
+      setUploadPercent(0);
+      setCurrentUploadingFile(null);
+      setUploadCompleteAnnounced(false);
     }
   };
 
@@ -297,13 +396,15 @@ export default function SubramaDetail() {
             setImagenPrincipal(subramaEncontrada.imagenPrincipal);
             console.log("✅ [SubramaDetail] Usando data URL para imagen principal");
           }
-          // PRIORIDAD 4: Cualquier URL en campo imagenPrincipal
+          // PRIORIDAD 3: Cualquier URL en campo imagenPrincipal
           else if (subramaEncontrada.imagenPrincipal) {
             setImagenPrincipal(subramaEncontrada.imagenPrincipal);
             console.log("✅ [SubramaDetail] Usando campo imagenPrincipal como URL:", subramaEncontrada.imagenPrincipal);
           }
           else {
             console.log("ℹ️ [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.nombre);
+            // Forzar estado vacío para que la UI deje de renderizar cualquier imagen previa
+            setImagenPrincipal('');
           }
 
           // Cargar galería desde backend (URLs directas)
@@ -377,7 +478,6 @@ export default function SubramaDetail() {
             <Progress value={uploadPercent} />
             {uploadPercent >= 100 && uploadCompleteAnnounced && (
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round"></path></svg>
                 Procesando en servidor...
               </div>
             )}
@@ -432,15 +532,12 @@ export default function SubramaDetail() {
                 {/* El progreso ahora se muestra en el modal flotante superior (como en RamaDetail) */}
               </>
             ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
-              <div className="text-center">
-                <Users className="w-16 h-16 text-primary mx-auto mb-2" />
-                <p className="text-muted-foreground">
-                  Imagen principal de la subrama
-                </p>
+              <div className="w-full h-full flex items-center justify-center bg-[rgba(234,241,246,0.9)]">
+                <div className="text-center">
+                  <span className="text-[72px] leading-none text-muted-foreground font-semibold">Sin imagen</span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Input oculto para imagen principal */}
