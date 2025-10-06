@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.member.model;
+package uao.edu.co.scouts_project.guardian.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,8 +27,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.member.shared.enums.Status;
+import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.guardian.shared.enums.Status;
 import uao.edu.co.scouts_project.organigram.Subgroup;
 
 @Builder

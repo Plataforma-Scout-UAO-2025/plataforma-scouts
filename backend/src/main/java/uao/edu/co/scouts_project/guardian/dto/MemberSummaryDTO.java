@@ -1,47 +1,32 @@
-package uao.edu.co.scouts_project.member.dto;
+package uao.edu.co.scouts_project.guardian.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.member.shared.enums.Status;
+import lombok.AllArgsConstructor;
+import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.guardian.shared.enums.Status;
+import uao.edu.co.scouts_project.organigram.Subgroup;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MemberCreateDTO {
-    @NotNull
+public class MemberSummaryDTO {
+    private String userId;
     private String tenantId;
-
-    @NotNull
-    private String subgroupId;
-
-    @NotNull
+    private Subgroup subgroup;
     private String firstName;
-
-    @NotNull
     private String lastName;
-
     private Integer age;
-
-    @NotNull
     private String role;
-
-    @NotNull
     private String identification;
-
     private DocumentType documentType;
-
-    @Email
     private String email;
-
     private String gender;
     private LocalDate birthDate;
     private String address;
@@ -55,5 +40,8 @@ public class MemberCreateDTO {
     private String relationship;
     private Status status;
     private LocalDate acceptanceDate;
+    private List<Integer> inChargeOf;
     private List<EmergencyContactDTO> emergencyContacts;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

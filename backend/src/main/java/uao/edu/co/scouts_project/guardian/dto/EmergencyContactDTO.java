@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.member.dto;
+package uao.edu.co.scouts_project.guardian.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,13 +1,14 @@
-package uao.edu.co.scouts_project.member.service;
+package uao.edu.co.scouts_project.guardian.service;
 
-import uao.edu.co.scouts_project.member.dto.GuardianDTO;
-import uao.edu.co.scouts_project.member.dto.GuardianCreateDTO;
-import uao.edu.co.scouts_project.member.dto.MemberCreateDTO;
-import uao.edu.co.scouts_project.member.dto.MemberResponseDTO;
-import uao.edu.co.scouts_project.member.dto.MemberSummaryDTO;
 import java.util.List;
 
-public interface MemberService {
+import uao.edu.co.scouts_project.guardian.dto.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.GuardianDTO;
+import uao.edu.co.scouts_project.guardian.dto.MemberCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.MemberResponseDTO;
+import uao.edu.co.scouts_project.guardian.dto.MemberSummaryDTO;
+
+public interface GuardianService {
     // Métodos generales para Member
     List<MemberResponseDTO> findAll();
     MemberResponseDTO findMemberById(String id);

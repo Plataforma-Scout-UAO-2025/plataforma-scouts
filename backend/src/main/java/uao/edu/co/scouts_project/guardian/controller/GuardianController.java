@@ -1,24 +1,24 @@
-package uao.edu.co.scouts_project.member.controller;
+package uao.edu.co.scouts_project.guardian.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import uao.edu.co.scouts_project.member.dto.MemberCreateDTO;
-import uao.edu.co.scouts_project.member.dto.MemberResponseDTO;
-import uao.edu.co.scouts_project.member.dto.GuardianDTO;
-import uao.edu.co.scouts_project.member.dto.GuardianCreateDTO;
-import uao.edu.co.scouts_project.member.dto.MemberSummaryDTO;
-import uao.edu.co.scouts_project.member.service.MemberService;
+import uao.edu.co.scouts_project.guardian.dto.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.GuardianDTO;
+import uao.edu.co.scouts_project.guardian.dto.MemberCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.MemberResponseDTO;
+import uao.edu.co.scouts_project.guardian.dto.MemberSummaryDTO;
+import uao.edu.co.scouts_project.guardian.service.GuardianService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/members")
-public class MemberController {
-    private final MemberService memberService;
+public class GuardianController {
+    private final GuardianService memberService;
 
-    public MemberController(MemberService memberService) {
+    public GuardianController(GuardianService memberService) {
         this.memberService = memberService;
     }
     // ======= ENDPOINTS PARA MEMBER =======

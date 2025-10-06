@@ -1,12 +1,11 @@
-package uao.edu.co.scouts_project.member.dto;
+package uao.edu.co.scouts_project.guardian.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.member.shared.enums.Status;
-
+import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.guardian.shared.enums.Status;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;

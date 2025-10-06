@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.member.model;
+package uao.edu.co.scouts_project.guardian.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

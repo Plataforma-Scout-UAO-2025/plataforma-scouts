@@ -1,13 +1,14 @@
-package uao.edu.co.scouts_project.member.service;
+package uao.edu.co.scouts_project.guardian.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uao.edu.co.scouts_project.member.dto.*;
-import uao.edu.co.scouts_project.member.model.Member;
-import uao.edu.co.scouts_project.member.repository.MemberRepository;
+
+import uao.edu.co.scouts_project.guardian.dto.*;
+import uao.edu.co.scouts_project.guardian.model.Member;
+import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
 import uao.edu.co.scouts_project.organigram.Subgroup;
 
 import java.util.List;
@@ -16,12 +17,12 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class MemberServiceImpl implements MemberService {
+public class GuardianServiceImpl implements GuardianService {
 
-    private static final Logger logger = LoggerFactory.getLogger(MemberServiceImpl.class);
-    private final MemberRepository memberRepository;
+    private static final Logger logger = LoggerFactory.getLogger(GuardianServiceImpl.class);
+    private final GuardianRepository memberRepository;
 
-    public MemberServiceImpl(MemberRepository memberRepository) {
+    public GuardianServiceImpl(GuardianRepository memberRepository) {
         this.memberRepository = memberRepository;
     }
 
