@@ -137,6 +137,57 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     }
   }, [tenantSlug, groupSlug, loadRamas, showSuccess, handleError]);
 
+  // =====================================================
+  // Acciones de galería para Secciones (Ramas)
+  // =====================================================
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+
+  const addGalleryImage = useCallback(async (sectionId: string, file: File) => {
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
+    setIsLoadingGallery(true);
+    try {
+      await organigramaService.addGalleryImage(tenantSlug, groupSlug, sectionId, file);
+      await loadRamas();
+      showSuccessLocal('Imagen agregada a la galería');
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
+
+  const replaceGalleryImage = useCallback(async (sectionId: string, targetUuid: string, newFile: File) => {
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
+    setIsLoadingGallery(true);
+    try {
+      await organigramaService.replaceGalleryImage(tenantSlug, groupSlug, sectionId, targetUuid, newFile);
+      await loadRamas();
+      showSuccessLocal('Imagen de galería reemplazada');
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
+
+  const removeGalleryImage = useCallback(async (sectionId: string, targetUuidOrUrl: string, deleteFromStorage = false) => {
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
+    setIsLoadingGallery(true);
+    try {
+      // deleteGalleryImageById acepta UUID o URL (extrae UUID internamente)
+      await organigramaService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, targetUuidOrUrl, deleteFromStorage);
+      await loadRamas();
+      showSuccessLocal('Imagen eliminada de la galería');
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
+
   return {
     createRama,
     updateRama,
@@ -147,6 +198,11 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     successOpen,
     successMessage,
     closeSuccess,
+    // gallery actions
+    addGalleryImage,
+    replaceGalleryImage,
+    removeGalleryImage,
+    isLoadingGallery,
   };
 }
 

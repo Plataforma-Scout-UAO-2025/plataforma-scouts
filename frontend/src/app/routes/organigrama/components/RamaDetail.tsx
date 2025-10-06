@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,7 +7,9 @@ import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
-import { extractObjectIdFromUrl } from "../services";
+import { apiClient } from "../services/apiClient";
+import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
+import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 import FotoModal from "../components/FotoModal";
@@ -33,6 +35,62 @@ export default function RamaDetail() {
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [galleryLocalPreviews, setGalleryLocalPreviews] = useState<string[]>([]);
   const uploadControllerRef = useRef<AbortController | null>(null);
+  // fetchRama necesita estar disponible para las acciones; lo definimos con useCallback
+  const fetchRama = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (!id) return;
+      const data = await organigramaService.getRamaById(tenantSlug, groupSlug, String(id));
+      if (data) {
+        setRama(data as Rama);
+        setImagenPrincipal(getMainImageUrl(data as Rama));
+  let galleryUrls = ((data as unknown as Record<string, unknown>)?.['gallery'] ? ((data as unknown as Record<string, unknown>)['gallery'] as Array<Record<string, unknown>>).map(g => String(g.url)) : (data as unknown as Record<string, unknown>)['galleryObjectUrls'] ?? []) as string[];
+        // If mapper didn't provide gallery URLs, try fetching raw backend record as fallback
+        if (galleryUrls.length === 0) {
+          try {
+            const endpoint = `/api/v1/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+            console.log('🔎 [RamaDetail] galleryUrls empty; fetching backend raw endpoint as fallback:', endpoint);
+            const backendRec = await apiClient.get<Record<string, unknown>>(endpoint);
+            if (backendRec) {
+              const fromBackendGallery = (backendRec['gallery'] as unknown[] | undefined) ?? [];
+              if (Array.isArray(fromBackendGallery) && fromBackendGallery.length > 0) {
+                galleryUrls = (fromBackendGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean);
+                console.log('🔎 [RamaDetail] galleryUrls recuperadas desde backend.gallery:', galleryUrls.length);
+              } else {
+                const maybeUrls = (backendRec['galleryObjectUrls'] as string[] | undefined) ?? (backendRec['galleryObjectIds'] as string[] | undefined) ?? (backendRec['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+                if (Array.isArray(maybeUrls) && maybeUrls.length > 0) {
+                  galleryUrls = maybeUrls.map(String).filter(Boolean);
+                  console.log('🔎 [RamaDetail] galleryUrls recuperadas desde backend aliases:', galleryUrls.length);
+                }
+              }
+            }
+          } catch (err) {
+            console.warn('⚠️ [RamaDetail] Fallback GET backend para galería falló:', err);
+          }
+        }
+
+        setGaleriaFotos(galleryUrls);
+        console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
+        console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
+      }
+    } catch (err) {
+      console.error('❌ [RamaDetail] Error cargando rama:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, tenantSlug, groupSlug]);
+
+  // Hook de acciones (incluye acciones de galería)
+  const { addGalleryImage, replaceGalleryImage, removeGalleryImage, isLoadingGallery } = useOrganigramaActions({
+    tenantSlug,
+    groupSlug,
+    // loadRamas: en este componente recargamos la rama actual
+    loadRamas: fetchRama,
+    handleError: (err: unknown) => {
+      console.error('Error en acción de organigrama:', err);
+      toast.error('Error en operación de organigrama');
+    }
+  });
   // Helpers to safely read legacy alias fields from objects
   const getLegacyString = (obj: unknown, key: string): string | undefined => {
     if (!obj) return undefined;
@@ -56,6 +114,7 @@ export default function RamaDetail() {
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
   const [fotoTipo, setFotoTipo] = useState<"icono" | "principal" | "galeria" | null>(null);
   const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
+  const [galeriaObjetivoId, setGaleriaObjetivoId] = useState<string | null>(null);
 
   // Abrir modal según tipo de imagen
   const openIconModal = () => {
@@ -78,6 +137,13 @@ export default function RamaDetail() {
     setFotoTipo("galeria");
     setFotoSeleccionada(url);
     setGaleriaObjetivo(url);
+    // Try to resolve the gallery object's id (gallery[].id) from rama.gallery if available
+    const maybeUuidInUrl = extractObjectIdFromUrl(url);
+    const galleryItems = rama?.gallery ?? [];
+    const galleryObj = maybeUuidInUrl
+      ? galleryItems.find((item) => item.url.includes(maybeUuidInUrl))
+      : undefined;
+    setGaleriaObjetivoId(galleryObj?.id ?? null);
     setFotoModalOpen(true);
   };
 
@@ -90,8 +156,8 @@ export default function RamaDetail() {
       setCurrentUploadingFile(file.name);
       // Crear un AbortController por cada operación de reemplazo
       if (uploadControllerRef.current) {
-        try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
-      }
+          try { uploadControllerRef.current.abort(); } catch (_err) { console.warn('Could not abort previous upload controller', _err); }
+        }
       const controller = new AbortController();
       uploadControllerRef.current = controller;
   if (fotoTipo === "icono") {
@@ -117,24 +183,35 @@ export default function RamaDetail() {
           }
         }, controller.signal);
       } else if (fotoTipo === "galeria") {
-        // para reemplazos de galería también pasamos la señal si el servicio lo soporta
-        const targetUuid = extractObjectIdFromUrl(galeriaObjetivo);
-        if (!targetUuid) {
-          toast.error("No se pudo obtener el UUID de la imagen seleccionada");
-          return;
+        // para reemplazos de galería preferimos usar el gallery[].id (galeriaObjetivoId)
+        let targetId = galeriaObjetivoId ?? null;
+        if (!targetId) {
+          try {
+            const resolved = await resolveGalleryItem(
+              tenantSlug,
+              groupSlug,
+              String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id),
+              galeriaObjetivo
+            );
+            if (resolved?.id) {
+              targetId = resolved.id;
+              setGaleriaObjetivoId(resolved.id);
+            }
+          } catch (_err) {
+            console.error('❌ [RamaDetail] Error resolviendo id para reemplazo de galería:', _err);
+          }
         }
 
-        console.log("🎯 UUID extraído para reemplazo:", targetUuid);
-
-  const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
-        await organigramaService.replaceGalleryImage(
-          tenantSlug,
-          groupSlug,
-          sectionId,
-          targetUuid,
-          file,
-          controller.signal
-        );
+        const targetIdOrUuid = targetId ?? extractObjectIdFromUrl(galeriaObjetivo);
+        const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
+        if (!targetIdOrUuid) {
+          toast.error("No se pudo obtener el identificador de la imagen seleccionada");
+          return;
+        }
+        if (!targetId) {
+          console.warn('⚠️ [RamaDetail] Usando UUID extraído de la URL como fallback para reemplazo:', targetIdOrUuid);
+        }
+        await replaceGalleryImage(sectionId, targetIdOrUuid, file);
       }
 
       toast.success("Foto actualizada correctamente");
@@ -189,12 +266,21 @@ export default function RamaDetail() {
         await organigramaService.removeSectionMainImage(tenantSlug, groupSlug, sectionId);
       } else if (fotoTipo === "galeria") {
         const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
-        await organigramaService.removeGalleryImage(
-          tenantSlug,
-          groupSlug,
-          sectionId,
-          galeriaObjetivo
-        );
+        let resolvedObjectId = galeriaObjetivoId ?? null;
+        if (!resolvedObjectId) {
+          try {
+            const resolved = await resolveGalleryItem(tenantSlug, groupSlug, sectionId, galeriaObjetivo);
+            if (resolved?.id) {
+              resolvedObjectId = resolved.id;
+              setGaleriaObjetivoId(resolved.id);
+            }
+          } catch (_err) {
+            console.error('❌ [RamaDetail] Error resolviendo id para eliminación de galería:', _err);
+          }
+        }
+
+        const finalTarget = resolvedObjectId ?? galeriaObjetivo;
+        await removeGalleryImage(sectionId, finalTarget, false);
       }
 
       toast.success("Foto eliminada correctamente");
@@ -296,7 +382,7 @@ export default function RamaDetail() {
       setIconPreview(previousIcon);
       toast.error('Error subiendo el ícono');
     } finally {
-      try { URL.revokeObjectURL(preview); } catch (e) { console.warn('Could not revoke object URL for icon preview', e); }
+  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for icon preview', _err); }
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -353,7 +439,7 @@ export default function RamaDetail() {
       setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
     } finally {
-      try { URL.revokeObjectURL(preview); } catch (e) { console.warn('Could not revoke object URL for main image preview', e); }
+  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for main image preview', _err); }
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -376,30 +462,11 @@ export default function RamaDetail() {
       setGalleryLocalPreviews(prev => [...prev, ...previews]);
       setGaleriaFotos(prev => [...prev, ...previews]);
 
-      // Subir las imágenes usando el nuevo sistema (con progreso individual y global)
-  await organigramaService.uploadGalleryImages(
-  tenantSlug,
-  groupSlug,
-  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
-        files,
-        (fileName: string, percent: number) => {
-          setCurrentUploadingFile(fileName);
-          const display = percent >= 100 ? 99 : Math.floor(percent);
-          setUploadPercent(display);
-          if (percent >= 100 && !uploadCompleteAnnounced) {
-            setUploadCompleteAnnounced(true);
-            toast('Subida completada. Procesando en servidor...');
-          }
-        },
-        (overallPercent: number) => {
-          const display = overallPercent >= 100 ? 99 : Math.floor(overallPercent);
-          setUploadPercent(display);
-          if (overallPercent >= 100 && !uploadCompleteAnnounced) {
-            setUploadCompleteAnnounced(true);
-            toast('Subida completada. Procesando en servidor...');
-          }
-        }
-      );
+      // Subir las imágenes usando las acciones del hook (uno a uno)
+      const sectionId = String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id);
+      for (const f of files) {
+        await addGalleryImage(sectionId, f);
+      }
 
       // Refrescar todos los datos de la rama para obtener la galería actualizada
       console.log('🔄 [RamaDetail] Refrescando datos de la rama después de subir galería...');
@@ -414,7 +481,7 @@ export default function RamaDetail() {
 
       // revocar previews locales
       for (const p of previews) {
-        try { URL.revokeObjectURL(p); } catch (e) { console.warn('Could not revoke object URL for gallery preview', e); }
+  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview', _err); }
       }
       setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
@@ -423,7 +490,7 @@ export default function RamaDetail() {
       const addedPreviews = galleryLocalPreviews.slice(-files.length);
       setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
       for (const p of addedPreviews) {
-        try { URL.revokeObjectURL(p); } catch (e) { console.warn('Could not revoke object URL for gallery preview (error case)', e); }
+  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview (error case)', _err); }
       }
       setGalleryLocalPreviews(prev => prev.slice(0, -files.length));
       toast.error('Error subiendo la galería');
@@ -435,41 +502,49 @@ export default function RamaDetail() {
     }
   };
 
-  const fetchRama = async () => {
-    try {
-      if (!id) return;
-      const data = await organigramaService.getRamaById(tenantSlug, groupSlug, id);
-      if (data) {
-        setRama(data);
-        
-        console.log('🔍 [RamaDetail] Datos completos de la rama:', {
-          id: data.id,
-          nombre: data.nombre,
-          imagenPrincipal: data.imagenPrincipal,
-          sectionGalleryObjectIds: data.sectionGalleryObjectIds
-        });
-        
-        // Cargar imagen principal existente
-        const mainImageUrl = getMainImageUrl(data);
-        setImagenPrincipal(mainImageUrl);
-        
-        // Cargar imágenes de galería desde el backend
-        const galleryUrls = data.sectionGalleryObjectIds || [];
-        setGaleriaFotos(galleryUrls);
-        
-        console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
-        console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
-      }
-    } catch (err) {
-      console.error('❌ [RamaDetail] Error cargando rama:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchRama = async () => {
+      try {
+        if (!id) return;
+        const data = await organigramaService.getRamaById(tenantSlug, groupSlug, String(id));
+        if (data) {
+          setRama(data as Rama);
+          setImagenPrincipal(getMainImageUrl(data as Rama));
+          // Intentar extraer URLs de galería desde varias fuentes posibles que el mapper/backend puede usar
+          const rec = data as unknown as Record<string, unknown>;
+          let galleryUrls: string[] = [];
+          if (Array.isArray(rec['gallery']) && (rec['gallery'] as unknown[]).length > 0) {
+            try {
+              galleryUrls = (rec['gallery'] as Array<Record<string, unknown>>).map(g => String(g.url)).filter(u => !!u);
+              console.log('📌 [RamaDetail] Extrayendo gallery.urls desde rec["gallery"]');
+            } catch {
+              galleryUrls = [];
+            }
+          }
+          // Fallbacks: galleryObjectUrls, galleryObjectIds, sectionGalleryObjectIds
+          if (galleryUrls.length === 0) {
+            const maybe1 = (rec['galleryObjectUrls'] ?? rec['galleryObjectIds'] ?? rec['galleryObjectIds'] ?? rec['sectionGalleryObjectIds'] ?? []) as string[];
+            if (Array.isArray(maybe1) && maybe1.length > 0) {
+              galleryUrls = maybe1.map(String).filter(u => !!u);
+              console.log('📌 [RamaDetail] Extrayendo galleryUrls desde alias:', Object.keys(rec).filter(k=>k.toLowerCase().includes('gallery')));
+            }
+          }
+
+          setGaleriaFotos(galleryUrls);
+          // Log para diagnóstico
+          console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
+          console.log('📸 [RamaDetail] URLs de galería del backend (resueltas):', galleryUrls);
+        }
+      } catch (_err) {
+        console.error('❌ [RamaDetail] Error cargando rama:', _err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchRama();
   }, [id, tenantSlug, groupSlug]);
+
 
   if (loading) return <p className="text-center mt-6 text-muted-foreground">Cargando detalles...</p>;
   if (!rama) return (
@@ -596,6 +671,9 @@ export default function RamaDetail() {
           <Button size="sm" variant="outline" onClick={handleGalleryClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Fotos <Upload className="w-4 h-4"/></Button>
         </div>
         <div className="grid grid-cols-3 gap-2">
+          {isLoadingGallery && (
+            <div className="col-span-3 text-center text-sm text-muted-foreground">Actualizando galería...</div>
+          )}
           {galeriaFotos.map((src, idx) => (
             <div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}>
               <img
@@ -610,7 +688,11 @@ export default function RamaDetail() {
       </Card>
       <FotoModal
         open={fotoModalOpen}
-        onClose={() => setFotoModalOpen(false)}
+        onClose={() => {
+          setFotoModalOpen(false);
+          setGaleriaObjetivo("");
+          setGaleriaObjetivoId(null);
+        }}
         titulo={
           fotoTipo === "icono"
             ? `Ícono de ${rama?.nombre ?? ""}`

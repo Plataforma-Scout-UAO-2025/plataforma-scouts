@@ -57,7 +57,7 @@ export default function FotoModal({
   const handleDelete = async () => {
     setIsProcessing(true);
     try {
-      await onDelete();
+      await onDelete?.();
       setPreview(null);
       onClose();
     } catch (err) {
@@ -103,7 +103,7 @@ export default function FotoModal({
           )}
         </div>
         
-  <DialogFooter className="flex justify-between items-center pt-4">
+        <DialogFooter className="flex justify-between items-center pt-4">
           <Button variant="outline" onClick={() => { if (onCancelUpload) { onCancelUpload(); } onClose(); }}>
             Cancelar
           </Button>
