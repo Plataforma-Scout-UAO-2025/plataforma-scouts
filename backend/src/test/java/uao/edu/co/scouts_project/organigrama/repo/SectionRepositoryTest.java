@@ -1,7 +1,5 @@
 package uao.edu.co.scouts_project.organigrama.repo;
 
-import uao.edu.co.scouts_project.organigrama.domain.Section;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import uao.edu.co.scouts_project.organigrama.model.Section;
+import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
 
 import java.time.Instant;
 import java.util.List;

@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.organigrama.api;
 
+import uao.edu.co.scouts_project.organigrama.controller.TenantController;
 import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
 import uao.edu.co.scouts_project.organigrama.service.TenantService;
 

@@ -3,13 +3,14 @@ package uao.edu.co.scouts_project.organigrama.service;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uao.edu.co.scouts_project.organigrama.domain.*;
+
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
-import uao.edu.co.scouts_project.organigrama.repo.GroupRepository;
-import uao.edu.co.scouts_project.organigrama.repo.SectionRepository;
-import uao.edu.co.scouts_project.organigrama.repo.SubgroupRepository;
-import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
+import uao.edu.co.scouts_project.organigrama.model.*;
+import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
+import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
+import uao.edu.co.scouts_project.organigrama.repository.SubgroupRepository;
+import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import java.time.Instant;

@@ -12,6 +12,8 @@ import static org.mockito.ArgumentMatchers.any;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import uao.edu.co.scouts_project.organigrama.controller.SectionController;
 import uao.edu.co.scouts_project.organigrama.dto.SectionDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
 import uao.edu.co.scouts_project.organigrama.service.SectionService;

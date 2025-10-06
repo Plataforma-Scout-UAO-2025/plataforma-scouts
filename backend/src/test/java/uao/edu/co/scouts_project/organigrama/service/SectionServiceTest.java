@@ -8,14 +8,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uao.edu.co.scouts_project.organigrama.domain.Group;
-import uao.edu.co.scouts_project.organigrama.domain.Section;
-import uao.edu.co.scouts_project.organigrama.domain.Tenant;
+
 import uao.edu.co.scouts_project.organigrama.dto.SectionDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
-import uao.edu.co.scouts_project.organigrama.repo.GroupRepository;
-import uao.edu.co.scouts_project.organigrama.repo.SectionRepository;
-import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
+import uao.edu.co.scouts_project.organigrama.model.Group;
+import uao.edu.co.scouts_project.organigrama.model.Section;
+import uao.edu.co.scouts_project.organigrama.model.Tenant;
+import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
+import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
+import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import java.time.Instant;
