@@ -1,8 +1,8 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
-import uao.edu.co.scouts_project.organigrama.domain.Tenant;
 import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
-import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
+import uao.edu.co.scouts_project.organigrama.model.Tenant;
+import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

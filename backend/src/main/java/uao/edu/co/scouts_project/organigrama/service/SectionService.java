@@ -3,18 +3,18 @@ package uao.edu.co.scouts_project.organigrama.service;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uao.edu.co.scouts_project.organigrama.domain.Group;
-import uao.edu.co.scouts_project.organigrama.domain.Section;
-import uao.edu.co.scouts_project.organigrama.domain.Tenant;
+
 import uao.edu.co.scouts_project.organigrama.dto.SectionDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
-import uao.edu.co.scouts_project.organigrama.repo.GroupRepository;
-import uao.edu.co.scouts_project.organigrama.repo.SectionRepository;
-import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
-import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
+import uao.edu.co.scouts_project.organigrama.model.Group;
+import uao.edu.co.scouts_project.organigrama.model.Section;
+import uao.edu.co.scouts_project.organigrama.model.Tenant;
+import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
+import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
+import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.organigrama.domain;
+package uao.edu.co.scouts_project.organigrama.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

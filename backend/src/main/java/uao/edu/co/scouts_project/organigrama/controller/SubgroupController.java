@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.organigrama.api;
+package uao.edu.co.scouts_project.organigrama.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

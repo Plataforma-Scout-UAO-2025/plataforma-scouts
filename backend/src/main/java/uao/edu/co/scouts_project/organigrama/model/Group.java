@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.organigrama.domain;
+package uao.edu.co.scouts_project.organigrama.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -6,7 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.HashMap;
