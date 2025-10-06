@@ -78,16 +78,16 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO reader;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO reader;
 
 ----------------------------------------------------------------------
--- API_USER ROLE GRANTS (APPLICATION CRUD ACCESS)
+-- API_USER ROLE GRANTS (APPLICATION CRUD ACCESS - NO DELETE)
 ----------------------------------------------------------------------
 
--- Grants for api_user (data manipulation only, no schema changes)
+-- Grants for api_user (SELECT, INSERT, UPDATE only - no DELETE or schema changes)
 GRANT USAGE ON SCHEMA public TO api_user;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO api_user;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO api_user;
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO api_user;
 
 -- Default Privileges for api_user (future tables and sequences)
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO api_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO api_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO api_user;
 
 ----------------------------------------------------------------------
