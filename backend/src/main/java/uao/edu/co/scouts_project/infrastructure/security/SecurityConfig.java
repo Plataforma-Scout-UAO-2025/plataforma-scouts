@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.*;
 
 @Configuration
 @EnableWebSecurity
@@ -27,15 +28,49 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
 
-                        .requestMatchers("/api/public").permitAll()
-                        .requestMatchers("/api/v1/mock/scouts/list").hasAuthority("SCOPE_read:scouts-list")
-                        .requestMatchers("/api/v1/mock/scouts/add/member").hasAuthority("SCOPE_write:scout-member")
-                        .requestMatchers("/api/v1/mock/scouts/member").hasAuthority("SCOPE_read:scout-member")
+                        .requestMatchers("/api/v1/mock/scouts/list").hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
+                        .requestMatchers("/api/v1/mock/scouts/add/member").hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/mock/scouts/member").hasAnyRole(DEV_SUPPORT.name())
+
+                        // Organigrama
+
+
+
+
+                        //
+                        // Datos básicos de miembros
+
+
+
+
+                        //
+                        // Acudientes
+
+
+
+
+                        //
+                        // Datos médicos
+
+
+
+
+                        //
+                        // Pagos
+
+
+
+
+                        //
+                        // Planes de adelanto
+
+
+
+
+                        //
+                        .anyRequest().permitAll()
+
                 )
                 .cors(withDefaults())
                 .oauth2ResourceServer(oauth2 -> oauth2

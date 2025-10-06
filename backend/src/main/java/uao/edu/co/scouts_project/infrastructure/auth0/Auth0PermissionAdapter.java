@@ -1,21 +1,23 @@
 package uao.edu.co.scouts_project.infrastructure.auth0;
 
-import com.auth0.client.mgmt.ManagementAPI;
-import com.auth0.exception.Auth0Exception;
-import com.auth0.json.mgmt.Permission;
-import com.auth0.json.mgmt.Role;
-import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
-import uao.edu.co.scouts_project.domain.service.PermissionNormalizer;
-import uao.edu.co.scouts_project.infrastructure.cache.PermissionCache;
-import uao.edu.co.scouts_project.infrastructure.cache.PermissionCacheMetrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import com.auth0.client.mgmt.ManagementAPI;
+import com.auth0.exception.Auth0Exception;
+import com.auth0.json.mgmt.Permission;
+import com.auth0.json.mgmt.Role;
+
+import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
+import uao.edu.co.scouts_project.domain.service.PermissionNormalizer;
+import uao.edu.co.scouts_project.infrastructure.cache.PermissionCache;
+import uao.edu.co.scouts_project.infrastructure.cache.PermissionCacheMetrics;
 
 /**
  * Adaptador Auth0 que implementa el puerto PermissionQueryPort usando un caché externo (PermissionCache).
