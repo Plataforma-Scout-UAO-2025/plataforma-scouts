@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+// Plus icon no usado porque el botón de crear rama se removió
+// import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 // Select de año eliminado temporalmente por requerimiento del stakeholder.
 // Si se requiere restaurarlo más adelante, descomentar la importación y el bloque JSX correspondiente.
@@ -11,7 +12,8 @@ import { Button } from '@/components/ui/button';
 //   SelectValue,
 // } from '@/components/ui/select';
 import RamaList from './components/RamaList';
-import CreateRamaModal from './components/CreateRamaModal';
+// CreateRamaModal importada pero no usada porque la creación de ramas fue deshabilitada
+// import CreateRamaModal from './components/CreateRamaModal';
 import CreateSubramaModal from './components/CreateSubramaModal';
 import EditRamaModal from './components/EditRamaModal';
 import EditSubramaModal from './components/EditSubramaModal';
@@ -22,7 +24,7 @@ import OrganigramaLoader from './components/OrganigramaLoader';
 import type {
   Branch as Rama,
   Subgroup as Subrama,
-  CreateBranchData as CreateRamaData,
+  // CreateBranchData as CreateRamaData, (no usado - creación de ramas deshabilitada)
   CreateSubgroupData,
   UpdateBranchData,
   UpdateSubgroupData,
@@ -41,7 +43,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export default function Organigrama() {
-  const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
+  // Creación de rama deshabilitada: ramas fijas según requerimiento del stakeholder.
+  // const [createRamaModalOpen, setCreateRamaModalOpen] = useState(false);
   const [createSubramaModalOpen, setCreateSubramaModalOpen] = useState(false);
   const [editRamaModalOpen, setEditRamaModalOpen] = useState(false);
   const [editSubramaModalOpen, setEditSubramaModalOpen] = useState(false);
@@ -70,7 +73,7 @@ export default function Organigrama() {
   const { error, handleError, clearError } = useApiError();
 
   const {
-    createRama,
+    // createRama, (creación de ramas deshabilitada)
     updateRama,
     createSubrama,
     updateSubrama,
@@ -84,9 +87,10 @@ export default function Organigrama() {
   const { exportPDF, exportExcel } = useOrganigramaExport(ramas, selectedYear);
 
   // ====== RAMAS ======
-  const handleCreateRama = async (data: CreateRamaData) => {
-    return createRama(data);
-  };
+  // Funcionalidad de creación de rama deshabilitada (ramas fijas).
+  // const handleCreateRama = async (data: CreateRamaData) => {
+  //   return createRama(data);
+  // };
 
   const handleEditRama = (rama: Rama) => {
     setRamaSeleccionada(rama);
@@ -201,9 +205,7 @@ export default function Organigrama() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button onClick={() => setCreateRamaModalOpen(true)} disabled={isLoading} aria-busy={isLoading}>
-            <Plus className="h-4 w-4 mr-2" /> Crear Nueva Rama
-          </Button>
+          {/* Botón de crear nueva rama removido: ramas fijas según stakeholder. */}
         </div>
       </div>
 
@@ -244,7 +246,8 @@ export default function Organigrama() {
       )}
 
       {/* Modales */}
-      <CreateRamaModal open={createRamaModalOpen} onOpenChange={setCreateRamaModalOpen} onSubmit={handleCreateRama} onSuccess={loadRamas} />
+  {/* CreateRamaModal deshabilitado porque la creación de ramas fue removida */}
+  {/* <CreateRamaModal open={createRamaModalOpen} onOpenChange={setCreateRamaModalOpen} onSubmit={handleCreateRama} onSuccess={loadRamas} /> */}
 
       <CreateSubramaModal open={createSubramaModalOpen} onOpenChange={setCreateSubramaModalOpen} ramaId={selectedRamaId} onSubmit={handleSubmitSubrama} />
 
