@@ -9,13 +9,13 @@ import org.hibernate.annotations.Immutable;
 public class MemberView {
 
   @Id
-  @Column(name = "user_id") 
-  private String userId;
+  @Column(name = "member_id", nullable = false, columnDefinition = "text")
+  private Long memberId;
 
-  @Column(name = "first_name")
+  @Column(name = "first_name", nullable = false, columnDefinition = "text")
   private String firstName;
 
-  @Column(name = "last_name")
+  @Column(name = "last_name", nullable = false, columnDefinition = "text")
   private String lastName;
 
   @Column(name = "age")
@@ -24,14 +24,14 @@ public class MemberView {
   @Column(name = "subgroup_id")
   private Long subgroup;
 
-  @Column(name = "tenant_id")
-  private String tenantId;
+  @Column(name = "tenant_id", nullable = false, columnDefinition = "text")
+  private String tenantId;  
 
   // JPA necesita ctor por defecto (al menos protected)
   protected MemberView() {}
 
   // getters
-  public String getUserId() { return userId; }
+  public Long getMemberId() { return memberId; }
   public String getFirstName() { return firstName; }
   public String getLastName() { return lastName; }
   public Integer getAge() { return age; }

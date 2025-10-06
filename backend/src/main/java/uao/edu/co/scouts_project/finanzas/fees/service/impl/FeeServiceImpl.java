@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import uao.edu.co.scouts_project.finanzas.fees.dto.CreateCuotaDto;
 import uao.edu.co.scouts_project.finanzas.fees.dto.CuotaDto;
@@ -101,21 +103,30 @@ public class FeeServiceImpl implements IFeeService {
     fp.setScope(dto.scope() != null ? dto.scope().name() : null);
     fp.setStartDate(dto.start_date());
     fp.setEndDate(dto.end_date());
-
     fp.setTenantId(tenantId);
 
-    // Tomar associated_to directamente del DTO (enrich opcional del "name" si viene vacío)
     JsonNode associatedTo = dto.associated_to(); // puede ser null en scope=ALL
 
-    // -------- Resolución de targets según scope --------
-    // Para SCOUT/SECTION/SUBGROUP usaremos el id dentro de associated_to
+    // === EXTRAER assocId (para targets) ===
     String assocId = (associatedTo != null && !associatedTo.isNull() && associatedTo.hasNonNull("id"))
         ? associatedTo.get("id").asText()
         : null;
 
+    // -------- Resolución de targets según scope --------
     List<MemberView> targets = switch (dto.scope()) {
+
       case ALL      -> memberRepo.findScoutsByTenant(tenantId);
-      case SCOUT    -> memberRepo.findScoutById(tenantId, assocId);
+
+      case SCOUT    -> {
+        Long scoutId = null;
+        try {
+          scoutId = Long.valueOf(assocId);
+        } catch (NumberFormatException e) {
+          throw new IllegalArgumentException("associated_to.id must be a valid Long for scope=SCOUT");
+        }
+        yield memberRepo.findScoutById(tenantId, scoutId);
+      }
+
       case SECTION  -> {
         Long sectionId = null;
         try {
@@ -140,22 +151,60 @@ public class FeeServiceImpl implements IFeeService {
       throw new IllegalArgumentException("No targets found for the provided associated_to.id / scope.");
     }
 
-    // Si el scope NO es ALL y el "name" no vino, intentamos enriquecerlo (opcional)
-    if (dto.scope() == FeeScope.SCOUT && associatedTo != null &&
-        (!associatedTo.hasNonNull("name") || associatedTo.get("name").asText().isBlank())) {
-      var t = targets.get(0);
-      String fullName = (t.getFirstName() != null ? t.getFirstName() : "")
-          + (t.getLastName() != null ? " " + t.getLastName() : "");
-      com.fasterxml.jackson.databind.node.ObjectNode n =
-          (associatedTo.isObject() ? (com.fasterxml.jackson.databind.node.ObjectNode) associatedTo
-                                  : new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode());
-      n.put("id", assocId);
-      n.put("name", fullName.trim().isEmpty() ? null : fullName.trim());
-      associatedTo = n;
-    }
-    // (Para SECTION/SUBGROUP podrías enriquecer nombre con consultas auxiliares si lo necesitas)
+    // === NORMALIZACIÓN para cumplir el CHECK de BD ===
+    if (dto.scope() == FeeScope.ALL) {
+      // Guardar como NULL de SQL (no 'null'::jsonb)
+      fp.setAssociatedTo(null);
+    } else {
+      // Debe ser objeto con id y name no vacíos
+      if (associatedTo == null || associatedTo.isNull() || !associatedTo.isObject()) {
+        throw new IllegalArgumentException("associated_to must be a JSON object when scope=" + dto.scope());
+      }
+      ObjectNode obj = (ObjectNode) associatedTo;
 
-    fp.setAssociatedTo(associatedTo);
+      String idVal = obj.hasNonNull("id") ? obj.get("id").asText() : null;
+      String nameVal = obj.hasNonNull("name") ? obj.get("name").asText() : null;
+
+      if (idVal == null || idVal.isBlank()) {
+        throw new IllegalArgumentException("associated_to.id is required and non-empty");
+      }
+
+      // Si falta name, lo intentamos enriquecer con el primer target
+      if (nameVal == null || nameVal.isBlank()) {
+        String resolvedName = null;
+        MemberView t = targets.get(0);
+        switch (dto.scope()) {
+          case SCOUT -> {
+            String first = t.getFirstName() != null ? t.getFirstName() : "";
+            String last  = t.getLastName()  != null ? t.getLastName()  : "";
+            String full  = (first + " " + last).trim();
+            resolvedName = full.isEmpty() ? null : full;
+          }
+          case SECTION -> {
+            try {
+              var m = t.getClass().getMethod("getSectionName");
+              Object val = m.invoke(t);
+              resolvedName = (val != null) ? String.valueOf(val) : null;
+            } catch (Exception ignore) {}
+          }
+          case SUBGROUP -> {
+            try {
+              var m = t.getClass().getMethod("getSubgroupName");
+              Object val = m.invoke(t);
+              resolvedName = (val != null) ? String.valueOf(val) : null;
+            } catch (Exception ignore) {}
+          }
+          case ALL -> { /* no entra aquí */ }
+        }
+        if (resolvedName == null || resolvedName.isBlank()) {
+          throw new IllegalArgumentException("associated_to.name is required and non-empty for scope=" + dto.scope());
+        }
+        obj.put("name", resolvedName);
+      }
+
+      fp.setAssociatedTo(obj); // jsonb válido
+    }
+
     feePlanRepo.save(fp);
 
     // -------- Calendario por periodicidad --------
@@ -163,10 +212,10 @@ public class FeeServiceImpl implements IFeeService {
 
     // -------- Crear installments (amount = valor por cuota) --------
     for (MemberView m : targets) {
-      Account acc = accountRepo.findByUserIdAndActiveTrue(m.getUserId())
+      Account acc = accountRepo.findByMemberIdAndActiveTrue(m.getMemberId())
           .orElseGet(() -> {
             Account a = new Account();
-            a.setUserId(m.getUserId());
+            a.setMemberId(m.getMemberId());
             a.setActive(true);
             a.setTenantId(tenantId);
             return accountRepo.save(a);
@@ -181,6 +230,9 @@ public class FeeServiceImpl implements IFeeService {
             dto.amount()
         );
         inst.setTenantId(tenantId); // propaga tenant al installment
+        inst.setBalance(dto.amount());
+        inst.setStatus("PENDING");
+        inst.setPayments(JsonNodeFactory.instance.arrayNode()); // <-- NO NULL
         toCreate.add(inst);
       }
       installmentRepo.saveAll(toCreate);
@@ -193,6 +245,7 @@ public class FeeServiceImpl implements IFeeService {
     }
     return mapper.toCuotaDto(fp, member);
   }
+
 
   // ---------------------------------------------------------------------
   // GET Listados de Cuotas y miembros separados.

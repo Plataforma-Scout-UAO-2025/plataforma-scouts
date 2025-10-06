@@ -1,7 +1,7 @@
 package uao.edu.co.scouts_project.finanzas.fees.repository.projection;
 
 public interface MemberHierarchyRow {
-  String getUserId();
+  Long getMemberId();
   String getFirstName();
   String getLastName();
   Integer getAge();

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -16,7 +17,7 @@ public class Installment {
   @Column(name = "installment_id")
   private Long installmentId;
 
-  @Column(name = "tenant_id", nullable = false)
+  @Column(name = "tenant_id", nullable = false, columnDefinition = "text")
   private String tenantId; 
 
   @Column(name = "account_id", nullable = false)
@@ -28,18 +29,31 @@ public class Installment {
   @Column(name = "due_date", nullable = false)
   private LocalDate dueDate;
 
-  @Column(name = "amount", nullable = false)
+  @Column(name = "amount", nullable = false, precision = 12, scale = 2)
   private BigDecimal amount;
 
-  @Column(name = "status", nullable = false)
+  @Column(name = "status", nullable = false, columnDefinition = "text")
   private String status = "PENDING"; // PENDING | PARTIAL | PAID | OVERDUE
 
-  @Column(name = "balance", nullable = false)
+  @Column(name = "balance", nullable = false, precision = 12, scale = 2)
   private BigDecimal balance;
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(columnDefinition = "jsonb")
-  private JsonNode payments;
+  @Column(name = "payments", nullable = false, columnDefinition = "jsonb not null default '[]'::jsonb")
+  private JsonNode payments = JsonNodeFactory.instance.arrayNode();  // <-- init
+
+  @PrePersist
+  public void prePersist() {
+    if (payments == null) {
+      payments = JsonNodeFactory.instance.arrayNode();
+    }
+    if (status == null || status.isBlank()) {
+      status = "PENDING";
+    }
+    if (balance == null) {
+      balance = amount; 
+    }
+  }
 
   public Installment() {}
 
@@ -64,4 +78,10 @@ public class Installment {
   public void setStatus(String status) { this.status = status; }
   public void setAmount(BigDecimal amount) { this.amount = amount; }
   public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+  public void setBalance(BigDecimal balance) { this.balance = balance; }
+  public void setInstallmentId(Long installmentId) {this.installmentId = installmentId; }
+  public void setAccountId(Long accountId) {this.accountId = accountId; }
+  public void setConceptId(Long conceptId) {this.conceptId = conceptId; }
+  public void setDueDate(LocalDate dueDate) {this.dueDate = dueDate; }
+  public void setPayments(JsonNode payments) {this.payments = payments; }
 }

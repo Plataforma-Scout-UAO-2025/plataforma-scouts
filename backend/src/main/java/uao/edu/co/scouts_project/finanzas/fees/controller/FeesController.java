@@ -23,8 +23,12 @@ public class FeesController {
   @Operation(summary = "Crear Concept, FeePlan y los installments necesarios segun la periodicidad elegida, para este calculo son obligatorios las fechas inical y final")
   @PostMapping
   public ResponseEntity<CuotaDto> create(@RequestBody CreateCuotaDto body) {
-    CuotaDto created = feeService.create(body);
-    return ResponseEntity.status(201).body(created);
+    try {
+      CuotaDto created = feeService.create(body);
+      return ResponseEntity.status(201).body(created);
+    } catch (IllegalArgumentException ex) {
+    return ResponseEntity.badRequest().build(); 
+  }
   }
 
   // -------- LIST: cuotas por tenant (con associatedTo) ----------

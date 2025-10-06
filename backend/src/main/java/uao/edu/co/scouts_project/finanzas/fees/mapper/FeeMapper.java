@@ -21,7 +21,7 @@ public class FeeMapper {
     public MemberPaymentDto toMemberDto(MemberView v) {
         if (v == null) return null;
         return new MemberPaymentDto(
-            v.getUserId(),     // user_id
+            v.getMemberId(),     // user_id
             v.getFirstName(),    // first_name
             v.getLastName(),     // last_name
             v.getSubgroup(),     // subgroup_id
@@ -39,7 +39,7 @@ public class FeeMapper {
     public MemberPaymentDto toMemberDto(MemberHierarchyRow r) {
         if (r == null) return null;
         return new MemberPaymentDto(
-            r.getUserId(),
+            r.getMemberId(),
             r.getFirstName(),
             r.getLastName(),
             r.getSubgroupId(),

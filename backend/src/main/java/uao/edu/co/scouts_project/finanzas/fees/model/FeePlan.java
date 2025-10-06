@@ -18,11 +18,11 @@ public class FeePlan {
     @Column(name = "fee_plan_id")
     private Long feePlanId;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", nullable = false, columnDefinition = "text")
     private String tenantId; 
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "concept_id", nullable = false)
+    @JoinColumn(name = "concept_id", nullable = false, columnDefinition = "text")
     private Concept concept;
 
     // numeric en DB (sin precision/scale explícito)
@@ -52,6 +52,10 @@ public class FeePlan {
   // getters y setters
   public Long getFeePlanId() {
     return feePlanId;
+  }
+
+  public void setFeePlanId(Long feePlanId) {
+    this.feePlanId = feePlanId;
   }
 
   public Concept getConcept() {

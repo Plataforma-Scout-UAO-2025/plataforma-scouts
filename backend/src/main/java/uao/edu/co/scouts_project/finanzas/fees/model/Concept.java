@@ -6,28 +6,27 @@ import jakarta.persistence.*;
 @Table(name = "concept")
 public class Concept {
 
-  @Id
-  @Column(name = "concept_id")
-  @SequenceGenerator(
-      name = "concept_seq_gen",
-      sequenceName = "concept_concept_id_seq",
-      allocationSize = 1                        
-  )
-  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "concept_seq_gen")
-  private Long conceptId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "concept_id")
+    private Long conceptId;
 
-  @Column(name = "name", nullable = false)
+  @Column(name = "name", nullable = false, columnDefinition = "text")
   private String name;
 
-  @Column(name = "description")
+  @Column(name = "description", nullable = false, columnDefinition = "text")
   private String description;
 
-  @Column(name = "tenant_id")
+  @Column(name = "tenant_id", nullable = false, columnDefinition = "text")
   private String tenantId;
 
   // getters y setters
   public Long getConceptId() {
     return conceptId;
+  }
+
+  public void setConceptId(Long conceptId) {
+    this.conceptId = conceptId;
   }
 
   public String getName() {

@@ -22,9 +22,9 @@ public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
       select * from member m
       where m.tenant_id = :tenantId
         and m.role = 'SCOUT'
-        and m.user_id = :userId
+        and m.member_id = :memberId
       """, nativeQuery = true)
-  List<MemberView> findScoutById(String tenantId, String userId);
+  List<MemberView> findScoutById(String tenantId, Long memberId);
 
   @Query(value = """
       select m.* from member m
@@ -45,7 +45,7 @@ public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
 
     @Query(value = """
       SELECT
-        m.user_id      AS userId,
+        m.member_id      AS memberId,
         m.first_name     AS firstName,
         m.last_name      AS lastName,
         m.age            AS age,
@@ -59,7 +59,7 @@ public interface IMemberReadRepository extends JpaRepository<MemberView, Long> {
       LEFT JOIN section  s  ON s.section_id = sg.section_id
       WHERE m.tenant_id = :tenantId
         AND m.role = 'SCOUT'
-      ORDER BY m.user_id
+      ORDER BY m.member_id
       """, nativeQuery = true)
   List<MemberHierarchyRow> findHierarchyByTenant(@Param("tenantId") String tenantId);
   
