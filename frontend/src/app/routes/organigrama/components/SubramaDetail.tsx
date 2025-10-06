@@ -39,6 +39,7 @@ export default function SubramaDetail() {
   const uploadIntervalRef = useRef<number | null>(null);
   const uploadProgressReceivedRef = useRef<boolean>(false);
   const uploadAnimateRef = useRef<number | null>(null);
+  const previousImagenPrincipalRef = useRef<string | null>(null);
 
   const animatePercentTo = (target: number) => {
     // limpiar cualquier animación previa
@@ -87,8 +88,10 @@ export default function SubramaDetail() {
     if (file && subrama) {
       try {
       console.log('🔄 [SubramaDetail] Subiendo imagen principal:', file.name);
-        const preview = URL.createObjectURL(file);
-        setImagenPrincipal(preview);
+  const preview = URL.createObjectURL(file);
+  // guardar imagen previa para poder revertir si se cancela
+  previousImagenPrincipalRef.current = imagenPrincipal || '';
+  setImagenPrincipal(preview);
 
         // Preparar AbortController y estados de progreso
         if (uploadControllerRef.current) {
@@ -139,6 +142,13 @@ export default function SubramaDetail() {
           },
           controller.signal
         );
+  // Si la operación fue cancelada por la señal, updateSubramaMainImage lanzará
+  // 'UploadCanceled' y caeremos en el catch. Para prevenir races, comprobamos
+  // si el controller fue abortado antes de hacer fetch/patch finalizados.
+  if (uploadControllerRef.current && uploadControllerRef.current.signal.aborted) {
+    console.warn('[SubramaDetail] Upload fue abortado - evitando refresh y restaurando preview si aplica');
+    throw new Error('UploadCanceled');
+  }
 
   // Refrescar datos de la subrama para asegurar sincronización
   console.log('🔄 [SubramaDetail] Refrescando datos de la subrama...');
@@ -165,12 +175,17 @@ export default function SubramaDetail() {
   }
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
-        if ((error as Error).message === 'UploadCanceled') {
+        const msg = (error as any)?.message || '';
+        if (msg === 'UploadCanceled' || msg === 'canceled') {
+          console.debug('[SubramaDetail] upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
+          // NUEVO: dejar el preview actual (blob) visible para simular cancel.
+          // Limpiar referencia previa.
+          previousImagenPrincipalRef.current = null;
         } else {
           toast.error('Error subiendo la imagen principal');
+          setImagenPrincipal('');
         }
-        setImagenPrincipal('');
       } finally {
           try { /* nothing to revoke here - previews are revoked by FotoModal when needed */ } catch { /* ignore */ }
           // limpiar intervalo simulado y animaciones si siguen activos
@@ -245,7 +260,9 @@ export default function SubramaDetail() {
 
     // Si es principal, usar el mismo flujo que el input principal para mostrar progreso
     if (fotoTipo === 'principal') {
-      const preview = URL.createObjectURL(file);
+  const preview = URL.createObjectURL(file);
+  // guardar imagen previa para poder revertir si se cancela
+  previousImagenPrincipalRef.current = imagenPrincipal || '';
       // preparar abort controller
       if (uploadControllerRef.current) {
         try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
@@ -297,6 +314,12 @@ export default function SubramaDetail() {
         );
 
         // refrescar y obtener URL definitiva
+        // Antes de refrescar, verificar si la señal fue abortada (cancel)
+        if (uploadControllerRef.current && uploadControllerRef.current.signal.aborted) {
+          console.warn('[SubramaDetail] modal upload fue abortado - evitando refresh y restaurando preview');
+          throw new Error('UploadCanceled');
+        }
+
         await fetchSubrama();
         try {
           const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, subrama.section_id, subrama.subgroup_id);
@@ -317,12 +340,16 @@ export default function SubramaDetail() {
         setFotoModalOpen(false);
       } catch (error) {
         console.error('❌ [SubramaDetail] Error reemplazando imagen principal desde modal:', error);
-        if ((error as Error).message === 'UploadCanceled') {
+        const msg = (error as any)?.message || '';
+        if (msg === 'UploadCanceled' || msg === 'canceled') {
+          console.debug('[SubramaDetail] modal upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
+          // Mantener preview actual y limpiar referencia previa
+          previousImagenPrincipalRef.current = null;
         } else {
           toast.error('Error actualizando la imagen');
+          setImagenPrincipal('');
         }
-        setImagenPrincipal('');
       } finally {
         try { URL.revokeObjectURL(preview); } catch { /* ignore */ }
         if (uploadIntervalRef.current) { clearInterval(uploadIntervalRef.current); uploadIntervalRef.current = null; }
@@ -367,6 +394,17 @@ export default function SubramaDetail() {
       setUploading(false);
       setUploadPercent(0);
       setCurrentUploadingFile(null);
+      // Revertir preview si existía (logs para diagnóstico)
+      console.debug('[SubramaDetail] handleCancelUpload: previousImagenPrincipalRef=', previousImagenPrincipalRef.current, 'current imagenPrincipal=', imagenPrincipal);
+      // NUEVA LÓGICA: conservar la imagen actual (preview) cuando el usuario
+      // pulsa cancelar. Esto simula la cancelación para el usuario aunque la
+      // operación real quede abortada en segundo plano.
+      // Limpiar la referencia a la imagen previa para evitar futuros reverts.
+      try {
+        previousImagenPrincipalRef.current = null;
+      } catch (err) {
+        console.warn('Error limpiando referencia previa tras cancel:', err);
+      }
     }
   };
 

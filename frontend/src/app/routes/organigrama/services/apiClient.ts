@@ -51,17 +51,24 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
+    // Si la petición fue cancelada por AbortController/Axios, lanzar un
+    // error específico que los handlers de subida (postFormData) esperan.
+    if ((error as any)?.code === 'ERR_CANCELED' || (error as any)?.message === 'canceled') {
+      console.warn(`⚠️ [ApiClient] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Cancelado por el usuario`);
+      throw new Error('UploadCanceled');
+    }
+
     const status = error.response?.status || 0;
     const statusText = error.response?.statusText || 'Network Error';
     const message = `Error ${status}: ${statusText}`;
-    
+
     console.error(`❌ [ApiClient] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Error:`, {
       status,
       statusText,
       message: error.message,
       data: error.response?.data
     });
-    
+
     // Transformar AxiosError a nuestro ApiError personalizado
     throw new ApiError(status, statusText, message);
   }
