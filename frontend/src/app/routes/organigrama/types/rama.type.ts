@@ -13,18 +13,18 @@ export interface Rama {
   edadMinima: number;
   edadMaxima: number;
   año: number;
-  estado: 'activa' | 'inactiva';
+  estado: "activa" | "inactiva";
   fechaCreacion: string;
   subramas: Subrama[];
 }
 
 export interface Subrama {
-  subgroup_id: string; 
+  subgroup_id: string;
   subgroupName: string;
   subgroupDescription?: string;
   subgroupGalleryObjectIds?: string[]; // IDs de imágenes de galería en localStorage
-  section_id: string; 
-  id: string; 
+  section_id: string;
+  id: string;
   nombre: string;
   descripcion?: string;
   icono?: string;
@@ -33,7 +33,7 @@ export interface Subrama {
   imagenPrincipalObjectId?: string; // ID para la imagen principal en localStorage
   ramaId: string;
   lider?: string;
-  estado: 'activa' | 'inactiva';
+  estado: "activa" | "inactiva";
   fechaCreacion: string;
   numeroMiembros: number;
 }
@@ -65,8 +65,6 @@ export interface UpdateSubramaBackendData {
   isActive?: boolean;
 }
 
-<<<<<<< HEAD
-=======
 export interface UpdateSubramaMainImageData {
   objectId: string;
 }
@@ -89,10 +87,13 @@ export interface GalleryRemoveOperation {
 }
 
 export interface GalleryUpdatePayload {
-  operations: (GalleryReplaceOperation | GalleryAddOperation | GalleryRemoveOperation)[];
+  operations: (
+    | GalleryReplaceOperation
+    | GalleryAddOperation
+    | GalleryRemoveOperation
+  )[];
 }
 
->>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 export interface CreateRamaData {
   nombre: string;
   descripcion?: string;
@@ -109,7 +110,7 @@ export interface UpdateRamaData {
   descripcion?: string;
   edadMinima?: number;
   edadMaxima?: number;
-  estado?: 'activa' | 'inactiva';
+  estado?: "activa" | "inactiva";
   iconFile?: File;
   galleryFiles?: File[];
 }
@@ -128,38 +129,26 @@ export interface UpdateSubramaData {
   nombre?: string;
   descripcion?: string;
   lider?: string;
-  estado?: 'activa' | 'inactiva';
+  estado?: "activa" | "inactiva";
   ramaId?: string;
 }
 
 // Tipos para las respuestas del backend
 export interface BackendRama {
-<<<<<<< HEAD
-  sectionId?: string;
-=======
   sectionId?: string | number;
->>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
   section_id?: string;
   id?: string;
   ID?: string;
   Section_ID?: string;
-<<<<<<< HEAD
-=======
   tenantId?: number;
   groupId?: number;
->>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
   name?: string;
   sectionName?: string;
   description?: string;
   sectionDescription?: string;
-<<<<<<< HEAD
-  iconObjectUrl?: string;
-  iconObjectId?: string;
-=======
   iconObjectUrl?: string | null;
   iconObjectId?: string;
   photoPrincipalUrl?: string | null;
->>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
   galleryObjectUrls?: string[];
   galleryObjectIds?: string[];
   sectionGalleryObjectIds?: string[];
@@ -191,8 +180,6 @@ export interface BackendSubrama {
   createdAt?: string;
   memberCount?: number;
   members?: number;
-<<<<<<< HEAD
-=======
   // Campos de imágenes (añadidos)
   iconObjectUrl?: string | null;
   photoPrincipalUrl?: string | null;
@@ -200,5 +187,4 @@ export interface BackendSubrama {
   iconObjectId?: string;
   photoPrincipalObjectId?: string;
   galleryObjectIds?: string[];
->>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
 }
