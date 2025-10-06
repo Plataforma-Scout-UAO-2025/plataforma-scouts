@@ -6,7 +6,8 @@ import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 // ===============================================================
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
   const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
-  return await apiClient.get<any>(endpoint);
+  // Retornamos un record desconocido y el consumidor puede castear a la forma esperada
+  return await apiClient.get<Record<string, unknown> | undefined>(endpoint);
 };
 
 // ===============================================================
@@ -75,9 +76,13 @@ export const getGalleryImageUuids = async (
 
   try {
     const rama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-    if (rama && rama.sectionGalleryObjectIds) {
-      console.log('✅ [GalleryService] UUIDs de galería obtenidos:', rama.sectionGalleryObjectIds);
-      return rama.sectionGalleryObjectIds;
+    // Preferimos la propiedad canónica 'galleryObjectIds' y caemos
+    // a 'sectionGalleryObjectIds' si la primera no existe.
+    const maybe = rama as unknown as Record<string, unknown> | undefined;
+    const uuids: string[] = (maybe?.['galleryObjectIds'] as string[] | undefined) ?? (maybe?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+    if (uuids && uuids.length > 0) {
+      console.log('✅ [GalleryService] UUIDs de galería obtenidos:', uuids);
+      return uuids;
     }
     console.log('ℹ️ [GalleryService] No hay imágenes en la galería');
     return [];

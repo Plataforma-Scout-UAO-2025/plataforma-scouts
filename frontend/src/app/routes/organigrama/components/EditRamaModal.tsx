@@ -13,13 +13,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useApiError } from '../hooks/useApiError';
-import type { Rama, UpdateRamaData } from '../types/rama.type';
+import type { Branch as Rama, UpdateBranchData } from '../types/frontend';
 
 interface EditRamaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   rama: Rama | null;
-  onSubmit: (data: UpdateRamaData) => Promise<void>;
+  // onSubmit expects UpdateBranchData
+  onSubmit: (data: UpdateBranchData) => Promise<void>;
   onSuccess?: () => void; // Callback para refrescar datos
 }
 
@@ -34,26 +35,50 @@ export default function EditRamaModal({
   const [isUploading, setIsUploading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const { error, handleError, clearError } = useApiError();
-  const [formData, setFormData] = useState<UpdateRamaData>({
+  type FormState = Partial<{
+    id: string;
+    name: string;
+    description: string;
+    minAge: number;
+    maxAge: number;
+    statusAlias: string;
+    iconoFile?: File;
+    galleryFiles?: File[];
+    // preview URL (legacy alias kept for local state only)
+    icono?: string;
+  }>;
+
+  const [formData, setFormData] = useState<FormState>({
     id: '',
-    nombre: '',
-    descripcion: '',
-    edadMinima: 0,
-    edadMaxima: 0,
-    estado: 'activa',
+    name: '',
+    description: '',
+    minAge: 0,
+    maxAge: 0,
+    statusAlias: 'activa',
   });
 
   useEffect(() => {
     if (rama) {
-      setFormData({
+      // Leer aliases legacy desde el objeto rama de forma segura
+      const legacy = rama as unknown as Record<string, unknown>;
+      const legacyEdadMinima = legacy['edadMinima'] as number | undefined;
+      const legacyEdadMaxima = legacy['edadMaxima'] as number | undefined;
+      const legacyNombre = (legacy['nombre'] as string | undefined) ?? undefined;
+      const legacyDescripcion = (legacy['descripcion'] as string | undefined) ?? undefined;
+      const legacyIcono = (legacy['icono'] as string | undefined) ?? undefined;
+
+      setFormData((prev) => ({
+        ...prev,
         id: rama.id,
-        nombre: rama.nombre,
-        descripcion: rama.descripcion,
-        edadMinima: rama.edadMinima,
-        edadMaxima: rama.edadMaxima,
-        estado: rama.estado,
-      });
-      if (rama.icono) setImagenUrl(rama.icono);
+        name: legacyNombre ?? rama.name,
+        description: legacyDescripcion ?? rama.description ?? undefined,
+        minAge: rama.minAge ?? legacyEdadMinima ?? 0,
+        maxAge: rama.maxAge ?? legacyEdadMaxima ?? 0,
+        statusAlias: rama.estado ?? (rama.status === 'active' ? 'activa' : 'inactiva'),
+        icono: legacyIcono ?? rama.iconUrl ?? prev.icono,
+      }));
+
+      setImagenUrl(legacyIcono ?? rama.iconUrl ?? null);
     }
   }, [rama]);
 
@@ -65,7 +90,18 @@ export default function EditRamaModal({
     
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      const payload: UpdateBranchData = {
+        id: formData.id as string,
+        name: formData.name ?? undefined,
+        description: formData.description ?? undefined,
+        minAge: formData.minAge ?? undefined,
+        maxAge: formData.maxAge ?? undefined,
+        status: (formData.statusAlias === 'activa') ? 'active' : undefined,
+        iconFile: formData.iconoFile ?? undefined,
+        galleryFiles: formData.galleryFiles ?? undefined,
+      };
+
+      await onSubmit(payload);
       onOpenChange(false);
       
       // Llamar callback de éxito para refrescar datos
@@ -106,10 +142,10 @@ export default function EditRamaModal({
           {/* Nombre de la Rama */}
           <div className="space-y-2">
             <Label htmlFor="nombre" className="text-foreground">Nombre de la Rama</Label>
-              <Input
-                id="nombre"
-                value={formData.nombre || ''}
-                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+        <Input
+          id="nombre"
+          value={formData.name || ''}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 className="w-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary"
                 required
               />
@@ -155,8 +191,7 @@ export default function EditRamaModal({
                     // Para edición sí tenemos rama.id
                     const url = await uploadSectionIcon('', '', rama.id, file);
                     setImagenUrl(url);
-                    setFormData(prev => ({ ...prev, 
-                      icono: url }));
+                    setFormData((prev) => ({ ...prev, icono: url }));
                   } catch (err) {
                     console.error('Error subiendo imagen:', err);
                   } finally {
@@ -172,8 +207,8 @@ export default function EditRamaModal({
             <Label htmlFor="descripcion" className="text-foreground">Descripción</Label>
             <Textarea
               id="descripcion"
-              value={formData.descripcion || ''}
-              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              value={formData.description || ''}
+              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Descripción opcional..."
               className="w-full bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary resize-none"
             />

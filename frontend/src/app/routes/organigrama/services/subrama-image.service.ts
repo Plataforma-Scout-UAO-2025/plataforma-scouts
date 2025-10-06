@@ -49,10 +49,12 @@ export const updateSubramaMainImage = async (
     console.log('✅ Foto principal de subrama actualizada correctamente.');
 
     // 3️⃣ Obtener la subrama actualizada
-    const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
-    if (updatedSubrama?.imagenPrincipal) {
-      console.log('✅ URL actualizada recibida:', updatedSubrama.imagenPrincipal);
-      return updatedSubrama.imagenPrincipal;
+  const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+  // Prefer new english-named properties, fallback to legacy spanish ones
+  const updatedUrl = updatedSubrama?.mainImageUrl ?? updatedSubrama?.imagenPrincipal ?? undefined;
+    if (updatedUrl) {
+      console.log('✅ URL actualizada recibida:', updatedUrl);
+      return updatedUrl;
     }
 
     console.warn('⚠️ No se encontró imagenPrincipal actualizada, usando URL del upload.');
@@ -103,7 +105,9 @@ export const uploadSubramaGalleryImages = async (
 
     // Refrescar la subrama
     const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
-    return updatedSubrama?.subgroupGalleryObjectIds || urls;
+    // Prefer new galleryObjectIds, fallback to legacy subgroupGalleryObjectIds (legacy prop is untyped)
+  const returnedUrls = updatedSubrama?.galleryObjectIds ?? updatedSubrama?.subgroupGalleryObjectIds ?? urls;
+  return returnedUrls;
 
   } catch (error) {
     console.error('❌ Error subiendo galería de subrama:', error);
@@ -175,8 +179,9 @@ export const replaceSubramaGalleryImage = async (
     console.log('✅ Imagen reemplazada correctamente en la galería.');
 
     // 3️⃣ Obtener datos actualizados
-    const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
-    return updatedSubrama?.subgroupGalleryObjectIds?.find(url => url.includes(uploadResponse.objectId))
+  const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+  const urls = updatedSubrama?.galleryObjectIds ?? updatedSubrama?.subgroupGalleryObjectIds ?? [];
+    return urls.find((url: string) => url.includes(uploadResponse.objectId))
       || uploadResponse.url
       || uploadResponse.objectId;
 
@@ -248,10 +253,11 @@ export const getSubramaGalleryImageUuids = async (
   console.log('🔍 [SubramaImageService] Obteniendo UUIDs de galería para subrama:', subgroupId);
 
   try {
-    const subrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
-    if (subrama?.subgroupGalleryObjectIds) {
-      console.log('✅ UUIDs obtenidos:', subrama.subgroupGalleryObjectIds);
-      return subrama.subgroupGalleryObjectIds;
+  const subrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+  const uuids = subrama?.galleryObjectIds ?? subrama?.subgroupGalleryObjectIds ?? [];
+    if (uuids && uuids.length > 0) {
+      console.log('✅ UUIDs obtenidos:', uuids);
+      return uuids;
     }
     console.log('ℹ️ No hay imágenes en la galería de subrama.');
     return [];

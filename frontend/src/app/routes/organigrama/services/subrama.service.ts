@@ -1,9 +1,9 @@
 import type { 
-  Subrama,
-  CreateSubramaData, 
-  UpdateSubramaData, 
-  BackendSubrama
-} from '../types/rama.type';
+  Subgroup as Subrama,
+  CreateSubgroupData as CreateSubramaData, 
+  UpdateSubgroupData as UpdateSubramaData, 
+} from '../types/frontend';
+import type { BackendSubgroup as BackendSubrama } from '../types/backend';
 
 import { apiClient } from './apiClient';
 import { 
@@ -36,8 +36,8 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${id}`;
     const backendSubrama = await apiClient.get<BackendSubrama>(endpoint);
     
-    const subrama = mapBackendSubramaToFrontend(backendSubrama);
-    console.log('✅ [SubramaService] Subrama obtenida:', subrama.nombre);
+  const subrama = mapBackendSubramaToFrontend(backendSubrama);
+  console.log('✅ [SubramaService] Subrama obtenida:', subrama.nombre ?? subrama.name);
     return subrama;
   } catch (error) {
     console.error('❌ [SubramaService] Error obteniendo subrama por ID:', error);
@@ -46,7 +46,9 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
 };
 
 export const createSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, data: CreateSubramaData): Promise<Subrama | null> => {
-  console.log('🔄 [SubramaService] Creando nueva subrama:', data.nombre);
+  const maybe = data as unknown as Record<string, unknown>;
+  const displayName = (maybe['nombre'] as string | undefined) ?? data.name;
+  console.log('🔄 [SubramaService] Creando nueva subrama:', displayName);
   
   try {
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups`;
@@ -57,8 +59,8 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
     // Crear la subrama
     const backendSubrama = await apiClient.post<BackendSubrama>(endpoint, backendData);
     
-    const subrama = mapBackendSubramaToFrontend(backendSubrama);
-    console.log('✅ [SubramaService] Subrama creada:', subrama.nombre);
+  const subrama = mapBackendSubramaToFrontend(backendSubrama);
+  console.log('✅ [SubramaService] Subrama creada:', subrama.nombre ?? subrama.name);
     return subrama;
   } catch (error) {
     console.error('❌ [SubramaService] Error creando subrama:', error);
@@ -70,11 +72,14 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
   console.log('🔄 [SubramaService] Actualizando subrama:', data.id);
   
   try {
-    if (!data.ramaId) {
-      throw new Error('ramaId es requerido para actualizar subrama');
+  // Prefer canonical branchId then legacy ramaId then section_id
+  const maybe = data as unknown as Record<string, unknown>;
+  const sectionId = (maybe['branchId'] as string | undefined) ?? (maybe['ramaId'] as string | undefined) ?? (maybe['section_id'] as string | undefined) ?? '';
+    if (!sectionId) {
+      throw new Error('ramaId/branchId es requerido para actualizar subrama');
     }
     
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${data.ramaId}/subgroups/${data.id}`;
+    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${data.id}`;
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendUpdateSubramaToBackend(data);
@@ -82,8 +87,8 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     // Actualizar la subrama
     const backendSubrama = await apiClient.put<BackendSubrama>(endpoint, backendData);
     
-    const subrama = mapBackendSubramaToFrontend(backendSubrama);
-    console.log('✅ [SubramaService] Subrama actualizada:', subrama.nombre);
+  const subrama = mapBackendSubramaToFrontend(backendSubrama);
+  console.log('✅ [SubramaService] Subrama actualizada:', subrama.nombre ?? subrama.name);
     return subrama;
   } catch (error) {
     console.error('❌ [SubramaService] Error actualizando subrama:', error);

@@ -1,186 +1,40 @@
-export interface Rama {
-  section_id: string;
-  sectionName: string;
-  sectionDescription?: string;
-  sectionGalleryObjectIds: string[];
-  id: string;
-  nombre: string;
-  descripcion?: string;
-  icono?: string;
-  iconoObjectId?: string; // ID para la imagen en localStorage
-  imagenPrincipal?: string; // URL de la imagen principal
-  imagenPrincipalObjectId?: string; // ID para la imagen principal en localStorage
-  edadMinima: number;
-  edadMaxima: number;
-  año: number;
-  estado: 'activa' | 'inactiva';
-  fechaCreacion: string;
-  subramas: Subrama[];
-}
+// Barrel file: re-export modular types and provide backward-compatible aliases
+export * from './frontend';
+export * from './backend';
+export * from './operations';
 
-export interface Subrama {
-  subgroup_id: string; 
-  subgroupName: string;
-  subgroupDescription?: string;
-  subgroupGalleryObjectIds?: string[]; // IDs de imágenes de galería en localStorage
-  section_id: string; 
-  id: string; 
-  nombre: string;
-  descripcion?: string;
-  icono?: string;
-  iconoObjectId?: string; // ID para la imagen en localStorage
-  imagenPrincipal?: string; // URL de la imagen principal
-  imagenPrincipalObjectId?: string; // ID para la imagen principal en localStorage
-  ramaId: string;
-  lider?: string;
-  estado: 'activa' | 'inactiva';
-  fechaCreacion: string;
-  numeroMiembros: number;
-}
+// Backwards-compatible aliases (legacy Spanish names) kept for a smooth migration
+import type * as F from './frontend';
+import type * as B from './backend';
 
-export interface CreateRamaBackendData {
-  name: string;
-  description?: string;
-  iconObjectId: string | null;
-  galleryObjectIds: string[];
-}
+export type Branch = F.Branch;
+export type Subgroup = F.Subgroup;
 
-export interface CreateSubramaBackendData {
-  name: string;
-  description?: string;
-  galleryObjectIds: string[];
-  isActive: boolean;
-}
-export interface UpdateRamaBackendData {
-  name?: string;
-  description?: string;
-  iconObjectId?: string | null;
-  galleryObjectIds?: string[];
-}
+export type Rama = Branch;
+export type Subrama = Subgroup;
 
-export interface UpdateSubramaBackendData {
-  name?: string;
-  description?: string;
-  galleryObjectIds?: string[];
-  isActive?: boolean;
-}
+export type CreateBranchData = F.CreateBranchData;
+export type UpdateBranchData = F.UpdateBranchData;
+export type CreateSubgroupData = F.CreateSubgroupData;
+export type UpdateSubgroupData = F.UpdateSubgroupData;
 
-export interface UpdateSubramaMainImageData {
-  objectId: string;
-}
+export type CreateRamaData = CreateBranchData;
+export type UpdateRamaData = UpdateBranchData;
+export type CreateSubramaData = CreateSubgroupData;
+export type UpdateSubramaData = UpdateSubgroupData;
 
-// Tipos para operaciones de galería según la guía del backend
-export interface GalleryReplaceOperation {
-  op: "replace";
-  targetUuid: string;
-  newValue: string;
-}
+export type CreateBranchBackendData = B.CreateBranchBackendData;
+export type UpdateBranchBackendData = B.UpdateBranchBackendData;
+export type CreateSubgroupBackendData = B.CreateSubgroupBackendData;
+export type UpdateSubgroupBackendData = B.UpdateSubgroupBackendData;
 
-export interface GalleryAddOperation {
-  op: "add";
-  newValue: string;
-}
+export type CreateRamaBackendData = CreateBranchBackendData;
+export type UpdateRamaBackendData = UpdateBranchBackendData;
+export type CreateSubramaBackendData = CreateSubgroupBackendData;
+export type UpdateSubramaBackendData = UpdateSubgroupBackendData;
 
-export interface GalleryRemoveOperation {
-  op: "remove";
-  targetUuid: string;
-}
+export type BackendRama = B.BackendBranch;
+export type BackendSubrama = B.BackendSubgroup;
 
-export interface GalleryUpdatePayload {
-  operations: (GalleryReplaceOperation | GalleryAddOperation | GalleryRemoveOperation)[];
-}
-
-export interface CreateRamaData {
-  nombre: string;
-  descripcion?: string;
-  edadMinima: number;
-  edadMaxima: number;
-  año: number;
-  iconFile?: File;
-  galleryFiles?: File[];
-}
-
-export interface UpdateRamaData {
-  id: string;
-  nombre?: string;
-  descripcion?: string;
-  edadMinima?: number;
-  edadMaxima?: number;
-  estado?: 'activa' | 'inactiva';
-  iconFile?: File;
-  galleryFiles?: File[];
-}
-
-export interface CreateSubramaData {
-  nombre: string;
-  descripcion?: string;
-  ramaId: string;
-  lider?: string;
-  galleryFiles?: File[];
-}
-
-export interface UpdateSubramaData {
-  id: string;
-  subgroup_id?: string;
-  nombre?: string;
-  descripcion?: string;
-  lider?: string;
-  estado?: 'activa' | 'inactiva';
-  ramaId?: string;
-}
-
-// Tipos para las respuestas del backend
-export interface BackendRama {
-  sectionId?: string | number;
-  section_id?: string;
-  id?: string;
-  ID?: string;
-  Section_ID?: string;
-  tenantId?: number;
-  groupId?: number;
-  name?: string;
-  sectionName?: string;
-  description?: string;
-  sectionDescription?: string;
-  iconObjectUrl?: string | null;
-  iconObjectId?: string;
-  photoPrincipalUrl?: string | null;
-  galleryObjectUrls?: string[];
-  galleryObjectIds?: string[];
-  sectionGalleryObjectIds?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-  minAge?: number;
-  maxAge?: number;
-}
-
-export interface BackendSubrama {
-  subgroup_id?: string;
-  subgroupId?: string;
-  id?: string;
-  ID?: string;
-  subgroupIdLegacy?: string;
-  subgroupName?: string;
-  subgroup_name?: string;
-  name?: string;
-  nombre?: string;
-  subgroupDescription?: string;
-  subgroup_description?: string;
-  description?: string;
-  section_id?: string;
-  sectionId?: string;
-  leader?: string;
-  leaderName?: string;
-  isActive?: boolean;
-  status?: string;
-  createdAt?: string;
-  memberCount?: number;
-  members?: number;
-  // Campos de imágenes (añadidos)
-  iconObjectUrl?: string | null;
-  photoPrincipalUrl?: string | null;
-  galleryObjectUrls?: string[];
-  iconObjectId?: string;
-  photoPrincipalObjectId?: string;
-  galleryObjectIds?: string[];
-}
+export type BackendBranch = B.BackendBranch;
+export type BackendSubgroup = B.BackendSubgroup;

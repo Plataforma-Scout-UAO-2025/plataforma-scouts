@@ -11,13 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import type { Subrama, UpdateSubramaData } from '../types/rama.type';
+import type { Subgroup, UpdateSubgroupData } from '../types/frontend';
 
 interface EditSubramaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  subrama: Subrama | null;
-  onSubmit: (data: UpdateSubramaData) => Promise<void>;
+  subrama: Subgroup | null;
+  onSubmit: (data: UpdateSubgroupData) => Promise<void>;
 }
 
 export default function EditSubramaModal({
@@ -27,24 +27,33 @@ export default function EditSubramaModal({
   onSubmit,
 }: EditSubramaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<UpdateSubramaData>({
+  const [formData, setFormData] = useState<Partial<{
+    id: string;
+    subgroup_id?: string;
+    name: string;
+    description: string;
+    leader?: string;
+    statusAlias: string;
+    ramaId?: string;
+    branchId?: string;
+  }>>({
     id: '',
     subgroup_id: undefined,
-    nombre: '',
-    descripcion: '',
-    lider: '',
-    estado: 'activa',
+    name: '',
+    description: '',
+    leader: '',
+    statusAlias: 'activa',
   });
 
   useEffect(() => {
     if (subrama) {
       setFormData({
         id: subrama.id,
-        subgroup_id: subrama.subgroup_id,
-        nombre: subrama.nombre,
-        descripcion: subrama.descripcion,
-        lider: subrama.lider,
-        estado: subrama.estado,
+        subgroup_id: subrama.subgroup_id ?? subrama.id,
+        name: subrama.nombre ?? subrama.name,
+        description: subrama.description ?? undefined,
+        leader: subrama.leader ?? undefined,
+        statusAlias: subrama.estado ?? (subrama.status === 'active' ? 'activa' : 'inactiva'),
       });
     }
   }, [subrama]);
@@ -53,7 +62,16 @@ export default function EditSubramaModal({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      const payload: UpdateSubgroupData = {
+        id: formData.id as string,
+        name: formData.name ?? undefined,
+        description: formData.description ?? undefined,
+        leader: formData.leader ?? undefined,
+        status: (formData.statusAlias === 'activa') ? 'active' : undefined,
+        branchId: formData.ramaId ?? formData.branchId ?? undefined,
+      };
+
+      await onSubmit(payload);
       onOpenChange(false);
     } catch (error) {
       console.error('❌ Error al editar subrama:', error);
@@ -88,10 +106,10 @@ export default function EditSubramaModal({
           {/* Nombre de la Subrama */}
           <div className="space-y-2">
             <Label htmlFor="nombre" className="text-foreground">Nombre de la Subrama</Label>
-            <Input
+              <Input
               id="nombre"
-              value={formData.nombre || ''}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              value={formData.name || ''}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
               className="w-full bg-card border border-border rounded-md focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             />
@@ -102,8 +120,8 @@ export default function EditSubramaModal({
             <Label htmlFor="descripcion" className="text-foreground">Descripción</Label>
             <Textarea
               id="descripcion"
-              value={formData.descripcion || ''}
-              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              value={formData.description || ''}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Descripción opcional..."
               className="w-full bg-background border border-border rounded-md resize-none focus:ring-primary focus:border-primary min-h-[100px] placeholder:text-muted-foreground"
             />

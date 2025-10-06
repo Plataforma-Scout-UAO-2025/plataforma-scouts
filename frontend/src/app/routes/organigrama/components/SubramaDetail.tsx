@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Subrama } from "../types/rama.type";
+import type { Subgroup as Subrama } from "../types/frontend";
 import * as organigramaService from "../services";
 import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
@@ -118,11 +118,13 @@ export default function SubramaDetail() {
           });
         }, 250);
 
+  const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.updateSubramaMainImage(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
+          String(sectionId),
+          String(subgroupId),
           file,
           (fileName, percent) => {
             // cuando llegan eventos reales, cancelar simulado y animar hasta el valor real
@@ -155,7 +157,9 @@ export default function SubramaDetail() {
   await fetchSubrama();
   // Obtener la subrama actualizada directamente para obtener la URL definitiva
   try {
-    const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, subrama.section_id, subrama.subgroup_id);
+    const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+    const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
+    const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, String(sectionId), String(subgroupId));
     if (updated && updated.imagenPrincipal) {
       // Actualizar visualmente con cache-bust igual que RamaDetail
       setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
@@ -175,7 +179,7 @@ export default function SubramaDetail() {
   }
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
-        const msg = (error as any)?.message || '';
+    const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
         if (msg === 'UploadCanceled' || msg === 'canceled') {
           console.debug('[SubramaDetail] upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
@@ -217,11 +221,13 @@ export default function SubramaDetail() {
       try {
         console.log('🔄 [SubramaDetail] Subiendo fotos a la galería:', files.length);
 
+  const sectionIdForUpload = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupIdForUpload = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.uploadSubramaGalleryImages(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
+          String(sectionIdForUpload),
+          String(subgroupIdForUpload),
           files
         );
 
@@ -290,13 +296,15 @@ export default function SubramaDetail() {
           });
         }, 250);
 
-        await organigramaService.updateSubramaMainImage(
-          tenantSlug,
-          groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
-          file,
-          (fileName, percent) => {
+  const sectionId2 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupId2 = subrama.subgroup_id ?? subrama.id ?? '';
+  await organigramaService.updateSubramaMainImage(
+    tenantSlug,
+    groupSlug,
+    String(sectionId2),
+    String(subgroupId2),
+    file,
+    (fileName, percent) => {
             uploadProgressReceivedRef.current = true;
             if (uploadIntervalRef.current) {
               clearInterval(uploadIntervalRef.current);
@@ -322,7 +330,14 @@ export default function SubramaDetail() {
 
         await fetchSubrama();
         try {
-          const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, subrama.section_id, subrama.subgroup_id);
+          const sectionId3 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+          const subgroupId3 = subrama.subgroup_id ?? subrama.id ?? '';
+          const updated = await organigramaService.getSubramaById(
+            tenantSlug,
+            groupSlug,
+            String(sectionId3),
+            String(subgroupId3)
+          );
           if (updated && updated.imagenPrincipal) {
             setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
             setUploadPercent(100);
@@ -340,7 +355,7 @@ export default function SubramaDetail() {
         setFotoModalOpen(false);
       } catch (error) {
         console.error('❌ [SubramaDetail] Error reemplazando imagen principal desde modal:', error);
-        const msg = (error as any)?.message || '';
+    const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
         if (msg === 'UploadCanceled' || msg === 'canceled') {
           console.debug('[SubramaDetail] modal upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
@@ -363,14 +378,16 @@ export default function SubramaDetail() {
       return;
     }
 
-    // Si es galería, usar el servicio de reemplazo de galería (sin progreso complejo por ahora)
+        // Si es galería, usar el servicio de reemplazo de galería (sin progreso complejo por ahora)
     try {
       const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+  const sectionIdReplace = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupIdReplace = subrama.subgroup_id ?? subrama.id ?? '';
       await organigramaService.replaceSubramaGalleryImage(
         tenantSlug,
         groupSlug,
-        subrama.section_id,
-        subrama.subgroup_id,
+        String(sectionIdReplace),
+        String(subgroupIdReplace),
         cleanUuid,
         file
       );
@@ -433,20 +450,24 @@ export default function SubramaDetail() {
 
       if (fotoTipo === "principal") {
         // 🧩 NUEVO: eliminar imagen principal
+  const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.removeSubramaMainImage(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id
+          String(sectionIdDel),
+          String(subgroupIdDel)
         );
       } else if (fotoTipo === "galeria") {
         // 🧠 Extraer UUID limpio
         const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+  const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.removeSubramaGalleryImage(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
+          String(sectionIdDel),
+          String(subgroupIdDel),
           cleanUuid
         );
       }
@@ -492,7 +513,7 @@ export default function SubramaDetail() {
         let subramaEncontrada: Subrama | null = null;
         
         for (const rama of ramas) {
-          const subramaInRama = rama.subramas.find((s: Subrama) => s.id === id);
+          const subramaInRama = (rama.subgroups ?? rama.subramas ?? []).find((s: Subrama) => s.id === id);
           if (subramaInRama) {
             subramaEncontrada = subramaInRama;
             break;
@@ -504,7 +525,7 @@ export default function SubramaDetail() {
           console.log("✅ [SubramaDetail] Subrama cargada:", subramaEncontrada);
 
           // 📸 Cargar imágenes existentes (PRIORIZAR URLs directas del backend)
-          console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.nombre);
+          console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre);
           console.log("🔍 [SubramaDetail] subrama.imagenPrincipal:", subramaEncontrada.imagenPrincipal);
           
           // PRIORIDAD 1: URL directa del backend (campo optimizado)
@@ -529,10 +550,11 @@ export default function SubramaDetail() {
           }
 
           // Cargar galería desde backend (URLs directas)
-          if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
-            setGaleriaFotos(subramaEncontrada.subgroupGalleryObjectIds);
-            console.log(`📸 [SubramaDetail] Cargadas ${subramaEncontrada.subgroupGalleryObjectIds.length} imágenes de galería desde backend`);
-            console.log('🔗 [SubramaDetail] URLs de galería:', subramaEncontrada.subgroupGalleryObjectIds);
+          const galleryUrls = subramaEncontrada.galleryObjectIds ?? subramaEncontrada.subgroupGalleryObjectIds ?? [];
+          if (galleryUrls && galleryUrls.length > 0) {
+            setGaleriaFotos(galleryUrls);
+            console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería desde backend`);
+            console.log('🔗 [SubramaDetail] URLs de galería:', galleryUrls);
           } else {
             console.log('ℹ️ [SubramaDetail] No hay imágenes en la galería de la subrama');
             setGaleriaFotos([]);
@@ -672,7 +694,7 @@ export default function SubramaDetail() {
         />
 
         <p className="text-sm text-muted-foreground">
-          {subrama.descripcion || "Sin descripción"}
+          {subrama.description ?? subrama.descripcion ?? "Sin descripción"}
         </p>
       </Card>
 

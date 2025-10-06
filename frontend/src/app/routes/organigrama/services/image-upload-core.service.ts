@@ -7,7 +7,7 @@ export const diagnoseBatchImageUpload = async (
   groupSlug: string,
   sectionId: string,
   file: File
-): Promise<{ uploaded: number; returned: number; details: any }> => {
+): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
   console.log('🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...');
   console.log('📝 [DIAGNÓSTICO] Archivo:', {
     name: file.name,
@@ -34,15 +34,17 @@ export const diagnoseBatchImageUpload = async (
 
     // Paso 3: Verificar resultado usando una llamada directa al API
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
-    const backendRama = await apiClient.get<any>(endpoint);
-    const resultCount = backendRama?.sectionGalleryObjectIds?.length || 0;
+  const backendRama = await apiClient.get<Record<string, unknown> | undefined>(endpoint);
+  const backendRec = backendRama as unknown as Record<string, unknown> | undefined;
+  const gallery: string[] = (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+  const resultCount = gallery?.length || 0;
 
     const result = {
       uploaded: 1,
       returned: resultCount,
       details: {
         originalObjectId: uploadResponse.objectId,
-        returnedUrls: backendRama?.sectionGalleryObjectIds || [],
+        returnedUrls: (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [],
         isProbablyMultiVariant: resultCount > 1
       }
     };
@@ -57,7 +59,7 @@ export const diagnoseBatchImageUpload = async (
 };
 
 // Función helper para hacer el diagnóstico accesible desde la consola del navegador
-(globalThis as any).diagnosticImageUpload = diagnoseBatchImageUpload;
+(globalThis as unknown as Record<string, unknown>).diagnosticImageUpload = diagnoseBatchImageUpload;
 
 // Funciones de carga de archivos - Implementación de dos pasos según backend
 export const uploadSectionIcon = async (

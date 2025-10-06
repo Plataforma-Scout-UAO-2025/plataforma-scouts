@@ -51,10 +51,11 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // Si la petición fue cancelada por AbortController/Axios, lanzar un
-    // error específico que los handlers de subida (postFormData) esperan.
-    if ((error as any)?.code === 'ERR_CANCELED' || (error as any)?.message === 'canceled') {
-      console.warn(`⚠️ [ApiClient] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Cancelado por el usuario`);
+    // Si la peticin fue cancelada por AbortController/Axios, lanzar un
+    // error especfico que los handlers de subida (postFormData) esperan.
+    const errAny = error as unknown as Record<string, unknown>;
+    if (errAny?.['code'] === 'ERR_CANCELED' || errAny?.['message'] === 'canceled') {
+      console.warn(`[33m [ApiClient] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Cancelado por el usuario`);
       throw new Error('UploadCanceled');
     }
 
@@ -62,7 +63,7 @@ axiosInstance.interceptors.response.use(
     const statusText = error.response?.statusText || 'Network Error';
     const message = `Error ${status}: ${statusText}`;
 
-    console.error(`❌ [ApiClient] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Error:`, {
+    console.error(`[31m [ApiClient] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Error:`, {
       status,
       statusText,
       message: error.message,
@@ -163,8 +164,8 @@ export const apiClient = {
         return response.data;
       } catch (error) {
         // Detectar cancelación explícita del request (AbortController)
-        const errAny = error as any;
-        if (errAny?.code === 'ERR_CANCELED' || errAny?.message === 'canceled') {
+        const errAny = error as unknown as Record<string, unknown>;
+        if (errAny?.['code'] === 'ERR_CANCELED' || errAny?.['message'] === 'canceled') {
           console.warn(`⚠️ [ApiClient] POST (FormData) ${endpoint} - Cancelado por el usuario`);
           throw new Error('UploadCanceled');
         }
@@ -179,9 +180,9 @@ export const apiClient = {
             console.log(`🧪 [ApiClient] Ejecutando intento FETCH fallback a ${fullUrl} (credentials: omit)`);
             const fetchResp = await fetch(fullUrl, {
               method: 'POST',
-              body: formData as any,
+              body: formData as unknown as BodyInit,
               credentials: 'omit',
-              signal: signalLocal as any
+              signal: signalLocal as unknown as AbortSignal
             });
             const text = await fetchResp.text();
             console.log('🧪 [ApiClient] Resultado FETCH fallback:', { status: fetchResp.status, statusText: fetchResp.statusText, body: text, headers: Array.from(fetchResp.headers.entries()) });

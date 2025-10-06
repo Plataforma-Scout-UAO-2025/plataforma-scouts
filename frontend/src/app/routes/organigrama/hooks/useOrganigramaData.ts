@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Rama } from '../types/rama.type';
+import type { Branch as Rama } from '../types/frontend';
 import * as organigramaService from '../services';
 import { useApiError } from '../hooks/useApiError';
 

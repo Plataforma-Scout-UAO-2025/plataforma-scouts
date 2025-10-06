@@ -17,8 +17,14 @@ import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import SuccessModal from './components/SuccessModal';
 import ErrorAlert from './components/ErrorAlert';
 import OrganigramaLoader from './components/OrganigramaLoader';
-import type { Rama, Subrama, CreateRamaData, UpdateSubramaData } from './types/rama.type';
-import type { CreateSubramaFormData, UpdateRamaFormData, UpdateSubramaFormData } from './schemas/rama.schema';
+import type {
+  Branch as Rama,
+  Subgroup as Subrama,
+  CreateBranchData as CreateRamaData,
+  CreateSubgroupData,
+  UpdateBranchData,
+  UpdateSubgroupData,
+} from './types/frontend';
 import { useTenantParams } from './hooks/useTenantParams';
 import useOrganigramaData from './hooks/useOrganigramaData';
 import useOrganigramaActions from './hooks/useOrganigramaActions';
@@ -38,17 +44,18 @@ export default function Organigrama() {
   const [editRamaModalOpen, setEditRamaModalOpen] = useState(false);
   const [editSubramaModalOpen, setEditSubramaModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  // success ahora proviene del hook de acciones
+
   const [deleteTarget, setDeleteTarget] = useState<{
     type: 'rama' | 'subrama';
     id: string;
     name: string;
     sectionId?: string;
   } | null>(null);
+
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
-  
+
   const { tenantSlug, groupSlug } = useTenantParams();
 
   const {
@@ -62,12 +69,19 @@ export default function Organigrama() {
 
   const { error, handleError, clearError } = useApiError();
 
-  const { createRama, updateRama, createSubrama, updateSubrama, deleteRama, deleteSubrama, successOpen, successMessage, closeSuccess } =
-    useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, handleError });
+  const {
+    createRama,
+    updateRama,
+    createSubrama,
+    updateSubrama,
+    deleteRama,
+    deleteSubrama,
+    successOpen,
+    successMessage,
+    closeSuccess,
+  } = useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, handleError });
 
   const { exportPDF, exportExcel } = useOrganigramaExport(ramas, selectedYear);
-  
-
 
   // ====== RAMAS ======
   const handleCreateRama = async (data: CreateRamaData) => {
@@ -79,11 +93,11 @@ export default function Organigrama() {
     setEditRamaModalOpen(true);
   };
 
-  const handleSubmitEditRama = async (data: UpdateRamaFormData) => {
-    if (!ramaSeleccionada) return;
+  const handleSubmitEditRama = async (data: UpdateBranchData) => {
     try {
-      const payload = { ...data, id: ramaSeleccionada.id };
-      await updateRama(payload as any);
+      const payload: UpdateBranchData = { ...data };
+      if (!payload.id && ramaSeleccionada) payload.id = ramaSeleccionada.id;
+      await updateRama(payload);
     } catch (err) {
       handleError(err);
       throw err;
@@ -91,7 +105,7 @@ export default function Organigrama() {
   };
 
   const handleDeleteRama = (rama: Rama) => {
-    setDeleteTarget({ type: 'rama', id: rama.id, name: rama.nombre });
+    setDeleteTarget({ type: 'rama', id: rama.id, name: rama.name ?? rama.nombre ?? '' });
     setConfirmDeleteOpen(true);
   };
 
@@ -101,7 +115,7 @@ export default function Organigrama() {
     setCreateSubramaModalOpen(true);
   };
 
-  const handleSubmitSubrama = async (data: CreateSubramaFormData) => {
+  const handleSubmitSubrama = async (data: CreateSubgroupData) => {
     return createSubrama(data);
   };
 
@@ -110,16 +124,11 @@ export default function Organigrama() {
     setEditSubramaModalOpen(true);
   };
 
-  const handleSubmitEditSubrama = async (data: UpdateSubramaFormData) => {
-    if (!subramaSeleccionada) return;
+  const handleSubmitEditSubrama = async (data: UpdateSubgroupData) => {
     try {
-      const updateData: UpdateSubramaData = {
-        id: subramaSeleccionada.id,
-        subgroup_id: subramaSeleccionada.subgroup_id,
-        ramaId: subramaSeleccionada.ramaId,
-        ...data,
-      };
-      await updateSubrama(updateData as any);
+      const payload: UpdateSubgroupData = { ...data };
+      if (!payload.id && subramaSeleccionada) payload.id = subramaSeleccionada.id;
+      await updateSubrama(payload);
     } catch (err) {
       handleError(err);
       throw err;
@@ -127,8 +136,8 @@ export default function Organigrama() {
   };
 
   const handleDeleteSubrama = (subrama: Subrama) => {
-    const sectionId = subrama.section_id ?? subrama.ramaId ?? undefined;
-    setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.nombre, sectionId });
+    const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? undefined;
+    setDeleteTarget({ type: 'subrama', id: subrama.id, name: subrama.name ?? subrama.nombre ?? '', sectionId });
     setConfirmDeleteOpen(true);
   };
 
@@ -141,6 +150,7 @@ export default function Organigrama() {
         setConfirmDeleteOpen(false);
         return;
       }
+
       if (deleteTarget.type === 'rama') {
         await deleteRama(deleteTarget.id);
       } else {
@@ -158,83 +168,53 @@ export default function Organigrama() {
           await deleteSubrama(sectionId, deleteTarget.id);
         }
       }
-      handleError(null); 
+      handleError(null);
     } catch (err) {
-      // @ts-ignore
-      handleError(err);
+      handleError(err as unknown);
     }
+    setConfirmDeleteOpen(false);
   };
 
   // ====== EXPORTAR ORGANIGRAMA ======
   const handleExportPDF = () => exportPDF();
   const handleExportExcel = () => exportExcel();
 
-  // ====== UTIL ======
-
-  // no local success timeout: gestionado por useOrganigramaActions
-
-
   return (
     <div className="space-y-6">
       {/* Cabecera */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">
-            Gestión de Organigrama
-          </h1>
-          <p className="text-muted-foreground">
-            Administra la estructura de ramas y subramas de tu grupo scout
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Gestión de Organigrama</h1>
+          <p className="text-muted-foreground">Administra la estructura de ramas y subramas de tu grupo scout</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* ⬇️ Nuevo: Exportar organigrama */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Exportar organigrama
-              </Button>
+              <Button variant="outline">Exportar organigrama</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={handleExportPDF}>
-                Exportar en PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel}>
-                Exportar en Excel
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>Exportar en PDF</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>Exportar en Excel</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button
-            onClick={() => setCreateRamaModalOpen(true)}
-            disabled={isLoading}
-            aria-busy={isLoading}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Crear Nueva Rama
+          <Button onClick={() => setCreateRamaModalOpen(true)} disabled={isLoading} aria-busy={isLoading}>
+            <Plus className="h-4 w-4 mr-2" /> Crear Nueva Rama
           </Button>
         </div>
       </div>
 
       {/* Mostrar errores de la API  */}
-      {error.hasError && (
-        <ErrorAlert 
-          message={error.message} 
-          type={error.type} 
-          onClose={clearError} 
-        />
-      )}
+      {error.hasError && <ErrorAlert message={error.message} type={error.type} onClose={clearError} />}
 
       {/* Controles de filtrado */}
       <div className="flex items-center space-x-4">
-        <Select
-          value={selectedYear}
-          onValueChange={(value: string) => setSelectedYear(value)}
-        >
+        <Select value={selectedYear} onValueChange={(value: string) => setSelectedYear(value)}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Seleccionar año" />
           </SelectTrigger>
           <SelectContent>
-            {availableYears.filter(year => year !== undefined && year !== null).map((year) => (
+            {availableYears.filter((year) => year !== undefined && year !== null).map((year) => (
               <SelectItem key={year} value={year.toString()}>
                 {year}
               </SelectItem>
@@ -258,54 +238,25 @@ export default function Organigrama() {
       )}
 
       {/* Modales */}
-      <CreateRamaModal
-        open={createRamaModalOpen}
-        onOpenChange={setCreateRamaModalOpen}
-        onSubmit={handleCreateRama}
-        onSuccess={loadRamas}
-      />
+      <CreateRamaModal open={createRamaModalOpen} onOpenChange={setCreateRamaModalOpen} onSubmit={handleCreateRama} onSuccess={loadRamas} />
 
-      <CreateSubramaModal
-        open={createSubramaModalOpen}
-        onOpenChange={setCreateSubramaModalOpen}
-        ramaId={selectedRamaId}
-        onSubmit={handleSubmitSubrama}
-      />
+      <CreateSubramaModal open={createSubramaModalOpen} onOpenChange={setCreateSubramaModalOpen} ramaId={selectedRamaId} onSubmit={handleSubmitSubrama} />
 
-      <EditRamaModal
-        open={editRamaModalOpen}
-        onOpenChange={setEditRamaModalOpen}
-        rama={ramaSeleccionada}
-        onSubmit={handleSubmitEditRama}
-        onSuccess={loadRamas}
-      />
+      <EditRamaModal open={editRamaModalOpen} onOpenChange={setEditRamaModalOpen} rama={ramaSeleccionada} onSubmit={handleSubmitEditRama} onSuccess={loadRamas} />
 
-      <EditSubramaModal
-        open={editSubramaModalOpen}
-        onOpenChange={setEditSubramaModalOpen}
-        subrama={subramaSeleccionada}
-        onSubmit={handleSubmitEditSubrama}
-      />
+      <EditSubramaModal open={editSubramaModalOpen} onOpenChange={setEditSubramaModalOpen} subrama={subramaSeleccionada} onSubmit={handleSubmitEditSubrama} />
 
       {/* Confirmación y Éxito */}
       <ConfirmDeleteModal
         open={confirmDeleteOpen}
         onClose={() => setConfirmDeleteOpen(false)}
-    onConfirm={onConfirmDelete}
+        onConfirm={onConfirmDelete}
         onSuccess={loadRamas}
-        title={`Confirmar Eliminación de ${
-          deleteTarget?.type === 'rama' ? 'Rama' : 'Subrama'
-        }`}
-        message={`¿Estás seguro de que quieres eliminar ${
-          deleteTarget?.type === 'rama' ? 'la rama' : 'la subrama'
-        } "${deleteTarget?.name}"?`}
+        title={`Confirmar Eliminación de ${deleteTarget?.type === 'rama' ? 'Rama' : 'Subrama'}`}
+        message={`¿Estás seguro de que quieres eliminar ${deleteTarget?.type === 'rama' ? 'la rama' : 'la subrama'} "${deleteTarget?.name}"?`}
       />
 
-      <SuccessModal
-        open={successOpen}
-        message={successMessage}
-        onClose={closeSuccess}
-      />
+      <SuccessModal open={successOpen} message={successMessage} onClose={closeSuccess} />
     </div>
   );
 }

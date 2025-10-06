@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import type { Rama, Subrama } from '../types/rama.type';
+import type { Branch as Rama, Subgroup as Subrama } from '../types/frontend';
 
 interface RamaListProps {
   ramas: Rama[];
@@ -31,7 +31,9 @@ export default function RamaList({
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   useEffect(() => {
     if (expandedItems.length === 0 && ramas && ramas.length > 0) {
-      setExpandedItems([ramas[0].section_id.toString()]);
+          const first = ramas[0];
+          const firstId = String(first?.section_id ?? first?.sectionId ?? first?.id ?? '');
+          if (firstId) setExpandedItems([firstId]);
     }
   
   }, [ramas, expandedItems.length]);
@@ -61,167 +63,95 @@ export default function RamaList({
 
   return (
     <Accordion type="multiple" value={expandedItems} className="space-y-4">
-      {ramas.map((rama) => (
-        <AccordionItem 
-          key={rama.section_id} 
-          value={rama.section_id.toString()}
-          className="border rounded-lg shadow-sm bg-white"
-        >
-          {/* Header con título y botones separados */}
-          <div className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 rounded-t-lg">
-            {/* Trigger del acordeón solo para el título */}
-            <AccordionTrigger 
-              className="flex-1 hover:no-underline [&>svg]:hidden p-0"
-              onClick={() => handleToggleExpansion(rama.section_id.toString())}
-            >
-              <div className="flex items-center space-x-3">
-                <ChevronDown 
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${
-                    expandedItems.includes(rama.section_id.toString()) ? 'rotate-180' : ''
-                  }`}
-                />
-                <Users className="h-5 w-5 text-primary" />
-                <div className="text-left">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-foreground">
-                      Rama: {rama.nombre}
-                    </span>
-                    <Badge 
-                      variant={rama.estado === 'activa' ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {rama.estado}
-                    </Badge>
+      {ramas.map((rama) => {
+  const ramaKey = String(rama.sectionId ?? rama.section_id ?? rama.id ?? '');
+  const ramaDisplayName = rama.name ?? rama.nombre ?? '';
+  const ramaEstado = rama.estado ?? (rama.status === 'active' ? 'activa' : 'inactiva');
+
+        return (
+          <AccordionItem key={ramaKey} value={ramaKey} className="border rounded-lg shadow-sm bg-white">
+            <div className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 rounded-t-lg">
+              <AccordionTrigger className="flex-1 hover:no-underline [&>svg]:hidden p-0" onClick={() => handleToggleExpansion(ramaKey)}>
+                <div className="flex items-center space-x-3">
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedItems.includes(ramaKey) ? 'rotate-180' : ''}`} />
+                  <Users className="h-5 w-5 text-primary" />
+                  <div className="text-left">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-foreground">Rama: {ramaDisplayName}</span>
+                      <Badge variant={ramaEstado === 'activa' ? 'default' : 'secondary'} className="text-xs">{ramaEstado}</Badge>
+                    </div>
                   </div>
                 </div>
+              </AccordionTrigger>
+
+              <div className="flex items-center space-x-2 ml-4">
+                <Button size="sm" variant="outline" onClick={() => navigate(`/app/organigrama/rama/${rama.id}`)} className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => onEditRama(rama)} className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => onDeleteRama(rama)} className="h-8 w-8 p-0">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-            </AccordionTrigger>
-
-            {/* Botones de acción fuera del trigger */}
-            <div className="flex items-center space-x-2 ml-4">
-              {/* Ver Rama */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate(`/app/organigrama/rama/${rama.id}`)}
-                className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              {/* Editar Rama */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onEditRama(rama)}
-                className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              {/* Eliminar Rama */}
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => onDeleteRama(rama)}
-                className="h-8 w-8 p-0"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
             </div>
-          </div>
 
-          <AccordionContent className="px-6 pb-4 pt-0 bg-gray-50/50">
-            <div className="space-y-3 border-l-2 border-gray-200 pl-6 ml-2">
-              {rama.subramas.length === 0 ? (
-                <div key={`no-subramas-${rama.section_id}`} className="text-center py-6">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Esta rama no tiene subramas
-                  </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onCreateSubrama(rama.id)}
-                      className="text-primary border-primary hover:bg-primary hover:text-white"
-                    >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Crear Nueva Subrama
-                  </Button>
-                </div>
-              ) : (
-                <div key={`subramas-${rama.section_id}`}>
-                  {rama.subramas.map((subrama, index) => (
-                    <div
-                      key={`subrama-${rama.section_id}-${subrama.id}-${index}`}
-                      className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm"
-                    >
-                      {/* Contenido izquierdo de la subrama */}
-                      <div className="flex items-center space-x-3">
-                        <Users className="h-4 w-4 text-secondary" />
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium text-sm">
-                              Subrama: {subrama.nombre}
-                            </span>
-                            <Badge 
-                              variant={subrama.estado === 'activa' ? 'default' : 'secondary'}
-                              className="text-xs"
-                            >
-                              {subrama.estado}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Botones de acción de la subrama */}
-                      <div className="flex items-center space-x-2">
-                        {/* Ver Subrama */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/app/organigrama/subrama/${subrama.subgroup_id || subrama.id}`)}
-                          className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
-                        >
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                        {/* Editar Subrama */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onEditSubrama(subrama)}
-                          className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                        </Button>
-                        {/* Eliminar Subrama */}
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => onDeleteSubrama(subrama)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {/* Botón para crear nueva subrama */}
-                  <div key={`create-subrama-${rama.section_id}`} className="pt-3 border-t border-gray-200">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onCreateSubrama(rama.id)}
-                      className="w-full text-primary border-primary hover:bg-primary hover:text-white"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Crear Nueva Subrama
+            <AccordionContent className="px-6 pb-4 pt-0 bg-gray-50/50">
+              <div className="space-y-3 border-l-2 border-gray-200 pl-6 ml-2">
+                {((rama.subgroups ?? rama.subramas) ?? []).length === 0 ? (
+                  <div key={`no-subramas-${ramaKey}`} className="text-center py-6">
+                    <p className="text-sm text-muted-foreground mb-3">Esta rama no tiene subramas</p>
+                    <Button variant="outline" size="sm" onClick={() => onCreateSubrama(rama.id)} className="text-primary border-primary hover:bg-primary hover:text-white">
+                      <Plus className="h-4 w-4 mr-2" /> Crear Nueva Subrama
                     </Button>
                   </div>
-                </div>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
+                ) : (
+                  <div key={`subramas-${ramaKey}`}>
+                    {((rama.subgroups ?? rama.subramas) ?? []).map((subrama, index) => {
+                      const subgroupKey = String(subrama.subgroup_id ?? subrama.id ?? '');
+                      const subramaDisplayName = subrama.name ?? subrama.nombre ?? '';
+                      const subramaEstado = subrama.estado ?? (subrama.status === 'active' ? 'activa' : 'inactiva');
+
+                      return (
+                        <div key={`subrama-${ramaKey}-${subgroupKey}-${index}`} className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm">
+                          <div className="flex items-center space-x-3">
+                            <Users className="h-4 w-4 text-secondary" />
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-sm">Subrama: {subramaDisplayName}</span>
+                                <Badge variant={subramaEstado === 'activa' ? 'default' : 'secondary'} className="text-xs">{subramaEstado}</Badge>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/app/organigrama/subrama/${subrama.subgroup_id ?? subrama.id}`)} className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => onEditSubrama(subrama)} className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => onDeleteSubrama(subrama)} className="h-7 w-7 p-0">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <div key={`create-subrama-${ramaKey}`} className="pt-3 border-t border-gray-200">
+                      <Button variant="outline" size="sm" onClick={() => onCreateSubrama(rama.id)} className="w-full text-primary border-primary hover:bg-primary hover:text-white">
+                        <Plus className="h-4 w-4 mr-2" /> Crear Nueva Subrama
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
     </Accordion>
   );
 }

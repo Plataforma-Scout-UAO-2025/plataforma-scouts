@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { exportarOrganigramaPDF, exportarOrganigramaExcel } from '../utils/exportarOrganigrama';
-import type { Rama } from '../types/rama.type';
+import type { Branch as Rama } from '../types/frontend';
 
 export function useOrganigramaExport(ramas: Rama[], selectedYear?: string) {
   const exportPDF = useCallback(() => {

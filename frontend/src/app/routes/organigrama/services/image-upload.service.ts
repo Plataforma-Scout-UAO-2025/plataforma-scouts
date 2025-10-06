@@ -4,7 +4,7 @@ import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 // Función auxiliar para obtener rama directamente sin dependencias circulares
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
   const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
-  return await apiClient.get<any>(endpoint);
+  return await apiClient.get<Record<string, unknown> | undefined>(endpoint);
 };
 
 // Función de diagnóstico para verificar comportamiento del backend con imágenes
@@ -13,7 +13,7 @@ export const diagnoseBatchImageUpload = async (
   groupSlug: string,
   sectionId: string,
   file: File
-): Promise<{ uploaded: number; returned: number; details: any }> => {
+): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
   console.log('🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...');
   console.log('📝 [DIAGNÓSTICO] Archivo:', {
     name: file.name,
@@ -39,15 +39,17 @@ export const diagnoseBatchImageUpload = async (
     console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
 
     // Paso 3: Verificar resultado
-    const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-    const resultCount = updatedRama?.sectionGalleryObjectIds?.length || 0;
+  const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+  const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
+  const gallery = (updatedRec?.['galleryObjectIds'] as string[] | undefined) ?? (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+  const resultCount = gallery?.length || 0;
 
     const result = {
       uploaded: 1,
       returned: resultCount,
       details: {
         originalObjectId: uploadResponse.objectId,
-        returnedUrls: updatedRama?.sectionGalleryObjectIds || [],
+        returnedUrls: (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [],
         isProbablyMultiVariant: resultCount > 1
       }
     };
@@ -62,7 +64,7 @@ export const diagnoseBatchImageUpload = async (
 };
 
 // Función helper para hacer el diagnóstico accesible desde la consola del navegador
-(globalThis as any).diagnosticImageUpload = diagnoseBatchImageUpload;
+(globalThis as unknown as Record<string, unknown>).diagnosticImageUpload = diagnoseBatchImageUpload;
 
 // Funciones de carga de archivos - Implementación de dos pasos según backend
 export const uploadSectionIcon = async (
@@ -244,13 +246,14 @@ export const uploadGalleryImages = async (
       
       // Obtener los datos actualizados de la rama para tener las URLs correctas
       console.log('🔄 [ImageUploadService] Obteniendo datos actualizados de la rama después de agregar a galería...');
-      const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-      
-      if (updatedRama && updatedRama.sectionGalleryObjectIds && updatedRama.sectionGalleryObjectIds.length > 0) {
+  const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+  const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
+  const galleryUrls = (updatedRec?.['galleryObjectIds'] as string[] | undefined) ?? (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+      if (galleryUrls && galleryUrls.length > 0) {
         // Retornar las URLs de la galería actualizada del backend
         console.log('✅ [ImageUploadService] URLs de galería actualizadas obtenidas del backend');
-        console.log('📸 [ImageUploadService] Galería completa actual:', updatedRama.sectionGalleryObjectIds);
-        return updatedRama.sectionGalleryObjectIds; // URLs reales del backend
+        console.log('📸 [ImageUploadService] Galería completa actual:', galleryUrls);
+        return galleryUrls; // URLs reales del backend
       } else {
         console.warn('⚠️ [ImageUploadService] No se pudieron obtener URLs actualizadas, usando URLs del upload');
         return urls; // Fallback a URLs del upload inicial
