@@ -1,9 +1,9 @@
 import type { 
-  Rama, 
-  CreateRamaData, 
-  UpdateRamaData, 
-  BackendRama
-} from '../types/rama.type';
+  Branch as Rama, 
+  CreateBranchData as CreateRamaData, 
+  UpdateBranchData as UpdateRamaData, 
+} from '../types/frontend';
+import type { BackendBranch as BackendRama } from '../types/backend';
 
 import { apiClient } from './apiClient';
 import { 
@@ -11,8 +11,73 @@ import {
   mapFrontendCreateRamaToBackend, 
   mapFrontendUpdateRamaToBackend
 } from '../utils/mappers';
+import { mapBackendSubramaToFrontend } from '../utils/mappers';
 import { getSubramasByRamaId } from './subrama.service';
 import { uploadSectionIcon, uploadGalleryImages } from './image-upload-core.service';
+
+// Nuevo: intentar obtener ramas y sus subramas en una sola llamada si el backend
+// soporta un parámetro `includeSubgroups`. Hace fallback al flujo actual.
+export const getRamasWithSubramas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
+  console.log('🔄 [RamaService] Intentando obtener ramas con subramas (optimizado)');
+  try {
+    // Intentar endpoint optimizado (si el backend lo soporta)
+    const endpointOptimized = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections?includeSubgroups=true`;
+  const backendRamas = await apiClient.get<unknown[]>(endpointOptimized).catch(() => undefined);
+
+    if (backendRamas && Array.isArray(backendRamas) && backendRamas.length > 0) {
+      console.log('✅ [RamaService] Backend soporta endpoint optimizado, mapeando resultados');
+      // Mapar ramas y, si no hay subramas embebidas, hidratar llamando al servicio
+      const ramas = await Promise.all(backendRamas.map(async (br) => {
+        const mapped = mapBackendRamaToFrontend(br as unknown as BackendRama);
+        const backendRec = br as unknown as Record<string, unknown>;
+        const backendSubgroups = (backendRec['subgroups'] ?? backendRec['subramas'] ?? backendRec['subgroupList']) as unknown[] | undefined;
+
+        if (Array.isArray(backendSubgroups) && backendSubgroups.length > 0) {
+          // Mapear cada subrama usando el mapper central para mantener compatibilidad
+          const mappedSubs = backendSubgroups.map((bs) => {
+            try {
+              return mapBackendSubramaToFrontend(bs as unknown as Record<string, unknown>);
+            } catch (e) {
+              console.warn('[RamaService] No se pudo mapear una subrama embebida:', e);
+              return null;
+            }
+          }).filter((x): x is import('../types/frontend').Subgroup => Boolean(x));
+          mapped.subramas = mappedSubs;
+          mapped.subgroups = mappedSubs;
+        } else {
+          // No hay subramas embebidas en la respuesta optimizada -> intentar hidratar por separado
+          try {
+            const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, mapped.id);
+            mapped.subramas = subramas;
+            mapped.subgroups = subramas;
+          } catch (err) {
+            console.warn('[RamaService] No se pudieron obtener subramas por separado para rama', mapped.id, err);
+            mapped.subramas = [];
+            mapped.subgroups = [];
+          }
+        }
+
+        return mapped;
+      }));
+
+      // Aplicar filtro por año si corresponde
+      const ramasFiltradas = año ? ramas.filter((rama: Rama) => {
+        const legacy = rama as unknown as Record<string, unknown>;
+        const year = rama.year ?? (legacy['año'] as number | undefined);
+        return year === año;
+      }) : ramas;
+
+      console.log('✅ [RamaService] Ramas optimizadas obtenidas:', ramasFiltradas.length);
+      return ramasFiltradas;
+    }
+
+    console.log('ℹ️ [RamaService] Endpoint optimizado no disponible; usando flujo estándar');
+    return await getRamas(tenantSlug, groupSlug, año);
+  } catch (error) {
+    console.warn('⚠️ [RamaService] Error en endpoint optimizado, fallback al flujo estándar:', error);
+    return await getRamas(tenantSlug, groupSlug, año);
+  }
+};
 
 // CRUD para Ramas (SECTIONS)
 export const getRamas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
@@ -44,16 +109,23 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
       ramas.map(async (rama) => {
         try {
           const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
-          return { ...rama, subramas };
+          // Populate both canonical and legacy-compatible fields so consumers using
+          // (rama.subgroups ?? rama.subramas) won't pick an empty array from the
+          // pre-initialized `subgroups: []` and miss the hydrated subramas.
+          return { ...rama, subramas, subgroups: subramas };
         } catch (error) {
-          console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, error);
-          return { ...rama, subramas: [] };
+          console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre ?? rama.name}:`, error);
+          return { ...rama, subramas: [], subgroups: [] };
         }
       })
     );
     
-    // Filtrar por año si se especifica
-    const ramasFiltradas = año ? ramasConSubramas.filter((rama: Rama) => rama.año === año) : ramasConSubramas;
+    // Filtrar por año si se especifica (soportando legacy 'año')
+    const ramasFiltradas = año ? ramasConSubramas.filter((rama: Rama) => {
+      const legacy = rama as unknown as Record<string, unknown>;
+      const year = rama.year ?? (legacy['año'] as number | undefined);
+      return year === año;
+    }) : ramasConSubramas;
     
     console.log('✅ [RamaService] Ramas hidratadas con subramas:', ramasFiltradas.length);
     console.log('📊 [RamaService] Subramas totales:', ramasFiltradas.reduce((total, rama) => total + rama.subramas.length, 0));
@@ -76,11 +148,15 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
     // 🔄 Hidratar rama con sus subramas
     try {
       const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
+      // Ensure both fields are populated so components that check the canonical
+      // `subgroups` property don't mistakenly use the pre-initialized empty array.
       rama.subramas = subramas;
+      rama.subgroups = subramas;
       console.log('✅ [RamaService] Rama obtenida con', subramas.length, 'subramas:', rama.nombre);
     } catch (subramaError) {
       console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, subramaError);
       rama.subramas = [];
+      rama.subgroups = [];
     }
     
     return rama;
@@ -91,10 +167,11 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
 };
 
 export const createRama = async (tenantSlug: string, groupSlug: string, data: CreateRamaData): Promise<Rama> => {
-  console.log('🔄 [RamaService] Creando nueva rama:', data.nombre);
+  const maybeData = data as unknown as Record<string, unknown>;
+  console.log('🔄 [RamaService] Creando nueva rama:', (maybeData['nombre'] as string | undefined) ?? data.name);
   console.log('📝 [RamaService] Datos recibidos:', {
-    nombre: data.nombre,
-    descripcion: data.descripcion,
+    nombre: (maybeData['nombre'] as string | undefined) ?? data.name,
+    descripcion: (maybeData['descripcion'] as string | undefined) ?? data.description,
     tieneIconFile: !!data.iconFile,
     iconFileName: data.iconFile?.name,
     tieneGalleryFiles: !!data.galleryFiles && data.galleryFiles.length > 0
@@ -139,7 +216,7 @@ export const createRama = async (tenantSlug: string, groupSlug: string, data: Cr
       }
     }
     
-    const rama = mapBackendRamaToFrontend(backendRama);
+  const rama = mapBackendRamaToFrontend(backendRama);
     console.log('✅ [RamaService] Rama creada:', rama.nombre);
     return rama;
   } catch (error) {
@@ -204,8 +281,11 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
     const backendRamas = await apiClient.get<BackendRama[]>(endpoint);
     
     // Extraer años directamente de los datos del backend sin mapear subramas
-    const ramasSimples = backendRamas.map(mapBackendRamaToFrontend);
-    const years = [...new Set(ramasSimples.map(rama => rama.año).filter(año => año !== undefined && año !== null))];
+  const ramasSimples = backendRamas.map(mapBackendRamaToFrontend);
+  const years = [...new Set(ramasSimples.map((r: Rama) => {
+    const legacy = r as unknown as Record<string, unknown>;
+    return r.year ?? (legacy['año'] as number | undefined);
+  }).filter((y) => y !== undefined && y !== null))];
     const sortedYears = years.sort((a, b) => b - a);
     
     console.log('✅ [RamaService] Años disponibles (optimizado):', sortedYears);

@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Subrama } from "../types/rama.type";
+import type { Subgroup as Subrama } from "../types/frontend";
 import * as organigramaService from "../services";
 import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
@@ -19,7 +19,8 @@ export default function SubramaDetail() {
   const [subrama, setSubrama] = useState<Subrama | null>(null);
   const [loading, setLoading] = useState(true);
   const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
-  const [galeriaFotos, setGaleriaFotos] = useState<string[]>([]);
+  // Galería deshabilitada por requerimiento: mantener estado comentado para posible restauración
+  // const [galeriaFotos, setGaleriaFotos] = useState<string[]>([]);
   // Token para forzar recarga de imágenes (cache-busting)
   const [imageRefreshToken, setImageRefreshToken] = useState<number>(Date.now());
   // Helper para display src (añade cache-bust si es URL remota)
@@ -68,20 +69,21 @@ export default function SubramaDetail() {
   const [fotoModalOpen, setFotoModalOpen] = useState(false);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
   const [fotoTipo, setFotoTipo] = useState<"principal" | "galeria" | null>(null);
-  const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
+  // const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>(""); // galería deshabilitada
 
 
   // Referencias para inputs de archivos
   const mainImageInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  // const galleryInputRef = useRef<HTMLInputElement>(null); // galería deshabilitada
 
   const handleMainImageClick = () => {
     mainImageInputRef.current?.click();
   };
 
-  const handleGalleryClick = () => {
-    galleryInputRef.current?.click();
-  };
+  // Galería deshabilitada
+  // const handleGalleryClick = () => {
+  //   galleryInputRef.current?.click();
+  // };
 
   const handleMainImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -118,11 +120,13 @@ export default function SubramaDetail() {
           });
         }, 250);
 
+  const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.updateSubramaMainImage(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
+          String(sectionId),
+          String(subgroupId),
           file,
           (fileName, percent) => {
             // cuando llegan eventos reales, cancelar simulado y animar hasta el valor real
@@ -155,7 +159,9 @@ export default function SubramaDetail() {
   await fetchSubrama();
   // Obtener la subrama actualizada directamente para obtener la URL definitiva
   try {
-    const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, subrama.section_id, subrama.subgroup_id);
+    const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+    const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
+    const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, String(sectionId), String(subgroupId));
     if (updated && updated.imagenPrincipal) {
       // Actualizar visualmente con cache-bust igual que RamaDetail
       setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
@@ -175,7 +181,7 @@ export default function SubramaDetail() {
   }
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
-        const msg = (error as any)?.message || '';
+    const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
         if (msg === 'UploadCanceled' || msg === 'canceled') {
           console.debug('[SubramaDetail] upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
@@ -208,37 +214,30 @@ export default function SubramaDetail() {
     }
   };
 
+  // Galería deshabilitada: handler de cambio de input comentado para desactivar subida de imágenes
+  /*
   const handleGalleryChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length > 0 && subrama) {
       const previews = files.map(f => URL.createObjectURL(f));
       setGaleriaFotos(prev => [...prev, ...previews]);
-      
       try {
-        console.log('🔄 [SubramaDetail] Subiendo fotos a la galería:', files.length);
-
+        const sectionIdForUpload = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+        const subgroupIdForUpload = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.uploadSubramaGalleryImages(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
+          String(sectionIdForUpload),
+          String(subgroupIdForUpload),
           files
         );
-
-        console.log('✅ [SubramaDetail] Fotos de galería subidas correctamente');
-        console.log('🔄 [SubramaDetail] Refrescando datos completos de la subrama...');
-        
-        // Recargar datos completos de la subrama para sincronizar con backend
         await fetchSubrama();
-        
-        console.log('✅ [SubramaDetail] Datos de subrama actualizados después del upload');
       } catch (error) {
-        console.error('❌ [SubramaDetail] Error subiendo fotos de galería:', error);
-        // Limpiar previews en caso de error
         setGaleriaFotos(prev => prev.slice(0, -previews.length));
       }
     }
   };
+  */
 
   // Abrir modal según tipo de imagen
   const openMainImageModal = () => {
@@ -248,12 +247,15 @@ export default function SubramaDetail() {
     setFotoModalOpen(true);
   };
 
+  // Galería deshabilitada: función para abrir modal de galería comentada
+  /*
   const openGalleryModal = (url: string) => {
     setFotoTipo("galeria");
     setFotoSeleccionada(url);
     setGaleriaObjetivo(url);
     setFotoModalOpen(true);
   };
+  */
 
   const handleReplaceFoto = async (file: File) => {
     if (!subrama || !fotoTipo) return;
@@ -290,13 +292,15 @@ export default function SubramaDetail() {
           });
         }, 250);
 
-        await organigramaService.updateSubramaMainImage(
-          tenantSlug,
-          groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
-          file,
-          (fileName, percent) => {
+  const sectionId2 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupId2 = subrama.subgroup_id ?? subrama.id ?? '';
+  await organigramaService.updateSubramaMainImage(
+    tenantSlug,
+    groupSlug,
+    String(sectionId2),
+    String(subgroupId2),
+    file,
+    (fileName, percent) => {
             uploadProgressReceivedRef.current = true;
             if (uploadIntervalRef.current) {
               clearInterval(uploadIntervalRef.current);
@@ -322,7 +326,14 @@ export default function SubramaDetail() {
 
         await fetchSubrama();
         try {
-          const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, subrama.section_id, subrama.subgroup_id);
+          const sectionId3 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+          const subgroupId3 = subrama.subgroup_id ?? subrama.id ?? '';
+          const updated = await organigramaService.getSubramaById(
+            tenantSlug,
+            groupSlug,
+            String(sectionId3),
+            String(subgroupId3)
+          );
           if (updated && updated.imagenPrincipal) {
             setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
             setUploadPercent(100);
@@ -340,7 +351,7 @@ export default function SubramaDetail() {
         setFotoModalOpen(false);
       } catch (error) {
         console.error('❌ [SubramaDetail] Error reemplazando imagen principal desde modal:', error);
-        const msg = (error as any)?.message || '';
+    const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
         if (msg === 'UploadCanceled' || msg === 'canceled') {
           console.debug('[SubramaDetail] modal upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
@@ -363,14 +374,17 @@ export default function SubramaDetail() {
       return;
     }
 
-    // Si es galería, usar el servicio de reemplazo de galería (sin progreso complejo por ahora)
+        // Si es galería, usar el servicio de reemplazo de galería (sin progreso complejo por ahora)
     try {
-      const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+  // galeriaObjetivo está deshabilitado; usar fallback vacío
+  const cleanUuid = ''.match(/[0-9a-fA-F-]{36}/)?.[0] || '';
+  const sectionIdReplace = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupIdReplace = subrama.subgroup_id ?? subrama.id ?? '';
       await organigramaService.replaceSubramaGalleryImage(
         tenantSlug,
         groupSlug,
-        subrama.section_id,
-        subrama.subgroup_id,
+        String(sectionIdReplace),
+        String(subgroupIdReplace),
         cleanUuid,
         file
       );
@@ -433,20 +447,25 @@ export default function SubramaDetail() {
 
       if (fotoTipo === "principal") {
         // 🧩 NUEVO: eliminar imagen principal
+  const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.removeSubramaMainImage(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id
+          String(sectionIdDel),
+          String(subgroupIdDel)
         );
       } else if (fotoTipo === "galeria") {
         // 🧠 Extraer UUID limpio
-        const cleanUuid = galeriaObjetivo.match(/[0-9a-fA-F-]{36}/)?.[0] || galeriaObjetivo;
+  // galeriaObjetivo está deshabilitado; usar fallback vacío
+  const cleanUuid = ''.match(/[0-9a-fA-F-]{36}/)?.[0] || '';
+  const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.removeSubramaGalleryImage(
           tenantSlug,
           groupSlug,
-          subrama.section_id,
-          subrama.subgroup_id,
+          String(sectionIdDel),
+          String(subgroupIdDel),
           cleanUuid
         );
       }
@@ -487,12 +506,12 @@ export default function SubramaDetail() {
       if (id) {
         console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
         
-        const ramas = await organigramaService.getRamas(tenantSlug, groupSlug);
+  const ramas = await organigramaService.getRamasWithSubramas(tenantSlug, groupSlug);
         
         let subramaEncontrada: Subrama | null = null;
         
         for (const rama of ramas) {
-          const subramaInRama = rama.subramas.find((s: Subrama) => s.id === id);
+          const subramaInRama = (rama.subgroups ?? rama.subramas ?? []).find((s: Subrama) => s.id === id);
           if (subramaInRama) {
             subramaEncontrada = subramaInRama;
             break;
@@ -504,7 +523,7 @@ export default function SubramaDetail() {
           console.log("✅ [SubramaDetail] Subrama cargada:", subramaEncontrada);
 
           // 📸 Cargar imágenes existentes (PRIORIZAR URLs directas del backend)
-          console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.nombre);
+          console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre);
           console.log("🔍 [SubramaDetail] subrama.imagenPrincipal:", subramaEncontrada.imagenPrincipal);
           
           // PRIORIDAD 1: URL directa del backend (campo optimizado)
@@ -529,13 +548,14 @@ export default function SubramaDetail() {
           }
 
           // Cargar galería desde backend (URLs directas)
-          if (subramaEncontrada.subgroupGalleryObjectIds && subramaEncontrada.subgroupGalleryObjectIds.length > 0) {
-            setGaleriaFotos(subramaEncontrada.subgroupGalleryObjectIds);
-            console.log(`📸 [SubramaDetail] Cargadas ${subramaEncontrada.subgroupGalleryObjectIds.length} imágenes de galería desde backend`);
-            console.log('🔗 [SubramaDetail] URLs de galería:', subramaEncontrada.subgroupGalleryObjectIds);
+          const galleryUrls = subramaEncontrada.galleryObjectIds ?? subramaEncontrada.subgroupGalleryObjectIds ?? [];
+          if (galleryUrls && galleryUrls.length > 0) {
+            // setGaleriaFotos(galleryUrls);
+            console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería desde backend`);
+            console.log('🔗 [SubramaDetail] URLs de galería:', galleryUrls);
           } else {
             console.log('ℹ️ [SubramaDetail] No hay imágenes en la galería de la subrama');
-            setGaleriaFotos([]);
+            // setGaleriaFotos([]);
           }
         } else {
           console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);
@@ -672,7 +692,7 @@ export default function SubramaDetail() {
         />
 
         <p className="text-sm text-muted-foreground">
-          {subrama.descripcion || "Sin descripción"}
+          {subrama.description ?? subrama.descripcion ?? "Sin descripción"}
         </p>
       </Card>
 
@@ -697,45 +717,7 @@ export default function SubramaDetail() {
         </div>
       </Card>
 
-      {/* Galería */}
-      <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-primary">
-            Galería de fotos
-          </h2>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleGalleryClick}
-            className="border border-primary text-primary hover:bg-accent flex items-center gap-2"
-          >
-            Añadir Fotos
-            <Upload className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {galeriaFotos.map((src, idx) => (
-            <div key={idx} className="relative cursor-pointer hover:opacity-80" onClick={() => openGalleryModal(src)}>
-              <img
-                src={src}
-                alt={`Foto ${idx + 1}`}
-                className="rounded-lg object-cover w-full h-[300px]"
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Input oculto para galería */}
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleGalleryChange}
-          className="hidden"
-          aria-label="Subir fotos a la galería"
-        />
-      </Card>
+      {/* Galería eliminada: sección removida por requerimiento */}
       <FotoModal
         open={fotoModalOpen}
         onClose={() => setFotoModalOpen(false)}

@@ -1,10 +1,3 @@
-/**
- * Utilidades simples para compresión de imágenes
- */
-
-/**
- * Comprime una imagen reduciendo su calidad y dimensiones
- */
 export const compressImage = (
   file: File, 
   maxWidth: number = 800, 

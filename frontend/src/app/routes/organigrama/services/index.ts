@@ -12,6 +12,7 @@
 export {
   getRamas,
   getRamaById,
+  getRamasWithSubramas,
   createRama,
   updateRama,
   deleteRama,

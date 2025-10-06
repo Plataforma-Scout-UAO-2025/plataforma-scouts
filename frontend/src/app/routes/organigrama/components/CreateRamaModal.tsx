@@ -12,13 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useApiError } from '../hooks/useApiError';
-import type { CreateRamaFormData } from '../schemas/rama.schema';
-import type { CreateRamaData } from '../types/rama.type';
+import type { CreateBranchData } from '../types/frontend';
+// schema types are available but this component uses a legacy form shape during migration
 
 interface CreateRamaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateRamaData) => Promise<void>;
+  // Accept legacy payload shapes during migration
+  onSubmit: (data: CreateBranchData) => Promise<void>;
   onSuccess?: () => void; // Callback para refrescar datos en la página principal
 }
 
@@ -33,12 +34,25 @@ export default function CreateRamaModal({
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { error, handleError, clearError } = useApiError();
-  const [formData, setFormData] = useState<CreateRamaFormData>({
-    nombre: '',
-    descripcion: '',
-    edadMinima: 7,
-    edadMaxima: 10,
-    año: new Date().getFullYear(),
+  type FormState = {
+    name?: string;
+    nombre?: string;
+    description?: string;
+    descripcion?: string;
+    minAge?: number;
+    maxAge?: number;
+    edadMinima?: number;
+    edadMaxima?: number;
+    year?: number;
+    año?: number;
+  };
+
+  const [formData, setFormData] = useState<FormState>({
+    name: '',
+    description: '',
+    minAge: 7,
+    maxAge: 10,
+    year: new Date().getFullYear(),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,22 +63,26 @@ export default function CreateRamaModal({
     
     setIsSubmitting(true);
     try {
-      // Crear el objeto de datos incluyendo el archivo de imagen si existe
-      const dataWithFile = {
-        ...formData,
+      // Mapear el formulario (campos en español) al nuevo tipo CreateBranchData
+      const payload: CreateBranchData = {
+        name: (formData.name ?? formData.nombre) ?? '',
+        description: (formData.description ?? formData.descripcion) || undefined,
+        minAge: (formData.minAge ?? formData.edadMinima) ?? 7,
+        maxAge: (formData.maxAge ?? formData.edadMaxima) ?? 10,
+  year: (formData.year ?? formData['año']) ?? new Date().getFullYear(),
         iconFile: selectedFile || undefined,
-        galleryFiles: undefined
+        galleryFiles: undefined,
       };
       
-      await onSubmit(dataWithFile);
+      await onSubmit(payload);
       
       // Reset form después del éxito
       setFormData({
-        nombre: '',
-        descripcion: '',
-        edadMinima: 7,
-        edadMaxima: 10,
-        año: new Date().getFullYear(),
+        name: '',
+        description: '',
+        minAge: 7,
+        maxAge: 10,
+        year: new Date().getFullYear(),
       });
       setSelectedFile(null);
       setImagenUrl(null);
@@ -85,11 +103,11 @@ export default function CreateRamaModal({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setFormData({
-        nombre: '',
-        descripcion: '',
-        edadMinima: 7,
-        edadMaxima: 10,
-        año: new Date().getFullYear(),
+        name: '',
+        description: '',
+        minAge: 7,
+        maxAge: 10,
+        year: new Date().getFullYear(),
       });
       setSelectedFile(null);
       setImagenUrl(null);
@@ -128,9 +146,9 @@ export default function CreateRamaModal({
             </Label>
             <Input
               id="nombre"
-              value={formData.nombre}
+              value={formData.name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData(prev => ({ ...prev, nombre: e.target.value }))
+                setFormData((prev) => ({ ...prev, name: e.target.value }))
               }
               className="w-full bg-card border border-border rounded-md focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
               required
@@ -199,9 +217,9 @@ export default function CreateRamaModal({
             <Textarea
               id="descripcion"
               placeholder="Descripción opcional de la rama..."
-              value={formData.descripcion}
+              value={formData.description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData(prev => ({ ...prev, descripcion: e.target.value }))
+                setFormData((prev) => ({ ...prev, description: e.target.value }))
               }
               className="w-full bg-background border border-border rounded-md resize-none focus:ring-primary focus:border-primary min-h-[100px] placeholder:text-muted-foreground"
               rows={4}

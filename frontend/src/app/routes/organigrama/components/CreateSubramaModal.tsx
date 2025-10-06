@@ -11,13 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import type { CreateSubramaFormData } from '../schemas/rama.schema';
+import type { CreateSubgroupData } from '../types/frontend';
 
 interface CreateSubramaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ramaId: string;
-  onSubmit: (data: CreateSubramaFormData) => Promise<void>;
+  onSubmit: (data: CreateSubgroupData) => Promise<void>;
 }
 
 export default function CreateSubramaModal({
@@ -28,23 +28,24 @@ export default function CreateSubramaModal({
 }: CreateSubramaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
+    name: '',
+    description: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const submitData: CreateSubramaFormData = {
-        ...formData,
-        ramaId: ramaId,
+      const payload: CreateSubgroupData = {
+        name: formData.name,
+        description: formData.description || undefined,
+        branchId: ramaId,
       };
-      await onSubmit(submitData);
+      await onSubmit(payload);
       // Reset form
       setFormData({
-        nombre: '',
-        descripcion: '',
+        name: '',
+        description: '',
       });
       onOpenChange(false);
     } catch (error) {
@@ -57,8 +58,8 @@ export default function CreateSubramaModal({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setFormData({
-        nombre: '',
-        descripcion: '',
+        name: '',
+        description: '',
       });
     }
     onOpenChange(newOpen);
@@ -95,9 +96,9 @@ export default function CreateSubramaModal({
             </Label>
             <Input
               id="nombre"
-              value={formData.nombre}
+              value={formData.name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData(prev => ({ ...prev, nombre: e.target.value }))
+                setFormData(prev => ({ ...prev, name: e.target.value }))
               }
               className="w-full bg-card border border-border rounded-md focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
               required
@@ -112,9 +113,9 @@ export default function CreateSubramaModal({
             <Textarea
               id="descripcion"
               placeholder="Descripción opcional..."
-              value={formData.descripcion}
+              value={formData.description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData(prev => ({ ...prev, descripcion: e.target.value }))
+                setFormData(prev => ({ ...prev, description: e.target.value }))
               }
               className="w-full bg-background border border-border rounded-md resize-none focus:ring-primary focus:border-primary min-h-[100px] placeholder:text-muted-foreground"
               rows={4}

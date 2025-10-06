@@ -1,10 +1,3 @@
-/**
- * Utilidades de diagnóstico para problemas de upload de imágenes
- * 
- * PROBLEMA REPORTADO: Al subir 1 imagen, el backend devuelve 4 URLs diferentes
- * Este archivo contiene funciones para diagnosticar el comportamiento del backend
- */
-
 import { apiClient } from '../services/apiClient';
 import { getRamaById } from '../services';
 
@@ -173,8 +166,8 @@ export const analyzeImageUrls = (urls: string[]): {
 /**
  * Función helper para llamar desde la consola del navegador
  */
-(window as any).diagnosticImageUpload = diagnosticImageUpload;
-(window as any).analyzeImageUrls = analyzeImageUrls;
+(window as unknown as Record<string, unknown>).diagnosticImageUpload = diagnosticImageUpload;
+(window as unknown as Record<string, unknown>).analyzeImageUrls = analyzeImageUrls;
 
 console.log('🔧 [DIAGNOSTIC] Funciones de diagnóstico cargadas. Usa:');
 console.log('  - diagnosticImageUpload(tenantSlug, groupSlug, sectionId, file)');

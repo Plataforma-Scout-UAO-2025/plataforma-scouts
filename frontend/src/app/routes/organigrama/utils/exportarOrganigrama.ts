@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import type { Rama, Subrama } from "../types/rama.type";
+import type { Branch as Rama, Subgroup as Subrama } from "../types/frontend";
 
 type ExportPDFOpts = {
   anio?: number;
@@ -32,13 +32,17 @@ function hexToRgb(hex: string): [number, number, number] {
 function construirFilas(ramas: Rama[]): string[][] {
   const filas: string[][] = [];
   for (const r of ramas) {
-    filas.push([`Rama: ${r.nombre}`, "", `Estado: ${r.estado ?? ""}`]);
+    const displayName = r.name ?? r.nombre ?? '';
+    const displayEstado = (r.status === 'active' ? 'activa' : (r.status === 'inactive' ? 'inactiva' : r.estado ?? ''));
+    filas.push([`Rama: ${displayName}`, "", `Estado: ${displayEstado}`]);
     if (r.subramas && r.subramas.length > 0) {
       for (const s of r.subramas) {
+        const sName = s.name ?? s.nombre ?? '';
+        const sEstado = (s.status === 'active' ? 'activa' : (s.status === 'inactive' ? 'inactiva' : s.estado ?? ''));
         filas.push([
           "",
-          `Subrama: ${s.nombre}`,
-          `Estado: ${s.estado ?? ""}`,
+          `Subrama: ${sName}`,
+          `Estado: ${sEstado}`,
         ]);
       }
     } else {
@@ -70,7 +74,7 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
     doc.setTextColor(0, 0, 0);
     doc.text(`Generado: ${new Date().toLocaleString()}`, x, y + 16);
 
-    const body = construirFilas(ramas); // string[][] sin undefined
+  const body = construirFilas(ramas); // string[][] sin undefined
 
     autoTable(doc, {
       startY: y + 32,
@@ -102,15 +106,15 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
 export const exportarOrganigramaExcel = (ramas: Rama[]) => {
   try {
     const hojaRamas = ramas.map((r) => ({
-      Rama: r.nombre,
-      Estado: r.estado ?? "",
-      "Descripción Rama": r.descripcion ?? "",
-      "Edad mínima": r.edadMinima ?? "",
-      "Edad máxima": r.edadMaxima ?? "",
-      Año: (r as any).año ?? (r as any).ano ?? "",
-      "Total subramas": r.subramas?.length ?? 0,
+      Rama: (r.name ?? r.nombre) as string,
+      Estado: (r.status === 'active' ? 'activa' : (r.status === 'inactive' ? 'inactiva' : r.estado ?? '')),
+      "Descripción Rama": r.description ?? "",
+      "Edad mínima": r.minAge ?? "",
+      "Edad máxima": r.maxAge ?? "",
+      "Año": r.year ?? "",
+      "Total subramas": r.subgroups?.length ?? r.subramas?.length ?? 0,
       "ID Rama": r.id,
-      "Section ID": r.section_id,
+      "Section ID": r.section_id ?? r.sectionId ?? "",
     }));
 
     const hojaSubramas: Array<{
@@ -124,21 +128,22 @@ export const exportarOrganigramaExcel = (ramas: Rama[]) => {
     }> = [];
 
     for (const r of ramas) {
-      if (r.subramas && r.subramas.length > 0) {
-        for (const s of r.subramas as Subrama[]) {
+      const subgroups = (r.subgroups ?? r.subramas) as Subrama[] | undefined;
+      if (subgroups && subgroups.length > 0) {
+        for (const s of subgroups) {
           hojaSubramas.push({
-            Rama: r.nombre,
+            Rama: (r.name ?? r.nombre) as string,
             "ID Rama": r.id,
-            Subrama: s.nombre,
-            Estado: s.estado ?? "",
-            "Descripción Subrama": s.descripcion ?? "",
+            Subrama: (s.name ?? s.nombre) as string,
+            Estado: (s.status === 'active' ? 'activa' : (s.status === 'inactive' ? 'inactiva' : s.estado ?? '')),
+            "Descripción Subrama": s.description ?? "",
             "ID Subrama": s.id,
-            "Subgroup ID": (s.subgroup_id as any) ?? "",
+            "Subgroup ID": s.subgroup_id ?? "",
           });
         }
       } else {
         hojaSubramas.push({
-          Rama: r.nombre,
+          Rama: (r.name ?? r.nombre) as string,
           "ID Rama": r.id,
           Subrama: "— (Sin subramas)",
           Estado: "",
@@ -155,7 +160,9 @@ export const exportarOrganigramaExcel = (ramas: Rama[]) => {
 
     const fitCols = (ws: XLSX.WorkSheet, headers: string[]) => {
       const cols = headers.map((h) => ({ wch: Math.max(12, h.length + 2) }));
-      (ws as any)["!cols"] = cols;
+      // XLSX types don't include the custom '!cols' property so we use a
+      // minimal localized cast here to set column widths.
+      (ws as unknown as Record<string, unknown>)["!cols"] = cols;
     };
     if (hojaRamas.length) fitCols(wsRamas, Object.keys(hojaRamas[0]));
     if (hojaSubramas.length) fitCols(wsSubs, Object.keys(hojaSubramas[0]));

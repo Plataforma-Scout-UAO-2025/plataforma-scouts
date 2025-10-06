@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import type { Rama } from "../types/rama.type";
+import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
 import { extractObjectIdFromUrl } from "../services";
 import { toast } from "sonner";
@@ -33,7 +33,20 @@ export default function RamaDetail() {
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [galleryLocalPreviews, setGalleryLocalPreviews] = useState<string[]>([]);
   const uploadControllerRef = useRef<AbortController | null>(null);
+  // Helpers to safely read legacy alias fields from objects
+  const getLegacyString = (obj: unknown, key: string): string | undefined => {
+    if (!obj) return undefined;
+    const rec = obj as unknown as Record<string, unknown>;
+    const v = rec[key];
+    return v === undefined || v === null ? undefined : String(v);
+  };
 
+  const getLegacyNumber = (obj: unknown, key: string): number | undefined => {
+    const s = getLegacyString(obj, key);
+    if (s === undefined) return undefined;
+    const n = Number(s);
+    return Number.isNaN(n) ? undefined : n;
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainImageInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -81,8 +94,9 @@ export default function RamaDetail() {
       }
       const controller = new AbortController();
       uploadControllerRef.current = controller;
-      if (fotoTipo === "icono") {
-        await organigramaService.uploadSectionIcon(tenantSlug, groupSlug, rama.section_id, file, (fileName, percent) => {
+  if (fotoTipo === "icono") {
+  const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
+  await organigramaService.uploadSectionIcon(tenantSlug, groupSlug, sectionId, file, (fileName, percent) => {
           setCurrentUploadingFile(fileName);
           const display = percent >= 100 ? 99 : Math.floor(percent);
           setUploadPercent(display);
@@ -91,8 +105,9 @@ export default function RamaDetail() {
             toast('Subida completada. Procesando en servidor...');
           }
         }, controller.signal);
-      } else if (fotoTipo === "principal") {
-        await organigramaService.uploadSectionMainImage(tenantSlug, groupSlug, rama.section_id, file, (fileName, percent) => {
+    } else if (fotoTipo === "principal") {
+  const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
+  await organigramaService.uploadSectionMainImage(tenantSlug, groupSlug, sectionId, file, (fileName, percent) => {
           setCurrentUploadingFile(fileName);
           const display = percent >= 100 ? 99 : Math.floor(percent);
           setUploadPercent(display);
@@ -111,10 +126,11 @@ export default function RamaDetail() {
 
         console.log("🎯 UUID extraído para reemplazo:", targetUuid);
 
+  const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
         await organigramaService.replaceGalleryImage(
           tenantSlug,
           groupSlug,
-          rama.section_id,
+          sectionId,
           targetUuid,
           file,
           controller.signal
@@ -166,14 +182,17 @@ export default function RamaDetail() {
 
     try {
       if (fotoTipo === "icono") {
-        await organigramaService.removeSectionIcon(tenantSlug, groupSlug, rama.section_id);
+        const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
+        await organigramaService.removeSectionIcon(tenantSlug, groupSlug, sectionId);
       } else if (fotoTipo === "principal") {
-        await organigramaService.removeSectionMainImage(tenantSlug, groupSlug, rama.section_id);
+        const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
+        await organigramaService.removeSectionMainImage(tenantSlug, groupSlug, sectionId);
       } else if (fotoTipo === "galeria") {
+        const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
         await organigramaService.removeGalleryImage(
           tenantSlug,
           groupSlug,
-          rama.section_id,
+          sectionId,
           galeriaObjetivo
         );
       }
@@ -193,58 +212,22 @@ export default function RamaDetail() {
 
   // Función optimizada para obtener la URL correcta del icono (prioriza URLs directas del backend)
   const getIconUrl = (rama: Rama): string => {
-    // PRIORIDAD 1: URL directa del backend (campo optimizado)
-    if (rama.icono && !rama.icono.startsWith('data:') && rama.icono.includes('http')) {
-      console.log('✅ [RamaDetail] Usando URL directa del backend para icono:', rama.icono);
-      return rama.icono;
-    }
-    
-    // PRIORIDAD 2: URL de datos (data:image/...) - para compatibilidad
-    if (rama.icono && rama.icono.startsWith('data:')) {
-      console.log('✅ [RamaDetail] Usando data URL para icono');
-      return rama.icono;
-    }
-    
-    // PRIORIDAD 3: Cualquier URL en campo icono
-    if (rama.icono) {
-      console.log('✅ [RamaDetail] Usando campo icono como URL:', rama.icono);
-      return rama.icono;
-    }
-    
-    console.log('⚠️ [RamaDetail] No hay icono disponible para rama:', rama.nombre);
+    // Prefer new fields then legacy
+    const iconObjectId = rama.iconObjectId ?? rama.iconoObjectId;
+    const iconUrl = rama.iconUrl ?? rama.icono;
+    if (iconObjectId) return iconObjectId as string;
+    if (iconUrl && !iconUrl.startsWith('data:') && iconUrl.includes('http')) return iconUrl as string;
+    if (iconUrl && iconUrl.startsWith('data:')) return iconUrl as string;
+    if (iconUrl) return iconUrl as string;
+    console.log('⚠️ [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
     return '';
   };
 
   // Función optimizada para obtener la URL correcta de la imagen principal
   const getMainImageUrl = (rama: Rama): string => {
-    console.log('🔍 [RamaDetail] Analizando imagen principal para:', rama.nombre);
-    console.log('🔍 [RamaDetail] rama.imagenPrincipal:', rama.imagenPrincipal);
-    
-    // PRIORIDAD 1: URL directa del backend (campo optimizado)
-    if (rama.imagenPrincipal && !rama.imagenPrincipal.startsWith('data:') && rama.imagenPrincipal.includes('http')) {
-      console.log('✅ [RamaDetail] Usando URL directa del backend para imagen principal:', rama.imagenPrincipal);
-      return rama.imagenPrincipal;
-    }
-    
-    // PRIORIDAD 2: URL de datos (data:image/...) - para compatibilidad
-    if (rama.imagenPrincipal && rama.imagenPrincipal.startsWith('data:')) {
-      console.log('✅ [RamaDetail] Usando data URL para imagen principal');
-      return rama.imagenPrincipal;
-    }
-    
-    // PRIORIDAD 3: Cualquier URL en campo imagenPrincipal
-    if (rama.imagenPrincipal) {
-      console.log('✅ [RamaDetail] Usando campo imagenPrincipal como URL:', rama.imagenPrincipal);
-      return rama.imagenPrincipal;
-    }
-    
-    console.log('⚠️ [RamaDetail] No hay imagen principal - usando placeholder para rama:', rama.nombre);
-    console.log('📊 [RamaDetail] Estado rama.imagenPrincipal:', { 
-      value: rama.imagenPrincipal, 
-      type: typeof rama.imagenPrincipal, 
-      isEmpty: rama.imagenPrincipal === '' || rama.imagenPrincipal === null 
-    });
-    // Fallback a una imagen placeholder
+    const mainImage = rama.mainImageUrl ?? rama.imagenPrincipal ?? '';
+    if (mainImage && !mainImage.startsWith('data:') && mainImage.includes('http')) return mainImage as string;
+    if (mainImage && mainImage.startsWith('data:')) return mainImage as string;
     return 'https://placehold.co/800x300/e2e8f0/94a3b8?text=Sin+imagen';
   };
 
@@ -272,10 +255,10 @@ export default function RamaDetail() {
       setUploadPercent(0);
 
       // Subir archivo usando el nuevo sistema y recibir progreso
-      await organigramaService.uploadSectionIcon(
-        tenantSlug,
-        groupSlug,
-        rama.section_id,
+  await organigramaService.uploadSectionIcon(
+    tenantSlug,
+    groupSlug,
+  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
         file,
         (fileName: string, percent: number) => {
           setCurrentUploadingFile(fileName);
@@ -335,10 +318,10 @@ export default function RamaDetail() {
       setUploadPercent(0);
 
       // Subir archivo usando la función específica para imagen principal (con progreso)
-      await organigramaService.uploadSectionMainImage(
-        tenantSlug,
-        groupSlug,
-        rama.section_id,
+  await organigramaService.uploadSectionMainImage(
+    tenantSlug,
+    groupSlug,
+  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
         file,
         (fileName: string, percent: number) => {
           setCurrentUploadingFile(fileName);
@@ -394,10 +377,10 @@ export default function RamaDetail() {
       setGaleriaFotos(prev => [...prev, ...previews]);
 
       // Subir las imágenes usando el nuevo sistema (con progreso individual y global)
-      await organigramaService.uploadGalleryImages(
-        tenantSlug,
-        groupSlug,
-        rama.section_id,
+  await organigramaService.uploadGalleryImages(
+  tenantSlug,
+  groupSlug,
+  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
         files,
         (fileName: string, percent: number) => {
           setCurrentUploadingFile(fileName);
@@ -522,25 +505,25 @@ export default function RamaDetail() {
       )}
       <div className="space-y-3">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-primary">Detalles de {rama.nombre} – {rama.año}</h1>
+          <h1 className="text-2xl font-bold text-primary">Detalles de {rama?.name ?? getLegacyString(rama, 'nombre') ?? ''} – {String(rama?.year ?? getLegacyNumber(rama, 'año') ?? '')}</h1>
           <div className="relative">
             <div className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors" onClick={openIconModal}>
               {rama && (iconPreview || getIconUrl(rama)) ? (
                 <img 
                   src={iconPreview ? iconPreview : makeDisplaySrc(getIconUrl(rama))!} 
-                  alt={`Ícono de ${rama.nombre}`} 
+                  alt={`Ícono de ${rama?.name ?? rama?.nombre}`} 
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error('❌ Error cargando icono de rama:', getIconUrl(rama));
                     e.currentTarget.style.display = 'none';
                   }}
                   onLoad={() => {
-                    console.log('✅ Icono de rama cargado correctamente:', rama.nombre);
+                    console.log('✅ Icono de rama cargado correctamente:', rama?.name ?? rama?.nombre);
                   }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-muted-foreground font-medium text-2xl">{rama.nombre.charAt(0)}</span>
+                  <span className="text-muted-foreground font-medium text-2xl">{(rama?.name ?? rama?.nombre)?.charAt?.(0) ?? ''}</span>
                   {rama.iconoObjectId && (
                     <div className="absolute bottom-1 left-1 text-xs text-red-500 bg-white px-1 rounded">
                       Debug: iconoObjectId={rama.iconoObjectId}
@@ -565,10 +548,10 @@ export default function RamaDetail() {
           <Button size="sm" variant="outline" onClick={handleMainImageClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Foto <Upload className="w-4 h-4"/></Button>
         </div>
         <div className="relative w-full h-[450px] rounded-lg overflow-hidden bg-gray-100" onClick={openMainImageModal}>
-          <img src={makeDisplaySrc(imagenPrincipal) || undefined} alt={rama.nombre} className="object-contain w-full h-full" />
+          <img src={makeDisplaySrc(imagenPrincipal) || undefined} alt={rama?.name ?? rama?.nombre} className="object-contain w-full h-full" />
         </div>
         <input ref={mainImageInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="hidden" aria-label="Subir imagen principal" />
-        <p className="text-sm text-muted-foreground">{rama.descripcion || "Sin descripción"}</p>
+  <p className="text-sm text-muted-foreground">{rama.description ?? getLegacyString(rama, 'descripcion') ?? 'Sin descripción'}</p>
 
         {/* Subramas embebidas dentro de la Card de Información Principal (según Figma) */}
         {rama.subramas && rama.subramas.length > 0 && (
@@ -583,7 +566,7 @@ export default function RamaDetail() {
                   className={"transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"}
                 >
                   <button type="button" onClick={() => navigate(`/app/organigrama/subrama/${subrama.subgroup_id || subrama.id}`)}>
-                    {subrama.nombre}
+                    {subrama.name ?? subrama.nombre}
                   </button>
                 </Badge>
               ))}
@@ -593,7 +576,7 @@ export default function RamaDetail() {
       </Card>
 
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-  <h2 className="text-lg font-semibold text-primary">Integrantes en {rama.año}</h2>
+  <h2 className="text-lg font-semibold text-primary">Integrantes en {String(rama.year ?? getLegacyNumber(rama, 'año') ?? '')}</h2>
         <div className="flex flex-wrap gap-2">
             {["Roberto Restrepo","Carlos Camargo","Ana Aguillón","Mario Mora"].map((name, idx)=>(
             <Badge
@@ -609,7 +592,7 @@ export default function RamaDetail() {
 
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-primary">Galería de fotos – {rama.año}</h2>
+          <h2 className="text-lg font-semibold text-primary">Galería de fotos – {String(rama.year ?? getLegacyNumber(rama, 'año') ?? '')}</h2>
           <Button size="sm" variant="outline" onClick={handleGalleryClick} className="border border-primary text-primary hover:bg-accent flex items-center gap-2">Añadir Fotos <Upload className="w-4 h-4"/></Button>
         </div>
         <div className="grid grid-cols-3 gap-2">

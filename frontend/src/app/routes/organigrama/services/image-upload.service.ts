@@ -4,7 +4,7 @@ import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 // Función auxiliar para obtener rama directamente sin dependencias circulares
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
   const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
-  return await apiClient.get<any>(endpoint);
+  return await apiClient.get<Record<string, unknown> | undefined>(endpoint);
 };
 
 // Función de diagnóstico para verificar comportamiento del backend con imágenes
@@ -13,7 +13,7 @@ export const diagnoseBatchImageUpload = async (
   groupSlug: string,
   sectionId: string,
   file: File
-): Promise<{ uploaded: number; returned: number; details: any }> => {
+): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
   console.log('🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...');
   console.log('📝 [DIAGNÓSTICO] Archivo:', {
     name: file.name,
@@ -39,15 +39,17 @@ export const diagnoseBatchImageUpload = async (
     console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
 
     // Paso 3: Verificar resultado
-    const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-    const resultCount = updatedRama?.sectionGalleryObjectIds?.length || 0;
+  const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+  const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
+  const gallery = (updatedRec?.['galleryObjectIds'] as string[] | undefined) ?? (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+  const resultCount = gallery?.length || 0;
 
     const result = {
       uploaded: 1,
       returned: resultCount,
       details: {
         originalObjectId: uploadResponse.objectId,
-        returnedUrls: updatedRama?.sectionGalleryObjectIds || [],
+        returnedUrls: (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [],
         isProbablyMultiVariant: resultCount > 1
       }
     };
@@ -62,7 +64,7 @@ export const diagnoseBatchImageUpload = async (
 };
 
 // Función helper para hacer el diagnóstico accesible desde la consola del navegador
-(globalThis as any).diagnosticImageUpload = diagnoseBatchImageUpload;
+(globalThis as unknown as Record<string, unknown>).diagnosticImageUpload = diagnoseBatchImageUpload;
 
 // Funciones de carga de archivos - Implementación de dos pasos según backend
 export const uploadSectionIcon = async (
@@ -244,13 +246,14 @@ export const uploadGalleryImages = async (
       
       // Obtener los datos actualizados de la rama para tener las URLs correctas
       console.log('🔄 [ImageUploadService] Obteniendo datos actualizados de la rama después de agregar a galería...');
-      const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-      
-      if (updatedRama && updatedRama.sectionGalleryObjectIds && updatedRama.sectionGalleryObjectIds.length > 0) {
+  const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+  const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
+  const galleryUrls = (updatedRec?.['galleryObjectIds'] as string[] | undefined) ?? (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+      if (galleryUrls && galleryUrls.length > 0) {
         // Retornar las URLs de la galería actualizada del backend
         console.log('✅ [ImageUploadService] URLs de galería actualizadas obtenidas del backend');
-        console.log('📸 [ImageUploadService] Galería completa actual:', updatedRama.sectionGalleryObjectIds);
-        return updatedRama.sectionGalleryObjectIds; // URLs reales del backend
+        console.log('📸 [ImageUploadService] Galería completa actual:', galleryUrls);
+        return galleryUrls; // URLs reales del backend
       } else {
         console.warn('⚠️ [ImageUploadService] No se pudieron obtener URLs actualizadas, usando URLs del upload');
         return urls; // Fallback a URLs del upload inicial
@@ -265,6 +268,86 @@ export const uploadGalleryImages = async (
     console.log('✅ [ImageUploadService] Imágenes de galería subidas con éxito');
   } catch (error) {
     console.error('❌ [ImageUploadService] Error subiendo galería:', error);
+    throw error;
+  }
+};
+
+// ==========================================================
+// ✅ Operaciones para la galería de SUBRAMAS (replace / remove)
+// ==========================================================
+/**
+ * Reemplaza una imagen específica de la galería de una subrama.
+ * Flujo: subir archivo -> PATCH con op 'replace' apuntando al objectId antiguo (si lo hay)
+ */
+export const replaceSubramaGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  oldObjectId: string | null,
+  file: File
+): Promise<string> => {
+  console.log('🔄 [ImageUploadService] Reemplazando imagen de galería en subrama...', { sectionId, subgroupId, oldObjectId });
+
+  try {
+    // Subir nuevo archivo
+    const formData = new FormData();
+    formData.append('file', file);
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+
+    // Construir payload replace
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    const replaceOp = {
+      operations: [
+        {
+          op: 'replace',
+          targetUuid: oldObjectId ?? null,
+          newValue: uploadResponse.objectId
+        }
+      ]
+    };
+
+    await apiClient.patch(patchEndpoint, replaceOp);
+    console.log('✅ [ImageUploadService] Replace PATCH enviado con éxito');
+
+    // Intentar obtener URL resultante consultando la subrama
+    const updated = await apiClient.get<Record<string, unknown>>(`/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}`);
+    const rec = updated as unknown as Record<string, unknown> | undefined;
+    const galleryUrls = (rec?.['galleryObjectIds'] as string[] | undefined) ?? (rec?.['subgroupGalleryObjectIds'] as string[] | undefined) ?? [];
+    // Devolver la primera URL que coincida con el nuevo objectId si es posible
+    return uploadResponse.url || uploadResponse.objectId || (galleryUrls[0] ?? uploadResponse.objectId);
+  } catch (error) {
+    console.error('❌ [ImageUploadService] Error reemplazando imagen de galería en subrama:', error);
+    throw error;
+  }
+};
+
+/**
+ * Elimina una imagen de la galería de una subrama usando op 'remove' con targetUuid.
+ */
+export const removeSubramaGalleryImage = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  objectIdToRemove: string
+): Promise<void> => {
+  console.log('🗑️ [ImageUploadService] Eliminando imagen de galería en subrama...', { sectionId, subgroupId, objectIdToRemove });
+  try {
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    const payload = {
+      operations: [
+        {
+          op: 'remove',
+          targetUuid: objectIdToRemove
+        }
+      ]
+    };
+
+    await apiClient.patch(patchEndpoint, payload);
+    console.log('✅ [ImageUploadService] Imagen eliminada de la galería de subrama');
+  } catch (error) {
+    console.error('❌ [ImageUploadService] Error eliminando imagen de galería en subrama:', error);
     throw error;
   }
 };

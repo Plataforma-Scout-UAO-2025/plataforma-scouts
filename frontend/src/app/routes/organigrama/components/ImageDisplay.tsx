@@ -1,6 +1,6 @@
 import React from 'react';
 import { useImageStorage } from '../hooks/useImageStorage';
-import type { Rama } from '../types/rama.type';
+import type { Branch as Rama } from '../types/frontend';
 
 interface ImageDisplayProps {
   rama: Rama;
@@ -9,47 +9,44 @@ interface ImageDisplayProps {
 export const ImageDisplay: React.FC<ImageDisplayProps> = ({ rama }) => {
   const { getImageUrl, getGalleryUrls } = useImageStorage();
 
-  // Obtener URL del icono - priorizar iconoObjectId, luego icono directo
+  // Obtener URL del icono - priorizar iconObjectId, luego iconUrl, luego legacy props
   const getIconUrl = (): string | null => {
-    // Si hay iconoObjectId, usar el hook refactorizado
-    if (rama.iconoObjectId) {
-      return getImageUrl(rama.iconoObjectId);
-    }
-    
-    // Si el icono es una URL de datos (data:image/...), usarla directamente
-    if (rama.icono && rama.icono.startsWith('data:')) {
-      return rama.icono;
-    }
-    
-    // Si hay una URL normal en icono, usarla
-    if (rama.icono) {
-      return rama.icono;
-    }
-    
+  const iconObjectId = rama.iconObjectId ?? rama.iconoObjectId;
+  const iconUrlDirect = rama.iconUrl ?? rama.icono;
+
+    if (iconObjectId) return getImageUrl(iconObjectId);
+    if (typeof iconUrlDirect === 'string' && iconUrlDirect.startsWith('data:')) return iconUrlDirect;
+    if (typeof iconUrlDirect === 'string') return iconUrlDirect;
     return null;
   };
 
   const iconUrl = getIconUrl();
-  
-  // Obtener URLs de la galería
-  const galleryUrls = getGalleryUrls(rama.sectionGalleryObjectIds || []);
+
+  // Obtener URLs de la galería - prefer new galleryObjectIds, fallback a legacy sectionGalleryObjectIds
+  const galleryIds: string[] = (rama.galleryObjectIds && rama.galleryObjectIds.length > 0)
+    ? rama.galleryObjectIds
+  : rama.sectionGalleryObjectIds || [];
+
+  const galleryUrls = getGalleryUrls(galleryIds);
+
+  const displayName = rama.name ?? rama.nombre ?? 'Rama';
 
   return (
     <div className="space-y-4">
       {/* Icono principal */}
       {iconUrl && (
         <div>
-          <h3 className="text-sm font-medium mb-2">Icono de rama {rama.nombre}</h3>
+          <h3 className="text-sm font-medium mb-2">Icono de rama {displayName}</h3>
           <img 
             src={iconUrl} 
-            alt={`Icono de ${rama.nombre}`}
+            alt={`Icono de ${displayName}`}
             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
             onError={(e) => {
               console.error('❌ Error cargando imagen:', iconUrl);
               e.currentTarget.style.display = 'none';
             }}
             onLoad={() => {
-              console.log('✅ Imagen cargada correctamente:', rama.nombre);
+              console.log('✅ Imagen cargada correctamente:', displayName);
             }}
           />
         </div>
@@ -64,7 +61,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ rama }) => {
               <img
                 key={index}
                 src={url}
-                alt={`Galería ${rama.nombre} ${index + 1}`}
+                alt={`Galería ${displayName} ${index + 1}`}
                 className="w-full h-20 object-cover rounded-lg"
               />
             ))}
@@ -77,8 +74,12 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ rama }) => {
         <div className="text-sm text-muted-foreground p-4 border border-dashed border-gray-300 rounded-lg">
           <p>No hay imagen disponible para esta rama.</p>
           <p className="text-xs mt-1">
-            iconoObjectId: {rama.iconoObjectId || 'N/A'}<br/>
-            icono: {rama.icono ? (rama.icono.length > 50 ? rama.icono.substring(0, 50) + '...' : rama.icono) : 'N/A'}
+            iconObjectId: {(rama.iconObjectId ?? rama.iconoObjectId) || 'N/A'}<br/>
+            iconUrl: {(() => {
+              const url = rama.iconUrl ?? rama.icono;
+              if (!url) return 'N/A';
+              return url.length > 50 ? url.substring(0, 50) + '...' : url;
+            })()}
           </p>
         </div>
       )}
