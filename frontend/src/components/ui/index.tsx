@@ -57,3 +57,4 @@ export {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "./collapsible"
+export { Progress } from "./progress"

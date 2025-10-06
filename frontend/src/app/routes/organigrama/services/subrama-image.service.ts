@@ -10,7 +10,9 @@ export const updateSubramaMainImage = async (
   groupSlug: string,
   sectionId: string,
   subgroupId: string,
-  file: File
+  file: File,
+  onFileProgress?: (fileName: string, percent: number) => void,
+  signal?: AbortSignal
 ): Promise<string> => {
   console.log('📤 [SubramaImageService] Actualizando foto principal de subrama...');
 
@@ -18,8 +20,25 @@ export const updateSubramaMainImage = async (
     // 1️⃣ Subir el archivo a storage
     const formData = new FormData();
     formData.append('file', file);
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+      '/api/storage/upload',
+      formData,
+      (percent) => onFileProgress?.(file.name, percent),
+      signal
+    );
     console.log('✅ Archivo subido:', uploadResponse.objectId);
+
+    // Si la señal fue abortada inmediatamente después del upload, no asociamos
+    // el objeto al backend: el usuario canceló la operación. Lanzamos un
+    // error controlado para que el caller restaure el preview y no se ejecute
+    // el PATCH que actualiza la imagen principal.
+    if (signal?.aborted) {
+      console.warn('⚠️ [SubramaImageService] Upload abortado tras subir el archivo; no se realizará el PATCH.');
+      // Nota: no intentamos borrar el objeto subido aquí (backend/storage)
+      // porque podría requerir credenciales adicionales; dejarlo para limpieza
+      // asíncrona en el servidor o tarea de mantenimiento.
+      throw new Error('UploadCanceled');
+    }
 
     // 2️⃣ PATCH al endpoint de imagen principal
     const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_MAIN_IMAGE(tenantSlug, groupSlug, sectionId, subgroupId);

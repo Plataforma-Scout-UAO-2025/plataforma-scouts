@@ -33,6 +33,9 @@ export {
   uploadSectionIcon,
   uploadSectionMainImage,
   uploadGalleryImages,
+} from './image-upload.service';
+
+export {
   removeSectionIcon,
   removeSectionMainImage
 } from './image-upload-core.service';
