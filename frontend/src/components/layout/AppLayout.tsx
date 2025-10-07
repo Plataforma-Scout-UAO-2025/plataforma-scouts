@@ -64,7 +64,6 @@ const adminGlobalItems: MenuItem[] = [
 
 const adminGrupalItems: MenuItem[] = [
   { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
   { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
