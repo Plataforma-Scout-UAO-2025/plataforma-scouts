@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { DollarSign } from "lucide-react";
 import CreatePagoForm from "./CreatePagoForm";
+import type { CreatePaymentDto } from "@/types/pago.type";
 
-export default function CreatePagoModal({ pago, onRefresh }: { pago: any; onRefresh?: () => void }) {
+export default function CreatePagoModal({ pago, onRefresh }: { pago: CreatePaymentDto & { installment_id: string; payer_member_id: string; name: string }; onRefresh?: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (

@@ -49,7 +49,7 @@ export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoF
 
   async function onSubmit(values: CreatePagoFormValues) {
 
-    let data = {
+    const data = {
       payment_id: crypto.randomUUID(),
       installment_id: pago.installment_id,
       payer_member_id: pago.payer_member_id,
@@ -65,7 +65,7 @@ export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoF
       } else {
         toast.error("Error al crear el pago");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error al crear el pago");
     }
   }

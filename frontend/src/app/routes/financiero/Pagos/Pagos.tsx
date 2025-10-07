@@ -135,7 +135,7 @@ export default function Pagos() {
       try {
         const response = await api.get("/finanzas/payments/members/" + "org_6B3k4dao2Wf6eGxa");
         setPagos(response.data);
-      } catch (error) {
+      } catch {
         toast.error("Error al obtener los pagos");
         setLoading(false);
       } finally {
