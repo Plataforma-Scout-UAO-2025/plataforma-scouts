@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import uao.edu.co.scouts_project.organigrama.model.Section;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ActiveProfiles("test")
 @DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=none")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 // 1) Desactiva el auto-config por defecto de repos en esta clase de test

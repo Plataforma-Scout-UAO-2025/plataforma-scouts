@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import uao.edu.co.scouts_project.common.tenant.TenantFilter;
+import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = SubgroupController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class SubgroupControllerTest {
 
     private static final String TENANT = "tenant-demo";
@@ -39,6 +42,7 @@ class SubgroupControllerTest {
 
     @MockitoBean SubgroupService subgroupService;
     @MockitoBean TenantFilter tenantFilter;
+    @MockitoBean AuthoritiesMappingPort authoritiesMappingPort;
 
     private SubgroupResponseDTO sample() {
         return new SubgroupResponseDTO(

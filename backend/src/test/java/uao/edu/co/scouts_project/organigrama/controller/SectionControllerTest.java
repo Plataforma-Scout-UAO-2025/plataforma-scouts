@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uao.edu.co.scouts_project.common.tenant.TenantFilter; // <-- mockeamos este filtro
+import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
 import uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest;
 import uao.edu.co.scouts_project.organigrama.dto.SectionDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
@@ -39,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(controllers = SectionController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class SectionControllerTest {
 
     private static final String BASE = "/api/v1/tenants/{tenant}/groups/{group}/sections";
@@ -51,6 +54,7 @@ class SectionControllerTest {
 
     @MockitoBean SectionService sectionService;
     @MockitoBean TenantFilter tenantFilter; // <-- clave para que arranque el contexto
+    @MockitoBean AuthoritiesMappingPort authoritiesMappingPort;
 
     private SectionResponseDTO sampleResponse(long id) {
         var gallery = List.of(

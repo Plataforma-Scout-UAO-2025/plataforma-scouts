@@ -9,12 +9,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 import uao.edu.co.scouts_project.storage.controller.StorageController;
 import uao.edu.co.scouts_project.common.tenant.TenantFilter;
+import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
 
 import java.util.UUID;
 
@@ -26,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // AJUSTA el paquete/clase del controller real:
 @WebMvcTest(controllers = StorageController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class StorageControllerTest {
 
     private static final String BASE = "/api/v1/storage";
@@ -35,6 +38,7 @@ class StorageControllerTest {
 
     @MockitoBean SupabaseStorageService storageService;
     @MockitoBean TenantFilter tenantFilter;
+    @MockitoBean AuthoritiesMappingPort authoritiesMappingPort;
 
     @Test
     @DisplayName("POST /storage/images/upload (multipart) → 201 Created")
