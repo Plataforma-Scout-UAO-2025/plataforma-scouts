@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.domain.port;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -8,5 +9,5 @@ import java.util.Set;
  */
 public interface PermissionQueryPort {
     Set<String> getUserPermissions(String userId);
+    List<String> getCurrentUserRoles();
 }
-
