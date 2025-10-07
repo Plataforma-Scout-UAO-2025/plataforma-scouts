@@ -56,7 +56,7 @@ public class GuardianMapper {
                 .build();
     }
 
-    public static GuardianCreateDTO toGuardianCreateDTO(java.lang.reflect.Member member) {
+    public static GuardianCreateDTO toGuardianCreateDTO(Member member) {
         return GuardianCreateDTO.builder()
                 .userId(member.getUserId())
                 .tenantId(member.getTenantId())
@@ -74,7 +74,7 @@ public class GuardianMapper {
                 .build();
     }
 
-    public static MemberDTO toMemberDTO(java.lang.reflect.Member member) {
+    public static MemberDTO toMemberDTO(Member member) {
         return MemberDTO.builder()
                 .userId(member.getUserId())
                 .tenantId(member.getTenantId())

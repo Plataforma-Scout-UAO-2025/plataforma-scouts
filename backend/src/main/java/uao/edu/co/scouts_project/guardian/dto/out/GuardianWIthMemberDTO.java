@@ -2,10 +2,8 @@ package uao.edu.co.scouts_project.guardian.dto.out;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;

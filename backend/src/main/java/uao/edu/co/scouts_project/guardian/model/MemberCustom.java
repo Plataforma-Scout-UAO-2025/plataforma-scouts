@@ -2,7 +2,6 @@ package uao.edu.co.scouts_project.guardian.model;
 
 import java.time.LocalDate;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -12,7 +11,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode
-@AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class MemberCustom {
