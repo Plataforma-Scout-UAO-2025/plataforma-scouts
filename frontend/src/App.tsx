@@ -13,13 +13,17 @@ import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 import Home from "./app/routes/Home";
+import { useRoleContext } from "./hooks/useRoleContext";
 
-const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal"; // Simulación de rol actual del usuario
+// Simulación de rol actual del usuario
 
 // Protected components
 const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
 
 function App() {
+
+  const { currentUserRole } = useRoleContext();
+
   useAuth0ApiWrapper();
 
   return (
@@ -27,20 +31,15 @@ function App() {
       <div className="h-screen w-screen">
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* Se quitan las rutas de login y register pues todo será manejado desde Auth0
-          <Route path="/login" element={<ProtectedLogin />} />
-          <Route path="/register" element={<ProtectedRegister />} /> */}
           <Route path="/app" element={<ProtectedAppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
 
             {/* Rutas para adminGrupal */}
-            {currentUserRole === "adminGrupal" && (
+            {currentUserRole === "ADMIN_GRUPO" && (
               <>
                 <Route path="financiero/cuotas" element={<Cuotas />} />
                 <Route path="financiero/cuotas/gestion" element={<Gestion />} />
-                <Route path="grupos" element={<Grupos />} />
-                <Route path="grupos/medical-info" element={<MedicalInfo />} />
                 {/* 
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="miembros" element={<TeamMembers />} />
@@ -53,11 +52,13 @@ function App() {
               </>
             )}
 
-            {/* Rutas para adminGlobal */}
-            {currentUserRole === "adminGlobal" && (
+            {currentUserRole === "SCOUT" ? (
               <>
-                {/* Aquí puedes agregar rutas específicas para adminGlobal */}
+                <Route path="grupos" element={<Grupos />} />
+                <Route path="grupos/medical-info" element={<MedicalInfo />} />
               </>
+            ) : (
+              <Route path="*" element={<Navigate to="/app" replace />} />
             )}
 
             {/* Rutas para todos los roles */}
