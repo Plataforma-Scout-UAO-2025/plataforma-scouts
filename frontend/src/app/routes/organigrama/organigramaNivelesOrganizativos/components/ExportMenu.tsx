@@ -5,23 +5,6 @@ import type { OrganigramaNiveles } from "../types/niveles.types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-/** Convierte los datos a CSV */
-function toCSV(data: OrganigramaNiveles) {
-  const rows: string[] = ["Nivel,Cargo,Titular,VisibleNivel,VisibleCargo,Año"];
-  data.niveles.forEach((nivel) => {
-    if (nivel.cargos.length > 0) {
-      nivel.cargos.forEach((cargo) => {
-        rows.push(
-          `${nivel.nombre.replaceAll(",", " ")},${cargo.nombre.replaceAll(",", " ")},${(cargo.titular || "").replaceAll(",", " ")},${nivel.visible},${cargo.visible},${data.anio}`
-        );
-      });
-    } else {
-      rows.push(`${nivel.nombre.replaceAll(",", " ")},,,${nivel.visible},,${data.anio}`);
-    }
-  });
-  return rows.join("\n");
-}
-
 /** Genera el PDF visual con niveles y cargos */
 function exportPDF(data: OrganigramaNiveles) {
   const doc = new jsPDF();
@@ -46,7 +29,7 @@ function exportPDF(data: OrganigramaNiveles) {
         tableData.push([
           nivel.nombre,
           cargo.nombre,
-          cargo.titular || "—",
+          cargo.titular || "-",
           nivel.visible ? "Sí" : "No",
           cargo.visible ? "Sí" : "No",
           data.anio,
@@ -55,27 +38,27 @@ function exportPDF(data: OrganigramaNiveles) {
     }
   });
 
-  // 👇 uso correcto del plugin
   autoTable(doc, {
-    head: [["Nivel", "Cargo", "Titular", "Nivel visible", "Cargo visible", "Año"]],
+    head: [["Nivel", "Cargo", "Titular", "Visible (Nivel)", "Visible (Cargo)", "Año"]],
     body: tableData,
     startY: 35,
-    styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [5, 150, 105], textColor: 255, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: [240, 253, 244] },
+    theme: "striped",
+    headStyles: { fillColor: [26, 65, 52] },
+    styles: { fontSize: 9 },
   });
 
   doc.save(`organigrama_niveles_${data.anio}.pdf`);
 }
 
-
-/** Exporta CSV para Excel */
+/** Genera CSV para Excel con formato correcto */
 function exportCSV(data: OrganigramaNiveles) {
-  const header = ["Nivel", "Cargo", "Titular", "Nivel visible", "Cargo visible", "Año"];
+  const header = ["Nivel", "Cargo", "Titular", "Visible (Nivel)", "Visible (Cargo)", "Año"];
   const rows: string[][] = [];
 
   data.niveles.forEach((nivel) => {
-    if (nivel.cargos.length > 0) {
+    if (nivel.cargos.length === 0) {
+      rows.push([nivel.nombre, "—", "—", nivel.visible ? "Sí" : "No", "—", String(data.anio)]);
+    } else {
       nivel.cargos.forEach((cargo) => {
         rows.push([
           nivel.nombre,
@@ -86,18 +69,16 @@ function exportCSV(data: OrganigramaNiveles) {
           String(data.anio),
         ]);
       });
-    } else {
-      rows.push([nivel.nombre, "—", "—", nivel.visible ? "Sí" : "No", "—", String(data.anio)]);
     }
   });
 
-  // 🔹 Convertir a texto CSV con punto y coma (;) y comillas
+  // Convertir a texto CSV con punto y coma (;) y comillas
   const csvContent =
     [header, ...rows]
       .map((row) => row.map((v) => `"${v}"`).join(";"))
       .join("\r\n");
 
-  // 🔹 Agregar BOM UTF-8 para compatibilidad con Excel
+  // Agregar BOM UTF-8 para compatibilidad con Excel
   const blob = new Blob(["\uFEFF" + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
@@ -109,7 +90,6 @@ function exportCSV(data: OrganigramaNiveles) {
   a.click();
   URL.revokeObjectURL(url);
 }
-
 
 export default function ExportMenu({ data }: { data: OrganigramaNiveles }) {
   return (

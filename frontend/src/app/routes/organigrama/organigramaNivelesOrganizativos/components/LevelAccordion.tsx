@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Trash2, Plus, Pencil, ChevronDown } from "lucide-react";
-import type { Nivel, Cargo } from "../types/niveles.types";
+import type { Nivel } from "../types/niveles.types";
 import PositionItem from "./PositionItem";
 
 interface Props {
@@ -10,8 +10,6 @@ interface Props {
   onUpdate: (nivel: Nivel) => void;
   onDelete: (id: string) => void;
   onAddCargo: (nivelId: string) => void;
-  onUpdateCargo: (nivelId: string, cargo: Cargo) => void;
-  onDeleteCargo: (nivelId: string, cargoId: string) => void;
   /** Opcional: iniciar abierto o cerrado (por defecto: true) */
   defaultOpen?: boolean;
 }
@@ -21,8 +19,6 @@ export default function LevelAccordion({
   onUpdate,
   onDelete,
   onAddCargo,
-  onUpdateCargo,
-  onDeleteCargo,
   defaultOpen = true,
 }: Props) {
   const [open, setOpen] = useState<boolean>(defaultOpen);
@@ -96,15 +92,7 @@ export default function LevelAccordion({
         <div className="min-h-0">
           <div className="space-y-2">
             {nivel.cargos.map((cargo) => (
-              <PositionItem
-                key={cargo.id}
-                cargo={cargo}
-                onEdit={() => onUpdateCargo(nivel.id, cargo)}
-                onToggleVisible={() =>
-                  onUpdateCargo(nivel.id, { ...cargo, visible: !cargo.visible })
-                }
-                onDelete={() => onDeleteCargo(nivel.id, cargo.id)}
-              />
+              <PositionItem key={cargo.id} cargo={cargo} />
             ))}
           </div>
 
