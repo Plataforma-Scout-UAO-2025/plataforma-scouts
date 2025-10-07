@@ -62,7 +62,7 @@ function ScoutEnrollment() {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // 📘 Handlers
+  // Handlers
   const handlePersonalChange = (e: ChangeEvent): void => {
     const { name, value } = e.target;
     setDatosPersonales((prev) => ({ ...prev, [name]: value }));
@@ -164,7 +164,7 @@ function ScoutEnrollment() {
   };
 
   // -------------------
-  // 🧩 Campos por página
+  //  Campos por página
   // -------------------
 
   // Página 1: Datos personales

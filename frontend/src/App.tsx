@@ -35,6 +35,7 @@ function App() {
           <Route path="/login" element={<ProtectedLogin />} />
           <Route path="/register" element={<ProtectedRegister />} /> */}
           <Route path="/inscripcion" element={<ScoutEnrollment />} />
+          
           <Route path="/app" element={<ProtectedAppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />

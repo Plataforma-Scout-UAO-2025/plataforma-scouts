@@ -6,6 +6,8 @@ import lobatos from "@/assets/lobatos.jpeg";
 import webelos from "@/assets/webelos.jpg";
 import Logo from "@/assets/logo.png"; 
 import scout from "@/assets/scout.jpg";
+import { useAuth0 } from "@auth0/auth0-react";
+
 
 const values = [
   {
@@ -75,7 +77,7 @@ const grupos = [
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("inicio");
-
+  const { loginWithRedirect } = useAuth0();
 //para el efecto en el boton del navbar
 useEffect(() => {
   const handleScroll = () => {
@@ -147,18 +149,24 @@ useEffect(() => {
           </a>
         </div>
         <div className="flex gap-3">
-          <a
-            href="/login"
-            className="border border-[#916E5A] text-[#916E5A] px-7 py-1 rounded-[8px] hover:bg-green-50 font-regular"
-          >
-            Login
-          </a>
-          <a
-            href="/register"
-            className="bg-[#113227] text-[#FFFAF3] px-7 py-1 rounded-[8px] hover:bg-[#18614a] font-regular"
-          >
-            Sign Up
-          </a>
+         <button
+        onClick={() => loginWithRedirect()}
+        className="border border-[#916E5A] text-[#916E5A] px-7 py-1 rounded-[8px] hover:bg-green-50 font-regular"
+      >
+        Login
+      </button>
+      <button
+        onClick={() =>
+          loginWithRedirect({
+            authorizationParams: {
+              screen_hint: "signup",
+            },
+          })
+        }
+        className="bg-[#113227] text-[#FFFAF3] px-7 py-1 rounded-[8px] hover:bg-[#18614a] font-regular"
+      >
+        Sign Up
+      </button>
         </div>
       </nav>
 
