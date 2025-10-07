@@ -17,7 +17,7 @@ import {
   MapPin,
   Phone,
 } from 'lucide-react';
-import type { Miembro } from '../types/miembro.type';
+import type { Miembro } from '../types/member.type';
 
 interface MiembroDetallesSheetProps {
   isOpen: boolean;

@@ -13,9 +13,11 @@ import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 import Home from "./app/routes/Home";
+
 import AcudientesPage from "./app/routes/AcudientesPage";
-import FinancieroAcudientes from "./app/routes/guardians/financiero/FinancieroAcudientes";
-import EventosAcudientes from "./app/routes/guardians/eventos/EventosAcudientes";
+import GuardianProfile from "./app/routes/guardians/GuardianProfile";
+import GuardianDashboard from "./app/routes/guardians/GuardianDashboard";
+import GuardianLayout from "./app/routes/guardians/GuardianLayout";
 import { CompleteDataModal } from "./app/routes/guardians/completeData/CompleteDataModal";
 
 const currentUserRole: "adminGrupal" | "adminGlobal" | "acudiente" = "acudiente"; // Simulación de rol actual del usuario
@@ -37,9 +39,16 @@ function App() {
           <Route path="/register" element={<ProtectedRegister />} /> */}
           
           {/* Rutas independientes para acudientes */}
-          <Route path="/acudientes" element={<AcudientesPage />} />
-          <Route path="/acudientes/financiero" element={<FinancieroAcudientes />} />
-          <Route path="/acudientes/eventos" element={<EventosAcudientes />} />
+          <Route path="/guardians" element={<GuardianDashboard />} />
+          <Route path="/guardians/members" element={<GuardianLayout />} />
+          <Route path="/guardians/profile" element={<GuardianProfile />} />
+          <Route path="/guardians/members/:id/profile" element={<AcudientesPage />} />
+          
+          {/* Redirecciones para compatibilidad */}
+          <Route path="/acudientes" element={<Navigate to="/guardians" replace />} />
+          <Route path="/acudientes/miembros" element={<Navigate to="/guardians/members" replace />} />
+          <Route path="/acudientes/perfil" element={<Navigate to="/guardians/profile" replace />} />
+          <Route path="/acudientes/miembros/:id/perfil" element={<Navigate to="/guardians/members" replace />} />
           
           <Route path="/app" element={<ProtectedAppLayout />}>
             <Route index element={<Dashboard />} />

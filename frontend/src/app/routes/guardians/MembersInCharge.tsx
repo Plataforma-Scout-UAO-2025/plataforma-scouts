@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FolderOpen } from 'lucide-react';
 import Sidebar from './components/Sidebar';
-import MiembrosTable from './components/MiembrosTable';
-import MiembroDetallesSheet from './components/MiembroDetallesSheet';
-import EditarMiembroModal from './components/EditarMiembroModal';
-import type { Miembro } from './types/miembro.type';
-import type { MiembroFormData } from './schemas/MiembroForm.schema';
+import MembersTable from './components/MembersTable';
+import MemberDetailsSheet from './components/MemberDetailsSheet';
+import EditMemberModal from './components/EditMemberModal';
+import type { Miembro } from './types/member.type';
+import type { MiembroFormData } from './schemas/MemberForm.schema';
 
 // Datos de ejemplo
 const miembrosEjemplo: Miembro[] = [
@@ -212,7 +212,7 @@ export default function MiembrosACargo() {
 
             {/* Tabla de miembros */}
             <div className="bg-white rounded-lg shadow-sm">
-              <MiembrosTable
+              <MembersTable
                 miembros={miembros}
                 onViewDetails={handleViewDetails}
                 onEdit={handleEdit}
@@ -223,7 +223,7 @@ export default function MiembrosACargo() {
       </div>
 
       {/* Sheet de detalles */}
-      <MiembroDetallesSheet
+      <MemberDetailsSheet
         isOpen={isDetailsSheetOpen}
         onClose={() => setIsDetailsSheetOpen(false)}
         miembro={selectedMiembro}
@@ -231,7 +231,7 @@ export default function MiembrosACargo() {
       />
 
       {/* Modal de edición */}
-      <EditarMiembroModal
+      <EditMemberModal
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);

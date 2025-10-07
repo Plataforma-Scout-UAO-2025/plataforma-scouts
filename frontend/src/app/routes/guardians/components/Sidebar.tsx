@@ -24,22 +24,25 @@ export default function Sidebar({
   const navigate = useNavigate();
 
   const navigationItems = [
-    { id: 'inicio', icon: Home, label: 'Inicio', href: '/acudientes' },
-    { id: 'tropa', icon: Users, label: 'Tropa', href: '/acudientes/tropa' },
-    { id: 'eventos', icon: Calendar, label: 'Eventos', href: '/acudientes/eventos' },
-    { id: 'financiero', icon: DollarSign, label: 'Financiero', href: '/acudientes/financiero' },
+    { id: 'inicio', icon: Home, label: 'Inicio', href: '/guardians' },
+    { id: 'tropa', icon: Users, label: 'Tropa', href: '/guardians/members' },
+    { id: 'eventos', icon: Calendar, label: 'Eventos', href: '#' }, // Temporalmente deshabilitado
+    { id: 'financiero', icon: DollarSign, label: 'Financiero', href: '#' }, // Temporalmente deshabilitado
   ];
 
   const supportItems = [
-    { id: 'ayuda', icon: HelpCircle, label: 'Ayuda', href: '/acudientes/ayuda' },
+    { id: 'ayuda', icon: HelpCircle, label: 'Ayuda', href: '/guardians/ayuda' },
     { id: 'logout', icon: LogOut, label: 'Cerrar sesión', href: '/logout' },
   ];
 
   return (
-    <div className="w-72 bg-[#1a4134] text-white flex flex-col h-screen">
+    <div className="fixed left-0 top-0 w-72 bg-[#1a4134] text-white flex flex-col h-screen z-10">
       {/* Header del usuario */}
-      <div className="p-6 border-b border-[#29765C]">
-        <div className="flex items-center space-x-3">
+      <div className="flex-shrink-0 p-6 border-b border-[#29765C]">
+        <button 
+          onClick={() => navigate('/guardians/profile')}
+          className="flex items-center space-x-3 w-full text-left hover:bg-[#29765C] rounded-lg p-2 transition-colors duration-200"
+        >
           <Avatar className="h-12 w-12">
             <AvatarFallback className="bg-[#29765C] text-white text-lg font-semibold">
               {userName.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -53,11 +56,11 @@ export default function Sidebar({
               {userGroup}
             </p>
           </div>
-        </div>
+        </button>
       </div>
 
-      {/* Navegación principal */}
-      <nav className="flex-1 p-4">
+      {/* Navegación principal - scrollable si es necesario */}
+      <nav className="flex-1 overflow-y-auto p-4">
         <div className="space-y-2">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -73,10 +76,10 @@ export default function Sidebar({
                   console.log('Ya estás en la sección de Tropa');
                   break;
                 case 'eventos':
-                  navigate('/acudientes/eventos');
+                  navigate('/guardians/eventos');
                   break;
                 case 'financiero':
-                  navigate('/acudientes/financiero');
+                  navigate('/guardians/financiero');
                   break;
                 default:
                   console.log(`Navegando a: ${item.label}`);
@@ -100,8 +103,8 @@ export default function Sidebar({
         </div>
       </nav>
 
-      {/* Footer con ayuda y logout */}
-      <div className="p-4 border-t border-[#29765C]">
+      {/* Footer con ayuda y logout - siempre visible */}
+      <div className="flex-shrink-0 p-4 border-t border-[#29765C]">
         <div className="space-y-2">
           {supportItems.map((item) => {
             const Icon = item.icon;
@@ -110,7 +113,7 @@ export default function Sidebar({
               switch (item.id) {
                 case 'ayuda':
                   console.log('Abriendo sección de Ayuda - Funcionalidad pendiente');
-                  // navigate('/acudientes/ayuda'); // Cuando esté disponible
+                  // navigate('/guardians/ayuda'); // Cuando esté disponible
                   break;
                 case 'logout':
                   console.log('Cerrando sesión...');

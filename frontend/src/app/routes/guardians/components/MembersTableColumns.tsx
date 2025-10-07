@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil } from 'lucide-react';
-import type { Miembro } from '../types/miembro.type';
+import type { Miembro } from '../types/member.type';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

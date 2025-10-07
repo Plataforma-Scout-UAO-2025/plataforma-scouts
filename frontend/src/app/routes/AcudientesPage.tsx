@@ -1,3 +1,3 @@
-import MiembrosACargo from './guardians/MiembrosACargo';
+import MembersInCharge from './guardians/MembersInCharge';
 
-export default MiembrosACargo;
+export default MembersInCharge;

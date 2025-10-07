@@ -11,8 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Miembro } from '../types/miembro.type';
-import { createMiembrosTableColumns } from './MiembrosTableColumns';
+import type { Miembro } from '../types/member.type';
+import { createMiembrosTableColumns } from './MembersTableColumns';
 
 interface MiembrosTableProps {
   miembros: Miembro[];

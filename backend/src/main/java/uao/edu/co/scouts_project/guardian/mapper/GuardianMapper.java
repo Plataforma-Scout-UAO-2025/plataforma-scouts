@@ -56,8 +56,25 @@ public class GuardianMapper {
                 .build();
     }
 
-    // Agregar estos métodos al GuardianMapper.java
-    public static MemberDTO toMemberDTO(Member member) {
+    public static GuardianCreateDTO toGuardianCreateDTO(java.lang.reflect.Member member) {
+        return GuardianCreateDTO.builder()
+                .userId(member.getUserId())
+                .tenantId(member.getTenantId())
+                .firstName(member.getFirstName())
+                .lastName(member.getLastName())
+                .age(member.getAge())
+                .identification(member.getIdentification())
+                .documentType(member.getDocumentType())
+                .phone(member.getPhone())
+                .isActive(member.getIsActive())
+                .relationship(member.getRelationship())
+                .status(member.getStatus())
+                .acceptanceDate(member.getAcceptanceDate())
+                .roles(List.of(member.getRole()))
+                .build();
+    }
+
+    public static MemberDTO toMemberDTO(java.lang.reflect.Member member) {
         return MemberDTO.builder()
                 .userId(member.getUserId())
                 .tenantId(member.getTenantId())
@@ -81,22 +98,5 @@ public class GuardianMapper {
                 .build();
     }
 
-    public static GuardianCreateDTO toGuardianCreateDTO(Member member) {
-        return GuardianCreateDTO.builder()
-                .userId(member.getUserId())
-                .tenantId(member.getTenantId())
-                .firstName(member.getFirstName())
-                .lastName(member.getLastName())
-                .age(member.getAge())
-                .identification(member.getIdentification())
-                .documentType(member.getDocumentType())
-                .phone(member.getPhone())
-                .isActive(member.getIsActive())
-                .relationship(member.getRelationship())
-                .status(member.getStatus())
-                .acceptanceDate(member.getAcceptanceDate())
-                .roles(List.of(member.getRole()))
-                .build();
-    }
-    
+
 }
