@@ -1,8 +1,10 @@
 import axios from "axios";
 
-// Configuración compatible con .env.local existente
+// Configuración unificada - compatible con ambas variables de entorno
 const rawBaseUrl = import.meta.env.VITE_PUBLIC_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const baseURL = rawBaseUrl.endsWith('/api/v1') ? rawBaseUrl : `${rawBaseUrl.replace(/\/$/, '')}/api/v1`;
+
+console.log('🔧 [Axios Config] Base URL configurada:', baseURL);
 
 const api = axios.create({
   baseURL,

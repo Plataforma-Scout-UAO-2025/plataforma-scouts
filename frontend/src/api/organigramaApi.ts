@@ -1,5 +1,49 @@
 import api from "./axios";
 
+// ===================================
+// 🔧 HELPER FUNCTIONS
+// ===================================
+
+/**
+ * Obtiene configuración de tenant y group de variables de entorno
+ */
+const getTenantConfig = () => {
+  const tenantSlug = import.meta.env.VITE_TENANT_SLUG;
+  const groupSlug = import.meta.env.VITE_GROUP_SLUG;
+  
+  if (!tenantSlug || tenantSlug === 'tu-tenant-aqui') {
+    throw new Error('VITE_TENANT_SLUG no está configurado. Revisa tu archivo .env.local');
+  }
+  
+  if (!groupSlug || groupSlug === 'tu-grupo-scout-aqui') {
+    throw new Error('VITE_GROUP_SLUG no está configurado. Revisa tu archivo .env.local');
+  }
+  
+  return { tenantSlug, groupSlug };
+};
+
+/**
+ * Construye URL para endpoints que requieren tenant y group
+ */
+const buildTenantGroupUrl = (endpoint: string): string => {
+  const { tenantSlug, groupSlug } = getTenantConfig();
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  return `/tenants/${tenantSlug}/groups/${groupSlug}/${cleanEndpoint}`;
+};
+
+/**
+ * Construye URL para endpoints que solo requieren tenant
+ */
+const buildTenantUrl = (endpoint: string): string => {
+  const { tenantSlug } = getTenantConfig();
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  return `/tenants/${tenantSlug}/${cleanEndpoint}`;
+};
+
+// ===================================
+// 🎯 TIPOS DE DATOS
+// ===================================
+
 // Define tipos para el organigrama
 export interface OrganigramaNode {
   id: string;
@@ -217,14 +261,18 @@ export const deleteTenant = async (tenantSlug: string): Promise<void> => {
 // ==================== FUNCIONES API - GROUPS ====================
 
 // GET /tenants/{tenantSlug}/groups
-export const getAllGroups = async (tenantSlug: string): Promise<Group[]> => {
-  const response = await api.get(`/tenants/${tenantSlug}/groups`);
+export const getAllGroups = async (tenantSlug?: string): Promise<Group[]> => {
+  const url = tenantSlug ? `/tenants/${tenantSlug}/groups` : buildTenantUrl('groups');
+  const response = await api.get(url);
   return response.data;
 };
 
 // GET /tenants/{tenantSlug}/groups/{groupSlug}
-export const getGroupBySlug = async (tenantSlug: string, groupSlug: string): Promise<Group> => {
-  const response = await api.get(`/tenants/${tenantSlug}/groups/${groupSlug}`);
+export const getGroupBySlug = async (tenantSlug?: string, groupSlug?: string): Promise<Group> => {
+  const url = (tenantSlug && groupSlug) 
+    ? `/tenants/${tenantSlug}/groups/${groupSlug}` 
+    : buildTenantGroupUrl('');
+  const response = await api.get(url);
   return response.data;
 };
 
@@ -268,26 +316,38 @@ export const deleteGroupScarf = async (tenantSlug: string, groupSlug: string): P
 // ==================== FUNCIONES API - SECTIONS ====================
 
 // GET /tenants/{tenantSlug}/groups/{groupSlug}/sections
-export const getAllSections = async (tenantSlug: string, groupSlug: string): Promise<Section[]> => {
-  const response = await api.get(`/tenants/${tenantSlug}/groups/${groupSlug}/sections`);
+export const getAllSections = async (tenantSlug?: string, groupSlug?: string): Promise<Section[]> => {
+  const url = (tenantSlug && groupSlug) 
+    ? `/tenants/${tenantSlug}/groups/${groupSlug}/sections` 
+    : buildTenantGroupUrl('sections');
+  const response = await api.get(url);
   return response.data;
 };
 
 // GET /tenants/{tenantSlug}/groups/{groupSlug}/sections/{sectionId}
-export const getSectionById = async (tenantSlug: string, groupSlug: string, sectionId: number): Promise<Section> => {
-  const response = await api.get(`/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`);
+export const getSectionById = async (sectionId: number, tenantSlug?: string, groupSlug?: string): Promise<Section> => {
+  const url = (tenantSlug && groupSlug) 
+    ? `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}` 
+    : buildTenantGroupUrl(`sections/${sectionId}`);
+  const response = await api.get(url);
   return response.data;
 };
 
 // GET /tenants/{tenantSlug}/groups/{groupSlug}/sections/{sectionId}/with-subgroups
-export const getSectionWithSubgroups = async (tenantSlug: string, groupSlug: string, sectionId: number): Promise<SectionWithSubgroups> => {
-  const response = await api.get(`/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/with-subgroups`);
+export const getSectionWithSubgroups = async (sectionId: number, tenantSlug?: string, groupSlug?: string): Promise<SectionWithSubgroups> => {
+  const url = (tenantSlug && groupSlug) 
+    ? `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/with-subgroups` 
+    : buildTenantGroupUrl(`sections/${sectionId}/with-subgroups`);
+  const response = await api.get(url);
   return response.data;
 };
 
 // POST /tenants/{tenantSlug}/groups/{groupSlug}/sections
-export const createSection = async (tenantSlug: string, groupSlug: string, section: CreateSectionRequest): Promise<Section> => {
-  const response = await api.post(`/tenants/${tenantSlug}/groups/${groupSlug}/sections`, section);
+export const createSection = async (section: CreateSectionRequest, tenantSlug?: string, groupSlug?: string): Promise<Section> => {
+  const url = (tenantSlug && groupSlug) 
+    ? `/tenants/${tenantSlug}/groups/${groupSlug}/sections` 
+    : buildTenantGroupUrl('sections');
+  const response = await api.post(url, section);
   return response.data;
 };
 
