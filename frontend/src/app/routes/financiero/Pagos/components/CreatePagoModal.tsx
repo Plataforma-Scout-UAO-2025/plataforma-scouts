@@ -11,7 +11,7 @@ import {
 import { DollarSign } from "lucide-react";
 import CreatePagoForm from "./CreatePagoForm";
 
-export default function CreatePagoModal({ pago }: { pago: any }) {
+export default function CreatePagoModal({ pago, onRefresh }: { pago: any; onRefresh?: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,7 +32,7 @@ export default function CreatePagoModal({ pago }: { pago: any }) {
           </DialogDescription>
         </DialogHeader>
 
-        <CreatePagoForm setOpen={setOpen} pago={pago} />
+        <CreatePagoForm setOpen={setOpen} pago={pago} onRefresh={onRefresh} />
       </DialogContent>
     </Dialog>
   );

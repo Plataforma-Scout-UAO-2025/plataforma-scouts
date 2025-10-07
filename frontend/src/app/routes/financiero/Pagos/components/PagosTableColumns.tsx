@@ -1,8 +1,4 @@
-import type {
-  PaymentRecord,
-  SectionPayment,
-  SubgroupPayment,
-} from "@/types/pago.type";
+import type { PaymentRecord } from "@/types/pago.type";
 import type { ColumnDef } from "@tanstack/react-table";
 import PaymentsDetailModal from "./PaymentsDetailModal";
 
@@ -22,21 +18,17 @@ export const columns: ColumnDef<PaymentRecord>[] = [
   {
     accessorKey: "age",
     header: "Edad",
-    cell: ({ row }) => <div>{row.original.age}</div>,
+    cell: ({ row }) => <div>{row.original.age || "-"}</div>,
   },
   {
     accessorKey: "subgroup",
     header: "Subgrupo",
-    cell: ({ row }) => (
-      <div>{(row.original.subgroup as SubgroupPayment).subgroup_name}</div>
-    ),
+    cell: ({ row }) => <div>{row.original.subgroup.name}</div>,
   },
   {
     accessorKey: "section",
     header: "Sección",
-    cell: ({ row }) => (
-      <div>{(row.original.section as SectionPayment).section_name}</div>
-    ),
+    cell: ({ row }) => <div>{row.original.section.name}</div>,
   },
   {
     id: "actions",
@@ -47,7 +39,9 @@ export const columns: ColumnDef<PaymentRecord>[] = [
 
       return (
         <div className="flex justify-start items-center gap-2">
-          <PaymentsDetailModal member={member} installment={row.original.installment} />
+          <PaymentsDetailModal
+            member={member}
+          />
         </div>
       );
     },

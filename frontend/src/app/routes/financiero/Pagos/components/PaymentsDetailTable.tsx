@@ -36,9 +36,11 @@ import { paymentsDetailTableColumns } from "./PaymentsDetailTableColumns";
 export default function PaymentsDetailTable({
   installment = [],
   member_id = '',
+  onRefresh,
 }: {
     installment?: InstallmentPayment[];
     member_id?: string;
+    onRefresh?: () => void;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -69,7 +71,7 @@ export default function PaymentsDetailTable({
 
   const table = useReactTable({
     data: filteredData,
-    columns: paymentsDetailTableColumns,
+    columns: paymentsDetailTableColumns(onRefresh),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),

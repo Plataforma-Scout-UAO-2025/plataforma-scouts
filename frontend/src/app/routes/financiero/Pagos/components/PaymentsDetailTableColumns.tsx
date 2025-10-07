@@ -10,7 +10,7 @@ const statusDict: Record<PaymentStatus, string> = {
   OVERDUE: "Vencido",
 };
 
-export const paymentsDetailTableColumns: ColumnDef<InstallmentPayment>[] = [
+export const paymentsDetailTableColumns = (onRefresh?: () => void): ColumnDef<InstallmentPayment>[] => [
   {
     accessorKey: "installment_id",
     header: "ID",
@@ -92,19 +92,24 @@ export const paymentsDetailTableColumns: ColumnDef<InstallmentPayment>[] = [
     accessorKey: "actions",
     header: "Acciones",
     cell: ({ row }) => {
+
+      console.log(row.original);
       return (
         <>
           {row.original.status !== "PAID" && (
             <div className="flex justify-start items-center gap-2">
               <CreatePagoModal
                 pago={{
-                  paid_at: row.original.paid_at?.toISOString() || "",
+                  paid_at: row.original.paid_at instanceof Date
+                    ? row.original.paid_at.toISOString()
+                    : row.original.paid_at || "",
                   method: row.original.method || "",
                   reference: row.original.reference || "",
                   installment_id: row.original.installment_id || "",
                   payer_member_id: row.original.payer_member_id || "",
                   name: row.original.name || "",
                 }}
+                onRefresh={onRefresh}
               />
             </div>
           )}

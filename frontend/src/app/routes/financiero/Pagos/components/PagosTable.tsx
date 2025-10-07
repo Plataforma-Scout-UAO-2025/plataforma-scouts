@@ -56,11 +56,11 @@ export default function PagosTable({
     let filtered = pagos;
 
     if (selectedSubgroup && selectedSubgroup !== "all") {
-      filtered = filtered.filter(pago => pago.subgroup.subgroup_id === selectedSubgroup);
+      filtered = filtered.filter(pago => pago.subgroup.id === selectedSubgroup);
     }
 
     if (selectedSection && selectedSection !== "all") {
-      filtered = filtered.filter(pago => pago.section.section_id === selectedSection);
+      filtered = filtered.filter(pago => pago.section.id === selectedSection);
     }
 
     return filtered;
@@ -90,23 +90,23 @@ export default function PagosTable({
 
 
   const uniqueSubgroups = React.useMemo(() => {
-    return Array.from(new Set(pagos.map(pago => pago.subgroup.subgroup_id)))
+    return Array.from(new Set(pagos.map(pago => pago.subgroup.id)))
       .map(subgroupId => {
-        const pago = pagos.find(p => p.subgroup.subgroup_id === subgroupId);
+        const pago = pagos.find(p => p.subgroup.id === subgroupId);
         return {
           id: subgroupId,
-          name: pago?.subgroup.subgroup_name || subgroupId
+          name: pago?.subgroup.name || subgroupId
         };
       });
   }, [pagos]);
 
   const uniqueSections = React.useMemo(() => {
-    return Array.from(new Set(pagos.map(pago => pago.section.section_id)))
+    return Array.from(new Set(pagos.map(pago => pago.section.id)))
       .map(sectionId => {
-        const pago = pagos.find(p => p.section.section_id === sectionId);
+        const pago = pagos.find(p => p.section.id === sectionId);
         return {
           id: sectionId,
-          name: pago?.section.section_name || sectionId
+          name: pago?.section.name || sectionId
         };
       });
   }, [pagos]);

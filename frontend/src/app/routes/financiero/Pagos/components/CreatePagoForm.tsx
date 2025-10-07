@@ -22,13 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { CreatePaymentDto } from "@/types/pago.type";
+import api from "@/api/axios";
+import { toast } from "sonner";
 
 interface CreatePagoFormProps {
   setOpen: (open: boolean) => void;
   pago: CreatePaymentDto & { installment_id: string, payer_member_id: string }; // ID para edición
+  onRefresh?: () => void; // Callback para refrescar la tabla
 }
 
-export default function CreatePagoForm({ setOpen, pago }: CreatePagoFormProps) {
+export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoFormProps) {
   const form = useForm<CreatePagoFormValues>({
     resolver: zodResolver(CreatePagoFormSchema),
     defaultValues: {
@@ -52,7 +55,19 @@ export default function CreatePagoForm({ setOpen, pago }: CreatePagoFormProps) {
       payer_member_id: pago.payer_member_id,
       ...values,
     }
-    console.log(data);
+
+    try {
+      const response = await api.post(`/finanzas/payments/${"org_6B3k4dao2Wf6eGxa"}/installments/${pago.installment_id}/payments`, data);
+      if(response.status === 201) {
+        toast.success("Pago creado correctamente");
+        setOpen(false);
+        onRefresh?.(); // Refrescar la tabla después de crear el pago
+      } else {
+        toast.error("Error al crear el pago");
+      }
+    } catch (error) {
+      toast.error("Error al crear el pago");
+    }
   }
 
   return (

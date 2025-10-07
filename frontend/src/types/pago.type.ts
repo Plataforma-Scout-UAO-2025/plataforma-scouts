@@ -1,13 +1,13 @@
 export type PaymentStatus = "PENDING" | "PARTIAL" | "PAID" | "OVERDUE";
 
 export interface SubgroupPayment {
-  subgroup_id: string;
-  subgroup_name: string;
+  id: string;
+  name: string;
 }
 
 export interface SectionPayment {
-  section_id: string;
-  section_name: string;
+  id: string;
+  name: string;
 }
 
 export interface InstallmentPayment {
