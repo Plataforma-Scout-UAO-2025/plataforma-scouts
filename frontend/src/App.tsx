@@ -10,9 +10,9 @@ import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
-import Organigrama from "./app/routes/organigrama";
-import RamaDetail from "@/app/routes/organigrama/components/RamaDetail";
-import SubramaDetail from "@/app/routes/organigrama/components/SubramaDetail";
+import Organigrama from "./app/routes/organigrama/organigramaRamas_Subramas";
+import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/RamaDetail";
+import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
 
 function App() {
   return (
