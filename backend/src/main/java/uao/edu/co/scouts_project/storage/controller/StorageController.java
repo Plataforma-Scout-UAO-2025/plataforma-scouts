@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.storage.api;
+package uao.edu.co.scouts_project.storage.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

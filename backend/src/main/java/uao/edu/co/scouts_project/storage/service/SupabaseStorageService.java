@@ -7,7 +7,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import uao.edu.co.scouts_project.config.SupabaseConfig;
 import uao.edu.co.scouts_project.storage.domain.StorageObject;
-import uao.edu.co.scouts_project.storage.repo.StorageObjectRepository;
+import uao.edu.co.scouts_project.storage.repository.StorageObjectRepository;
 
 import java.io.IOException;
 import java.util.Collections;
