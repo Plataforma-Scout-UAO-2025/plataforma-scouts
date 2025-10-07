@@ -1,0 +1,81 @@
+meta {
+  name: 26) GetCuota - Id inexistente
+  type: http
+  seq: 31
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([404]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 26) GetCuota - Id inexistente');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 26: Obtener Cuota - ID Inexistente
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema devuelve un error apropiado al intentar consultar una cuota con un ID que no existe.
+  
+  ## 📍 Endpoint
+  ```
+  GET {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+  ```
+  **Nota:** UUID inexistente `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+  
+  ## 📦 Request Body
+  N/A (método GET no requiere body)
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `404 Not Found`
+  - **Body:** Mensaje de error indicando que la cuota no existe
+  
+  ```json
+  {
+    "message": "Cuota no encontrada"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

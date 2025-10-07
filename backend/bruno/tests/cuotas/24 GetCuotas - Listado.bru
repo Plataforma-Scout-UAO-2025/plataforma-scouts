@@ -1,0 +1,102 @@
+meta {
+  name: 24) GetCuotas - Listado
+  type: http
+  seq: 29
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees/org_6B3k4dao2Wf6eGxa
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Has id or payload on success', () => {
+    if ([200,201].includes(res.status)) {
+      expect(res.body).to.have.any.keys('id','data','cuota');
+    }
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 24) GetCuotas - Listado');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 24: Obtener Cuotas - Listado General
+  
+  ## 🎯 Objetivo
+  Validar que el sistema devuelve correctamente el listado completo de todas las cuotas registradas.
+  
+  ## 📍 Endpoint
+  ```
+  GET {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas
+  ```
+  
+  ## 📦 Request Body
+  N/A (método GET no requiere body)
+  
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK`
+  - **Body:** Array con todas las cuotas
+  
+  ```json
+  [
+    {
+      "id": "uuid-1",
+      "tenant_id": 1,
+      "name": "Mensualidad",
+      "description": "Cuota Plástico 2025",
+      "amount": 50000,
+      "periodicity": "MONTH",
+      "scope": "ALL",
+      "start_date": "2025-10-01",
+      "end_date": "2026-01-30"
+    },
+    {
+      "id": "uuid-2",
+      "tenant_id": 1,
+      "name": "Cuota Extraordinaria",
+      "description": "Cuota especial",
+      "amount": 100000,
+      "periodicity": "QUARTERLY",
+      "scope": "SPECIFIC",
+      "start_date": "2025-11-01",
+      "end_date": "2026-02-28"
+    }
+  ]
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

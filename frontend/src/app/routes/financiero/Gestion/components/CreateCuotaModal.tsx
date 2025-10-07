@@ -11,7 +11,11 @@ import {
 import { Plus } from "lucide-react";
 import CreateCuotaForm from "./CreateCuotaForm";
 
-export default function CreateCuotaModal() {
+interface CreateCuotaModalProps {
+  onRefresh?: () => void;
+}
+
+export default function CreateCuotaModal({ onRefresh }: CreateCuotaModalProps = {}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -24,14 +28,19 @@ export default function CreateCuotaModal() {
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="text-primary text-3xl tracking-tight font-bold mt-4">Crear nueva cuota</DialogTitle>
+          <DialogTitle className="text-primary text-3xl tracking-tight font-bold mt-4">
+            Crear nueva cuota
+          </DialogTitle>
           <DialogDescription>
             Define los parámetros de la cuota que se aplicará a tu grupo.
           </DialogDescription>
         </DialogHeader>
 
-        <CreateCuotaForm open={open} setOpen={setOpen} />
-
+        <CreateCuotaForm
+          open={open}
+          setOpen={setOpen}
+          onRefresh={onRefresh}
+        />
       </DialogContent>
     </Dialog>
   );
