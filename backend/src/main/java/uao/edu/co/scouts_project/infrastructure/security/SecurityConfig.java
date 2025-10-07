@@ -60,7 +60,11 @@ public class SecurityConfig {
                         // Pagos
 
 
-
+                        // Cuotas
+                        .requestMatchers("/api/v1/finanzas/fees").hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/finanzas/fees/members/").hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/finanzas/fees/subgroups/").hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/finanzas/fees/sections").hasAnyRole(TESORERO.name())
 
                         //
                         // Planes de adelanto
