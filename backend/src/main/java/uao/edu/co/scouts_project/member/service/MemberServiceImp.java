@@ -12,6 +12,8 @@ import org.springframework.util.StringUtils;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
+import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
+import uao.edu.co.scouts_project.organigrama.repo.SubgroupRepository;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -25,9 +27,11 @@ public class MemberServiceImp implements IMemberService {
     @Autowired
     private IMemberRepository memberRepository;
 
+    @Autowired
+    private SubgroupRepository subgroupRepository;
+
     @Override
     public Member create_member(Member miembro) {
-        // Validaciones de entrada
         validateMemberData(miembro);
 
         try {
@@ -36,6 +40,11 @@ public class MemberServiceImp implements IMemberService {
                 log.warn("Attempt to create duplicate member with identification: {}", miembro.getIdentification());
                 throw new IllegalArgumentException("A member with identification " + miembro.getIdentification() + " already exists");
             }
+
+            Subgroup subgroup = subgroupRepository.findBySubgroupId(miembro.getSubgroup().getSubgroupId())
+                    .orElseThrow(() -> new RuntimeException("Subgroup no encontrado"));
+
+            miembro.setSubgroup(subgroup);
 
             String userId = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("Creating member - Authenticated user: {}", userId);

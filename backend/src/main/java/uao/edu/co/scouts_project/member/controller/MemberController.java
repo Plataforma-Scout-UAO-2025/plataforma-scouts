@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.member.dto.MemberDto;
@@ -22,6 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static java.lang.String.format;
 
 /**
  * Controlador REST para la gestión de members.
@@ -49,6 +52,9 @@ public class MemberController {
     @Autowired
     private ISchoolRepository schoolRepository;
 
+    private static String getCurrentUsername() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
 
     /**
      * Crea un nuevo miembro en el sistema.
@@ -63,6 +69,10 @@ public class MemberController {
      */
     @PostMapping("/create_member")
     public ResponseEntity<?> create_member(@Valid @RequestBody MemberDto miembroDto) {
+
+        String name = getCurrentUsername();
+        log.info("Acceso para usuario autenticado: {}", name);
+
         try {
             log.info("Recibida solicitud de pre registro para miembro: {}", miembroDto.getIdentification());
 

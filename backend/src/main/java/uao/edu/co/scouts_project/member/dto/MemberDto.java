@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,8 +29,8 @@ public class MemberDto {
     @JsonProperty("guardianId")
     private Integer guardianId;
 
-    @JsonProperty("subgroupId")
-    private Long subgroupId;
+    @JsonProperty("subgroup")
+    private Subgroup subgroup;
 
     @JsonProperty("firstName")
     private String firstName;
