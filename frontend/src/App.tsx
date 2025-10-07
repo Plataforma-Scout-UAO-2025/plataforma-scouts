@@ -15,6 +15,8 @@ import TeamMembers from "./app/routes/adminGrupal/Miembros/Miembros";
 import Requests from "./app/routes/adminGrupal/Solicitudes/Requests";
 import Rejected from "./app/routes/adminGrupal/Solicitudes/Rejected";
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
+import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
+
 
 function App() {
   useAuth0ApiWrapper();
@@ -25,8 +27,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/inscripcion" element={<ScoutEnrollment />} />
+          <Route path="/scout/dashboard" element={<ScoutDashboard />} />
           <Route path="/app" element={<AppLayout />}>
-            <Route index element={<Dashboard />} />
+           
 
             {/* Rutas para admin de grupo */}
             <Route
