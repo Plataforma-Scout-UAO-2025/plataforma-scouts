@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,19 +23,24 @@ public class FeesController {
   private final IFeeService feeService;
 
   @Operation(summary = "Crear Concept, FeePlan y los installments necesarios segun la periodicidad elegida, para este calculo son obligatorios las fechas inical y final")
-@PostMapping
-public ResponseEntity<?> create(@RequestBody CreateCuotaDto body) {
-    try {
-        CuotaDto created = feeService.create(body);
-        return ResponseEntity.status(201).body(created);
-    } catch (IllegalArgumentException ex) {
-        // Devolver el mensaje exacto del error al cliente
-        return ResponseEntity.badRequest().body(Map.of(
-            "error", "bad_request",
-            "message", ex.getMessage()
-        ));
-    }
-}
+  @PostMapping
+  public ResponseEntity<?> create(@RequestBody CreateCuotaDto body) {
+      try {
+          CuotaDto created = feeService.create(body);
+          return ResponseEntity.status(201).body(created);
+      } catch (DataIntegrityViolationException ex) {
+          return ResponseEntity.status(409).body(Map.of(
+              "error", "unique_constraint_violation",
+              "constraint", "uq_installment_per_account_concept_date",
+              "message", "Ya existe una cuota para este account, concepto y fecha"
+          ));
+      } catch (IllegalArgumentException ex) {
+          return ResponseEntity.badRequest().body(Map.of(
+              "error", "bad_request",
+              "message", ex.getMessage()
+          ));
+      }
+  }
 
   // -------- LIST: cuotas por tenant (con associatedTo) ----------
   @Operation(summary = "Listar cuotas de un tenant")
