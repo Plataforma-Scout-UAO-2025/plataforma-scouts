@@ -1,0 +1,40 @@
+package uao.edu.co.scouts_project.finanzas.payments.controller;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import uao.edu.co.scouts_project.finanzas.payments.dto.InstallmentPaymentDto;
+import uao.edu.co.scouts_project.finanzas.payments.dto.PaymentRecordDto;
+import uao.edu.co.scouts_project.finanzas.payments.service.PaymentsService;
+
+@RestController
+@RequestMapping("/api/v1/finanzas/payments")
+public class PaymentsController {
+
+    private final PaymentsService service;
+
+    public PaymentsController(PaymentsService service) {
+        this.service = service;
+    }
+
+    // GET members by tenant (solo SCOUT con ≥1 installment)
+    @GetMapping("/members/{tenantId}")
+    public ResponseEntity<List<PaymentRecordDto>> getMembersByTenant(
+            @PathVariable("tenantId") String tenantId
+    ) {
+        var out = service.listMembersWithInstallments(tenantId);
+        return ResponseEntity.ok(out);
+    }
+
+    // GET installments by member & tenant (con concept name/desc)
+    @GetMapping("/installments/{tenantId}/{member_id}")
+    public ResponseEntity<List<InstallmentPaymentDto>> getInstallmentsByMemberAndTenant(
+            @PathVariable("tenantId") String tenantId,
+            @PathVariable("member_id") Long memberId
+    ) {
+        var out = service.listInstallmentsByMember(tenantId, memberId);
+        return ResponseEntity.ok(out);
+    }
+}
