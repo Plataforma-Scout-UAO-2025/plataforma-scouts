@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Auth0Provider } from "@auth0/auth0-react";
 import "./styles/global.css";
 import App from "./App.tsx";
+import { RoleProvider } from "@/context/RoleProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -14,7 +15,9 @@ createRoot(document.getElementById("root")!).render(
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
       }}
     >
-      <App />
+      <RoleProvider>
+        <App />
+      </RoleProvider>
     </Auth0Provider>
   </StrictMode>
 );
