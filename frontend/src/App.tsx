@@ -20,7 +20,6 @@ const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal"; // Simulac
 const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
 
 import Pagos from "./app/routes/financiero/Pagos/Pagos";
-import EstadoCuenta from "./app/routes/acudiente/estado-cuenta/EstadoCuenta";
 
 function App() {
   useAuth0ApiWrapper();

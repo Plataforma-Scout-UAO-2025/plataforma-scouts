@@ -21,73 +21,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast, type ExternalToast } from "sonner";
-import { mockScouts, mockCuotas } from "../constants/mockData";
+import type { CreatePaymentDto } from "@/types/pago.type";
 
 interface CreatePagoFormProps {
-  open: boolean;
   setOpen: (open: boolean) => void;
-  defaultValues?: Partial<CreatePagoFormValues>;
-  submitButtonText?: string;
-  pagoId?: string; // ID para edición
+  pago: CreatePaymentDto & { installment_id: string, payer_member_id: string }; // ID para edición
 }
 
-export default function CreatePagoForm({
-  setOpen,
-  defaultValues,
-  submitButtonText = "Crear pago",
-  pagoId,
-}: CreatePagoFormProps) {
+export default function CreatePagoForm({ setOpen, pago }: CreatePagoFormProps) {
   const form = useForm<CreatePagoFormValues>({
     resolver: zodResolver(CreatePagoFormSchema),
     defaultValues: {
-      concepto: defaultValues?.concepto || "",
-      monto: defaultValues?.monto || "0",
-      fechaPago: defaultValues?.fechaPago || "",
-      estado:
-        (defaultValues?.estado as "Pagado" | "Pendiente" | "Cancelado") ||
-        "Pendiente",
-      medioPago:
-        (defaultValues?.medioPago as
+      paid_at: pago.paid_at || "",
+      method:
+        (pago.method as
           | "PSE"
           | "Efectivo"
           | "Tarjeta de Debito"
           | "Tarjeta de Credito"
           | "Otro") || "PSE",
-      cuotaId: defaultValues?.cuotaId || "",
-      scoutId: defaultValues?.scoutId || "",
+      reference: pago.reference || "",
     },
   });
 
   async function onSubmit(values: CreatePagoFormValues) {
-    if (pagoId) {
-      // Modo edición: incluir el ID del pago
-      try {
-        const data = {
-          id: pagoId,
-          ...values,
-        };
 
-        // Simular llamada a API con datos mock
-        console.log("Actualizando pago:", data);
-        toast.success("Pago actualizado correctamente");
-        setOpen(false);
-      } catch (error) {
-        toast.error("Error al actualizar el pago:", error as ExternalToast);
-        console.error("Error al actualizar el pago:", error);
-      }
-    } else {
-      // Modo creación: crear nuevo pago
-      try {
-        // Simular llamada a API con datos mock
-        console.log("Creando pago:", values);
-        toast.success("Pago creado correctamente");
-        setOpen(false);
-      } catch (error) {
-        toast.error("Error al crear el pago:", error as ExternalToast);
-        console.error("Error al crear el pago:", error);
-      }
+    let data = {
+      payment_id: crypto.randomUUID(),
+      installment_id: pago.installment_id,
+      payer_member_id: pago.payer_member_id,
+      ...values,
     }
+    console.log(data);
   }
 
   return (
@@ -96,40 +61,10 @@ export default function CreatePagoForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid grid-cols-3 gap-6"
       >
-        <div className="col-span-12 md:col-span-1">
+        <div className="col-span-full">
           <FormField
             control={form.control}
-            name="concepto"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Concepto</FormLabel>
-                <FormControl>
-                  <Input placeholder="Cuota mensual Scouts..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="col-span-full md:col-span-1">
-          <FormField
-            control={form.control}
-            name="monto"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Monto</FormLabel>
-                <FormControl>
-                  <Input type="text" placeholder="50000" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="col-span-full md:col-span-1">
-          <FormField
-            control={form.control}
-            name="fechaPago"
+            name="paid_at"
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Fecha de pago</FormLabel>
@@ -141,37 +76,10 @@ export default function CreatePagoForm({
             )}
           />
         </div>
-        <div className="col-span-full md:col-span-1">
+        <div className="col-span-full">
           <FormField
             control={form.control}
-            name="estado"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona un estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pagado">Pagado</SelectItem>
-                      <SelectItem value="Pendiente">Pendiente</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="col-span-full md:col-span-1">
-          <FormField
-            control={form.control}
-            name="medioPago"
+            name="method"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Medio de pago</FormLabel>
@@ -201,58 +109,16 @@ export default function CreatePagoForm({
             )}
           />
         </div>
-        <div className="col-span-full md:col-span-1">
+
+        <div className="col-span-full">
           <FormField
             control={form.control}
-            name="cuotaId"
+            name="reference"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cuota</FormLabel>
+                <FormLabel>Referencia</FormLabel>
                 <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona una cuota" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockCuotas.map((cuota) => (
-                        <SelectItem key={cuota.id} value={cuota.id}>
-                          {cuota.nombre} - ${cuota.monto} ({cuota.periodicidad})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="col-span-full md:col-span-1">
-          <FormField
-            control={form.control}
-            name="scoutId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Integrante</FormLabel>
-                <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona un integrante" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockScouts.map((scout) => (
-                        <SelectItem key={scout.id} value={scout.id}>
-                          {scout.nombre} - {scout.rama} ({scout.edad} años)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input placeholder="Referencia" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -268,7 +134,7 @@ export default function CreatePagoForm({
             Cancelar
           </Button>
           <Button type="submit" variant="primary">
-            {submitButtonText}
+            Pagar
           </Button>
         </div>
       </form>

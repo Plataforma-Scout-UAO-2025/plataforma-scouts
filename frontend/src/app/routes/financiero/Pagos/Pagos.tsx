@@ -1,64 +1,130 @@
 import { useEffect, useState } from "react";
 import PagosTable from "./components/PagosTable";
-import type { Pago } from "./types/pago.type";
+import type { PaymentRecord } from "@/types/pago.type";
 import { Loader2 } from "lucide-react";
 
 // Datos mock para pagos
-const mockPagos: Pago[] = [
+const mockPagos: PaymentRecord[] = [
   {
-    id: "1",
-    concepto: "Cuota mensual Scouts",
-    monto: "50000",
-    fechaPago: "2024-01-15",
-    estado: "Pagado",
-    medioPago: "PSE",
-    cuotaId: "cuota-1",
-    scoutId: "scout-1"
+    member_id: "1",
+    first_name: "Juan",
+    last_name: "Perez",
+    age: 20,
+    subgroup: {
+      subgroup_id: "1",
+      subgroup_name: "Subgrupo 1",
+    },
+    section: {
+      section_id: "1",
+      section_name: "Sección 1",
+    },
+    installment: [
+      {
+        installment_id: "1",
+        name: "Cuota 1",
+        due_date: new Date(),
+        amount: 100,
+        status: "PAID",
+        payment_id: crypto.randomUUID(),
+        paid_at: new Date(),
+        method: "Efectivo",
+        reference: "1234567890",
+        payer_member_id: "1",
+      },
+      {
+        installment_id: "2",
+        name: "Cuota 2",
+        due_date: new Date(),
+        amount: 100,
+        status: "PENDING",
+        payment_id: null,
+        paid_at: null,
+        method: null,
+        reference: null,
+        payer_member_id: null,
+      },
+      {
+        installment_id: "3",
+        name: "Cuota 3",
+        due_date: new Date(),
+        amount: 100,
+        status: "OVERDUE",
+        payment_id: null,
+        paid_at: null,
+        method: null,
+        reference: null,
+        payer_member_id: null,
+      },
+    ],
   },
   {
-    id: "2",
-    concepto: "Cuota trimestral Lobatos",
-    monto: "150000",
-    fechaPago: "2024-01-20",
-    estado: "Pendiente",
-    medioPago: "Efectivo",
-    cuotaId: "cuota-2",
-    scoutId: "scout-2"
-  },
-  {
-    id: "3",
-    concepto: "Pago extraordinario Campamento",
-    monto: "200000",
-    fechaPago: "2024-01-25",
-    estado: "Pagado",
-    medioPago: "Tarjeta de Crédito",
-    cuotaId: "cuota-3",
-    scoutId: "scout-3"
-  },
-  {
-    id: "4",
-    concepto: "Cuota anual Rovers",
-    monto: "300000",
-    fechaPago: "2024-02-01",
-    estado: "Pagado",
-    medioPago: "PSE",
-    cuotaId: "cuota-4",
-    scoutId: "scout-4"
-  },
-  {
-    id: "5",
-    concepto: "Cuota mensual Scouts",
-    monto: "50000",
-    fechaPago: "2024-02-15",
-    estado: "Pendiente",
-    medioPago: "Otro",
-    cuotaId: "cuota-1",
-    scoutId: "scout-5"
+    member_id: "2",
+    first_name: "Maria",
+    last_name: "Gomez",
+    age: 25,
+    subgroup: {
+      subgroup_id: "2",
+      subgroup_name: "Subgrupo 2",
+    },
+    section: {
+      section_id: "2",
+      section_name: "Sección 2",
+    },
+    installment: [
+      {
+        installment_id: "1",
+        name: "Cuota 1",
+        due_date: new Date(),
+        amount: 100,
+        status: "PAID",
+        payment_id: crypto.randomUUID(),
+        paid_at: new Date(),
+        method: "Tarjeta de Debito",
+        reference: "1234567890",
+        payer_member_id: "2",
+      },
+      {
+        installment_id: "2",
+        name: "Cuota 2",
+        due_date: new Date(),
+        amount: 100,
+        status: "PAID",
+        payment_id: crypto.randomUUID(),
+        paid_at: new Date(),
+        method: "Efectivo",
+        reference: "1234567890",
+        payer_member_id: "2",
+      },
+      {
+        installment_id: "3",
+        name: "Cuota 3",
+        due_date: new Date(),
+        amount: 100,
+        status: "PENDING",
+        payment_id: null,
+        paid_at: null,
+        method: null,
+        reference: null,
+        payer_member_id: null,
+      },
+      {
+        installment_id: "4",
+        name: "Cuota 4",
+        due_date: new Date(),
+        amount: 100,
+        status: "PENDING",
+        payment_id: null,
+        paid_at: null,
+        method: null,
+        reference: null,
+        payer_member_id: null,
+      },
+    ],
   }
 ];
 
 export default function Pagos() {
-  const [pagos, setPagos] = useState<Pago[]>([]);
+  const [pagos, setPagos] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

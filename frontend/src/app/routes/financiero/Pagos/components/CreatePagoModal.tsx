@@ -8,30 +8,31 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import CreatePagoForm from "./CreatePagoForm";
 
-export default function CreatePagoModal() {
+export default function CreatePagoModal({ pago }: { pago: any }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen} modal={true}>
       <DialogTrigger asChild>
-        <Button variant="primary">
-          <Plus className="text-white" />
-          Crear pago
+        <Button className="bg-primary text-white h-7" size="sm">
+          <DollarSign className="text-white" />
+          Pagar
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="text-primary text-3xl tracking-tight font-bold mt-4">Crear nuevo pago</DialogTitle>
+          <DialogTitle className="text-primary text-3xl tracking-tight font-bold mt-4">
+            Pagar cuota
+          </DialogTitle>
           <DialogDescription>
-            Registra un nuevo pago realizado por un miembro del grupo.
+            Registra un nuevo pago realizado por un miembro del grupo para la cuota {pago.name}
           </DialogDescription>
         </DialogHeader>
 
-        <CreatePagoForm open={open} setOpen={setOpen} />
-
+        <CreatePagoForm setOpen={setOpen} pago={pago} />
       </DialogContent>
     </Dialog>
   );

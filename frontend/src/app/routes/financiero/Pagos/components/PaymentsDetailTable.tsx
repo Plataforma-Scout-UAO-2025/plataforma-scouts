@@ -14,7 +14,6 @@ import {
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -30,45 +29,47 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { PaymentRecord } from "@/types/pago.type";
-import { columns } from "./PagosTableColumns";
+import type { InstallmentPayment } from "@/types/pago.type";
 
-export default function PagosTable({
-  pagos = [],
+import { paymentsDetailTableColumns } from "./PaymentsDetailTableColumns";
+
+export default function PaymentsDetailTable({
+  installment = [],
+  member_id = '',
 }: {
-  pagos?: PaymentRecord[];
+    installment?: InstallmentPayment[];
+    member_id?: string;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [globalFilter, setGlobalFilter] = React.useState("");
 
-  // Estados para los filtros personalizados
-  const [selectedSubgroup, setSelectedSubgroup] = React.useState<string>("all");
-  const [selectedSection, setSelectedSection] = React.useState<string>("all");
+  // Estado para el filtro de status
+  const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
 
-  // Filtrar datos según los filtros seleccionados
+  // Preparar y filtrar datos
   const filteredData = React.useMemo(() => {
-    let filtered = pagos;
+    // Primero transformar los datos agregando payer_member_id
+    const transformedData = installment.map(item => ({
+      ...item,
+      payer_member_id: member_id || ''
+    }));
 
-    if (selectedSubgroup && selectedSubgroup !== "all") {
-      filtered = filtered.filter(pago => pago.subgroup.subgroup_id === selectedSubgroup);
+    // Luego filtrar por status si es necesario
+    if (selectedStatus && selectedStatus !== "all") {
+      return transformedData.filter(item => item.status === selectedStatus);
     }
-
-    if (selectedSection && selectedSection !== "all") {
-      filtered = filtered.filter(pago => pago.section.section_id === selectedSection);
-    }
-
-    return filtered;
-  }, [pagos, selectedSubgroup, selectedSection]);
+    return transformedData;
+  }, [installment, selectedStatus, member_id]);
 
   const table = useReactTable({
     data: filteredData,
-    columns,
+    columns: paymentsDetailTableColumns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -77,86 +78,33 @@ export default function PagosTable({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
-      globalFilter,
     },
   });
 
-
-  const uniqueSubgroups = React.useMemo(() => {
-    return Array.from(new Set(pagos.map(pago => pago.subgroup.subgroup_id)))
-      .map(subgroupId => {
-        const pago = pagos.find(p => p.subgroup.subgroup_id === subgroupId);
-        return {
-          id: subgroupId,
-          name: pago?.subgroup.subgroup_name || subgroupId
-        };
-      });
-  }, [pagos]);
-
-  const uniqueSections = React.useMemo(() => {
-    return Array.from(new Set(pagos.map(pago => pago.section.section_id)))
-      .map(sectionId => {
-        const pago = pagos.find(p => p.section.section_id === sectionId);
-        return {
-          id: sectionId,
-          name: pago?.section.section_name || sectionId
-        };
-      });
-  }, [pagos]);
-
   return (
-    <div className="w-full mt-5">
+    <div className="max-w-full mt-5">
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
-          <Input
-            placeholder="Buscar en toda la tabla..."
-            value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(event.target.value)}
-            className="max-w-sm"
-          />
-
           <Select
-            value={selectedSubgroup}
-            onValueChange={setSelectedSubgroup}
+            value={selectedStatus}
+            onValueChange={setSelectedStatus}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por subgrupo" />
+              <SelectValue placeholder="Filtrar por estado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los subgrupos</SelectItem>
-              {uniqueSubgroups.map((subgroup) => (
-                <SelectItem key={subgroup.id} value={subgroup.id}>
-                  {subgroup.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="PENDING">Pendiente</SelectItem>
+              <SelectItem value="PARTIAL">Parcial</SelectItem>
+              <SelectItem value="PAID">Pagado</SelectItem>
+              <SelectItem value="OVERDUE">Vencido</SelectItem>
             </SelectContent>
           </Select>
-
-          <Select
-            value={selectedSection}
-            onValueChange={setSelectedSection}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por sección" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las secciones</SelectItem>
-              {uniqueSections.map((section) => (
-                <SelectItem key={section.id} value={section.id}>
-                  {section.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-
         </div>
       </div>
       <div className="rounded-md border">
@@ -199,7 +147,7 @@ export default function PagosTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={paymentsDetailTableColumns.length}
                   className="h-24 text-center"
                 >
                   No hay resultados.
