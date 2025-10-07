@@ -19,7 +19,7 @@ export default function EditNivelModal({ open, nivel, onClose, onSave }: Props) 
   useEffect(() => {
     if (nivel) {
       setNombre(nivel.nombre);
-      setDescripcion((nivel as any).descripcion || "");
+      setDescripcion(nivel.descripcion || "");
     }
   }, [nivel]);
 

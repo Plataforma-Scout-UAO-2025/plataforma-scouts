@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -501,7 +501,7 @@ export default function SubramaDetail() {
     }
   };
 
-  const fetchSubrama = async () => {
+  const fetchSubrama = useCallback(async () => {
     try {
       if (id) {
         console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
@@ -568,11 +568,11 @@ export default function SubramaDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, tenantSlug, groupSlug]);
 
   useEffect(() => {
     fetchSubrama();
-  }, [id, tenantSlug, groupSlug]);
+  }, [id, tenantSlug, groupSlug, fetchSubrama]);
 
   if (loading) {
     return (

@@ -21,7 +21,7 @@ export default function EditCargoModal({ open, cargo, onClose, onSave }: Props) 
     if (cargo) {
       setNombre(cargo.nombre);
       setTitular(cargo.titular || "");
-      setDescripcion((cargo as any).descripcion || "");
+      setDescripcion(cargo.descripcion || "");
     }
   }, [cargo]);
 

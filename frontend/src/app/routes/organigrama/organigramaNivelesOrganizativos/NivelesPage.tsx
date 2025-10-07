@@ -38,7 +38,7 @@ export default function NivelesPage() {
 
   // Handlers ------------------------
 
-  const handleCreateNivel = (nombre: string, _descripcion?: string) => {
+  const handleCreateNivel = (nombre: string) => {
     addNivel(nombre);
     setOpenCreateNivel(false);
     setShowSuccess(true);

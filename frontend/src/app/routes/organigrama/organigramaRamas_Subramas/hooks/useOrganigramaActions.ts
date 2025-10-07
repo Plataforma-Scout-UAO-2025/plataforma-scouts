@@ -62,7 +62,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       handleError(err);
       throw err;
     }
-  }, [tenantSlug, groupSlug, loadRamas, showSuccess, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const updateRama = useCallback(async (data: UpdateBranchData | UpdateRamaFormData) => {
     try {
@@ -76,7 +76,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       handleError(err);
       throw err;
     }
-  }, [tenantSlug, groupSlug, loadRamas, showSuccess, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const createSubrama = useCallback(async (data: CreateSubgroupData | CreateSubramaFormData) => {
     try {
@@ -90,7 +90,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       handleError(err);
       throw err;
     }
-  }, [tenantSlug, groupSlug, loadRamas, showSuccess, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const updateSubrama = useCallback(async (data: UpdateSubgroupData | UpdateSubramaFormData) => {
     try {
@@ -111,7 +111,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       handleError(err);
       throw err;
     }
-  }, [tenantSlug, groupSlug, loadRamas, showSuccess, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const deleteRama = useCallback(async (id: string) => {
     if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
@@ -123,7 +123,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       handleError(err);
       throw err;
     }
-  }, [tenantSlug, groupSlug, loadRamas, showSuccess, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const deleteSubrama = useCallback(async (sectionId: string, id: string) => {
     if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
@@ -135,7 +135,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       handleError(err);
       throw err;
     }
-  }, [tenantSlug, groupSlug, loadRamas, showSuccess, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   // =====================================================
   // Acciones de galería para Secciones (Ramas)

@@ -19,7 +19,7 @@ function exportPDF(data: OrganigramaNiveles) {
   doc.setFont("helvetica", "normal");
   doc.text(`Generado el ${fecha}`, 14, 27);
 
-  const tableData: any[] = [];
+  const tableData: (string | number)[][] = [];
 
   data.niveles.forEach((nivel) => {
     if (nivel.cargos.length === 0) {
