@@ -21,7 +21,7 @@ export const updateSubramaMainImage = async (
     const formData = new FormData();
     formData.append('file', file);
     const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-      '/api/storage/upload',
+      'storage/upload',
       formData,
       {
         onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
@@ -91,7 +91,7 @@ export const uploadSubramaGalleryImages = async (
       const formData = new FormData();
       formData.append('file', file);
       const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-        '/api/storage/upload',
+        'storage/upload',
         formData
       );
       objectIds.push(uploadResponse.objectId);
@@ -135,7 +135,7 @@ export const addSubramaGalleryImage = async (
     const formData = new FormData();
     formData.append('file', file);
     const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-      '/api/storage/upload',
+      'storage/upload',
       formData
     );
 
@@ -171,7 +171,7 @@ export const replaceSubramaGalleryImage = async (
     const formData = new FormData();
     formData.append('file', newFile);
     const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-      '/api/storage/upload',
+      'storage/upload',
       formData
     );
 

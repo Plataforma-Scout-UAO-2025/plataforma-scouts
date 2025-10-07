@@ -468,7 +468,7 @@ export const uploadTestImage = async (file: File): Promise<{
 };
 
 // POST /test/upload/document
-export const uploadTestDocument = async (file: File): Promise<any> => {
+export const uploadTestDocument = async (file: File): Promise<UploadResponse> => {
   const formData = new FormData();
   formData.append('file', file);
   
@@ -862,7 +862,7 @@ export const testApi = {
   },
 
   // POST /test/upload/document
-  async uploadTestDocument(file: File): Promise<any> {
+  async uploadTestDocument(file: File): Promise<UploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
     

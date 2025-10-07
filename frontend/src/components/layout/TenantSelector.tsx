@@ -23,7 +23,7 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({ onConfigChange }
 
   React.useEffect(() => {
     fetchTenants();
-  }, []);
+  }, [fetchTenants]);
 
   const handleApplyConfig = () => {
     if (tempTenant && tempGroup) {

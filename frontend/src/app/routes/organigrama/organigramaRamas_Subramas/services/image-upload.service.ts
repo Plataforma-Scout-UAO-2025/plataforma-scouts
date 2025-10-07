@@ -31,7 +31,7 @@ export const diagnoseBatchImageUpload = async (
     formData.append("file", file);
 
     const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-      "/api/storage/upload",
+      "storage/upload",
       formData
     );
     console.log("✅ [DIAGNÓSTICO] Upload exitoso, objectId:", uploadResponse.objectId);
@@ -101,7 +101,7 @@ export const uploadSectionIcon = async (
 
     console.log("🔄 [ImageUploadService] Subiendo archivo al storage...");
     const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-      "/api/storage/upload",
+      "storage/upload",
       formData,
       {
         onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
@@ -156,7 +156,7 @@ export const uploadSectionMainImage = async (
     formData.append("file", file);
 
     const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-      "/api/storage/upload",
+      "storage/upload",
       formData,
       {
         onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
@@ -219,7 +219,7 @@ export const uploadGalleryImages = async (
       formData.append("file", file);
 
       const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-        "/api/storage/upload",
+        "storage/upload",
         formData,
         {
           onUploadProgress: (percent: number) => {
@@ -307,7 +307,7 @@ export const replaceSubramaGalleryImage = async (
     const formData = new FormData();
     formData.append("file", file);
     const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-      "/api/storage/upload",
+      "storage/upload",
       formData
     );
 

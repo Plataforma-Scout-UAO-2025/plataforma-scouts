@@ -49,7 +49,7 @@ export const diagnosticImageUpload = async (
   formData.append('file', file);
   
   const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
-    '/api/storage/upload',
+    'storage/upload',
     formData
   );
   

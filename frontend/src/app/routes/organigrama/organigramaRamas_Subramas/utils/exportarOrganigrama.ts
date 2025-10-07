@@ -158,10 +158,10 @@ export const exportarOrganigramaCSV = (ramas: Rama[]) => {
       }
     }
 
-    const objectArrayToCsv = (data: Array<Record<string, any>>): string => {
+    const objectArrayToCsv = (data: Array<Record<string, unknown>>): string => {
       if (!data || data.length === 0) return "";
       const keys = Object.keys(data[0]);
-      const escapeCell = (v: any) => {
+      const escapeCell = (v: unknown) => {
         if (v === null || v === undefined) return "";
         const s = String(v);
         if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {

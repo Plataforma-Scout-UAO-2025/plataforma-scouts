@@ -28,8 +28,8 @@ export const getRamasWithSubramas = async (tenantSlug: string, groupSlug: string
     if (backendRamas && Array.isArray(backendRamas) && backendRamas.length > 0) {
       console.log('✅ [RamaService] Backend soporta endpoint optimizado, mapeando resultados');
       // Mapar ramas y, si no hay subramas embebidas, hidratar llamando al servicio
-      const ramas = await Promise.all(backendRamas.map(async (br: any) => {
-        const mapped = mapBackendRamaToFrontend(br as unknown as BackendRama);
+      const ramas = await Promise.all(backendRamas.map(async (br: unknown) => {
+        const mapped = mapBackendRamaToFrontend(br as BackendRama);
         const backendRec = br as unknown as Record<string, unknown>;
         const backendSubgroups = (backendRec['subgroups'] ?? backendRec['subramas'] ?? backendRec['subgroupList']) as unknown[] | undefined;
 
@@ -291,7 +291,7 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
     const years = [...new Set(ramasSimples.map((r: Rama) => {
       const legacy = r as unknown as Record<string, unknown>;
       return r.year ?? (legacy['año'] as number | undefined);
-    }).filter((y: any) => y !== undefined && y !== null))] as number[];
+    }).filter((y: number | undefined) => y !== undefined && y !== null))] as number[];
     const sortedYears = years.sort((a: number, b: number) => b - a);
     
     console.log('✅ [RamaService] Años disponibles (optimizado):', sortedYears);
