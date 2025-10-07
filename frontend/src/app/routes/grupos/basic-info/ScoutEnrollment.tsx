@@ -27,7 +27,6 @@ import { transformarDatos } from "./utils/enrollment.utils";
 
 function ScoutEnrollment() {
   const navigate = useNavigate();
-
   const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     firstname: "",
     lastname: "",
@@ -144,10 +143,10 @@ function ScoutEnrollment() {
       }
 
       setShowModal(true);
-    } catch (error: any) {
+    } catch (error) {
       alert(
         "Error al enviar la solicitud: " +
-          (error.message || "Error desconocido")
+          (error instanceof Error ? error.message : "Error desconocido")
       );
     } finally {
       setLoading(false);
