@@ -280,6 +280,22 @@ findAllInstallmentsForGuardian(@Param("tenantId") String tenantId,
   """, nativeQuery = true)
   int markPaidWhereHasPayments(@org.springframework.data.repository.query.Param("tenantId") String tenantId);
 
+  @org.springframework.data.jpa.repository.Query(
+  value = """
+    SELECT EXISTS(
+      SELECT 1
+      FROM member m
+      WHERE m.tenant_id = :tenantId
+        AND m.member_id = :memberId
+    )
+  """,
+  nativeQuery = true
+)
+boolean memberExistsInTenant(
+    @org.springframework.data.repository.query.Param("tenantId") String tenantId,
+    @org.springframework.data.repository.query.Param("memberId") Long memberId
+);
+
 }
 
 

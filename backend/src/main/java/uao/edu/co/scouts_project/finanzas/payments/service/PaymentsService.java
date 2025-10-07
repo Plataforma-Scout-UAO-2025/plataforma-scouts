@@ -73,28 +73,42 @@ public class PaymentsService {
         return dto;
     }
 
-    public void appendPayment(String tenantId, Long installmentId, AppendPaymentDto dto) {
-        // Validación simple opcional: si mandan installment_id en body, que coincida
-        if (dto.getInstallment_id() != null && !dto.getInstallment_id().equals(installmentId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "installment_id mismatch");
-        }
-        int updated = readRepo.appendPayment(
-                tenantId,
-                installmentId,
-                dto.getPayment_id(),
-                dto.getAmount(),
-                dto.getPaid_at(),
-                dto.getMethod(),
-                dto.getReference(),
-                dto.getPayer_member_id()
-        );
-
-        if (updated == 0) {
-            // Puede ser: no existe el installment en el tenant o payment_id duplicado
-            // Si quieres distinguir duplicado vs. no encontrado, hacemos consultas separadas.
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Installment not found or payment_id already exists");
-        }
+// PaymentsService.java
+public void appendPayment(String tenantId, Long installmentId, AppendPaymentDto dto) {
+    // 1) validación de path vs body
+    if (dto.getInstallment_id() != null && !dto.getInstallment_id().equals(installmentId)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "installment_id mismatch");
     }
+
+    // 2) payer_member_id es requerido
+    if (dto.getPayer_member_id() == null) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "payer_member_id is required");
+    }
+
+    // 3) el payer debe existir en el mismo tenant
+    boolean exists = readRepo.memberExistsInTenant(tenantId, dto.getPayer_member_id());
+    if (!exists) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Payer member not found in tenant");
+    }
+
+    // 4) insertar el pago (UPDATE JSONB) y marcar PAID si corresponde
+    int updated = readRepo.appendPayment(
+            tenantId,
+            installmentId,
+            dto.getPayment_id(),
+            dto.getAmount(),
+            dto.getPaid_at(),
+            dto.getMethod(),
+            dto.getReference(),
+            dto.getPayer_member_id()
+    );
+
+    if (updated == 0) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Installment not found or payment_id already exists");
+    }
+}
+
 
 
     public List<EstadoCuentaDto> listAccountStatusForTenant(String tenantId) {

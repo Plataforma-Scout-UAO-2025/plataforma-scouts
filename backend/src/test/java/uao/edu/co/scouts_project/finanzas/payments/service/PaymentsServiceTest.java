@@ -138,13 +138,19 @@ class PaymentsServiceTest {
         var body = new AppendPaymentDto();
         body.setInstallment_id(3L);
         body.setPayment_id("p-1");
+        body.setPayer_member_id(1L); // ← requerido ahora
 
-        when(repo.appendPayment("org_TENANT", 3L, "p-1", null, null, null, null, null))
+        // El payer existe en el tenant
+        when(repo.memberExistsInTenant("org_TENANT", 1L)).thenReturn(true);
+
+        // El UPDATE JSONB afectó 1 fila
+        when(repo.appendPayment("org_TENANT", 3L, "p-1", null, null, null, null, 1L))
                 .thenReturn(1);
 
         service.appendPayment("org_TENANT", 3L, body);
 
-        verify(repo).appendPayment("org_TENANT", 3L, "p-1", null, null, null, null, null);
+        verify(repo).memberExistsInTenant("org_TENANT", 1L);
+        verify(repo).appendPayment("org_TENANT", 3L, "p-1", null, null, null, null, 1L);
     }
 
     @Test
@@ -163,18 +169,24 @@ class PaymentsServiceTest {
     void appendPayment_updatedZero_throwsConflict() {
         var body = new AppendPaymentDto();
         body.setPayment_id("dup");
-        // body.installment_id null -> no mismatch
+        body.setPayer_member_id(1L); // ← requerido ahora
 
+        // El payer existe
+        when(repo.memberExistsInTenant("org_TENANT", 1L)).thenReturn(true);
+
+        // El UPDATE no afectó filas → conflicto (id duplicado o no existe installment)
         when(repo.appendPayment(eq("org_TENANT"), eq(3L), eq("dup"),
-                any(), any(), any(), any(), any()))
-                .thenReturn(0);
+                any(), any(), any(), any(), eq(1L)))
+            .thenReturn(0);
 
         var ex = assertThrows(ResponseStatusException.class,
                 () -> service.appendPayment("org_TENANT", 3L, body));
 
         assertThat(ex.getStatusCode().value()).isEqualTo(409);
+
+        verify(repo).memberExistsInTenant("org_TENANT", 1L);
         verify(repo).appendPayment(eq("org_TENANT"), eq(3L), eq("dup"),
-                any(), any(), any(), any(), any());
+                any(), any(), any(), any(), eq(1L));
     }
 
     @Test
@@ -236,5 +248,21 @@ class PaymentsServiceTest {
         verify(repo).markPaidWhereHasPayments("org_TENANT");
         verify(repo).markOverdueForTenant("org_TENANT");
         verify(repo).findAllInstallmentsForGuardian("org_TENANT", 1001L);
+    }
+
+    @Test
+    void appendPayment_payerNotFound_throws404() {
+        var body = new AppendPaymentDto();
+        body.setInstallment_id(3L);
+        body.setPayment_id("p-404");
+        body.setPayer_member_id(999L);
+
+        when(repo.memberExistsInTenant("org_TENANT", 999L)).thenReturn(false);
+
+        var ex = assertThrows(ResponseStatusException.class,
+                () -> service.appendPayment("org_TENANT", 3L, body));
+
+        assertThat(ex.getStatusCode().value()).isEqualTo(404);
+        verify(repo, never()).appendPayment(any(), any(), any(), any(), any(), any(), any(), any());
     }
 }
