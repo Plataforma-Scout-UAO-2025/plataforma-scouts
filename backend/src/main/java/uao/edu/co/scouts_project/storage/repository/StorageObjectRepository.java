@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.storage.repo;
+package uao.edu.co.scouts_project.storage.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
@@ -122,6 +123,33 @@ class TenantServiceTest {
     }
 
     @Test
+    @DisplayName("createTenant: usa estado por defecto cuando el DTO no lo envía")
+    void createTenant_defaultStatus() {
+        TenantDTO incoming = new TenantDTO(null, "default-slug", null, null, null);
+        when(tenantRepository.existsBySlug("default-slug")).thenReturn(false);
+
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> {
+            Tenant entity = invocation.getArgument(0, Tenant.class);
+            entity.setTenantId("t-default-slug");
+            return entity;
+        });
+
+        TenantDTO out = tenantService.createTenant(incoming);
+
+        ArgumentCaptor<Tenant> captor = ArgumentCaptor.forClass(Tenant.class);
+        verify(tenantRepository).save(captor.capture());
+
+        Tenant savedEntity = captor.getValue();
+        assertThat(savedEntity.getSlug()).isEqualTo("default-slug");
+        assertThat(savedEntity.getStatus()).isEqualTo("active");
+
+        assertThat(out.slug()).isEqualTo("default-slug");
+        assertThat(out.status()).isEqualTo("active");
+        verify(tenantRepository).existsBySlug("default-slug");
+        verifyNoMoreInteractions(tenantRepository);
+    }
+
+    @Test
     @DisplayName("updateTenant: actualiza si existe")
     void updateTenant_ok() {
         Tenant existing = newTenantEntity("slug-x", "inactive");
@@ -153,6 +181,29 @@ class TenantServiceTest {
             .hasMessageContaining("not found");
 
         verify(tenantRepository).findBySlug("missing");
+        verifyNoMoreInteractions(tenantRepository);
+    }
+
+    @Test
+    @DisplayName("updateTenant: conserva estado cuando el DTO no envía cambios")
+    void updateTenant_keepStatusIfNull() {
+        Tenant existing = newTenantEntity("slug-keep", "inactive");
+        when(tenantRepository.findBySlug("slug-keep")).thenReturn(Optional.of(existing));
+
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TenantDTO patch = new TenantDTO(null, "slug-keep", null, null, null);
+
+        TenantDTO out = tenantService.updateTenant("slug-keep", patch);
+
+        ArgumentCaptor<Tenant> captor = ArgumentCaptor.forClass(Tenant.class);
+        verify(tenantRepository).save(captor.capture());
+
+        Tenant savedEntity = captor.getValue();
+        assertThat(savedEntity.getStatus()).isEqualTo("inactive");
+
+        assertThat(out.status()).isEqualTo("inactive");
+        verify(tenantRepository).findBySlug("slug-keep");
         verifyNoMoreInteractions(tenantRepository);
     }
 
