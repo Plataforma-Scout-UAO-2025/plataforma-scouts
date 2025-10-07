@@ -102,9 +102,10 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
   }
 };
 
-/** Exporta Excel en 2 hojas: Ramas y Subramas */
-export const exportarOrganigramaExcel = (ramas: Rama[]) => {
+/** Exporta CSV con estructura Rama→Subrama (separador ';' para Excel en español) */
+export const exportarOrganigramaCSV = (ramas: Rama[]) => {
   try {
+<<<<<<< HEAD
     const hojaRamas = ramas.map((r) => ({
       Rama: (r.name ?? r.nombre) as string,
       Estado: (r.status === 'active' ? 'activa' : (r.status === 'inactive' ? 'inactiva' : r.estado ?? '')),
@@ -116,18 +117,16 @@ export const exportarOrganigramaExcel = (ramas: Rama[]) => {
       "ID Rama": r.id,
       "Section ID": r.section_id ?? r.sectionId ?? "",
     }));
+=======
+    const sep = ";";
+    const filas: string[] = [];
+    filas.push(["Rama", "Subrama", "Estado"].join(sep));
+>>>>>>> feature/organigrama-Bmerge2
 
-    const hojaSubramas: Array<{
-      Rama: string;
-      "ID Rama": string;
-      Subrama: string;
-      Estado: string;
-      "Descripción Subrama": string;
-      "ID Subrama": string;
-      "Subgroup ID": string | number | "";
-    }> = [];
+    const quote = (val: string) => `"${(val ?? "").replace(/"/g, '""')}"`;
 
     for (const r of ramas) {
+<<<<<<< HEAD
       const subgroups = (r.subgroups ?? r.subramas) as Subrama[] | undefined;
       if (subgroups && subgroups.length > 0) {
         for (const s of subgroups) {
@@ -151,13 +150,29 @@ export const exportarOrganigramaExcel = (ramas: Rama[]) => {
           "ID Subrama": "",
           "Subgroup ID": "",
         });
+=======
+      if (r.subramas && r.subramas.length > 0) {
+        for (const s of r.subramas as Subrama[]) {
+          const rama = quote(r.nombre);
+          const subrama = quote(s.nombre);
+          const estado = quote(s.estado ?? "");
+          filas.push([rama, subrama, estado].join(sep));
+        }
+      } else {
+        const rama = quote(r.nombre);
+        const subrama = quote("— (Sin subramas)");
+        const estado = quote(r.estado ?? "");
+        filas.push([rama, subrama, estado].join(sep));
+>>>>>>> feature/organigrama-Bmerge2
       }
     }
 
-    const wb = XLSX.utils.book_new();
-    const wsRamas = XLSX.utils.json_to_sheet(hojaRamas);
-    const wsSubs = XLSX.utils.json_to_sheet(hojaSubramas);
+    // BOM para que Excel reconozca UTF-8 correctamente
+    const csvContent = "\uFEFF" + filas.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    downloadBlob("organigrama.csv", blob);
 
+<<<<<<< HEAD
     const fitCols = (ws: XLSX.WorkSheet, headers: string[]) => {
       const cols = headers.map((h) => ({ wch: Math.max(12, h.length + 2) }));
       // XLSX types don't include the custom '!cols' property so we use a
@@ -177,7 +192,10 @@ export const exportarOrganigramaExcel = (ramas: Rama[]) => {
     });
 
     downloadBlob("organigrama.xlsx", blob);
+=======
+    console.log("✅ CSV exportado correctamente");
+>>>>>>> feature/organigrama-Bmerge2
   } catch (e) {
-    console.error("❌ Error exportando Excel:", e);
+    console.error("❌ Error exportando CSV:", e);
   }
 };
