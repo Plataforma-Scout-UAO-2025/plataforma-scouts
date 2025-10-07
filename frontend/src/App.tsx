@@ -14,10 +14,7 @@ import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 import Home from "./app/routes/Home";
 
-import AcudientesPage from "./app/routes/AcudientesPage";
-import GuardianProfile from "./app/routes/guardians/GuardianProfile";
-import GuardianDashboard from "./app/routes/guardians/GuardianDashboard";
-import GuardianLayout from "./app/routes/guardians/GuardianLayout";
+import { GuardianProfile, GuardianDashboard, GuardianLayout } from "./app/routes/guardians";
 import { CompleteDataModal } from "./app/routes/guardians/completeData/CompleteDataModal";
 
 const currentUserRole: "adminGrupal" | "adminGlobal" | "acudiente" = "acudiente"; // Simulación de rol actual del usuario
@@ -42,13 +39,13 @@ function App() {
           <Route path="/guardians" element={<GuardianDashboard />} />
           <Route path="/guardians/members" element={<GuardianLayout />} />
           <Route path="/guardians/profile" element={<GuardianProfile />} />
-          <Route path="/guardians/members/:id/profile" element={<AcudientesPage />} />
+          {/* TODO: Crear componente MemberProfile para mostrar perfil individual de un miembro */}
+          {/* <Route path="/guardians/members/:id/profile" element={<MemberProfile />} /> */}
           
           {/* Redirecciones para compatibilidad */}
           <Route path="/acudientes" element={<Navigate to="/guardians" replace />} />
           <Route path="/acudientes/miembros" element={<Navigate to="/guardians/members" replace />} />
           <Route path="/acudientes/perfil" element={<Navigate to="/guardians/profile" replace />} />
-          <Route path="/acudientes/miembros/:id/perfil" element={<Navigate to="/guardians/members" replace />} />
           
           <Route path="/app" element={<ProtectedAppLayout />}>
             <Route index element={<Dashboard />} />

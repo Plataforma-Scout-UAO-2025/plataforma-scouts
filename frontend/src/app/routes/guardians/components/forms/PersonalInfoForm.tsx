@@ -8,12 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { MiembroFormData } from '../../schemas/MemberForm.schema';
+import type { MemberFormData } from '../../schemas/MemberForm.schema';
 
 interface PersonalInfoFormProps {
-  register: UseFormRegister<MiembroFormData>;
-  errors: FieldErrors<MiembroFormData>;
-  setValue: UseFormSetValue<MiembroFormData>;
+  register: UseFormRegister<MemberFormData>;
+  errors: FieldErrors<MemberFormData>;
+  setValue: UseFormSetValue<MemberFormData>;
 }
 
 export default function PersonalInfoForm({ register, errors, setValue }: PersonalInfoFormProps) {
@@ -51,7 +51,7 @@ export default function PersonalInfoForm({ register, errors, setValue }: Persona
         {/* Tipo de Documento */}
         <div>
           <Label htmlFor="documentType">Tipo de Documento *</Label>
-          <Select onValueChange={(value) => setValue('tipoDocumento', value as MiembroFormData['tipoDocumento'])}>
+          <Select onValueChange={(value) => setValue('documentType', value as MemberFormData['documentType'])}>
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar" />
             </SelectTrigger>
@@ -62,8 +62,8 @@ export default function PersonalInfoForm({ register, errors, setValue }: Persona
               <SelectItem value="PA">Pasaporte</SelectItem>
             </SelectContent>
           </Select>
-          {errors.tipoDocumento && (
-            <p className="text-sm text-red-500 mt-1">{errors.tipoDocumento.message}</p>
+          {errors.documentType && (
+            <p className="text-sm text-red-500 mt-1">{errors.documentType.message}</p>
           )}
         </div>
 
@@ -97,18 +97,18 @@ export default function PersonalInfoForm({ register, errors, setValue }: Persona
         {/* Género */}
         <div>
           <Label htmlFor="gender">Género *</Label>
-          <Select onValueChange={(value) => setValue('genero', value as MiembroFormData['genero'])}>
+          <Select onValueChange={(value) => setValue('gender', value as MemberFormData['gender'])}>
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Masculino">Masculino</SelectItem>
-              <SelectItem value="Femenino">Femenino</SelectItem>
-              <SelectItem value="Otro">Otro</SelectItem>
+              <SelectItem value="MALE">Masculino</SelectItem>
+              <SelectItem value="FEMALE">Femenino</SelectItem>
+              <SelectItem value="OTHER">Otro</SelectItem>
             </SelectContent>
           </Select>
-          {errors.genero && (
-            <p className="text-sm text-red-500 mt-1">{errors.genero.message}</p>
+          {errors.gender && (
+            <p className="text-sm text-red-500 mt-1">{errors.gender.message}</p>
           )}
         </div>
 
@@ -118,10 +118,10 @@ export default function PersonalInfoForm({ register, errors, setValue }: Persona
           <Input
             id="birthDate"
             type="date"
-            {...register('fechaNacimiento')}
+            {...register('birthDate')}
           />
-          {errors.fechaNacimiento && (
-            <p className="text-sm text-red-500 mt-1">{errors.fechaNacimiento.message}</p>
+          {errors.birthDate && (
+            <p className="text-sm text-red-500 mt-1">{errors.birthDate.message}</p>
           )}
         </div>
 
@@ -130,11 +130,11 @@ export default function PersonalInfoForm({ register, errors, setValue }: Persona
           <Label htmlFor="phone">Teléfono *</Label>
           <Input
             id="phone"
-            {...register('telefono')}
+            {...register('phone')}
             placeholder="Ej: +57 300 123 4567"
           />
-          {errors.telefono && (
-            <p className="text-sm text-red-500 mt-1">{errors.telefono.message}</p>
+          {errors.phone && (
+            <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
           )}
         </div>
 
@@ -143,18 +143,18 @@ export default function PersonalInfoForm({ register, errors, setValue }: Persona
           <Label htmlFor="address">Dirección *</Label>
           <Input
             id="address"
-            {...register('direccion')}
+            {...register('address')}
             placeholder="Ej: Calle 5 # 10-20, Cali"
           />
-          {errors.direccion && (
-            <p className="text-sm text-red-500 mt-1">{errors.direccion.message}</p>
+          {errors.address && (
+            <p className="text-sm text-red-500 mt-1">{errors.address.message}</p>
           )}
         </div>
 
         {/* Rol */}
         <div>
           <Label htmlFor="role">Rol en el Grupo</Label>
-          <Select onValueChange={(value) => setValue('rol', value)}>
+          <Select onValueChange={(value) => setValue('role', value)}>
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar rol" />
             </SelectTrigger>
@@ -173,10 +173,10 @@ export default function PersonalInfoForm({ register, errors, setValue }: Persona
           <Input
             id="acceptanceDate"
             type="date"
-            {...register('fechaAceptacion')}
+            {...register('acceptanceDate')}
           />
-          {errors.fechaAceptacion && (
-            <p className="text-sm text-red-500 mt-1">{errors.fechaAceptacion.message}</p>
+          {errors.acceptanceDate && (
+            <p className="text-sm text-red-500 mt-1">{errors.acceptanceDate.message}</p>
           )}
         </div>
       </div>

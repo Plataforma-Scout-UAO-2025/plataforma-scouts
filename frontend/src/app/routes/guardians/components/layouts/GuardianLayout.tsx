@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import WelcomeAddMember from './WelcomeAddMember';
-import MembersInCharge from './MembersInCharge';
+import WelcomeAddMember from '../WelcomeAddMember';
+import MembersInCharge from '../MembersInCharge';
 
 // Member interface
 interface Member {

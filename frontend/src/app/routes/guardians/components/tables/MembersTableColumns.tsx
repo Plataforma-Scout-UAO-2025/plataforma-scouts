@@ -2,19 +2,19 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil } from 'lucide-react';
-import type { Miembro } from '../types/member.type';
+import type { Member } from '../../types/member.type';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface MiembrosTableColumnsProps {
-  onViewDetails: (miembro: Miembro) => void;
-  onEdit: (miembro: Miembro) => void;
+interface MembersTableColumnsProps {
+  onViewDetails: (member: Member) => void;
+  onEdit: (member: Member) => void;
 }
 
-export const createMiembrosTableColumns = ({
+export const createMembersTableColumns = ({
   onViewDetails,
   onEdit,
-}: MiembrosTableColumnsProps): ColumnDef<Miembro>[] => [
+}: MembersTableColumnsProps): ColumnDef<Member>[] => [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -76,14 +76,14 @@ export const createMiembrosTableColumns = ({
     id: 'actions',
     header: 'ACCIONES',
     cell: ({ row }) => {
-      const miembro = row.original;
+      const member = row.original;
       
       return (
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onViewDetails(miembro)}
+            onClick={() => onViewDetails(member)}
             className="h-8 w-8 p-0 hover:bg-yellow-100 hover:text-yellow-800"
           >
             <Eye className="h-4 w-4" />
@@ -91,7 +91,7 @@ export const createMiembrosTableColumns = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onEdit(miembro)}
+            onClick={() => onEdit(member)}
             className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-800"
           >
             <Pencil className="h-4 w-4" />

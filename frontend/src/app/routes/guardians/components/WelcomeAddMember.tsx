@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { UserPlus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Sidebar from './components/Sidebar';
-import AddMemberModal from './components/AddMemberModal';
+import Sidebar from './layouts/Sidebar';
+import AddMemberModal from './modals/AddMemberModal';
 
 interface WelcomeAddMemberProps {
   userName?: string;

@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import type { Miembro } from '../types/member.type';
-import { miembroFormSchema, type MiembroFormData } from '../schemas/MemberForm.schema';
-import PersonalInfoForm from './member-form/PersonalInfoForm';
-import HealthInfoForm from './member-form/HealthInfoForm';
-import EmergencyContactsForm, { type EmergencyContact } from './member-form/EmergencyContactsForm';
+import type { Member } from '../../types/member.type';
+import { memberFormSchema, type MemberFormData } from '../../schemas/MemberForm.schema';
+import PersonalInfoForm from '../forms/PersonalInfoForm';
+import HealthInfoForm from '../forms/HealthInfoForm';
+import EmergencyContactsForm, { type EmergencyContact } from '../forms/EmergencyContactsForm';
 
-interface EditarMiembroModalProps {
+interface EditMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  miembro: Miembro | null;
-  onSave: (data: MiembroFormData) => void;
+  miembro: Member | null;
+  onSave: (data: MemberFormData) => void;
 }
 
 export default function EditarMiembroModal({
@@ -22,7 +22,7 @@ export default function EditarMiembroModal({
   onClose,
   miembro,
   onSave,
-}: EditarMiembroModalProps) {
+}: EditMemberModalProps) {
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([
     { name: '', relationship: '', phone: '' }
   ]);
@@ -33,8 +33,8 @@ export default function EditarMiembroModal({
     setValue,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<MiembroFormData>({
-    resolver: zodResolver(miembroFormSchema)
+  } = useForm<MemberFormData>({
+    resolver: zodResolver(memberFormSchema)
   });
 
   // Pre-llenar el formulario cuando se abre con un miembro
@@ -44,28 +44,28 @@ export default function EditarMiembroModal({
         firstName: miembro.firstName,
         lastName: miembro.lastName,
         email: miembro.email,
-        tipoDocumento: miembro.tipoDocumento,
+        documentType: miembro.documentType,
         identification: miembro.identification,
-        genero: miembro.genero,
-        fechaNacimiento: miembro.fechaNacimiento,
-        telefono: miembro.telefono,
-        direccion: miembro.direccion,
-        rol: miembro.rol || '',
-        fechaAceptacion: miembro.fechaAceptacion,
+        gender: miembro.gender,
+        birthDate: miembro.birthDate,
+        phone: miembro.phone,
+        address: miembro.address,
+        role: miembro.role || '',
+        acceptanceDate: miembro.acceptanceDate,
         isActive: miembro.isActive,
-        peso: miembro.peso || '',
-        altura: miembro.altura || '',
+        weight: miembro.weight || '',
+        height: miembro.height || '',
         hobbies: miembro.hobbies || '',
-        deportes: miembro.deportes || '',
-        instrumentos: miembro.instrumentos || '',
+        sports: miembro.sports || '',
+        instruments: miembro.instruments || '',
       });
 
       // Convertir contactos de emergencia al formato correcto
-      if (miembro.contactosEmergencia && miembro.contactosEmergencia.length > 0) {
-        const convertedContacts = miembro.contactosEmergencia.map(contact => ({
-          name: contact.nombreCompleto,
-          relationship: contact.relacion,
-          phone: contact.telefono
+      if (miembro.emergencyContacts && miembro.emergencyContacts.length > 0) {
+        const convertedContacts = miembro.emergencyContacts.map(contact => ({
+          name: contact.fullName,
+          relationship: contact.relationship,
+          phone: contact.phone
         }));
         setEmergencyContacts(convertedContacts);
       }
@@ -90,7 +90,7 @@ export default function EditarMiembroModal({
     setEmergencyContacts(updated);
   };
 
-  const onSubmit = async (data: MiembroFormData) => {
+  const onSubmit = async (data: MemberFormData) => {
     try {
       onSave(data);
       toast.success('Miembro actualizado correctamente');
@@ -113,6 +113,9 @@ export default function EditarMiembroModal({
           <DialogTitle className="text-2xl font-bold text-[#1a4134]">
             Editar Miembro
           </DialogTitle>
+          <DialogDescription>
+            Actualiza la información del miembro seleccionado.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,9 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
           <DialogTitle className="text-2xl font-bold text-[#1a4134]">
             Editar Perfil
           </DialogTitle>
+          <DialogDescription>
+            Actualiza tu información personal y de contacto.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import Sidebar from './components/Sidebar';
-import ProfileHeader from './components/profile/ProfileHeader';
-import ProfileInfoCard from './components/profile/ProfileInfoCard';
-import MembersInChargeCard from './components/profile/MembersInChargeCard';
-import EditProfileModal from './components/profile/EditProfileModal';
+import Sidebar from '../layouts/Sidebar';
+import ProfileHeader from './ProfileHeader';
+import ProfileInfoCard from './ProfileInfoCard';
+import MembersInChargeCard from './MembersInChargeCard';
+import EditProfileModal from './EditProfileModal';
 
 interface MembersInCharge {
   id: number;

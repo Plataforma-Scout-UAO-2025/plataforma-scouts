@@ -11,20 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Miembro } from '../types/member.type';
-import { createMiembrosTableColumns } from './MembersTableColumns';
+import type { Member } from '../../types/member.type';
+import { createMembersTableColumns } from './MembersTableColumns';
 
-interface MiembrosTableProps {
-  miembros: Miembro[];
-  onViewDetails: (miembro: Miembro) => void;
-  onEdit: (miembro: Miembro) => void;
+interface MembersTableProps {
+  members: Member[];
+  onViewDetails: (member: Member) => void;
+  onEdit: (member: Member) => void;
 }
 
-export default function MiembrosTable({ miembros, onViewDetails, onEdit }: MiembrosTableProps) {
-  const columns = createMiembrosTableColumns({ onViewDetails, onEdit });
+export default function MembersTable({ members, onViewDetails, onEdit }: MembersTableProps) {
+  const columns = createMembersTableColumns({ onViewDetails, onEdit });
 
   const table = useReactTable({
-    data: miembros,
+    data: members,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });

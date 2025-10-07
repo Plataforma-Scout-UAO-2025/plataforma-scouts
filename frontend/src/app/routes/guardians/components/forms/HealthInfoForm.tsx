@@ -2,11 +2,11 @@ import type { UseFormRegister, FieldErrors } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { MiembroFormData } from '../../schemas/MemberForm.schema';
+import type { MemberFormData } from '../../schemas/MemberForm.schema';
 
 interface HealthInfoFormProps {
-  register: UseFormRegister<MiembroFormData>;
-  errors: FieldErrors<MiembroFormData>;
+  register: UseFormRegister<MemberFormData>;
+  errors: FieldErrors<MemberFormData>;
 }
 
 export default function HealthInfoForm({ register, errors }: HealthInfoFormProps) {
@@ -20,7 +20,7 @@ export default function HealthInfoForm({ register, errors }: HealthInfoFormProps
           <Label htmlFor="weight">Peso</Label>
           <Input
             id="weight"
-            {...register('peso')}
+            {...register('weight')}
             placeholder="Ej: 45 kg"
           />
         </div>
@@ -30,7 +30,7 @@ export default function HealthInfoForm({ register, errors }: HealthInfoFormProps
           <Label htmlFor="height">Altura</Label>
           <Input
             id="height"
-            {...register('altura')}
+            {...register('height')}
             placeholder="Ej: 1.55 m"
           />
         </div>
@@ -51,7 +51,7 @@ export default function HealthInfoForm({ register, errors }: HealthInfoFormProps
           <Label htmlFor="sports">Deportes que Practica</Label>
           <Textarea
             id="sports"
-            {...register('deportes')}
+            {...register('sports')}
             placeholder="Ej: Fútbol, Natación"
             rows={2}
           />
@@ -62,7 +62,7 @@ export default function HealthInfoForm({ register, errors }: HealthInfoFormProps
           <Label htmlFor="instruments">Instrumentos Musicales</Label>
           <Textarea
             id="instruments"
-            {...register('instrumentos')}
+            {...register('instruments')}
             placeholder="Ej: Guitarra, Piano"
             rows={2}
           />

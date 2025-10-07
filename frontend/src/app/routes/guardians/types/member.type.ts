@@ -1,53 +1,53 @@
-export interface ContactoEmergencia {
+export interface EmergencyContact {
   id?: number;
-  nombreCompleto: string;
-  relacion: 'Padre' | 'Madre' | 'Tutor' | 'Abuelo/a' | 'Tío/a' | 'Hermano/a' | 'Otro';
-  telefono: string;
+  fullName: string;
+  relationship: 'Padre' | 'Madre' | 'Tutor' | 'Abuelo/a' | 'Tío/a' | 'Hermano/a' | 'Otro';
+  phone: string;
 }
 
-export interface Miembro {
+export interface Member {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
-  tipoDocumento: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP';
+  documentType: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP';
   identification: string;
-  genero: 'Masculino' | 'Femenino' | 'Otro';
-  fechaNacimiento: string;
-  telefono: string;
-  direccion: string;
-  rol?: string;
-  fechaAceptacion: string;
+  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  birthDate: string;
+  phone: string;
+  address: string;
+  role?: string;
+  acceptanceDate: string;
   isActive: boolean;
-  peso?: string;
-  altura?: string;
+  weight?: string;
+  height?: string;
   hobbies?: string;
-  deportes?: string;
-  instrumentos?: string;
-  contactosEmergencia: ContactoEmergencia[];
+  sports?: string;
+  instruments?: string;
+  emergencyContacts: EmergencyContact[];
   createdAt: string;
   city: string;
   rama: string;
-  edad?: number;
+  age?: number;
 }
 
-export interface MiembroFormData {
+export interface MemberFormData {
   firstName: string;
   lastName: string;
   email: string;
-  tipoDocumento: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP';
+  documentType: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP';
   identification: string;
-  genero: 'Masculino' | 'Femenino' | 'Otro';
-  fechaNacimiento: string;
-  telefono: string;
-  direccion: string;
-  rol?: string;
-  fechaAceptacion: string;
+  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  birthDate: string;
+  phone: string;
+  address: string;
+  role?: string;
+  acceptanceDate: string;
   isActive: boolean;
-  peso?: string;
-  altura?: string;
+  weight?: string;
+  height?: string;
   hobbies?: string;
-  deportes?: string;
-  instrumentos?: string;
-  contactosEmergencia: ContactoEmergencia[];
+  sports?: string;
+  instruments?: string;
+  emergencyContacts: EmergencyContact[];
 }

@@ -1,46 +1,46 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FolderOpen } from 'lucide-react';
-import Sidebar from './components/Sidebar';
-import MembersTable from './components/MembersTable';
-import MemberDetailsSheet from './components/MemberDetailsSheet';
-import EditMemberModal from './components/EditMemberModal';
-import type { Miembro } from './types/member.type';
-import type { MiembroFormData } from './schemas/MemberForm.schema';
+import Sidebar from './layouts/Sidebar';
+import MembersTable from './tables/MembersTable';
+import MemberDetailsSheet from './modals/MemberDetailsSheet';
+import EditMemberModal from './modals/EditMemberModal';
+import type { Member } from '../types/member.type';
+import type { MemberFormData } from '../schemas/MemberForm.schema';
 
 // Datos de ejemplo
-const miembrosEjemplo: Miembro[] = [
+const membersExample: Member[] = [
   {
     id: 1,
     firstName: "José Alberto",
     lastName: "Gutierrez Jimenez",
     email: "jose.gutierrez@email.com",
-    tipoDocumento: "CC",
+    documentType: "CC",
     identification: "CC 1123123123010",
-    genero: "Masculino",
-    fechaNacimiento: "2010-03-14",
-    telefono: "+57 312 345 6789",
-    direccion: "Calle 5 # 10-20, Cali",
-    rol: "Scout Aspirante",
-    fechaAceptacion: "2025-01-15",
+    gender: "MALE",
+    birthDate: "2010-03-14",
+    phone: "+57 312 345 6789",
+    address: "Calle 5 # 10-20, Cali",
+    role: "Scout Aspirante",
+    acceptanceDate: "2025-01-15",
     isActive: true,
-    peso: "45 kg",
-    altura: "1.55 m",
+    weight: "45 kg",
+    height: "1.55 m",
     hobbies: "Dibujar, Leer, Tocar Guitarra",
-    deportes: "Voleibol",
-    instrumentos: "Guitarra",
-    contactosEmergencia: [
+    sports: "Voleibol",
+    instruments: "Guitarra",
+    emergencyContacts: [
       {
         id: 1,
-        nombreCompleto: "María Gómez",
-        relacion: "Madre",
-        telefono: "+57 310 987 6543"
+        fullName: "María Gómez",
+        relationship: "Madre",
+        phone: "+57 310 987 6543"
       },
       {
         id: 2,
-        nombreCompleto: "Carlos Rojas",
-        relacion: "Padre",
-        telefono: "+57 300 112 2334"
+        fullName: "Carlos Rojas",
+        relationship: "Padre",
+        phone: "+57 300 112 2334"
       }
     ],
     createdAt: "2025-08-13T16:30:00",
@@ -52,26 +52,26 @@ const miembrosEjemplo: Miembro[] = [
     firstName: "Ana María",
     lastName: "López Hernández",
     email: "ana.lopez@email.com",
-    tipoDocumento: "TI",
+    documentType: "TI",
     identification: "TI 1098765432",
-    genero: "Femenino",
-    fechaNacimiento: "2011-07-22",
-    telefono: "+57 315 678 9012",
-    direccion: "Carrera 12 # 25-30, Cali",
-    rol: "Scout Aspirante",
-    fechaAceptacion: "2025-02-01",
+    gender: "FEMALE",
+    birthDate: "2011-07-22",
+    phone: "+57 315 678 9012",
+    address: "Carrera 12 # 25-30, Cali",
+    role: "Scout Aspirante",
+    acceptanceDate: "2025-02-01",
     isActive: true,
-    peso: "40 kg",
-    altura: "1.50 m",
+    weight: "40 kg",
+    height: "1.50 m",
     hobbies: "Natación, Pintura",
-    deportes: "Natación",
-    instrumentos: "Piano",
-    contactosEmergencia: [
+    sports: "Natación",
+    instruments: "Piano",
+    emergencyContacts: [
       {
         id: 3,
-        nombreCompleto: "Patricia Hernández",
-        relacion: "Madre",
-        telefono: "+57 314 555 7777"
+        fullName: "Patricia Hernández",
+        relationship: "Madre",
+        phone: "+57 314 555 7777"
       }
     ],
     createdAt: "2025-08-15T10:15:00",
@@ -83,32 +83,32 @@ const miembrosEjemplo: Miembro[] = [
     firstName: "Luis Fernando",
     lastName: "Martínez Silva",
     email: "luis.martinez@email.com",
-    tipoDocumento: "CC",
+    documentType: "CC",
     identification: "CC 1087654321",
-    genero: "Masculino",
-    fechaNacimiento: "2009-11-08",
-    telefono: "+57 318 456 7890",
-    direccion: "Avenida 6 # 15-45, Cali",
-    rol: "Scout",
-    fechaAceptacion: "2024-09-10",
+    gender: "MALE",
+    birthDate: "2009-11-08",
+    phone: "+57 318 456 7890",
+    address: "Avenida 6 # 15-45, Cali",
+    role: "Scout",
+    acceptanceDate: "2024-09-10",
     isActive: true,
-    peso: "50 kg",
-    altura: "1.60 m",
+    weight: "50 kg",
+    height: "1.60 m",
     hobbies: "Fútbol, Lectura, Videojuegos",
-    deportes: "Fútbol",
-    instrumentos: "Flauta",
-    contactosEmergencia: [
+    sports: "Fútbol",
+    instruments: "Flauta",
+    emergencyContacts: [
       {
         id: 4,
-        nombreCompleto: "Roberto Martínez",
-        relacion: "Padre",
-        telefono: "+57 300 888 9999"
+        fullName: "Roberto Martínez",
+        relationship: "Padre",
+        phone: "+57 300 888 9999"
       },
       {
         id: 5,
-        nombreCompleto: "Sandra Silva",
-        relacion: "Madre",
-        telefono: "+57 311 777 8888"
+        fullName: "Sandra Silva",
+        relationship: "Madre",
+        phone: "+57 311 777 8888"
       }
     ],
     createdAt: "2024-09-10T14:20:00",
@@ -118,27 +118,27 @@ const miembrosEjemplo: Miembro[] = [
 ];
 
 export default function MiembrosACargo() {
-  const [miembros, setMiembros] = useState<Miembro[]>(miembrosEjemplo);
-  const [selectedMiembro, setSelectedMiembro] = useState<Miembro | null>(null);
+  const [miembros, setMiembros] = useState<Member[]>(membersExample);
+  const [selectedMiembro, setSelectedMiembro] = useState<Member | null>(null);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
-  const handleViewDetails = (miembro: Miembro) => {
+  const handleViewDetails = (miembro: Member) => {
     setSelectedMiembro(miembro);
     setIsDetailsSheetOpen(true);
   };
 
-  const handleEdit = (miembro: Miembro) => {
+  const handleEdit = (miembro: Member) => {
     setSelectedMiembro(miembro);
     setIsEditModalOpen(true);
     setIsDetailsSheetOpen(false); // Cerrar detalles si está abierto
   };
 
-  const handleSaveEdit = (data: MiembroFormData) => {
+  const handleSaveEdit = (data: MemberFormData) => {
     if (!selectedMiembro) return;
 
-    const updatedMiembro: Miembro = {
+    const updatedMiembro: Member = {
       ...selectedMiembro,
       ...data,
     };
@@ -213,7 +213,7 @@ export default function MiembrosACargo() {
             {/* Tabla de miembros */}
             <div className="bg-white rounded-lg shadow-sm">
               <MembersTable
-                miembros={miembros}
+                members={miembros}
                 onViewDetails={handleViewDetails}
                 onEdit={handleEdit}
               />

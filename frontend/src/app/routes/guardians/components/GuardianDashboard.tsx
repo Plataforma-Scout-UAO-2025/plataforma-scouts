@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, UserCheck, Calendar, DollarSign, Bell, Settings } from 'lucide-react';
-import Sidebar from './components/Sidebar';
+import Sidebar from './layouts/Sidebar';
 
 export default function AcudienteDashboard() {
   const navigate = useNavigate();

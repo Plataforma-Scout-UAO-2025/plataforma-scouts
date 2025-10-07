@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-export const contactoEmergenciaSchema = z.object({
+export const emergencyContactSchema = z.object({
   id: z.number().optional(),
-  nombreCompleto: z.string().min(1, 'El nombre completo es requerido'),
-  relacion: z.enum(['Padre', 'Madre', 'Tutor', 'Abuelo/a', 'Tío/a', 'Hermano/a', 'Otro'], {
+  fullName: z.string().min(1, 'El nombre completo es requerido'),
+  relationship: z.enum(['Padre', 'Madre', 'Tutor', 'Abuelo/a', 'Tío/a', 'Hermano/a', 'Otro'], {
     message: 'La relación es requerida'
   }),
-  telefono: z.string()
+  phone: z.string()
     .min(1, 'El teléfono es requerido')
     .superRefine((value, ctx) => {
       // Remover espacios para la validación
@@ -33,19 +33,19 @@ export const contactoEmergenciaSchema = z.object({
     })
 });
 
-export const miembroFormSchema = z.object({
+export const memberFormSchema = z.object({
   firstName: z.string().min(1, 'Los nombres son requeridos'),
   lastName: z.string().min(1, 'Los apellidos son requeridos'),
   email: z.string().email('Email inválido'),
-  tipoDocumento: z.enum(['CC', 'TI', 'RC', 'CE', 'PA', 'PEP', 'PPT', 'NIT', 'NUIP'], {
+  documentType: z.enum(['CC', 'TI', 'RC', 'CE', 'PA', 'PEP', 'PPT', 'NIT', 'NUIP'], {
     message: 'El tipo de documento es requerido'
   }),
   identification: z.string().min(1, 'El número de identificación es requerido'),
-  genero: z.enum(['Masculino', 'Femenino', 'Otro'], {
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER'], {
     message: 'El género es requerido'
   }),
-  fechaNacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
-  telefono: z.string()
+  birthDate: z.string().min(1, 'La fecha de nacimiento es requerida'),
+  phone: z.string()
     .min(1, 'El teléfono es requerido')
     .superRefine((value, ctx) => {
       // Remover espacios para la validación
@@ -70,19 +70,17 @@ export const miembroFormSchema = z.object({
         return;
       }
     }),
-  direccion: z.string().min(1, 'La dirección es requerida'),
-  rol: z.string().optional(),
-  fechaAceptacion: z.string().min(1, 'La fecha de aceptación es requerida'),
+  address: z.string().min(1, 'La dirección es requerida'),
+  role: z.string().optional(),
+  acceptanceDate: z.string().min(1, 'La fecha de aceptación es requerida'),
   isActive: z.boolean(),
-  peso: z.string().optional(),
-  altura: z.string().optional(),
+  weight: z.string().optional(),
+  height: z.string().optional(),
   hobbies: z.string().optional(),
-  deportes: z.string().optional(),
-  instrumentos: z.string().optional(),
-  contactosEmergencia: z.array(contactoEmergenciaSchema)
-    .min(1, 'Debe tener al menos un contacto de emergencia')
-    .max(5, 'Máximo 5 contactos de emergencia')
+  sports: z.string().optional(),
+  instruments: z.string().optional(),
+  emergencyContacts: z.array(emergencyContactSchema).optional()
 });
 
-export type MiembroFormData = z.infer<typeof miembroFormSchema>;
-export type ContactoEmergenciaData = z.infer<typeof contactoEmergenciaSchema>;
+export type MemberFormData = z.infer<typeof memberFormSchema>;
+export type EmergencyContactData = z.infer<typeof emergencyContactSchema>;

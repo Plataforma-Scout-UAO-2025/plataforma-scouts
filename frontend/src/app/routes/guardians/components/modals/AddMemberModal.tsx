@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { miembroFormSchema, type MiembroFormData } from '../schemas/MemberForm.schema';
-import PersonalInfoForm from './member-form/PersonalInfoForm';
-import HealthInfoForm from './member-form/HealthInfoForm';
-import EmergencyContactsForm, { type EmergencyContact } from './member-form/EmergencyContactsForm';
-import SuccessCard from './member-form/SuccessCard';
+import { memberFormSchema, type MemberFormData } from '../../schemas/MemberForm.schema';
+import PersonalInfoForm from '../forms/PersonalInfoForm';
+import HealthInfoForm from '../forms/HealthInfoForm';
+import EmergencyContactsForm, { type EmergencyContact } from '../forms/EmergencyContactsForm';
+import SuccessCard from '../forms/SuccessCard';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -37,8 +37,8 @@ export default function AddMemberModal({
     setValue,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<MiembroFormData>({
-    resolver: zodResolver(miembroFormSchema)
+  } = useForm<MemberFormData>({
+    resolver: zodResolver(memberFormSchema)
   });
 
   const addEmergencyContact = () => {
@@ -67,14 +67,37 @@ export default function AddMemberModal({
     );
   };
 
-  const onSubmit = async (data: MiembroFormData) => {
+  const onSubmit = async (data: MemberFormData) => {
+    console.log('=== FORMULARIO ENVIADO ===');
+    console.log('Datos del formulario:', data);
+    console.log('Contactos de emergencia:', emergencyContacts);
+    
     setErrorMessage('');
     
     if (!validateEmergencyContacts()) {
+      console.log('⚠️ Validación falló: No hay contactos de emergencia completos');
       setErrorMessage("Debes agregar al menos un contacto de emergencia completo");
       return;
     }
 
+    console.log('✅ Validación pasó, guardando...');
+    
+    // Mapear contactos de emergencia al formato correcto del schema
+    const emergencyContactsFormatted = emergencyContacts
+      .filter(contact => contact.name.trim() && contact.relationship.trim() && contact.phone.trim())
+      .map(contact => ({
+        fullName: contact.name,
+        relationship: contact.relationship as 'Padre' | 'Madre' | 'Tutor' | 'Abuelo/a' | 'Tío/a' | 'Hermano/a' | 'Otro',
+        phone: contact.phone
+      }));
+
+    const dataWithContacts = {
+      ...data,
+      emergencyContacts: emergencyContactsFormatted
+    };
+
+    console.log('Datos completos con contactos:', dataWithContacts);
+    
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -82,15 +105,15 @@ export default function AddMemberModal({
       const fullName = `${data.firstName} ${data.lastName}`;
       setAddedMemberName(fullName);
 
+      console.log('✅ Miembro guardado exitosamente:', fullName);
+
       reset();
       setEmergencyContacts([{ name: '', relationship: '', phone: '' }]);
 
-      if (isFirstMember) {
-        setShowSuccessCard(true);
-      } else {
-        onSuccess();
-      }
+      // Siempre mostrar la tarjeta de éxito
+      setShowSuccessCard(true);
     } catch (error) {
+      console.error('❌ Error al guardar:', error);
       setErrorMessage("No se pudo agregar el miembro. Intenta de nuevo.");
     }
   };
@@ -123,6 +146,9 @@ export default function AddMemberModal({
               <DialogTitle className="text-xl font-semibold text-gray-900">
                 {isFirstMember ? "Agregar mi primer miembro" : "Agregar nuevo miembro"}
               </DialogTitle>
+              <DialogDescription>
+                Completa la información del miembro que deseas agregar a tu tropa.
+              </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
