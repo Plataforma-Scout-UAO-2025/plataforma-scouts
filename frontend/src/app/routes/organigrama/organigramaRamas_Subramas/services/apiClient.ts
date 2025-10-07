@@ -5,8 +5,8 @@ import type { AxiosInstance } from 'axios';
 // Si VITE_API_BASE_URL está definida, la usamos; si no, usamos localhost.
 // Eliminamos cualquier slash final y añadimos '/api/v1' para apuntar a la nueva ruta.
 const RAW_API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-// Mantener la base host-only. Normalizaremos '/api/v1' en los endpoints para evitar duplicados
-const API_BASE_URL = RAW_API_BASE.replace(/\/$/, '');
+// En desarrollo, usar URLs absolutas para evitar problemas de CORS
+const API_BASE_URL = import.meta.env.DEV ? RAW_API_BASE.replace(/\/$/, '') : '';
 
 // Normaliza el endpoint para que apunte a /api/v1 sin duplicados.
 const normalizeEndpoint = (endpoint: string) => {
