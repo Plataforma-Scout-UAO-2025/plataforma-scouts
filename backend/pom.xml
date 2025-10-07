@@ -205,6 +205,7 @@
 						<!-- Security pilot -->
 						<exclude>**/uao/edu/co/scouts_project/infrastructure/auth0/**</exclude>
 						<exclude>**/uao/edu/co/scouts_project/infrastructure/cache/**</exclude>
+
 					</excludes>
 				</configuration>
 				<executions>

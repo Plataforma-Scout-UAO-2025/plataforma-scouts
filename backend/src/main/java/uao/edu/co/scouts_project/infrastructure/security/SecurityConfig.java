@@ -60,6 +60,9 @@ public class SecurityConfig {
 
                         //
                         // Pagos
+                        .requestMatchers("/api/v1/finanzas/payments/**").permitAll() // Cambiar a .hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/finanzas/payments").permitAll()
+
 
 
                         // Cuotas
