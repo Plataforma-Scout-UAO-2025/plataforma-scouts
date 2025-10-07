@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import CuotasTable from "./components/CuotasTable";
 import type { Cuota } from "@/types/cuota.type";
 import api from "@/api/axios";
@@ -13,7 +13,7 @@ export default function Gestion() {
   const { tenantId } = useTenant();
   const navigate = useNavigate();
 
-  const fetchCuotas = async () => {
+  const fetchCuotas = useCallback(async () => {
     try {
       const response = await api.get(
         `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}`
@@ -21,7 +21,17 @@ export default function Gestion() {
 
       if (response.status === 200) {
         // Transformar las fechas de string a Date objects
-        const cuotasData = response.data.map((cuota: any) => ({
+        const cuotasData: Cuota[] = response.data.map((cuota: {
+          fee_id: string;
+          amount: number;
+          name: string;
+          description: string;
+          periodicity: Cuota["periodicity"];
+          scope: Cuota["scope"];
+          start_date: string;
+          end_date?: string | null;
+          associated_to: { id: string; name: string } | null;
+        }) => ({
           ...cuota,
           start_date: new Date(cuota.start_date),
           end_date: cuota.end_date ? new Date(cuota.end_date) : undefined,
@@ -40,11 +50,11 @@ export default function Gestion() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantId, navigate]);
 
   useEffect(() => {
     fetchCuotas();
-  }, [tenantId]);
+  }, [fetchCuotas]);
 
   return (
     <div>
