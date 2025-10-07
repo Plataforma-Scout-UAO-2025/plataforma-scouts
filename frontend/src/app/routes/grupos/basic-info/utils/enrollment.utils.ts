@@ -47,6 +47,6 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     sports: data.sports,
     instruments: data.instruments,
     status: "PENDING",
-    emergency_phone: emergencyPhone,
+    emergency_contacts: emergencyPhone,
   };
 };

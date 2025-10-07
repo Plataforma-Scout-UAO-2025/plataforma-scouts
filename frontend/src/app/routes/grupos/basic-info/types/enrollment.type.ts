@@ -1,4 +1,14 @@
-export type DocumentType = "CC" | "TI" | "CE" | "";
+export type DocumentType =
+  | "CC"
+  | "TI"
+  | "CE"
+  | "RC"
+  | "PA"
+  | "PEP"
+  | "PPT"
+  | "NIT"
+  | "NUIP"
+  | "";
 export type Gender = "Femenino" | "Masculino" | "";
 export type Shift = "Mañana" | "Tarde" | "Noche" | "Completa" | "";
 export type GroupName = "Centinelas 113" | "803 Chiminigagua" | "";
@@ -55,7 +65,7 @@ export interface CreateMemberRequest {
   sports: string;
   instruments: string;
   status: MemberStatus;
-  emergency_phone: Record<string, EmergencyContact>;
+  emergency_contacts: Record<string, EmergencyContact>;
 }
 
 export interface CreateMemberResponse {
