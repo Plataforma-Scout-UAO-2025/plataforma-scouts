@@ -7,6 +7,7 @@ import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWIthMemberDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
 import uao.edu.co.scouts_project.guardian.model.Member;
+import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 
 
