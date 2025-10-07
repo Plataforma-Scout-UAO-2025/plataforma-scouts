@@ -49,6 +49,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-scroll-track: #1a4134;
+  --sidebar-scroll-thumb: #2d5a49;
+  --sidebar-scroll-thumb-hover: #3f7a64;
+  --sidebar-scroll-thumb-active: #2c5f4d;
 }
 
 a {
@@ -139,5 +143,37 @@ body {
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --sidebar-scroll-track: #1a4134;
+    --sidebar-scroll-thumb: #2d5a49;
+    --sidebar-scroll-thumb-hover: #3f7a64;
+    --sidebar-scroll-thumb-active: #2c5f4d;
   }
+}
+
+/* Scrollbar personalizada solo para el contenedor de contenido del sidebar */
+[data-slot="sidebar-content"] {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--sidebar-scroll-thumb) var(--sidebar-scroll-track);
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar {
+  width: 10px;
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar-track {
+  background: var(--sidebar-scroll-track);
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar-thumb {
+  background: var(--sidebar-scroll-thumb);
+  border-radius: 6px;
+  border: 2px solid var(--sidebar-scroll-track);
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar-thumb:hover {
+  background: var(--sidebar-scroll-thumb-hover);
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar-thumb:active {
+  background: var(--sidebar-scroll-thumb-active);
 }
