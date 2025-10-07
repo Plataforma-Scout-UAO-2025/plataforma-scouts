@@ -1,22 +1,22 @@
 import { FaShieldAlt, FaBullseye, FaMountain, FaUsers, FaArrowRight, FaBinoculars, FaShip } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 import home from "@/assets/Home.png";
 import cachorros from "@/assets/cachorros.jpg";
 import lobatos from "@/assets/lobatos.jpeg";
 import webelos from "@/assets/webelos.jpg";
 import Logo from "@/assets/logo.png"; 
 import scout from "@/assets/scout.jpg";
-import { useAuth0 } from "@auth0/auth0-react";
-
 
 const values = [
   {
-    icon: <FaShieldAlt  size={32} className="text-green-600" />,
+    icon: <FaShieldAlt size={32} className="text-green-600" />,
     title: "Integridad",
     desc: "Desarrollamos el carácter y los valores fundamentales que forman líderes íntegros para el futuro.",
   },
   {
-    icon: <FaShip  size={32} className="text-blue-600" />,
+    icon: <FaShip size={32} className="text-blue-600" />,
     title: "Aventura",
     desc: "Exploramos la naturaleza y vivimos experiencias únicas que fortalecen el espíritu aventurero.",
   },
@@ -30,22 +30,19 @@ const values = [
     title: "Hermandad",
     desc: "Construimos amistades duraderas y aprendemos el valor del trabajo en equipo y la solidaridad.",
   },
-   
 ];
+
 const mision = [ 
   {
-   icon: <FaBullseye  size={32} className="text-red-600" />,
+    icon: <FaBullseye size={32} className="text-red-600" />,
     title: "Misión",
     desc: "Promover el desarrollo personal y colectivo a través de experiencias de aprendizaje, aventura y servicio, fomentando los valores de integridad, compromiso y hermandad. Nuestro propósito es preparar a cada miembro para enfrentar los retos de la vida con liderazgo, solidaridad y respeto hacia los demás y la naturaleza.",
   },
   {
-    icon: <FaBinoculars  size={32} className="text-pink-800" />,
+    icon: <FaBinoculars size={32} className="text-pink-800" />,
     title: "Visión",
     desc: "Ser una comunidad scout reconocida por formar líderes íntegros, solidarios y comprometidos con la sociedad y el medio ambiente, inspirando a las nuevas generaciones a vivir con valentía, servicio y espíritu aventurero.",
   },
-  
-   
-   
 ];
 
 const grupos = [
@@ -70,50 +67,75 @@ const grupos = [
   {
     section: "Sección Mayor",
     image: scout,
-    title: "Scout ",
+    title: "Scout",
     desc: "Preparación para la vida adulta a través de proyectos de servicio comunitario y liderazgo."
   }
 ];
 
-export default function Home() {
+export default function LandingPage() {
   const [activeSection, setActiveSection] = useState("inicio");
-  const { loginWithRedirect } = useAuth0();
-//para el efecto en el boton del navbar
-useEffect(() => {
-  const handleScroll = () => {
-    const sections = ["inicio", "about", "grupos", "contact"];
-    let current = "inicio";
-    let minDistance = Infinity;
+  const { loginWithRedirect, isAuthenticated } = useAuth0();
+  const navigate = useNavigate();
 
-    for (const sec of sections) {
-      const el = document.getElementById(sec);
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        const distance = Math.abs(rect.top - 80); 
-        if (distance < minDistance && rect.bottom > 100) {
-          minDistance = distance;
-          current = sec;
+  // Si el usuario ya está autenticado, redirigir a /app
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/app");
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Para el efecto en el botón del navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ["inicio", "about", "grupos", "contact"];
+      let current = "inicio";
+      let minDistance = Infinity;
+
+      for (const sec of sections) {
+        const el = document.getElementById(sec);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const distance = Math.abs(rect.top - 80); 
+          if (distance < minDistance && rect.bottom > 100) {
+            minDistance = distance;
+            current = sec;
+          }
         }
       }
-    }
-    setActiveSection(current);
+      setActiveSection(current);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // PASO 1: Función para manejar el Login (sin signup)
+  const handleLogin = () => {
+    loginWithRedirect({
+      authorizationParams: {
+        redirect_uri: window.location.origin + "/app",
+      },
+    });
   };
 
-  window.addEventListener("scroll", handleScroll);
-  handleScroll();
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
+  // PASO 2: Función para manejar el Sign Up
+  const handleSignUp = () => {
+    loginWithRedirect({
+      authorizationParams: {
+        redirect_uri: window.location.origin + "/app",
+        screen_hint: "signup", // Esto le dice a Auth0 que muestre la pantalla de registro
+      },
+    });
+  };
 
   const navBtnClass = (section: string) => {
-    const base =
-      "rounded-md px-7 py-1 font-regular transition-colors";
+    const base = "rounded-md px-7 py-1 font-regular transition-colors";
 
     if (activeSection === section) {
-      // Botón activo → degradado fijo
       return `${base} bg-gradient-to-r from-[#23614C] to-[#1A4134] text-white shadow`;
     }
 
-    // Botón inactivo → normal, pero con hover y active degradado
     return `${base} bg-[#1A4134] text-[rgba(255,250,243,1)] 
       hover:bg-gradient-to-r hover:from-[#23614C] hover:to-[#1A4134]
       active:bg-gradient-to-r active:from-[#23614C] border-[#1A4134]`;
@@ -148,25 +170,21 @@ useEffect(() => {
             Contacto
           </a>
         </div>
+
+        {/* PASO 3: Botones con las funciones de Auth0 */}
         <div className="flex gap-3">
-         <button
-        onClick={() => loginWithRedirect()}
-        className="border border-[#916E5A] text-[#916E5A] px-7 py-1 rounded-[8px] hover:bg-green-50 font-regular"
-      >
-        Login
-      </button>
-      <button
-        onClick={() =>
-          loginWithRedirect({
-            authorizationParams: {
-              screen_hint: "signup",
-            },
-          })
-        }
-        className="bg-[#113227] text-[#FFFAF3] px-7 py-1 rounded-[8px] hover:bg-[#18614a] font-regular"
-      >
-        Sign Up
-      </button>
+          <button
+            onClick={handleLogin}
+            className="border border-[#916E5A] text-[#916E5A] px-7 py-1 rounded-[8px] hover:bg-green-50 font-regular"
+          >
+            Login
+          </button>
+          <button
+            onClick={handleSignUp}
+            className="bg-[#113227] text-[#FFFAF3] px-7 py-1 rounded-[8px] hover:bg-[#18614a] font-regular"
+          >
+            Sign Up
+          </button>
         </div>
       </nav>
 
@@ -184,15 +202,16 @@ useEffect(() => {
             servicio y amistad, ayudamos a construir líderes para el presente y el futuro.
           </p>
           <div className="flex gap-4 mb-8">
-          <a
-            href="#contact"
-            className="bg-[#113227] rounded-[8px] text-[#FFFAF3] px-6 py-3 font-medium flex items-center gap-2 
-                      hover:bg-[#154737] hover:scale-95 hover:shadow-inner 
-                      transition-transform duration-200"
-          >
-            Únete a ser un Scout
-            <FaArrowRight className="text-[#FFFAF3]" />
-          </a>
+            {/* PASO 4: Botón "Únete" redirige a Sign Up */}
+            <button
+              onClick={handleSignUp}
+              className="bg-[#113227] rounded-[8px] text-[#FFFAF3] px-6 py-3 font-medium flex items-center gap-2 
+                        hover:bg-[#154737] hover:scale-95 hover:shadow-inner 
+                        transition-transform duration-200"
+            >
+              Únete a ser un Scout
+              <FaArrowRight className="text-[#FFFAF3]" />
+            </button>
             <a
               href="#about"
               className="border border-[#916E5A] text-[#916E5A] px-6 py-3 rounded-[8px] font-semibold
@@ -202,24 +221,23 @@ useEffect(() => {
               Conoce más
             </a>
           </div>
-         
         </div>
         <div className="md:w-1/2 flex justify-center mt-10 md:mt-0">
           <img
             src={home}
             alt="Scout"
-            className="w-593.42 h-auto rounded-xl "
+            className="w-593.42 h-auto rounded-xl"
           />
         </div>
       </section>
 
-      {/* quines somos */}
+      {/* Quiénes somos */}
       <section id="about" className="pt-8 scroll-mt-28 px-8 py-16 bg-[#FFFAF3]">
-      <div className="flex justify-center  mb-3">
-        <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
-          ¿Qué es ser Scout?
-        </span>
-      </div>
+        <div className="flex justify-center mb-3">
+          <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+            ¿Qué es ser Scout?
+          </span>
+        </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
           Más que una aventura, un estilo de vida
         </h2>
@@ -246,40 +264,40 @@ useEffect(() => {
           ))}
         </div>
         <div className="mt-16">
-         <div className="flex justify-center mb-3">
-        <span className="inline-block bg-[#f7f7f7] text-gray-700 mb-8 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
-          ¿Cuál es nuestro propósito y nuestro sueño?
-        </span>
-         </div>
+          <div className="flex justify-center mb-3">
+            <span className="inline-block bg-[#f7f7f7] text-gray-700 mb-8 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+              ¿Cuál es nuestro propósito y nuestro sueño?
+            </span>
+          </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-16 text-center">
-          Más que un propósito, un camino hacia el futuro
-        </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-80 mx-40"> 
-        {mision.map((v) => (
-            <div
-              key={v.title}
-              className="bg-white rounded-xl p-6 flex flex-col items-center shadow-xl hover:shadow-2xl transition"
-            >
-              {v.icon}
-              <h3 className="mt-4 text-xl font-semibold text-gray-800">
-                {v.title}
-              </h3>
-              <p className="mt-2 text-gray-600 text-center">{v.desc}</p>
-            </div>
-        ))}
-      </div>
-      </div>
+            Más que un propósito, un camino hacia el futuro
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-80 mx-40"> 
+            {mision.map((v) => (
+              <div
+                key={v.title}
+                className="bg-white rounded-xl p-6 flex flex-col items-center shadow-xl hover:shadow-2xl transition"
+              >
+                {v.icon}
+                <h3 className="mt-4 text-xl font-semibold text-gray-800">
+                  {v.title}
+                </h3>
+                <p className="mt-2 text-gray-600 text-center">{v.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Grupos */}
-      <section id="grupos" className="pt-8 scroll-mt-28 px-8 py-16 bg-[#F0F3F2] ">
-      <div className="flex justify-center  mb-3">
-        <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
-          Nuestros Grupos
-        </span>
-      </div>
+      <section id="grupos" className="pt-8 scroll-mt-28 px-8 py-16 bg-[#F0F3F2]">
+        <div className="flex justify-center mb-3">
+          <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+            Nuestros Grupos
+          </span>
+        </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
-          Grupo Centinelas 113 y  803 chiminigagua
+          Grupo Centinelas 113 y 803 chiminigagua
         </h2>
         <div className="flex justify-center">
           <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
@@ -287,81 +305,82 @@ useEffect(() => {
             específicamente para cada edad y nivel de desarrollo.
           </p>
         </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-200 mx-40">
-        {grupos.map((v) => (
-          <div
-            key={v.title}
-            className="bg-white rounded-xl shadow-xl hover:shadow-2xl transition overflow-hidden"
-          >
-            <img
-              src={v.image}
-              alt={v.title}
-              className="h-48 w-full object-cover"
-            />
-
-            {/* Contenido inferior */}
-            <div className="p-6">
-              <span className="inline-block px-3 py-1 text-xs font-medium text-white bg-[#113227] rounded-full">
-                {v.section}
-              </span>
-              <h3 className="mt-3 text-lg font-semibold text-gray-800">
-                {v.title}
-              </h3>
-              <p className="mt-2 text-gray-600">{v.desc}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-200 mx-40">
+          {grupos.map((v) => (
+            <div
+              key={v.title}
+              className="bg-white rounded-xl shadow-xl hover:shadow-2xl transition overflow-hidden"
+            >
+              <img
+                src={v.image}
+                alt={v.title}
+                className="h-48 w-full object-cover"
+              />
+              <div className="p-6">
+                <span className="inline-block px-3 py-1 text-xs font-medium text-white bg-[#113227] rounded-full">
+                  {v.section}
+                </span>
+                <h3 className="mt-3 text-lg font-semibold text-gray-800">
+                  {v.title}
+                </h3>
+                <p className="mt-2 text-gray-600">{v.desc}</p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
       </section>
 
-     {/* Contacto */}
+      {/* Contacto */}
       <section id="contact" className="pt-8 scroll-mt-28 px-8 py-16 bg-[#FFFAF3]">
-  <div className="flex justify-center mb-3">
-    <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
-      ¡Únete hoy!
-    </span>
-  </div>
-  <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
-    ¿Listo para tu próxima aventura?
-  </h2>
-  <div className="flex justify-center">
-    <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
-      Desde los más pequeños hasta jóvenes adultos, tenemos grupos diseñados 
-      específicamente para cada edad y nivel de desarrollo.
-    </p>
-  </div>
-  <div className="flex flex-col md:flex-row gap-12 justify-center items-start max-w-4xl mx-auto">
-    {/* Bloque de formulario */}
-    <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full mb-8 md:mb-0">
-      <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">Si deseas unirte déjanos tu información</h3>    
-      <div className="mb-4 flex justify-center">   
-<a
-  href="/inscription"
-  className="bg-gradient-to-r from-[#23614C] to-[#1A4134] text-white font-semibold py-2 px-7 rounded mt-2 hover:scale-95 transition text-center"
->
-  Llena el formulario
-</a>
-</div>
-  
+        <div className="flex justify-center mb-3">
+          <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+            ¡Únete hoy!
+          </span>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
+          ¿Listo para tu próxima aventura?
+        </h2>
+        <div className="flex justify-center">
+          <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
+            Desde los más pequeños hasta jóvenes adultos, tenemos grupos diseñados 
+            específicamente para cada edad y nivel de desarrollo.
+          </p>
+        </div>
+        <div className="flex flex-col md:flex-row gap-12 justify-center items-start max-w-4xl mx-auto">
+          {/* Bloque de formulario */}
+          <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full mb-8 md:mb-0">
+            <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">
+              Regístrate y forma parte de nuestra comunidad.
+            </h3>    
+            <div className="mb-4 flex justify-center">   
+              <button
+                onClick={handleSignUp}
+                className="bg-gradient-to-r from-[#23614C] to-[#1A4134] text-white font-semibold py-2 px-7 rounded mt-2 hover:scale-95 transition text-center"
+              >
+             ¡Únete ahora!             
+              </button>
+            </div>
+          </div>
+
+          {/* Bloque de información de contacto */}
+          <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full">
+            <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">
+              Información de contacto
+            </h3>
+            <div className="flex flex-col gap-4 text-gray-700">
+              <div>
+                <span className="font-bold">Teléfono:</span> +57 312 345 6789
+              </div>
+              <div>
+                <span className="font-bold">Email:</span> scouts.pacifico@email.com
+              </div>
+              <div>
+                <span className="font-bold">Ubicación:</span> Calle 123 #45-67, Cali, Colombia
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-    {/* Bloque de información de contacto */}
-    <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full">
-      <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">Información de contacto</h3>
-      <div className="flex flex-col gap-4 text-gray-700">
-        <div>
-          <span className="font-bold">Teléfono:</span> +57 312 345 6789
-        </div>
-        <div>
-          <span className="font-bold">Email:</span> scouts.pacifico@email.com
-        </div>
-        <div>
-          <span className="font-bold">Ubicación:</span> Calle 123 #45-67, Cali, Colombia
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-</div>
   );
 }
-

@@ -37,18 +37,16 @@ export interface SchoolData {
   shift: Shift;
 }
 
-// Interfaces para conexión con backend
-
 export interface CreateMemberRequest {
   subgroup_id: number;
   first_name: string;
   last_name: string;
   age: number;
-  identification: number;
+  identification: string;
   document_type: DocumentType;
   email: string;
   gender: Gender;
-  birth_date: string;
+  birth_date: Date;
   address: string;
   phone: string;
   weight: string;
@@ -62,11 +60,11 @@ export interface CreateMemberRequest {
 
 export interface CreateMemberResponse {
   member_id: number;
-  [key: string]: number;
 }
 
-export interface CreateSchoolDataRequest extends SchoolData {
-  member_id: number;
+export interface CreateMemberWithSchoolRequest {
+  member: CreateMemberRequest;
+  school: SchoolData;
 }
 
 export interface ApiErrorResponse {

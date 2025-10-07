@@ -21,8 +21,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import type { Member } from "../Miembros/types/member.type";
-import { membersService } from "@/api/services/members.service";
+import type { Member } from "@/models/types/memberTypes";
+import { getMembersByStatus, getMember } from "@/api/membersApi";
 
 const Rejected = () => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -44,7 +44,7 @@ const Rejected = () => {
   const loadRejectedMembers = async () => {
     try {
       setLoading(true);
-      const data = await membersService.getByStatus("NOT_ACCEPTED");
+      const data = await getMembersByStatus("NOT_ACCEPTED");
       setMembers(data);
     } catch (error) {
       console.error("Error al cargar miembros rechazados:", error);
@@ -83,11 +83,14 @@ const Rejected = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  // 🔹 Ver detalles
+  // Ver detalles
   const handleView = async (member: Member) => {
     try {
       setLoading(true);
-      const data = await membersService.getDetails(member.member_id);
+      if (member.member_id === undefined) {
+        throw new Error("El ID del miembro es indefinido.");
+      }
+      const data = await getMember(member.member_id);
       setSelectedMember(data);
       setOpenViewModal(true);
     } catch (err) {
@@ -135,7 +138,7 @@ const Rejected = () => {
                 <DropdownMenuItem
                   key={city}
                   className="cursor-pointer"
-                  onSelect={() => setCityFilter(city)}
+                  onSelect={() => setCityFilter(city ?? "")}
                 >
                   {city}
                 </DropdownMenuItem>
@@ -189,7 +192,7 @@ const Rejected = () => {
                     </TableCell>
                     <TableCell>
                       <span className="py-1 rounded font-medium bg-red-100 text-red-800">
-                        {statusLabels[member.status] || member.status}
+                        {statusLabels[member.status ?? "Rechazado"]}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -251,7 +254,7 @@ const Rejected = () => {
                 <p>
                   <b>Estado:</b>{" "}
                   <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
-                    {statusLabels[selectedMember.status]}
+                    {statusLabels[selectedMember.status ?? "Rechazado"]}
                   </span>
                 </p>
               </div>

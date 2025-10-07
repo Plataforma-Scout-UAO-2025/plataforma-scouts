@@ -22,8 +22,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import type { Member } from "../Miembros/types/member.type";
-import { membersService } from "@/api/services/members.service";
+import type { Member } from "@/models/types/memberTypes";
+import {
+  getMembersByStatus,
+  getMember,
+  updateMemberStatus,
+} from "@/api/membersApi";
 
 const Requests = () => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -45,11 +49,11 @@ const Requests = () => {
     NOT_ACCEPTED: "Rechazado",
   };
 
-  // 🔹 Cargar solicitudes pendientes
+  // Cargar solicitudes pendientes
   const loadPendingMembers = async () => {
     try {
       setLoading(true);
-      const data = await membersService.getByStatus("PENDING");
+      const data = await getMembersByStatus("PENDING");
       setMembers(data);
     } catch (error) {
       console.error("Error al cargar solicitudes:", error);
@@ -63,7 +67,7 @@ const Requests = () => {
     loadPendingMembers();
   }, []);
 
-  // 🔹 Obtener ciudades únicas
+  // Obtener ciudades únicas
   const cities = useMemo(() => {
     const uniqueCities = [
       ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
@@ -71,7 +75,7 @@ const Requests = () => {
     return uniqueCities.sort();
   }, [members]);
 
-  // 🔹 Filtro combinado
+  // Filtro combinado
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
@@ -88,11 +92,11 @@ const Requests = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  // 🔹 Ver detalles
+  // Ver detalles
   const handleView = async (member: Member) => {
     try {
       setLoading(true);
-      const data = await membersService.getDetails(member.member_id);
+      const data = await getMember(member.member_id);
       setSelectedMember(data);
       setOpenViewModal(true);
     } catch (err) {
@@ -103,12 +107,12 @@ const Requests = () => {
     }
   };
 
-  // 🔹 Aceptar solicitud
+  // Aceptar solicitud
   const handleAcceptFromModal = async () => {
     if (!selectedMember) return;
     try {
       setLoading(true);
-      await membersService.updateStatus(selectedMember.member_id, "ACCEPTED");
+      await updateMemberStatus(Number(selectedMember.member_id), "ACCEPTED");
       alert(
         `Solicitud de ${selectedMember.first_name} ${selectedMember.last_name} aceptada exitosamente`
       );
@@ -123,13 +127,13 @@ const Requests = () => {
     }
   };
 
-  // 🔹 Abrir modal de rechazo
+  // Abrir modal de rechazo
   const handleRejectFromModal = () => {
     setOpenViewModal(false);
     setOpenRejectModal(true);
   };
 
-  // 🔹 Enviar rechazo
+  // Enviar rechazo
   const handleSendReject = async () => {
     if (!selectedMember) return;
     if (!rejectReason.trim()) {
@@ -138,8 +142,8 @@ const Requests = () => {
     }
     try {
       setLoading(true);
-      await membersService.updateStatus(
-        selectedMember.member_id,
+      await updateMemberStatus(
+        Number(selectedMember.member_id),
         "NOT_ACCEPTED"
       );
       setOpenRejectModal(false);
@@ -176,7 +180,7 @@ const Requests = () => {
           />
           <DropdownMenu onOpenChange={setIsActive}>
             <DropdownMenuTrigger className="w-1/3 py-1 px-2 text-sm border border-primary rounded-md justify-between flex items-center">
-              {cityFilter || "Seleccionar Ciudad..."}{" "}
+              {cityFilter || "Seleccionar dirección..."}{" "}
               {isActive ? <ChevronUp /> : <ChevronDown />}
             </DropdownMenuTrigger>
             <DropdownMenuContent className="py-1 px-2 text-sm border border-primary bg-background rounded-md">
@@ -184,13 +188,13 @@ const Requests = () => {
                 className="cursor-pointer"
                 onSelect={() => setCityFilter("")}
               >
-                Todas las ciudades
+                Todas las direcciones
               </DropdownMenuItem>
               {cities.map((city) => (
                 <DropdownMenuItem
                   key={city}
                   className="cursor-pointer"
-                  onSelect={() => setCityFilter(city)}
+                  onSelect={() => setCityFilter(city ?? "")}
                 >
                   {city}
                 </DropdownMenuItem>
@@ -255,7 +259,7 @@ const Requests = () => {
                     </TableCell>
                     <TableCell>
                       <span className="py-1 rounded font-medium bg-gray-300 text-gray-800">
-                        {statusLabels[member.status] || member.status}
+                        {statusLabels[member.status ?? "Pendiente"]}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -317,7 +321,8 @@ const Requests = () => {
                   <b>Sexo:</b> {selectedMember.gender}
                 </p>
                 <p>
-                  <b>Estado:</b> {statusLabels[selectedMember.status]}
+                  <b>Estado:</b>{" "}
+                  {statusLabels[selectedMember.status ?? "Pendiente"]}
                 </p>
               </div>
             )
