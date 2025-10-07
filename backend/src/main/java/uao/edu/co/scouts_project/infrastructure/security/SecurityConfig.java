@@ -61,10 +61,8 @@ public class SecurityConfig {
 
 
                         // Cuotas
-                        .requestMatchers("/api/v1/finanzas/fees").hasAnyRole(TESORERO.name())
-                        .requestMatchers("/api/v1/finanzas/fees/members/").hasAnyRole(TESORERO.name())
-                        .requestMatchers("/api/v1/finanzas/fees/subgroups/").hasAnyRole(TESORERO.name())
-                        .requestMatchers("/api/v1/finanzas/fees/sections").hasAnyRole(TESORERO.name())
+                        .requestMatchers( "/api/v1/finanzas/fees/**").permitAll() //Cambiar a .hasAnyRole(TESORERO.name()) 
+                        .requestMatchers("/api/v1/finanzas/fees").permitAll() 
 
                         //
                         // Planes de adelanto
