@@ -5,15 +5,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.guardian.shared.enums.Role;
 import uao.edu.co.scouts_project.guardian.shared.enums.Status;
 
 import java.time.LocalDate;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class GuardianDTO {
     private String userId;
     private String tenantId;
@@ -28,5 +32,4 @@ public class GuardianDTO {
     private String relationship;
     private Status status;
     private LocalDate acceptanceDate;
-    private List<MemberSummaryDTO> membersInCharge;
 }

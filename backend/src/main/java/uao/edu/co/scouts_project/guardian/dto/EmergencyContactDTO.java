@@ -14,10 +14,8 @@ import jakarta.validation.constraints.NotNull;
 public class EmergencyContactDTO {
     @NotNull
     private String name;
-
     @NotNull
     private String relationship;
-
     @NotNull
     private String phone;
 }
