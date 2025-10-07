@@ -94,6 +94,10 @@
   			<artifactId>java-dotenv</artifactId>
   			<version>5.2.2</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+  			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
 
 		<!-- H2 Database for testing -->
 		<dependency>
@@ -101,26 +105,39 @@
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<version>5.2.0</version>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>com.okta.spring</groupId>
 			<artifactId>okta-spring-boot-starter</artifactId>
 			<version>3.0.5</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.auth0</groupId>
 			<artifactId>auth0</artifactId>
 			<version>1.42.0</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.auth0</groupId>
 			<artifactId>mvc-auth-commons</artifactId>
 			<version>1.9.1</version>
 		</dependency>
+		
 	</dependencies>
+
 
 	<build>
 		<plugins>
@@ -184,6 +201,10 @@
 						
 						<!-- Repository Interfaces (Spring Data JPA auto-implemented) -->
 						<exclude>**/repository/**</exclude>
+
+						<!-- Security pilot -->
+						<exclude>**/uao/edu/co/scouts_project/infrastructure/auth0/**</exclude>
+						<exclude>**/uao/edu/co/scouts_project/infrastructure/cache/**</exclude>
 					</excludes>
 				</configuration>
 				<executions>

@@ -1,13 +1,29 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui";
 import { ArrowUpDown } from "lucide-react";
-import { type Cuota } from "../types/cuota.type";
+import { type Cuota } from "@/types/cuota.type";
 import EditCuotaModal from "./EditCuotaModal";
 import DeleteCuotaModal from "./DeleteCuotaModal";
 
-export const columns: ColumnDef<Cuota>[] = [
+// Traducciones para periodicidad
+const periodicityTranslations: Record<string, string> = {
+  SINGLE: "Única",
+  MONTH: "Mensual",
+  QUARTER: "Trimestral",
+  YEAR: "Anual",
+};
+
+// Traducciones para scope
+const scopeTranslations: Record<string, string> = {
+  ALL: "Todos",
+  SCOUT: "Scout específico",
+  SUBGROUP: "Subgrupo",
+  SECTION: "Sección",
+};
+
+export const getColumns = (onRefresh?: () => void): ColumnDef<Cuota>[] => [
     {
-      accessorKey: "nombre",
+      accessorKey: "name",
       header: ({ column }) => {
         return (
           <Button
@@ -20,11 +36,11 @@ export const columns: ColumnDef<Cuota>[] = [
         );
       },
       cell: ({ row }) => (
-        <div className="lowercase">{row.getValue("nombre")}</div>
+        <div>{row.getValue("name")}</div>
       ),
     },
     {
-      accessorKey: "monto",
+      accessorKey: "amount",
       header: ({ column }) => {
         return (
           <Button
@@ -37,55 +53,69 @@ export const columns: ColumnDef<Cuota>[] = [
         );
       },
       cell: ({ row }) => {
-        const monto = parseFloat(row.getValue("monto"));
-  
+        const amount = parseFloat(row.getValue("amount"));
+
         const formatted = new Intl.NumberFormat("es-CO", {
           style: "currency",
           currency: "COP",
-        }).format(monto);
-  
+        }).format(amount);
+
         return <div className="text-left font-medium">{formatted}</div>;
       },
     },
     {
-      accessorKey: "periodicidad",
+      accessorKey: "periodicity",
       header: "Periodicidad",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("periodicidad")}</div>
-      ),
+      cell: ({ row }) => {
+        const periodicity = row.getValue("periodicity") as string;
+        return <div>{periodicityTranslations[periodicity] || periodicity}</div>;
+      },
     },
     {
-      accessorKey: "tipoCuota",
+      accessorKey: "scope",
       header: "Tipo de cuota",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("tipoCuota")}</div>
-      ),
+      cell: ({ row }) => {
+        const scope = row.getValue("scope") as string;
+        return <div>{scopeTranslations[scope] || scope}</div>;
+      },
     },
     {
-      accessorKey: "fechaLimitePago",
-      header: "Fecha límite",
-      cell: ({ row }) => <div>{row.getValue("fechaLimitePago")}</div>,
+      accessorKey: "start_date",
+      header: "Fecha inicio",
+      cell: ({ row }) => {
+        const date = new Date(row.getValue("start_date"));
+        return <div>{date.toLocaleDateString("es-ES")}</div>;
+      },
     },
     {
-      accessorKey: "medioPago",
-      header: "Medio de pago",
-      cell: ({ row }) => <div>{row.getValue("medioPago")}</div>,
+      accessorKey: "end_date",
+      header: "Fecha fin",
+      cell: ({ row }) => {
+        const date = new Date(row.getValue("end_date"));
+        return <div>{date.toLocaleDateString("es-ES")}</div>;
+      },
     },
     {
-      accessorKey: "aplicaA",
+      accessorKey: "member",
       header: "Aplica a",
-      cell: ({ row }) => <div>{row.getValue("aplicaA")}</div>,
+      cell: ({ row }) => {
+        const scope = row.original.scope;
+
+        const value = row.original.associated_to ? row.original.associated_to.name : scopeTranslations[scope] || scope;
+
+        return <div>{value}</div>;
+      },
     },
     {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
         const cuota = row.original;
-  
+
         return (
           <div className="flex items-center gap-2">
-            <EditCuotaModal cuota={cuota} />
-            <DeleteCuotaModal cuota={cuota} />
+            <EditCuotaModal cuota={cuota} onRefresh={onRefresh} />
+            <DeleteCuotaModal cuota={cuota} onRefresh={onRefresh} />
           </div>
         );
       },

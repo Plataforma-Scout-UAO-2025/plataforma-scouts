@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: http://localhost:8080/api/v1/finanzas/cuotas
+  url: http://localhost:8080/api/v1/finanzas/fees
   body: json
   auth: inherit
 }
@@ -17,16 +17,47 @@ headers {
 
 body:json {
   {
-    "nombre": "Cuota 1",
-    "monto": "150000",
-    "periodicidad": "Mensual",
-    "tipoCuota": "Ordinaria",
-    "fechaLimitePago": "2025-09-30", 
-    "medioPago": "PSE",
-    "aplicaA": "Grupo Scout Alfa"
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota scout Comida",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "SINGLE",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2025-01-01",
+    "associated_to": {
+      "id": 23,
+      "name": "Samuel Gómez"
+    }
   }
 }
 
 settings {
   encodeUrl: true
+}
+
+docs {
+  
+    "tenant_id": BigINT,
+    
+    "amount": numeric,
+    
+    "name": text,
+    
+    "description": text,
+    
+    "periodicity": text = "SINGLE" | "MONTH" | "QUARTER" | "YEAR",
+    
+    "scope": text ="ALL" | "SCOUT" | "SUBGROUP" | "SECTION",
+    
+    "start_date": LocalDate,
+    
+    "end_date": LocalDate,
+    
+    "member": BigINT -> NULLABLE if scope ≠ "SCOUT",
+    
+    "subgroup_id": BigINT -> NULLABLE if scope ≠ "SUBGROUP",
+          
+    "section_id": BigINT -> NULLABLE if scope ≠ "SECTION",
+    
 }

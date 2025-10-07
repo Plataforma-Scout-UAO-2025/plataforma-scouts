@@ -1,0 +1,108 @@
+meta {
+  name: 17) UpdateCuota - Edición exitosa
+  type: http
+  seq: 22
+}
+
+patch {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees/org_6B3k4dao2Wf6eGxa/22
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "amount": 15000,
+    "name": "Mensualidad",
+    "description": "Prueba de cambio"
+  }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Has id or payload on success', () => {
+    if ([200,201].includes(res.status)) {
+      expect(res.body).to.have.any.keys('fee_id','amount','name');
+    }
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 17) UpdateCuota - Edición exitosa');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 17: Actualizar Cuota - Edición Exitosa
+  
+  ## 🎯 Objetivo
+  Validar que el sistema permite actualizar correctamente una cuota existente con datos válidos.
+  
+  ## 📍 Endpoint
+  ```
+  PUT {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/{{idCuota}}
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "name": "Mensualidad Ajustada",
+    "description": "Cuota Plástico 2025 Actualizada",
+    "amount": 60000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-02-28"
+  }
+  ```
+  
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK`
+  - **Body:** Objeto JSON con el recurso actualizado
+  
+  ```json
+  {
+    "id": "uuid-de-la-cuota",
+    "tenant_id": 1,
+    "name": "Mensualidad Ajustada",
+    "description": "Cuota Plástico 2025 Actualizada",
+    "amount": 60000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-02-28"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

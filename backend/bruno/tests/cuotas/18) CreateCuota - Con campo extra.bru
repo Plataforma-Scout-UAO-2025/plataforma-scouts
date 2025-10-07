@@ -1,0 +1,111 @@
+meta {
+  name: 18) CreateCuota - Con campo extra
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2025-06-01",
+    "extra": "extra",
+    "associated_to": {
+      "id": 50,
+      "name": "Valentina Jiménez"
+    }
+  }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422, 400,500]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 18) CreateCuota - Con campo extra');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 18: Crear Cuota - Con Campo Extra No Permitido
+
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de cuotas cuando se incluye un campo adicional no definido en el esquema (campo "extra").
+
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  ```
+
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2025-06-01",
+    "extra": "extra",  // ❌ Campo adicional no permitido
+    "associated_to": {
+      "id": 50,
+      "name": "Valentina Jiménez"
+    }
+  }
+  ```
+
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity` o `400 Bad Request` o `500 Internal Server Error`
+  - **Body:** Mensaje de error indicando que el campo no es permitido
+
+  ```json
+  {
+    "message": "Campo no permitido en el esquema",
+    "field": "extra"
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}

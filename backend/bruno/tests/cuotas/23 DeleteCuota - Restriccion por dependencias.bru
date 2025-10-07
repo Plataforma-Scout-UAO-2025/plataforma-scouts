@@ -1,0 +1,81 @@
+meta {
+  name: 23) DeleteCuota - Restricción por dependencias
+  type: http
+  seq: 28
+}
+
+delete {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/{{idConPagos}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 23) DeleteCuota - Restricción por dependencias');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 23: Eliminar Cuota - Restricción por Dependencias
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema impide la eliminación de cuotas que tienen pagos asociados, manteniendo la integridad referencial.
+  
+  ## 📍 Endpoint
+  ```
+  DELETE {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/{{idConPagos}}
+  ```
+  **Nota:** `{{idConPagos}}` debe ser el ID de una cuota con pagos registrados
+  
+  ## 📦 Request Body
+  N/A (método DELETE no requiere body)
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity`
+  - **Body:** Mensaje de error indicando que la cuota tiene dependencias
+  
+  ```json
+  {
+    "message": "No se puede eliminar la cuota porque tiene pagos asociados"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}
