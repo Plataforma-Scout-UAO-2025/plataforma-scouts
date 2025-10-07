@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 
 // ⬇️ IMPORTA LAS NUEVAS ANOTACIONES (Spring Framework 6.2+)
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import org.springframework.http.MediaType;
@@ -20,6 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+
+import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -33,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = TenantController.class)
 @AutoConfigureMockMvc(addFilters = false) // desactiva filtros de seguridad
+@ActiveProfiles("test")
 class TenantControllerTest {
 
     @Autowired
@@ -43,8 +47,11 @@ class TenantControllerTest {
     private TenantService tenantService;
 
     // ⬇️ mockeamos el filtro que depende de JdbcTemplate para que el slice no falle
-    @MockitoBean
-    private uao.edu.co.scouts_project.common.tenant.TenantFilter tenantFilter;
+        @MockitoBean
+        private uao.edu.co.scouts_project.common.tenant.TenantFilter tenantFilter;
+
+        @MockitoBean
+        private AuthoritiesMappingPort authoritiesMappingPort;
 
     @Autowired
     private ObjectMapper objectMapper;

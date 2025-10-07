@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -101,7 +102,7 @@ class SectionServiceTest {
         for (UUID galleryId : galleryIds) {
             urlMap.put(galleryId, "http://gallery-" + galleryId);
         }
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class))).thenReturn(urlMap);
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(urlMap);
 
         // Act
         List<SectionResponseDTO> result = sectionService.getSectionsByGroup("tenant-slug", "group-slug");
@@ -127,7 +128,7 @@ class SectionServiceTest {
         Map<UUID, String> urlMap = new HashMap<>();
         urlMap.put(iconId, "http://icon-url");
         urlMap.put(photoId, "http://photo-url");
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class))).thenReturn(urlMap);
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(urlMap);
 
         // Act
         SectionResponseDTO result = sectionService.getSectionById("tenant-slug", "group-slug", 1L);
@@ -169,7 +170,7 @@ class SectionServiceTest {
                 .thenReturn(Optional.of(section));
         when(subgroupService.getSubgroupsBySection("tenant-slug", "group-slug", 1L))
                 .thenReturn(subgroups);
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class))).thenReturn(Collections.emptyMap());
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         Map<String, Object> result = sectionService.getSectionWithSubgroups("tenant-slug", "group-slug", 1L);
@@ -198,7 +199,7 @@ class SectionServiceTest {
             saved.setUpdatedAt(Instant.now());
             return saved;
         });
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class))).thenReturn(Collections.emptyMap());
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         SectionResponseDTO result = sectionService.createSection("tenant-slug", "group-slug", dto);
@@ -247,7 +248,7 @@ class SectionServiceTest {
         when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class))).thenReturn(Collections.emptyMap());
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         SectionResponseDTO result = sectionService.updateSection("tenant-slug", "group-slug", 1L, dto);
@@ -301,6 +302,24 @@ class SectionServiceTest {
         verify(sectionRepository).save(section);
     }
 
+        @Test
+        @DisplayName("Debe ignorar eliminación del ícono cuando no existe")
+        void testDeleteIconImage_noIcon() {
+                // Arrange
+                section.setIconObjectId(null);
+                when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+                when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+                when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                                .thenReturn(Optional.of(section));
+
+                // Act
+                sectionService.deleteIconImage("tenant-slug", "group-slug", 1L);
+
+                // Assert
+                verify(storageService, never()).deleteFileByObjectId(any());
+                verify(sectionRepository, never()).save(any());
+        }
+
     @Test
     @DisplayName("Debe actualizar ícono y eliminar el anterior")
     void testUpdateIcon() {
@@ -319,6 +338,23 @@ class SectionServiceTest {
         assertThat(section.getIconObjectId()).isEqualTo(newIconId);
         verify(sectionRepository).save(section);
     }
+
+        @Test
+        @DisplayName("Debe conservar ícono cuando se envía el mismo UUID")
+        void testUpdateIcon_sameUuid() {
+                // Arrange
+                when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+                when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+                when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                                .thenReturn(Optional.of(section));
+
+                // Act
+                sectionService.updateIcon("tenant-slug", "group-slug", 1L, iconId);
+
+                // Assert
+                verify(storageService, never()).deleteFileByObjectId(any());
+                verify(sectionRepository).save(argThat(saved -> iconId.equals(saved.getIconObjectId())));
+        }
 
     @Test
     @DisplayName("Debe actualizar foto principal y eliminar la anterior")
@@ -340,6 +376,60 @@ class SectionServiceTest {
     }
 
     @Test
+    @DisplayName("Debe conservar foto principal cuando se envía el mismo UUID")
+    void testUpdatePhotoPrincipal_sameUuid() {
+        // Arrange
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                .thenReturn(Optional.of(section));
+
+        // Act
+        sectionService.updatePhotoPrincipal("tenant-slug", "group-slug", 1L, photoId);
+
+        // Assert
+        verify(storageService, never()).deleteFileByObjectId(any());
+        verify(sectionRepository).save(argThat(saved -> photoId.equals(saved.getPhotoPrincipal())));
+    }
+
+    @Test
+    @DisplayName("Debe eliminar foto principal y persistir null")
+    void testDeletePhotoPrincipal_whenPresent() {
+        // Arrange
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                .thenReturn(Optional.of(section));
+        when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        sectionService.deletePhotoPrincipal("tenant-slug", "group-slug", 1L);
+
+        // Assert
+        verify(storageService).deleteFileByObjectId(photoId);
+        assertThat(section.getPhotoPrincipal()).isNull();
+        verify(sectionRepository).save(section);
+    }
+
+    @Test
+    @DisplayName("Debe ignorar eliminación de foto principal cuando no existe")
+    void testDeletePhotoPrincipal_whenEmpty() {
+        // Arrange
+        section.setPhotoPrincipal(null);
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                .thenReturn(Optional.of(section));
+
+        // Act
+        sectionService.deletePhotoPrincipal("tenant-slug", "group-slug", 1L);
+
+        // Assert
+        verify(storageService, never()).deleteFileByObjectId(any());
+        verify(sectionRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("Debe eliminar imagen de la galería por ID")
     void testDeleteGalleryImageById() {
         // Arrange
@@ -349,17 +439,82 @@ class SectionServiceTest {
         when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class))).thenReturn(Collections.emptyMap());
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         SectionResponseDTO result = sectionService.deleteGalleryImageById(
                 "tenant-slug", "group-slug", 1L, imageToDelete, true);
 
         // Assert
+        assertThat(result).isNotNull();
         verify(storageService).deleteFileByObjectId(imageToDelete);
         assertThat(section.getGalleryObjectIds()).hasSize(1);
         assertThat(section.getGalleryObjectIds()).doesNotContain(imageToDelete);
         verify(sectionRepository).save(section);
+    }
+
+    @Test
+    @DisplayName("Debe actualizar galería sin borrar del storage cuando se indica")
+    void testDeleteGalleryImageById_skipStorageDeletion() {
+        // Arrange
+        UUID imageToDelete = galleryIds[0];
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                .thenReturn(Optional.of(section));
+        when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
+
+        // Act
+        SectionResponseDTO result = sectionService.deleteGalleryImageById(
+                "tenant-slug", "group-slug", 1L, imageToDelete, false);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(storageService, never()).deleteFileByObjectId(imageToDelete);
+        assertThat(section.getGalleryObjectIds()).hasSize(1).doesNotContain(imageToDelete);
+        verify(sectionRepository).save(section);
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si la galería está vacía al eliminar imagen")
+    void testDeleteGalleryImageById_emptyGallery() {
+        // Arrange
+        section.setGalleryObjectIds(new UUID[0]);
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                .thenReturn(Optional.of(section));
+
+        // Act & Assert
+        assertThatThrownBy(() -> sectionService.deleteGalleryImageById(
+                "tenant-slug", "group-slug", 1L, UUID.randomUUID(), true))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Gallery is empty");
+
+        verify(storageService, never()).deleteFileByObjectId(any());
+        verify(sectionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si el UUID no está en la galería")
+    void testDeleteGalleryImageById_notFound() {
+        // Arrange
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                .thenReturn(Optional.of(section));
+
+        UUID unknown = UUID.randomUUID();
+
+        // Act & Assert
+        assertThatThrownBy(() -> sectionService.deleteGalleryImageById(
+                "tenant-slug", "group-slug", 1L, unknown, true))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Imagen no encontrada");
+
+        verify(storageService, never()).deleteFileByObjectId(any());
+        verify(sectionRepository, never()).save(any());
     }
 
     @Test
@@ -380,13 +535,14 @@ class SectionServiceTest {
         when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class))).thenReturn(Collections.emptyMap());
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         SectionResponseDTO result = sectionService.patchGalleryAndReturn(
                 "tenant-slug", "group-slug", 1L, operations);
 
         // Assert
+        assertThat(result).isNotNull();
         verify(storageService).deleteFileByObjectId(replaceTarget); // Se eliminó la imagen reemplazada
         assertThat(section.getGalleryObjectIds()).hasSize(3); // 2 originales - 1 reemplazada + 1 nueva = 3
         assertThat(section.getGalleryObjectIds()).contains(newImage, replaceWith, galleryIds[1]);
@@ -427,7 +583,7 @@ class SectionServiceTest {
         when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
         when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
-        when(storageService.getPublicUrlsFromObjectIds(any(Set.class)))
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any()))
                 .thenThrow(new RuntimeException("Storage service error"));
 
         // Act
