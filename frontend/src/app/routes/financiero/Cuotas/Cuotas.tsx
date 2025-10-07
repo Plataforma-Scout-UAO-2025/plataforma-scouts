@@ -14,6 +14,12 @@ export default function Cuotas() {
         </div>
         <div className="flex gap-2">
           <Button variant="primary" asChild>
+            <Link to="/app/financiero/estado-cuenta">
+              <FileText className="text-white" />
+              Ver estado de cuenta
+            </Link>
+          </Button>
+          <Button variant="primary" asChild>
             <Link to="/app/financiero/pagos">
               <DollarSign className="text-white" />
               Gestionar pagos
