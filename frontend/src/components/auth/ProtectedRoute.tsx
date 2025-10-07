@@ -1,23 +1,11 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { Navigate, Outlet, useLocation, matchPath } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import FullScreenLoader from "../common/FullScreenLoader";
+import { useRoleContext } from "@/hooks/useRoleContext";
 
-const rolePermissions: Record<string, string[]> = {
-  "": ['ADMIN_GLOBAL'],
-  "": ['ADMIN_GRUPO'],
-  "": ['COMITE_ADMIN'],
-  "": ['DEV_SUPPORT'],
-  "": ['SCOUT'],
-  "": ['SCOUTER'],
-  "": ['TESORERO'],
-  "": ['ACUDIENTE'],
-  "": ['GUEST'],
-  "": ['UNKNOWN']
-};
-
-const ProtectedRoute = () => {
+const ProtectedRoute = ({allowedRoles, children}: {allowedRoles: string[]; children: React.ReactNode}) => {
   const { user, isAuthenticated, isLoading } = useAuth0();
-  const location = useLocation();
+  const { currentUserRole } = useRoleContext();
 
   if (isLoading) return <FullScreenLoader />;
 
@@ -25,20 +13,11 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user.emailVerified) {
+  if (!currentUserRole || !allowedRoles.includes(currentUserRole)) {
     return <Navigate to="/" replace />;
   }
 
-  for (const [path, roles] of Object.entries(rolePermissions)) {
-    if (matchPath({ path, end: true }, location.pathname)) {
-      if (!roles.includes(user?.role || "")) {
-        return <Navigate to="/" replace />;
-      }
-    }
-  }
-
-  return <Outlet />;
+  return <>{children}</>;
 };
-
 
 export default ProtectedRoute;
