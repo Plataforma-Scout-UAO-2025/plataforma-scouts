@@ -1,4 +1,14 @@
-export type DocumentType = "CC" | "TI" | "CE" | "";
+export type DocumentType =
+  | "CC"
+  | "TI"
+  | "CE"
+  | "RC"
+  | "PA"
+  | "PEP"
+  | "PPT"
+  | "NIT"
+  | "NUIP"
+  | "";
 export type Gender = "Femenino" | "Masculino" | "";
 export type Shift = "Mañana" | "Tarde" | "Noche" | "Completa" | "";
 export type GroupName = "Centinelas 113" | "803 Chiminigagua" | "";
@@ -37,18 +47,16 @@ export interface SchoolData {
   shift: Shift;
 }
 
-// Interfaces para conexión con backend
-
 export interface CreateMemberRequest {
   subgroup_id: number;
   first_name: string;
   last_name: string;
   age: number;
-  identification: number;
+  identification: string;
   document_type: DocumentType;
   email: string;
   gender: Gender;
-  birth_date: string;
+  birth_date: Date;
   address: string;
   phone: string;
   weight: string;
@@ -57,16 +65,16 @@ export interface CreateMemberRequest {
   sports: string;
   instruments: string;
   status: MemberStatus;
-  emergency_phone: Record<string, EmergencyContact>;
+  emergency_contacts: Record<string, EmergencyContact>;
 }
 
 export interface CreateMemberResponse {
   member_id: number;
-  [key: string]: number;
 }
 
-export interface CreateSchoolDataRequest extends SchoolData {
-  member_id: number;
+export interface CreateMemberWithSchoolRequest {
+  member: CreateMemberRequest;
+  school: SchoolData;
 }
 
 export interface ApiErrorResponse {

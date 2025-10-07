@@ -9,12 +9,16 @@ import org.springframework.test.util.ReflectionTestUtils;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.member.service.MemberServiceImp;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
+import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
+import uao.edu.co.scouts_project.organigrama.repo.SubgroupRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -24,14 +28,17 @@ import static org.mockito.Mockito.*;
 public class TestMemberService {
 
     private IMemberRepository repository;
+    private SubgroupRepository subgroupRepository;
     private MemberServiceImp service;
 
     @BeforeEach
     void setup() {
 
         repository = mock(IMemberRepository.class);
+        subgroupRepository = mock(SubgroupRepository.class);
         service = new MemberServiceImp();
         ReflectionTestUtils.setField(service, "memberRepository", repository);
+        ReflectionTestUtils.setField(service, "subgroupRepository", subgroupRepository);
 
         // Simular un usuario autenticado
         Authentication auth = mock(Authentication.class);
@@ -44,11 +51,32 @@ public class TestMemberService {
     @Test
     @DisplayName("create_member: debe crear un nuevo miembro correctamente")
     void createMember_success() {
+        
+        Subgroup subgroup = new Subgroup();
+        subgroup.setSubgroupId(1L);
+        when(subgroupRepository.findBySubgroupId(1L)).thenReturn(Optional.of(subgroup));
         // Arrange
         Member newMember = new Member();
+        newMember.setUserId("user123");
+        newMember.setTenantId("Centinelas");
+        newMember.setGuardianId(1);
         newMember.setFirstName("Carlos");
         newMember.setLastName("Gómez");
+        newMember.setDocumentType(DocumentType.TI);
         newMember.setIdentification("12345");
+        newMember.setEmail("ejemplo@gmail.com");
+        newMember.setGender("M");
+        newMember.setAge(15);
+        newMember.setAddress("Calle 123 #45-67");
+        newMember.setPhone("3001234567");
+        newMember.setWeight("70.5");
+        newMember.setHeight("1.75");
+        newMember.setHobbies("Fútbol, lectura");
+        newMember.setSports("Baloncesto");
+        newMember.setInstruments("Guitarra");
+        newMember.setIsActive(true);
+        newMember.setRelationship("Hermano");
+        newMember.setSubgroup(subgroup);
         newMember.setStatus(Status.PENDING);
 
         when(repository.findByIdentification("12345")).thenReturn(Optional.empty());
@@ -218,7 +246,7 @@ public class TestMemberService {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.list_members_by_status(null));
 
-        assertEquals("Status cannot be null", ex.getMessage());
+        assertEquals("Status cannot be null or blank", ex.getMessage());
         verify(repository, never()).findByStatus(any());
     }
 }
