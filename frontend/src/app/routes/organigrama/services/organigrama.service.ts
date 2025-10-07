@@ -1,11 +1,11 @@
-import type { 
-  Rama, 
-  CreateRamaData, 
-  UpdateRamaData, 
-  CreateSubramaData, 
-  UpdateSubramaData, 
-  Subrama 
-} from '../types/rama.type';
+import type {
+  Rama,
+  CreateRamaData,
+  UpdateRamaData,
+  CreateSubramaData,
+  UpdateSubramaData,
+  Subrama,
+} from "../types/rama.type";
 
 import {
   mockGetRamas,
@@ -18,24 +18,32 @@ import {
   mockCreateSubrama,
   mockUpdateSubrama,
   mockDeleteSubrama,
-  clearStorageData
-} from './organigrama.mock.service';
+  clearStorageData,
+} from "./organigrama.mock.service";
 
 // Interruptor para alternar entre API real y simulación
 const USE_MOCK_API = true;
 
 // CRUD para Ramas (SECTIONS)
-export const getRamas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
+export const getRamas = async (
+  tenantSlug: string,
+  groupSlug: string,
+  año?: number
+): Promise<Rama[]> => {
   if (USE_MOCK_API) {
-    console.log('��� [OrganigramaService] Modo simulación activado');
+    console.log("��� [OrganigramaService] Modo simulación activado");
     return await mockGetRamas(tenantSlug, groupSlug, año);
   } else {
-    console.log('��� [OrganigramaService] Modo real activado');
+    console.log("��� [OrganigramaService] Modo real activado");
     return [];
   }
 };
 
-export const getRamaById = async (tenantSlug: string, groupSlug: string, id: string): Promise<Rama | null> => {
+export const getRamaById = async (
+  tenantSlug: string,
+  groupSlug: string,
+  id: string
+): Promise<Rama | null> => {
   if (USE_MOCK_API) {
     return await mockGetRamaById(tenantSlug, groupSlug, id);
   } else {
@@ -43,15 +51,17 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
   }
 };
 
-export const createRama = async (tenantSlug: string, groupSlug: string, data: CreateRamaData): Promise<Rama> => {
+export const createRama = async (data: CreateRamaData): Promise<Rama> => {
   if (USE_MOCK_API) {
     return await mockCreateRama(data);
   } else {
-    throw new Error('API real no implementada');
+    throw new Error("API real no implementada");
   }
 };
 
-export const updateRama = async (tenantSlug: string, groupSlug: string, data: UpdateRamaData): Promise<Rama | null> => {
+export const updateRama = async (
+  data: UpdateRamaData
+): Promise<Rama | null> => {
   if (USE_MOCK_API) {
     return await mockUpdateRama(data.id, data);
   } else {
@@ -59,7 +69,7 @@ export const updateRama = async (tenantSlug: string, groupSlug: string, data: Up
   }
 };
 
-export const deleteRama = async (tenantSlug: string, groupSlug: string, id: string): Promise<boolean> => {
+export const deleteRama = async (id: string): Promise<boolean> => {
   if (USE_MOCK_API) {
     try {
       await mockDeleteRama(id);
@@ -73,7 +83,11 @@ export const deleteRama = async (tenantSlug: string, groupSlug: string, id: stri
 };
 
 // CRUD para Subramas (SUBGROUPS)
-export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, ramaId: string): Promise<Subrama[]> => {
+export const getSubramasByRamaId = async (
+  tenantSlug: string,
+  groupSlug: string,
+  ramaId: string
+): Promise<Subrama[]> => {
   if (USE_MOCK_API) {
     return await mockGetSubramasByRamaId(tenantSlug, groupSlug, ramaId);
   } else {
@@ -81,7 +95,12 @@ export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string,
   }
 };
 
-export const getSubramaById = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<Subrama | null> => {
+export const getSubramaById = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  id: string
+): Promise<Subrama | null> => {
   if (USE_MOCK_API) {
     return await mockGetSubramaById(tenantSlug, groupSlug, sectionId, id);
   } else {
@@ -89,7 +108,10 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
   }
 };
 
-export const createSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, data: CreateSubramaData): Promise<Subrama | null> => {
+export const createSubrama = async (
+  sectionId: string,
+  data: CreateSubramaData
+): Promise<Subrama | null> => {
   if (USE_MOCK_API) {
     return await mockCreateSubrama(sectionId, data);
   } else {
@@ -97,10 +119,12 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
   }
 };
 
-export const updateSubrama = async (tenantSlug: string, groupSlug: string, data: UpdateSubramaData): Promise<Subrama | null> => {
+export const updateSubrama = async (
+  data: UpdateSubramaData
+): Promise<Subrama | null> => {
   if (USE_MOCK_API) {
     if (!data.ramaId) {
-      throw new Error('ramaId es requerido para actualizar subrama');
+      throw new Error("ramaId es requerido para actualizar subrama");
     }
     return await mockUpdateSubrama(data.ramaId, data.id, data);
   } else {
@@ -108,7 +132,10 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
   }
 };
 
-export const deleteSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<boolean> => {
+export const deleteSubrama = async (
+  sectionId: string,
+  id: string
+): Promise<boolean> => {
   if (USE_MOCK_API) {
     try {
       await mockDeleteSubrama(sectionId, id);
@@ -122,10 +149,19 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
 };
 
 // Funciones auxiliares
-export const getAvailableYears = async (tenantSlug: string, groupSlug: string): Promise<number[]> => {
+export const getAvailableYears = async (
+  tenantSlug: string,
+  groupSlug: string
+): Promise<number[]> => {
   if (USE_MOCK_API) {
     const ramas = await mockGetRamas(tenantSlug, groupSlug);
-    const years = [...new Set(ramas.map(rama => rama.año).filter(año => año !== undefined && año !== null))];
+    const years = [
+      ...new Set(
+        ramas
+          .map((rama) => rama.año)
+          .filter((año) => año !== undefined && año !== null)
+      ),
+    ];
     return years.sort((a, b) => b - a);
   } else {
     return [];
@@ -140,23 +176,26 @@ export const uploadSectionIcon = async (
   file: File
 ): Promise<string> => {
   if (USE_MOCK_API) {
-    console.log('📤 [MockService] Subiendo icono de sección...');
-    
+    console.log("📤 [MockService] Subiendo icono de sección...");
+
     try {
       // Usar StorageService para manejar la persistencia real
-      const { StorageService } = await import('./storage.service');
+      const { StorageService } = await import("./storage.service");
       const objectId = await StorageService.uploadRamaIcon(file, sectionId);
-      
-      console.log('✅ [MockService] Icono de sección subido con éxito:', objectId);
+
+      console.log(
+        "✅ [MockService] Icono de sección subido con éxito:",
+        objectId
+      );
       return objectId;
     } catch (error) {
-      console.error('❌ [MockService] Error subiendo icono:', error);
+      console.error("❌ [MockService] Error subiendo icono:", error);
       throw error;
     }
   }
 
   // TODO: Implementar upload real cuando se conecte con el backend
-  throw new Error('Real API not implemented yet');
+  throw new Error("Real API not implemented yet");
 };
 
 export const uploadSectionMainImage = async (
@@ -166,55 +205,69 @@ export const uploadSectionMainImage = async (
   file: File
 ): Promise<string> => {
   if (USE_MOCK_API) {
-    console.log('📤 [MockService] Subiendo imagen principal de sección...');
-    
+    console.log("📤 [MockService] Subiendo imagen principal de sección...");
+
     try {
       // Usar StorageService para manejar la persistencia real
-      const { StorageService } = await import('./storage.service');
-      const objectId = await StorageService.uploadRamaMainImage(file, sectionId);
-      
-      console.log('✅ [MockService] Imagen principal de sección subida con éxito:', objectId);
+      const { StorageService } = await import("./storage.service");
+      const objectId = await StorageService.uploadRamaMainImage(
+        file,
+        sectionId
+      );
+
+      console.log(
+        "✅ [MockService] Imagen principal de sección subida con éxito:",
+        objectId
+      );
       return objectId;
     } catch (error) {
-      console.error('❌ [MockService] Error subiendo imagen principal:', error);
+      console.error("❌ [MockService] Error subiendo imagen principal:", error);
       throw error;
     }
   }
 
   // TODO: Implementar upload real cuando se conecte con el backend
-  throw new Error('Real API not implemented yet');
+  throw new Error("Real API not implemented yet");
 };
 
 export const uploadSubgroupIcon = async (
   _tenantSlug: string,
-  _groupSlug: string, 
+  _groupSlug: string,
   _sectionId: string,
   subgroupId: string,
   file: File
 ): Promise<string> => {
   if (USE_MOCK_API) {
-    console.log('📤 [MockService] Subiendo icono de subgrupo...');
-    
+    console.log("📤 [MockService] Subiendo icono de subgrupo...");
+
     try {
       // Usar StorageService para manejar la persistencia real
-      const { StorageService } = await import('./storage.service');
+      const { StorageService } = await import("./storage.service");
       const objectId = await StorageService.uploadSubramaIcon(file, subgroupId);
       const url = StorageService.getImageUrl(objectId);
-      
+
       // Actualizar la subrama en el mock para guardar la referencia
-      const { mockUpdateSubramaImage } = await import('./organigrama.mock.service');
-      await mockUpdateSubramaImage(subgroupId, 'icono', objectId, url || '');
-      
-      console.log('✅ [MockService] Icono de subgrupo subido con éxito:', objectId);
-      return url || ''; // Retornar la URL para mostrar inmediatamente
+      const { mockUpdateSubramaImage } = await import(
+        "./organigrama.mock.service"
+      );
+      await mockUpdateSubramaImage(subgroupId, "icono", objectId, url || "");
+
+      console.log(
+        "✅ [MockService] Icono de subgrupo subido con éxito:",
+        objectId
+      );
+      return url || ""; // Retornar la URL para mostrar inmediatamente
     } catch (error) {
-      console.error('❌ [MockService] Error subiendo icono de subgrupo:', error);
+      console.error(
+        "❌ [MockService] Error subiendo icono de subgrupo:",
+        error
+      );
       throw error;
     }
   }
 
   // TODO: Implementar upload real cuando se conecte con el backend
-  throw new Error('Real API not implemented yet');
+  throw new Error("Real API not implemented yet");
 };
 
 export const uploadSubgroupMainImage = async (
@@ -225,28 +278,44 @@ export const uploadSubgroupMainImage = async (
   file: File
 ): Promise<string> => {
   if (USE_MOCK_API) {
-    console.log('📤 [MockService] Subiendo imagen principal de subgrupo...');
-    
+    console.log("📤 [MockService] Subiendo imagen principal de subgrupo...");
+
     try {
       // Usar StorageService para manejar la persistencia real
-      const { StorageService } = await import('./storage.service');
-      const objectId = await StorageService.uploadSubramaMainImage(file, subgroupId);
+      const { StorageService } = await import("./storage.service");
+      const objectId = await StorageService.uploadSubramaMainImage(
+        file,
+        subgroupId
+      );
       const url = StorageService.getImageUrl(objectId);
-      
+
       // Actualizar la subrama en el mock para guardar la referencia
-      const { mockUpdateSubramaImage } = await import('./organigrama.mock.service');
-      await mockUpdateSubramaImage(subgroupId, 'imagenPrincipal', objectId, url || '');
-      
-      console.log('✅ [MockService] Imagen principal de subgrupo subida con éxito:', objectId);
-      return url || ''; // Retornar la URL para mostrar inmediatamente
+      const { mockUpdateSubramaImage } = await import(
+        "./organigrama.mock.service"
+      );
+      await mockUpdateSubramaImage(
+        subgroupId,
+        "imagenPrincipal",
+        objectId,
+        url || ""
+      );
+
+      console.log(
+        "✅ [MockService] Imagen principal de subgrupo subida con éxito:",
+        objectId
+      );
+      return url || ""; // Retornar la URL para mostrar inmediatamente
     } catch (error) {
-      console.error('❌ [MockService] Error subiendo imagen principal de subgrupo:', error);
+      console.error(
+        "❌ [MockService] Error subiendo imagen principal de subgrupo:",
+        error
+      );
       throw error;
     }
   }
 
   // TODO: Implementar upload real cuando se conecte con el backend
-  throw new Error('Real API not implemented yet');
+  throw new Error("Real API not implemented yet");
 };
 
 export const uploadGalleryImages = async (
@@ -256,26 +325,34 @@ export const uploadGalleryImages = async (
   files: File[]
 ): Promise<string[]> => {
   if (USE_MOCK_API) {
-    console.log('📤 [MockService] Subiendo imágenes de galería...');
-    
+    console.log("📤 [MockService] Subiendo imágenes de galería...");
+
     try {
       // Usar StorageService para manejar la persistencia real
-      const { StorageService } = await import('./storage.service');
-      const objectIds = await StorageService.uploadRamaGallery(files, sectionId);
-      
+      const { StorageService } = await import("./storage.service");
+      const objectIds = await StorageService.uploadRamaGallery(
+        files,
+        sectionId
+      );
+
       // Devolver las URLs para mostrar inmediatamente
-      const urls = objectIds.map(id => StorageService.getImageUrl(id)).filter(url => url !== null) as string[];
-      
-      console.log('✅ [MockService] Imágenes de galería subidas con éxito:', urls.length);
+      const urls = objectIds
+        .map((id) => StorageService.getImageUrl(id))
+        .filter((url) => url !== null) as string[];
+
+      console.log(
+        "✅ [MockService] Imágenes de galería subidas con éxito:",
+        urls.length
+      );
       return urls;
     } catch (error) {
-      console.error('❌ [MockService] Error subiendo galería:', error);
+      console.error("❌ [MockService] Error subiendo galería:", error);
       throw error;
     }
   }
 
   // TODO: Implementar upload real cuando se conecte con el backend
-  throw new Error('Real API not implemented yet');
+  throw new Error("Real API not implemented yet");
 };
 
 export const uploadSubgroupGalleryImages = async (
@@ -286,30 +363,43 @@ export const uploadSubgroupGalleryImages = async (
   files: File[]
 ): Promise<string[]> => {
   if (USE_MOCK_API) {
-    console.log('📤 [MockService] Subiendo imágenes de galería de subgrupo...');
-    
+    console.log("📤 [MockService] Subiendo imágenes de galería de subgrupo...");
+
     try {
       // Usar StorageService para manejar la persistencia real
-      const { StorageService } = await import('./storage.service');
-      const objectIds = await StorageService.uploadSubramaGallery(files, subgroupId);
-      
+      const { StorageService } = await import("./storage.service");
+      const objectIds = await StorageService.uploadSubramaGallery(
+        files,
+        subgroupId
+      );
+
       // Actualizar la subrama en el mock para guardar las referencias
-      const { mockUpdateSubramaGallery } = await import('./organigrama.mock.service');
+      const { mockUpdateSubramaGallery } = await import(
+        "./organigrama.mock.service"
+      );
       await mockUpdateSubramaGallery(subgroupId, objectIds);
-      
+
       // Devolver las URLs para mostrar inmediatamente
-      const urls = objectIds.map(id => StorageService.getImageUrl(id)).filter(url => url !== null) as string[];
-      
-      console.log('✅ [MockService] Imágenes de galería de subgrupo subidas con éxito:', urls.length);
+      const urls = objectIds
+        .map((id) => StorageService.getImageUrl(id))
+        .filter((url) => url !== null) as string[];
+
+      console.log(
+        "✅ [MockService] Imágenes de galería de subgrupo subidas con éxito:",
+        urls.length
+      );
       return urls;
     } catch (error) {
-      console.error('❌ [MockService] Error subiendo galería de subgrupo:', error);
+      console.error(
+        "❌ [MockService] Error subiendo galería de subgrupo:",
+        error
+      );
       throw error;
     }
   }
 
   // TODO: Implementar upload real cuando se conecte con el backend
-  throw new Error('Real API not implemented yet');
+  throw new Error("Real API not implemented yet");
 };
 
 // 🧹 Función para limpiar localStorage (útil para debugging)
@@ -317,6 +407,6 @@ export const clearAllStorageData = (): void => {
   if (USE_MOCK_API) {
     clearStorageData();
   } else {
-    console.warn('clearAllStorageData solo funciona en modo mock');
+    console.warn("clearAllStorageData solo funciona en modo mock");
   }
 };
