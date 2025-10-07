@@ -13,8 +13,9 @@ import {
 import { Trash } from "lucide-react";
 import type { Cuota } from "@/types/cuota.type";
 import { toast, type ExternalToast } from "sonner";
-import axios from "axios";
+import api from "@/api/axios";
 import { useTenant } from "@/hooks/useTenant";
+import { useNavigate } from "react-router-dom";
 
 interface DeleteCuotaModalProps {
   cuota: Cuota;
@@ -23,16 +24,20 @@ interface DeleteCuotaModalProps {
 
 export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalProps) {
   const { tenantId } = useTenant();
+  const navigate = useNavigate();
 
   const handleDelete = async () => {
     console.log("Eliminando cuota:", cuota.fee_id);
     try{
-      const response = await axios.delete(
+      const response = await api.delete(
         `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}/${cuota.fee_id}`
       );
       if(response.status === 204) {
         toast.success("Cuota eliminada correctamente");
         onRefresh?.();
+      } else if (response.status === 401) {
+        toast.error("No tienes permisos para realizar esta acción");
+        navigate("/app/dashboard");
       } else {
         toast.error("Error al eliminar la cuota:", response.data.message);
       }

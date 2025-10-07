@@ -31,8 +31,9 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast, type ExternalToast } from "sonner";
-import axios from "axios";
+import api from "@/api/axios";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
 import type { Subgroup } from "@/types/subgroup.type";
 import type { Section } from "@/types/section.type";
@@ -58,6 +59,7 @@ export default function CreateCuotaForm({
   onRefresh,
 }: CreateCuotaFormProps) {
   const { tenantId } = useTenant();
+  const navigate = useNavigate();
 
   const [showAssociatedToField, setShowAssociatedToField] = useState(false);
   // Traer los miembros, subgrupos y secciones del grupo
@@ -69,7 +71,7 @@ export default function CreateCuotaForm({
     const fetchMembersSubgroupsAndSections = async () => {
       // Cargar miembros
       try {
-        const membersResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}finanzas/fees/members/${tenantId}`);
+        const membersResponse = await api.get(`finanzas/fees/members/${tenantId}`);
         setMembers(membersResponse.data || []);
       } catch (error) {
         console.error("Error al cargar miembros:", error);
@@ -78,7 +80,7 @@ export default function CreateCuotaForm({
 
       // Cargar subgrupos
       try {
-        const subgroupsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}finanzas/fees/subgroups/${tenantId}`);
+        const subgroupsResponse = await api.get(`finanzas/fees/subgroups/${tenantId}`);
         setSubgroups(subgroupsResponse.data || []);
       } catch (error) {
         console.error("Error al cargar subgrupos:", error);
@@ -87,7 +89,7 @@ export default function CreateCuotaForm({
 
       // Cargar secciones
       try {
-        const sectionsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}finanzas/fees/sections/${tenantId}`);
+        const sectionsResponse = await api.get(`finanzas/fees/sections/${tenantId}`);
         setSections(sectionsResponse.data || []);
       } catch (error) {
         console.error("Error al cargar secciones:", error);
@@ -116,12 +118,13 @@ export default function CreateCuotaForm({
         ? typeof defaultValues.end_date === "string"
           ? new Date(defaultValues.end_date)
           : defaultValues.end_date
-        : undefined,
+        : defaultValues?.periodicity === "SINGLE" ? undefined : undefined,
       associated_to: defaultValues?.associated_to || null,
     },
   });
 
   const scopeValue = form.watch("scope");
+  const periodicityValue = form.watch("periodicity");
 
   // Mostrar campo target_member_id solo cuando scope es SCOUT
   useEffect(() => {
@@ -142,6 +145,13 @@ export default function CreateCuotaForm({
     }
   }, [scopeValue, form]);
 
+  // Cuando cambia la periodicidad a SINGLE, limpiar end_date
+  useEffect(() => {
+    if (periodicityValue === "SINGLE") {
+      form.resetField("end_date");
+    }
+  }, [periodicityValue, form]);
+
   async function onSubmit(values: CreateCuotaFormValues) {
     // Preparar los datos según el formato esperado por el backend
     const dataToSendCreate = {
@@ -152,7 +162,11 @@ export default function CreateCuotaForm({
       periodicity: values.periodicity,
       scope: values.scope,
       start_date: values.start_date.toISOString().split('T')[0], // Formato YYYY-MM-DD
-      ...(values.end_date && { end_date: values.end_date.toISOString().split('T')[0] }),
+      // Si es SINGLE, usar la misma fecha de inicio como fecha de fin
+      ...(values.periodicity === "SINGLE"
+        ? { end_date: values.start_date.toISOString().split('T')[0] }
+        : values.end_date && { end_date: values.end_date.toISOString().split('T')[0] }
+      ),
       associated_to: values.scope === "ALL" ? null : values.associated_to,
     };
 
@@ -166,7 +180,7 @@ export default function CreateCuotaForm({
           amount: values.amount,
         };
 
-        const response = await axios.patch(
+        const response = await api.patch(
           `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}/${cuotaId}`,
           dataToSendEdit
         );
@@ -175,6 +189,9 @@ export default function CreateCuotaForm({
           toast.success("Cuota actualizada correctamente");
           setOpen(false);
           onRefresh?.();
+        } else if (response.status === 401) {
+          toast.error("No tienes permisos para realizar esta acción");
+          navigate("/app/dashboard");
         } else {
           toast.error("Error al actualizar la cuota:", response.data.message);
         }
@@ -185,7 +202,7 @@ export default function CreateCuotaForm({
     } else {
       // Modo creación: crear nueva cuota
       try {
-        const response = await axios.post(
+        const response = await api.post(
           `${import.meta.env.VITE_BACKEND_URL}finanzas/fees`,
           dataToSendCreate
         );
@@ -194,6 +211,9 @@ export default function CreateCuotaForm({
           toast.success("Cuota creada correctamente");
           setOpen(false);
           onRefresh?.();
+        } else if (response.status === 401) {
+          toast.error("No tienes permisos para realizar esta acción");
+          navigate("/app/dashboard");
         } else {
           toast.error("Error al crear la cuota:", response.data.message);
         }
@@ -335,49 +355,51 @@ export default function CreateCuotaForm({
             )}
           />
         </div>
-        <div className="col-span-full md:col-span-1">
-          <FormField
-            control={form.control}
-            name="end_date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Fecha de fin</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                        disabled={isEditMode}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Selecciona una fecha</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0))
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {periodicityValue !== "SINGLE" && (
+          <div className="col-span-full md:col-span-1">
+            <FormField
+              control={form.control}
+              name="end_date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Fecha de fin</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isEditMode}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Selecciona una fecha</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date(new Date().setHours(0, 0, 0, 0))
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
         <Separator className="col-span-full" />
 
         <div className="col-span-full md:col-span-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">

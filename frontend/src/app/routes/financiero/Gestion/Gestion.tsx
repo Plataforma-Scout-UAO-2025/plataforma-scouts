@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
 import CuotasTable from "./components/CuotasTable";
 import type { Cuota } from "@/types/cuota.type";
-import axios from "axios";
+import api from "@/api/axios";
 import { Loader2 } from "lucide-react";
 import { useTenant } from "@/hooks/useTenant";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export default function Gestion() {
   const [cuotas, setCuotas] = useState<Cuota[]>([]);
   const [loading, setLoading] = useState(true);
   const { tenantId } = useTenant();
+  const navigate = useNavigate();
 
   const fetchCuotas = async () => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}`
       );
 
@@ -25,6 +27,9 @@ export default function Gestion() {
           end_date: cuota.end_date ? new Date(cuota.end_date) : undefined,
         }));
         setCuotas(cuotasData);
+      } else if (response.status === 401) {
+        toast.error("No tienes permisos para acceder a esta sección");
+        navigate("/app/dashboard");
       } else {
         toast.error("Error al cargar las cuotas");
         console.error("Error al cargar las cuotas:", response.data);
