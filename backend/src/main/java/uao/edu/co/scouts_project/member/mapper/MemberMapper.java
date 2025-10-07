@@ -2,7 +2,7 @@ package uao.edu.co.scouts_project.member.mapper;
 
 import uao.edu.co.scouts_project.member.dto.MemberDto;
 import uao.edu.co.scouts_project.member.model.Member;
-import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
+//import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 

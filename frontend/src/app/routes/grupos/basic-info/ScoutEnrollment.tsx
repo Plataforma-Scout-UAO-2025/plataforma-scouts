@@ -105,7 +105,7 @@ function ScoutEnrollment() {
     }
   };
 
-  // Enviar formulario - CORREGIDO
+  // Enviar formulario
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
@@ -168,27 +168,31 @@ function ScoutEnrollment() {
   // Página 1: Datos personales
   const camposPagina1 = (
     <>
-      <div>
+      <div className="w-full">
         <Label htmlFor="firstname">Nombres *</Label>
         <Input
           id="firstname"
           name="firstname"
           value={datosPersonales.firstname}
           onChange={handlePersonalChange}
+          placeholder="Ej: Juan Carlos"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="lastname">Apellidos *</Label>
         <Input
           id="lastname"
           name="lastname"
           value={datosPersonales.lastname}
           onChange={handlePersonalChange}
+          placeholder="Ej: Pérez García"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="email">Correo electrónico *</Label>
         <Input
           id="email"
@@ -196,10 +200,12 @@ function ScoutEnrollment() {
           type="email"
           value={datosPersonales.email}
           onChange={handlePersonalChange}
+          placeholder="ejemplo@correo.com"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="confirm_email">Confirmar correo *</Label>
         <Input
           id="confirm_email"
@@ -207,36 +213,40 @@ function ScoutEnrollment() {
           type="email"
           value={datosPersonales.confirm_email}
           onChange={handlePersonalChange}
+          placeholder="ejemplo@correo.com"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="document_type">Tipo de documento *</Label>
         <select
           id="document_type"
           name="document_type"
           value={datosPersonales.document_type}
           onChange={handlePersonalChange}
-          className="border border-primary rounded w-full h-10 px-2 bg-white"
+          className="w-full border border-input rounded-md h-10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           required
         >
-          <option value="">Selecciona...</option>
+          <option value="">Selecciona un tipo...</option>
           <option value="CC">Cédula de Ciudadanía</option>
           <option value="TI">Tarjeta de Identidad</option>
           <option value="CE">Cédula de Extranjería</option>
         </select>
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="identification">Número de documento *</Label>
         <Input
           id="identification"
           name="identification"
           value={datosPersonales.identification}
           onChange={handlePersonalChange}
+          placeholder="1234567890"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="birth_date">Fecha de nacimiento *</Label>
         <Input
           id="birth_date"
@@ -244,35 +254,38 @@ function ScoutEnrollment() {
           type="date"
           value={datosPersonales.birth_date}
           onChange={handlePersonalChange}
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="gender">Género *</Label>
         <select
           id="gender"
           name="gender"
           value={datosPersonales.gender}
           onChange={handlePersonalChange}
-          className="border border-primary rounded w-full h-10 px-2 bg-white"
+          className="w-full border border-input rounded-md h-10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           required
         >
-          <option value="">Selecciona...</option>
+          <option value="">Selecciona una opción...</option>
           <option value="Masculino">Masculino</option>
           <option value="Femenino">Femenino</option>
         </select>
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="address">Dirección *</Label>
         <Input
           id="address"
           name="address"
           value={datosPersonales.address}
           onChange={handlePersonalChange}
+          placeholder="Calle 12 #34-56"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="phone">Teléfono *</Label>
         <Input
           id="phone"
@@ -280,54 +293,60 @@ function ScoutEnrollment() {
           type="tel"
           value={datosPersonales.phone}
           onChange={handlePersonalChange}
+          placeholder="3001234567"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="weight">Peso (kg)</Label>
         <Input
           id="weight"
           name="weight"
           value={datosPersonales.weight}
           onChange={handlePersonalChange}
+          placeholder="65"
+          className="w-full"
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="height">Altura (cm)</Label>
         <Input
           id="height"
           name="height"
           value={datosPersonales.height}
           onChange={handlePersonalChange}
+          placeholder="170"
+          className="w-full"
         />
       </div>
-      <div className="col-span-2">
+      <div className="col-span-full w-full">
         <Label htmlFor="group">Grupo scout *</Label>
         <select
           id="group"
           name="group"
           value={datosPersonales.group}
           onChange={handlePersonalChange}
-          className="border border-primary rounded w-full h-10 px-2 bg-white"
+          className="w-full border border-input rounded-md h-10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           required
         >
-          <option value="">Selecciona...</option>
+          <option value="">Selecciona un grupo...</option>
           <option value="Centinelas 113">Centinelas 113</option>
           <option value="803 Chiminigagua">803 Chiminigagua</option>
         </select>
       </div>
 
       {/* Contactos de emergencia */}
-      <div className="col-span-2 mt-4">
+      <div className="col-span-full mt-4">
         <h3 className="text-lg font-semibold mb-3">
           Contactos de emergencia *
         </h3>
         {datosPersonales.emergency_contacts.map((contact, index) => (
           <div
             key={index}
-            className="grid grid-cols-3 gap-4 mb-4 p-4 border rounded-lg"
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border rounded-lg"
           >
-            <div>
+            <div className="w-full">
               <Label htmlFor={`contact_name_${index}`}>Nombre</Label>
               <Input
                 id={`contact_name_${index}`}
@@ -335,10 +354,12 @@ function ScoutEnrollment() {
                 onChange={(e) =>
                   handleEmergencyContactChange(index, "name", e.target.value)
                 }
+                placeholder="María González"
+                className="w-full"
                 required
               />
             </div>
-            <div>
+            <div className="w-full">
               <Label htmlFor={`contact_relationship_${index}`}>
                 Parentesco
               </Label>
@@ -352,12 +373,14 @@ function ScoutEnrollment() {
                     e.target.value
                   )
                 }
+                placeholder="Madre, Padre, Hermano/a..."
+                className="w-full"
                 required
               />
             </div>
-            <div>
+            <div className="w-full">
               <Label htmlFor={`contact_phone_${index}`}>Teléfono</Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 <Input
                   id={`contact_phone_${index}`}
                   type="tel"
@@ -365,6 +388,8 @@ function ScoutEnrollment() {
                   onChange={(e) =>
                     handleEmergencyContactChange(index, "phone", e.target.value)
                   }
+                  placeholder="3009876543"
+                  className="flex-1"
                   required
                 />
                 {datosPersonales.emergency_contacts.length > 1 && (
@@ -373,6 +398,7 @@ function ScoutEnrollment() {
                     variant="destructive"
                     size="sm"
                     onClick={() => removeEmergencyContact(index)}
+                    className="shrink-0"
                   >
                     X
                   </Button>
@@ -396,7 +422,7 @@ function ScoutEnrollment() {
   // Página 2: Intereses y habilidades
   const camposPagina2 = (
     <>
-      <div className="col-span-2">
+      <div className="col-span-full w-full">
         <Label htmlFor="hobbies">Pasatiempos</Label>
         <Input
           id="hobbies"
@@ -404,9 +430,10 @@ function ScoutEnrollment() {
           value={datosPersonales.hobbies}
           onChange={handlePersonalChange}
           placeholder="Lectura, videojuegos, pintura..."
+          className="w-full"
         />
       </div>
-      <div className="col-span-2">
+      <div className="col-span-full w-full">
         <Label htmlFor="sports">Deportes</Label>
         <Input
           id="sports"
@@ -414,9 +441,10 @@ function ScoutEnrollment() {
           value={datosPersonales.sports}
           onChange={handlePersonalChange}
           placeholder="Fútbol, natación, ciclismo..."
+          className="w-full"
         />
       </div>
-      <div className="col-span-2">
+      <div className="col-span-full w-full">
         <Label htmlFor="instruments">Instrumentos musicales</Label>
         <Input
           id="instruments"
@@ -424,6 +452,7 @@ function ScoutEnrollment() {
           value={datosPersonales.instruments}
           onChange={handlePersonalChange}
           placeholder="Guitarra, piano, flauta..."
+          className="w-full"
         />
       </div>
     </>
@@ -432,28 +461,31 @@ function ScoutEnrollment() {
   // Página 3: Datos escolares
   const camposPagina3 = (
     <>
-      <div className="col-span-2">
+      <div className="col-span-full w-full">
         <Label htmlFor="institution">Institución educativa *</Label>
         <Input
           id="institution"
           name="institution"
           value={datosEscolares.institution}
           onChange={handleSchoolChange}
+          placeholder="Nombre de la institución"
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="course">Curso/Grado actual *</Label>
         <Input
           id="course"
           name="course"
           value={datosEscolares.course}
           onChange={handleSchoolChange}
-          placeholder="Ej: 9°, 10°, 11°"
+          placeholder="9, 10, 11..."
+          className="w-full"
           required
         />
       </div>
-      <div>
+      <div className="w-full">
         <Label htmlFor="calendar">Calendario</Label>
         <Input
           id="calendar"
@@ -461,19 +493,20 @@ function ScoutEnrollment() {
           value={datosEscolares.calendar}
           onChange={handleSchoolChange}
           placeholder="A o B"
+          className="w-full"
         />
       </div>
-      <div className="col-span-2">
+      <div className="col-span-full w-full">
         <Label htmlFor="shift">Jornada *</Label>
         <select
           id="shift"
           name="shift"
           value={datosEscolares.shift}
           onChange={handleSchoolChange}
-          className="border border-primary rounded w-full h-10 px-2 bg-white"
+          className="w-full border border-input rounded-md h-10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           required
         >
-          <option value="">Selecciona...</option>
+          <option value="">Selecciona una jornada...</option>
           <option value="Mañana">Mañana</option>
           <option value="Tarde">Tarde</option>
           <option value="Noche">Noche</option>
