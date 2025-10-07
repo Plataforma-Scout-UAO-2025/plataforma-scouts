@@ -124,7 +124,6 @@ function AppLayoutContent() {
             />
             <div className="leading-tight">
               <div className="text-base font-semibold">{user?.nickname}</div>
-              <div className="text-xs opacity-80">MANADA KUNA</div>
               <div className="text-xs opacity-80">{currentUserRoleLabel}</div>
             </div>
           </div>
