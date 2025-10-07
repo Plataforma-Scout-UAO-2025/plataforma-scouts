@@ -35,7 +35,7 @@ export const buildApiPath = (
   resource: string,
   ...additionalPaths: string[]
 ): string => {
-  const basePath = `/api/tenants/${tenantSlug}/groups/${groupSlug}`;
+  const basePath = `tenants/${tenantSlug}/groups/${groupSlug}`;
   const fullPath = [basePath, resource, ...additionalPaths].filter(Boolean).join('/');
   return fullPath;
 };

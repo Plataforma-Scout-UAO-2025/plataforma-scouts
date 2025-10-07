@@ -56,7 +56,7 @@ export const diagnosticImageUpload = async (
   console.log('📤 [DIAGNOSTIC] Upload response:', uploadResponse);
 
   // Paso 3: Agregar a galería usando PATCH
-  const patchEndpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery`;
+  const patchEndpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery`;
   const addPayload = {
     operations: [{ 
       op: "add", 

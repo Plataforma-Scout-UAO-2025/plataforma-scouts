@@ -48,7 +48,7 @@ export default function RamaDetail() {
         // If mapper didn't provide gallery URLs, try fetching raw backend record as fallback
         if (galleryUrls.length === 0) {
           try {
-            const endpoint = `/api/v1/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+            const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
             console.log('🔎 [RamaDetail] galleryUrls empty; fetching backend raw endpoint as fallback:', endpoint);
             const response = await api.get<Record<string, unknown>>(endpoint);
             const backendRec = response.data;

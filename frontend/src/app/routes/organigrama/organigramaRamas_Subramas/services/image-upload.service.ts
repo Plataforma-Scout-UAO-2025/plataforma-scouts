@@ -6,7 +6,7 @@ type OverallProgressHandler = (percent: number) => void;
 
 // Función auxiliar para obtener rama directamente sin dependencias circulares
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
-  const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+  const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
   const response = await api.get<Record<string, unknown> | undefined>(endpoint);
   return response.data;
 };
@@ -331,7 +331,7 @@ export const replaceSubramaGalleryImage = async (
     console.log("✅ [ImageUploadService] Replace PATCH enviado con éxito");
 
     const response = await api.get<Record<string, unknown>>(
-      `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}`
+      `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}`
     );
     const rec = response.data as Record<string, unknown> | undefined;
     const galleryUrls =
