@@ -67,6 +67,7 @@ const adminGrupalItems: MenuItem[] = [
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+  { id: "grupos", label: "Información Médica", icon: <Settings />, href: "/app/grupos" },
 ]
 
 const bottomItems: MenuItem[] = [
