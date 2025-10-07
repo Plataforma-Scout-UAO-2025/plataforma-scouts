@@ -33,7 +33,6 @@ import { Outlet, Link, useLocation } from "react-router-dom"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import type { ReactNode } from "react"
 import { useAuth0 } from '@auth0/auth0-react';
-import { RoleProvider } from '@/context/RoleProvider';
 import { useRoleContext } from '@/hooks/useRoleContext';
 import FullScreenLoader from '@/components/common/FullScreenLoader';
 import FullScreenError from '@/components/common/FullScreenError';
@@ -243,9 +242,5 @@ function AppLayoutContent() {
 }
 
 export default function AppLayout() {
-  return (
-    <RoleProvider>
-      <AppLayoutContent />
-    </RoleProvider>
-  );
+  return <AppLayoutContent />;
 }
