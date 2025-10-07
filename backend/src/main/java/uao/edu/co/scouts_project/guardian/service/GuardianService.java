@@ -3,6 +3,7 @@ package uao.edu.co.scouts_project.guardian.service;
 import java.util.List;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.GuardianWIthMemberDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 
 public interface GuardianService {
@@ -16,4 +17,6 @@ public interface GuardianService {
     GuardianCreateDTO removeMemberFromGuardian(String guardianId, String memberId);
     boolean deleteGuardianById(String guardianId);
     List<MemberDTO> findAvailableMembers();
+    List<MemberDTO> findMembersInChargeOf(String guardianId);
+    GuardianWIthMemberDTO findGuardianWithMembers(String guardianId);
 }
