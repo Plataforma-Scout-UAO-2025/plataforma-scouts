@@ -21,7 +21,7 @@ export const getRamasWithSubramas = async (tenantSlug: string, groupSlug: string
   console.log('🔄 [RamaService] Intentando obtener ramas con subramas (optimizado)');
   try {
     // Intentar endpoint optimizado (si el backend lo soporta)
-    const endpointOptimized = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections?includeSubgroups=true`;
+    const endpointOptimized = `/tenants/${tenantSlug}/groups/${groupSlug}/sections?includeSubgroups=true`;
     const response = await api.get<unknown[]>(endpointOptimized).catch(() => undefined);
     const backendRamas = response?.data;
 
@@ -85,7 +85,7 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
   console.log('🔄 [RamaService] Obteniendo ramas del backend real');
   
   try {
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
     console.log('🔄 [RamaService] Haciendo request a:', endpoint);
     
     const response = await api.get<BackendRama[]>(endpoint);
@@ -142,7 +142,7 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
   console.log('🔄 [RamaService] Obteniendo rama por ID:', id);
   
   try {
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
     const response = await api.get<BackendRama>(endpoint);
     const backendRama = response.data;
     
@@ -181,7 +181,7 @@ export const createRama = async (tenantSlug: string, groupSlug: string, data: Cr
   });
   
   try {
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendCreateRamaToBackend(data);
@@ -233,7 +233,7 @@ export const updateRama = async (tenantSlug: string, groupSlug: string, data: Up
   console.log('🔄 [RamaService] Actualizando rama:', data.id);
   
   try {
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${data.id}`;
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${data.id}`;
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendUpdateRamaToBackend(data);
@@ -264,7 +264,7 @@ export const deleteRama = async (tenantSlug: string, groupSlug: string, id: stri
   console.log('🔄 [RamaService] Eliminando rama:', id);
   
   try {
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
     await api.delete(endpoint);
     
     console.log('✅ [RamaService] Rama eliminada');
@@ -282,7 +282,7 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
   try {
     // OPTIMIZACIÓN: Solo obtenemos las ramas SIN subramas para calcular años
     // Esto evita el bucle infinito y mejora el rendimiento
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
     const response = await api.get<BackendRama[]>(endpoint);
     const backendRamas = response.data;
     

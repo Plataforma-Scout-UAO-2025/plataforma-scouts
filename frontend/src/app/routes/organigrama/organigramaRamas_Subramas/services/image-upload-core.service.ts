@@ -20,7 +20,7 @@ export const diagnoseBatchImageUpload = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await api.postFormData('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData('/storage/upload', formData);
     console.log('✅ [DIAGNÓSTICO] Upload exitoso, objectId:', uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
@@ -33,7 +33,7 @@ export const diagnoseBatchImageUpload = async (
     console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
 
     // Paso 3: Verificar resultado usando una llamada directa al API
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
   const backendRama = await api.get<Record<string, unknown> | undefined>(endpoint);
   const backendRec = backendRama as unknown as Record<string, unknown> | undefined;
   const gallery: string[] = (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
@@ -83,7 +83,7 @@ export const uploadSectionIcon = async (
     formData.append('file', file);
     
     console.log('🔄 [ImageUploadService] Subiendo archivo al storage...');
-    const uploadResponse = await api.postFormData('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData('/storage/upload', formData);
     console.log('✅ [ImageUploadService] Archivo subido, objectId:', uploadResponse.objectId);
     
     // Paso 2: Usar endpoint PATCH específico para icono
@@ -130,7 +130,7 @@ export const uploadSectionMainImage = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await api.postFormData('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData('/storage/upload', formData);
     
     // Paso 2: Usar endpoint PATCH específico para imagen principal
     console.log('🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico...');
@@ -179,7 +179,7 @@ export const uploadGalleryImages = async (
       const formData = new FormData();
       formData.append('file', file);
       
-      const uploadResponse = await api.postFormData('/api/storage/upload', formData);
+      const uploadResponse = await api.postFormData('/storage/upload', formData);
       objectIds.push(uploadResponse.objectId);
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }

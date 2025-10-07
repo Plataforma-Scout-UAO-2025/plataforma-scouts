@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast, type ExternalToast } from "sonner";
-import axios from "axios";
+import { api } from "@/api";
 
 interface CreateCuotaFormProps {
   open: boolean;
@@ -74,8 +74,8 @@ export default function CreateCuotaForm({
           ...values,
         }
 
-        const response = await axios.put(
-          import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + cuotaId,
+        const response = await api.put(
+          "/finanzas/cuotas/" + cuotaId,
           data
         );
 
@@ -93,8 +93,8 @@ export default function CreateCuotaForm({
     } else {
       // Modo creación: crear nueva cuota
       try {
-        const response = await axios.post(
-          import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas",
+        const response = await api.post(
+          "/finanzas/cuotas",
           values
         );
 

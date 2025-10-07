@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import CuotasTable from "./components/CuotasTable";
 import type { Cuota } from "./types/cuota.type";
-import axios from "axios";
+import { api } from "@/api";
 import { Loader2 } from "lucide-react";
 
 export default function Gestion() {
@@ -10,8 +10,8 @@ export default function Gestion() {
 
   useEffect(() => {
     const fetchCuotas = async () => {
-      const response = await axios.get(
-        import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas"
+      const response = await api.get(
+        "/finanzas/cuotas"
       );
       setCuotas(response.data);
       setLoading(false);

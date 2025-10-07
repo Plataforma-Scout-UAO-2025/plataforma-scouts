@@ -13,7 +13,7 @@ import {
 import { Trash } from "lucide-react";
 import type { Cuota } from "../types/cuota.type";
 import { toast, type ExternalToast } from "sonner";
-import axios from "axios";
+import { api } from "@/api";
 
 interface DeleteCuotaModalProps {
   cuota: Cuota;
@@ -23,7 +23,7 @@ export default function DeleteCuotaModal({ cuota }: DeleteCuotaModalProps) {
   const handleDelete = async () => {
     console.log("Eliminando cuota:", cuota.id);
     try{
-      const response = await axios.delete(import.meta.env.VITE_BACKEND_URL + "finanzas/cuotas/" + cuota.id);
+      const response = await api.delete("/finanzas/cuotas/" + cuota.id);
       if(response.status === 204) {
         toast.success("Cuota eliminada correctamente");
         window.location.reload();

@@ -17,7 +17,7 @@ export const getAvailableTenants = async (): Promise<TenantInfo[]> => {
   try {
     console.log('🔄 [TenantService] Obteniendo tenants disponibles');
     
-  const response = await api.get<TenantInfo[]>('/api/tenants');
+  const response = await api.get<TenantInfo[]>('/tenants');
   const tenants = response.data;
     
   console.log('✅ [TenantService] Tenants obtenidos:', tenants);
@@ -42,7 +42,7 @@ export const getAvailableGroups = async (tenantSlug: string): Promise<GroupInfo[
   try {
     console.log('🔄 [TenantService] Obteniendo grupos para tenant:', tenantSlug);
     
-  const response = await api.get<GroupInfo[]>(`/api/tenants/${tenantSlug}/groups`);
+  const response = await api.get<GroupInfo[]>(`/tenants/${tenantSlug}/groups`);
   const groups = response.data;
     
   console.log('✅ [TenantService] Grupos obtenidos:', groups);
