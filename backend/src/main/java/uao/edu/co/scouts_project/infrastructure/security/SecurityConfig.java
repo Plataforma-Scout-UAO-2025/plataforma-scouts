@@ -52,7 +52,7 @@ public class SecurityConfig {
 
                         //
                         // Datos médicos
-
+                        .requestMatchers("/api/medical_record/**").permitAll()
 
 
 
