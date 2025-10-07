@@ -3,9 +3,10 @@ package uao.edu.co.scouts_project.finanzas.payments.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.finanzas.payments.model.Installment;
 import uao.edu.co.scouts_project.finanzas.payments.repository.projection.InstallmentWithConceptRow;
 import uao.edu.co.scouts_project.finanzas.payments.repository.projection.MemberWithGroupsRow;
@@ -43,27 +44,79 @@ public interface IPaymentsReadRepository extends JpaRepository<Installment, Long
   List<MemberWithGroupsRow> findScoutMembersWithInstallments(@Param("tenantId") String tenantId);
 
   // Installments por miembro + tenant, con concept name/desc
-  @Query(
-    value = """
-            SELECT i.installment_id,
-                   i.due_date,
-                   i.amount,
-                   i.status,
-                   c.name        AS concept_name,
-                   c.description AS concept_desc
-            FROM installment i
-            JOIN account a
-              ON a.tenant_id = i.tenant_id AND a.account_id = i.account_id
-            JOIN concept c
-              ON c.tenant_id = i.tenant_id AND c.concept_id = i.concept_id
-            WHERE i.tenant_id = :tenantId
-              AND a.member_id = :memberId
-            ORDER BY i.due_date DESC
-            """,
-    nativeQuery = true
-  )
+  @Query(value = """
+      SELECT i.installment_id,
+            i.due_date,
+            i.amount,
+            i.status,
+            c.name        AS concept_name,
+            c.description AS concept_desc,
+            p.payment_id,
+            p.paid_at,
+            p.method,
+            p.reference,
+            p.payer_member_id
+      FROM installment i
+      JOIN account a
+        ON a.tenant_id = i.tenant_id AND a.account_id = i.account_id
+      JOIN concept c
+        ON c.tenant_id = i.tenant_id AND c.concept_id = i.concept_id
+      /* Último elemento del array payments (por orden de inserción) */
+      LEFT JOIN LATERAL (
+        SELECT
+          e->>'payment_id'                       AS payment_id,
+          NULLIF(e->>'paid_at','')::date         AS paid_at,
+          e->>'method'                           AS method,
+          e->>'reference'                        AS reference,
+          NULLIF(e->>'payer_member_id','')::bigint AS payer_member_id
+        FROM jsonb_array_elements(COALESCE(i.payments, '[]'::jsonb)) WITH ORDINALITY AS t(e, ord)
+        ORDER BY ord DESC
+        LIMIT 1
+      ) p ON TRUE
+      WHERE i.tenant_id = :tenantId
+        AND a.member_id = :memberId
+      ORDER BY i.due_date DESC
+      """, nativeQuery = true)
   List<InstallmentWithConceptRow> findInstallmentsByMember(
       @Param("tenantId") String tenantId,
       @Param("memberId") Long memberId
   );
+
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Transactional
+  @Query(value = """
+    UPDATE installment i
+    SET payments = COALESCE(i.payments, '[]'::jsonb)
+                || jsonb_build_array(
+                      jsonb_build_object(
+                        'payment_id',      CAST(:paymentId      AS text),
+                        'amount',          CAST(:amount         AS numeric),
+                        -- JSON no tiene tipo fecha; lo guardamos como string ISO yyyy-MM-dd
+                        'paid_at',         to_char(CAST(:paidAt AS date), 'YYYY-MM-DD'),
+                        'method',          CAST(:method         AS text),
+                        'reference',       CAST(:reference      AS text),
+                        'payer_member_id', CAST(:payerMemberId  AS bigint)
+                      )
+                    )
+    WHERE i.tenant_id = :tenantId
+      AND i.installment_id = :installmentId
+      AND NOT EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(COALESCE(i.payments, '[]'::jsonb)) e
+        WHERE e->>'payment_id' = :paymentId
+      )
+    """, nativeQuery = true)
+  int appendPayment(@Param("tenantId") String tenantId,
+                    @Param("installmentId") Long installmentId,
+                    @Param("paymentId") String paymentId,
+                    @Param("amount") java.math.BigDecimal amount,
+                    @Param("paidAt") java.time.LocalDate paidAt,
+                    @Param("method") String method,
+                    @Param("reference") String reference,
+                    @Param("payerMemberId") Long payerMemberId);
+
+
 }
+
+
+

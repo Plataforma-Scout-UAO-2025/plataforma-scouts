@@ -10,4 +10,11 @@ public interface InstallmentWithConceptRow {
     String getStatus();
     String getConcept_name();
     String getConcept_desc();
+
+    String getPayment_id();
+    LocalDate getPaid_at();
+    String getMethod();
+    String getReference();
+    Long getPayer_member_id();
 }
+

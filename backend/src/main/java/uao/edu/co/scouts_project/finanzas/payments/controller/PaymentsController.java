@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import uao.edu.co.scouts_project.finanzas.payments.dto.AppendPaymentDto;
 import uao.edu.co.scouts_project.finanzas.payments.dto.InstallmentPaymentDto;
 import uao.edu.co.scouts_project.finanzas.payments.dto.PaymentRecordDto;
 import uao.edu.co.scouts_project.finanzas.payments.service.PaymentsService;
@@ -37,4 +38,15 @@ public class PaymentsController {
         var out = service.listInstallmentsByMember(tenantId, memberId);
         return ResponseEntity.ok(out);
     }
+
+        @PostMapping("/{tenantId}/installments/{installmentId}/payments")
+    public ResponseEntity<AppendPaymentDto> appendPayment(
+            @PathVariable String tenantId,
+            @PathVariable Long installmentId,
+            @RequestBody AppendPaymentDto body
+    ) {
+        service.appendPayment(tenantId, installmentId, body);
+        return ResponseEntity.status(201).body(body); // devolvemos lo insertado
+    }
+
 }
