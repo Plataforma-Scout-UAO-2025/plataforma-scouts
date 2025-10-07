@@ -1,7 +1,7 @@
 package uao.edu.co.scouts_project.organigrama.repo;
 
-import uao.edu.co.scouts_project.member.model.Member;
-import uao.edu.co.scouts_project.member.shared.enums.Status;
+//import uao.edu.co.scouts_project.member.model.Member;
+//import uao.edu.co.scouts_project.member.shared.enums.Status;
 import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

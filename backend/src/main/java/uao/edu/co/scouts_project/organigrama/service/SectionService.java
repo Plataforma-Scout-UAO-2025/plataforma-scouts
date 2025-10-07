@@ -14,7 +14,7 @@ import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
-import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
+//import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
 
 import java.util.*;
 import java.util.stream.Collectors;

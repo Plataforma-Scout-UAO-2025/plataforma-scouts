@@ -1,7 +1,6 @@
 package uao.edu.co.scouts_project.infrastructure.security;
 
 import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,7 +17,6 @@ public class SecurityConfig {
 
     private final AuthoritiesMappingPort authoritiesMappingPort;
 
-    @Autowired
     public SecurityConfig(AuthoritiesMappingPort authoritiesMappingPort) {
         this.authoritiesMappingPort = authoritiesMappingPort;
     }
