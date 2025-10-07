@@ -40,3 +40,15 @@ tests {
     }
   });
 }
+
+docs {
+  Nombre: Validación de subida de imagen de gran tamaño
+  Endpoint: /api/v1/test/upload/image
+  HU relacionadas: 
+  Descripción: Test que verifica el comportamiento al subir archivos de gran tamaño, esperando éxito o error de límite
+  Respuesta esperada: Status 200 (éxito) o 413 (archivo demasiado grande) - ACTUAL: 403 (problema de autenticación)
+  Estructura del body de entrada: archivo multipart de gran tamaño
+  Estructura del body de salida: {message: string, ...} o {error: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}

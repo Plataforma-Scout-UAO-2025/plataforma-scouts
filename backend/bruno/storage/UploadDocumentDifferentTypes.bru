@@ -39,3 +39,14 @@ tests {
     expect(validContentTypes).to.include(body.contentType);
   });
 }
+
+docs {
+  Nombre: Subida de documentos de diferentes tipos (DOCX)
+  Endpoint: /api/v1/test/upload/document
+  HU relacionadas: 
+  Descripción: Test que verifica la subida correcta de diferentes tipos de documentos (DOCX, etc.)
+  Respuesta esperada: Status 200 con información del archivo subido y detección correcta del content-type
+  Estructura del body de salida: {message: string, fileName: string, originalName: string, fileUrl: string, bucket: string, size: number, contentType: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}

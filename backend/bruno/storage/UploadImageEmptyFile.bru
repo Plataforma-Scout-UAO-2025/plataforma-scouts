@@ -37,3 +37,14 @@ tests {
     expect(new Date(body.timestamp)).to.be.instanceOf(Date);
   });
 }
+
+docs {
+  Nombre: Validación de error al subir imagen vacía
+  Endpoint: /api/v1/test/upload/image
+  HU relacionadas: 
+  Descripción: Test que verifica el manejo correcto de errores cuando se intenta subir un archivo vacío
+  Respuesta esperada: Status 400 con mensaje de error específico y timestamp
+  Estructura del body de salida: {error: string, statusCode: number, details: string, timestamp: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}
