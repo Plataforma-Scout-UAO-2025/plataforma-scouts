@@ -10,7 +10,8 @@ import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import { Toaster } from "sonner";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
-import Organigrama from "./app/routes/organigrama/organigramaRamas_Subramas";
+import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
+import OrganigramaRamas from "./app/routes/organigrama/organigramaRamas_Subramas";
 import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/RamaDetail";
 import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
 
@@ -23,7 +24,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="organigrama" element={<Organigrama />} />
+            <Route path="organigrama" element={<OrganigramaHome />} />
+            <Route path="organigrama/ramas-y-subramas" element={<OrganigramaRamas />} />
             <Route path="financiero/cuotas" element={<Cuotas />} />
             <Route path="financiero/cuotas/gestion" element={<Gestion />} />
             <Route path="grupos" element={<Grupos />} />
