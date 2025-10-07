@@ -1,13 +1,14 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth0ApiWrapper } from "./hooks/useAuth0ApiWrapper";
 
 // Routes imports
-import Login from "./app/routes/Login";
-import Register from "./app/routes/Register";
-import AppLayout from "./components/layout/AppLayout";
-import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
-import Dashboard from "./app/routes/Dashboard";
-import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import { Toaster } from "sonner";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
+import Home from "./app/routes/Home";
+import Dashboard from "./app/routes/Dashboard";
+import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
+import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 
@@ -19,13 +20,14 @@ import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativo
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
 
 function App() {
+  useAuth0ApiWrapper();
+
   return (
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
           {/* 🔹 Login & Registro */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Home />} />
 
           {/* 🔹 Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
@@ -46,7 +48,25 @@ function App() {
             {/* ===================== GRUPOS ===================== */}
             <Route path="grupos" element={<Grupos />} />
             <Route path="grupos/medical-info" element={<MedicalInfo />} />
+
+            {/* Rutas para admin de grupo */}
+            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Cuotas /></ProtectedRoute>} />
+            <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Gestion /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
+            {/*
+            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><TeamMembers /></ProtectedRoute>} />
+            <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
+            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
+            <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Organigrama /></ProtectedRoute>} /> 
+            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><RamaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><SubramaDetail /></ProtectedRoute>} /> 
+            */}
+
+            {/* Rutas para acudiente */}
+            <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
+            <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalInfo /></ProtectedRoute>} />
           </Route>
+          <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
       </div>
       <Toaster />

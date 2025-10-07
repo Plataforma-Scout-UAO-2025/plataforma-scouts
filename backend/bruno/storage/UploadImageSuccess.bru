@@ -56,3 +56,15 @@ tests {
     expect(body.size).to.be.greaterThan(0);
   });
 }
+
+docs {
+  Nombre: Subida exitosa de imagen JPG
+  Endpoint: /api/v1/test/upload/image
+  HU relacionadas: 
+  Descripción: Test que verifica la subida correcta de archivos de imagen al bucket de imágenes de Supabase
+  Respuesta esperada: Status 200 con información del archivo subido, URL de acceso y metadatos
+  Estructura del body de entrada: multipart/form-data con archivo imagen
+  Estructura del body de salida: {message: string, fileName: string, originalName: string, fileUrl: string, bucket: string, size: number, contentType: string}
+  Responsable: Alejandro Bravo
+  Última Actualización: 2025-09-23
+}

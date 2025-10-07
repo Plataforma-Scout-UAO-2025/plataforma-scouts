@@ -104,7 +104,7 @@ const OrganigramaExample: React.FC = () => {
       };
 
       console.log('➕ Creando nueva sección...');
-      const created = await createSection(tenantSlug, groupSlug, newSection);
+      const created = await createSection(newSection, tenantSlug, groupSlug);
       setSections(prev => [...prev, created]);
       console.log('✅ Sección creada:', created);
       alert(`Sección "${created.name}" creada exitosamente`);

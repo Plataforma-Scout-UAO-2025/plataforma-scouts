@@ -13,9 +13,28 @@ const api = axios.create({
   },
 });
 
-// Interceptor de request para logging (opcional)
+// Variable para el proveedor de tokens Auth0
+let getAccessTokenSilently: (() => Promise<string>) | null = null;
+
+export const setAuth0TokenProvider = (tokenProvider: () => Promise<string>) => {
+  getAccessTokenSilently = tokenProvider;
+};
+
+// Interceptor de request para logging y autenticación
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // Agregar token de Auth0 si está disponible
+    if (getAccessTokenSilently) {
+      try {
+        const token = await getAccessTokenSilently();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.warn('⚠️ [Auth] No se pudo obtener token:', error);
+      }
+    }
+    
     console.log(`🔄 [API] ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -45,7 +64,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Nota: Omitiendo configuración de autenticación por ahora, como solicitado.
 
 export default api;
