@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.*;
 
 @Configuration
 @EnableWebSecurity
@@ -27,10 +28,6 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
 
                         .requestMatchers("/api/public").permitAll()
                         .requestMatchers("/api/v1/mock/scouts/list").hasAuthority("SCOPE_read:scouts-list")

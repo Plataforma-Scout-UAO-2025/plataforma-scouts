@@ -18,11 +18,11 @@ import type {
   PersonalData,
   SchoolData,
   CreateMemberRequest,
-  CreateSchoolDataRequest,
+  CreateMemberWithSchoolRequest,
   ChangeEvent,
   EmergencyContactField,
 } from "./types/enrollment.type";
-import { enrollmentService } from "@/api/services/enrollment.service";
+import { createMember, createMemberWithSchool } from "@/api/membersApi";
 import { transformarDatos } from "./utils/enrollment.utils";
 
 function ScoutEnrollment() {
@@ -62,7 +62,6 @@ function ScoutEnrollment() {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // 📘 Handlers
   const handlePersonalChange = (e: ChangeEvent): void => {
     const { name, value } = e.target;
     setDatosPersonales((prev) => ({ ...prev, [name]: value }));
@@ -106,11 +105,11 @@ function ScoutEnrollment() {
     }
   };
 
-  // 🧩 Enviar formulario
+  // Enviar formulario - CORREGIDO
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
-    // Página 1 → pasa a intereses
+    // Página 1 pasa a intereses
     if (pagina === 1) {
       if (datosPersonales.email !== datosPersonales.confirm_email) {
         alert("Los correos electrónicos no coinciden");
@@ -128,17 +127,20 @@ function ScoutEnrollment() {
     setLoading(true);
     try {
       const memberData: CreateMemberRequest = transformarDatos(datosPersonales);
-      const miembroCreado = await enrollmentService.createMember(memberData);
 
       if (
         incluirDatosEscolares &&
         (datosEscolares.institution || datosEscolares.course)
       ) {
-        const schoolData: CreateSchoolDataRequest = {
-          member_id: miembroCreado.member_id,
-          ...datosEscolares,
+        // Crear miembro con datos escolares en una sola petición
+        const requestData: CreateMemberWithSchoolRequest = {
+          member: memberData,
+          school: datosEscolares,
         };
-        await enrollmentService.createMemberWithSchool(schoolData);
+        await createMemberWithSchool(requestData);
+      } else {
+        // Crear solo el miembro
+        await createMember(memberData);
       }
 
       setShowModal(true);
@@ -162,10 +164,6 @@ function ScoutEnrollment() {
       handleSubmit(new Event("submit") as unknown as React.FormEvent);
     }
   };
-
-  // -------------------
-  // 🧩 Campos por página
-  // -------------------
 
   // Página 1: Datos personales
   const camposPagina1 = (

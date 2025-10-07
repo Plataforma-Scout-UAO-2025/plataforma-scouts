@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/index";
 import { Pencil, Trash, User, Medal } from "lucide-react";
-import type { Member } from "../types/member.type";
+import type { Member } from "@/models/types/memberTypes";
 
 interface MembersTableProps {
   filteredMembers: Member[];
@@ -58,10 +58,24 @@ const MembersTable = ({
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
                 <TableCell>{member.identification}</TableCell>
-                <TableCell>{member.acceptance_date}</TableCell>
+                <TableCell>
+                  {member.acceptance_date
+                    ? new Date(member.acceptance_date).toLocaleDateString()
+                    : "—"}
+                </TableCell>
                 <TableCell>{member.status}</TableCell>
-                <TableCell>{member.city}</TableCell>
-                <TableCell>{member.branch || "—"}</TableCell>
+                <TableCell>{member.address}</TableCell>
+                <TableCell>
+                  {Array.isArray(member.branch)
+                    ? member.branch.length > 0
+                      ? member.branch
+                          .map((rama) =>
+                            typeof rama === "string" ? rama : rama.nombre
+                          )
+                          .join(", ")
+                      : "—"
+                    : member.branch || "—"}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="iconbutton"
