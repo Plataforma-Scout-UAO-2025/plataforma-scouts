@@ -49,6 +49,7 @@ public class MemberServiceImp implements IMemberService {
             String userId = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("Creating member - Authenticated user: {}", userId);
 
+
             miembro.setUserId(userId);
 
             if (miembro.getStatus() == null) {
