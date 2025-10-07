@@ -1,0 +1,86 @@
+meta {
+  name: 14) Get EstadoCuenta Acudiente - Funciona
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/status/org_6B3k4dao2Wf6eGxa/83
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200]).to.include(res.status);
+  });
+
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+
+  // Validar presencia de datos en respuesta exitosa
+  test('Has data on success', () => {
+    if ([200].includes(res.status)) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 14) Get EstadoCuenta Acudiente - Funciona');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 14: Obtener Estado de Cuenta Acudiente - Exitoso
+
+  ## 🎯 Objetivo
+  Validar que el sistema devuelve correctamente el estado de cuenta de un miembro específico (vista de acudiente).
+
+  ## 📍 Endpoint
+  ```
+  GET {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/status/org_6B3k4dao2Wf6eGxa/83
+  ```
+
+  ## 📦 Request Body
+  N/A (método GET no requiere body)
+
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK`
+  - **Body:** Objeto con el estado de cuenta del miembro
+
+  ```json
+  {
+    "member_id": 83,
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "total_fees": 5,
+    "total_paid": 75000,
+    "total_pending": 25000,
+    "installments": []
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}

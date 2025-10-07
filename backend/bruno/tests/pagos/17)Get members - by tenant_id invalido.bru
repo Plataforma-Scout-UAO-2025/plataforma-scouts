@@ -1,0 +1,81 @@
+meta {
+  name: 17)Get members - by tenant_id invalido
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/members/org_6B3k4dao2Wf6eGxaINVALID
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([404, 400]).to.include(res.status);
+  });
+
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 17) Get members - by tenant_id invalido');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 17: Obtener Miembros por Tenant - Tenant ID Inválido
+
+  ## 🎯 Objetivo
+  Verificar que el sistema devuelve un error apropiado al intentar consultar miembros con un tenant_id inválido o inexistente.
+
+  ## 📍 Endpoint
+  ```
+  GET {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/members/org_6B3k4dao2Wf6eGxaINVALID
+  ```
+  **Nota:** Tenant ID inválido `org_6B3k4dao2Wf6eGxaINVALID`
+
+  ## 📦 Request Body
+  N/A (método GET no requiere body)
+
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `404 Not Found` o `400 Bad Request`
+  - **Body:** Mensaje de error indicando que el tenant no existe
+
+  ```json
+  {
+    "message": "Tenant not found"
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}
