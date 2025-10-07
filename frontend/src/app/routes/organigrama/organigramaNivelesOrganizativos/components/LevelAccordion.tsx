@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Trash2, Plus, Pencil, ChevronDown } from "lucide-react";
+import { Eye, EyeOff, Trash2, Pencil, ChevronDown } from "lucide-react";
 import type { Nivel } from "../types/niveles.types";
 import PositionItem from "./PositionItem";
 
@@ -9,7 +9,6 @@ interface Props {
   nivel: Nivel;
   onUpdate: (nivel: Nivel) => void;
   onDelete: (id: string) => void;
-  onAddCargo: (nivelId: string) => void;
   /** Opcional: iniciar abierto o cerrado (por defecto: true) */
   defaultOpen?: boolean;
 }
@@ -18,7 +17,7 @@ export default function LevelAccordion({
   nivel,
   onUpdate,
   onDelete,
-  onAddCargo,
+  
   defaultOpen = true,
 }: Props) {
   const [open, setOpen] = useState<boolean>(defaultOpen);
@@ -96,11 +95,7 @@ export default function LevelAccordion({
             ))}
           </div>
 
-          <div className="flex justify-center mt-3">
-            <Button size="sm" variant="outline" onClick={() => onAddCargo(nivel.id)}>
-              <Plus className="h-4 w-4 mr-1" /> Crear Nuevo Cargo
-            </Button>
-          </div>
+          {/* Crear cargos removido por decisión de UI */}
         </div>
       </div>
     </Card>

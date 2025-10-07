@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 // 🔹 Modales importados
 import CreateNivelModal from "./components/CreateNivelModal";
 import EditNivelModal from "./components/EditNivelModal";
-import CreateCargoModal from "./components/CreateCargoModal";
+
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import SuccessModal from "./components/SuccessModal";
 
@@ -21,16 +21,14 @@ export default function NivelesPage() {
   const currentYear = new Date().getFullYear();
   const years = useMemo(() => [currentYear + 1, currentYear, currentYear - 1, 2025, 2024], [currentYear]);
 
-  const { anio, setAnio, data, loading, addNivel, updateNivel, removeNivel, addCargo } = useNiveles(currentYear);
+  const { anio, setAnio, data, loading, addNivel, updateNivel, removeNivel } = useNiveles(currentYear);
 
   // Estados de modales
   const [openCreateNivel, setOpenCreateNivel] = useState(false);
   const [openEditNivel, setOpenEditNivel] = useState(false);
   const [nivelToEdit, setNivelToEdit] = useState<Nivel | null>(null);
 
-  const [openCreateCargo, setOpenCreateCargo] = useState(false);
   
-  const [nivelTargetId, setNivelTargetId] = useState<string | null>(null);
 
   const [openDelete, setOpenDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "nivel" | "cargo"; id: string; name: string; nivelId?: string } | null>(null);
@@ -59,12 +57,7 @@ export default function NivelesPage() {
     setShowSuccess(true);
   };
 
-  const handleCreateCargo = (nombre: string, titular: string, _descripcion?: string) => {
-    if (!nivelTargetId) return;
-    addCargo(nivelTargetId, nombre, titular);
-    setOpenCreateCargo(false);
-    setShowSuccess(true);
-  };
+  
 
   // Render ------------------------
 
@@ -123,10 +116,6 @@ export default function NivelesPage() {
                 setDeleteTarget({ type: "nivel", id: n.id, name: n.nombre });
                 setOpenDelete(true);
               }}
-              onAddCargo={(nivelId) => {
-                setNivelTargetId(nivelId);
-                setOpenCreateCargo(true);
-              }}
             />
           ))}
         </div>
@@ -149,14 +138,7 @@ export default function NivelesPage() {
         onSave={handleEditNivel}
       />
 
-      {/* Crear Cargo */}
-      <CreateCargoModal
-        open={openCreateCargo}
-        onClose={() => setOpenCreateCargo(false)}
-        onSave={handleCreateCargo}
-      />
-
-      {/* Editar Cargo (eliminado) */}
+      {/* Crear Cargo (eliminado) */}
 
       {/* Confirmar Eliminación */}
       <ConfirmDeleteModal
