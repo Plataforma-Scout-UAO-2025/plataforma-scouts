@@ -85,4 +85,3 @@ public class Installment {
   public void setDueDate(LocalDate dueDate) {this.dueDate = dueDate; }
   public void setPayments(JsonNode payments) {this.payments = payments; }
 }
-}
