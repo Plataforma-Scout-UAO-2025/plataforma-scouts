@@ -40,7 +40,7 @@ const Rejected = () => {
     NOT_ACCEPTED: "Rechazado",
   };
 
-  // 🔹 Cargar miembros rechazados
+  //Cargar miembros rechazados
   const loadRejectedMembers = async () => {
     try {
       setLoading(true);
@@ -58,7 +58,7 @@ const Rejected = () => {
     loadRejectedMembers();
   }, []);
 
-  // 🔹 Ciudades únicas
+  // Ciudades
   const cities = useMemo(() => {
     const uniqueCities = [
       ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
@@ -66,7 +66,7 @@ const Rejected = () => {
     return uniqueCities.sort();
   }, [members]);
 
-  // 🔹 Filtros
+  // Filtros
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
@@ -83,7 +83,7 @@ const Rejected = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  // Ver detalles
+  // Ver detalles de un miembro
   const handleView = async (member: Member) => {
     try {
       setLoading(true);

@@ -55,8 +55,8 @@ export const updateMemberAction = createAsyncThunk<
     }
 
     try {
-      const response = await updateMember(uid, updates);
-      return response;
+      await updateMember(uid, updates);
+      return { message: "Miembro actualizado correctamente" };
     } catch (error: unknown) {
       const axiosError = error as AxiosError;
       const errorData = axiosError.response?.data as { error: string };

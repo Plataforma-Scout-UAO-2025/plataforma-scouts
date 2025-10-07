@@ -1,6 +1,3 @@
-import type { Rama } from "@/app/routes/organigrama/types/rama.type";
-import type { Insignia } from "@/models/types/insigniaTypes";
-
 export interface Member {
   member_id: bigint;
   user_id: string;
@@ -27,11 +24,9 @@ export interface Member {
   sports?: string;
   instruments?: string;
   acceptance_date?: Date;
-  emergency_phone?: [string];
+  emergency_phone?: string;
   created_at?: string;
   updated_at?: string;
-  branch?: Rama[];
-  badges?: Insignia[];
 }
 
 export interface MemberPayload {
