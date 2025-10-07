@@ -11,4 +11,7 @@ import uao.edu.co.scouts_project.guardian.model.Member;
 public interface GuardianRepository extends JpaRepository<Member, String> {
 
     List<Member> findByIsActive(boolean active);
+    //TODO: create a method that follows this structure
+    // List<MemberCustom> findMembersImInChargeOf(String guardianId); in the service we apply the mapping
+    //logic create in the model package a new model that captures this custom query value
 }

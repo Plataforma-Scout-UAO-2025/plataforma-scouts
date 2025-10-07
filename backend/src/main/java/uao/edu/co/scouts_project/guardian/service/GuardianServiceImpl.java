@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import uao.edu.co.scouts_project.guardian.dto.*;
+import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.model.Member;
 import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
 import uao.edu.co.scouts_project.organigram.Subgroup;
@@ -26,29 +28,34 @@ public class GuardianServiceImpl implements GuardianService {
         this.memberRepository = memberRepository;
     }
 
-    
+
+    // TODO: Throw exceptions based on the examples given in ControllerExceptionHandler
+
     @Override
     @Transactional(readOnly = true)
-    public List<GuardianDTO> findAllGuardians() {
+    public List<GuardianCreateDTO> findAllGuardians() {
         logger.info("Listando todos los guardians");
         return memberRepository.findAll().stream()
                 .filter(this::isGuardian).map(this::convertToGuardianDTO)
                                 .collect(Collectors.toList());
+                                if (guardian != null) {
+                                    throw new NotFoundException("Guardian not found");
+                                }
     }
+
 
     @Override
     @Transactional(readOnly = true)
-    public GuardianDTO findGuardianById(String id) {
+    public GuardianCreateDTO findGuardianById(String id) {
         logger.info("Buscando guardian por id: {}", id);
         return memberRepository.findById(id)
                 .filter(this::isGuardian)
-                .map(this::convertToGuardianDTO)
-                .orElse(null);
+                .map(this::convertToGuardianDTO).orElse
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<GuardianDTO> findGuardiansByStatus(boolean active) {
+    public List<GuardianCreateDTO> findGuardiansByStatus(boolean active) {
         logger.info("Buscando guardians por estado: {}", active);
         return memberRepository.findByIsActive(active).stream()
                 .filter(this::isGuardian)
@@ -56,9 +63,12 @@ public class GuardianServiceImpl implements GuardianService {
                 .collect(Collectors.toList());
     }
 
+
+    // TODO: create a method that validates if the member is a guardian, if a guardian exists
+    // if not exists let the user continue with the operation and persist the guardian
     @Override
     @Transactional
-    public GuardianDTO saveGuardian(GuardianCreateDTO guardianCreateDTO) {
+    public GuardianCreateDTO saveGuardian(GuardianCreateDTO guardianCreateDTO) {
         logger.info("Creando nuevo guardian");
         Member guardian = convertToGuardianEntity(guardianCreateDTO);
         guardian.setRole("GUARDIAN");
@@ -75,9 +85,10 @@ public class GuardianServiceImpl implements GuardianService {
         return convertToGuardianDTO(savedGuardian);
     }
 
+    // TODO: There should be two update methods, one for updating guardian info and that's it and another for updating guardian and members the guardian is in charge of in the same flow this method only meets the first requirement
     @Override
     @Transactional
-    public GuardianDTO updateGuardianById(String guardianId, GuardianCreateDTO guardianCreateDTO) {
+    public GuardianCreateDTO updateGuardianById(String guardianId, GuardianCreateDTO guardianCreateDTO) {
         Member existingGuardian = memberRepository.findById(guardianId).orElse(null);
         if (existingGuardian != null && isGuardian(existingGuardian)) {
             updateGuardianFields(existingGuardian, guardianCreateDTO);
@@ -90,9 +101,11 @@ public class GuardianServiceImpl implements GuardianService {
         }
     }
 
+    // TODO: you gotta set the guardianId value in the column guardianId in the member table
+    // validate if the guardian exists and if the member exists and also validate if the member is not a guardian
     @Override
     @Transactional
-    public GuardianDTO addMemberToGuardian(String guardianId, String memberId) {
+    public GuardianCreateDTO addMemberToGuardian(String guardianId, String memberId) {
         Member guardian = memberRepository.findById(guardianId).orElse(null);
         Member memberToAdd = memberRepository.findById(memberId).orElse(null);
 
@@ -115,12 +128,15 @@ public class GuardianServiceImpl implements GuardianService {
         return null;
     }
 
-    @Override
+    // TODO: To delete a member from guardian you gotta capture the memberId and remove the value in the guardianId column in the member table, and also you have to check if the guardian exists
     @Transactional
-    public GuardianDTO removeMemberFromGuardian(String guardianId, String memberId) {
+    public GuardianCreateDTO removeMemberFromGuardian(String guardianId, String memberId) {
         return null;
     }
 
+    // TODO: To delete a guardian you gotta delete all the members that are in charge of that guardian
+    // you can do it with a cascade delete or manually deleting each member
+    // also you have to check if the guardian exists
     @Override
     @Transactional
     public boolean deleteGuardianById(String guardianId) {
@@ -129,7 +145,7 @@ public class GuardianServiceImpl implements GuardianService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MemberSummaryDTO> findAvailableMembers() {
+    public List<MemberDTO> findAvailableMembers() {
         logger.info("Buscando miembros disponibles para asignar a guardian");
         return memberRepository.findAll().stream()
                 .filter(member -> !isGuardian(member))

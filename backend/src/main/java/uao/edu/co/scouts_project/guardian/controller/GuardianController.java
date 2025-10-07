@@ -4,11 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import uao.edu.co.scouts_project.guardian.dto.GuardianCreateDTO;
-import uao.edu.co.scouts_project.guardian.dto.GuardianDTO;
-import uao.edu.co.scouts_project.guardian.dto.MemberCreateDTO;
-import uao.edu.co.scouts_project.guardian.dto.MemberResponseDTO;
-import uao.edu.co.scouts_project.guardian.dto.MemberSummaryDTO;
+import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.service.GuardianService;
 
 import java.util.List;
@@ -23,91 +20,17 @@ public class GuardianController {
     }
     // ======= ENDPOINTS PARA MEMBER =======
 
-    // Listar todos los miembros (excluyendo guardians)
-    @GetMapping("/list_members")
-    public ResponseEntity<List<MemberResponseDTO>> getAllMembers() {
-        return ResponseEntity.ok(memberService.findAll());
-    }
-
-    // Listar miembro por id
-    @GetMapping("/list_member_by_id/{id}")
-    public ResponseEntity<MemberResponseDTO> getMemberById(@PathVariable String id) {
-        MemberResponseDTO member = memberService.findMemberById(id);
-        if (member != null) {
-            return ResponseEntity.ok(member);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
-    }
-
-    // Listar miembros por estado (activo/inactivo)
-    @GetMapping("/list_members_by_status")
-    public ResponseEntity<List<MemberResponseDTO>> getMembersByStatus(@RequestParam boolean active) {
-        return ResponseEntity.ok(memberService.findMemberByStatus(active));
-    }
-
-    // Crear un nuevo miembro
-    @PostMapping("/create_member")
-    public ResponseEntity<MemberResponseDTO> createMember(@RequestBody MemberCreateDTO memberCreateDTO) {
-        MemberResponseDTO createdMember = memberService.saveMember(memberCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdMember);
-    }
-
-    // Actualizar miembro por id
-    @PutMapping("/update_member/{id}")
-    public ResponseEntity<MemberResponseDTO> updateMember(@PathVariable String id, @RequestBody MemberCreateDTO memberCreateDTO) {
-        MemberResponseDTO updatedMember = memberService.updateMemberById(id, memberCreateDTO);
-        if (updatedMember != null) {
-            return ResponseEntity.ok(updatedMember);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
-    }
-
-    // Actualizar estado del miembro (activo/inactivo)
-    @PatchMapping("/update_member_status/{id}")
-    public ResponseEntity<MemberResponseDTO> updateMemberStatus(@PathVariable String id, @RequestParam boolean active) {
-        MemberResponseDTO updatedMember = memberService.updateMemberStatus(id, active);
-        if (updatedMember != null) {
-            return ResponseEntity.ok(updatedMember);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
-
-    // Actualizar rol del miembro
-    @PatchMapping("/update_member_role/{id}")
-    public ResponseEntity<MemberResponseDTO> updateMemberRole(@PathVariable String id, @RequestParam String newRole) {
-        MemberResponseDTO updatedMember = memberService.updateMemberRole(id, newRole);
-        if (updatedMember != null) {
-            return ResponseEntity.ok(updatedMember);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
-    }
-
-    // Eliminar miembro
-    @DeleteMapping("/delete_member/{id}")
-    public ResponseEntity<Void> deleteMember(@PathVariable String id) {
-        boolean deleted = memberService.deleteMemberById(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
-    }
-
-    // ======= ENDPOINTS PARA GUARDIAN =======
 
     // Listar todos los guardians
     @GetMapping("/guardians/list")
-    public ResponseEntity<List<GuardianDTO>> getAllGuardians() {
+    public ResponseEntity<List<GuardianCreateDTO>> getAllGuardians() {
         return ResponseEntity.ok(memberService.findAllGuardians());
     }
 
     // Listar guardian por id
     @GetMapping("/guardians/{id}")
-    public ResponseEntity<GuardianDTO> getGuardianById(@PathVariable String id) {
-        GuardianDTO guardian = memberService.findGuardianById(id);
+    public ResponseEntity<GuardianCreateDTO> getGuardianById(@PathVariable String id) {
+        GuardianCreateDTO guardian = memberService.findGuardianById(id);
         if (guardian != null) {
             return ResponseEntity.ok(guardian);
         }
@@ -117,21 +40,21 @@ public class GuardianController {
 
     // Listar guardians por estado
     @GetMapping("/guardians/by_status")
-    public ResponseEntity<List<GuardianDTO>> getGuardiansByStatus(@RequestParam boolean active) {
+    public ResponseEntity<List<GuardianCreateDTO>> getGuardiansByStatus(@RequestParam boolean active) {
         return ResponseEntity.ok(memberService.findGuardiansByStatus(active));
     }
 
     // Crear un nuevo guardian
     @PostMapping("/guardians/create")
-    public ResponseEntity<GuardianDTO> createGuardian(@RequestBody GuardianCreateDTO guardianCreateDTO) {
-        GuardianDTO createdGuardian = memberService.saveGuardian(guardianCreateDTO);
+    public ResponseEntity<GuardianCreateDTO> createGuardian(@RequestBody GuardianCreateDTO guardianCreateDTO) {
+        GuardianCreateDTO createdGuardian = memberService.saveGuardian(guardianCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdGuardian);
     }
 
     // Actualizar guardian por id
     @PutMapping("/guardians/{id}")
-    public ResponseEntity<GuardianDTO> updateGuardian(@PathVariable String id, @RequestBody GuardianCreateDTO guardianCreateDTO) {
-        GuardianDTO updatedGuardian = memberService.updateGuardianById(id, guardianCreateDTO);
+    public ResponseEntity<GuardianCreateDTO> updateGuardian(@PathVariable String id, @RequestBody GuardianCreateDTO guardianCreateDTO) {
+        GuardianCreateDTO updatedGuardian = memberService.updateGuardianById(id, guardianCreateDTO);
         if (updatedGuardian != null) {
             return ResponseEntity.ok(updatedGuardian);
         }
@@ -141,8 +64,8 @@ public class GuardianController {
 
     // Añadir miembro al guardian
     @PostMapping("/guardians/{guardianId}/add-member/{memberId}")
-    public ResponseEntity<GuardianDTO> addMemberToGuardian(@PathVariable String guardianId, @PathVariable String memberId) {
-        GuardianDTO updatedGuardian = memberService.addMemberToGuardian(guardianId, memberId);
+    public ResponseEntity<GuardianCreateDTO> addMemberToGuardian(@PathVariable String guardianId, @PathVariable String memberId) {
+        GuardianCreateDTO updatedGuardian = memberService.addMemberToGuardian(guardianId, memberId);
         if (updatedGuardian != null) {
             return ResponseEntity.ok(updatedGuardian);
         }
@@ -151,8 +74,8 @@ public class GuardianController {
 
     // Remover miembro del guardian
     @DeleteMapping("/guardians/{guardianId}/remove-member/{memberId}")
-    public ResponseEntity<GuardianDTO> removeMemberFromGuardian(@PathVariable String guardianId, @PathVariable String memberId) {
-        GuardianDTO updatedGuardian = memberService.removeMemberFromGuardian(guardianId, memberId);
+    public ResponseEntity<GuardianCreateDTO> removeMemberFromGuardian(@PathVariable String guardianId, @PathVariable String memberId) {
+        GuardianCreateDTO updatedGuardian = memberService.removeMemberFromGuardian(guardianId, memberId);
         if (updatedGuardian != null) {
             return ResponseEntity.ok(updatedGuardian);
         }
@@ -171,7 +94,7 @@ public class GuardianController {
 
     // Listar miembros disponibles para asignar a guardian
     @GetMapping("/available-for-guardian")
-    public ResponseEntity<List<MemberSummaryDTO>> getAvailableMembers() {
+    public ResponseEntity<List<MemberDTO>> getAvailableMembers() {
         return ResponseEntity.ok(memberService.findAvailableMembers());
     }
 }

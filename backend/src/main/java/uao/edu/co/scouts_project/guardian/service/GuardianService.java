@@ -2,19 +2,18 @@ package uao.edu.co.scouts_project.guardian.service;
 
 import java.util.List;
 
-import uao.edu.co.scouts_project.guardian.dto.GuardianCreateDTO;
-import uao.edu.co.scouts_project.guardian.dto.GuardianDTO;
-import uao.edu.co.scouts_project.guardian.dto.MemberSummaryDTO;
+import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 
 public interface GuardianService {
     
-    List<GuardianDTO> findAllGuardians();
-    GuardianDTO findGuardianById(String id);
-    List<GuardianDTO> findGuardiansByStatus(boolean active);
-    GuardianDTO saveGuardian(GuardianCreateDTO guardianCreateDTO);
-    GuardianDTO updateGuardianById(String guardianId, GuardianCreateDTO guardianCreateDTO);
-    GuardianDTO addMemberToGuardian(String guardianId, String memberId);
-    GuardianDTO removeMemberFromGuardian(String guardianId, String memberId);
+    List<GuardianCreateDTO> findAllGuardians();
+    GuardianCreateDTO findGuardianById(String id);
+    List<GuardianCreateDTO> findGuardiansByStatus(boolean active);
+    GuardianCreateDTO saveGuardian(GuardianCreateDTO guardianCreateDTO);
+    GuardianCreateDTO updateGuardianById(String guardianId, GuardianCreateDTO guardianCreateDTO);
+    GuardianCreateDTO addMemberToGuardian(String guardianId, String memberId);
+    GuardianCreateDTO removeMemberFromGuardian(String guardianId, String memberId);
     boolean deleteGuardianById(String guardianId);
-    List<MemberSummaryDTO> findAvailableMembers();
+    List<MemberDTO> findAvailableMembers();
 }
