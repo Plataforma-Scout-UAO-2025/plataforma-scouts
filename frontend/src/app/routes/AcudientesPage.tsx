@@ -1,3 +1,3 @@
-import MiembrosACargo from './acudientes/MiembrosACargo';
+import MiembrosACargo from './guardians/MiembrosACargo';
 
 export default MiembrosACargo;

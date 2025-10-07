@@ -1,0 +1,35 @@
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import type { Control } from "react-hook-form";
+import type { CompleteDataFormData } from "../../schemas/CompleteData.schema";
+
+interface PhoneFieldProps {
+  control: Control<CompleteDataFormData>;
+  disabled?: boolean;
+}
+
+export const PhoneField = ({ control, disabled }: PhoneFieldProps) => {
+  return (
+    <FormField
+      control={control}
+      name="phone"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Teléfono</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="3001234567"
+              {...field}
+              disabled={disabled}
+              maxLength={10}
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};

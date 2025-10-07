@@ -14,8 +14,9 @@ import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 import Home from "./app/routes/Home";
 import AcudientesPage from "./app/routes/AcudientesPage";
-import FinancieroAcudientes from "./app/routes/acudientes/financiero/FinancieroAcudientes";
-import EventosAcudientes from "./app/routes/acudientes/eventos/EventosAcudientes";
+import FinancieroAcudientes from "./app/routes/guardians/financiero/FinancieroAcudientes";
+import EventosAcudientes from "./app/routes/guardians/eventos/EventosAcudientes";
+import { CompleteDataModal } from "./app/routes/guardians/completeData/CompleteDataModal";
 
 const currentUserRole: "adminGrupal" | "adminGlobal" | "acudiente" = "acudiente"; // Simulación de rol actual del usuario
 
@@ -28,6 +29,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="h-screen w-screen">
+        <CompleteDataModal />
         <Routes>
           <Route path="/" element={<Home />} />
           {/* Se quitan las rutas de login y register pues todo será manejado desde Auth0
