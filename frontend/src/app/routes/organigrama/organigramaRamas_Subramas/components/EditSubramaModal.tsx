@@ -54,6 +54,9 @@ export default function EditSubramaModal({
         description: subrama.description ?? undefined,
         leader: subrama.leader ?? undefined,
         statusAlias: subrama.estado ?? (subrama.status === 'active' ? 'activa' : 'inactiva'),
+        // Asegurar que el formData incluya el identificador de la rama/section
+        ramaId: (subrama.ramaId ?? subrama.section_id ?? subrama.branchId) as string | undefined,
+        branchId: (subrama.branchId ?? subrama.section_id ?? subrama.ramaId) as string | undefined,
       });
     }
   }, [subrama]);
