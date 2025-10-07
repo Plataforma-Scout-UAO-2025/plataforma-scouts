@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import type { Branch as Rama, Subgroup as Subrama } from "../types/frontend";
 
 type ExportPDFOpts = {
@@ -106,10 +105,8 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
 };
 
 /** Exporta Excel con hojas separadas para Ramas y Subramas */
-export const exportarOrganigramaExcel = (ramas: Rama[]) => {
+export const exportarOrganigramaCSV = (ramas: Rama[]) => {
   try {
-    const wb = XLSX.utils.book_new();
-    
     // Hoja de Ramas
     const hojaRamas = ramas.map((r) => ({
       Rama: (r.name ?? r.nombre) as string,
@@ -161,30 +158,38 @@ export const exportarOrganigramaExcel = (ramas: Rama[]) => {
       }
     }
 
-    const wsRamas = XLSX.utils.json_to_sheet(hojaRamas);
-    const wsSubs = XLSX.utils.json_to_sheet(hojaSubramas);
-
-    const fitCols = (ws: XLSX.WorkSheet, headers: string[]) => {
-      const cols = headers.map((h) => ({ wch: Math.max(12, h.length + 2) }));
-      // XLSX types don't include the custom '!cols' property so we use a
-      // minimal localized cast here to set column widths.
-      (ws as unknown as Record<string, unknown>)["!cols"] = cols;
+    const objectArrayToCsv = (data: Array<Record<string, any>>): string => {
+      if (!data || data.length === 0) return "";
+      const keys = Object.keys(data[0]);
+      const escapeCell = (v: any) => {
+        if (v === null || v === undefined) return "";
+        const s = String(v);
+        if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      };
+      const header = keys.join(',');
+      const rows = data.map((row) => keys.map((k) => escapeCell(row[k])).join(','));
+      return [header, ...rows].join('\n');
     };
-    
-    if (hojaRamas.length) fitCols(wsRamas, Object.keys(hojaRamas[0]));
-    if (hojaSubramas.length) fitCols(wsSubs, Object.keys(hojaSubramas[0]));
 
-    XLSX.utils.book_append_sheet(wb, wsRamas, "Ramas");
-    XLSX.utils.book_append_sheet(wb, wsSubs, "Subramas");
+    const csvRamas = objectArrayToCsv(hojaRamas);
+    const csvSubramas = objectArrayToCsv(hojaSubramas);
 
-    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([buf], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+    // Añadimos BOM para que Excel interprete UTF-8 correctamente
+    const bom = '\uFEFF';
+    const blobRamas = new Blob([bom + csvRamas], { type: 'text/csv;charset=utf-8;' });
+    const blobSubramas = new Blob([bom + csvSubramas], { type: 'text/csv;charset=utf-8;' });
 
-    downloadBlob("organigrama.xlsx", blob);
-    console.log("✅ Excel exportado correctamente");
+    downloadBlob('organigrama_ramas.csv', blobRamas);
+    downloadBlob('organigrama_subramas.csv', blobSubramas);
+
+    console.log('✅ CSV(s) exportado(s) correctamente');
   } catch (e) {
-    console.error("❌ Error exportando Excel:", e);
+    console.error('❌ Error exportando CSV:', e);
   }
 };
+
+// Alias por compatibilidad hacia atrás: antes se llamaba exportarOrganigramaExcel
+export const exportarOrganigramaExcel = exportarOrganigramaCSV;
