@@ -44,14 +44,14 @@ public class MemberDto {
 
     private String identification;
 
-    @JsonProperty("document_type")
+    @JsonProperty("documentType")
     private String documentType;  // Se convierte a/desde enum en el mapper
 
     private String email;
 
     private String gender;
 
-    @JsonProperty("birth_date")
+    @JsonProperty("birthDate")
     private LocalDate birthDate;
 
     private String address;
@@ -68,17 +68,17 @@ public class MemberDto {
 
     private String instruments;
 
-    @JsonProperty("is_active")
+    @JsonProperty("isActive")
     private Boolean isActive;
 
     private String relationship;
 
-    private String status;  // Se convierte a/desde enum en el mapper
+    private String status;
 
     @JsonProperty("acceptance_date")
     private LocalDate acceptanceDate;
 
-    @JsonProperty("emergency_contacts")
+    @JsonProperty("emergencyContacts")
     private List<EmergencyContactDto> emergencyContacts;
 
     @JsonProperty("created_at")
