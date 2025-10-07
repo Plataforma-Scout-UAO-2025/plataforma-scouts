@@ -91,13 +91,13 @@ public interface IPaymentsReadRepository extends JpaRepository<Installment, Long
                       jsonb_build_object(
                         'payment_id',      CAST(:paymentId      AS text),
                         'amount',          CAST(:amount         AS numeric),
-                        -- JSON no tiene tipo fecha; lo guardamos como string ISO yyyy-MM-dd
                         'paid_at',         to_char(CAST(:paidAt AS date), 'YYYY-MM-DD'),
                         'method',          CAST(:method         AS text),
                         'reference',       CAST(:reference      AS text),
                         'payer_member_id', CAST(:payerMemberId  AS bigint)
                       )
-                    )
+                    ),
+        status   = 'PAID'
     WHERE i.tenant_id = :tenantId
       AND i.installment_id = :installmentId
       AND NOT EXISTS (
@@ -114,6 +114,7 @@ public interface IPaymentsReadRepository extends JpaRepository<Installment, Long
                     @Param("method") String method,
                     @Param("reference") String reference,
                     @Param("payerMemberId") Long payerMemberId);
+
 
 
 }
