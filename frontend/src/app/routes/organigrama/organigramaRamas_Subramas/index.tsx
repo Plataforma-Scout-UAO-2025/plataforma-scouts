@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // Plus icon no usado porque el botón de crear rama se removió
 // import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,8 @@ export default function Organigrama() {
   const [selectedRamaId, setSelectedRamaId] = useState<string>('');
   const [ramaSeleccionada, setRamaSeleccionada] = useState<Rama | null>(null);
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
+
+  const navigate = useNavigate();
 
   const { tenantSlug, groupSlug } = useTenantParams();
 
@@ -213,10 +216,11 @@ export default function Organigrama() {
       {error.hasError && <ErrorAlert message={error.message} type={error.type} onClose={clearError} />}
 
       {/* Controles de filtrado */}
-      {/* Select de año eliminado temporalmente por el stakeholder. Si se necesita restaurarlo,
-          descomentar el bloque JSX y la import correspondiente en la cabecera del archivo. */}
-      {/*
       <div className="flex items-center space-x-4">
+        <Button variant="outline" onClick={() => navigate('/app/organigrama')} className="text-sm">Anterior</Button>
+        {/* Select de año eliminado temporalmente por el stakeholder. Si se necesita restaurarlo,
+            descomentar el bloque JSX y la import correspondiente en la cabecera del archivo. */}
+        {/*
         <Select value={selectedYear} onValueChange={(value: string) => setSelectedYear(value)}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Seleccionar año" />
@@ -229,8 +233,8 @@ export default function Organigrama() {
             ))}
           </SelectContent>
         </Select>
+        */}
       </div>
-      */}
 
       {/* Lista de ramas */}
       {isLoading ? (
