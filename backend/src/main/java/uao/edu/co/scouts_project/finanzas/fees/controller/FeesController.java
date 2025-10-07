@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,15 +22,19 @@ public class FeesController {
   private final IFeeService feeService;
 
   @Operation(summary = "Crear Concept, FeePlan y los installments necesarios segun la periodicidad elegida, para este calculo son obligatorios las fechas inical y final")
-  @PostMapping
-  public ResponseEntity<CuotaDto> create(@RequestBody CreateCuotaDto body) {
+@PostMapping
+public ResponseEntity<?> create(@RequestBody CreateCuotaDto body) {
     try {
-      CuotaDto created = feeService.create(body);
-      return ResponseEntity.status(201).body(created);
+        CuotaDto created = feeService.create(body);
+        return ResponseEntity.status(201).body(created);
     } catch (IllegalArgumentException ex) {
-    return ResponseEntity.badRequest().build(); 
-  }
-  }
+        // Devolver el mensaje exacto del error al cliente
+        return ResponseEntity.badRequest().body(Map.of(
+            "error", "bad_request",
+            "message", ex.getMessage()
+        ));
+    }
+}
 
   // -------- LIST: cuotas por tenant (con associatedTo) ----------
   @Operation(summary = "Listar cuotas de un tenant")
