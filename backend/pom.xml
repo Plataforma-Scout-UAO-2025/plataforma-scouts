@@ -201,6 +201,10 @@
 						
 						<!-- Repository Interfaces (Spring Data JPA auto-implemented) -->
 						<exclude>**/repository/**</exclude>
+
+						<!-- Security pilot -->
+						<exclude>**/uao/edu/co/scouts_project/infrastructure/auth0/**</exclude>
+						<exclude>**/uao/edu/co/scouts_project/infrastructure/cache/**</exclude>
 					</excludes>
 				</configuration>
 				<executions>
