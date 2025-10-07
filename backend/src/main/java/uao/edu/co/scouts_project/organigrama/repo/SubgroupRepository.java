@@ -1,5 +1,7 @@
 package uao.edu.co.scouts_project.organigrama.repo;
 
+import uao.edu.co.scouts_project.member.model.Member;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,4 +15,7 @@ public interface SubgroupRepository extends JpaRepository<Subgroup, Long> {
     Optional<Subgroup> findBySectionIdAndName(Long sectionId, String name);
     boolean existsBySectionIdAndName(Long sectionId, String name);
     List<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndIsActive(String tenantId, Long groupId, Long sectionId, Boolean isActive);
+
+    Optional<Subgroup> findBySubgroupId(Long subgroupId);
+
 }

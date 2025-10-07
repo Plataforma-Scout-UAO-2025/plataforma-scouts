@@ -18,7 +18,7 @@ public class MemberMapper {
                 .userId(member.getUserId())
                 .tenantId(member.getTenantId())
                 .guardianId(member.getGuardianId())
-                .subgroupId(member.getSubgroup() != null ? member.getSubgroup().getSubgroupId() : null)
+                .subgroup(member.getSubgroup() != null ? member.getSubgroup() : null)
                 .firstName(member.getFirstName())
                 .lastName(member.getLastName())
                 .age(member.getAge())
@@ -64,13 +64,9 @@ public class MemberMapper {
         member.setUserId(dto.getUserId());
         member.setTenantId(dto.getTenantId());
         member.setGuardianId(dto.getGuardianId());
-
-        if (dto.getSubgroupId() != null) {
-            Subgroup subgroup = new Subgroup();
-            subgroup.setSubgroupId(dto.getSubgroupId());
-            member.setSubgroup(subgroup);
+        if (dto.getSubgroup() != null) {
+            member.setSubgroup(dto.getSubgroup());
         }
-
         member.setFirstName(dto.getFirstName());
         member.setLastName(dto.getLastName());
         member.setAge(dto.getAge());
