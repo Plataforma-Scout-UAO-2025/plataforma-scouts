@@ -75,7 +75,7 @@ export default function CreateCuotaForm({
         }
 
         const response = await api.put(
-          "/finanzas/cuotas/" + cuotaId,
+          `finanzas/cuotas/${cuotaId}`,
           data
         );
 
@@ -94,7 +94,7 @@ export default function CreateCuotaForm({
       // Modo creación: crear nueva cuota
       try {
         const response = await api.post(
-          "/finanzas/cuotas",
+          "finanzas/cuotas",
           values
         );
 

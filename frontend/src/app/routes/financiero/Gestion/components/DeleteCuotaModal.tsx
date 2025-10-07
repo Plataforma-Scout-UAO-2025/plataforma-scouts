@@ -23,7 +23,7 @@ export default function DeleteCuotaModal({ cuota }: DeleteCuotaModalProps) {
   const handleDelete = async () => {
     console.log("Eliminando cuota:", cuota.id);
     try{
-      const response = await api.delete("/finanzas/cuotas/" + cuota.id);
+  const response = await api.delete(`finanzas/cuotas/${cuota.id}`);
       if(response.status === 204) {
         toast.success("Cuota eliminada correctamente");
         window.location.reload();

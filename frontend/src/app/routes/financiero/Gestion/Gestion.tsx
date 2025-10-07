@@ -11,7 +11,7 @@ export default function Gestion() {
   useEffect(() => {
     const fetchCuotas = async () => {
       const response = await api.get(
-        "/finanzas/cuotas"
+        "finanzas/cuotas"
       );
       setCuotas(response.data);
       setLoading(false);

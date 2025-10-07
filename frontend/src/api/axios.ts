@@ -9,12 +9,26 @@ interface PostFormDataOptions {
 
 // Extender el tipo AxiosInstance para incluir postFormData
 interface ExtendedAxiosInstance extends AxiosInstance {
-  postFormData: <T = any>(url: string, formData: FormData, options?: PostFormDataOptions) => Promise<T>;
+  postFormData: <T = unknown>(url: string, formData: FormData, options?: PostFormDataOptions) => Promise<T>;
 }
 
-// Configuración unificada - compatible con ambas variables de entorno
-const rawBaseUrl = import.meta.env.VITE_PUBLIC_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-const baseURL = rawBaseUrl.endsWith('/api/v1') ? rawBaseUrl : `${rawBaseUrl.replace(/\/$/, '')}/api/v1`;
+// Configuración unificada - compatible con diferentes variables de entorno
+const normalizeUrl = (url: string) => {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+};
+
+const candidateBaseUrl =
+  normalizeUrl(import.meta.env.VITE_BACKEND_URL ?? "") ||
+  normalizeUrl(import.meta.env.VITE_PUBLIC_BACKEND_URL ?? "");
+
+const fallbackBase = normalizeUrl(import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080");
+const fallbackApiBase = fallbackBase.endsWith("api/v1/")
+  ? fallbackBase
+  : `${fallbackBase.replace(/\/$/, "")}/api/v1/`;
+
+const baseURL = candidateBaseUrl || fallbackApiBase;
 
 console.log('🔧 [Axios Config] Base URL configurada:', baseURL);
 
@@ -83,7 +97,7 @@ api.interceptors.response.use(
 );
 
 // Método personalizado para upload de archivos
-api.postFormData = async function<T = any>(
+api.postFormData = async function<T = unknown>(
   url: string,
   formData: FormData,
   options: PostFormDataOptions = {}
