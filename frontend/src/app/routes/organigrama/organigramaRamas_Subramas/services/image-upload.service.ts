@@ -1,10 +1,14 @@
-import { apiClient } from './apiClient';
-import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+import api from "@/api/axios";
+import { PATCH_ENDPOINTS } from "../constants/api-endpoints";
+
+type FileProgressHandler = (fileName: string, percent: number) => void;
+type OverallProgressHandler = (percent: number) => void;
 
 // Función auxiliar para obtener rama directamente sin dependencias circulares
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
   const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
-  return await apiClient.get<Record<string, unknown> | undefined>(endpoint);
+  const response = await api.get<Record<string, unknown> | undefined>(endpoint);
+  return response.data;
 };
 
 // Función de diagnóstico para verificar comportamiento del backend con imágenes
@@ -14,51 +18,57 @@ export const diagnoseBatchImageUpload = async (
   sectionId: string,
   file: File
 ): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
-  console.log('🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...');
-  console.log('📝 [DIAGNÓSTICO] Archivo:', {
+  console.log("🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...");
+  console.log("📝 [DIAGNÓSTICO] Archivo:", {
     name: file.name,
     size: file.size,
-    type: file.type
+    type: file.type,
   });
 
   try {
     // Paso 1: Subir archivo individual
     const formData = new FormData();
-    formData.append('file', file);
-    
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
-    console.log('✅ [DIAGNÓSTICO] Upload exitoso, objectId:', uploadResponse.objectId);
+    formData.append("file", file);
+
+    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      "/api/storage/upload",
+      formData
+    );
+    console.log("✅ [DIAGNÓSTICO] Upload exitoso, objectId:", uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
     const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
     const addPayload = {
-      operations: [{ op: "add", newValue: uploadResponse.objectId }]
+      operations: [{ op: "add", newValue: uploadResponse.objectId }],
     };
 
-    await apiClient.patch(patchEndpoint, addPayload);
-    console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
+    await api.patch(patchEndpoint, addPayload);
+    console.log("✅ [DIAGNÓSTICO] PATCH exitoso");
 
     // Paso 3: Verificar resultado
-  const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-  const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
-  const gallery = (updatedRec?.['galleryObjectIds'] as string[] | undefined) ?? (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
-  const resultCount = gallery?.length || 0;
+    const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+    const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
+    const gallery =
+      (updatedRec?.["galleryObjectIds"] as string[] | undefined) ??
+      (updatedRec?.["sectionGalleryObjectIds"] as string[] | undefined) ??
+      [];
+    const resultCount = gallery?.length || 0;
 
     const result = {
       uploaded: 1,
       returned: resultCount,
       details: {
         originalObjectId: uploadResponse.objectId,
-        returnedUrls: (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [],
-        isProbablyMultiVariant: resultCount > 1
-      }
+        returnedUrls:
+          (updatedRec?.["sectionGalleryObjectIds"] as string[] | undefined) ?? [],
+        isProbablyMultiVariant: resultCount > 1,
+      },
     };
 
-    console.log('🔬 [DIAGNÓSTICO] RESULTADO FINAL:', result);
+    console.log("🔬 [DIAGNÓSTICO] RESULTADO FINAL:", result);
     return result;
-
   } catch (error) {
-    console.error('❌ [DIAGNÓSTICO] Error:', error);
+    console.error("❌ [DIAGNÓSTICO] Error:", error);
     throw error;
   }
 };
@@ -72,58 +82,59 @@ export const uploadSectionIcon = async (
   groupSlug: string,
   sectionId: string,
   file: File,
-  onFileProgress?: (fileName: string, percent: number) => void,
+  onFileProgress?: FileProgressHandler,
   signal?: AbortSignal
 ): Promise<string> => {
-  console.log('📤 [ImageUploadService] Subiendo icono de sección...');
-  console.log('📝 [ImageUploadService] Parámetros:', {
+  console.log("📤 [ImageUploadService] Subiendo icono de sección...");
+  console.log("📝 [ImageUploadService] Parámetros:", {
     tenantSlug,
     groupSlug,
     sectionId,
     fileName: file.name,
-    fileSize: file.size
+    fileSize: file.size,
   });
-  
+
   try {
     // Paso 1: Subir archivo al sistema de archivos
     const formData = new FormData();
-    formData.append('file', file);
-    
-    console.log('🔄 [ImageUploadService] Subiendo archivo al storage...');
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
-      '/api/storage/upload',
+    formData.append("file", file);
+
+    console.log("🔄 [ImageUploadService] Subiendo archivo al storage...");
+    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      "/api/storage/upload",
       formData,
-      (percent) => onFileProgress?.(file.name, percent),
-      signal
+      {
+        onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
+        signal,
+      }
     );
-    console.log('✅ [ImageUploadService] Archivo subido, objectId:', uploadResponse.objectId);
-    
+    console.log("✅ [ImageUploadService] Archivo subido, objectId:", uploadResponse.objectId);
+
     // Paso 2: Usar endpoint PATCH específico para icono
-    console.log('🔄 [ImageUploadService] Asociando icono usando endpoint PATCH específico...');
+    console.log("🔄 [ImageUploadService] Asociando icono usando endpoint PATCH específico...");
     const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
-    console.log('📍 [ImageUploadService] Endpoint PATCH:', patchEndpoint);
-    
-    // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
+    console.log("📍 [ImageUploadService] Endpoint PATCH:", patchEndpoint);
+
     const iconPayload = {
-      objectId: uploadResponse.objectId
+      objectId: uploadResponse.objectId,
     };
-    
-    console.log('🔄 [ImageUploadService] PATCH payload para icono:', iconPayload);
-    
+
+    console.log("🔄 [ImageUploadService] PATCH payload para icono:", iconPayload);
+
     try {
-      await apiClient.patch(patchEndpoint, iconPayload);
-      console.log('✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH');
+      await api.patch(patchEndpoint, iconPayload);
+      console.log("✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH");
     } catch (patchError) {
-      console.error('❌ [ImageUploadService] Error en endpoint PATCH para icono:', patchError);
+      console.error("❌ [ImageUploadService] Error en endpoint PATCH para icono:", patchError);
       throw patchError;
     }
-    
-    console.log('✅ [ImageUploadService] Icono de sección subido con éxito');
-    console.log('📝 [ImageUploadService] ObjectId guardado:', uploadResponse.objectId);
-    
+
+    console.log("✅ [ImageUploadService] Icono de sección subido con éxito");
+    console.log("📝 [ImageUploadService] ObjectId guardado:", uploadResponse.objectId);
+
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error subiendo icono:', error);
+    console.error("❌ [ImageUploadService] Error subiendo icono:", error);
     throw error;
   }
 };
@@ -133,50 +144,54 @@ export const uploadSectionMainImage = async (
   tenantSlug: string,
   groupSlug: string,
   sectionId: string,
-  file: File
-  ,
-  onFileProgress?: (fileName: string, percent: number) => void,
+  file: File,
+  onFileProgress?: FileProgressHandler,
   signal?: AbortSignal
 ): Promise<string> => {
-  console.log('📤 [ImageUploadService] Subiendo imagen principal de sección...');
-  
+  console.log("📤 [ImageUploadService] Subiendo imagen principal de sección...");
+
   try {
     // Paso 1: Subir archivo al sistema de archivos
     const formData = new FormData();
-    formData.append('file', file);
-    
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
-      '/api/storage/upload',
+    formData.append("file", file);
+
+    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      "/api/storage/upload",
       formData,
-      (percent) => onFileProgress?.(file.name, percent),
-      signal
+      {
+        onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
+        signal,
+      }
     );
-    
+
     // Paso 2: Usar endpoint PATCH específico para imagen principal
-    console.log('🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico...');
+    console.log(
+      "🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico..."
+    );
     const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
-    
-    // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
+
     const mainImagePayload = {
-      objectId: uploadResponse.objectId
+      objectId: uploadResponse.objectId,
     };
-    
-    console.log('🔄 [ImageUploadService] PATCH payload para imagen principal:', mainImagePayload);
-    
+
+    console.log("🔄 [ImageUploadService] PATCH payload para imagen principal:", mainImagePayload);
+
     try {
-      await apiClient.patch(patchEndpoint, mainImagePayload);
-      console.log('✅ [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH');
+      await api.patch(patchEndpoint, mainImagePayload);
+      console.log(
+        "✅ [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH"
+      );
     } catch (patchError) {
-      console.error('❌ [ImageUploadService] Error en endpoint PATCH para imagen principal:', patchError);
+      console.error("❌ [ImageUploadService] Error en endpoint PATCH para imagen principal:", patchError);
       throw patchError;
     }
-    
-    console.log('✅ [ImageUploadService] Imagen principal de sección subida con éxito');
-    console.log('📝 [ImageUploadService] ObjectId de imagen principal:', uploadResponse.objectId);
-    
+
+    console.log("✅ [ImageUploadService] Imagen principal de sección subida con éxito");
+    console.log("📝 [ImageUploadService] ObjectId de imagen principal:", uploadResponse.objectId);
+
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error subiendo imagen principal:', error);
+    console.error("❌ [ImageUploadService] Error subiendo imagen principal:", error);
     throw error;
   }
 };
@@ -185,89 +200,88 @@ export const uploadGalleryImages = async (
   tenantSlug: string,
   groupSlug: string,
   sectionId: string,
-  files: File[]
-  ,
-  onFileProgress?: (fileName: string, percent: number) => void,
-  onOverallProgress?: (percent: number) => void
-  , signal?: AbortSignal
+  files: File[],
+  onFileProgress?: FileProgressHandler,
+  onOverallProgress?: OverallProgressHandler,
+  signal?: AbortSignal
 ): Promise<string[]> => {
-  console.log('📤 [ImageUploadService] Subiendo imágenes de galería...');
-  
+  console.log("📤 [ImageUploadService] Subiendo imágenes de galería...");
+
   try {
     const objectIds: string[] = [];
     const urls: string[] = [];
-    
-    // Paso 1: Subir cada archivo individualmente
-    // Para calcular progreso general, acumulamos el avance de cada archivo
+
     const perFileProgress: Record<string, number> = {};
     const totalFiles = files.length;
 
     for (const file of files) {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
-        '/api/storage/upload',
+      const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+        "/api/storage/upload",
         formData,
-        (percent) => {
-          perFileProgress[file.name] = percent;
-          // Reportar progreso individual
-          onFileProgress?.(file.name, percent);
+        {
+          onUploadProgress: (percent: number) => {
+            perFileProgress[file.name] = percent;
+            onFileProgress?.(file.name, percent);
 
-          // Calcular progreso general como promedio simple
-          const sum = Object.values(perFileProgress).reduce((a, b) => a + b, 0);
-          const overall = Math.round(sum / totalFiles);
-          onOverallProgress?.(overall);
-        },
-        signal
+            const sum = Object.values(perFileProgress).reduce((a, b) => a + b, 0);
+            const overall = Math.round(sum / totalFiles);
+            onOverallProgress?.(overall);
+          },
+          signal,
+        }
       );
 
       objectIds.push(uploadResponse.objectId);
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }
-    
-    // Paso 2: Usar endpoint PATCH específico para galería
-    console.log('🔄 [ImageUploadService] Asociando galería usando endpoint PATCH específico...');
+
+    console.log("🔄 [ImageUploadService] Asociando galería usando endpoint PATCH específico...");
     const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
-    
-    // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
+
     const galleryPayload = {
-      operations: objectIds.map(objectId => ({
+      operations: objectIds.map((objectId) => ({
         op: "add",
-        newValue: objectId
-      }))
+        newValue: objectId,
+      })),
     };
-    
-    console.log('🔄 [ImageUploadService] PATCH payload para galería (formato operations):', galleryPayload);
-    
+
+    console.log("🔄 [ImageUploadService] PATCH payload para galería (formato operations):", galleryPayload);
+
     try {
-      await apiClient.patch(patchEndpoint, galleryPayload);
-      console.log('✅ [ImageUploadService] Galería asociada correctamente con endpoint PATCH');
-      
-      // Obtener los datos actualizados de la rama para tener las URLs correctas
-      console.log('🔄 [ImageUploadService] Obteniendo datos actualizados de la rama después de agregar a galería...');
-  const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-  const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
-  const galleryUrls = (updatedRec?.['galleryObjectIds'] as string[] | undefined) ?? (updatedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
+      await api.patch(patchEndpoint, galleryPayload);
+      console.log("✅ [ImageUploadService] Galería asociada correctamente con endpoint PATCH");
+
+      console.log(
+        "🔄 [ImageUploadService] Obteniendo datos actualizados de la rama después de agregar a galería..."
+      );
+      const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+      const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
+      const galleryUrls =
+        (updatedRec?.["galleryObjectIds"] as string[] | undefined) ??
+        (updatedRec?.["sectionGalleryObjectIds"] as string[] | undefined) ??
+        [];
+
       if (galleryUrls && galleryUrls.length > 0) {
-        // Retornar las URLs de la galería actualizada del backend
-        console.log('✅ [ImageUploadService] URLs de galería actualizadas obtenidas del backend');
-        console.log('📸 [ImageUploadService] Galería completa actual:', galleryUrls);
-        return galleryUrls; // URLs reales del backend
-      } else {
-        console.warn('⚠️ [ImageUploadService] No se pudieron obtener URLs actualizadas, usando URLs del upload');
-        return urls; // Fallback a URLs del upload inicial
+        console.log("✅ [ImageUploadService] URLs de galería actualizadas obtenidas del backend");
+        console.log("📸 [ImageUploadService] Galería completa actual:", galleryUrls);
+        return galleryUrls;
       }
+
+      console.warn(
+        "⚠️ [ImageUploadService] No se pudieron obtener URLs actualizadas, usando URLs del upload"
+      );
+      return urls;
     } catch (patchError) {
-      console.error('❌ [ImageUploadService] Error en endpoint PATCH para galería:', patchError);
-      console.error('❌ [ImageUploadService] Payload enviado:', JSON.stringify(galleryPayload, null, 2));
-      console.error('❌ [ImageUploadService] Endpoint usado:', patchEndpoint);
+      console.error("❌ [ImageUploadService] Error en endpoint PATCH para galería:", patchError);
+      console.error("❌ [ImageUploadService] Payload enviado:", JSON.stringify(galleryPayload, null, 2));
+      console.error("❌ [ImageUploadService] Endpoint usado:", patchEndpoint);
       throw patchError;
     }
-    
-    console.log('✅ [ImageUploadService] Imágenes de galería subidas con éxito');
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error subiendo galería:', error);
+    console.error("❌ [ImageUploadService] Error subiendo galería:", error);
     throw error;
   }
 };
@@ -275,10 +289,6 @@ export const uploadGalleryImages = async (
 // ==========================================================
 // ✅ Operaciones para la galería de SUBRAMAS (replace / remove)
 // ==========================================================
-/**
- * Reemplaza una imagen específica de la galería de una subrama.
- * Flujo: subir archivo -> PATCH con op 'replace' apuntando al objectId antiguo (si lo hay)
- */
 export const replaceSubramaGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -287,44 +297,60 @@ export const replaceSubramaGalleryImage = async (
   oldObjectId: string | null,
   file: File
 ): Promise<string> => {
-  console.log('🔄 [ImageUploadService] Reemplazando imagen de galería en subrama...', { sectionId, subgroupId, oldObjectId });
+  console.log("🔄 [ImageUploadService] Reemplazando imagen de galería en subrama...", {
+    sectionId,
+    subgroupId,
+    oldObjectId,
+  });
 
   try {
-    // Subir nuevo archivo
     const formData = new FormData();
-    formData.append('file', file);
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    formData.append("file", file);
+    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      "/api/storage/upload",
+      formData
+    );
 
-    // Construir payload replace
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(
+      tenantSlug,
+      groupSlug,
+      sectionId,
+      subgroupId
+    );
     const replaceOp = {
       operations: [
         {
-          op: 'replace',
+          op: "replace" as const,
           targetUuid: oldObjectId ?? null,
-          newValue: uploadResponse.objectId
-        }
-      ]
+          newValue: uploadResponse.objectId,
+        },
+      ],
     };
 
-    await apiClient.patch(patchEndpoint, replaceOp);
-    console.log('✅ [ImageUploadService] Replace PATCH enviado con éxito');
+    await api.patch(patchEndpoint, replaceOp);
+    console.log("✅ [ImageUploadService] Replace PATCH enviado con éxito");
 
-    // Intentar obtener URL resultante consultando la subrama
-    const updated = await apiClient.get<Record<string, unknown>>(`/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}`);
-    const rec = updated as unknown as Record<string, unknown> | undefined;
-    const galleryUrls = (rec?.['galleryObjectIds'] as string[] | undefined) ?? (rec?.['subgroupGalleryObjectIds'] as string[] | undefined) ?? [];
-    // Devolver la primera URL que coincida con el nuevo objectId si es posible
-    return uploadResponse.url || uploadResponse.objectId || (galleryUrls[0] ?? uploadResponse.objectId);
+    const response = await api.get<Record<string, unknown>>(
+      `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}`
+    );
+    const rec = response.data as Record<string, unknown> | undefined;
+    const galleryUrls =
+      (rec?.["galleryObjectIds"] as string[] | undefined) ??
+      (rec?.["subgroupGalleryObjectIds"] as string[] | undefined) ??
+      [];
+
+    return (
+      uploadResponse.url ||
+      uploadResponse.objectId ||
+      galleryUrls.find((url) => url.includes(uploadResponse.objectId)) ||
+      uploadResponse.objectId
+    );
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error reemplazando imagen de galería en subrama:', error);
+    console.error("❌ [ImageUploadService] Error reemplazando imagen de galería en subrama:", error);
     throw error;
   }
 };
 
-/**
- * Elimina una imagen de la galería de una subrama usando op 'remove' con targetUuid.
- */
 export const removeSubramaGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -332,22 +358,31 @@ export const removeSubramaGalleryImage = async (
   subgroupId: string,
   objectIdToRemove: string
 ): Promise<void> => {
-  console.log('🗑️ [ImageUploadService] Eliminando imagen de galería en subrama...', { sectionId, subgroupId, objectIdToRemove });
+  console.log("🗑️ [ImageUploadService] Eliminando imagen de galería en subrama...", {
+    sectionId,
+    subgroupId,
+    objectIdToRemove,
+  });
   try {
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(
+      tenantSlug,
+      groupSlug,
+      sectionId,
+      subgroupId
+    );
     const payload = {
       operations: [
         {
-          op: 'remove',
-          targetUuid: objectIdToRemove
-        }
-      ]
+          op: "remove",
+          targetUuid: objectIdToRemove,
+        },
+      ],
     };
 
-    await apiClient.patch(patchEndpoint, payload);
-    console.log('✅ [ImageUploadService] Imagen eliminada de la galería de subrama');
+    await api.patch(patchEndpoint, payload);
+    console.log("✅ [ImageUploadService] Imagen eliminada de la galería de subrama");
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error eliminando imagen de galería en subrama:', error);
+    console.error("❌ [ImageUploadService] Error eliminando imagen de galería en subrama:", error);
     throw error;
   }
 };

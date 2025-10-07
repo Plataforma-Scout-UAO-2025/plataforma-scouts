@@ -7,7 +7,7 @@ import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
-import { apiClient } from "../services/apiClient";
+import api from "@/api/axios";
 import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
@@ -50,7 +50,8 @@ export default function RamaDetail() {
           try {
             const endpoint = `/api/v1/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
             console.log('🔎 [RamaDetail] galleryUrls empty; fetching backend raw endpoint as fallback:', endpoint);
-            const backendRec = await apiClient.get<Record<string, unknown>>(endpoint);
+            const response = await api.get<Record<string, unknown>>(endpoint);
+            const backendRec = response.data;
             if (backendRec) {
               const fromBackendGallery = (backendRec['gallery'] as unknown[] | undefined) ?? [];
               if (Array.isArray(fromBackendGallery) && fromBackendGallery.length > 0) {

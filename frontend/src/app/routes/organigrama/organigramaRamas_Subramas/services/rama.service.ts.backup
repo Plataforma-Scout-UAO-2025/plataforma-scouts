@@ -22,13 +22,12 @@ export const getRamasWithSubramas = async (tenantSlug: string, groupSlug: string
   try {
     // Intentar endpoint optimizado (si el backend lo soporta)
     const endpointOptimized = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections?includeSubgroups=true`;
-    const response = await api.get<unknown[]>(endpointOptimized).catch(() => undefined);
-    const backendRamas = response?.data;
+  const backendRamas = await api.get<unknown[]>(endpointOptimized).catch(() => undefined);
 
     if (backendRamas && Array.isArray(backendRamas) && backendRamas.length > 0) {
       console.log('✅ [RamaService] Backend soporta endpoint optimizado, mapeando resultados');
       // Mapar ramas y, si no hay subramas embebidas, hidratar llamando al servicio
-      const ramas = await Promise.all(backendRamas.map(async (br: any) => {
+      const ramas = await Promise.all(backendRamas.map(async (br) => {
         const mapped = mapBackendRamaToFrontend(br as unknown as BackendRama);
         const backendRec = br as unknown as Record<string, unknown>;
         const backendSubgroups = (backendRec['subgroups'] ?? backendRec['subramas'] ?? backendRec['subgroupList']) as unknown[] | undefined;
@@ -143,8 +142,7 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
   
   try {
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
-    const response = await api.get<BackendRama>(endpoint);
-    const backendRama = response.data;
+    const backendRama = await api.get<BackendRama>(endpoint);
     
     const rama = mapBackendRamaToFrontend(backendRama);
     
@@ -188,8 +186,7 @@ export const createRama = async (tenantSlug: string, groupSlug: string, data: Cr
     console.log('📤 [RamaService] Enviando al backend:', backendData);
     
     // Crear la rama
-    const response = await api.post<BackendRama>(endpoint, backendData);
-    const backendRama = response.data;
+    const backendRama = await api.post<BackendRama>(endpoint, backendData);
     
     // Extraer el ID de la sección creada (puede venir como sectionId o section_id)
     const sectionId = String(backendRama.sectionId || backendRama.section_id || backendRama.id || '');
@@ -239,8 +236,7 @@ export const updateRama = async (tenantSlug: string, groupSlug: string, data: Up
     const backendData = mapFrontendUpdateRamaToBackend(data);
     
     // Actualizar la rama
-    const response = await api.put<BackendRama>(endpoint, backendData);
-    const backendRama = response.data;
+    const backendRama = await api.put<BackendRama>(endpoint, backendData);
     
     // Si hay archivos de imagen nuevos, subirlos
     if (data.iconFile) {
@@ -283,16 +279,15 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
     // OPTIMIZACIÓN: Solo obtenemos las ramas SIN subramas para calcular años
     // Esto evita el bucle infinito y mejora el rendimiento
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections`;
-    const response = await api.get<BackendRama[]>(endpoint);
-    const backendRamas = response.data;
+    const backendRamas = await api.get<BackendRama[]>(endpoint);
     
     // Extraer años directamente de los datos del backend sin mapear subramas
-    const ramasSimples = backendRamas.map(mapBackendRamaToFrontend);
-    const years = [...new Set(ramasSimples.map((r: Rama) => {
-      const legacy = r as unknown as Record<string, unknown>;
-      return r.year ?? (legacy['año'] as number | undefined);
-    }).filter((y: any) => y !== undefined && y !== null))] as number[];
-    const sortedYears = years.sort((a: number, b: number) => b - a);
+  const ramasSimples = backendRamas.map(mapBackendRamaToFrontend);
+  const years = [...new Set(ramasSimples.map((r: Rama) => {
+    const legacy = r as unknown as Record<string, unknown>;
+    return r.year ?? (legacy['año'] as number | undefined);
+  }).filter((y) => y !== undefined && y !== null))];
+    const sortedYears = years.sort((a, b) => b - a);
     
     console.log('✅ [RamaService] Años disponibles (optimizado):', sortedYears);
     return sortedYears;

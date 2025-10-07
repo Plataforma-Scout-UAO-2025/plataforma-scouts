@@ -36,6 +36,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useRoleContext } from '@/hooks/useRoleContext';
 import FullScreenLoader from '@/components/common/FullScreenLoader';
 import FullScreenError from '@/components/common/FullScreenError';
+import { setAuth0TokenProvider } from '@/api/axios';
+import { useEffect } from 'react';
 
 type SubMenuItem = {
   id: string
@@ -81,8 +83,16 @@ function AppLayoutContent() {
   const location = useLocation()
   const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal')
   const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems
-  const { user, logout } = useAuth0();
+  const { user, logout, getAccessTokenSilently } = useAuth0();
   const { status, currentUserRoleLabel, error, retry } = useRoleContext();
+
+  // Conectar Auth0 con axios centralizado
+  useEffect(() => {
+    if (getAccessTokenSilently) {
+      setAuth0TokenProvider(getAccessTokenSilently);
+      console.log('🔗 [Auth] Token provider conectado con axios centralizado');
+    }
+  }, [getAccessTokenSilently]);
 
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } });

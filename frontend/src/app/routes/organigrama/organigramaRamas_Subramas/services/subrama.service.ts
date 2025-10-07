@@ -5,7 +5,7 @@ import type {
 } from '../types/frontend';
 import type { BackendSubgroup as BackendSubrama } from '../types/backend';
 
-import { apiClient } from './apiClient';
+import api from "@/api/axios";
 import { 
   mapBackendSubramaToFrontend,
   mapFrontendCreateSubramaToBackend,
@@ -17,8 +17,9 @@ export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string,
   console.log('🔄 [SubramaService] Obteniendo subramas de rama:', ramaId);
   
   try {
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${ramaId}/subgroups`;
-    const backendSubramas = await apiClient.get<BackendSubrama[]>(endpoint);
+  const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${ramaId}/subgroups`;
+  const response = await api.get<BackendSubrama[]>(endpoint);
+  const backendSubramas = response.data;
     
     const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
     console.log('✅ [SubramaService] Subramas obtenidas:', subramas.length);
@@ -34,9 +35,10 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
   
   try {
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${id}`;
-    const backendSubrama = await apiClient.get<BackendSubrama>(endpoint);
-    
-  const subrama = mapBackendSubramaToFrontend(backendSubrama);
+    const response = await api.get<BackendSubrama>(endpoint);
+    const backendSubrama = response.data;
+
+    const subrama = mapBackendSubramaToFrontend(backendSubrama);
   console.log('✅ [SubramaService] Subrama obtenida:', subrama.nombre ?? subrama.name);
     return subrama;
   } catch (error) {
@@ -51,15 +53,16 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
   console.log('🔄 [SubramaService] Creando nueva subrama:', displayName);
   
   try {
-    const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups`;
+  const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups`;
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendCreateSubramaToBackend(data);
     
     // Crear la subrama
-    const backendSubrama = await apiClient.post<BackendSubrama>(endpoint, backendData);
-    
-  const subrama = mapBackendSubramaToFrontend(backendSubrama);
+    const response = await api.post<BackendSubrama>(endpoint, backendData);
+    const backendSubrama = response.data;
+
+    const subrama = mapBackendSubramaToFrontend(backendSubrama);
   console.log('✅ [SubramaService] Subrama creada:', subrama.nombre ?? subrama.name);
     return subrama;
   } catch (error) {
@@ -85,9 +88,10 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     const backendData = mapFrontendUpdateSubramaToBackend(data);
     
     // Actualizar la subrama
-    const backendSubrama = await apiClient.put<BackendSubrama>(endpoint, backendData);
-    
-  const subrama = mapBackendSubramaToFrontend(backendSubrama);
+    const response = await api.put<BackendSubrama>(endpoint, backendData);
+    const backendSubrama = response.data;
+
+    const subrama = mapBackendSubramaToFrontend(backendSubrama);
   console.log('✅ [SubramaService] Subrama actualizada:', subrama.nombre ?? subrama.name);
     return subrama;
   } catch (error) {
@@ -101,7 +105,7 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
   
   try {
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${id}`;
-    await apiClient.delete(endpoint);
+  await api.delete(endpoint);
     
     console.log('✅ [SubramaService] Subrama eliminada');
     return true;

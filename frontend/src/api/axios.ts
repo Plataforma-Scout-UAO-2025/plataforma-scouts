@@ -1,4 +1,16 @@
 import axios from "axios";
+import type { AxiosInstance, AxiosProgressEvent, AxiosRequestConfig } from "axios";
+
+interface PostFormDataOptions {
+  config?: AxiosRequestConfig;
+  onUploadProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+}
+
+// Extender el tipo AxiosInstance para incluir postFormData
+interface ExtendedAxiosInstance extends AxiosInstance {
+  postFormData: <T = any>(url: string, formData: FormData, options?: PostFormDataOptions) => Promise<T>;
+}
 
 // Configuración unificada - compatible con ambas variables de entorno
 const rawBaseUrl = import.meta.env.VITE_PUBLIC_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
@@ -11,7 +23,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-});
+}) as ExtendedAxiosInstance;
 
 // Variable para el proveedor de tokens Auth0
 let getAccessTokenSilently: (() => Promise<string>) | null = null;
@@ -29,10 +41,15 @@ api.interceptors.request.use(
         const token = await getAccessTokenSilently();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔐 [Auth] Token agregado a la petición:', token.substring(0, 20) + '...');
+        } else {
+          console.warn('⚠️ [Auth] No se obtuvo token');
         }
       } catch (error) {
         console.warn('⚠️ [Auth] No se pudo obtener token:', error);
       }
+    } else {
+      console.warn('⚠️ [Auth] Token provider no configurado');
     }
     
     console.log(`🔄 [API] ${config.method?.toUpperCase()} ${config.url}`);
@@ -64,5 +81,34 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Método personalizado para upload de archivos
+api.postFormData = async function<T = any>(
+  url: string,
+  formData: FormData,
+  options: PostFormDataOptions = {}
+) {
+  const { config, onUploadProgress, signal } = options;
+  const forwardProgress = config?.onUploadProgress;
+
+  const response = await this.post<T>(url, formData, {
+    ...config,
+    headers: {
+      "Content-Type": "multipart/form-data",
+      ...(config?.headers || {}),
+    },
+    signal: signal ?? config?.signal,
+    onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+      forwardProgress?.(progressEvent);
+      if (onUploadProgress) {
+        const total = progressEvent.total ?? 0;
+        const percent = total > 0 ? Math.round((progressEvent.loaded * 100) / total) : 0;
+        onUploadProgress(percent);
+      }
+    },
+  });
+
+  return response.data;
+};
 
 export default api;

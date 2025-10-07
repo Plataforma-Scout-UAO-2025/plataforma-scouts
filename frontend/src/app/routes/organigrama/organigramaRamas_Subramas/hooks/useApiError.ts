@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { ApiError } from '../services/apiClient';
+import type { AxiosError } from 'axios';
+import { isAxiosError } from 'axios';
 
 interface ErrorState {
   hasError: boolean;
@@ -16,9 +17,13 @@ export const useApiError = () => {
 
   const handleError = useCallback((error: unknown) => {
     console.error('Error de API:', error);
-    
-    if (error instanceof ApiError) {
-      switch (error.status) {
+
+    if (isAxiosError(error)) {
+      const axiosError = error as AxiosError<{ error?: string; message?: string }>;
+      const status = axiosError.response?.status ?? 0;
+      const serverMessage = axiosError.response?.data?.message ?? axiosError.response?.data?.error ?? axiosError.message;
+
+      switch (status) {
         case 404:
           setError({
             hasError: true,
@@ -57,7 +62,7 @@ export const useApiError = () => {
         default:
           setError({
             hasError: true,
-            message: `Error del servidor: ${error.message}`,
+            message: serverMessage ? `Error del servidor: ${serverMessage}` : 'Error del servidor',
             type: 'error'
           });
       }

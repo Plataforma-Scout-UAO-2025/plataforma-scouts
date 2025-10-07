@@ -1,4 +1,4 @@
-import { apiClient } from '../services/apiClient';
+import api from "@/api/axios";
 import { getRamaById } from '../services';
 
 interface UploadDiagnostic {
@@ -48,7 +48,10 @@ export const diagnosticImageUpload = async (
   const formData = new FormData();
   formData.append('file', file);
   
-  const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+  const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    '/api/storage/upload',
+    formData
+  );
   
   console.log('📤 [DIAGNOSTIC] Upload response:', uploadResponse);
 
@@ -61,7 +64,7 @@ export const diagnosticImageUpload = async (
     }]
   };
 
-  await apiClient.patch(patchEndpoint, addPayload);
+  await api.patch(patchEndpoint, addPayload);
   console.log('✅ [DIAGNOSTIC] PATCH completado');
 
   // Paso 4: Obtener estado final

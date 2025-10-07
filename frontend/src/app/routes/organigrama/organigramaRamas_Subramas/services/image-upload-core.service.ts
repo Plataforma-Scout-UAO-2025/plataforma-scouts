@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import api from '@/api/axios';
 import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 
 // Función de diagnóstico para verificar comportamiento del backend con imágenes
@@ -20,7 +20,7 @@ export const diagnoseBatchImageUpload = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData('/api/storage/upload', formData);
     console.log('✅ [DIAGNÓSTICO] Upload exitoso, objectId:', uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
@@ -29,12 +29,12 @@ export const diagnoseBatchImageUpload = async (
       operations: [{ op: "add", newValue: uploadResponse.objectId }]
     };
 
-    await apiClient.patch(patchEndpoint, addPayload);
+    await api.patch(patchEndpoint, addPayload);
     console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
 
     // Paso 3: Verificar resultado usando una llamada directa al API
     const endpoint = `/api/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
-  const backendRama = await apiClient.get<Record<string, unknown> | undefined>(endpoint);
+  const backendRama = await api.get<Record<string, unknown> | undefined>(endpoint);
   const backendRec = backendRama as unknown as Record<string, unknown> | undefined;
   const gallery: string[] = (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
   const resultCount = gallery?.length || 0;
@@ -83,7 +83,7 @@ export const uploadSectionIcon = async (
     formData.append('file', file);
     
     console.log('🔄 [ImageUploadService] Subiendo archivo al storage...');
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData('/api/storage/upload', formData);
     console.log('✅ [ImageUploadService] Archivo subido, objectId:', uploadResponse.objectId);
     
     // Paso 2: Usar endpoint PATCH específico para icono
@@ -99,7 +99,7 @@ export const uploadSectionIcon = async (
     console.log('🔄 [ImageUploadService] PATCH payload para icono:', iconPayload);
     
     try {
-      await apiClient.patch(patchEndpoint, iconPayload);
+      await api.patch(patchEndpoint, iconPayload);
       console.log('✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH');
     } catch (patchError) {
       console.error('❌ [ImageUploadService] Error en endpoint PATCH para icono:', patchError);
@@ -130,7 +130,7 @@ export const uploadSectionMainImage = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData('/api/storage/upload', formData);
     
     // Paso 2: Usar endpoint PATCH específico para imagen principal
     console.log('🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico...');
@@ -144,7 +144,7 @@ export const uploadSectionMainImage = async (
     console.log('🔄 [ImageUploadService] PATCH payload para imagen principal:', mainImagePayload);
     
     try {
-      await apiClient.patch(patchEndpoint, mainImagePayload);
+      await api.patch(patchEndpoint, mainImagePayload);
       console.log('✅ [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH');
     } catch (patchError) {
       console.error('❌ [ImageUploadService] Error en endpoint PATCH para imagen principal:', patchError);
@@ -179,7 +179,7 @@ export const uploadGalleryImages = async (
       const formData = new FormData();
       formData.append('file', file);
       
-      const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+      const uploadResponse = await api.postFormData('/api/storage/upload', formData);
       objectIds.push(uploadResponse.objectId);
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }
@@ -199,7 +199,7 @@ export const uploadGalleryImages = async (
     console.log('🔄 [ImageUploadService] PATCH payload para galería (formato operations):', galleryPayload);
     
     try {
-      await apiClient.patch(patchEndpoint, galleryPayload);
+      await api.patch(patchEndpoint, galleryPayload);
       console.log('✅ [ImageUploadService] Galería asociada correctamente con endpoint PATCH');
       
       // Retornar las URLs subidas inicialmente como fallback
@@ -237,7 +237,7 @@ export const removeSectionIcon = async (
     ],
   };
 
-  await apiClient.patch(patchEndpoint, payload);
+  await api.patch(patchEndpoint, payload);
   console.log("✅ Ícono eliminado correctamente de la sección");
 };
 
@@ -261,6 +261,6 @@ export const removeSectionMainImage = async (
     ],
   };
 
-  await apiClient.patch(patchEndpoint, payload);
+  await api.patch(patchEndpoint, payload);
   console.log("✅ Imagen principal eliminada correctamente de la sección");
 };

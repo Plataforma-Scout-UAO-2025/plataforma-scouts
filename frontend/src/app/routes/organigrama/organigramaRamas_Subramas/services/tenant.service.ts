@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import api from "@/api/axios";
 
 // Interface para tenant info
 interface TenantInfo {
@@ -17,10 +17,11 @@ export const getAvailableTenants = async (): Promise<TenantInfo[]> => {
   try {
     console.log('🔄 [TenantService] Obteniendo tenants disponibles');
     
-    const tenants = await apiClient.get<TenantInfo[]>('/api/tenants');
+  const response = await api.get<TenantInfo[]>('/api/tenants');
+  const tenants = response.data;
     
-    console.log('✅ [TenantService] Tenants obtenidos:', tenants);
-    return tenants;
+  console.log('✅ [TenantService] Tenants obtenidos:', tenants);
+  return tenants;
   } catch (error) {
     console.warn('⚠️ [TenantService] No se pudieron obtener tenants:', error);
     
@@ -41,10 +42,11 @@ export const getAvailableGroups = async (tenantSlug: string): Promise<GroupInfo[
   try {
     console.log('🔄 [TenantService] Obteniendo grupos para tenant:', tenantSlug);
     
-    const groups = await apiClient.get<GroupInfo[]>(`/api/tenants/${tenantSlug}/groups`);
+  const response = await api.get<GroupInfo[]>(`/api/tenants/${tenantSlug}/groups`);
+  const groups = response.data;
     
-    console.log('✅ [TenantService] Grupos obtenidos:', groups);
-    return groups;
+  console.log('✅ [TenantService] Grupos obtenidos:', groups);
+  return groups;
   } catch (error) {
     console.warn('⚠️ [TenantService] No se pudieron obtener grupos:', error);
     

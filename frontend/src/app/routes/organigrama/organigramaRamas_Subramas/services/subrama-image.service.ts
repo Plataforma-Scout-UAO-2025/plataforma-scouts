@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import api from "@/api/axios";
 import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 import { getSubramaById } from './subrama.service';
 
@@ -20,11 +20,13 @@ export const updateSubramaMainImage = async (
     // 1️⃣ Subir el archivo a storage
     const formData = new FormData();
     formData.append('file', file);
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>(
+    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
       '/api/storage/upload',
       formData,
-      (percent) => onFileProgress?.(file.name, percent),
-      signal
+      {
+        onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
+        signal,
+      }
     );
     console.log('✅ Archivo subido:', uploadResponse.objectId);
 
@@ -45,7 +47,7 @@ export const updateSubramaMainImage = async (
     const mainImagePayload = { objectId: uploadResponse.objectId };
     console.log('📡 PATCH →', patchEndpoint, mainImagePayload);
 
-    await apiClient.patch(patchEndpoint, mainImagePayload);
+  await api.patch(patchEndpoint, mainImagePayload);
     console.log('✅ Foto principal de subrama actualizada correctamente.');
 
     // 3️⃣ Obtener la subrama actualizada
@@ -88,7 +90,10 @@ export const uploadSubramaGalleryImages = async (
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-      const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+      const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+        '/api/storage/upload',
+        formData
+      );
       objectIds.push(uploadResponse.objectId);
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }
@@ -100,7 +105,7 @@ export const uploadSubramaGalleryImages = async (
     };
 
     console.log('📡 PATCH →', patchEndpoint, galleryPayload);
-    await apiClient.patch(patchEndpoint, galleryPayload);
+  await api.patch(patchEndpoint, galleryPayload);
     console.log('✅ Galería de subrama actualizada correctamente.');
 
     // Refrescar la subrama
@@ -129,14 +134,17 @@ export const addSubramaGalleryImage = async (
     // Subir el archivo
     const formData = new FormData();
     formData.append('file', file);
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      '/api/storage/upload',
+      formData
+    );
 
     // PATCH al endpoint de galería
     const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
     const addPayload = { operations: [{ op: "add", newValue: uploadResponse.objectId }] };
     console.log('📡 PATCH →', patchEndpoint, addPayload);
 
-    await apiClient.patch(patchEndpoint, addPayload);
+  await api.patch(patchEndpoint, addPayload);
     console.log('✅ Imagen agregada correctamente a la galería.');
 
     return uploadResponse.url || uploadResponse.objectId;
@@ -162,7 +170,10 @@ export const replaceSubramaGalleryImage = async (
     // 1️⃣ Subir el nuevo archivo
     const formData = new FormData();
     formData.append('file', newFile);
-    const uploadResponse = await apiClient.postFormData<{ objectId: string, url: string }>('/api/storage/upload', formData);
+    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      '/api/storage/upload',
+      formData
+    );
 
     // 🧠 Extraer solo UUID limpio
     const cleanUuid = targetImageUuid.match(/[0-9a-fA-F-]{36}/)?.[0] || targetImageUuid;
@@ -175,7 +186,7 @@ export const replaceSubramaGalleryImage = async (
     };
     console.log('📡 PATCH →', patchEndpoint, replacePayload);
 
-    await apiClient.patch(patchEndpoint, replacePayload);
+  await api.patch(patchEndpoint, replacePayload);
     console.log('✅ Imagen reemplazada correctamente en la galería.');
 
     // 3️⃣ Obtener datos actualizados
@@ -205,7 +216,7 @@ export const removeSubramaMainImage = async (
     const payload = { objectId: null }; // El backend interpreta null como eliminar
     console.log('📡 PATCH →', patchEndpoint, payload);
 
-    await apiClient.patch(patchEndpoint, payload);
+  await api.patch(patchEndpoint, payload);
     console.log('✅ Foto principal de subrama eliminada correctamente.');
   } catch (error) {
     console.error('❌ Error eliminando foto principal de subrama:', error);
@@ -234,7 +245,7 @@ export const removeSubramaGalleryImage = async (
     const removePayload = { operations: [{ op: "remove", targetUuid: cleanUuid }] };
     console.log('📡 PATCH →', patchEndpoint, removePayload);
 
-    await apiClient.patch(patchEndpoint, removePayload);
+  await api.patch(patchEndpoint, removePayload);
     console.log('✅ Imagen eliminada correctamente de la galería.');
 
   } catch (error) {
