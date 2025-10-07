@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.finanzas.payments.model;
+package uao.edu.co.scouts_project.finanzas.fees.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
