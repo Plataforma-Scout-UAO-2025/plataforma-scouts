@@ -16,6 +16,12 @@ export const useApiError = () => {
   });
 
   const handleError = useCallback((error: unknown) => {
+    // Si se pasa null o undefined, limpiamos el error (operación exitosa)
+    if (!error) {
+      setError({ hasError: false, message: '', type: 'error' });
+      return;
+    }
+
     console.error('Error de API:', error);
 
     if (isAxiosError(error)) {
