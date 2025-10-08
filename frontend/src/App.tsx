@@ -1,26 +1,39 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { withAuthenticationRequired } from "@auth0/auth0-react";
 import { useAuth0ApiWrapper } from "./hooks/useAuth0ApiWrapper";
 
-// Routes imports
-// import Login from "./app/routes/Login";
-// import Register from "./app/routes/Register";
+// Layout
 import AppLayout from "./components/layout/AppLayout";
-import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
-import Dashboard from "./app/routes/Dashboard";
-import Gestion from "./app/routes/financiero/Gestion/Gestion";
-import { Toaster } from "sonner";
-import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
-import Grupos from "./app/routes/grupos/Grupos";
-import Home from "./app/routes/Home";
 
+// Common components
+import { Toaster } from "sonner";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
+// Pages - Landing & Public
+import Home from "./app/routes/LandingPage";
+
+// Pages - Dashboard
+import Dashboard from "./app/routes/Dashboard";
+
+// Pages - Financiero (Admin Grupal)
+import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
+import Gestion from "./app/routes/financiero/Gestion/Gestion";
+
+// Pages - Grupos (Acudiente)
+import Grupos from "./app/routes/grupos/Grupos";
+import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
+
+// Pages - Admin Grupal
+import TeamMembers from "./app/routes/adminGrupal/Miembros/Miembros";
+import Requests from "./app/routes/adminGrupal/Solicitudes/Requests";
+import Rejected from "./app/routes/adminGrupal/Solicitudes/Rejected";
+
+// Pages - Scout
+import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
+import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
+
+// Pages - Guardians/Acudientes
 import { GuardianProfile, GuardianDashboard, GuardianLayout } from "./app/routes/guardians";
 import { CompleteDataModal } from "./app/routes/guardians/completeData/CompleteDataModal";
-
-const currentUserRole: "adminGrupal" | "adminGlobal" | "acudiente" = "acudiente"; // Simulación de rol actual del usuario
-
-// Protected components
-const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
 
 function App() {
   useAuth0ApiWrapper();
@@ -28,62 +41,149 @@ function App() {
   return (
     <BrowserRouter>
       <div className="h-screen w-screen">
+        {/* Modal para completar datos de acudientes */}
         <CompleteDataModal />
+        
         <Routes>
+          {/* ============================================
+              RUTAS PÚBLICAS
+          ============================================ */}
           <Route path="/" element={<Home />} />
-          {/* Se quitan las rutas de login y register pues todo será manejado desde Auth0
-          <Route path="/login" element={<ProtectedLogin />} />
-          <Route path="/register" element={<ProtectedRegister />} /> */}
           
-          {/* Rutas independientes para acudientes */}
+          {/* ============================================
+              RUTAS DE INSCRIPCIÓN Y SCOUT (Sin auth requerida aún)
+          ============================================ */}
+          <Route path="/inscripcion" element={<ScoutEnrollment />} />
+          <Route path="/scout/dashboard" element={<ScoutDashboard />} />
+          
+          {/* ============================================
+              RUTAS INDEPENDIENTES PARA ACUDIENTES
+              Estas rutas NO están dentro de /app porque tienen su propio layout
+          ============================================ */}
           <Route path="/guardians" element={<GuardianDashboard />} />
           <Route path="/guardians/members" element={<GuardianLayout />} />
           <Route path="/guardians/profile" element={<GuardianProfile />} />
           {/* TODO: Crear componente MemberProfile para mostrar perfil individual de un miembro */}
           {/* <Route path="/guardians/members/:id/profile" element={<MemberProfile />} /> */}
           
-          {/* Redirecciones para compatibilidad */}
+          {/* Redirecciones para compatibilidad con rutas antiguas */}
           <Route path="/acudientes" element={<Navigate to="/guardians" replace />} />
           <Route path="/acudientes/miembros" element={<Navigate to="/guardians/members" replace />} />
           <Route path="/acudientes/perfil" element={<Navigate to="/guardians/profile" replace />} />
           
-          <Route path="/app" element={<ProtectedAppLayout />}>
+          {/* ============================================
+              RUTAS PROTEGIDAS DE LA APLICACIÓN
+              AppLayout sin withAuthenticationRequired porque cada ruta tiene su ProtectedRoute
+          ============================================ */}
+          <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            
+            {/* ============================================
+                RUTAS PARA ADMIN DE GRUPO
+            ============================================ */}
+            <Route
+              path="dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Financiero */}
+            <Route
+              path="financiero/cuotas"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Cuotas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="financiero/cuotas/gestion"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Gestion />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Gestión de miembros */}
+            <Route
+              path="miembros"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <TeamMembers />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Solicitudes */}
+            <Route
+              path="solicitudes/pendientes"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Requests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/rechazadas"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Rejected />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* ============================================
+                RUTAS PARA ACUDIENTE (Dentro de /app)
+                Nota: Los acudientes tienen rutas tanto en /guardians (independientes)
+                como en /app (integradas con el sistema principal)
+            ============================================ */}
+            <Route
+              path="grupos"
+              element={
+                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
+                  <Grupos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="grupos/medical-info"
+              element={
+                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
+                  <MedicalInfo />
+                </ProtectedRoute>
+              }
+            />
 
-            {/* Rutas para adminGrupal */}
-            {currentUserRole === "adminGrupal" && (
-              <>
-                <Route path="financiero/cuotas" element={<Cuotas />} />
-                <Route path="financiero/cuotas/gestion" element={<Gestion />} />
-                <Route path="grupos" element={<Grupos />} />
-                <Route path="grupos/medical-info" element={<MedicalInfo />} />
-                {/* 
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="miembros" element={<TeamMembers />} />
-                <Route path="insignias" element={<Insignias />} />
-                <Route path="eventos" element={<Events />} />
-                <Route path="solicitudes" element={<Requests />} />
-                <Route path="organigrama" element={<Organigrama />} /> 
-                <Route path="organigrama/rama/:id" element={<RamaDetail />} />
-                <Route path="organigrama/subrama/:id" element={<SubramaDetail />} /> */}
-              </>
-            )}
-
-            {/* Rutas para adminGlobal */}
-            {currentUserRole === "adminGlobal" && (
-              <>
-                {/* Aquí puedes agregar rutas específicas para adminGlobal */}
-              </>
-            )}
-
-            {/* Rutas para todos los roles */}
-            <Route path="grupos" element={<Grupos />} />
+            {/* ============================================
+                RUTAS PARA ADMIN GLOBAL
+                TODO: Agregar rutas específicas para adminGlobal cuando sea necesario
+            ============================================ */}
+            
+            {/* ============================================
+                RUTAS FUTURAS (Comentadas para referencia)
+            ============================================ */}
+            {/* 
+            <Route path="insignias" element={<Insignias />} />
+            <Route path="eventos" element={<Events />} />
+            <Route path="organigrama" element={<Organigrama />} /> 
+            <Route path="organigrama/rama/:id" element={<RamaDetail />} />
+            <Route path="organigrama/subrama/:id" element={<SubramaDetail />} /> 
+            */}
           </Route>
-          {/* Agrega más rutas aquí */}
-          <Route path="*" element={<Navigate to={"/"} />} />
+          
+          {/* ============================================
+              RUTA CATCH-ALL
+              Redirige cualquier ruta no encontrada al inicio
+          ============================================ */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
+      
+      {/* Toaster global para notificaciones */}
       <Toaster />
     </BrowserRouter>
   );
