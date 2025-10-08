@@ -35,6 +35,9 @@ import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
 import { GuardianProfile, GuardianDashboard, GuardianLayout } from "./app/routes/guardians";
 import { CompleteDataModal } from "./app/routes/guardians/completeData/CompleteDataModal";
 
+import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
+import Pagos from "./app/routes/financiero/Pagos/Pagos";
+
 function App() {
   useAuth0ApiWrapper();
 
@@ -158,21 +161,9 @@ function App() {
               }
             />
 
-            {/* ============================================
-                RUTAS PARA ADMIN GLOBAL
-                TODO: Agregar rutas específicas para adminGlobal cuando sea necesario
-            ============================================ */}
-            
-            {/* ============================================
-                RUTAS FUTURAS (Comentadas para referencia)
-            ============================================ */}
-            {/* 
-            <Route path="insignias" element={<Insignias />} />
-            <Route path="eventos" element={<Events />} />
-            <Route path="organigrama" element={<Organigrama />} /> 
-            <Route path="organigrama/rama/:id" element={<RamaDetail />} />
-            <Route path="organigrama/subrama/:id" element={<SubramaDetail />} /> 
-            */}
+            {/* Rutas adicionales para tesorero */}
+            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
           </Route>
           
           {/* ============================================

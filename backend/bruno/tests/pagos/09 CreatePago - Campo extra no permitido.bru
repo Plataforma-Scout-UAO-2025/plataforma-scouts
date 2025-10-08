@@ -1,0 +1,106 @@
+meta {
+  name: 9) CreatePago - Campo extra no permitido
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/226/payments
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+      "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+      "installment_id": 226,
+      "payer_member_id": 32,
+      "paid_at": "2025-10-23",
+      "method": "PSE",
+      "reference": "asdas",
+      "amount": 15000,
+      "extra_field": "no permitido"
+    }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422, 400]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 9) CreatePago - Campo extra no permitido');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 9: Crear Pago - Campo Extra No Permitido
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de pagos cuando se incluye un campo adicional no definido en el esquema.
+  
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/300/payments
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+    "installment_id": 300,
+    "payer_member_id": 61,
+    "paid_at": "2025-10-23",
+    "method": "PSE",
+    "reference": "asdas",
+    "amount": 15000,
+    "extra_field": "no permitido"  // ❌ Campo adicional no permitido
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity` o `400 Bad Request`
+  - **Body:** Mensaje de error indicando que el campo no es permitido
+  
+  ```json
+  {
+    "message": "Campo no permitido en el esquema",
+    "field": "extra_field"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-07
+}

@@ -1,0 +1,110 @@
+meta {
+  name: 1) CreatePago - Caso feliz
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/300/payments
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+      "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+      "installment_id": 300,
+      "payer_member_id": 61,
+      "paid_at": "2025-10-23",
+      "method": "PSE",
+      "reference": "asdas",
+      "amount": 15000
+    }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200, 201]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Has id or payload on success', () => {
+    if ([200,201].includes(res.status)) {
+      expect(res.body).to.have.any.keys('payment_id','installment_id','payer_member_id','paid_at','method','reference','amount');
+    }
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 1) CreatePago - Caso feliz');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 1: Crear Pago - Caso Feliz
+
+  ## 🎯 Objetivo
+  Validar que el sistema permite crear un pago asociado a una cuota (installment) con todos los datos correctos y devuelve una respuesta exitosa con el recurso creado.
+
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/300/payments
+  ```
+
+  ## 📦 Request Body
+  ```json
+  {
+    "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+    "installment_id": 300,
+    "payer_member_id": 61,
+    "paid_at": "2025-10-23",
+    "method": "PSE",
+    "reference": "asdas",
+    "amount": 15000
+  }
+  ```
+
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK` o `201 Created`
+  - **Body:** Objeto JSON con el recurso creado
+
+  ```json
+  {
+    "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+    "installment_id": 300,
+    "payer_member_id": 61,
+    "paid_at": "2025-10-23",
+    "method": "PSE",
+    "reference": "asdas",
+    "amount": 15000
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}
