@@ -1,6 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getMember, getMembers, updateMember } from "../../api/membersApi";
+import {
+  getMember,
+  getMembers,
+  updateMember,
+  getMembersByStatus,
+} from "../../api/membersApi";
 import { validateClient } from "../../lib/zodUtils";
 import { updateMemberSchema } from "@/models/models/memberSchema";
 import type { Member } from "@/models/types/memberTypes";
@@ -24,7 +29,7 @@ export const fetchMemberAction = createAsyncThunk<
 
 // Obtener datos de todos los miembros desde Firestore
 export const fetchMembersAction = createAsyncThunk(
-  "members/fetch",
+  "members/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
       const members = await getMembers();
@@ -37,6 +42,25 @@ export const fetchMembersAction = createAsyncThunk(
     }
   }
 );
+
+// Obtener datos de todos los miembros por estado
+type MemberStatus = "PENDING" | "APPROVED" | "REJECTED";
+export const fetchMembersByStatusAction = createAsyncThunk<
+  Member[],
+  MemberStatus,
+  { rejectValue: string }
+>("members/fetchByStatus", async (status, { rejectWithValue }) => {
+  try {
+    const members = await getMembersByStatus(status);
+    return members;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage =
+      errorData?.error || "Error al obtener los miembros por estado";
+    return rejectWithValue(errorMessage);
+  }
+});
 
 // Actualizar datos de un miembro en Firestore
 export const updateMemberAction = createAsyncThunk<

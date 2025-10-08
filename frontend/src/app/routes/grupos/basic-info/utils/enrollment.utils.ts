@@ -30,15 +30,15 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
   });
 
   return {
-    subgroup_id: GROUP_TO_SUBGROUP_ID[data.group] || 1,
-    first_name: data.firstname,
-    last_name: data.lastname,
+    tenantId: GROUP_TO_SUBGROUP_ID[data.group],
+    firstName: data.firstname,
+    lastName: data.lastname,
     age: edad,
     identification: data.identification,
-    document_type: data.document_type,
+    documentType: data.document_type,
     email: data.email,
     gender: data.gender,
-    birth_date: new Date(data.birth_date),
+    birthDate: new Date(data.birth_date),
     address: data.address,
     phone: data.phone,
     weight: data.weight,
@@ -47,6 +47,6 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     sports: data.sports,
     instruments: data.instruments,
     status: "PENDING",
-    emergency_contacts: emergencyPhone,
+    emergencyContacts: emergencyPhone,
   };
 };

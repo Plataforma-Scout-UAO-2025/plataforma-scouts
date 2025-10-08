@@ -29,6 +29,7 @@ import {
   BarChart3,
   ChevronRight,
   Network,
+  Pencil,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -78,6 +79,12 @@ const adminGrupalItems: MenuItem[] = [
     label: "Inicio",
     icon: <LineChart />,
     href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
   },
   {
     id: "organigrama",

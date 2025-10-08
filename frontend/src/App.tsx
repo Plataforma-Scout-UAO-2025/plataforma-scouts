@@ -25,9 +25,17 @@ function App() {
       <div className="h-screen w-screen">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/inscripcion" element={<ScoutEnrollment />} />
+
           <Route path="/app" element={<AppLayout />}>
             {/* Rutas para admin de grupo */}
+            <Route
+              path="inscripcion"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT"]}>
+                  <ScoutEnrollment />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="financiero/cuotas"
               element={
@@ -106,7 +114,7 @@ function App() {
           </Route>
           {/* Rutas para scout */}
           <Route
-            path="/scout/dashboard"
+            path="scout/dashboard"
             element={
               <ProtectedRoute allowedRoles={["SCOUT"]}>
                 <ScoutDashboard />

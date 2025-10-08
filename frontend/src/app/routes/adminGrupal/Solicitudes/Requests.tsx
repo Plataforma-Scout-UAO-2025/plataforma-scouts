@@ -45,8 +45,8 @@ const Requests = () => {
 
   const statusLabels: Record<string, string> = {
     PENDING: "Pendiente",
-    ACCEPTED: "Aceptado",
-    NOT_ACCEPTED: "Rechazado",
+    APPROVED: "Aceptado",
+    REJECTED: "Rechazado",
   };
 
   // Cargar solicitudes pendientes
@@ -78,7 +78,7 @@ const Requests = () => {
   // Filtro combinado
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
-      const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
+      const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
       const matchesSearch =
         searchFilter === "" ||
         fullName.includes(searchFilter.toLowerCase()) ||
@@ -96,7 +96,7 @@ const Requests = () => {
   const handleView = async (member: Member) => {
     try {
       setLoading(true);
-      const data = await getMember(member.member_id);
+      const data = await getMember(member.memberId);
       setSelectedMember(data);
       setOpenViewModal(true);
     } catch (err) {
@@ -112,9 +112,9 @@ const Requests = () => {
     if (!selectedMember) return;
     try {
       setLoading(true);
-      await updateMemberStatus(Number(selectedMember.member_id), "ACCEPTED");
+      await updateMemberStatus(Number(selectedMember.memberId), "APPROVED");
       alert(
-        `Solicitud de ${selectedMember.first_name} ${selectedMember.last_name} aceptada exitosamente`
+        `Solicitud de ${selectedMember.firstName} ${selectedMember.lastName} aceptada exitosamente`
       );
       setOpenViewModal(false);
       setSelectedMember(null);
@@ -142,10 +142,7 @@ const Requests = () => {
     }
     try {
       setLoading(true);
-      await updateMemberStatus(
-        Number(selectedMember.member_id),
-        "NOT_ACCEPTED"
-      );
+      await updateMemberStatus(Number(selectedMember.memberId), "REJECTED");
       setOpenRejectModal(false);
       setRejectReason("");
       setSelectedMember(null);
@@ -249,10 +246,10 @@ const Requests = () => {
                 </TableRow>
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <TableRow key={member.member_id}>
-                    <TableCell>{member.member_id}</TableCell>
-                    <TableCell>{member.first_name}</TableCell>
-                    <TableCell>{member.last_name}</TableCell>
+                  <TableRow key={member.memberId}>
+                    <TableCell>{member.memberId}</TableCell>
+                    <TableCell>{member.firstName}</TableCell>
+                    <TableCell>{member.lastName}</TableCell>
                     <TableCell>{member.identification}</TableCell>
                     <TableCell>
                       {member.address?.split(",")[0] || "N/A"}
@@ -299,16 +296,16 @@ const Requests = () => {
             selectedMember && (
               <div className="space-y-2 text-sm">
                 <p>
-                  <b>Nombres:</b> {selectedMember.first_name}
+                  <b>Nombres:</b> {selectedMember.firstName}
                 </p>
                 <p>
-                  <b>Apellidos:</b> {selectedMember.last_name}
+                  <b>Apellidos:</b> {selectedMember.lastName}
                 </p>
                 <p>
                   <b>Correo:</b> {selectedMember.email}
                 </p>
                 <p>
-                  <b>Documento:</b> {selectedMember.document_type}{" "}
+                  <b>Documento:</b> {selectedMember.documentType}{" "}
                   {selectedMember.identification}
                 </p>
                 <p>
@@ -356,7 +353,7 @@ const Requests = () => {
             <p className="text-sm mb-2">
               ¿Estás seguro de rechazar la solicitud de{" "}
               <b>
-                {selectedMember.first_name} {selectedMember.last_name}
+                {selectedMember.firstName} {selectedMember.lastName}
               </b>
               ?
             </p>
