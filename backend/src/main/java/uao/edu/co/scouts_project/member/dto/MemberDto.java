@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
