@@ -1,0 +1,27 @@
+meta {
+  name: POST payment
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/api/v1/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/220/payments
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+      "installment_id": 220,
+      "payer_member_id": 29,
+      "paid_at": "2025-10-23",
+      "method": "PSE",
+      "reference": "asdas",
+      "amount": 15000
+    }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,111 @@
+meta {
+  name: 17) CreateCuota - Sin Descripcion
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01",
+    "associated_to": {
+      "id": 48,
+      "name": "Santiago Vargas"
+    }
+  }
+  
+  
+  
+  
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422, 400,500]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 17) CreateCuota - Sin Descripcion');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 17: Crear Cuota - Sin Campo description
+
+  ## 🎯 Objetivo
+  Verificar que el sistema puede crear cuotas sin el campo `description`, validando que sea un campo opcional.
+
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  ```
+
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    // ❌ Falta el campo "description"
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01",
+    "associated_to": {
+      "id": 48,
+      "name": "Santiago Vargas"
+    }
+  }
+  ```
+
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity` o `400 Bad Request` o `500 Internal Server Error`
+  - **Body:** Mensaje de error si el campo es requerido, o éxito si es opcional
+
+  ```json
+  {
+    "message": "El campo description es requerido"
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}

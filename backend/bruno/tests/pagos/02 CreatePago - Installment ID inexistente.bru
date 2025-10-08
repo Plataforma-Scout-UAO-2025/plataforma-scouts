@@ -1,0 +1,103 @@
+meta {
+  name: 2) CreatePago - Installment ID inexistente
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/99999/payments
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+      "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+      "installment_id": 99999,
+      "payer_member_id": 61,
+      "paid_at": "2025-10-23",
+      "method": "PSE",
+      "reference": "asdas",
+      "amount": 15000
+    }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([404,409]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 2) CreatePago - Installment ID inexistente');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 2: Crear Pago - Installment ID Inexistente
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de pagos cuando el installment_id no existe en la base de datos.
+  
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/99999/payments
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+    "installment_id": 99999,  // ❌ ID inexistente
+    "payer_member_id": 61,
+    "paid_at": "2025-10-23",
+    "method": "PSE",
+    "reference": "asdas",
+    "amount": 15000
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `404 Not Found`
+  - **Body:** Mensaje de error indicando que la cuota no existe
+  
+  ```json
+  {
+    "message": "Installment not found"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-07
+}

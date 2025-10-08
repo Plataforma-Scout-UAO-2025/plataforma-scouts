@@ -1,18 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { withAuthenticationRequired } from "@auth0/auth0-react";
 import { useAuth0ApiWrapper } from "./hooks/useAuth0ApiWrapper";
-import AppLayout from "./components/layout/AppLayout";
+
+// Routes imports
 import { Toaster } from "sonner";
-import MedicalRecordsView from "./app/routes/grupos/components/MedicalRecordView";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
 import Home from "./app/routes/Home";
 import Dashboard from "./app/routes/Dashboard";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
+import MedicalRecordsView from "./app/routes/grupos/components/MedicalRecordView";
+import Grupos from "./app/routes/grupos/Grupos";
 
-// Simulación de rol
-const currentUserRole: "adminGrupal" | "adminGlobal" = "adminGrupal";
-
-const ProtectedAppLayout = withAuthenticationRequired(AppLayout);
+import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
+import Pagos from "./app/routes/financiero/Pagos/Pagos";
 
 function App() {
   useAuth0ApiWrapper();
@@ -22,28 +23,29 @@ function App() {
       <div className="h-screen w-screen">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/app" element={<ProtectedAppLayout />}>
-            <Route index element={<Navigate to="dashboard" />} />
-            <Route path="dashboard" element={<Dashboard />} />
+          <Route path="/app" element={<AppLayout />}>
+            <Route index element={<Dashboard />} />
 
-            {/* Rutas para adminGrupal */}
-            {currentUserRole === "adminGrupal" && (
-              <>
-                <Route path="grupos" element={<MedicalRecordsView groupId={1} />} />
-                <Route path="financiero/cuotas" element={<Cuotas />} />
-                <Route path="financiero/cuotas/gestion" element={<Gestion />} />
-              </>
-            )}
+            {/* Rutas para admin de grupo */}
+            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Cuotas /></ProtectedRoute>} />
+            <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
+            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
+            {/*
+            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><TeamMembers /></ProtectedRoute>} />
+            <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
+            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
+            <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Organigrama /></ProtectedRoute>} /> 
+            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><RamaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><SubramaDetail /></ProtectedRoute>} /> 
+            */}
 
-            {/* Rutas para adminGlobal */}
-            {currentUserRole === "adminGlobal" && (
-              <>
-                {/* Rutas específicas adminGlobal */}
-              </>
-            )}
+            {/* Rutas para acudiente */}
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
+            <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
+            <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalRecordsView groupId={1} /></ProtectedRoute>} />
           </Route>
-          
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
       </div>
       <Toaster />

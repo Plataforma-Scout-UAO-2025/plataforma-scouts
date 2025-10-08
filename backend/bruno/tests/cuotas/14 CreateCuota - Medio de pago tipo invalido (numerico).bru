@@ -1,0 +1,99 @@
+meta {
+  name: 14) CreateCuota - Sin campo associated_to
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01"
+  }
+  
+  
+  
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([400]).to.include(res.status);
+  });
+  
+  
+  
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 14) CreateCuota - Sin campo associated_to');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 14: Crear Cuota - Sin Campo associated_to
+
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de cuotas cuando no se incluye el campo `associated_to`, validando que sea un campo requerido.
+
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  ```
+
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01"
+    // ❌ Falta el campo associated_to
+  }
+  ```
+
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `400 Bad Request`
+  - **Body:** Mensaje de error indicando que el campo es requerido
+
+  ```json
+  {
+    "message": "El campo associated_to es requerido"
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}

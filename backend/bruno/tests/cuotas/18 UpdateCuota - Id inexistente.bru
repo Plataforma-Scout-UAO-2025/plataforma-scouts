@@ -1,0 +1,100 @@
+meta {
+  name: 18) UpdateCuota - Id inexistente
+  type: http
+  seq: 23
+}
+
+patch {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees/org_6B3k4dao2Wf6eGxa/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "amount": 15000,
+    "name": "Mensualidad",
+    "description": "Prueba de cambio"
+  }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([404,405]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 18) UpdateCuota - Id inexistente');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 18: Actualizar Cuota - ID Inexistente
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza intentos de actualizar una cuota con un ID que no existe en la base de datos.
+  
+  ## 📍 Endpoint
+  ```
+  PUT {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+  ```
+  **Nota:** UUID inexistente `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "name": "Mensualidad Ajustada",
+    "description": "Cuota Actualizada",
+    "amount": 60000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-02-28"
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `404 Not Found`
+  - **Body:** Mensaje de error indicando que la cuota no existe
+  
+  ```json
+  {
+    "message": "Cuota no encontrada"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

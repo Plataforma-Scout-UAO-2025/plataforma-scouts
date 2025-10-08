@@ -1,0 +1,116 @@
+meta {
+  name: 13) CreateCuota - Associated_to con ID inexistente
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01",
+    "associated_to": {
+      "id": 42,
+      "name": "Webelos"
+    }
+  }
+  
+  
+  
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([404]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 13) CreateCuota - Associated_to con ID inexistente');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 13: Crear Cuota - Associated_to con ID Inexistente
+
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de cuotas cuando el campo `associated_to.id` contiene un ID que no existe en la base de datos.
+
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  ```
+
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01",
+    "associated_to": {
+      "id": 42,  // ❌ ID inexistente (nombre "Webelos" no corresponde)
+      "name": "Webelos"
+    }
+  }
+  ```
+
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `404 Not Found`
+  - **Body:** Mensaje de error indicando que el recurso asociado no existe
+
+  ```json
+  {
+    "message": "El recurso asociado no existe o no fue encontrado"
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}
