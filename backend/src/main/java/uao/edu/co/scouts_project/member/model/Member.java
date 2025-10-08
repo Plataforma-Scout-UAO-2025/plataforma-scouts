@@ -45,11 +45,9 @@ public class Member {
     @Column(name = "member_id")
     private Long memberId;
 
-    @NotNull
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
 

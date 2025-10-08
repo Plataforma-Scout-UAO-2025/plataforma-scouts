@@ -6,7 +6,9 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -47,11 +49,24 @@ public class MemberServiceImp implements IMemberService {
 
             miembro.setSubgroup(subgroup);
 
-            String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userId = authentication.getName();
             log.info("Creating member - Authenticated user: {}", userId);
 
+            String orgId = null;
+            if (authentication.getPrincipal() instanceof Jwt) {
+                Jwt jwt = (Jwt) authentication.getPrincipal();
+                orgId = jwt.getClaimAsString("org_id");
+                log.info("Extracted org_id from JWT: {}", orgId);
+            }
+
+            if (orgId == null || orgId.isBlank()) {
+                log.error("org_id claim not found in JWT");
+                throw new IllegalArgumentException("Organization ID is required but not found in token");
+            }
 
             miembro.setUserId(userId);
+            miembro.setTenantId(orgId);
 
             if (miembro.getStatus() == null) {
                 miembro.setStatus(Status.PENDING);

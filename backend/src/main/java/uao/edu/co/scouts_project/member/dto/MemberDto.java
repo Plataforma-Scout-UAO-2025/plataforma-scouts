@@ -75,7 +75,7 @@ public class MemberDto {
 
     private String status;
 
-    @JsonProperty("acceptance_date")
+    @JsonProperty("acceptanceDate")
     private LocalDate acceptanceDate;
 
     @JsonProperty("emergencyContacts")
