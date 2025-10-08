@@ -2,6 +2,7 @@ package uao.edu.co.scouts_project.organigrama.dto;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public record SectionResponseDTO(
     Long sectionId,
@@ -11,7 +12,15 @@ public record SectionResponseDTO(
     String description,
     String iconObjectUrl,
     String photoPrincipalUrl,
-    List<String> galleryObjectUrls, 
+
+    // (Legacy) — se mantiene por compatibilidad temporal con el FE antiguo
+    List<String> galleryObjectUrls,
+
+    // (Nuevo) — contrato estable para galería
+    List<GalleryItemDTO> gallery,
+
     Instant createdAt,
     Instant updatedAt
-) {}
+) {
+    public record GalleryItemDTO(UUID id, String url) {}
+}

@@ -42,6 +42,8 @@ import { useRoleContext } from "@/hooks/useRoleContext";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
 import FullScreenError from "@/components/common/FullScreenError";
 import { RawRole } from '@/roles/roles';
+import { setAuth0TokenProvider } from '@/api/axios';
+import { useEffect } from 'react';
 
 type SubMenuItem = {
   id: string;
@@ -74,27 +76,12 @@ const adminGlobalItems: MenuItem[] = [
 ];
 
 const adminGrupalItems: MenuItem[] = [
-  {
-    id: "inicio",
-    label: "Inicio",
-    icon: <LineChart />,
-    href: "/app/dashboard",
-  },
-  {
-    id: "inscripcion",
-    label: "Inscripcion",
-    icon: <Pencil />,
-    href: "/app/inscripcion",
-  },
-  {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
-  },
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "inscripcion", label: "Inscripcion", icon: <Pencil />, href: "/app/inscripcion", },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
   { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
   { id: "medico", label: "Información Médica", icon: <Settings />, href: "/app/grupos/informacion-medica" },
@@ -107,6 +94,7 @@ const tesoreroItems: MenuItem[] = [
 
 const acudienteItems: MenuItem[] = [
   { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
 ]
 
@@ -116,8 +104,8 @@ const bottomItems: MenuItem[] = [
 ];
 
 function AppLayoutContent() {
-  const location = useLocation();
-  const { user, logout } = useAuth0();
+  const location = useLocation()
+  const { user, logout, getAccessTokenSilently } = useAuth0();
   const { status, currentUserRole, currentUserRoleLabel, error, retry } = useRoleContext();
 
   // Determinar qué menú mostrar según el rol del usuario
@@ -141,6 +129,14 @@ function AppLayoutContent() {
   };
 
   const menuItems = getMenuItems();
+
+  // Conectar Auth0 con axios centralizado
+  useEffect(() => {
+    if (getAccessTokenSilently) {
+      setAuth0TokenProvider(getAccessTokenSilently);
+      console.log('🔗 [Auth] Token provider conectado con axios centralizado');
+    }
+  }, [getAccessTokenSilently]);
 
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } });

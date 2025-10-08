@@ -3,13 +3,14 @@ package uao.edu.co.scouts_project.organigrama.service;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uao.edu.co.scouts_project.organigrama.domain.*;
+
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
-import uao.edu.co.scouts_project.organigrama.repo.GroupRepository;
-import uao.edu.co.scouts_project.organigrama.repo.SectionRepository;
-import uao.edu.co.scouts_project.organigrama.repo.SubgroupRepository;
-import uao.edu.co.scouts_project.organigrama.repo.TenantRepository;
+import uao.edu.co.scouts_project.organigrama.model.*;
+import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
+import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
+import uao.edu.co.scouts_project.organigrama.repository.SubgroupRepository;
+import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import java.time.Instant;
@@ -51,10 +52,12 @@ public class SubgroupService {
             tenant.getTenantId(), group.getGroupId(), sectionId);
 
         // 2. Recolectar TODOS los UUIDs de TODAS las imágenes (fotos principales y galerías)
+        // TODO: GALERÍA DE FOTOS - Lógica de galería temporalmente deshabilitada
         Set<UUID> allImageIds = subgroups.stream()
             .flatMap(subgroup -> {
-                Stream<UUID> galleryStream = (subgroup.getGalleryObjectIds() != null) ? Arrays.stream(subgroup.getGalleryObjectIds()) : Stream.empty();
-                return Stream.concat(Stream.of(subgroup.getPhotoPrincipal()), galleryStream);
+                // Stream<UUID> galleryStream = (subgroup.getGalleryObjectIds() != null) ? Arrays.stream(subgroup.getGalleryObjectIds()) : Stream.empty();
+                // return Stream.concat(Stream.of(subgroup.getPhotoPrincipal()), galleryStream);
+                return Stream.of(subgroup.getPhotoPrincipal()); // Solo foto principal
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
@@ -92,11 +95,12 @@ public class SubgroupService {
         subgroup.setDescription(dto.description());
         subgroup.setPhotoPrincipal(dto.photoPrincipal());
 
-        if (dto.galleryObjectIds() != null) {
+        // TODO: GALERÍA DE FOTOS - Lógica de galería temporalmente deshabilitada
+        /*if (dto.galleryObjectIds() != null) {
             subgroup.setGalleryObjectIds(dto.galleryObjectIds());
         } else {
             subgroup.setGalleryObjectIds(new UUID[0]);
-        }
+        }*/
         
         subgroup.setIsActive(dto.isActive() != null ? dto.isActive() : true);
         subgroup.setCreatedAt(Instant.now());
@@ -122,7 +126,8 @@ public class SubgroupService {
             storageService.deleteFileByObjectId(existing.getPhotoPrincipal());
             existing.setPhotoPrincipal(dto.photoPrincipal());
         }
-        if (dto.galleryObjectIds() != null) {
+        // TODO: GALERÍA DE FOTOS - Lógica de actualización de galería temporalmente deshabilitada
+        /*if (dto.galleryObjectIds() != null) {
             UUID[] oldArr = existing.getGalleryObjectIds() != null ? existing.getGalleryObjectIds() : new UUID[0];
             Set<UUID> oldSet = new HashSet<>(Arrays.asList(oldArr));
             Set<UUID> newSet = new HashSet<>(Arrays.asList(dto.galleryObjectIds()));
@@ -133,7 +138,7 @@ public class SubgroupService {
                     .forEach(storageService::deleteFileByObjectId);
             }
             existing.setGalleryObjectIds(newSet.toArray(UUID[]::new));
-        }
+        }*/
 
         if (dto.isActive() != null) {
             existing.setIsActive(dto.isActive());
@@ -149,14 +154,16 @@ public class SubgroupService {
         Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
         
         storageService.deleteFileByObjectId(subgroup.getPhotoPrincipal());
-        if (subgroup.getGalleryObjectIds() != null) {
+        // TODO: GALERÍA DE FOTOS - Eliminación de galería temporalmente deshabilitada
+        /*if (subgroup.getGalleryObjectIds() != null) {
             Arrays.stream(subgroup.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
-        }
+        }*/
 
         subgroupRepository.delete(subgroup);
     }
     
-    @Transactional
+    // TODO: GALERÍA DE FOTOS - Método temporalmente deshabilitado
+    /*@Transactional
     public void deleteGalleryImageById(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId, UUID objectId) {
         Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
         
@@ -170,7 +177,7 @@ public class SubgroupService {
             subgroup.setGalleryObjectIds(galleryIdList.toArray(new UUID[0]));
             subgroupRepository.save(subgroup);
         }
-    }
+    }*/
 
     @Transactional
     public void deletePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
@@ -197,7 +204,8 @@ public class SubgroupService {
         subgroupRepository.save(subgroup);
     }
     
-    @Transactional
+    // TODO: GALERÍA DE FOTOS - Método temporalmente deshabilitado
+    /*@Transactional
     public void patchGallery(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId,
                             List<uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest.PatchOperation> operations) {
         Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
@@ -269,7 +277,7 @@ public class SubgroupService {
         // Guardar el array actualizado
         subgroup.setGalleryObjectIds(galleryList.toArray(new UUID[0]));
         subgroupRepository.save(subgroup);
-    }
+    }*/
     
     private Subgroup findSubgroupOrThrow(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
         validateHierarchy(tenantSlug, groupSlug, sectionId);
@@ -298,7 +306,8 @@ public class SubgroupService {
     private SubgroupResponseDTO toResponseDTO(Subgroup subgroup, Map<UUID, String> urlMap) {
         String photoPrincipalUrl = urlMap != null ? urlMap.get(subgroup.getPhotoPrincipal()) : null;
         
-        List<String> galleryUrls;
+        // TODO: GALERÍA DE FOTOS - Lógica de galería temporalmente deshabilitada
+        /*List<String> galleryUrls;
         if (subgroup.getGalleryObjectIds() != null && subgroup.getGalleryObjectIds().length > 0) {
             galleryUrls = Arrays.stream(subgroup.getGalleryObjectIds())
                                 .map(urlMap::get) // Búsqueda eficiente en el mapa
@@ -306,12 +315,12 @@ public class SubgroupService {
                                 .collect(Collectors.toList());
         } else {
             galleryUrls = Collections.emptyList();
-        }
+        }*/
 
         return new SubgroupResponseDTO(
                 subgroup.getSubgroupId(), subgroup.getTenantId(), subgroup.getGroupId(),
                 subgroup.getSectionId(), subgroup.getName(), subgroup.getDescription(),
-                photoPrincipalUrl, galleryUrls, subgroup.getIsActive(), subgroup.getCreatedAt(), subgroup.getUpdatedAt()
+                photoPrincipalUrl, /* galleryUrls, */ subgroup.getIsActive(), subgroup.getCreatedAt(), subgroup.getUpdatedAt()
         );
     }
 
@@ -321,9 +330,10 @@ public class SubgroupService {
         if (subgroup.getPhotoPrincipal() != null) {
             ids.add(subgroup.getPhotoPrincipal());
         }
-        if (subgroup.getGalleryObjectIds() != null) {
+        // TODO: GALERÍA DE FOTOS - Lógica de galería temporalmente deshabilitada
+        /*if (subgroup.getGalleryObjectIds() != null) {
             ids.addAll(Arrays.asList(subgroup.getGalleryObjectIds()));
-        }
+        }*/
 
         if (ids.isEmpty()) {
             return toResponseDTO(subgroup, Collections.emptyMap());
