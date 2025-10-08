@@ -14,13 +14,19 @@ import {
 
 // CRUD para Subramas (SUBGROUPS)
 export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, ramaId: string): Promise<Subrama[]> => {
-  console.log('🔄 [SubramaService] Obteniendo subramas de rama:', ramaId);
-  
+  const normalizedRamaId = typeof ramaId === 'string' ? ramaId.trim() : String(ramaId ?? '').trim();
+  console.log('🔄 [SubramaService] Obteniendo subramas de rama:', normalizedRamaId || '(sin id)');
+
+  if (!normalizedRamaId) {
+    console.warn('⚠️ [SubramaService] Rama sin ID válido, se omite la consulta de subramas.');
+    return [];
+  }
+
   try {
-  const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${ramaId}/subgroups`;
-  const response = await api.get<BackendSubrama[]>(endpoint);
-  const backendSubramas = response.data;
-    
+    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${encodeURIComponent(normalizedRamaId)}/subgroups`;
+    const response = await api.get<BackendSubrama[]>(endpoint);
+    const backendSubramas = response.data;
+
     const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
     console.log('✅ [SubramaService] Subramas obtenidas:', subramas.length);
     return subramas;

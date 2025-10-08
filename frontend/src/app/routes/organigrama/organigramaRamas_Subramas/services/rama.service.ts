@@ -58,15 +58,32 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
     console.log('🔄 [RamaService] Hidratando ramas con sus subramas...');
     const ramasConSubramas = await Promise.all(
       ramas.map(async (rama) => {
+        const idCandidates = [
+          rama.sectionId,
+          (rama as unknown as Record<string, unknown>)['section_id'],
+          rama.id,
+          (rama as unknown as Record<string, unknown>)['ramaId'],
+        ];
+        const normalizedId = idCandidates
+          .map((candidate) => (typeof candidate === 'string' ? candidate.trim() : candidate !== undefined && candidate !== null ? String(candidate) : ''))
+          .find((candidate) => candidate.length > 0) ?? '';
+
+        if (!normalizedId) {
+          console.warn('⚠️ [RamaService] Rama sin ID válido, se omite la carga de subramas.', {
+            nombre: rama.nombre ?? rama.name,
+          });
+          return { ...rama, subramas: [], subgroups: [] };
+        }
+
         try {
-          const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
+          const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, normalizedId);
           // Populate both canonical and legacy-compatible fields so consumers using
           // (rama.subgroups ?? rama.subramas) won't pick an empty array from the
           // pre-initialized `subgroups: []` and miss the hydrated subramas.
-          return { ...rama, subramas, subgroups: subramas };
+          return { ...rama, id: normalizedId, sectionId: normalizedId, subramas, subgroups: subramas };
         } catch (error) {
           console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre ?? rama.name}:`, error);
-          return { ...rama, subramas: [], subgroups: [] };
+          return { ...rama, id: normalizedId, sectionId: normalizedId, subramas: [], subgroups: [] };
         }
       })
     );

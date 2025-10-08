@@ -29,9 +29,23 @@ export default function RamaList({
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   useEffect(() => {
     if (expandedItems.length === 0 && ramas && ramas.length > 0) {
-          const first = ramas[0];
-          const firstId = String(first?.section_id ?? first?.sectionId ?? first?.id ?? '');
-          if (firstId) setExpandedItems([firstId]);
+      const first = ramas[0];
+      const firstId = [
+        first?.sectionId,
+        (first as unknown as Record<string, unknown>)?.['section_id'],
+        first?.id,
+        (first as unknown as Record<string, unknown>)?.['ramaId'],
+      ]
+        .map((candidate) =>
+          typeof candidate === 'string'
+            ? candidate.trim()
+            : candidate !== undefined && candidate !== null
+              ? String(candidate)
+              : ''
+        )
+        .find((candidate) => candidate.length > 0);
+
+      if (firstId) setExpandedItems([firstId]);
     }
   
   }, [ramas, expandedItems.length]);
@@ -61,11 +75,42 @@ export default function RamaList({
 
   return (
     <Accordion type="multiple" value={expandedItems} className="space-y-4">
-      {ramas.map((rama) => {
-  const ramaKey = String(rama.sectionId ?? rama.section_id ?? rama.id ?? '');
+      {ramas.map((rama, index) => {
+  const ramaId = [
+    rama.sectionId,
+    (rama as unknown as Record<string, unknown>)['section_id'],
+    rama.id,
+    (rama as unknown as Record<string, unknown>)['ramaId'],
+  ]
+    .map((candidate) =>
+      typeof candidate === 'string'
+        ? candidate.trim()
+        : candidate !== undefined && candidate !== null
+          ? String(candidate)
+          : ''
+    )
+    .find((candidate) => candidate.length > 0) ?? '';
+
+  const ramaKey = ramaId || `rama-${index}`;
   const ramaDisplayName = rama.name ?? rama.nombre ?? '';
   const ramaEstado = rama.estado ?? (rama.status === 'active' ? 'activa' : 'inactiva');
   const ramaIsActive = (rama.estado !== undefined ? String(rama.estado) === 'activa' : rama.status === 'active');
+
+  const handleNavigateRama = () => {
+    if (!ramaId) {
+      console.warn('⚠️ [RamaList] Intento de navegar a una rama sin ID válido');
+      return;
+    }
+    navigate(`/app/organigrama/rama/${ramaId}`);
+  };
+
+  const handleCreateSubrama = () => {
+    if (!ramaId) {
+      console.warn('⚠️ [RamaList] No se puede crear subrama porque la rama no tiene ID');
+      return;
+    }
+    onCreateSubrama(ramaId);
+  };
 
         return (
           <AccordionItem key={ramaKey} value={ramaKey} className="border rounded-lg shadow-sm bg-white">
@@ -87,7 +132,14 @@ export default function RamaList({
               </AccordionTrigger>
 
               <div className="flex items-center space-x-2 ml-4">
-                <Button size="sm" variant="outline" onClick={() => navigate(`/app/organigrama/rama/${rama.id}`)} className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleNavigateRama}
+                  disabled={!ramaId}
+                  title={!ramaId ? 'Esta rama no tiene un ID válido en el backend' : undefined}
+                  className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => onEditRama(rama)} className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
@@ -102,20 +154,47 @@ export default function RamaList({
                 {((rama.subgroups ?? rama.subramas) ?? []).length === 0 ? (
                   <div key={`no-subramas-${ramaKey}`} className="text-center py-6">
                     <p className="text-sm text-muted-foreground mb-3">Esta rama no tiene subramas</p>
-                    <Button variant="outline" size="sm" onClick={() => onCreateSubrama(rama.id)} className="text-primary border-primary hover:bg-primary hover:text-white">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCreateSubrama}
+                      disabled={!ramaId}
+                      title={!ramaId ? 'No se puede crear subrama porque la rama no tiene ID' : undefined}
+                      className="text-primary border-primary hover:bg-primary hover:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
                       <Plus className="h-4 w-4 mr-2" /> Crear Nueva Subrama
                     </Button>
                   </div>
                 ) : (
                   <div key={`subramas-${ramaKey}`}>
-                    {((rama.subgroups ?? rama.subramas) ?? []).map((subrama, index) => {
-                      const subgroupKey = String(subrama.subgroup_id ?? subrama.id ?? '');
+                    {((rama.subgroups ?? rama.subramas) ?? []).map((subrama, subIndex) => {
+                      const subgroupId = [
+                        subrama.subgroup_id,
+                        subrama.id,
+                      ]
+                        .map((candidate) =>
+                          typeof candidate === 'string'
+                            ? candidate.trim()
+                            : candidate !== undefined && candidate !== null
+                              ? String(candidate)
+                              : ''
+                        )
+                        .find((candidate) => candidate.length > 0) ?? '';
+                      const subgroupKey = subgroupId || `subgrupo-${subIndex}`;
                       const subramaDisplayName = subrama.name ?? subrama.nombre ?? '';
                       const subramaEstado = subrama.estado ?? (subrama.status === 'active' ? 'activa' : 'inactiva');
                       const subramaIsActive = (subrama.estado !== undefined ? String(subrama.estado) === 'activa' : subrama.status === 'active');
 
+                      const handleNavigateSubrama = () => {
+                        if (!subgroupId) {
+                          console.warn('⚠️ [RamaList] Intento de navegar a una subrama sin ID válido');
+                          return;
+                        }
+                        navigate(`/app/organigrama/subrama/${subgroupId}`);
+                      };
+
                       return (
-                        <div key={`subrama-${ramaKey}-${subgroupKey}-${index}`} className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm">
+                        <div key={`subrama-${ramaKey}-${subgroupKey}-${subIndex}`} className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm">
                           <div className="flex items-center space-x-3">
                             <Users className="h-4 w-4 text-secondary" />
                             <div>
@@ -130,7 +209,14 @@ export default function RamaList({
                           </div>
 
                           <div className="flex items-center space-x-2">
-                            <Button size="sm" variant="outline" onClick={() => navigate(`/app/organigrama/subrama/${subrama.subgroup_id ?? subrama.id}`)} className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={handleNavigateSubrama}
+                              disabled={!subgroupId}
+                              title={!subgroupId ? 'Esta subrama no tiene un ID válido en el backend' : undefined}
+                              className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
                               <Eye className="h-3 w-3" />
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => onEditSubrama(subrama)} className="h-7 w-7 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
@@ -145,7 +231,14 @@ export default function RamaList({
                     })}
 
                     <div key={`create-subrama-${ramaKey}`} className="pt-3 border-t border-gray-200">
-                      <Button variant="outline" size="sm" onClick={() => onCreateSubrama(rama.id)} className="w-full text-primary border-primary hover:bg-primary hover:text-white">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCreateSubrama}
+                        disabled={!ramaId}
+                        title={!ramaId ? 'No se puede crear subrama porque la rama no tiene ID' : undefined}
+                        className="w-full text-primary border-primary hover:bg-primary hover:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
                         <Plus className="h-4 w-4 mr-2" /> Crear Nueva Subrama
                       </Button>
                     </div>
