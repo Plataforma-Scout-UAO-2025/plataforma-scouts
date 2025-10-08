@@ -259,11 +259,9 @@ export const mapFrontendCreateSubramaToBackend = (frontendData: CreateSubramaDat
 
   // Backend appears to expect snake_case 'is_active' — include both forms only if the frontend provided state
   if (maybe.isActive !== undefined) {
-    base.isActive = Boolean(maybe.isActive);
     base.is_active = Boolean(maybe.isActive);
   } else if (maybe.estado !== undefined) {
     const isAct = String(maybe.estado) === 'activa';
-    base.isActive = isAct;
     base.is_active = isAct;
   }
 
@@ -280,15 +278,12 @@ export const mapFrontendUpdateSubramaToBackend = (frontendData: UpdateSubramaDat
   if (maybe.descripcion !== undefined) backendData.description = maybe.descripcion as unknown as string;
   if (maybe.galleryObjectIds !== undefined) backendData.galleryObjectIds = maybe.galleryObjectIds as string[];
   if (maybe.isActive !== undefined) {
-    backendData.isActive = Boolean(maybe.isActive);
     backendData.is_active = Boolean(maybe.isActive);
   } else if (maybe.estado !== undefined) {
     const v = (maybe.estado as unknown as string) === 'activa';
-    backendData.isActive = v;
     backendData.is_active = v;
   } else if (maybe.status !== undefined) {
     const v = (maybe.status as unknown as string) === 'active';
-    backendData.isActive = v;
     backendData.is_active = v;
   }
 

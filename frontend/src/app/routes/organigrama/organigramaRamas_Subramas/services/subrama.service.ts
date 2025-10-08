@@ -102,16 +102,24 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendUpdateSubramaToBackend(data);
-    
     // Actualizar la subrama
+    console.log('📤 [SubramaService] Endpoint a PUT:', endpoint);
+    try {
+      console.log('📤 [SubramaService] Payload a enviar (update):', JSON.stringify(backendData, null, 2));
+    } catch (e) {
+      console.log('📤 [SubramaService] Payload a enviar (update) (no serializable):', backendData);
+    }
     const response = await api.put<BackendSubrama>(endpoint, backendData);
     const backendSubrama = response.data;
 
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
   console.log('✅ [SubramaService] Subrama actualizada:', subrama.nombre ?? subrama.name);
     return subrama;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [SubramaService] Error actualizando subrama:', error);
+    if (error?.response?.data) {
+      console.error('❌ [SubramaService] Respuesta del backend (update):', error.response.data);
+    }
     throw error;
   }
 };
