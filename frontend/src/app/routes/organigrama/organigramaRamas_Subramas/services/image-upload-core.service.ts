@@ -99,18 +99,50 @@ export const uploadSectionIcon = async (
     console.log('📍 [ImageUploadService] Endpoint PATCH:', patchEndpoint);
     
     // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
-    const iconPayload = {
-      objectId: uploadResponse.objectId
-    };
-    
-    console.log('🔄 [ImageUploadService] PATCH payload para icono:', iconPayload);
-    
+    const iconPayload = { objectId: uploadResponse.objectId };
+    console.log('🔄 [ImageUploadService] PATCH payload para icono (primary):', iconPayload);
+
     try {
       await api.patch(patchEndpoint, iconPayload);
-      console.log('✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH');
-    } catch (patchError) {
-      console.error('❌ [ImageUploadService] Error en endpoint PATCH para icono:', patchError);
-      throw patchError;
+      console.log('✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH (primary)');
+    } catch (primaryError: any) {
+      console.error('❌ [ImageUploadService] Error en endpoint PATCH para icono (primary):', primaryError);
+      console.error('❌ [ImageUploadService] Respuesta del backend (primary):', primaryError?.response?.data ?? primaryError?.response ?? primaryError);
+
+      // Intentar payload alternativo: snake_case object_id
+      const alt1 = { object_id: uploadResponse.objectId };
+      console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (object_id):', alt1);
+      try {
+        await api.patch(patchEndpoint, alt1);
+        console.log('✅ [ImageUploadService] Icono asociado con payload alternativo (object_id)');
+      } catch (alt1Error: any) {
+        console.error('❌ [ImageUploadService] Falla alt1 (object_id):', alt1Error);
+        console.error('❌ [ImageUploadService] Respuesta backend (alt1):', alt1Error?.response?.data ?? alt1Error?.response ?? alt1Error);
+
+        // Intentar formato operations (similar a galería)
+        const alt2 = { operations: [{ op: 'add', newValue: uploadResponse.objectId }] };
+        console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations add):', alt2);
+        try {
+          await api.patch(patchEndpoint, alt2);
+          console.log('✅ [ImageUploadService] Icono asociado con payload alternativo (operations add)');
+        } catch (alt2Error: any) {
+          console.error('❌ [ImageUploadService] Falla alt2 (operations add):', alt2Error);
+          console.error('❌ [ImageUploadService] Respuesta backend (alt2):', alt2Error?.response?.data ?? alt2Error?.response ?? alt2Error);
+
+          // Intentar operations replace
+          const alt3 = { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] };
+          console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations replace):', alt3);
+          try {
+            await api.patch(patchEndpoint, alt3);
+            console.log('✅ [ImageUploadService] Icono asociado con payload alternativo (operations replace)');
+          } catch (alt3Error: any) {
+            console.error('❌ [ImageUploadService] Falla alt3 (operations replace):', alt3Error);
+            console.error('❌ [ImageUploadService] Respuesta backend (alt3):', alt3Error?.response?.data ?? alt3Error?.response ?? alt3Error);
+            // Si todo falla, volver a lanzar el error original para que el UI lo muestre
+            throw primaryError;
+          }
+        }
+      }
     }
     
     console.log('✅ [ImageUploadService] Icono de sección subido con éxito');
@@ -144,18 +176,46 @@ export const uploadSectionMainImage = async (
     const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
     
     // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
-    const mainImagePayload = {
-      objectId: uploadResponse.objectId
-    };
-    
-    console.log('🔄 [ImageUploadService] PATCH payload para imagen principal:', mainImagePayload);
-    
+    const mainImagePayload = { objectId: uploadResponse.objectId };
+    console.log('🔄 [ImageUploadService] PATCH payload para imagen principal (primary):', mainImagePayload);
+
     try {
       await api.patch(patchEndpoint, mainImagePayload);
-      console.log('✅ [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH');
-    } catch (patchError) {
-      console.error('❌ [ImageUploadService] Error en endpoint PATCH para imagen principal:', patchError);
-      throw patchError;
+      console.log('✅ [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH (primary)');
+    } catch (primaryError: any) {
+      console.error('❌ [ImageUploadService] Error en endpoint PATCH para imagen principal (primary):', primaryError);
+      console.error('❌ [ImageUploadService] Respuesta del backend (primary):', primaryError?.response?.data ?? primaryError?.response ?? primaryError);
+
+      const alt1 = { object_id: uploadResponse.objectId };
+      console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (object_id) para imagen principal:', alt1);
+      try {
+        await api.patch(patchEndpoint, alt1);
+        console.log('✅ [ImageUploadService] Imagen principal asociada con payload alternativo (object_id)');
+      } catch (alt1Error: any) {
+        console.error('❌ [ImageUploadService] Falla alt1 (object_id) imagen principal:', alt1Error);
+        console.error('❌ [ImageUploadService] Respuesta backend (alt1):', alt1Error?.response?.data ?? alt1Error?.response ?? alt1Error);
+
+        const alt2 = { operations: [{ op: 'add', newValue: uploadResponse.objectId }] };
+        console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations add) para imagen principal:', alt2);
+        try {
+          await api.patch(patchEndpoint, alt2);
+          console.log('✅ [ImageUploadService] Imagen principal asociada con payload alternativo (operations add)');
+        } catch (alt2Error: any) {
+          console.error('❌ [ImageUploadService] Falla alt2 (operations add) imagen principal:', alt2Error);
+          console.error('❌ [ImageUploadService] Respuesta backend (alt2):', alt2Error?.response?.data ?? alt2Error?.response ?? alt2Error);
+
+          const alt3 = { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] };
+          console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations replace) para imagen principal:', alt3);
+          try {
+            await api.patch(patchEndpoint, alt3);
+            console.log('✅ [ImageUploadService] Imagen principal asociada con payload alternativo (operations replace)');
+          } catch (alt3Error: any) {
+            console.error('❌ [ImageUploadService] Falla alt3 (operations replace) imagen principal:', alt3Error);
+            console.error('❌ [ImageUploadService] Respuesta backend (alt3):', alt3Error?.response?.data ?? alt3Error?.response ?? alt3Error);
+            throw primaryError;
+          }
+        }
+      }
     }
     
     console.log('✅ [ImageUploadService] Imagen principal de sección subida con éxito');

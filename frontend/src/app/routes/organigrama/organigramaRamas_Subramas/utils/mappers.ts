@@ -161,10 +161,10 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
     backendSubrama.nombre ||
     '';
 
-  // 🔍 CRÍTICO: Extraer URLs de imágenes (igual que en mapBackendRamaToFrontend)
-  const iconUrl = backendSubrama.iconObjectUrl || '';
-  const photoPrincipalUrl = backendSubrama.photoPrincipalUrl || '';
-  const galleryUrls = backendSubrama.galleryObjectUrls || [];
+  // 🔍 CRÍTICO: Extraer URLs de imágenes (soportar snake_case y camelCase como en mapBackendRamaToFrontend)
+  const iconUrl = String((backendSubrama as unknown as Record<string, unknown>).icon_object_url ?? (backendSubrama as unknown as Record<string, unknown>).iconObjectUrl ?? '');
+  const photoPrincipalUrl = String((backendSubrama as unknown as Record<string, unknown>).photo_principal_url ?? (backendSubrama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
+  const galleryUrls = ((backendSubrama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendSubrama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
 
   // 🔍 LOG DETALLADO: Ver qué URLs estamos extrayendo para subramas
   console.log('🔍 [Mapper] URLs extraídas para SUBRAMA:');
@@ -178,7 +178,7 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
     name: nameFromBackend,
     description: backendSubrama.subgroupDescription || backendSubrama.subgroup_description || backendSubrama.description,
 
-    iconUrl: iconUrl || undefined,
+  iconUrl: iconUrl || undefined,
     iconObjectId: backendSubrama.iconObjectId,
     mainImageUrl: photoPrincipalUrl || undefined,
     mainImageObjectId: backendSubrama.photoPrincipalObjectId,

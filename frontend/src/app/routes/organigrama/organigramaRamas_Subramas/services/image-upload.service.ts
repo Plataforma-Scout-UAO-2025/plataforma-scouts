@@ -116,18 +116,38 @@ export const uploadSectionIcon = async (
     const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
     console.log("📍 [ImageUploadService] Endpoint PATCH:", patchEndpoint);
 
-    const iconPayload = {
-      objectId: uploadResponse.objectId,
-    };
+    // Intentaremos varios formatos de payload porque el backend puede esperar snake_case o estructura "operations"
+    const attempts = [
+      { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
+      { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
+      { description: 'operations add', payload: { operations: [{ op: 'add', newValue: uploadResponse.objectId }] } },
+      { description: 'operations replace', payload: { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] } },
+    ];
 
-    console.log("🔄 [ImageUploadService] PATCH payload para icono:", iconPayload);
+    let lastError: unknown = null;
+    let patched = false;
+    for (const attempt of attempts) {
+      console.log(`🔄 [ImageUploadService] Intentando PATCH (${attempt.description}) ->`, attempt.payload);
+      try {
+        const res = await api.patch(patchEndpoint, attempt.payload as any);
+        console.log(`✅ [ImageUploadService] PATCH exitoso con formato: ${attempt.description}`, res?.data ?? res);
+        patched = true;
+        break;
+      } catch (patchError) {
+        lastError = patchError;
+        // Loguear respuesta del backend si está disponible para diagnóstico
+        if ((patchError as any)?.response) {
+          console.error('❌ [ImageUploadService] Respuesta del backend en intento:', (patchError as any).response?.data);
+        } else {
+          console.error('❌ [ImageUploadService] Error en intento PATCH (sin respuesta):', patchError);
+        }
+        // seguir probando con el siguiente payload
+      }
+    }
 
-    try {
-      await api.patch(patchEndpoint, iconPayload);
-      console.log("✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH");
-    } catch (patchError) {
-      console.error("❌ [ImageUploadService] Error en endpoint PATCH para icono:", patchError);
-      throw patchError;
+    if (!patched) {
+      console.error('❌ [ImageUploadService] Ningún formato de PATCH funcionó para asociar el icono. Último error:', lastError);
+      throw lastError;
     }
 
     console.log("✅ [ImageUploadService] Icono de sección subido con éxito");
@@ -171,20 +191,36 @@ export const uploadSectionMainImage = async (
     );
     const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
 
-    const mainImagePayload = {
-      objectId: uploadResponse.objectId,
-    };
+    // Intentar varios formatos por compatibilidad con el backend
+    const attemptsMain = [
+      { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
+      { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
+      { description: 'operations add', payload: { operations: [{ op: 'add', newValue: uploadResponse.objectId }] } },
+      { description: 'operations replace', payload: { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] } },
+    ];
 
-    console.log("🔄 [ImageUploadService] PATCH payload para imagen principal:", mainImagePayload);
+    let lastMainError: unknown = null;
+    let mainPatched = false;
+    for (const attempt of attemptsMain) {
+      console.log(`🔄 [ImageUploadService] Intentando PATCH imagen principal (${attempt.description}) ->`, attempt.payload);
+      try {
+        const res = await api.patch(patchEndpoint, attempt.payload as any);
+        console.log(`✅ [ImageUploadService] PATCH imagen principal exitoso con formato: ${attempt.description}`, res?.data ?? res);
+        mainPatched = true;
+        break;
+      } catch (patchError) {
+        lastMainError = patchError;
+        if ((patchError as any)?.response) {
+          console.error('❌ [ImageUploadService] Respuesta del backend en intento imagen principal:', (patchError as any).response?.data);
+        } else {
+          console.error('❌ [ImageUploadService] Error en intento PATCH imagen principal (sin respuesta):', patchError);
+        }
+      }
+    }
 
-    try {
-      await api.patch(patchEndpoint, mainImagePayload);
-      console.log(
-        "✅ [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH"
-      );
-    } catch (patchError) {
-      console.error("❌ [ImageUploadService] Error en endpoint PATCH para imagen principal:", patchError);
-      throw patchError;
+    if (!mainPatched) {
+      console.error('❌ [ImageUploadService] Ningún formato de PATCH funcionó para asociar la imagen principal. Último error:', lastMainError);
+      throw lastMainError;
     }
 
     console.log("✅ [ImageUploadService] Imagen principal de sección subida con éxito");
