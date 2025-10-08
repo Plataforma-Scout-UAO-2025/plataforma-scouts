@@ -1,4 +1,5 @@
 import api from "@/api/axios";
+import { postFormData } from "@/api/formData";
 import { PATCH_ENDPOINTS } from "../constants/api-endpoints";
 
 type FileProgressHandler = (fileName: string, percent: number) => void;
@@ -30,7 +31,7 @@ export const diagnoseBatchImageUpload = async (
     const formData = new FormData();
     formData.append("file", file);
 
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       "storage/upload",
       formData
     );
@@ -100,7 +101,7 @@ export const uploadSectionIcon = async (
     formData.append("file", file);
 
     console.log("🔄 [ImageUploadService] Subiendo archivo al storage...");
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       "storage/upload",
       formData,
       {
@@ -155,7 +156,7 @@ export const uploadSectionMainImage = async (
     const formData = new FormData();
     formData.append("file", file);
 
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       "storage/upload",
       formData,
       {
@@ -218,7 +219,7 @@ export const uploadGalleryImages = async (
       const formData = new FormData();
       formData.append("file", file);
 
-      const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      const uploadResponse = await postFormData<{ objectId: string; url: string }>(
         "storage/upload",
         formData,
         {
@@ -306,7 +307,7 @@ export const replaceSubramaGalleryImage = async (
   try {
     const formData = new FormData();
     formData.append("file", file);
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       "storage/upload",
       formData
     );

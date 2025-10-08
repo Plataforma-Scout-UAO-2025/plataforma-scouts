@@ -1,4 +1,5 @@
 import api from '@/api/axios';
+import { postFormData } from '@/api/formData';
 import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 
 // Tipo para la respuesta del upload de archivos
@@ -26,7 +27,7 @@ export const diagnoseBatchImageUpload = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await api.postFormData<UploadResponse>('/storage/upload', formData);
+  const uploadResponse = await postFormData<UploadResponse>('/storage/upload', formData);
     console.log('✅ [DIAGNÓSTICO] Upload exitoso, objectId:', uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
@@ -89,7 +90,7 @@ export const uploadSectionIcon = async (
     formData.append('file', file);
     
     console.log('🔄 [ImageUploadService] Subiendo archivo al storage...');
-    const uploadResponse = await api.postFormData<UploadResponse>('/storage/upload', formData);
+  const uploadResponse = await postFormData<UploadResponse>('/storage/upload', formData);
     console.log('✅ [ImageUploadService] Archivo subido, objectId:', uploadResponse.objectId);
     
     // Paso 2: Usar endpoint PATCH específico para icono
@@ -136,7 +137,7 @@ export const uploadSectionMainImage = async (
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await api.postFormData<UploadResponse>('/storage/upload', formData);
+  const uploadResponse = await postFormData<UploadResponse>('/storage/upload', formData);
     
     // Paso 2: Usar endpoint PATCH específico para imagen principal
     console.log('🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico...');
@@ -185,7 +186,7 @@ export const uploadGalleryImages = async (
       const formData = new FormData();
       formData.append('file', file);
       
-      const uploadResponse = await api.postFormData<UploadResponse>('/storage/upload', formData);
+  const uploadResponse = await postFormData<UploadResponse>('/storage/upload', formData);
       objectIds.push(uploadResponse.objectId);
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }

@@ -1,4 +1,5 @@
 import api from "@/api/axios";
+import { postFormData } from "@/api/formData";
 import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 import { getSubramaById } from './subrama.service';
 
@@ -20,7 +21,7 @@ export const updateSubramaMainImage = async (
     // 1️⃣ Subir el archivo a storage
     const formData = new FormData();
     formData.append('file', file);
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       'storage/upload',
       formData,
       {
@@ -90,7 +91,7 @@ export const uploadSubramaGalleryImages = async (
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-      const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+      const uploadResponse = await postFormData<{ objectId: string; url: string }>(
         'storage/upload',
         formData
       );
@@ -134,7 +135,7 @@ export const addSubramaGalleryImage = async (
     // Subir el archivo
     const formData = new FormData();
     formData.append('file', file);
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       'storage/upload',
       formData
     );
@@ -170,7 +171,7 @@ export const replaceSubramaGalleryImage = async (
     // 1️⃣ Subir el nuevo archivo
     const formData = new FormData();
     formData.append('file', newFile);
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       'storage/upload',
       formData
     );

@@ -1,4 +1,5 @@
 import api from "@/api/axios";
+import { postFormData } from "@/api/formData";
 import { getRamaById } from '../services';
 
 interface UploadDiagnostic {
@@ -48,7 +49,7 @@ export const diagnosticImageUpload = async (
   const formData = new FormData();
   formData.append('file', file);
   
-  const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+  const uploadResponse = await postFormData<{ objectId: string; url: string }>(
     'storage/upload',
     formData
   );

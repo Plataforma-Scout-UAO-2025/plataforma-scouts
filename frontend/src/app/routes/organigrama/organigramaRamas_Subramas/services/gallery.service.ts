@@ -1,4 +1,5 @@
 import api from '@/api/axios';
+import { postFormData } from '@/api/formData';
 import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
 
 // Helper para reemplazar la lista completa de la sección vía PUT (force remove)
@@ -118,7 +119,7 @@ export const addGalleryImage = async (
     const formData = new FormData();
     formData.append('file', file);
 
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       'storage/upload',
       formData,
       {
@@ -248,7 +249,7 @@ export const replaceGalleryImage = async (
     const formData = new FormData();
     formData.append('file', newFile);
 
-    const uploadResponse = await api.postFormData<{ objectId: string; url: string }>(
+    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
       'storage/upload',
       formData,
       {
