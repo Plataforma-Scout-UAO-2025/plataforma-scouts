@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Save } from 'lucide-react';
 import { medicalFormSchema } from '../schemas/CreateMedicalInfoForm.schema';
-import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail, ApiMember } from '../types/medical-form';
+import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail, ApiMember } from '../../../../../types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
 import axios from 'axios';

@@ -1,4 +1,4 @@
-import type { MedicalFormData } from "../medical-info/types/medical-form";
+import type { MedicalFormData } from "./medical-form.type";
 
 export interface MedicalRecord extends MedicalFormData {
   id: number;

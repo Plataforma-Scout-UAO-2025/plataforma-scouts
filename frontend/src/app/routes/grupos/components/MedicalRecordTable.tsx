@@ -38,7 +38,7 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react';
-import type { MedicalRecord, MedicalRecordsTableProps } from '../types/medical-record';
+import type { MedicalRecord, MedicalRecordsTableProps } from '../../../../types/medical-record.type';
 
 export default function MedicalRecordsTable({
   records,

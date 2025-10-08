@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import type { MedicalRecord } from '../types/medical-record';
+import type { MedicalRecord } from '../../../../types/medical-record.type';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
-import type { ApiMember, MedicalFormData } from '../medical-info/types/medical-form';
+import type { ApiMember, MedicalFormData } from '../../../../types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
 

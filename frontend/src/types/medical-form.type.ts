@@ -25,3 +25,12 @@ export interface MedicalFormErrors {
   [key: string]: string | null;
 }
 
+export interface ApiMember {
+  memberId: number;
+  firstName: string;
+  lastName: string;
+  identification: string;
+  role: string;
+  status: string;
+  isActive: boolean;
+}
