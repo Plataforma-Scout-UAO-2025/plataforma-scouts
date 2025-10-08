@@ -3,7 +3,7 @@ import type {
   CreateMemberRequest,
   EmergencyContact,
 } from "@/models/types/enrollment.type";
-import { GROUP_TO_SUBGROUP_ID } from "@/models/types/enrollment.type";
+//import { GROUP_TO_SUBGROUP_ID } from "@/models/types/enrollment.type";
 
 export const calcularEdad = (fecha: string): number => {
   if (!fecha) return 0;
@@ -27,7 +27,7 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     }));
 
   return {
-    tenantId: GROUP_TO_SUBGROUP_ID[data.group],
+    tenantId: "org_6B3k4dao2Wf6eGxa",
     firstName: data.firstname,
     lastName: data.lastname,
     age: edad,
@@ -47,7 +47,7 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     status: "PENDING",
     emergencyContacts,
     subgroup: {
-      subgroupId: 12,
+      subgroupId: 1,
     },
     role: "SCOUT",
   };
