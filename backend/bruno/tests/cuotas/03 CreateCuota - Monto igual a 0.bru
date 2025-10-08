@@ -1,0 +1,111 @@
+meta {
+  name: 3) CreateCuota - Monto igual a 0
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 0,
+    "periodicity": "MONTH",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2025-06-01",
+    "associated_to": {
+      "id": 27,
+      "name": "Tomás Vargas"
+    }
+  }
+  
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 3) CreateCuota - Monto igual a 0');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 3: Crear Cuota - Monto Igual a Cero
+  
+  ## 🎯 Objetivo
+  Validar que el sistema rechaza cuotas con monto igual a cero, ya que no tiene sentido crear una cuota sin valor.
+  
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": 1,
+    "name": "Test Monto Cero",
+    "description": "Validación monto cero",
+    "amount": 0,  // ❌ Cero no es válido
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-01-30"
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity`
+  - **Body:** Mensaje de error indicando que el monto debe ser mayor a cero
+  
+  ```json
+  {
+    "message": "El monto debe ser mayor a cero",
+    "field": "amount"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

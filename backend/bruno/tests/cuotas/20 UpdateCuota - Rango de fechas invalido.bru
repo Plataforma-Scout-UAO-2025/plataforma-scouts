@@ -1,0 +1,104 @@
+meta {
+  name: 20) UpdateCuota - Rango de fechas inválido
+  type: http
+  seq: 25
+}
+
+put {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/{{idCuota}}
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Mensualidad",
+    "description": "Validación rango fechas",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2026-12-31",
+    "end_date": "2025-01-01"
+  }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 20) UpdateCuota - Rango de fechas inválido');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 20: Actualizar Cuota - Rango de Fechas Inválido
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza actualizaciones donde la fecha de inicio es posterior a la fecha de fin (start_date > end_date).
+  
+  ## 📍 Endpoint
+  ```
+  PUT {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/{{idCuota}}
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "name": "Mensualidad",
+    "description": "Validación rango fechas",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2026-12-31",  // ❌ Fecha inicio posterior a fecha fin
+    "end_date": "2025-01-01"
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity`
+  - **Body:** Mensaje de error indicando que el rango de fechas es inválido
+  
+  ```json
+  {
+    "message": "La fecha de inicio debe ser anterior a la fecha de fin",
+    "field": "date_range"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

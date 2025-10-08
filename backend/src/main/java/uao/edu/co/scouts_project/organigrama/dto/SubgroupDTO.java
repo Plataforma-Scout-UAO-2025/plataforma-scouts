@@ -12,7 +12,8 @@ public record SubgroupDTO(
     @NotBlank String name,
     String description,
     UUID photoPrincipal,
-    UUID[] galleryObjectIds,
+    // TODO: GALERÍA DE FOTOS - Campo temporalmente deshabilitado
+    // UUID[] galleryObjectIds,
     Boolean isActive,
     Instant createdAt,
     Instant updatedAt

@@ -1,0 +1,104 @@
+meta {
+  name: 4) CreatePago - Paid at formato inválido
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/302/payments
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+      "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+      "installment_id": 302,
+      "payer_member_id": 61,
+      "paid_at": "2025/10/23",
+      "method": "PSE",
+      "reference": "asdas",
+      "amount": 15000
+    }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([400,500]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 4) CreatePago - Paid at formato inválido');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 4: Crear Pago - Paid at Formato Inválido
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de pagos cuando el campo paid_at tiene un formato de fecha incorrecto (usando '/' en lugar de '-').
+  
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/300/payments
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+    "installment_id": 300,
+    "payer_member_id": 61,
+    "paid_at": "2025/10/23",  // ❌ Formato incorrecto (debe ser YYYY-MM-DD)
+    "method": "PSE",
+    "reference": "asdas",
+    "amount": 15000
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `400 Bad Request`
+  - **Body:** Mensaje de error indicando que el formato de fecha es inválido
+  
+  ```json
+  {
+    "message": "Formato de fecha inválido. Use YYYY-MM-DD",
+    "field": "paid_at"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-07
+}

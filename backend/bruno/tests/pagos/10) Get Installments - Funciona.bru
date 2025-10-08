@@ -1,0 +1,74 @@
+meta {
+  name: 10) Get Installments - Funciona
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/installments/org_6B3k4dao2Wf6eGxa/23
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200]).to.include(res.status);
+  });
+  
+  
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 10) Get Installments - Funciona');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 10: Obtener Installment - Detalle por ID
+  
+  ## 🎯 Objetivo
+  Validar que el sistema devuelve correctamente el detalle de una cuota específica (installment) mediante su ID.
+  
+  ## 📍 Endpoint
+  ```
+  GET {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/installments/org_6B3k4dao2Wf6eGxa/23
+  ```
+  
+  ## 📦 Request Body
+  N/A (método GET no requiere body)
+  
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK`
+  - **Body:** Objeto con los detalles del installment
+  
+  ```json
+  {
+    "id": 23,
+    "fee_id": "fee-id",
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "amount": 15000,
+    "due_date": "2025-10-23",
+    "status": "pending"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-07
+}

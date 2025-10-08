@@ -42,6 +42,17 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useRoleContext } from "@/hooks/useRoleContext";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
 import FullScreenError from "@/components/common/FullScreenError";
+} from "lucide-react"
+import { Outlet, Link, useLocation } from "react-router-dom"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import type { ReactNode } from "react"
+import { useAuth0 } from '@auth0/auth0-react';
+import { useRoleContext } from '@/hooks/useRoleContext';
+import FullScreenLoader from '@/components/common/FullScreenLoader';
+import FullScreenError from '@/components/common/FullScreenError';
+import { RawRole } from '@/roles/roles';
+import { setAuth0TokenProvider } from '@/api/axios';
+import { useEffect } from 'react';
 
 type SubMenuItem = {
   id: string;
@@ -74,6 +85,7 @@ const adminGlobalItems: MenuItem[] = [
 ];
 
 const adminGrupalItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
   {
     id: "inicio",
     label: "Inicio",
@@ -93,6 +105,12 @@ const adminGrupalItems: MenuItem[] = [
     href: "/app/organigrama",
   },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
+  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
+  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
+  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+]
   {
     id: "solicitudes",
     label: "Solicitudes",
@@ -131,6 +149,17 @@ const adminGrupalItems: MenuItem[] = [
     href: "/app/financiero/cuotas",
   },
 ];
+
+const tesoreroItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+]
+
+const acudienteItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
+]
 
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },

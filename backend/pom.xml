@@ -83,11 +83,18 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		
 		
 		<dependency>
   			<groupId>io.github.cdimascio</groupId>
@@ -95,35 +102,63 @@
   			<version>5.2.2</version>
 		</dependency>
 		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+  			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
+
+		<!-- Hibernate Types para soporte completo de arrays UUID en PostgreSQL -->
+		<dependency>
+			<groupId>io.hypersistence</groupId>
+			<artifactId>hypersistence-utils-hibernate-63</artifactId>
+			<version>3.8.1</version> 
+		</dependency>
+
+		<!-- JSON Patch (RFC 6902) para operaciones PATCH en arrays -->
+		<dependency>
+			<groupId>com.github.java-json-tools</groupId>
+			<artifactId>json-patch</artifactId>
+			<version>1.13</version>
+		</dependency>
+
+		<!-- H2 Database for testing -->
+		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<version>5.2.0</version>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>com.okta.spring</groupId>
 			<artifactId>okta-spring-boot-starter</artifactId>
 			<version>3.0.5</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.auth0</groupId>
 			<artifactId>auth0</artifactId>
 			<version>1.42.0</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.auth0</groupId>
 			<artifactId>mvc-auth-commons</artifactId>
 			<version>1.9.1</version>
 		</dependency>
-        <dependency>
-            <groupId>io.hypersistence</groupId>
-            <artifactId>hypersistence-utils-hibernate-63</artifactId>
-            <version>3.9.9</version>
-        </dependency>
-    </dependencies>
+		
+	</dependencies>
+
 
 	<build>
 		<plugins>
@@ -162,24 +197,15 @@
 						<exclude>**/ScoutsProjectApplication.class</exclude>
 						
 						<!-- Configuration Classes -->
-						<exclude>**/config/**</exclude>
+						<exclude>*/config/*</exclude>
 						<exclude>**/infrastructure/security/SecurityConfig.class</exclude>
 						
-						<!-- DTOs (Data Transfer Objects) -->
-						<exclude>**/dto/**</exclude>
-						
-						<!-- Entity/Model Classes (JPA Entities with Lombok) -->
-						<exclude>**/model/**</exclude>
-						<exclude>**/organigram/**</exclude>
-						<exclude>**/medicalrecord/MedicalRecord.class</exclude>
-						<exclude>**/medicalrecord/MedicalRecord$*.class</exclude>
-						
 						<!-- Enums -->
-						<exclude>**/enums/**</exclude>
-						<exclude>**/shared/enums/**</exclude>
+						<exclude>*/enums/*</exclude>
+						<exclude>*/shared/enums/*</exclude>
 						
 						<!-- Ports/Interfaces (no implementation logic) -->
-						<exclude>**/domain/port/**</exclude>
+						<exclude>*/domain/port/*</exclude>
 						
 						<!-- Test/Mock Controllers (development only) -->
 						<exclude>**/web/controller/MockTestAuthzController.class</exclude>
@@ -187,6 +213,13 @@
 						
 						<!-- Repository Interfaces (Spring Data JPA auto-implemented) -->
 						<exclude>**/repository/**</exclude>
+
+						<!-- Security pilot -->
+						<exclude>**/uao/edu/co/scouts_project/infrastructure/auth0/**</exclude>
+						<exclude>**/uao/edu/co/scouts_project/infrastructure/cache/**</exclude>
+
+						
+
 					</excludes>
 				</configuration>
 				<executions>
