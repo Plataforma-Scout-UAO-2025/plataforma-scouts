@@ -3,7 +3,7 @@ import type { Member } from "../models/types/memberTypes";
 import type {
   CreateMemberRequest,
   CreateMemberWithSchoolRequest,
-} from "@/app/routes/grupos/basic-info/types/enrollment.type";
+} from "@/models/types/enrollment.type";
 
 // Crear un nuevo miembro - Acepta CreateMemberRequest
 export const createMember = async (memberData: CreateMemberRequest) => {

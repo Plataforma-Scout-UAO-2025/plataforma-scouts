@@ -1,7 +1,5 @@
-
 import HomeCard from "./components/HomeCard";
 import RecentActivities from "./components/RecentActivies";
-
 
 const Dashboard = () => {
   // Información del scout (simulada)
@@ -10,7 +8,7 @@ const Dashboard = () => {
     grupo: "Grupo 1",
     rama: "Lobatos",
     subrama: "Manada Amarilla",
-    progreso: 75, 
+    progreso: 75,
   };
 
   return (
@@ -27,9 +25,7 @@ const Dashboard = () => {
 
       {/* Información del grupo */}
       <section className="my-8 bg-white shadow-md rounded-lg p-6">
-        <h3 className="text-3xl font-bold text-primary mb-4">
-          Tu Información
-        </h3>
+        <h3 className="text-3xl font-bold text-primary mb-4">Tu Información</h3>
         <ul className="text-lg">
           <li>
             <strong>Grupo:</strong> {scoutInfo.grupo}
@@ -53,8 +49,8 @@ const Dashboard = () => {
           ></div>
         </div>
         <p className="text-lg mt-2">
-          Has completado el{" "}
-          <strong>{scoutInfo.progreso}%</strong> de tus actividades.
+          Has completado el <strong>{scoutInfo.progreso}%</strong> de tus
+          actividades.
         </p>
       </section>
 
@@ -80,4 +76,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard;

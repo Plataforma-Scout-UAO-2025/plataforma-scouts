@@ -49,14 +49,19 @@ export interface SchoolData {
 
 export interface CreateMemberRequest {
   tenantId: string;
+  guardianId: number;
+  subgroup: {
+    subgroupId: number;
+  };
   firstName: string;
   lastName: string;
   age: number;
+  role: string;
   identification: string;
-  documentType: DocumentType;
+  documentType: string;
   email: string;
-  gender: Gender;
-  birthDate: Date;
+  gender: string;
+  birthDate: string | Date;
   address: string;
   phone: string;
   weight: string;
@@ -64,8 +69,11 @@ export interface CreateMemberRequest {
   hobbies: string;
   sports: string;
   instruments: string;
-  status: MemberStatus;
-  emergencyContacts: Record<string, EmergencyContact>;
+  isActive: boolean;
+  relationship: string;
+  status: string;
+  acceptanceDate: string | Date;
+  emergencyContacts: EmergencyContact[];
 }
 
 export interface CreateMemberResponse {
