@@ -1,6 +1,7 @@
 import api from "@/api/axios";
 import { postFormData } from "@/api/formData";
 import { PATCH_ENDPOINTS } from "../constants/api-endpoints";
+type MaybeAxiosError = { response?: { data?: unknown } };
 
 type FileProgressHandler = (fileName: string, percent: number) => void;
 type OverallProgressHandler = (percent: number) => void;
@@ -129,15 +130,15 @@ export const uploadSectionIcon = async (
     for (const attempt of attempts) {
       console.log(`🔄 [ImageUploadService] Intentando PATCH (${attempt.description}) ->`, attempt.payload);
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as any);
+        const res = await api.patch(patchEndpoint, attempt.payload as unknown);
         console.log(`✅ [ImageUploadService] PATCH exitoso con formato: ${attempt.description}`, res?.data ?? res);
         patched = true;
         break;
       } catch (patchError) {
         lastError = patchError;
         // Loguear respuesta del backend si está disponible para diagnóstico
-        if ((patchError as any)?.response) {
-          console.error('❌ [ImageUploadService] Respuesta del backend en intento:', (patchError as any).response?.data);
+        if ((patchError as MaybeAxiosError)?.response) {
+          console.error('❌ [ImageUploadService] Respuesta del backend en intento:', (patchError as MaybeAxiosError).response?.data);
         } else {
           console.error('❌ [ImageUploadService] Error en intento PATCH (sin respuesta):', patchError);
         }
@@ -204,14 +205,14 @@ export const uploadSectionMainImage = async (
     for (const attempt of attemptsMain) {
       console.log(`🔄 [ImageUploadService] Intentando PATCH imagen principal (${attempt.description}) ->`, attempt.payload);
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as any);
+        const res = await api.patch(patchEndpoint, attempt.payload as unknown);
         console.log(`✅ [ImageUploadService] PATCH imagen principal exitoso con formato: ${attempt.description}`, res?.data ?? res);
         mainPatched = true;
         break;
       } catch (patchError) {
         lastMainError = patchError;
-        if ((patchError as any)?.response) {
-          console.error('❌ [ImageUploadService] Respuesta del backend en intento imagen principal:', (patchError as any).response?.data);
+          if ((patchError as MaybeAxiosError)?.response) {
+          console.error('❌ [ImageUploadService] Respuesta del backend en intento imagen principal:', (patchError as MaybeAxiosError).response?.data);
         } else {
           console.error('❌ [ImageUploadService] Error en intento PATCH imagen principal (sin respuesta):', patchError);
         }

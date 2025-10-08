@@ -25,7 +25,8 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
 
   // Generar ID consistente basado en datos del backend si no hay ID real
   const generateConsistentId = () => {
-    const uniqueString = `${(backendRama as any).name || ''}-${(backendRama as any).tenant_id || (backendRama as any).tenantId || ''}-${(backendRama as any).group_id || (backendRama as any).groupId || ''}`;
+    const rec = backendRama as unknown as Record<string, unknown>;
+    const uniqueString = `${String(rec['name'] ?? '')}-${String(rec['tenant_id'] ?? rec['tenantId'] ?? '')}-${String(rec['group_id'] ?? rec['groupId'] ?? '')}`;
     let hash = 0;
     for (let i = 0; i < uniqueString.length; i++) {
       const char = uniqueString.charCodeAt(i);
@@ -119,8 +120,9 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   _mappedRamaAny.section_id = mappedRama.sectionId;
   _mappedRamaAny.ramaId = mappedRama.sectionId;
   
+  const recForLog = backendRama as unknown as Record<string, unknown>;
   console.log('🔄 [Mapper] Rama mapeada final:', { 
-    backend: { name: (backendRama as any).name, section_id: (backendRama as any).section_id ?? (backendRama as any).sectionId, id: (backendRama as any).id },
+    backend: { name: recForLog['name'], section_id: recForLog['section_id'] ?? recForLog['sectionId'], id: recForLog['id'] },
     frontend: { name: mappedRama.name, id: mappedRama.id, iconUrl: mappedRama.iconUrl, mainImageUrl: mappedRama.mainImageUrl }
   });
   
@@ -203,8 +205,9 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
   _mappedSubramaAny.subgroup_id = mappedSubrama.id;
   _mappedSubramaAny.ramaId = backendSubrama.section_id ?? backendSubrama.sectionId ?? '';
 
+  const subRecForLog = backendSubrama as unknown as Record<string, unknown>;
   console.log('🔄 [Mapper] Subrama mapeada final:', { 
-    backend: { name: backendSubrama.subgroupName || backendSubrama.name, subgroupId: backendSubrama.subgroup_id || backendSubrama.subgroupId },
+    backend: { name: subRecForLog['subgroupName'] ?? subRecForLog['name'], subgroupId: subRecForLog['subgroup_id'] ?? subRecForLog['subgroupId'] },
     frontend: { 
       name: mappedSubrama.name, 
       id: mappedSubrama.id, 

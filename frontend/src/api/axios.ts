@@ -23,7 +23,7 @@ api.interceptors.request.use(
         try {
           const visible = typeof token === 'string' ? `${token.slice(0, 8)}... (len ${token.length})` : 'unknown';
           console.log('🔐 [Axios] Adjuntando Authorization header:', visible);
-        } catch (e) {
+        } catch {
           console.log('🔐 [Axios] Adjuntando Authorization header: (token present)');
         }
         config.headers.Authorization = `Bearer ${token}`;

@@ -57,14 +57,15 @@ export const updateSubramaMainImage = async (
     for (const attempt of attempts) {
       console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as any);
-        console.log(`✅ Foto principal de subrama actualizada correctamente con formato: ${attempt.description}`, res?.data ?? res);
+        const res = await api.patch(patchEndpoint, attempt.payload as unknown);
+          console.log(`✅ Foto principal de subrama actualizada correctamente con formato: ${attempt.description}`, res?.data ?? res);
         patched = true;
         break;
-      } catch (e) {
+      } catch (e: unknown) {
         lastErr = e;
-        if ((e as any)?.response) {
-          console.error('❌ Respuesta del backend en intento PATCH:', (e as any).response?.data);
+        const errorWithResponse = e as { response?: { data?: unknown } };
+        if (errorWithResponse?.response) {
+          console.error('❌ Respuesta del backend en intento PATCH:', errorWithResponse.response?.data);
         } else {
           console.error('❌ Error en intento PATCH (sin response):', e);
         }
@@ -89,7 +90,7 @@ export const updateSubramaMainImage = async (
     console.warn('⚠️ No se encontró imagenPrincipal actualizada, usando URL del upload.');
     return uploadResponse.url || uploadResponse.objectId;
 
-  } catch (error) {
+    } catch (error: unknown) {
     console.error('❌ Error actualizando foto principal de subrama:', error);
     throw error;
   }
@@ -254,14 +255,15 @@ export const removeSubramaMainImage = async (
     for (const attempt of attempts) {
       console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as any);
+        const res = await api.patch(patchEndpoint, attempt.payload as Record<string, unknown>);
         console.log(`✅ Foto principal de subrama eliminada correctamente con formato: ${attempt.description}`, res?.data ?? res);
         removed = true;
         break;
-      } catch (e) {
+      } catch (e: unknown) {
         lastErr = e;
-        if ((e as any)?.response) {
-          console.error('❌ Respuesta del backend en intento de eliminación:', (e as any).response?.data);
+        const errorWithResponse = e as { response?: { data?: unknown } };
+        if (errorWithResponse?.response) {
+          console.error('❌ Respuesta del backend en intento de eliminación:', errorWithResponse.response?.data);
         } else {
           console.error('❌ Error en intento de eliminación (sin response):', e);
         }

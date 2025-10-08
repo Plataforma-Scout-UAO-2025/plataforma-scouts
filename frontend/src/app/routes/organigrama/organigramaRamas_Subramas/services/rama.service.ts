@@ -98,10 +98,11 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
     console.log('✅ [RamaService] Ramas hidratadas con subramas:', ramasFiltradas.length);
     console.log('📊 [RamaService] Subramas totales:', ramasFiltradas.reduce((total, rama) => total + rama.subramas.length, 0));
     return ramasFiltradas;
-  } catch (error) {
+    } catch (error: unknown) {
     console.error('❌ [RamaService] Error obteniendo ramas:', error);
-    if ((error as any)?.response) {
-      console.error('❌ [RamaService] response.data:', (error as any).response?.data);
+    const errorWithResponse = error as { response?: { data?: unknown } };
+    if (errorWithResponse?.response) {
+      console.error('❌ [RamaService] response.data:', errorWithResponse.response?.data);
     }
     throw error;
   }
@@ -265,10 +266,11 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
     
     console.log('✅ [RamaService] Años disponibles (optimizado):', sortedYears);
     return sortedYears;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ [RamaService] Error obteniendo años:', error);
-    if ((error as any)?.response) {
-      console.error('❌ [RamaService] response.data (años):', (error as any).response?.data);
+    const errorWithResponse = error as { response?: { data?: unknown } };
+    if (errorWithResponse?.response) {
+      console.error('❌ [RamaService] response.data (años):', errorWithResponse.response?.data);
     }
     return [];
   }

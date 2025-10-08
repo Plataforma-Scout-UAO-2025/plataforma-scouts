@@ -12,6 +12,8 @@ import {
   mapFrontendUpdateSubramaToBackend
 } from '../utils/mappers';
 
+type MaybeAxiosError = { response?: { data?: unknown } };
+
 // CRUD para Subramas (SUBGROUPS)
 export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, ramaId: string): Promise<Subrama[]> => {
   const normalizedRamaId = typeof ramaId === 'string' ? ramaId.trim() : String(ramaId ?? '').trim();
@@ -68,7 +70,7 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
     console.log('📤 [SubramaService] Endpoint a POST:', endpoint);
     try {
       console.log('📤 [SubramaService] Payload a enviar:', JSON.stringify(backendData, null, 2));
-    } catch (e) {
+    } catch {
       console.log('📤 [SubramaService] Payload (no serializable):', backendData);
     }
     const response = await api.post<BackendSubrama>(endpoint, backendData);
@@ -77,11 +79,11 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
   console.log('✅ [SubramaService] Subrama creada:', subrama.nombre ?? subrama.name);
     return subrama;
-  } catch (error: any) {
+    } catch (error: unknown) {
     console.error('❌ [SubramaService] Error creando subrama:', error);
     // Mostrar cuerpo de respuesta del backend si existe para diagnóstico
-    if (error?.response?.data) {
-      console.error('❌ [SubramaService] Respuesta del backend:', error.response.data);
+    if ((error as MaybeAxiosError)?.response?.data) {
+      console.error('❌ [SubramaService] Respuesta del backend:', (error as MaybeAxiosError).response?.data);
     }
     throw error;
   }
@@ -106,7 +108,7 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     console.log('📤 [SubramaService] Endpoint a PUT:', endpoint);
     try {
       console.log('📤 [SubramaService] Payload a enviar (update):', JSON.stringify(backendData, null, 2));
-    } catch (e) {
+    } catch {
       console.log('📤 [SubramaService] Payload a enviar (update) (no serializable):', backendData);
     }
     const response = await api.put<BackendSubrama>(endpoint, backendData);
@@ -115,10 +117,10 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
   console.log('✅ [SubramaService] Subrama actualizada:', subrama.nombre ?? subrama.name);
     return subrama;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ [SubramaService] Error actualizando subrama:', error);
-    if (error?.response?.data) {
-      console.error('❌ [SubramaService] Respuesta del backend (update):', error.response.data);
+    if ((error as MaybeAxiosError)?.response?.data) {
+      console.error('❌ [SubramaService] Respuesta del backend (update):', (error as MaybeAxiosError).response?.data);
     }
     throw error;
   }
@@ -133,7 +135,7 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
     
     console.log('✅ [SubramaService] Subrama eliminada');
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ [SubramaService] Error eliminando subrama:', error);
     return false;
   }
