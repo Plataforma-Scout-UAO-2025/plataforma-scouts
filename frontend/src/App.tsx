@@ -12,6 +12,9 @@ import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 
+import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
+import Pagos from "./app/routes/financiero/Pagos/Pagos";
+
 // Organigrama
 import Organigrama from "./app/routes/organigrama/organigramaRamas_Subramas";
 import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/RamaDetail";
@@ -50,8 +53,9 @@ function App() {
             <Route path="grupos/medical-info" element={<MedicalInfo />} />
 
             {/* Rutas para admin de grupo */}
-            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Cuotas /></ProtectedRoute>} />
-            <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Gestion /></ProtectedRoute>} />
+            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Cuotas /></ProtectedRoute>} />
+            <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
+            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
             {/*
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><TeamMembers /></ProtectedRoute>} />
@@ -63,6 +67,7 @@ function App() {
             */}
 
             {/* Rutas para acudiente */}
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
             <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalInfo /></ProtectedRoute>} />
           </Route>

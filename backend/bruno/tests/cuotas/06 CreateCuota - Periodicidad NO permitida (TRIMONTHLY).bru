@@ -1,0 +1,103 @@
+meta {
+  name: 6) CreateCuota - Rango de fechas inválido (end_date < start_date)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "SCOUT",
+    "start_date": "2025-12-01",
+    "end_date": "2025-01-01",
+    "associated_to": {
+      "id": 34,
+      "name": "Laura Ruiz"
+    }
+  }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([400,422]).to.include(res.status);
+  });
+  
+  
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 6) CreateCuota - Rango de fechas inválido (end_date < start_date)');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 6: Crear Cuota - Rango de Fechas Inválido
+
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de cuotas donde la fecha de fin es anterior a la fecha de inicio (end_date < start_date).
+
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  ```
+
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "SCOUT",
+    "start_date": "2025-12-01",  // ❌ Fecha inicio posterior a fecha fin
+    "end_date": "2025-01-01",
+    "associated_to": {
+      "id": 34,
+      "name": "Laura Ruiz"
+    }
+  }
+  ```
+
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `400 Bad Request` o `422 Unprocessable Entity`
+  - **Body:** Mensaje de error indicando que el rango de fechas es inválido
+
+  ```json
+  {
+    "message": "La fecha de inicio debe ser anterior a la fecha de fin",
+    "field": "date_range"
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}

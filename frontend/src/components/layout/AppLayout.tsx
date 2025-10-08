@@ -36,6 +36,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useRoleContext } from '@/hooks/useRoleContext';
 import FullScreenLoader from '@/components/common/FullScreenLoader';
 import FullScreenError from '@/components/common/FullScreenError';
+import { RawRole } from '@/roles/roles';
 import { setAuth0TokenProvider } from '@/api/axios';
 import { useEffect } from 'react';
 
@@ -74,6 +75,16 @@ const adminGrupalItems: MenuItem[] = [
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
 ]
 
+const tesoreroItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+]
+
+const acudienteItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
+]
+
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
@@ -81,10 +92,30 @@ const bottomItems: MenuItem[] = [
 
 function AppLayoutContent() {
   const location = useLocation()
-  const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal')
-  const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems
   const { user, logout, getAccessTokenSilently } = useAuth0();
-  const { status, currentUserRoleLabel, error, retry } = useRoleContext();
+  const { status, currentUserRole, currentUserRoleLabel, error, retry } = useRoleContext();
+
+  // Determinar qué menú mostrar según el rol del usuario
+  const getMenuItems = (): MenuItem[] => {
+    const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal');
+    
+    if (isAdminGlobalRoute) {
+      return adminGlobalItems;
+    }
+
+    switch (currentUserRole) {
+      case RawRole.ACUDIENTE:
+        return acudienteItems;
+      case RawRole.TESORERO:
+        return tesoreroItems;
+      case RawRole.ADMIN_GRUPO:
+      case RawRole.COMITE_ADMIN:
+      default:
+        return adminGrupalItems;
+    }
+  };
+
+  const menuItems = getMenuItems();
 
   // Conectar Auth0 con axios centralizado
   useEffect(() => {

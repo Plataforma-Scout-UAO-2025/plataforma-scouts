@@ -1,0 +1,74 @@
+meta {
+  name: 12) Get EstadoCuenta Tesorero - Funciona
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/status/org_6B3k4dao2Wf6eGxa
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200]).to.include(res.status);
+  });
+  
+  
+  
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 12) Get EstadoCuenta Tesorero - Funciona');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 12: Obtener Estado de Cuenta Tesorero - Exitoso
+  
+  ## 🎯 Objetivo
+  Validar que el sistema devuelve correctamente el estado de cuenta general de un tenant (vista de tesorero).
+  
+  ## 📍 Endpoint
+  ```
+  GET {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/status/org_6B3k4dao2Wf6eGxa
+  ```
+  
+  ## 📦 Request Body
+  N/A (método GET no requiere body)
+  
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK`
+  - **Body:** Objeto con el estado de cuenta del tenant
+  
+  ```json
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "total_fees": 10,
+    "total_paid": 150000,
+    "total_pending": 50000,
+    "installments": []
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-07
+}

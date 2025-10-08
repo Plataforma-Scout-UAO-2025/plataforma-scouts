@@ -1,0 +1,127 @@
+meta {
+  name: 15) CreateCuota - Periodicidad válida (QUARTER)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01",
+    "associated_to": {
+      "id": 44,
+      "name": "Paula García"
+    }
+  }
+  
+  
+  
+  
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200, 201]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Has id or payload on success', () => {
+    if ([200,201].includes(res.status)) {
+      expect(res.body).to.have.any.keys('id','data','cuota','fee_id');
+    }
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 15) CreateCuota - Periodicidad válida (QUARTER)');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 15: Crear Cuota - Periodicidad Válida (QUARTER)
+
+  ## 🎯 Objetivo
+  Validar que el sistema acepta correctamente la periodicidad 'QUARTER' como valor válido al crear una cuota.
+
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/fees
+  ```
+
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "QUARTER",  // ✅ Valor válido
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01",
+    "associated_to": {
+      "id": 44,
+      "name": "Paula García"
+    }
+  }
+  ```
+
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK` o `201 Created`
+  - **Body:** Objeto JSON con el recurso creado
+
+  ```json
+  {
+    "id": "uuid-generado",
+    "fee_id": "fee-id",
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Pago mensual de actividades",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01"
+  }
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}

@@ -1,0 +1,90 @@
+meta {
+  name: 16) Get members by tenant
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/members/org_6B3k4dao2Wf6eGxa
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200]).to.include(res.status);
+  });
+
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+
+  // Validar presencia de datos en respuesta exitosa
+  test('Has data on success', () => {
+    if ([200].includes(res.status)) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 16) Get members by tenant');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 16: Obtener Miembros por Tenant - Exitoso
+
+  ## 🎯 Objetivo
+  Validar que el sistema devuelve correctamente la lista de miembros asociados a un tenant específico.
+
+  ## 📍 Endpoint
+  ```
+  GET {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/members/org_6B3k4dao2Wf6eGxa
+  ```
+
+  ## 📦 Request Body
+  N/A (método GET no requiere body)
+
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK`
+  - **Body:** Lista de miembros del tenant
+
+  ```json
+  [
+    {
+      "member_id": 61,
+      "name": "Juan Pérez",
+      "tenant_id": "org_6B3k4dao2Wf6eGxa"
+    },
+    {
+      "member_id": 83,
+      "name": "María González",
+      "tenant_id": "org_6B3k4dao2Wf6eGxa"
+    }
+  ]
+  ```
+
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+
+  ## 👤 Responsable
+  Edwin
+
+  ## 📅 Última Actualización
+  2025-10-07
+}
