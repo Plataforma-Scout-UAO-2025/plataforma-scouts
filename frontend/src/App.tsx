@@ -103,16 +103,16 @@ function App() {
             <Route
               path="miembros"
               element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST"]}>
-                  <ScoutEnrollment />
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO]}>
+                  <TeamMembers />
                 </ProtectedRoute>
               }
             />
             <Route
               path="inscripcion"
               element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                  <TeamMembers />
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST"]}>
+                  <ScoutEnrollment />
                 </ProtectedRoute>
               }
             />
