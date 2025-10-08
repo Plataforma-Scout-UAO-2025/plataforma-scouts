@@ -40,13 +40,13 @@ public class SecurityConfig {
 
 
                         // Datos básicos de miembros
-                        //.requestMatchers("/api/members/create_member").hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name())
-                        //.requestMatchers("/api/members/create_member_with_school").hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name())
-                        //.requestMatchers("/api/members/list_members").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
-                        //.requestMatchers("/api/members/list_member_by_id").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
-                        //.requestMatchers("/api/members/list_members_by_status").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
-                        //.requestMatchers("/api/members/update_member_status/**").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
-                        //.requestMatchers("/api/members/update_member_by_id/**").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/create_member").hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name())
+                        //.requestMatchers("/api/v1/members/create_member_with_school").hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/list_members").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/list_member_by_id").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/list_members_by_status").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/update_member_status/**").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/update_member_by_id/**").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
 
 
 

@@ -43,7 +43,7 @@ import static java.lang.String.format;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/members")
+@RequestMapping("/api/v1/members")
 public class MemberController {
 
     @Autowired
