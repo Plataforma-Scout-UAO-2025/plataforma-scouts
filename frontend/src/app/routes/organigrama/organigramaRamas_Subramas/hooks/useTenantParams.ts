@@ -22,8 +22,8 @@ export const useTenantParams = (): TenantParams => {
     
     // Valores por defecto más comunes - CAMBIAR ESTOS POR VALORES REALES
     return {
-      tenantSlug: 'scouts-main',
-      groupSlug: 'group-1'     
+      tenantSlug: 'staging-centinelas-113',
+      groupSlug: 'grupo-scout-centinelas-113'     
     };
   }, []);
 };
