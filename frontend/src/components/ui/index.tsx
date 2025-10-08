@@ -46,3 +46,15 @@ export {
   AlertDialogCancel,
 } from "./alert-dialog"
 export { Separator } from "./separator"
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "./accordion"
+export {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "./collapsible"
+export { Progress } from "./progress"
