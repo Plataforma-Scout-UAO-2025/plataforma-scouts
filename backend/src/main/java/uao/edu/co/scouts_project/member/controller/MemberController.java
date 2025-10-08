@@ -165,6 +165,7 @@ public class MemberController {
      * - 200 OK: Lista de members obtenida exitosamente.
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
+    @Transactional(readOnly = true)
     @GetMapping("/list_members")
     public ResponseEntity<?> list_members() {
         try {
@@ -193,6 +194,7 @@ public class MemberController {
      * - 404 Not Found: No existe un miembro con el ID especificado.
      */
     @GetMapping("/list_member_by_id")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> list_member_by_id(@RequestParam("id") Long member_id) {
         Optional<Member> memberOpt = memberservice.get_member_by_id(member_id);
 
@@ -217,6 +219,7 @@ public class MemberController {
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
     @GetMapping("/list_members_by_status")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> list_members_by_status(@RequestParam String status) {
         try {
             List<MemberDto> membersDto = memberservice.list_members_by_status(status)
