@@ -43,13 +43,39 @@ export const updateSubramaMainImage = async (
       throw new Error('UploadCanceled');
     }
 
-    // 2️⃣ PATCH al endpoint de imagen principal
+    // 2️⃣ PATCH al endpoint de imagen principal: intentaremos varios formatos porque el backend puede esperar snake_case u operaciones
     const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_MAIN_IMAGE(tenantSlug, groupSlug, sectionId, subgroupId);
-    const mainImagePayload = { objectId: uploadResponse.objectId };
-    console.log('📡 PATCH →', patchEndpoint, mainImagePayload);
+    const attempts = [
+      { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
+      { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
+      { description: 'operations add', payload: { operations: [{ op: 'add', newValue: uploadResponse.objectId }] } },
+      { description: 'operations replace', payload: { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] } },
+    ];
 
-  await api.patch(patchEndpoint, mainImagePayload);
-    console.log('✅ Foto principal de subrama actualizada correctamente.');
+    let patched = false;
+    let lastErr: unknown = null;
+    for (const attempt of attempts) {
+      console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
+      try {
+        const res = await api.patch(patchEndpoint, attempt.payload as any);
+        console.log(`✅ Foto principal de subrama actualizada correctamente con formato: ${attempt.description}`, res?.data ?? res);
+        patched = true;
+        break;
+      } catch (e) {
+        lastErr = e;
+        if ((e as any)?.response) {
+          console.error('❌ Respuesta del backend en intento PATCH:', (e as any).response?.data);
+        } else {
+          console.error('❌ Error en intento PATCH (sin response):', e);
+        }
+        // continuar con siguiente intento
+      }
+    }
+
+    if (!patched) {
+      console.error('❌ Ningún formato de PATCH funcionó para foto principal de subrama. Último error:', lastErr);
+      throw lastErr;
+    }
 
     // 3️⃣ Obtener la subrama actualizada
   const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
@@ -214,11 +240,38 @@ export const removeSubramaMainImage = async (
 
   try {
     const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_MAIN_IMAGE(tenantSlug, groupSlug, sectionId, subgroupId);
-    const payload = { objectId: null }; // El backend interpreta null como eliminar
-    console.log('📡 PATCH →', patchEndpoint, payload);
 
-  await api.patch(patchEndpoint, payload);
-    console.log('✅ Foto principal de subrama eliminada correctamente.');
+    // Intentar varios formatos por compatibilidad
+    const attempts = [
+      { description: 'camelCase objectId null', payload: { objectId: null } },
+      { description: 'snake_case object_id null', payload: { object_id: null } },
+      { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
+      { description: 'operations remove (newValue null)', payload: { operations: [{ op: 'remove', newValue: null }] } },
+    ];
+
+    let lastErr: unknown = null;
+    let removed = false;
+    for (const attempt of attempts) {
+      console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
+      try {
+        const res = await api.patch(patchEndpoint, attempt.payload as any);
+        console.log(`✅ Foto principal de subrama eliminada correctamente con formato: ${attempt.description}`, res?.data ?? res);
+        removed = true;
+        break;
+      } catch (e) {
+        lastErr = e;
+        if ((e as any)?.response) {
+          console.error('❌ Respuesta del backend en intento de eliminación:', (e as any).response?.data);
+        } else {
+          console.error('❌ Error en intento de eliminación (sin response):', e);
+        }
+      }
+    }
+
+    if (!removed) {
+      console.error('❌ Ningún formato funcionó para eliminar la foto principal de subrama. Último error:', lastErr);
+      throw lastErr;
+    }
   } catch (error) {
     console.error('❌ Error eliminando foto principal de subrama:', error);
     throw error;
