@@ -30,7 +30,6 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     tenantId: GROUP_TO_SUBGROUP_ID[data.group],
     firstName: data.firstname,
     lastName: data.lastname,
-    guardianId: 5,
     age: edad,
     identification: data.identification,
     documentType: data.document_type,
@@ -45,9 +44,7 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     sports: data.sports,
     instruments: data.instruments,
     isActive: true,
-    relationship: "Ninguna",
     status: "PENDING",
-    acceptanceDate: "2025-01-15",
     emergencyContacts,
     subgroup: {
       subgroupId: 12,

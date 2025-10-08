@@ -49,7 +49,6 @@ export interface SchoolData {
 
 export interface CreateMemberRequest {
   tenantId: string;
-  guardianId: number;
   subgroup: {
     subgroupId: number;
   };
@@ -70,9 +69,7 @@ export interface CreateMemberRequest {
   sports: string;
   instruments: string;
   isActive: boolean;
-  relationship: string;
   status: string;
-  acceptanceDate: string | Date;
   emergencyContacts: EmergencyContact[];
 }
 
