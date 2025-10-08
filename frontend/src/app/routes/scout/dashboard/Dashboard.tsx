@@ -10,7 +10,7 @@ const Dashboard = () => {
     grupo: "Grupo 1",
     rama: "Lobatos",
     subrama: "Manada Amarilla",
-    progreso: 75, 
+    progreso: 75,
   };
 
   return (
@@ -80,4 +80,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard;

@@ -5,17 +5,12 @@ import { useAuth0ApiWrapper } from "./hooks/useAuth0ApiWrapper";
 import { Toaster } from "sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
-import Home from "./app/routes/LandingPage";
+import Home from "./app/routes/Home";
 import Dashboard from "./app/routes/Dashboard";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalRecordsView from "./app/routes/grupos/components/MedicalRecordView";
 import Grupos from "./app/routes/grupos/Grupos";
-import TeamMembers from "./app/routes/adminGrupal/Miembros/Miembros";
-import Requests from "./app/routes/adminGrupal/Solicitudes/Requests";
-import Rejected from "./app/routes/adminGrupal/Solicitudes/Rejected";
-import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
-import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
 
 import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
 import Pagos from "./app/routes/financiero/Pagos/Pagos";
@@ -28,18 +23,17 @@ function App() {
       <div className="h-screen w-screen">
         <Routes>
           <Route path="/" element={<Home />} />
-
           <Route path="/app" element={<AppLayout />}>
+            <Route index element={<Dashboard />} />
+
             {/* Rutas para admin de grupo */}
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Cuotas /></ProtectedRoute>} />
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
             {/*
-            <Route path="dashboard" element={<Dashboard />} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><TeamMembers /></ProtectedRoute>} />
             <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
-            <Route path="eventos" element={<Events />} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
             <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Organigrama /></ProtectedRoute>} /> 
             <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><RamaDetail /></ProtectedRoute>} />
@@ -49,21 +43,8 @@ function App() {
             {/* Rutas para acudiente */}
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
-            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "INVITADO"]}><MedicalRecordsView /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT"]}><ScoutEnrollment /></ProtectedRoute>} />
-            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><TeamMembers /></ProtectedRoute>} />
-            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
-            <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Rejected /></ProtectedRoute>} />
+            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><MedicalRecordsView  /></ProtectedRoute>} />
           </Route>
-          {/* Rutas para scout */}
-          <Route
-            path="scout/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["SCOUT"]}>
-                <ScoutDashboard />
-              </ProtectedRoute>
-            }
-          />
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
       </div>

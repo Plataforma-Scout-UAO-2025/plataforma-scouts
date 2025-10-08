@@ -4,34 +4,34 @@ import { Plus } from 'lucide-react';
 import type { MedicalRecord } from '../types/medical-record';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
-import type { MedicalFormData } from '../medical-info/types/medical-form';
+import type { ApiMember, MedicalFormData } from '../medical-info/types/medical-form';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
 
 // Interface para la respuesta de la API
 interface ApiMedicalRecord {
-  id: string;
-  member_id: string;
-  blood_type: string;
-  eps: string;
-  allergies: string;
-  chronic_diseases: string;
-  physical_restrictions: string;
-  surgical_history: string;
-  vaccines_detail: Array<{
-    name: string;
-    applied_at: string;
-  }>;
-  medications_detail: Array<{
-    name: string;
-    frequency: string;
-  }>;
-  created_at: string;
-  updated_at: string;
+    id: string;
+    member_id: string;
+    blood_type: string;
+    eps: string;
+    allergies: string;
+    chronic_diseases: string;
+    physical_restrictions: string;
+    surgical_history: string;
+    vaccines_detail: Array<{
+        name: string;
+        applied_at: string;
+    }>;
+    medications_detail: Array<{
+        name: string;
+        frequency: string;
+    }>;
+    created_at: string;
+    updated_at: string;
 }
 
 interface ApiResponse {
-  content: ApiMedicalRecord[];
+    content: ApiMedicalRecord[];
 }
 
 export default function MedicalRecordsView() {
@@ -40,12 +40,13 @@ export default function MedicalRecordsView() {
     const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     const { tenantId } = useTenant();
 
+    // Busca esta función y reemplázala:
     const fetchMedicalRecords = useCallback(async () => {
         if (!tenantId) return;
-        
+
         try {
             setIsLoading(true);
             setError(null);
@@ -58,30 +59,45 @@ export default function MedicalRecordsView() {
                     size: 50
                 }
             });
-            
-            const adaptedRecords: MedicalRecord[] = response.data.content.map((record: ApiMedicalRecord) => ({
-                id: parseInt(record.id),
-                member_id: parseInt(record.member_id),
-                member_name: `Integrante ${record.member_id}`,
-                blood_type: record.blood_type,
-                eps: record.eps,
-                allergies: record.allergies,
-                chronic_diseases: record.chronic_diseases,
-                physical_restrictions: record.physical_restrictions,
-                surgical_history: record.surgical_history,
-                vaccines_detail: record.vaccines_detail.map((vaccine) => ({
-                    name: vaccine.name,
-                    date: vaccine.applied_at
-                })),
-                medications_detail: record.medications_detail.map((med) => ({
-                    name: med.name,
-                    dose: '',
-                    frecuency: med.frequency
-                })),
-                created_at: record.created_at,
-                updated_at: record.updated_at
-            }));
-            
+
+            // PRIMERO: Cargar los miembros para tener los nombres
+            const membersResponse = await api.get('/members/list_members');
+            const membersMap = new Map();
+
+            membersResponse.data.forEach((member: ApiMember) => {
+                if (member.status === 'APPROVED' && member.isActive !== false) {
+                    membersMap.set(member.memberId, `${member.firstName} ${member.lastName}`);
+                }
+            });
+
+            const adaptedRecords: MedicalRecord[] = response.data.content.map((record: ApiMedicalRecord) => {
+                const memberId = parseInt(record.member_id);
+                const memberName = membersMap.get(memberId) || `Miembro ${memberId}`;
+
+                return {
+                    id: parseInt(record.id),
+                    member_id: memberId,
+                    member_name: memberName, // ¡AQUÍ ESTÁ EL NOMBRE REAL!
+                    blood_type: record.blood_type,
+                    eps: record.eps,
+                    allergies: record.allergies,
+                    chronic_diseases: record.chronic_diseases,
+                    physical_restrictions: record.physical_restrictions,
+                    surgical_history: record.surgical_history,
+                    vaccines_detail: record.vaccines_detail.map((vaccine) => ({
+                        name: vaccine.name,
+                        date: vaccine.applied_at
+                    })),
+                    medications_detail: record.medications_detail.map((med) => ({
+                        name: med.name,
+                        dose: '',
+                        frecuency: med.frequency
+                    })),
+                    created_at: record.created_at,
+                    updated_at: record.updated_at
+                };
+            });
+
             setRecords(adaptedRecords);
         } catch (err) {
             console.error('Error fetching medical records:', err);
@@ -125,8 +141,8 @@ export default function MedicalRecordsView() {
                     record.id === editingRecord.id
                         ? {
                             ...record,
-                            ...formData, 
-                            updated_at: new Date().toISOString() 
+                            ...formData,
+                            updated_at: new Date().toISOString()
                         }
                         : record
                 ));
@@ -141,7 +157,7 @@ export default function MedicalRecordsView() {
                 };
                 setRecords(prev => [...prev, newRecord]);
             }
-            
+
             setShowForm(false);
             setEditingRecord(null);
         } catch (err) {

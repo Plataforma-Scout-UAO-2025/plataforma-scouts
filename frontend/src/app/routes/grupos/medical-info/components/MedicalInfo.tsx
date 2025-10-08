@@ -3,24 +3,32 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Save } from 'lucide-react';
 import { medicalFormSchema } from '../schemas/CreateMedicalInfoForm.schema';
-import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail } from '../types/medical-form';
+import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail, ApiMember } from '../types/medical-form';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 interface MedicalWizardFormProps {
-  memberId: number;
+  memberId?: number; // Hacerlo opcional para creación
   onSubmit: (data: MedicalFormData) => void;
   onCancel?: () => void;
   initialData?: MedicalFormData;
+}
+
+interface Member {
+  memberId: number;
+  firstName: string;
+  lastName: string;
+  identification: string;
+  role: string;
 }
 
 export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initialData }: MedicalWizardFormProps) {
   const { tenantId } = useTenant();
 
   const [formData, setFormData] = useState<MedicalFormData>({
-    member_id: memberId,
+    member_id: memberId || 0, // Valor por defecto 0 para creación
     blood_type: '',
     eps: '',
     allergies: '',
@@ -34,10 +42,18 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   const [errors, setErrors] = useState<MedicalFormErrors>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState<number>(memberId || 0);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+
+  // Cargar miembros si estamos en modo creación
+  useEffect(() => {
+    if (!initialData && !memberId) {
+      loadMembers();
+    }
+  }, [initialData, memberId]);
 
   useEffect(() => {
-    
-
     if (initialData) {
       const adaptedData = {
         ...initialData,
@@ -56,18 +72,30 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     }
   }, [initialData, memberId, tenantId]);
 
-  const steps = [
-    { id: 'basica', title: 'Información Básica', completed: false },
-    { id: 'medica', title: 'Información Médica', completed: false },
-    { id: 'vacunas', title: 'Vacunas', completed: false },
-    { id: 'medicamentos', title: 'Medicamentos', completed: false }
-  ];
+  // Cargar lista de miembros desde la API
+  const loadMembers = async () => {
+    try {
+      setIsLoadingMembers(true);
+      const response = await api.get('/members/list_members');
+      
+      // Filtrar solo miembros aprobados y activos
+      const scoutMembers = response.data.filter((member: ApiMember) => 
+      member.role === 'SCOUT' && 
+      member.status === 'APPROVED' && 
+      member.isActive !== false
+    );
+    
+    setMembers(scoutMembers);
+  } catch (error) {
+    console.error('Error cargando miembros:', error);
+    toast.error('Error al cargar la lista de miembros');
+  } finally {
+    setIsLoadingMembers(false);
+  }
+};
 
-  const alergiasComunes = [
-    'Penicilina', 'Aspirina', 'Mariscos', 'Nueces', 'Huevos', 'Leche',
-    'Soja', 'Trigo', 'Polen', 'Ácaros', 'Mascotas', 'Picaduras de insectos'
-  ];
-  const updateMedicalRecord = async (data: MedicalFormData) => {
+  // Función para crear nuevo registro médico
+  const createMedicalRecord = async (data: MedicalFormData) => {
     try {
       setIsSubmitting(true);
 
@@ -75,11 +103,11 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
         throw new Error('No se encontró el tenant ID');
       }
 
-      if (!memberId) {
-        throw new Error('No se encontró el member ID');
+      if (!selectedMemberId) {
+        throw new Error('Debe seleccionar un miembro');
       }
 
-      // USAR snake_case (como el DTO real espera)
+      // Preparar payload en snake_case (como espera el endpoint)
       const payload = {
         blood_type: data.blood_type,
         eps: data.eps,
@@ -98,6 +126,70 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
         }))
       };
 
+      const response = await api.post(
+        `http://localhost:8080/api/medical_record/create_record/${selectedMemberId}`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Tenant-Id': tenantId
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        throw new Error(`Error del servidor: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('❌ CREATE - Error:', error);
+
+      if (axios.isAxiosError(error)) {
+        console.error('❌ CREATE - Detalles Axios:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        throw new Error(error.response?.data?.message || `Error ${error.response?.status}` || 'Error del servidor');
+      }
+
+      throw new Error('Error desconocido al crear el registro médico');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const updateMedicalRecord = async (data: MedicalFormData) => {
+    try {
+      setIsSubmitting(true);
+
+      if (!tenantId) {
+        throw new Error('No se encontró el tenant ID');
+      }
+
+      if (!memberId) {
+        throw new Error('No se encontró el member ID');
+      }
+
+      const payload = {
+        blood_type: data.blood_type,
+        eps: data.eps,
+        allergies: data.allergies,
+        chronic_diseases: data.chronic_diseases,
+        physical_restrictions: data.physical_restrictions,
+        surgical_history: data.surgical_history,
+        active: true,
+        medications_detail: data.medications_detail.map(med => ({
+          name: med.name,
+          frequency: med.frecuency
+        })),
+        vaccines_detail: data.vaccines_detail.map(vaccine => ({
+          name: vaccine.name,
+          applied_at: vaccine.date.includes('T') ? vaccine.date : `${vaccine.date}T00:00:00.000Z`
+        }))
+      };
 
       const response = await api.put(
         `http://localhost:8080/api/medical_record/update_record/${memberId}`,
@@ -157,6 +249,11 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
     }
+  };
+
+  const handleMemberChange = (newMemberId: number) => {
+    setSelectedMemberId(newMemberId);
+    setFormData(prev => ({ ...prev, member_id: newMemberId }));
   };
 
   const addVaccine = () => {
@@ -235,8 +332,6 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   };
 
   const handleSubmit = async () => {
-    
-
     if (!validateForm(formData)) {
       toast.error('Por favor corrige los errores en el formulario');
       return;
@@ -244,11 +339,13 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
 
     try {
       if (initialData) {
+        // Modo edición
         await updateMedicalRecord(formData);
         toast.success('Información médica actualizada exitosamente');
       } else {
-        toast.info('Función de creación en desarrollo');
-        return;
+        // Modo creación
+        await createMedicalRecord(formData);
+        toast.success('Información médica creada exitosamente');
       }
 
       onSubmit(formData);
@@ -277,6 +374,11 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   };
 
   const canProceed = () => {
+    // En modo creación, verificar que se haya seleccionado un miembro
+    if (!initialData && currentStep === 0 && !selectedMemberId) {
+      return false;
+    }
+
     switch (currentStep) {
       case 0:
         return formData.eps.trim() !== '' && formData.blood_type !== '';
@@ -290,6 +392,18 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
         return true;
     }
   };
+
+  const steps = [
+    { id: 'basica', title: 'Información Básica', completed: false },
+    { id: 'medica', title: 'Información Médica', completed: false },
+    { id: 'vacunas', title: 'Vacunas', completed: false },
+    { id: 'medicamentos', title: 'Medicamentos', completed: false }
+  ];
+
+  const alergiasComunes = [
+    'Penicilina', 'Aspirina', 'Mariscos', 'Nueces', 'Huevos', 'Leche',
+    'Soja', 'Trigo', 'Polen', 'Ácaros', 'Mascotas', 'Picaduras de insectos'
+  ];
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
@@ -338,6 +452,32 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Información Básica</h2>
               <div className="space-y-4">
+                {/* Selector de miembro solo en modo creación */}
+                {!initialData && (
+                  <div className="space-y-2">
+                    <Label htmlFor="member" className="font-medium">Seleccionar Integrante *</Label>
+                    <Select
+                      value={selectedMemberId.toString()}
+                      onValueChange={(value) => handleMemberChange(parseInt(value))}
+                      disabled={isLoadingMembers}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={isLoadingMembers ? "Cargando miembros..." : "Seleccione un integrante"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {members.map(member => (
+                          <SelectItem key={member.memberId} value={member.memberId.toString()}>
+                            {member.firstName} {member.lastName} - {member.identification} ({member.role})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!selectedMemberId && (
+                      <p className="text-sm text-red-500">Debe seleccionar un integrante</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="eps">EPS *</Label>
@@ -376,6 +516,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
             </div>
           )}
 
+          {/* El resto del componente se mantiene igual */}
           {currentStep === 1 && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Información Médica Detallada</h2>
@@ -640,12 +781,12 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {initialData ? 'Actualizando...' : 'Enviando...'}
+                    {initialData ? 'Actualizando...' : 'Creando...'}
                   </>
                 ) : currentStep === steps.length - 1 ? (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    {initialData ? 'Actualizar' : 'Guardar'}
+                    {initialData ? 'Actualizar' : 'Crear'}
                   </>
                 ) : (
                   <>
