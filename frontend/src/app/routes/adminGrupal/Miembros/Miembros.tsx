@@ -6,13 +6,14 @@ import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
 import type { Member } from "@/models/types/memberTypes";
 import { useMember } from "@/hooks/useMembers";
-import { fetchMembersAction } from "@/store/members/membersActions";
+import { fetchMembersByStatusAction } from "@/store/members/membersActions";
 import { clearNotification } from "@/store/members/membersSlice";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 
 const TeamMembers = () => {
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
+
   //const [branchFilter, setBranchFilter] = useState("");
   const navigate = useNavigate();
 
@@ -21,7 +22,7 @@ const TeamMembers = () => {
 
   // Cargar datos iniciales
   useEffect(() => {
-    dispatch(fetchMembersAction());
+    dispatch(fetchMembersByStatusAction("APPROVED"));
   }, [dispatch]);
 
   // Aplicar filtros y mapear a formato de tabla
@@ -31,8 +32,8 @@ const TeamMembers = () => {
     const filtered = members.filter((member: Member) => {
       const matchesSearch =
         searchFilter === "" ||
-        member.first_name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        member.last_name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        member.firstName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        member.lastName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
         member.identification
           ?.toLowerCase()
           .includes(searchFilter.toLowerCase());
@@ -57,20 +58,19 @@ const TeamMembers = () => {
     // Mapear a formato de tabla
     return filtered.map(
       (member: Member): Member => ({
-        member_id: member.member_id,
-        user_id: member.user_id,
-        tenant_id: member.tenant_id,
-        subgroup_id: member.subgroup_id,
-        first_name: member.first_name,
-        last_name: member.last_name,
+        memberId: member.memberId,
+        userId: member.userId,
+        tenantId: member.tenantId,
+        subgroupId: member.subgroupId,
+        firstName: member.firstName,
+        lastName: member.lastName,
         age: member.age,
         role: member.role,
         identification: member.identification,
-        branch: member.branch,
-        document_type: member.document_type,
+        documentType: member.documentType,
         email: member.email,
         gender: member.gender,
-        birth_date: member.birth_date,
+        birthDate: member.birthDate,
         address: member.address,
         phone: member.phone,
         weight: member.weight,
@@ -79,11 +79,11 @@ const TeamMembers = () => {
         sports: member.sports,
         instruments: member.instruments,
         status: member.status,
-        acceptance_date: member.acceptance_date,
-        guardian_id: member.guardian_id,
-        emergency_phone: member.emergency_phone,
-        created_at: member.created_at,
-        updated_at: member.updated_at,
+        acceptanceDate: member.acceptanceDate,
+        guardianId: member.guardianId,
+        emergencyPhone: member.emergencyPhone,
+        createdAt: member.createdAt,
+        updatedAt: member.updatedAt,
       })
     );
   }, [members, searchFilter, cityFilter /*branchFilter*/]);

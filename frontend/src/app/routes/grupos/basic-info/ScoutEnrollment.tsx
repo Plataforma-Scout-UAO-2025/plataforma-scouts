@@ -21,7 +21,7 @@ import type {
   CreateMemberWithSchoolRequest,
   ChangeEvent,
   EmergencyContactField,
-} from "./types/enrollment.type";
+} from "@/models/types/enrollment.type";
 import { createMember, createMemberWithSchool } from "@/api/membersApi";
 import { transformarDatos } from "./utils/enrollment.utils";
 
@@ -123,6 +123,10 @@ function ScoutEnrollment() {
       return;
     }
 
+    await enviarDatos();
+  };
+
+  const enviarDatos = async (): Promise<void> => {
     setLoading(true);
     try {
       const memberData: CreateMemberRequest = transformarDatos(datosPersonales);
@@ -152,7 +156,6 @@ function ScoutEnrollment() {
       setLoading(false);
     }
   };
-
   const handleSchoolDialogResponse = (incluir: boolean): void => {
     setIncluirDatosEscolares(incluir);
     setShowSchoolDialog(false);
@@ -160,7 +163,7 @@ function ScoutEnrollment() {
       setPagina(3);
     } else {
       // Si no incluye, envía directamente
-      handleSubmit(new Event("submit") as unknown as React.FormEvent);
+      enviarDatos();
     }
   };
 
@@ -531,7 +534,7 @@ function ScoutEnrollment() {
   const progreso = (pagina / totalPaginas) * 100;
 
   return (
-    <div className="min-h-screen w-screen bg-background px-4 md:px-20 py-10">
+    <div className="min-h-screen bg-background px-4 md:px-20 py-10">
       <h1 className="text-2xl font-bold text-primary mb-8">
         Inscríbete al grupo scout
       </h1>
@@ -605,7 +608,7 @@ function ScoutEnrollment() {
           <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-8 h-8 text-green-600"
+                className="w-8 h-8 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

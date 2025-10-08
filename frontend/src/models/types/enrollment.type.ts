@@ -48,15 +48,20 @@ export interface SchoolData {
 }
 
 export interface CreateMemberRequest {
-  subgroup_id: number;
-  first_name: string;
-  last_name: string;
+  tenantId: string;
+  guardianId: number;
+  subgroup: {
+    subgroupId: number;
+  };
+  firstName: string;
+  lastName: string;
   age: number;
+  role: string;
   identification: string;
-  document_type: DocumentType;
+  documentType: string;
   email: string;
-  gender: Gender;
-  birth_date: Date;
+  gender: string;
+  birthDate: string | Date;
   address: string;
   phone: string;
   weight: string;
@@ -64,8 +69,11 @@ export interface CreateMemberRequest {
   hobbies: string;
   sports: string;
   instruments: string;
-  status: MemberStatus;
-  emergency_contacts: Record<string, EmergencyContact>;
+  isActive: boolean;
+  relationship: string;
+  status: string;
+  acceptanceDate: string | Date;
+  emergencyContacts: EmergencyContact[];
 }
 
 export interface CreateMemberResponse {
@@ -89,12 +97,12 @@ export type ChangeEvent = React.ChangeEvent<
 export type EmergencyContactField = keyof EmergencyContact;
 
 export interface GroupMapping {
-  [key: string]: number;
+  [key: string]: string;
 }
 
 export const GROUP_TO_SUBGROUP_ID: GroupMapping = {
-  "Centinelas 113": 1,
-  "803 Chiminigagua": 2,
+  "Centinelas 113": "1",
+  "803 Chiminigagua": "2",
 };
 
 export interface EnrollmentFormState {

@@ -36,15 +36,15 @@ const Rejected = () => {
 
   const statusLabels: Record<string, string> = {
     PENDING: "Pendiente",
-    ACCEPTED: "Aceptado",
-    NOT_ACCEPTED: "Rechazado",
+    APPROVED: "Aceptado",
+    REJECTED: "Rechazado",
   };
 
-  // 🔹 Cargar miembros rechazados
+  //Cargar miembros rechazados
   const loadRejectedMembers = async () => {
     try {
       setLoading(true);
-      const data = await getMembersByStatus("NOT_ACCEPTED");
+      const data = await getMembersByStatus("REJECTED");
       setMembers(data);
     } catch (error) {
       console.error("Error al cargar miembros rechazados:", error);
@@ -58,7 +58,7 @@ const Rejected = () => {
     loadRejectedMembers();
   }, []);
 
-  // 🔹 Ciudades únicas
+  // Ciudades
   const cities = useMemo(() => {
     const uniqueCities = [
       ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
@@ -66,10 +66,10 @@ const Rejected = () => {
     return uniqueCities.sort();
   }, [members]);
 
-  // 🔹 Filtros
+  // Filtros
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
-      const fullName = `${member.first_name} ${member.last_name}`.toLowerCase();
+      const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
       const matchesSearch =
         searchFilter === "" ||
         fullName.includes(searchFilter.toLowerCase()) ||
@@ -83,14 +83,14 @@ const Rejected = () => {
     });
   }, [members, searchFilter, cityFilter]);
 
-  // Ver detalles
+  // Ver detalles de un miembro
   const handleView = async (member: Member) => {
     try {
       setLoading(true);
-      if (member.member_id === undefined) {
+      if (member.memberId === undefined) {
         throw new Error("El ID del miembro es indefinido.");
       }
-      const data = await getMember(member.member_id);
+      const data = await getMember(member.memberId);
       setSelectedMember(data);
       setOpenViewModal(true);
     } catch (err) {
@@ -182,10 +182,10 @@ const Rejected = () => {
                 </TableRow>
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <TableRow key={member.member_id}>
-                    <TableCell>{member.member_id}</TableCell>
-                    <TableCell>{member.first_name}</TableCell>
-                    <TableCell>{member.last_name}</TableCell>
+                  <TableRow key={member.memberId}>
+                    <TableCell>{member.memberId}</TableCell>
+                    <TableCell>{member.firstName}</TableCell>
+                    <TableCell>{member.lastName}</TableCell>
                     <TableCell>{member.identification}</TableCell>
                     <TableCell>
                       {member.address?.split(",")[0] || "N/A"}
@@ -230,16 +230,16 @@ const Rejected = () => {
             selectedMember && (
               <div className="space-y-2 text-sm">
                 <p>
-                  <b>Nombres:</b> {selectedMember.first_name}
+                  <b>Nombres:</b> {selectedMember.firstName}
                 </p>
                 <p>
-                  <b>Apellidos:</b> {selectedMember.last_name}
+                  <b>Apellidos:</b> {selectedMember.lastName}
                 </p>
                 <p>
                   <b>Correo:</b> {selectedMember.email}
                 </p>
                 <p>
-                  <b>Documento:</b> {selectedMember.document_type}{" "}
+                  <b>Documento:</b> {selectedMember.documentType}{" "}
                   {selectedMember.identification}
                 </p>
                 <p>

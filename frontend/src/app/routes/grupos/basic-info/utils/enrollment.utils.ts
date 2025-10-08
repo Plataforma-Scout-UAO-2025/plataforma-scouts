@@ -2,8 +2,8 @@ import type {
   PersonalData,
   CreateMemberRequest,
   EmergencyContact,
-} from "../types/enrollment.type";
-import { GROUP_TO_SUBGROUP_ID } from "../types/enrollment.type";
+} from "@/models/types/enrollment.type";
+import { GROUP_TO_SUBGROUP_ID } from "@/models/types/enrollment.type";
 
 export const calcularEdad = (fecha: string): number => {
   if (!fecha) return 0;
@@ -18,27 +18,25 @@ export const calcularEdad = (fecha: string): number => {
 export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
   const edad = calcularEdad(data.birth_date);
 
-  const emergencyPhone: Record<string, EmergencyContact> = {};
-  data.emergency_contacts.forEach((contact, index) => {
-    if (contact.name && contact.phone) {
-      emergencyPhone[`contact${index + 1}`] = {
-        name: contact.name,
-        relationship: contact.relationship,
-        phone: contact.phone,
-      };
-    }
-  });
+  const emergencyContacts: EmergencyContact[] = data.emergency_contacts
+    .filter((contact) => contact.name && contact.phone)
+    .map((contact) => ({
+      name: contact.name,
+      relationship: contact.relationship,
+      phone: contact.phone,
+    }));
 
   return {
-    subgroup_id: GROUP_TO_SUBGROUP_ID[data.group] || 1,
-    first_name: data.firstname,
-    last_name: data.lastname,
+    tenantId: GROUP_TO_SUBGROUP_ID[data.group],
+    firstName: data.firstname,
+    lastName: data.lastname,
+    guardianId: 5,
     age: edad,
     identification: data.identification,
-    document_type: data.document_type,
+    documentType: data.document_type,
     email: data.email,
     gender: data.gender,
-    birth_date: new Date(data.birth_date),
+    birthDate: new Date(data.birth_date),
     address: data.address,
     phone: data.phone,
     weight: data.weight,
@@ -46,7 +44,14 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     hobbies: data.hobbies,
     sports: data.sports,
     instruments: data.instruments,
+    isActive: true,
+    relationship: "Ninguna",
     status: "PENDING",
-    emergency_contacts: emergencyPhone,
+    acceptanceDate: "2025-01-15",
+    emergencyContacts,
+    subgroup: {
+      subgroupId: 12,
+    },
+    role: "SCOUT",
   };
 };

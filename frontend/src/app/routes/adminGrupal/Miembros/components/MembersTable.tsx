@@ -15,6 +15,11 @@ interface MembersTableProps {
   loading?: boolean;
   onView?: (member: Member) => void;
 }
+const statusLabels: Record<string, string> = {
+  PENDING: "Pendiente",
+  APPROVED: "Aceptado",
+  REJECTED: "Rechazado",
+};
 
 const MembersTable = ({
   filteredMembers,
@@ -51,30 +56,34 @@ const MembersTable = ({
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
-              <TableRow key={member.member_id}>
+              <TableRow key={member.memberId}>
                 <TableCell className="pl-4 font-medium">
-                  {member.member_id}
+                  {member.memberId}
                 </TableCell>
-                <TableCell>{member.first_name}</TableCell>
-                <TableCell>{member.last_name}</TableCell>
+                <TableCell>{member.firstName}</TableCell>
+                <TableCell>{member.lastName}</TableCell>
                 <TableCell>{member.identification}</TableCell>
                 <TableCell>
-                  {member.acceptance_date
-                    ? new Date(member.acceptance_date).toLocaleDateString()
+                  {member.acceptanceDate
+                    ? new Date(member.acceptanceDate).toLocaleDateString()
                     : "—"}
                 </TableCell>
-                <TableCell>{member.status}</TableCell>
+                <TableCell>
+                  <span className="py-1 rounded font-medium bg-green-100 text-green-800">
+                    {statusLabels[member.status ?? "Aceptado"]}
+                  </span>
+                </TableCell>
                 <TableCell>{member.address}</TableCell>
                 <TableCell>
-                  {Array.isArray(member.branch)
-                    ? member.branch.length > 0
-                      ? member.branch
+                  {Array.isArray(member.subgroupId)
+                    ? member.subgroupId.length > 0
+                      ? member.subgroupId
                           .map((rama) =>
-                            typeof rama === "string" ? rama : rama.nombre
+                            typeof rama === "string" ? rama : rama.name
                           )
                           .join(", ")
                       : "—"
-                    : member.branch || "—"}
+                    : member.subgroupId || "—"}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
