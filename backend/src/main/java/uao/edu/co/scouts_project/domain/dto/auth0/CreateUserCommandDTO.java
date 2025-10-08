@@ -1,0 +1,12 @@
+package uao.edu.co.scouts_project.domain.dto.auth0;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@AllArgsConstructor()
+@Data()
+public class CreateUserCommandDTO {
+    private String email;
+    private String password; 
+    private String username;
+}
