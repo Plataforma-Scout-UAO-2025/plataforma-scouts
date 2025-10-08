@@ -71,7 +71,8 @@ const adminGrupalItems: MenuItem[] = [
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
-  { id: "grupos", label: "Información Médica", icon: <Settings />, href: "/app/grupos" },
+  { id: "grupos", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
+  { id: "medico", label: "Información Médica", icon: <Settings />, href: "/app/grupos/informacion-medica" },
 ]
 
 const tesoreroItems: MenuItem[] = [
