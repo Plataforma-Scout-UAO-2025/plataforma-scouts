@@ -100,6 +100,9 @@ export const getRamas = async (tenantSlug: string, groupSlug: string, año?: num
     return ramasFiltradas;
   } catch (error) {
     console.error('❌ [RamaService] Error obteniendo ramas:', error);
+    if ((error as any)?.response) {
+      console.error('❌ [RamaService] response.data:', (error as any).response?.data);
+    }
     throw error;
   }
 };
@@ -264,6 +267,9 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
     return sortedYears;
   } catch (error) {
     console.error('❌ [RamaService] Error obteniendo años:', error);
+    if ((error as any)?.response) {
+      console.error('❌ [RamaService] response.data (años):', (error as any).response?.data);
+    }
     return [];
   }
 };
