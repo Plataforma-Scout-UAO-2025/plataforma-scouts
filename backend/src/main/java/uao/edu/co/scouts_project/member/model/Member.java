@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
-import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
+import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 
 @Builder
 @Entity

@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:8080/api/v1",
+  baseURL: import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:8080/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
@@ -30,8 +29,8 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    return config;
   }
-  return config;
-});
+);
 
 export default api;

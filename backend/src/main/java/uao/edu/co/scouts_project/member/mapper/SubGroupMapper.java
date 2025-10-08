@@ -1,7 +1,7 @@
 package uao.edu.co.scouts_project.member.mapper;
 
-import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO; // ✅ Cambia a SubgroupDTO (mayúsculas)
+import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 
 public class SubGroupMapper {
 
@@ -16,7 +16,6 @@ public class SubGroupMapper {
                 subgroup.getName(),
                 subgroup.getDescription(),
                 subgroup.getPhotoPrincipal(),
-                subgroup.getGalleryObjectIds(),
                 subgroup.getIsActive(),
                 subgroup.getCreatedAt(),
                 subgroup.getUpdatedAt()

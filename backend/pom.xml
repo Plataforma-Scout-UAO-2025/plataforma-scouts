@@ -156,11 +156,6 @@
 			<artifactId>mvc-auth-commons</artifactId>
 			<version>1.9.1</version>
 		</dependency>
-        <dependency>
-            <groupId>io.hypersistence</groupId>
-            <artifactId>hypersistence-utils-hibernate-63</artifactId>
-            <version>3.9.9</version>
-        </dependency>
     </dependencies>
 
 
