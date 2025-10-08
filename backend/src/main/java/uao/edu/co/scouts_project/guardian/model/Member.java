@@ -72,6 +72,7 @@ public class Member {
 
     @NotNull
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Role role;
 
     @NotNull
@@ -109,7 +110,6 @@ public class Member {
 
     @Column(name = "acceptance_date")
     private LocalDate acceptanceDate;
-
 
     @Type(JsonType.class)
     @Column(name = "emergency_contacts", columnDefinition = "jsonb")
