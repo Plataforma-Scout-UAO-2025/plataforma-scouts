@@ -1,26 +1,26 @@
 package uao.edu.co.scouts_project.infrastructure.auth0;
 
+import com.auth0.client.mgmt.ManagementAPI;
+import com.auth0.exception.Auth0Exception;
+import com.auth0.json.mgmt.Permission;
+import com.auth0.json.mgmt.Role;
+import org.springframework.security.core.context.SecurityContextHolder;
+import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
+import uao.edu.co.scouts_project.domain.service.PermissionNormalizer;
+import uao.edu.co.scouts_project.infrastructure.cache.PermissionCache;
+import uao.edu.co.scouts_project.infrastructure.cache.PermissionCacheMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import com.auth0.client.mgmt.ManagementAPI;
-import com.auth0.exception.Auth0Exception;
-import com.auth0.json.mgmt.Permission;
-import com.auth0.json.mgmt.Role;
-
-import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
-import uao.edu.co.scouts_project.domain.service.PermissionNormalizer;
-import uao.edu.co.scouts_project.infrastructure.cache.PermissionCache;
-import uao.edu.co.scouts_project.infrastructure.cache.PermissionCacheMetrics;
-
 /**
- * Adaptador Auth0 que implementa el puerto PermissionQueryPort usando un caché externo (PermissionCache).
+ * Adaptador Auth0 que implementa el puerto PermissionQueryPort usando un caché
+ * externo (PermissionCache).
  */
 @Component
 public class Auth0PermissionAdapter implements PermissionQueryPort {
@@ -33,9 +33,9 @@ public class Auth0PermissionAdapter implements PermissionQueryPort {
     private final PermissionCache cache;
 
     public Auth0PermissionAdapter(Auth0ManagementClientProvider managementProvider,
-                                  PermissionCacheMetrics metrics,
-                                  PermissionNormalizer normalizer,
-                                  PermissionCache cache) {
+            PermissionCacheMetrics metrics,
+            PermissionNormalizer normalizer,
+            PermissionCache cache) {
         this.managementProvider = managementProvider;
         this.metrics = metrics;
         this.normalizer = normalizer;
@@ -59,7 +59,8 @@ public class Auth0PermissionAdapter implements PermissionQueryPort {
     }
 
     /**
-     * Método protegido para facilitar pruebas (se puede sobreescribir en tests unitarios para simular llamadas remotas).
+     * Método protegido para facilitar pruebas (se puede sobreescribir en tests
+     * unitarios para simular llamadas remotas).
      */
     protected Set<String> fetchFromRemote(String userId) {
         Set<String> aggregate = new HashSet<>();
@@ -82,7 +83,7 @@ public class Auth0PermissionAdapter implements PermissionQueryPort {
                         .map(normalizer::normalizePermission)
                         .filter(s -> !s.isBlank())
                         .collect(Collectors.toSet()));
-                String roleNorm = normalizer.normalizeRole(role == null ? null : role.getName());
+                String roleNorm = normalizer.normalizeRole(role.getName());
                 if (!roleNorm.isBlank()) {
                     aggregate.add("ROLE_" + roleNorm);
                 }
@@ -97,8 +98,31 @@ public class Auth0PermissionAdapter implements PermissionQueryPort {
     }
 
     private String safePermissionName(Permission p) {
-        if (p == null) return "";
+        if (p == null)
+            return "";
         String n = p.getName();
         return n == null ? "" : n.trim();
     }
+
+    public List<String> getCurrentUserRoles() {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            ManagementAPI api = managementProvider.getManagementAPI();
+            List<Role> roles = api.users().listRoles(userId, null).execute().getItems();
+            if (roles == null || roles.isEmpty()) {
+                return List.of();
+            }
+            return roles.stream()
+                    .map(r -> r == null ? "" : r.getName())
+                    .filter(n -> n != null && !n.isBlank())
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+        } catch (Auth0Exception e) {
+            log.error("Error consultando Auth0 para {}: {}", userId, e.getMessage());
+        } catch (Exception e) {
+            log.error("Fallo inesperado consultando Auth0 para {}: {}", userId, e.getMessage());
+        }
+        return List.of();
+    }
+
 }
