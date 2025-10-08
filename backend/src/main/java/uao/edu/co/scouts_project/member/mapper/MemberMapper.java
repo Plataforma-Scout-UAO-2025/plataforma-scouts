@@ -2,7 +2,8 @@ package uao.edu.co.scouts_project.member.mapper;
 
 import uao.edu.co.scouts_project.member.dto.MemberDto;
 import uao.edu.co.scouts_project.member.model.Member;
-//import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
+import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
+import uao.edu.co.scouts_project.member.mapper.SubGroupMapper;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 
@@ -18,7 +19,7 @@ public class MemberMapper {
                 .userId(member.getUserId())
                 .tenantId(member.getTenantId())
                 .guardianId(member.getGuardianId())
-                .subgroup(member.getSubgroup() != null ? member.getSubgroup() : null)
+                .subgroup(SubGroupMapper.toDto(member.getSubgroup()))
                 .firstName(member.getFirstName())
                 .lastName(member.getLastName())
                 .age(member.getAge())
@@ -65,7 +66,7 @@ public class MemberMapper {
         member.setTenantId(dto.getTenantId());
         member.setGuardianId(dto.getGuardianId());
         if (dto.getSubgroup() != null) {
-            member.setSubgroup(dto.getSubgroup());
+            member.setSubgroup(SubGroupMapper.toEntity(dto.getSubgroup()));
         }
         member.setFirstName(dto.getFirstName());
         member.setLastName(dto.getLastName());
