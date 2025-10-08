@@ -82,6 +82,7 @@ const tesoreroItems: MenuItem[] = [
 
 const acudienteItems: MenuItem[] = [
   { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
 ]
 
