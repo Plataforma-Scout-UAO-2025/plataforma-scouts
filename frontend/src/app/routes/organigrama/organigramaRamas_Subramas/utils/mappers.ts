@@ -20,13 +20,28 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   // 🔍 LOG DETALLADO: Ver qué campos exactos recibimos del backend
   console.log('🔄 [Mapper] Input del backend completo:', JSON.stringify(backendRama, null, 2));
   
-  // Usar los campos reales que retorna el backend
-  const sectionId = String(backendRama.sectionId || backendRama.id || '');
+  // Intentar extraer el ID canonical que provee el backend desde varios nombres posibles
+  const rawId = (backendRama as unknown as Record<string, unknown>).section_id ?? (backendRama as unknown as Record<string, unknown>).sectionId ?? (backendRama as unknown as Record<string, unknown>).id ?? (backendRama as unknown as Record<string, unknown>).ID;
 
-  // Usar las URLs directas que retorna el backend
-  const iconUrl = backendRama.iconObjectUrl || '';
-  const photoPrincipalUrl = backendRama.photoPrincipalUrl || '';
-  const galleryUrls = backendRama.galleryObjectUrls || [];
+  // Generar ID consistente basado en datos del backend si no hay ID real
+  const generateConsistentId = () => {
+    const uniqueString = `${(backendRama as any).name || ''}-${(backendRama as any).tenant_id || (backendRama as any).tenantId || ''}-${(backendRama as any).group_id || (backendRama as any).groupId || ''}`;
+    let hash = 0;
+    for (let i = 0; i < uniqueString.length; i++) {
+      const char = uniqueString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString();
+  };
+
+  const hasBackendId = rawId !== undefined && rawId !== null && rawId !== '';
+  const sectionId = hasBackendId ? String(rawId) : generateConsistentId();
+
+  // Extraer URLs soportando diferentes convenciones (snake_case y camelCase)
+  const iconUrl = String((backendRama as unknown as Record<string, unknown>).icon_object_url ?? (backendRama as unknown as Record<string, unknown>).iconObjectUrl ?? '');
+  const photoPrincipalUrl = String((backendRama as unknown as Record<string, unknown>).photo_principal_url ?? (backendRama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
+  const galleryUrls = ((backendRama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendRama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
 
   // 🔍 LOG DETALLADO: Ver qué URLs exactas estamos extrayendo
   console.log('🔍 [Mapper] URLs extraídas:');
@@ -36,15 +51,15 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
 
   const mappedRama: Rama = {
     // canonical ids
-    id: sectionId,
-    sectionId: sectionId,
+  id: sectionId,
+  sectionId: sectionId,
 
     // standard english fields
     name: backendRama.name || '',
     description: backendRama.description || undefined,
 
     // image urls
-    iconUrl: iconUrl || undefined,
+  iconUrl: iconUrl || undefined,
     iconObjectId: backendRama.iconObjectId,
     mainImageUrl: photoPrincipalUrl || undefined,
     mainImageObjectId: backendRama.photoPrincipalObjectId,
@@ -77,7 +92,7 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
     createdAt: backendRama.createdAt ? backendRama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
 
     // gallery
-      galleryObjectIds: galleryUrls,
+  galleryObjectIds: galleryUrls,
       // canonical gallery array of objects (id + url) if backend provided it
   gallery: ((backendRama as unknown as Record<string, unknown>)['gallery'] && Array.isArray((backendRama as unknown as Record<string, unknown>)['gallery'])) ? ( (backendRama as unknown as Record<string, unknown>)['gallery'] as unknown[] ).map((g) => { const rec = g as unknown as Record<string, unknown>; return { id: String(rec['id'] ?? rec['objectId'] ?? ''), url: String(rec['url'] ?? '') }; }) : undefined,
 
@@ -105,7 +120,7 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   _mappedRamaAny.ramaId = mappedRama.sectionId;
   
   console.log('🔄 [Mapper] Rama mapeada final:', { 
-    backend: { name: backendRama.name, sectionId: backendRama.sectionId },
+    backend: { name: (backendRama as any).name, section_id: (backendRama as any).section_id ?? (backendRama as any).sectionId, id: (backendRama as any).id },
     frontend: { name: mappedRama.name, id: mappedRama.id, iconUrl: mappedRama.iconUrl, mainImageUrl: mappedRama.mainImageUrl }
   });
   
