@@ -161,17 +161,56 @@ const acudienteItems: MenuItem[] = [
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
 ]
 
+const tesoreroItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+]
+
+const acudienteItems: MenuItem[] = [
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
+  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
+]
+
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
 ];
 
 function AppLayoutContent() {
-  const location = useLocation();
-  const isAdminGlobalRoute = location.pathname.startsWith("/app/adminGlobal");
-  const menuItems = isAdminGlobalRoute ? adminGlobalItems : adminGrupalItems;
-  const { user, logout } = useAuth0();
-  const { status, currentUserRoleLabel, error, retry } = useRoleContext();
+  const location = useLocation()
+  const { user, logout, getAccessTokenSilently } = useAuth0();
+  const { status, currentUserRole, currentUserRoleLabel, error, retry } = useRoleContext();
+
+  // Determinar qué menú mostrar según el rol del usuario
+  const getMenuItems = (): MenuItem[] => {
+    const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal');
+    
+    if (isAdminGlobalRoute) {
+      return adminGlobalItems;
+    }
+
+    switch (currentUserRole) {
+      case RawRole.ACUDIENTE:
+        return acudienteItems;
+      case RawRole.TESORERO:
+        return tesoreroItems;
+      case RawRole.ADMIN_GRUPO:
+      case RawRole.COMITE_ADMIN:
+      default:
+        return adminGrupalItems;
+    }
+  };
+
+  const menuItems = getMenuItems();
+
+  // Conectar Auth0 con axios centralizado
+  useEffect(() => {
+    if (getAccessTokenSilently) {
+      setAuth0TokenProvider(getAccessTokenSilently);
+      console.log('🔗 [Auth] Token provider conectado con axios centralizado');
+    }
+  }, [getAccessTokenSilently]);
 
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } });

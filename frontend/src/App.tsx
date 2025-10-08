@@ -27,6 +27,16 @@ import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/co
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
 
+import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
+import Pagos from "./app/routes/financiero/Pagos/Pagos";
+
+// Organigrama
+import Organigrama from "./app/routes/organigrama/organigramaRamas_Subramas";
+import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/RamaDetail";
+import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
+import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
+import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
+
 function App() {
   useAuth0ApiWrapper();
 
@@ -43,20 +53,11 @@ function App() {
 
             {/* ===================== ORGANIGRAMA ===================== */}
             <Route path="organigrama" element={<OrganigramaHome />} />
-            <Route
-              path="organigrama/ramas-y-subramas"
-              element={<Organigrama />}
-            />
+            <Route path="organigrama/ramas-y-subramas" element={<Organigrama />} />
             <Route path="organigrama/rama/:id" element={<RamaDetail />} />
             <Route path="organigrama/subrama/:id" element={<SubramaDetail />} />
-            <Route
-              path="organigrama/niveles-organizativos"
-              element={<NivelesPage />}
-            />
-            <Route
-              path="organigrama/resumen"
-              element={<div>Vista resumen (en desarrollo)</div>}
-            />
+            <Route path="organigrama/niveles-organizativos" element={<NivelesPage />} />
+            <Route path="organigrama/resumen" element={<div>Vista resumen (en desarrollo)</div>} />
 
             {/* ===================== FINANCIERO ===================== */}
             <Route path="financiero/cuotas" element={<Cuotas />} />
@@ -141,32 +142,9 @@ function App() {
                 */}
 
             {/* Rutas para acudiente */}
-            <Route
-              path="financiero/estado-cuenta"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO"]}
-                >
-                  <EstadoCuenta />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="grupos"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <Grupos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="grupos/medical-info"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <MedicalInfo />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
+            <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
+            <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalInfo /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

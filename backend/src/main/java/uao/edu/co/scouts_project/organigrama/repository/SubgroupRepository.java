@@ -15,7 +15,4 @@ public interface SubgroupRepository extends JpaRepository<Subgroup, Long> {
     Optional<Subgroup> findBySectionIdAndName(Long sectionId, String name);
     boolean existsBySectionIdAndName(Long sectionId, String name);
     List<Subgroup> findByTenantIdAndGroupIdAndSectionIdAndIsActive(String tenantId, Long groupId, Long sectionId, Boolean isActive);
-
-    Optional<Subgroup> findBySubgroupId(Long subgroupId);
-
 }
