@@ -65,14 +65,24 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
     const backendData = mapFrontendCreateSubramaToBackend(data);
     
     // Crear la subrama
+    console.log('📤 [SubramaService] Endpoint a POST:', endpoint);
+    try {
+      console.log('📤 [SubramaService] Payload a enviar:', JSON.stringify(backendData, null, 2));
+    } catch (e) {
+      console.log('📤 [SubramaService] Payload (no serializable):', backendData);
+    }
     const response = await api.post<BackendSubrama>(endpoint, backendData);
     const backendSubrama = response.data;
 
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
   console.log('✅ [SubramaService] Subrama creada:', subrama.nombre ?? subrama.name);
     return subrama;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [SubramaService] Error creando subrama:', error);
+    // Mostrar cuerpo de respuesta del backend si existe para diagnóstico
+    if (error?.response?.data) {
+      console.error('❌ [SubramaService] Respuesta del backend:', error.response.data);
+    }
     throw error;
   }
 };

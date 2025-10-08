@@ -249,12 +249,25 @@ export const mapFrontendUpdateRamaToBackend = (frontendData: UpdateRamaData): Up
 // Mapear datos del frontend al formato que espera el backend para crear Subramas
 export const mapFrontendCreateSubramaToBackend = (frontendData: CreateSubramaData): CreateSubramaBackendData => {
   const maybe = frontendData as unknown as Record<string, unknown>;
-  return {
+  const base: Record<string, unknown> = {
     name: ((maybe.name ?? maybe.nombre) as string | undefined) ?? '',
     description: (maybe.description ?? maybe.descripcion) as string | undefined,
-    galleryObjectIds: [],
-    isActive: true
   };
+
+  // Conditionally include gallery ids if provided
+  if (maybe.galleryObjectIds !== undefined) base.galleryObjectIds = maybe.galleryObjectIds as string[];
+
+  // Backend appears to expect snake_case 'is_active' — include both forms only if the frontend provided state
+  if (maybe.isActive !== undefined) {
+    base.isActive = Boolean(maybe.isActive);
+    base.is_active = Boolean(maybe.isActive);
+  } else if (maybe.estado !== undefined) {
+    const isAct = String(maybe.estado) === 'activa';
+    base.isActive = isAct;
+    base.is_active = isAct;
+  }
+
+  return base as unknown as CreateSubramaBackendData;
 };
 
 // Mapear datos del frontend al formato que espera el backend para actualizar Subramas
@@ -265,10 +278,19 @@ export const mapFrontendUpdateSubramaToBackend = (frontendData: UpdateSubramaDat
   if (maybe.nombre !== undefined) backendData.name = maybe.nombre as unknown as string;
   if (maybe.description !== undefined) backendData.description = maybe.description as unknown as string;
   if (maybe.descripcion !== undefined) backendData.description = maybe.descripcion as unknown as string;
-
-  backendData.galleryObjectIds = [];
-  if (maybe.estado !== undefined) backendData.isActive = (maybe.estado as unknown as string) === 'activa';
-  if (maybe.status !== undefined) backendData.isActive = (maybe.status as unknown as string) === 'active';
+  if (maybe.galleryObjectIds !== undefined) backendData.galleryObjectIds = maybe.galleryObjectIds as string[];
+  if (maybe.isActive !== undefined) {
+    backendData.isActive = Boolean(maybe.isActive);
+    backendData.is_active = Boolean(maybe.isActive);
+  } else if (maybe.estado !== undefined) {
+    const v = (maybe.estado as unknown as string) === 'activa';
+    backendData.isActive = v;
+    backendData.is_active = v;
+  } else if (maybe.status !== undefined) {
+    const v = (maybe.status as unknown as string) === 'active';
+    backendData.isActive = v;
+    backendData.is_active = v;
+  }
 
   return backendData;
 };

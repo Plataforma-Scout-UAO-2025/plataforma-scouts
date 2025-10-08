@@ -75,8 +75,10 @@ export interface UpdateBranchBackendData {
 export interface CreateSubgroupBackendData {
   name: string;
   description?: string;
-  galleryObjectIds: string[];
-  isActive: boolean;
+  galleryObjectIds?: string[];
+  // Some backends expect snake_case field names for JSON. Keep both to be flexible.
+  isActive?: boolean;
+  is_active?: boolean;
 }
 
 export interface UpdateSubgroupBackendData {
@@ -84,6 +86,7 @@ export interface UpdateSubgroupBackendData {
   description?: string;
   galleryObjectIds?: string[];
   isActive?: boolean;
+  is_active?: boolean;
 }
 
 export interface UpdateSubgroupMainImageData {
