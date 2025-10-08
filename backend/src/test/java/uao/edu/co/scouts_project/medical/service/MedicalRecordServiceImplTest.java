@@ -12,6 +12,7 @@ import uao.edu.co.scouts_project.medical.record.exception.MedicalRecordNotFoundE
 import uao.edu.co.scouts_project.medical.record.mapper.MedicalRecordMapper;
 import uao.edu.co.scouts_project.medical.record.model.MedicalRecord;
 import uao.edu.co.scouts_project.medical.record.repository.IMedicalRecordRepository;
+import uao.edu.co.scouts_project.medical.record.service.MedicalRecordServiceImpl;
 
 import java.time.OffsetDateTime;
 import java.util.List;

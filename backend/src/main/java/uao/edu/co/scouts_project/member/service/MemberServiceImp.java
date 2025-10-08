@@ -13,8 +13,8 @@ import org.springframework.util.StringUtils;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
-import uao.edu.co.scouts_project.organigrama.domain.Subgroup;
-import uao.edu.co.scouts_project.organigrama.repo.SubgroupRepository;
+import uao.edu.co.scouts_project.organigrama.model.Subgroup;
+import uao.edu.co.scouts_project.organigrama.repository.SubgroupRepository;
 
 import java.time.LocalDate;
 import java.util.*;
