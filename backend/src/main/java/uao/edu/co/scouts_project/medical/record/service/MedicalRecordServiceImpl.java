@@ -1,5 +1,7 @@
 package uao.edu.co.scouts_project.medical.record.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import uao.edu.co.scouts_project.medical.record.dto.*;
@@ -73,11 +75,17 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
         }
     }
 
+    // ====== nuevo ======
+    @Override
+    public Page<MedicalRecordDTO> listarPorTenant(String tenantId, Pageable pageable) {
+        requireTenant(tenantId);
+        return repo.findAllByTenantId(tenantId, pageable).map(mapper::toDto);
+    }
+
     private void requireTenant(String tenantId) {
         if (!StringUtils.hasText(tenantId)) {
             throw new IllegalArgumentException("X-Tenant-Id header is required");
         }
-        // TODO opcional: validar que tenant exista en tabla TENANT (si hay cliente/repositorio disponible)
     }
 
     private void validateBlood(String bt){

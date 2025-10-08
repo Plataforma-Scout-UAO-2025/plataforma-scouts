@@ -1,5 +1,7 @@
 package uao.edu.co.scouts_project.medical.record.repository.jpa;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import uao.edu.co.scouts_project.medical.record.mapper.MedicalRecordMapper;
 import uao.edu.co.scouts_project.medical.record.model.MedicalRecord;
@@ -37,5 +39,11 @@ public class MedicalRecordRepositoryImpl implements IMedicalRecordRepository {
     @Override
     public void deleteById(Long id) {
         jpa.deleteById(id);
+    }
+
+    // ===== nuevo =====
+    @Override
+    public Page<MedicalRecord> findAllByTenantId(String tenantId, Pageable pageable) {
+        return jpa.findAllByTenantId(tenantId, pageable).map(mapper::toDomain);
     }
 }

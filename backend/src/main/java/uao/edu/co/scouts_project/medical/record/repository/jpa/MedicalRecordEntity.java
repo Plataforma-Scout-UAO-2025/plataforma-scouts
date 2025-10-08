@@ -1,13 +1,13 @@
 package uao.edu.co.scouts_project.medical.record.repository.jpa;
 
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
-import java.util.List;
-
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import uao.edu.co.scouts_project.medical.record.dto.MedicationDTO;
 import uao.edu.co.scouts_project.medical.record.dto.VaccineDTO;
-import uao.edu.co.scouts_project.medical.record.repository.jpa.converter.MedicationListConverter;
-import uao.edu.co.scouts_project.medical.record.repository.jpa.converter.VaccineListConverter;
+
+import java.time.OffsetDateTime;
+import java.util.List;
 
 @Entity
 @Table(
@@ -20,10 +20,11 @@ import uao.edu.co.scouts_project.medical.record.repository.jpa.converter.Vaccine
 public class MedicalRecordEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // la tabla es bigserial
     @Column(name = "medical_record_id", nullable = false)
     private Long medicalRecordId;
 
-    @Column(name = "tenant_id", nullable = false) // <-- String en DB (text/varchar)
+    @Column(name = "tenant_id", nullable = false)
     private String tenantId;
 
     @Column(name = "member_id", nullable = false)
@@ -48,34 +49,33 @@ public class MedicalRecordEntity {
     private String surgicalHistory;
 
     @Column(name = "active", nullable = false)
-    private Boolean active;
+    private Boolean active = Boolean.TRUE;
 
-    @Convert(converter = VaccineListConverter.class)
-    @Column(name = "vaccines_detail", columnDefinition = "jsonb")
+    // ===== FIX JSONB: Hibernate envía JSON nativo (no VARCHAR) =====
+    @Column(name = "vaccines_detail", columnDefinition = "jsonb", nullable = false)
+    @JdbcTypeCode(SqlTypes.JSON)
     private List<VaccineDTO> vaccinesDetail;
 
-    @Convert(converter = MedicationListConverter.class)
-    @Column(name = "medications_detail", columnDefinition = "jsonb")
+    @Column(name = "medications_detail", columnDefinition = "jsonb", nullable = false)
+    @JdbcTypeCode(SqlTypes.JSON)
     private List<MedicationDTO> medicationsDetail;
 
-    @Column(name = "created_at", nullable = false)
+    // Deja que Postgres ponga now() (según tu DDL de Supabase)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
 
+    // Si prefieres timestamps desde app, quita insertable/updatable y usa @PrePersist/@PreUpdate
     @PrePersist
     void onCreate() {
-        var now = OffsetDateTime.now();
-        createdAt = now;
-        updatedAt = now;
         if (active == null) active = Boolean.TRUE;
+        if (vaccinesDetail == null) vaccinesDetail = List.of();
+        if (medicationsDetail == null) medicationsDetail = List.of();
     }
 
-    @PreUpdate
-    void onUpdate() { updatedAt = OffsetDateTime.now(); }
-
-    // getters/setters
+    // ===== getters/setters =====
     public Long getMedicalRecordId() { return medicalRecordId; }
     public void setMedicalRecordId(Long v) { this.medicalRecordId = v; }
     public String getTenantId() { return tenantId; }

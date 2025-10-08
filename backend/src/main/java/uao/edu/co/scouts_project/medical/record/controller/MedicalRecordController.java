@@ -4,6 +4,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -62,5 +66,19 @@ public class MedicalRecordController {
             @RequestBody UpdateMedicalRecordDTO dto
     ) {
         return ResponseEntity.ok(service.actualizar(tenantId, memberId, dto));
+    }
+
+    // ============== NUEVO ENDPOINT: listar por tenant ==============
+    @Operation(
+        summary = "Listar fichas médicas por tenant",
+        description = "Requiere header X-Tenant-Id. Soporta paginación (page, size) y orden (sort=campo,asc|desc)."
+    )
+    @GetMapping("/list_by_tenant")
+    public ResponseEntity<Page<MedicalRecordDTO>> listByTenant(
+            @Parameter(name = "X-Tenant-Id", description = "Identificador del tenant (organizationId del token)", required = true, in = ParameterIn.HEADER)
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return ResponseEntity.ok(service.listarPorTenant(tenantId, pageable));
     }
 }
