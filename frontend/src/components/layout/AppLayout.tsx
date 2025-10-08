@@ -26,7 +26,6 @@ import {
   LogOut,
   Users,
   Award,
-  BarChart3,
   ChevronRight,
   Network,
   Pencil,
@@ -99,22 +98,6 @@ const adminGrupalItems: MenuItem[] = [
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
   { id: "medico", label: "Información Médica", icon: <Settings />, href: "/app/grupos/informacion-medica" },
-  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />,
-    submenu: [
-      {
-        id: "solicitudes-pendientes",
-        label: "Pendientes",
-        icon: <BarChart3 />,
-        href: "/app/solicitudes",
-      },
-      {
-        id: "solicitudes-rechazadas",
-        label: "Rechazadas",
-        icon: <BarChart3 />,
-        href: "/app/solicitudes/rechazadas",
-      },
-    ],
-  },
 ]
 
 const tesoreroItems: MenuItem[] = [

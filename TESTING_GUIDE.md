@@ -93,7 +93,7 @@ cd frontend && npm run lint && npx tsc --noEmit && npm run build
 
 ### Pre-condiciones
 - Usuario: [rol específico]
-- Datos: [status inicial necesario]
+- Datos: [estado inicial necesario]
 
 ### Pasos
 1. [Acción específica] → [Resultado esperado]
