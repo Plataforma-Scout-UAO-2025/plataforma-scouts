@@ -293,19 +293,38 @@ export const removeSectionIcon = async (
   sectionId: string
 ): Promise<void> => {
   console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...");
-
   const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
-  const payload = {
-    operations: [
-      {
-        op: "remove",
-        targetUuid: null,
-      },
-    ],
-  };
 
-  await api.patch(patchEndpoint, payload);
-  console.log("✅ Ícono eliminado correctamente de la sección");
+  const attempts = [
+    { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
+    { description: 'operations remove (newValue null)', payload: { operations: [{ op: 'remove', newValue: null }] } },
+    { description: 'camelCase objectId null', payload: { objectId: null } },
+    { description: 'snake_case object_id null', payload: { object_id: null } },
+  ];
+
+  let lastErr: unknown = null;
+  let removed = false;
+  for (const attempt of attempts) {
+    console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
+    try {
+      const res = await api.patch(patchEndpoint, attempt.payload as any);
+      console.log(`✅ Ícono eliminado correctamente con formato: ${attempt.description}`, res?.data ?? res);
+      removed = true;
+      break;
+    } catch (e) {
+      lastErr = e;
+      if ((e as any)?.response) {
+        console.error('❌ Respuesta del backend en intento de eliminación de icono:', (e as any).response?.data);
+      } else {
+        console.error('❌ Error en intento de eliminación de icono (sin response):', e);
+      }
+    }
+  }
+
+  if (!removed) {
+    console.error('❌ Ningún formato funcionó para eliminar el ícono de la sección. Último error:', lastErr);
+    throw lastErr;
+  }
 };
 
 // ==========================================================
@@ -317,17 +336,36 @@ export const removeSectionMainImage = async (
   sectionId: string
 ): Promise<void> => {
   console.log("🗑️ [ImageUploadService] Eliminando imagen principal de sección...");
-
   const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
-  const payload = {
-    operations: [
-      {
-        op: "remove",
-        targetUuid: null,
-      },
-    ],
-  };
 
-  await api.patch(patchEndpoint, payload);
-  console.log("✅ Imagen principal eliminada correctamente de la sección");
+  const attempts = [
+    { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
+    { description: 'operations remove (newValue null)', payload: { operations: [{ op: 'remove', newValue: null }] } },
+    { description: 'camelCase objectId null', payload: { objectId: null } },
+    { description: 'snake_case object_id null', payload: { object_id: null } },
+  ];
+
+  let lastErr: unknown = null;
+  let removed = false;
+  for (const attempt of attempts) {
+    console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
+    try {
+      const res = await api.patch(patchEndpoint, attempt.payload as any);
+      console.log(`✅ Imagen principal eliminada correctamente con formato: ${attempt.description}`, res?.data ?? res);
+      removed = true;
+      break;
+    } catch (e) {
+      lastErr = e;
+      if ((e as any)?.response) {
+        console.error('❌ Respuesta del backend en intento de eliminación imagen principal:', (e as any).response?.data);
+      } else {
+        console.error('❌ Error en intento de eliminación imagen principal (sin response):', e);
+      }
+    }
+  }
+
+  if (!removed) {
+    console.error('❌ Ningún formato funcionó para eliminar la imagen principal de la sección. Último error:', lastErr);
+    throw lastErr;
+  }
 };
