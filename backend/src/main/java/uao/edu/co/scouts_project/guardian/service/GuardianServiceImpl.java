@@ -243,7 +243,7 @@ public class GuardianServiceImpl implements GuardianService {
     private Role getRoleForGuardian() {
         // TODO: Cambia por el valor correcto de tu enum Role
         // Verifica el archivo Role.java para valores como: PARENT, GUARDIAN, ADMIN, etc.
-        return Role.ADMIN; // TEMPORAL - reemplaza con el valor correcto
+        return Role.ACUDIENTE; // TEMPORAL - reemplaza con el valor correcto
     }
 
     private void updateGuardianFields(Member existingGuardian, GuardianCreateDTO dto) {
