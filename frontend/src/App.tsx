@@ -32,61 +32,107 @@ function App() {
 
   return (
     <BrowserRouter>
-          <div className="h-screen w-screen">
-            <Routes>
-              {/* 🔹 Login & Registro */}
-              <Route path="/" element={<Home />} />
+      <div className="h-screen w-screen">
+        <Routes>
+          {/* 🔹 Login & Registro */}
+          <Route path="/" element={<Home />} />
 
-              {/* 🔹 Rutas internas con layout */}
-              <Route path="/app" element={<AppLayout />}>
-                <Route index element={<Dashboard />} />
+          {/* 🔹 Rutas internas con layout */}
+          <Route path="/app" element={<AppLayout />}>
+            <Route index element={<Dashboard />} />
 
-                {/* ===================== ORGANIGRAMA ===================== */}
-                <Route path="organigrama" element={<OrganigramaHome />} />
-                <Route path="organigrama/ramas-y-subramas" element={<Organigrama />} />
-                <Route path="organigrama/rama/:id" element={<RamaDetail />} />
-                <Route path="organigrama/subrama/:id" element={<SubramaDetail />} />
-                <Route path="organigrama/niveles-organizativos" element={<NivelesPage />} />
-                <Route path="organigrama/resumen" element={<div>Vista resumen (en desarrollo)</div>} />
+            {/* ===================== ORGANIGRAMA ===================== */}
+            <Route path="organigrama" element={<OrganigramaHome />} />
+            <Route
+              path="organigrama/ramas-y-subramas"
+              element={<Organigrama />}
+            />
+            <Route path="organigrama/rama/:id" element={<RamaDetail />} />
+            <Route path="organigrama/subrama/:id" element={<SubramaDetail />} />
+            <Route
+              path="organigrama/niveles-organizativos"
+              element={<NivelesPage />}
+            />
+            <Route
+              path="organigrama/resumen"
+              element={<div>Vista resumen (en desarrollo)</div>}
+            />
 
-                {/* ===================== FINANCIERO ===================== */}
-                <Route path="financiero/cuotas" element={<Cuotas />} />
-                <Route path="financiero/cuotas/gestion" element={<Gestion />} />
+            {/* ===================== FINANCIERO ===================== */}
+            <Route path="financiero/cuotas" element={<Cuotas />} />
+            <Route path="financiero/cuotas/gestion" element={<Gestion />} />
 
-                {/* ===================== GRUPOS ===================== */}
-                <Route path="grupos" element={<Grupos />} />
-                <Route path="grupos/medical-info" element={<MedicalInfo />} />
+            {/* ===================== GRUPOS ===================== */}
+            <Route path="grupos" element={<Grupos />} />
+            <Route path="grupos/medical-info" element={<MedicalInfo />} />
 
-                {/* Rutas para admin de grupo */}
-                <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Cuotas /></ProtectedRoute>} />
-                <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
-                <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
-                <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
-                <Route
-                              path="miembros"
-                              element={
-                                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                                  <TeamMembers />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="solicitudes"
-                              element={
-                                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                                  <Requests />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="solicitudes/rechazadas"
-                              element={
-                                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                                  <Rejected />
-                                </ProtectedRoute>
-                              }
-                            />
-                {/*
+            {/* Rutas para admin de grupo */}
+            <Route
+              path="financiero/cuotas"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}>
+                  <Cuotas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="financiero/cuotas/gestion"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}>
+                  <Gestion />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="financiero/pagos"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}>
+                  <Pagos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="miembros"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST"]}>
+                  <ScoutEnrollment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="inscripcion"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <TeamMembers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Requests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/rechazadas"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
+                  <Rejected />
+                </ProtectedRoute>
+              }
+            />
+            {/*
                 <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
                 <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
                 <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Organigrama /></ProtectedRoute>} />
@@ -94,17 +140,40 @@ function App() {
                 <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><SubramaDetail /></ProtectedRoute>} />
                 */}
 
-                {/* Rutas para acudiente */}
-                <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
-                <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
-                <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalInfo /></ProtectedRoute>} />
-              </Route>
-              <Route path="*" element={<Navigate to={"/"} />} />
-            </Routes>
-          </div>
-          <Toaster />
-        </BrowserRouter>
-      );
-    }
+            {/* Rutas para acudiente */}
+            <Route
+              path="financiero/estado-cuenta"
+              element={
+                <ProtectedRoute
+                  allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO"]}
+                >
+                  <EstadoCuenta />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="grupos"
+              element={
+                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
+                  <Grupos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="grupos/medical-info"
+              element={
+                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
+                  <MedicalInfo />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+          <Route path="*" element={<Navigate to={"/"} />} />
+        </Routes>
+      </div>
+      <Toaster />
+    </BrowserRouter>
+  );
+}
 
 export default App;
