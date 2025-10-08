@@ -58,7 +58,7 @@ export default function EstadoCuenta() {
     };
 
     fetchEstadoCuenta();
-  }, [isTesoreroOrAdmin]);
+  }, [isTesoreroOrAdmin, isAcudiente]);
 
   // Filtrar cuotas por miembro seleccionado (solo para acudiente)
   const cuotasFiltradas = useMemo<CuotasEstado[]>(() => {
@@ -104,7 +104,7 @@ export default function EstadoCuenta() {
           <p className="text-muted-foreground text-sm">
             {isTesoreroOrAdmin
               ? "Vista global del estado financiero del grupo, incluyendo cuotas pendientes y pagos realizados por todos los integrantes."
-              : "Consulta el estado financiero de tus hijos, incluyendo cuotas pendientes, pagos realizados y el historial completo de transacciones."}
+              : "Consulta el estado financiero de tus personas a cargo, incluyendo cuotas pendientes, pagos realizados y el historial completo de transacciones."}
           </p>
         </div>
 
@@ -112,16 +112,18 @@ export default function EstadoCuenta() {
         {!isTesoreroOrAdmin && estadoCuentaData && estadoCuentaData.members && (
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium text-gray-700">
-              Seleccionar hijo:
+              Seleccionar persona a cargo:
             </label>
             <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
               <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Selecciona un hijo" />
+                <SelectValue placeholder="Selecciona una persona a cargo" />
               </SelectTrigger>
               <SelectContent>
                 {estadoCuentaData.members.map((member) => (
                   <SelectItem key={member.member_id} value={member.member_id}>
-                    {member.member_name} - {member.section.name} ({member.age} años)
+                    {member.member_name} - {member.section.name} {
+                      member.age ? `(${member.age} años)` : ""
+                    }
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -7,7 +7,7 @@ export default function Cuotas() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-5xl font-bold tracking-tight text-primary">Cuotas</h1>
+          <h1 className="text-5xl font-bold tracking-tight text-primary">Modulo financiero</h1>
           <p className="text-muted-foreground">
             Gestiona las cuotas y pagos de los scouts
           </p>

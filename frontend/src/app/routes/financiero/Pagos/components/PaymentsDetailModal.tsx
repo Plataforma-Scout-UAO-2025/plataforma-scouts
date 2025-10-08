@@ -31,7 +31,7 @@ export default function PaymentsDetailModal({member}: {member: PaymentRecord}) {
       </DialogTrigger>
       <DialogContent className='w-[95vw] max-w-none overflow-hidden'>
         <DialogHeader>
-          <DialogTitle>Detalles del pago de {member.first_name + " " + member.last_name}</DialogTitle>
+          <DialogTitle>Detalles de los pagos de {member.first_name + " " + member.last_name}</DialogTitle>
         </DialogHeader>
         <div className="overflow-x-auto">
           <PaymentsDetailTable installment={installment} member_id={member.member_id} onRefresh={fetchInstallment} />
