@@ -1,43 +1,99 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import type { MedicalRecord } from '../types/medical-record';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
 import type { MedicalFormData } from '../medical-info/types/medical-form';
+import { useTenant } from '@/hooks/useTenant';
+import api from '@/api/axios';
 
-interface MedicalRecordsViewProps {
-    groupId: number;
+// Interface para la respuesta de la API
+interface ApiMedicalRecord {
+  id: string;
+  member_id: string;
+  blood_type: string;
+  eps: string;
+  allergies: string;
+  chronic_diseases: string;
+  physical_restrictions: string;
+  surgical_history: string;
+  vaccines_detail: Array<{
+    name: string;
+    applied_at: string;
+  }>;
+  medications_detail: Array<{
+    name: string;
+    frequency: string;
+  }>;
+  created_at: string;
+  updated_at: string;
 }
 
-export default function MedicalRecordsView({ groupId }: MedicalRecordsViewProps) {
+interface ApiResponse {
+  content: ApiMedicalRecord[];
+}
+
+export default function MedicalRecordsView() {
     const [records, setRecords] = useState<MedicalRecord[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    
+    const { tenantId } = useTenant();
 
-    // Datos de ejemplo (reemplazar con API real)
-    const mockRecords: MedicalRecord[] = [
-        {
-            id: 1,
-            member_id: 123,
-            member_name: 'Juan Pérez',
-            blood_type: 'O+',
-            eps: 'Salud Total',
-            allergies: 'Penicilina, Mariscos',
-            chronic_diseases: 'Asma',
-            physical_restrictions: 'Ninguna',
-            surgical_history: 'Apendicectomía en 2018',
-            vaccines_detail: [
-                { name: 'COVID-19 (Pfizer)', date: '2022-04-23T18:25:43.511Z' },
-                { name: 'Influenza', date: '2023-10-15T18:25:43.511Z' }
-            ],
-            medications_detail: [
-                { name: 'Salbutamol', dose: '100 mcg', frecuency: 'Cuando sea necesario' }
-            ],
-            created_at: '2024-01-15T10:30:00Z',
-            updated_at: '2024-01-15T10:30:00Z'
+    const fetchMedicalRecords = useCallback(async () => {
+        if (!tenantId) return;
+        
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await api.get<ApiResponse>('http://localhost:8080/api/medical_record/list_by_tenant', {
+                headers: {
+                    'X-Tenant-Id': tenantId
+                },
+                params: {
+                    page: 0,
+                    size: 50
+                }
+            });
+            
+            const adaptedRecords: MedicalRecord[] = response.data.content.map((record: ApiMedicalRecord) => ({
+                id: parseInt(record.id),
+                member_id: parseInt(record.member_id),
+                member_name: `Integrante ${record.member_id}`,
+                blood_type: record.blood_type,
+                eps: record.eps,
+                allergies: record.allergies,
+                chronic_diseases: record.chronic_diseases,
+                physical_restrictions: record.physical_restrictions,
+                surgical_history: record.surgical_history,
+                vaccines_detail: record.vaccines_detail.map((vaccine) => ({
+                    name: vaccine.name,
+                    date: vaccine.applied_at
+                })),
+                medications_detail: record.medications_detail.map((med) => ({
+                    name: med.name,
+                    dose: '',
+                    frecuency: med.frequency
+                })),
+                created_at: record.created_at,
+                updated_at: record.updated_at
+            }));
+            
+            setRecords(adaptedRecords);
+        } catch (err) {
+            console.error('Error fetching medical records:', err);
+            setError('Error al cargar los registros médicos');
+        } finally {
+            setIsLoading(false);
         }
-    ];
+    }, [tenantId]);
+
+    useEffect(() => {
+        fetchMedicalRecords();
+    }, [fetchMedicalRecords]);
 
     const handleCreate = () => {
         setEditingRecord(null);
@@ -49,35 +105,49 @@ export default function MedicalRecordsView({ groupId }: MedicalRecordsViewProps)
         setShowForm(true);
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('¿Está seguro de que desea eliminar este registro médico?')) {
+    const handleDelete = async (id: number) => {
+        if (!confirm('¿Está seguro de que desea eliminar este registro médico?')) {
+            return;
+        }
+
+        try {
             setRecords(prev => prev.filter(record => record.id !== id));
+        } catch (err) {
+            console.error('Error deleting medical record:', err);
+            alert('Error al eliminar el registro médico');
         }
     };
 
-    const handleFormSubmit = (formData: MedicalFormData) => {
-        if (editingRecord) {
-            setRecords(prev => prev.map(record =>
-                record.id === editingRecord.id
-                    ? {
-                        ...record,
-                        ...formData, 
-                        updated_at: new Date().toISOString() 
-                    }
-                    : record
-            ));
-        } else {
-            const newRecord: MedicalRecord = {
-                ...formData,
-                id: Date.now(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                member_name: 'Nuevo Integrante' // Esto vendría de la API
-            };
-            setRecords(prev => [...prev, newRecord]);
+    const handleFormSubmit = async (formData: MedicalFormData) => {
+        try {
+            if (editingRecord) {
+                setRecords(prev => prev.map(record =>
+                    record.id === editingRecord.id
+                        ? {
+                            ...record,
+                            ...formData, 
+                            updated_at: new Date().toISOString() 
+                        }
+                        : record
+                ));
+            } else {
+                const newRecord: MedicalRecord = {
+                    ...formData,
+                    id: Date.now(),
+                    member_id: 0,
+                    member_name: 'Nuevo Integrante',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                };
+                setRecords(prev => [...prev, newRecord]);
+            }
+            
+            setShowForm(false);
+            setEditingRecord(null);
+        } catch (err) {
+            console.error('Error saving medical record:', err);
+            alert('Error al guardar el registro médico');
         }
-        setShowForm(false);
-        setEditingRecord(null);
     };
 
     const handleFormCancel = () => {
@@ -96,26 +166,47 @@ export default function MedicalRecordsView({ groupId }: MedicalRecordsViewProps)
         );
     }
 
+    if (error) {
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold">Registros Médicos</h1>
+                        <p className="text-muted-foreground">
+                            Gestiona la información médica de los integrantes
+                        </p>
+                    </div>
+                </div>
+                <div className="text-center text-red-500 py-8">
+                    {error}
+                    <Button onClick={fetchMedicalRecords} className="ml-4">
+                        Reintentar
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold">Registros Médicos - Grupo {groupId}</h1>
+                    <h1 className="text-3xl font-bold">Registros Médicos</h1>
                     <p className="text-muted-foreground">
-                        Gestiona la información médica de los integrantes del grupo scout
+                        Gestiona la información médica de los integrantes
                     </p>
                 </div>
-                <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Button onClick={handleCreate} className="flex items-center gap-2" disabled={isLoading}>
                     <Plus className="h-4 w-4" />
                     Nuevo Registro
                 </Button>
             </div>
 
             <MedicalRecordsTable
-                records={records.length > 0 ? records : mockRecords}
+                records={records}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                isLoading={false}
+                isLoading={isLoading}
             />
         </div>
     );

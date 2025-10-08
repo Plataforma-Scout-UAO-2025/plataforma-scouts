@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Save } from 'lucide-react';
 import { medicalFormSchema } from '../schemas/CreateMedicalInfoForm.schema';
 import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail } from '../types/medical-form';
+import { useTenant } from '@/hooks/useTenant';
+import api from '@/api/axios';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -14,7 +16,9 @@ interface MedicalWizardFormProps {
   initialData?: MedicalFormData;
 }
 
-export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: MedicalWizardFormProps) {
+export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initialData }: MedicalWizardFormProps) {
+  const { tenantId } = useTenant();
+
   const [formData, setFormData] = useState<MedicalFormData>({
     member_id: memberId,
     blood_type: '',
@@ -30,7 +34,27 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
   const [errors, setErrors] = useState<MedicalFormErrors>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    
+
+    if (initialData) {
+      const adaptedData = {
+        ...initialData,
+        vaccines_detail: initialData.vaccines_detail.map(vaccine => ({
+          name: vaccine.name,
+          date: vaccine.date.includes('T') ? vaccine.date : `${vaccine.date}T00:00:00.000Z`
+        })),
+        medications_detail: initialData.medications_detail.map(med => ({
+          name: med.name,
+          dose: med.dose || 'No especificada',
+          frecuency: med.frecuency || 'No especificada'
+        }))
+      };
+
+      setFormData(adaptedData);
+    }
+  }, [initialData, memberId, tenantId]);
 
   const steps = [
     { id: 'basica', title: 'Información Básica', completed: false },
@@ -43,40 +67,68 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
     'Penicilina', 'Aspirina', 'Mariscos', 'Nueces', 'Huevos', 'Leche',
     'Soja', 'Trigo', 'Polen', 'Ácaros', 'Mascotas', 'Picaduras de insectos'
   ];
-
-  // Función para hacer el POST al backend
-  const submitMedicalRecord = async (data: MedicalFormData) => {
+  const updateMedicalRecord = async (data: MedicalFormData) => {
     try {
       setIsSubmitting(true);
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'}/api/v1/medical_record/create_record`,
-        data,
+      if (!tenantId) {
+        throw new Error('No se encontró el tenant ID');
+      }
+
+      if (!memberId) {
+        throw new Error('No se encontró el member ID');
+      }
+
+      // USAR snake_case (como el DTO real espera)
+      const payload = {
+        blood_type: data.blood_type,
+        eps: data.eps,
+        allergies: data.allergies,
+        chronic_diseases: data.chronic_diseases,
+        physical_restrictions: data.physical_restrictions,
+        surgical_history: data.surgical_history,
+        active: true,
+        medications_detail: data.medications_detail.map(med => ({
+          name: med.name,
+          frequency: med.frecuency
+        })),
+        vaccines_detail: data.vaccines_detail.map(vaccine => ({
+          name: vaccine.name,
+          applied_at: vaccine.date.includes('T') ? vaccine.date : `${vaccine.date}T00:00:00.000Z`
+        }))
+      };
+
+
+      const response = await api.put(
+        `http://localhost:8080/api/medical_record/update_record/${memberId}`,
+        payload,
         {
           headers: {
             'Content-Type': 'application/json',
+            'X-Tenant-Id': tenantId
           },
         }
       );
 
-      if (response.status === 200 || response.status === 201) {
-        console.log('Registro médico creado exitosamente:', response.data);
+      if (response.status === 200) {
         return response.data;
       } else {
         throw new Error(`Error del servidor: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error al crear el registro médico:', error);
+      console.error('❌ UPDATE - Error:', error);
 
       if (axios.isAxiosError(error)) {
-        if (error.response) {
-          throw new Error(`Error ${error.response.status}: ${error.response.data?.message || 'Error del servidor'}`);
-        } else if (error.request) {
-          throw new Error('No se pudo conectar con el servidor. Verifique su conexión.');
-        }
+        console.error('❌ UPDATE - Detalles Axios:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        throw new Error(error.response?.data?.message || `Error ${error.response?.status}` || 'Error del servidor');
       }
 
-      throw new Error('Error desconocido al enviar el formulario');
+      throw new Error('Error desconocido al actualizar');
     } finally {
       setIsSubmitting(false);
     }
@@ -170,7 +222,6 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
       setErrors({});
       return true;
     } else {
-      console.log('Errores de validación:', result.error.issues); // ← Agrega esto
       const newErrors: MedicalFormErrors = {};
       result.error.issues.forEach((issue) => {
         if (issue.path && issue.path.length > 0) {
@@ -184,7 +235,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
   };
 
   const handleSubmit = async () => {
-    console.log('Datos para enviar:', formData);
+    
 
     if (!validateForm(formData)) {
       toast.error('Por favor corrige los errores en el formulario');
@@ -192,19 +243,25 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
     }
 
     try {
-      const result = await submitMedicalRecord(formData);
+      if (initialData) {
+        await updateMedicalRecord(formData);
+        toast.success('Información médica actualizada exitosamente');
+      } else {
+        toast.info('Función de creación en desarrollo');
+        return;
+      }
+
       onSubmit(formData);
-
-      // Mostrar toast de éxito
-      toast.success('Información médica guardada exitosamente');
-
-      console.log('Formulario enviado exitosamente:', result);
-
     } catch (error) {
-      // Mostrar toast de error
-      toast.error(error instanceof Error ? error.message : 'Error al enviar el formulario');
+      console.error('❌ SUBMIT - Error general:', error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Error al guardar');
+      }
     }
   };
+
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -238,18 +295,16 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
     <div className="min-h-screen w-full bg-background text-foreground">
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="bg-background p-6 rounded-lg">
-          <h1 className="text-2xl font-bold">Información Médica</h1>
+          <h1 className="text-2xl font-bold">
+            {initialData ? 'Editar' : 'Nueva'} Información Médica
+          </h1>
           <p className="text-muted-foreground">
-            Complete la información médica del integrante para garantizar su seguridad durante las actividades scout.
+            {initialData
+              ? 'Actualice la información médica del integrante.'
+              : 'Complete la información médica del integrante.'
+            }
           </p>
         </div>
-
-        {/* Mostrar error de envío */}
-        {submitError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            <strong>Error al enviar:</strong> {submitError}
-          </div>
-        )}
 
         <div className="bg-background rounded-lg shadow-sm border p-6">
           <div className="mb-8">
@@ -279,7 +334,6 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
             </div>
           </div>
 
-          {/* Resto del formulario se mantiene igual */}
           {currentStep === 0 && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Información Básica</h2>
@@ -326,13 +380,11 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Información Médica Detallada</h2>
               <div className="space-y-6">
-
                 <div className="space-y-4">
                   <Label className="font-medium">Alergias</Label>
-
                   <textarea
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                    placeholder="Lista de alergias separadas por comas (ej: Piña, Perro, Gato)"
+                    placeholder="Lista de alergias separadas por comas"
                     value={formData.allergies}
                     onChange={(e) => handleInputChange('allergies', e.target.value)}
                     rows={2}
@@ -341,7 +393,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
                   <p className="text-xs text-gray-500">{formData.allergies.length}/1000 caracteres</p>
 
                   <div className="space-y-2">
-                    <Label className="text-sm text-gray-500">Alergias comunes (click para agregar/remover):</Label>
+                    <Label className="text-sm text-gray-500">Alergias comunes:</Label>
                     <div className="flex flex-wrap gap-2">
                       {alergiasComunes.map(alergia => {
                         const currentAllergies = formData.allergies
@@ -517,7 +569,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
                         <Label className="font-medium">Dosis *</Label>
                         <input
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="ej: 50 mg los primeros 3 días"
+                          placeholder="ej: 50 mg"
                           value={medication.dose}
                           onChange={(e) => updateMedication(index, 'dose', e.target.value)}
                           maxLength={100}
@@ -588,12 +640,12 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel }: Medi
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Enviando...
+                    {initialData ? 'Actualizando...' : 'Enviando...'}
                   </>
                 ) : currentStep === steps.length - 1 ? (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Guardar Información Médica
+                    {initialData ? 'Actualizar' : 'Guardar'}
                   </>
                 ) : (
                   <>

@@ -23,26 +23,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  Eye, 
-  Edit, 
-  MoreVertical, 
-  User, 
-  Droplets, 
+import {
+  Eye,
+  Edit,
+  MoreVertical,
+  User,
+  Droplets,
   Pill,
   Shield,
   AlertTriangle,
-  Stethoscope
+  Stethoscope,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import type { MedicalRecord, MedicalRecordsTableProps } from '../types/medical-record';
 
-export default function MedicalRecordsTable({ 
-  records, 
-  onEdit, 
-  isLoading = false 
+export default function MedicalRecordsTable({
+  records,
+  onEdit,
+  isLoading = false
 }: MedicalRecordsTableProps) {
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+
+  // ESTADOS PARA PAGINACIÓN
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const handleView = (record: MedicalRecord) => {
     setSelectedRecord(record);
@@ -63,6 +71,41 @@ export default function MedicalRecordsTable({
 
   const hasChronicDiseases = (diseases: string) => {
     return diseases && diseases.trim().length > 0;
+  };
+
+  // LÓGICA DE PAGINACIÓN
+  const totalPages = Math.ceil(records.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRecords = records.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
+
+  // GENERAR RANGO DE PÁGINAS PARA MOSTRAR
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Ajustar si estamos cerca del final
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
   };
 
   if (isLoading) {
@@ -92,7 +135,14 @@ export default function MedicalRecordsTable({
   return (
     <>
       <Card>
-        <CardContent>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Mostrando {startIndex + 1}-{Math.min(endIndex, records.length)} de {records.length} registros
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -107,7 +157,7 @@ export default function MedicalRecordsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {records.map((record) => (
+              {currentRecords.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -163,7 +213,6 @@ export default function MedicalRecordsTable({
                           <Edit className="h-4 w-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
-                       
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -171,6 +220,72 @@ export default function MedicalRecordsTable({
               ))}
             </TableBody>
           </Table>
+
+          {/* PAGINACIÓN */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {/* BOTÓN PRIMERA PÁGINA */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToFirstPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+
+                {/* BOTÓN PÁGINA ANTERIOR */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* NUMEROS DE PÁGINA */}
+                <div className="flex space-x-1">
+                  {getPageNumbers().map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "primary" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                {/* BOTÓN PÁGINA SIGUIENTE */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                {/* BOTÓN ÚLTIMA PÁGINA */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToLastPage}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -219,8 +334,8 @@ export default function MedicalRecordsTable({
                     <div>
                       <Label className="text-sm font-medium">Alergias</Label>
                       <p className="text-sm">
-                        {hasAllergies(selectedRecord.allergies) 
-                          ? selectedRecord.allergies 
+                        {hasAllergies(selectedRecord.allergies)
+                          ? selectedRecord.allergies
                           : 'Ninguna'}
                       </p>
                     </div>
