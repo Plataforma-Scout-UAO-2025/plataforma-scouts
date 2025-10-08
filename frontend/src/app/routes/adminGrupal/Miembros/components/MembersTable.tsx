@@ -79,7 +79,7 @@ const MembersTable = ({
                     ? member.subgroupId.length > 0
                       ? member.subgroupId
                           .map((rama) =>
-                            typeof rama === "string" ? rama : rama.name
+                            typeof rama === "string" ? rama : rama.name,
                           )
                           .join(", ")
                       : "—"
@@ -100,14 +100,14 @@ const MembersTable = ({
                   <Button variant="iconbutton" size="icon" title="Insignias">
                     <Medal />
                   </Button>
-                  <Button
+                  {/* <Button
                     variant="iconbutton"
                     size="icon"
                     className="text-destructive hover:text-destructive-hover"
                     title="Eliminar"
                   >
                     <Trash />
-                  </Button>
+                  </Button> */}
                 </TableCell>
               </TableRow>
             ))

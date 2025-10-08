@@ -145,7 +145,7 @@ const Rejected = () => {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
+          {/* <Button
             variant="primary"
             className="w-1/6 flex h-auto px-3"
             onClick={() => {
@@ -154,7 +154,7 @@ const Rejected = () => {
             }}
           >
             <BrushCleaning size={16} /> Limpiar
-          </Button>
+          </Button> */}
         </div>
       </section>
 

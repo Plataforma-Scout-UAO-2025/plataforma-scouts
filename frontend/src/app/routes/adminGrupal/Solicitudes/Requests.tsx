@@ -114,7 +114,7 @@ const Requests = () => {
       setLoading(true);
       await updateMemberStatus(Number(selectedMember.memberId), "APPROVED");
       alert(
-        `Solicitud de ${selectedMember.firstName} ${selectedMember.lastName} aceptada exitosamente`
+        `Solicitud de ${selectedMember.firstName} ${selectedMember.lastName} aceptada exitosamente`,
       );
       setOpenViewModal(false);
       setSelectedMember(null);
@@ -198,7 +198,7 @@ const Requests = () => {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
+          {/* <Button
             variant="primary"
             className="w-1/6 flex h-auto px-3"
             onClick={() => {
@@ -207,7 +207,7 @@ const Requests = () => {
             }}
           >
             <BrushCleaning size={16} /> Limpiar
-          </Button>
+          </Button> */}
         </div>
 
         <Button

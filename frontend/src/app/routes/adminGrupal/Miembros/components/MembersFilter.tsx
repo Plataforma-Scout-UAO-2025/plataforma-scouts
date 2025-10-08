@@ -61,7 +61,7 @@ const MembersFilter = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button
+        {/* <Button
           variant="primary"
           className="w-1/6 flex h-auto px-3"
           onClick={() => {
@@ -70,13 +70,13 @@ const MembersFilter = ({
           }}
         >
           <BrushCleaning /> Limpiar
-        </Button>
+        </Button> */}
       </div>
 
       <div className="flex gap-4 justify-end">
-        <Button variant="primary">
+        {/* <Button variant="primary">
           <Plus /> Crear Nuevo Integrante
-        </Button>
+        </Button> */}
       </div>
     </>
   );

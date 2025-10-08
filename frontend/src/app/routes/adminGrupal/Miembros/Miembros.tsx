@@ -84,7 +84,7 @@ const TeamMembers = () => {
         emergencyPhone: member.emergencyPhone,
         createdAt: member.createdAt,
         updatedAt: member.updatedAt,
-      })
+      }),
     );
   }, [members, searchFilter, cityFilter /*branchFilter*/]);
 
@@ -104,9 +104,9 @@ const TeamMembers = () => {
         <p className="text-5xl font-bold text-primary">Gestión de Miembros</p>
         <p className="text-2xl font-bold text-secondary">Centinelas 113</p>
       </header>
-      <section className="my-2 flex gap-4">
+      {/* <section className="my-2 flex gap-4">
         <BranchCount />
-      </section>
+      </section> */}
 
       {/* Filtros de búsqueda */}
       <section className="my-8 flex justify-between flex-col md:flex-row gap-4 md:gap-6">
@@ -130,7 +130,7 @@ const TeamMembers = () => {
             <Button
               variant="primary"
               onClick={() => {
-                navigate("/solicitudes");
+                navigate("/app/solicitudes");
               }}
             >
               Solicitudes
