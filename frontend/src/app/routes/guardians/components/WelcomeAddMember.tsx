@@ -1,27 +1,19 @@
-import { useState } from 'react';
 import { UserPlus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './layouts/Sidebar';
-import AddMemberModal from './modals/AddMemberModal';
 
 interface WelcomeAddMemberProps {
   userName?: string;
-  onMemberAdded?: () => void;
 }
 
 export default function WelcomeAddMember({ 
-  userName = "Juan Esteban",
-  onMemberAdded 
+  userName = "Juan Esteban"
 }: WelcomeAddMemberProps) {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleAddMember = () => {
-    setIsAddModalOpen(true);
-  };
-
-  const handleMemberAddedSuccess = () => {
-    setIsAddModalOpen(false);
-    onMemberAdded?.();
+    navigate('/inscripcion');
   };
 
   return (
@@ -68,14 +60,6 @@ export default function WelcomeAddMember({
           </div>
         </div>
       </div>
-
-      {/* Add Member Modal */}
-      <AddMemberModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleMemberAddedSuccess}
-        isFirstMember={true}
-      />
     </div>
   );
 }

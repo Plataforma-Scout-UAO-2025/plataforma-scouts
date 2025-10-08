@@ -81,24 +81,13 @@ export default function AcudienteLayout() {
     fetchMembers();
   }, []);
 
-  const handleMemberAdded = () => {
-    // Refresh members list after adding a new member
-    setLoading(true);
-    
-    // Simulate fetching updated members list
-    setTimeout(() => {
-      setMembers(mockMembers); // Add the mock members after first member is added
-      setLoading(false);
-    }, 500);
-  };
-
   if (loading) {
     return <LoadingSpinner />;
   }
 
   // If no members, show welcome page
   if (members.length === 0) {
-    return <WelcomeAddMember onMemberAdded={handleMemberAdded} />;
+    return <WelcomeAddMember />;
   }
 
   // If has members, show normal members view
