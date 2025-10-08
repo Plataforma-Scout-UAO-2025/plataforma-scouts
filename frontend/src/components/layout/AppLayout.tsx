@@ -26,7 +26,6 @@ import {
   LogOut,
   Users,
   Award,
-  DollarSign,
   BarChart3,
   ChevronRight,
   Network,
@@ -91,7 +90,20 @@ const adminGrupalItems: MenuItem[] = [
     id: "solicitudes",
     label: "Solicitudes",
     icon: <Boxes />,
-    href: "/app/solicitudes",
+    submenu: [
+      {
+        id: "solicitudes-pendientes",
+        label: "Pendientes",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes",
+      },
+      {
+        id: "solicitudes-rechazadas",
+        label: "Rechazadas",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes/rechazadas",
+      },
+    ],
   },
   {
     id: "insignias",
@@ -110,25 +122,6 @@ const adminGrupalItems: MenuItem[] = [
     label: "Financiero",
     icon: <Settings />,
     href: "/app/financiero/cuotas",
-  },
-  {
-    id: "solicitudes",
-    label: "solicitudes",
-    icon: <DollarSign />,
-    submenu: [
-      {
-        id: "solicitudes-pendientes",
-        label: "Pendientes",
-        icon: <BarChart3 />,
-        href: "/app/solicitudes",
-      },
-      {
-        id: "solicitudes-rechazado",
-        label: "Rechazadas",
-        icon: <BarChart3 />,
-        href: "/app/solicitudes/rechazadas",
-      },
-    ],
   },
 ];
 

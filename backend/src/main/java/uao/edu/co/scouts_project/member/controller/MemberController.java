@@ -43,7 +43,7 @@ import static java.lang.String.format;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/members")
+@RequestMapping("/api/v1")
 public class MemberController {
 
     @Autowired
@@ -67,7 +67,7 @@ public class MemberController {
      * - 400 Bad Request: Error de validación en los datos de entrada.
      * - 500 Internal Server Error: Error inesperado en el servidor.
      */
-    @PostMapping("/create_member")
+    @PostMapping("/members/create_member")
     public ResponseEntity<?> create_member(@Valid @RequestBody MemberDto miembroDto) {
 
         String name = getCurrentUsername();

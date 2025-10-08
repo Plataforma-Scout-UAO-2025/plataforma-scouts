@@ -66,7 +66,6 @@ const TeamMembers = () => {
         age: member.age,
         role: member.role,
         identification: member.identification,
-        branch: member.branch,
         document_type: member.document_type,
         email: member.email,
         gender: member.gender,
