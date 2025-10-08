@@ -11,72 +11,21 @@ import {
   mapFrontendCreateRamaToBackend, 
   mapFrontendUpdateRamaToBackend
 } from '../utils/mappers';
-import { mapBackendSubramaToFrontend } from '../utils/mappers';
 import { getSubramasByRamaId } from './subrama.service';
 import { uploadSectionIcon, uploadGalleryImages } from './image-upload-core.service';
 
-// Nuevo: intentar obtener ramas y sus subramas en una sola llamada si el backend
-// soporta un parámetro `includeSubgroups`. Hace fallback al flujo actual.
+// Obtener ramas con sus subramas usando el flujo estándar probado
 export const getRamasWithSubramas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
-  console.log('🔄 [RamaService] Intentando obtener ramas con subramas (optimizado)');
+  console.log('🔄 [RamaService] Obteniendo ramas con subramas usando flujo estándar');
+  
+  // Por ahora, usar siempre el flujo estándar que sabemos que funciona
+  // En el futuro se puede intentar el endpoint optimizado cuando esté disponible
   try {
-    // Intentar endpoint optimizado (si el backend lo soporta)
-    const endpointOptimized = `/tenants/${tenantSlug}/groups/${groupSlug}/sections?includeSubgroups=true`;
-    const response = await api.get<unknown[]>(endpointOptimized).catch(() => undefined);
-    const backendRamas = response?.data;
-
-    if (backendRamas && Array.isArray(backendRamas) && backendRamas.length > 0) {
-      console.log('✅ [RamaService] Backend soporta endpoint optimizado, mapeando resultados');
-      // Mapar ramas y, si no hay subramas embebidas, hidratar llamando al servicio
-      const ramas = await Promise.all(backendRamas.map(async (br: unknown) => {
-        const mapped = mapBackendRamaToFrontend(br as BackendRama);
-        const backendRec = br as unknown as Record<string, unknown>;
-        const backendSubgroups = (backendRec['subgroups'] ?? backendRec['subramas'] ?? backendRec['subgroupList']) as unknown[] | undefined;
-
-        if (Array.isArray(backendSubgroups) && backendSubgroups.length > 0) {
-          // Mapear cada subrama usando el mapper central para mantener compatibilidad
-          const mappedSubs = backendSubgroups.map((bs) => {
-            try {
-              return mapBackendSubramaToFrontend(bs as unknown as Record<string, unknown>);
-            } catch (e) {
-              console.warn('[RamaService] No se pudo mapear una subrama embebida:', e);
-              return null;
-            }
-          }).filter((x): x is import('../types/frontend').Subgroup => Boolean(x));
-          mapped.subramas = mappedSubs;
-          mapped.subgroups = mappedSubs;
-        } else {
-          // No hay subramas embebidas en la respuesta optimizada -> intentar hidratar por separado
-          try {
-            const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, mapped.id);
-            mapped.subramas = subramas;
-            mapped.subgroups = subramas;
-          } catch (err) {
-            console.warn('[RamaService] No se pudieron obtener subramas por separado para rama', mapped.id, err);
-            mapped.subramas = [];
-            mapped.subgroups = [];
-          }
-        }
-
-        return mapped;
-      }));
-
-      // Aplicar filtro por año si corresponde
-      const ramasFiltradas = año ? ramas.filter((rama: Rama) => {
-        const legacy = rama as unknown as Record<string, unknown>;
-        const year = rama.year ?? (legacy['año'] as number | undefined);
-        return year === año;
-      }) : ramas;
-
-      console.log('✅ [RamaService] Ramas optimizadas obtenidas:', ramasFiltradas.length);
-      return ramasFiltradas;
-    }
-
-    console.log('ℹ️ [RamaService] Endpoint optimizado no disponible; usando flujo estándar');
+    console.log('📡 [RamaService] Usando flujo estándar (getRamas + hidratar subramas)');
     return await getRamas(tenantSlug, groupSlug, año);
   } catch (error) {
-    console.warn('⚠️ [RamaService] Error en endpoint optimizado, fallback al flujo estándar:', error);
-    return await getRamas(tenantSlug, groupSlug, año);
+    console.error('❌ [RamaService] Error en flujo estándar:', error);
+    throw error;
   }
 };
 

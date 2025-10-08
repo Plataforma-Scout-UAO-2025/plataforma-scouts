@@ -50,8 +50,27 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
     mainImageObjectId: backendRama.photoPrincipalObjectId,
 
     // ages and year
-    minAge: backendRama.minAge ?? 7,
-    maxAge: backendRama.maxAge ?? 10,
+    // Intentar extraer min/max de campos explícitos; si no existen intentar parsear la descripción
+    // Ej: "Edades de 7 a 11 años" -> minAge=7, maxAge=11
+    // Por compatibilidad con el resto del código, mantenemos número (fallback 0 si no hay dato)
+    minAge: ((): number => {
+      if (typeof backendRama.minAge === 'number') return backendRama.minAge;
+      const desc = backendRama.description as string | undefined;
+      if (desc) {
+        const m = desc.match(/(\d{1,2})\s*(?:-|a|to)\s*(\d{1,2})/i);
+        if (m) return parseInt(m[1], 10);
+      }
+      return 0;
+    })(),
+    maxAge: ((): number => {
+      if (typeof backendRama.maxAge === 'number') return backendRama.maxAge;
+      const desc = backendRama.description as string | undefined;
+      if (desc) {
+        const m = desc.match(/(\d{1,2})\s*(?:-|a|to)\s*(\d{1,2})/i);
+        if (m) return parseInt(m[2], 10);
+      }
+      return 0;
+    })(),
     year: new Date().getFullYear(),
 
     status: 'active',

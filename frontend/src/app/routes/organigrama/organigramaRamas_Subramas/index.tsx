@@ -69,7 +69,7 @@ export default function Organigrama() {
     closeSuccess,
   } = useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, handleError });
 
-  const { exportPDF, exportExcel } = useOrganigramaExport(ramas, selectedYear);
+  const { exportPDF, exportExcel } = useOrganigramaExport(ramas, selectedYear, { tenantSlug, groupSlug });
 
   // ====== RAMAS ======
   const handleEditRama = (rama: Rama) => {
