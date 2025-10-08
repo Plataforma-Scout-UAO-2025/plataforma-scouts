@@ -1,7 +1,6 @@
 package uao.edu.co.scouts_project.infrastructure.security;
 
 import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,7 +17,6 @@ public class SecurityConfig {
 
     private final AuthoritiesMappingPort authoritiesMappingPort;
 
-    @Autowired
     public SecurityConfig(AuthoritiesMappingPort authoritiesMappingPort) {
         this.authoritiesMappingPort = authoritiesMappingPort;
     }
@@ -40,9 +38,15 @@ public class SecurityConfig {
 
 
 
-                        //
-                        // Datos básicos de miembros
 
+                        // Datos básicos de miembros
+                        //.requestMatchers("/api/v1/members/create_member").hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name())
+                        //.requestMatchers("/api/v1/members/create_member_with_school").hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/list_members").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/list_member_by_id").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/list_members_by_status").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/update_member_status/**").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                        //.requestMatchers("/api/v1/members/update_member_by_id/**").hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
 
 
 

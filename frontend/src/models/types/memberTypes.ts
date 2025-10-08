@@ -1,30 +1,32 @@
 export interface Member {
-  member_id: string;
-  tenant_id: string;
-  subgroup_id: string;
+  memberId: bigint;
   userId: string;
-  first_name: string;
-  last_name: string;
-  age: number;
-  role: "admin_group" | "admin_global" | "scout";
-  identification: string;
-  document_type: string;
-  email: string;
-  gender: string;
-  birth_day: Date;
-  address: string;
-  phone: string;
-  weight: number;
-  height: number;
-  hobbies: string;
-  sports: string;
-  instruments: string;
-  status: string;
-  acceptance_date: Date;
-  in_charge_of: string;
-  emergency_phone: string;
-  created_at: Date;
-  updated_at: Date;
+  tenantId?: string;
+  guardianId?: number;
+  relationship?: string;
+  subgroupId?: number;
+  role?: "admin_group" | "admin_global" | "scout";
+  status?: string;
+  isActive?: boolean;
+  firstName?: string;
+  lastName?: string;
+  age?: number;
+  identification?: string;
+  documentType?: string;
+  email?: string;
+  gender?: string;
+  birthDate?: Date;
+  address?: string;
+  phone?: string;
+  weight?: string;
+  height?: string;
+  hobbies?: string;
+  sports?: string;
+  instruments?: string;
+  acceptanceDate: Date;
+  emergencyPhone?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface MemberPayload {
@@ -39,7 +41,7 @@ export interface MemberPayload {
   document_type: string;
   email: string;
   gender: string;
-  birth_day: Date;
+  birth_date: Date;
   address: string;
   phone: string;
   weight: number;
@@ -54,15 +56,15 @@ export interface MemberPayload {
 }
 
 export interface UpdateMember {
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   age?: number;
   role?: "admin_group" | "admin_global" | "scout";
   identification?: string;
-  document_type?: string;
+  documentType?: string;
   email?: string;
   gender?: string;
-  birth_day?: Date;
+  birthDate?: Date;
   address?: string;
   phone?: string;
   weight?: number;
@@ -71,7 +73,9 @@ export interface UpdateMember {
   sports?: string;
   instruments?: string;
   status?: string;
-  acceptance_date?: Date;
-  in_charge_of?: string;
-  emergency_phone?: string;
+  acceptanceDate?: Date;
+  guardianId?: number;
+  relationship?: string;
+  subgroupId?: number;
+  emergencyPhone?: string;
 }

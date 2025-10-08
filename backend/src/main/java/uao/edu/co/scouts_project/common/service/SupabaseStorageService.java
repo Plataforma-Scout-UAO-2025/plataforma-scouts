@@ -4,6 +4,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+
 import uao.edu.co.scouts_project.config.SupabaseConfig;
 import uao.edu.co.scouts_project.common.dto.storage.StorageUploadResponse;
 

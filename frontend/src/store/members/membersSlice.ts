@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchMemberAction,
   fetchMembersAction,
+  fetchMembersByStatusAction,
   updateMemberAction,
 } from "./membersActions";
 import type { Member } from "@/models/types/memberTypes";
@@ -70,6 +71,19 @@ const membersSlice = createSlice({
     builder.addCase(updateMemberAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload?.error as string;
+    });
+    // Fetch members by status
+    builder.addCase(fetchMembersByStatusAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchMembersByStatusAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.members = action.payload;
+    });
+    builder.addCase(fetchMembersByStatusAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
     });
   },
 });
