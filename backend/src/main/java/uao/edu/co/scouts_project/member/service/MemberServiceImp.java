@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
@@ -70,8 +71,9 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Member> list_members() {
-        List<Member> members = memberRepository.findAll();
+        List<Member> members = memberRepository.findAllWithSubgroup();
         log.info("Retrieved {} members from database", members.size());
         return members.stream()
                 .filter(Objects::nonNull)
@@ -82,13 +84,14 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Member> get_member_by_id(Long memberId) {
         if (memberId == null || memberId <= 0) {
             log.warn("Invalid member ID for search: {}", memberId);
             return Optional.empty();
         }
 
-        Optional<Member> maybeMember = memberRepository.findById(memberId);
+        Optional<Member> maybeMember = memberRepository.findByIdWithSubgroup(memberId);
 
         if (maybeMember.isPresent()) {
             Member m = maybeMember.get();
@@ -105,6 +108,7 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Member> list_members_by_status(String status) {
         if (status == null || status.isBlank()) {
             log.warn("Null or blank status provided for member search");
@@ -121,7 +125,7 @@ public class MemberServiceImp implements IMemberService {
 
         log.info("Listing members with status: {}", enumStatus);
 
-        List<Member> members = memberRepository.findByStatus(enumStatus);
+        List<Member> members = memberRepository.findByStatusWithSubgroup(enumStatus);
 
         return members.stream()
                 .filter(Objects::nonNull)
