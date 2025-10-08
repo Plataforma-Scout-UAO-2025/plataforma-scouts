@@ -15,10 +15,10 @@ export async function debugBackendData(tenantSlug: string, groupSlug: string) {
         id: rama.id,
         name: rama.name ?? rama.nombre,
         description: rama.description,
-        descripcionLegacy: (rama as any).descripcion,
+        descripcionLegacy: (rama as { descripcion?: string }).descripcion,
         minAge: rama.minAge,
         maxAge: rama.maxAge,
-        hasDescription: Boolean(rama.description ?? (rama as any).descripcion),
+        hasDescription: Boolean(rama.description ?? (rama as { descripcion?: string }).descripcion),
         subramasCount: rama.subramas?.length ?? 0
       });
       
@@ -29,17 +29,17 @@ export async function debugBackendData(tenantSlug: string, groupSlug: string) {
             id: subrama.id,
             name: subrama.name ?? subrama.nombre,
             description: subrama.description,
-            descripcionLegacy: (subrama as any).descripcion,
-            hasDescription: Boolean(subrama.description ?? (subrama as any).descripcion)
+            descripcionLegacy: (subrama as { descripcion?: string }).descripcion,
+            hasDescription: Boolean(subrama.description ?? (subrama as { descripcion?: string }).descripcion)
           });
         });
       }
     });
     
     // Resumen
-    const ramasConDescripcion = ramas.filter(r => Boolean(r.description ?? (r as any).descripcion));
+    const ramasConDescripcion = ramas.filter(r => Boolean(r.description ?? (r as { descripcion?: string }).descripcion));
     const subramasConDescripcion = ramas.flatMap(r => r.subramas ?? [])
-      .filter(s => Boolean(s.description ?? (s as any).descripcion));
+      .filter(s => Boolean(s.description ?? (s as { descripcion?: string }).descripcion));
     
     console.log('📈 [Debug] Resumen:');
     console.log(`  - Ramas con descripción: ${ramasConDescripcion.length}/${ramas.length}`);
@@ -66,7 +66,7 @@ export function previewExportData(tenantSlug: string, groupSlug: string) {
     console.log('🔍 [Preview] Vista previa de exportación:');
     
     const filasPreview = ramas.map(rama => {
-      const descripcionRama = (rama.description ?? (rama as any).descripcion ?? '').toString().trim() || 
+      const descripcionRama = (rama.description ?? (rama as { descripcion?: string }).descripcion ?? '').toString().trim() || 
                              `${rama.minAge}-${rama.maxAge} años`;
                              
       if (rama.subramas && rama.subramas.length > 0) {

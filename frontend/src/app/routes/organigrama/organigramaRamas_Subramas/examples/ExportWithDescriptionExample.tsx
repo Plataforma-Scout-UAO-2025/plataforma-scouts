@@ -11,9 +11,16 @@ interface ExportWithDescriptionExampleProps {
   groupSlug: string;
 }
 
+interface EstadisticasData {
+  totalRamas: number;
+  ramasConDescripcion: number;
+  totalSubramas: number;
+  subramasConDescripcion: number;
+}
+
 export function ExportWithDescriptionExample({ tenantSlug, groupSlug }: ExportWithDescriptionExampleProps) {
   const [ramas, setRamas] = useState<Rama[]>([]);
-  const [estadisticas, setEstadisticas] = useState<any>(null);
+  const [estadisticas, setEstadisticas] = useState<EstadisticasData | null>(null);
   const [loading, setLoading] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
 

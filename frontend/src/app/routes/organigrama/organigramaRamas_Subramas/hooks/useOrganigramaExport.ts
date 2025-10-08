@@ -38,7 +38,8 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
         console.log('🔄 [useOrganigramaExport] Usando datos locales como fallback para PDF');
         
         // Si hay error 403, es un problema de autenticación/autorización
-        if ((e as any)?.status === 403 || (e as any)?.response?.status === 403) {
+        if ((e as Error & { status?: number; response?: { status?: number } })?.status === 403 || 
+            (e as Error & { status?: number; response?: { status?: number } })?.response?.status === 403) {
           console.warn('🔐 [useOrganigramaExport] Error 403: Problema de autenticación. Verificar permisos o tokens.');
         }
         
@@ -85,7 +86,8 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
         console.log('🔄 [useOrganigramaExport] Usando datos locales como fallback para CSV');
         
         // Si hay error 403, es un problema de autenticación/autorización
-        if ((e as any)?.status === 403 || (e as any)?.response?.status === 403) {
+        if ((e as Error & { status?: number; response?: { status?: number } })?.status === 403 || 
+            (e as Error & { status?: number; response?: { status?: number } })?.response?.status === 403) {
           console.warn('🔐 [useOrganigramaExport] Error 403: Problema de autenticación. Verificar permisos o tokens.');
         }
       }

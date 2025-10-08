@@ -42,7 +42,7 @@ export function ExportActions({
       console.log('✅ [ExportActions] PDF exportado exitosamente');
     } catch (error) {
       console.error('❌ [ExportActions] Error al exportar PDF:', error);
-      const errorMsg = (error as any)?.response?.status === 403 
+      const errorMsg = (error as Error & { response?: { status?: number } })?.response?.status === 403 
         ? 'Error de autenticación. Verifica tus permisos.'
         : 'Error al exportar PDF. Revisa la consola para más detalles.';
       setLastError(errorMsg);
@@ -60,7 +60,7 @@ export function ExportActions({
       console.log('✅ [ExportActions] CSV exportado exitosamente');
     } catch (error) {
       console.error('❌ [ExportActions] Error al exportar CSV:', error);
-      const errorMsg = (error as any)?.response?.status === 403 
+      const errorMsg = (error as Error & { response?: { status?: number } })?.response?.status === 403 
         ? 'Error de autenticación. Verifica tus permisos.'
         : 'Error al exportar CSV. Revisa la consola para más detalles.';
       setLastError(errorMsg);

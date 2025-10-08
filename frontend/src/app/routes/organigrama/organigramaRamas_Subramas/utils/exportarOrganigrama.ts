@@ -40,7 +40,7 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
     const ramaNombre = (r.name ?? r.nombre ?? '').toString();
     
     // CORRECCIÓN: Usar descripción real de la rama en lugar de edad calculada
-    const descripcionRama = (r.description ?? (r as any).descripcion ?? '').toString().trim() || 
+    const descripcionRama = (r.description ?? (r as { descripcion?: string }).descripcion ?? '').toString().trim() || 
                            // Solo como fallback mostrar edad si no hay descripción
                            ((typeof r.minAge === 'number' && typeof r.maxAge === 'number' && r.minAge > 0 && r.maxAge > 0)
                            ? `${r.minAge}-${r.maxAge} años`
@@ -49,18 +49,19 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
     console.log('📝 [ExportUtils] Rama procesada:', {
       nombre: ramaNombre,
       descripcionOriginal: r.description,
-      descripcionLegacy: (r as any).descripcion,
+      descripcionLegacy: (r as { descripcion?: string }).descripcion,
       descripcionFinal: descripcionRama,
-      esDescripcionReal: Boolean(r.description ?? (r as any).descripcion),
-      esFallbackEdad: !Boolean(r.description ?? (r as any).descripcion)
+      esDescripcionReal: !!(r.description ?? (r as { descripcion?: string }).descripcion),
+      esFallbackEdad: !(r.description ?? (r as { descripcion?: string }).descripcion)
     });
 
     // Jefe de rama: buscar propiedades comunes o fallback a líderes de subramas
-    const jefeRama = (r as any).leader ?? (r as any).jefe ?? (() => {
+    const jefeRama = (r as { leader?: string; jefe?: string }).leader ?? 
+                     (r as { leader?: string; jefe?: string }).jefe ?? (() => {
       const subs = (r.subgroups ?? r.subramas) as Subrama[] | undefined;
       if (subs && subs.length > 0) {
         // obtener líderes únicos de las subramas (si existen)
-        const leaders = subs.map(s => (s as any).leader).filter(Boolean);
+        const leaders = subs.map(s => (s as { leader?: string }).leader).filter(Boolean);
         return leaders.length > 0 ? [...new Set(leaders)].join(', ') : '';
       }
       return '';
@@ -78,10 +79,10 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
         // intentar extraer tipo si el nombre tiene formato "Tipo: Nombre" o como primera palabra
         let tipoSubrama = '';
         const tipoCandidates = [
-          (s as any).tipo,
-          (s as any).tipoSubrama,
-          (s as any).type,
-          (s as any).subtype,
+          (s as { tipo?: string }).tipo,
+          (s as { tipoSubrama?: string }).tipoSubrama,
+          (s as { type?: string }).type,
+          (s as { subtype?: string }).subtype,
         ];
         for (const c of tipoCandidates) {
           if (c) {
@@ -102,22 +103,23 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
         // Estado: buscar múltiples propiedades posibles
         const estado = (s.status === 'active' ? 'activa' : 
                       (s.status === 'inactive' ? 'inactiva' : 
-                      ((s as any).isActive === true ? 'activa' :
-                      ((s as any).isActive === false ? 'inactiva' :
-                      ((s as any).estado ?? 'desconocido')))));
+                      ((s as { isActive?: boolean }).isActive === true ? 'activa' :
+                      ((s as { isActive?: boolean }).isActive === false ? 'inactiva' :
+                      ((s as { estado?: string }).estado ?? 'desconocido')))));
 
         // Integrantes: múltiples formatos posibles (array o string)
         let integrantes = '';
-        if ((s as any).members && Array.isArray((s as any).members)) {
-          integrantes = (s as any).members.join(', ');
-        } else if ((s as any).integrantes && Array.isArray((s as any).integrantes)) {
-          integrantes = (s as any).integrantes.join(', ');
-        } else if ((s as any).membersNames && Array.isArray((s as any).membersNames)) {
-          integrantes = (s as any).membersNames.join(', ');
-        } else if (typeof (s as any).integrantes === 'string' && (s as any).integrantes) {
-          integrantes = (s as any).integrantes;
-        } else if ((s as any).leader) {
-          integrantes = String((s as any).leader);
+        const sUnknown = s as unknown as Record<string, unknown>;
+        if (sUnknown.members && Array.isArray(sUnknown.members)) {
+          integrantes = (sUnknown.members as string[]).join(', ');
+        } else if (sUnknown.integrantes && Array.isArray(sUnknown.integrantes)) {
+          integrantes = (sUnknown.integrantes as string[]).join(', ');
+        } else if (sUnknown.membersNames && Array.isArray(sUnknown.membersNames)) {
+          integrantes = (sUnknown.membersNames as string[]).join(', ');
+        } else if (typeof sUnknown.integrantes === 'string' && sUnknown.integrantes) {
+          integrantes = sUnknown.integrantes;
+        } else if (sUnknown.leader) {
+          integrantes = String(sUnknown.leader);
         }
 
         console.log('📝 [ExportUtils] Datos procesados para subrama:', {
@@ -142,9 +144,9 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
       // Rama sin subramas: fila con subrama vacía
       const ramaEstado = (r.status === 'active' ? 'activa' : 
                          (r.status === 'inactive' ? 'inactiva' : 
-                         ((r as any).isActive === true ? 'activa' :
-                         ((r as any).isActive === false ? 'inactiva' :
-                         ((r as any).estado ?? 'desconocido')))));
+                         ((r as unknown as { isActive?: boolean }).isActive === true ? 'activa' :
+                         ((r as unknown as { isActive?: boolean }).isActive === false ? 'inactiva' :
+                         ((r as unknown as { estado?: string }).estado ?? 'desconocido')))));
       
       filas.push([
         ramaNombre,
@@ -201,7 +203,7 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
     const totalWeight = weights.reduce((a, b) => a + b, 0);
     const colWidths = weights.map((w) => Math.floor((w / totalWeight) * availableWidth));
 
-    const columnStyles: Record<string, any> = {};
+    const columnStyles: Record<string, { cellWidth: number }> = {};
     colWidths.forEach((w, i) => {
       columnStyles[i] = { cellWidth: w };
     });
