@@ -59,7 +59,7 @@ export default function ResumenEstadoCuenta({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Total Pendiente
+                Total Pendiente este mes
               </p>
               <p className="text-2xl font-bold text-red-600">
                 {formatMonto(kpis.total_pendiente)}
