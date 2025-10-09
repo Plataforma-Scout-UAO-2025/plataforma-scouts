@@ -58,3 +58,9 @@ export {
   CollapsibleContent,
 } from "./collapsible"
 export { Progress } from "./progress"
+export { Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow, } from "./table"

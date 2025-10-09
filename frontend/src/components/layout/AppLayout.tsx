@@ -20,7 +20,6 @@ import { Separator } from "@/components/ui/separator"
 import {
   LineChart,
   Boxes,
-  CalendarDays,
   Settings,
   HelpCircle,
   LogOut,
@@ -71,7 +70,6 @@ const adminGrupalItems: MenuItem[] = [
   { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
   { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
-  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
 ]
 
