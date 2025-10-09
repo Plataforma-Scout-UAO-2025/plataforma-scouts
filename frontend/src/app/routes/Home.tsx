@@ -6,7 +6,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex-col">
       <header className="bg-primary py-4">
-        <div className="container mx-auto px-4 flex items-center justify-end">
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <img src="/logo.jpg"
+               alt="Logo"
+               className="h-10 w-auto"/>
           <LoginButton
             variant="secondary"
             className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
