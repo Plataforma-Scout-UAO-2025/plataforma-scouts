@@ -2,14 +2,14 @@ import type { Section } from "./section.type";
 
 export interface Member {
   member_id: number;
-  first_name: string;
-  last_name: string;
-  subgroup_id: number;
-  subgroup_name: string;
-  section_id: number;
-  section_name: string;
-  age: number;
-  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  subgroup_id?: number;
+  subgroup_name?: string;
+  section_id?: number;
+  section_name?: string;
+  age?: number;
+  user_id?: string;
   tenant_id?: string;
   guardian_id?: number;
   relationship?: string;
