@@ -1,4 +1,4 @@
-import type { Member } from "@/models/types/memberTypes";
+import type { Member } from "@/types/member.type";
 import { User2, Award } from "lucide-react";
 
 interface GeneralStatsProps {
@@ -13,7 +13,7 @@ const GeneralStats = ({ members }: GeneralStatsProps) => {
     : 0;
 
   // Scouts con insignias
-  const conInsignias = members.filter((m) => m.badges && m.badges.length > 0).length;
+  const conInsignias = 0 //members.filter((m) => m.badges && m.badges.length > 0).length;
   const porcentajeConInsignias = members.length > 0 
     ? Math.round((conInsignias / members.length) * 100)
     : 0;

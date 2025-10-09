@@ -41,7 +41,7 @@ const AdminGrupoView = () => {
     members.forEach((m) => {
       if (m.branch && m.branch.length > 0) {
         m.branch.forEach((rama) => {
-          if (rama.nombre) ramasSet.add(rama.nombre);
+          if (rama.name) ramasSet.add(rama.name);
         });
       }
     });

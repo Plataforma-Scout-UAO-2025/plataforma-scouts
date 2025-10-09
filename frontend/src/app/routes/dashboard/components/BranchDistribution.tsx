@@ -1,4 +1,4 @@
-import type { Member } from "@/models/types/memberTypes";
+import type { Member } from "@/types/member.type";
 import { Users } from "lucide-react";
 
 interface BranchDistributionProps {
@@ -12,7 +12,7 @@ const BranchDistribution = ({ members }: BranchDistributionProps) => {
   members.forEach((m) => {
     if (m.branch && m.branch.length > 0) {
       m.branch.forEach((rama) => {
-        const nombre = rama.nombre || "Sin rama";
+        const nombre = rama.name || "Sin rama";
         scoutsPorRama[nombre] = (scoutsPorRama[nombre] || 0) + 1;
       });
     } else {
