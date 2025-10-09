@@ -68,7 +68,7 @@ class PaymentsControllerStatusTest {
         cuota.setInstallment_id(1L);
         cuota.setName("Matrícula 2025");
         cuota.setAmount(new BigDecimal("120000"));
-        cuota.setDue_date(LocalDate.now().withDayOfMonth(1));
+        cuota.setDue_date(LocalDate.of(2025, 1, 1));
         cuota.setStatus("PENDING");
         cuota.setPayment_id(null);
         cuota.setPaid_at(null);
