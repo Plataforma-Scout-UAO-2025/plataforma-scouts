@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Home from "./app/routes/Home";
-import Dashboard from "./app/routes/Dashboard";
+import Dashboard from "./app/routes/dashboard/Dashboard";
 import Miembros from "./app/routes/admin-grupal/Miembros/Miembros";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
