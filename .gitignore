@@ -33,8 +33,9 @@ application-*.properties
 !**/application-test.properties
 
 # Supabase credentials
-supabase/
-.supabase/
+supabase/.temp
+supabase/.branches
+supabase/config.toml
 
 # Security files
 *.key
@@ -78,5 +79,4 @@ build/
 plataforma-scouts.code-workspace
 
 ### supabase
-supabase/seeds/
 supabase/.temp/
