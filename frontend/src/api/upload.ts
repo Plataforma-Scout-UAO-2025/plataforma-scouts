@@ -15,12 +15,28 @@ export const postFormData = async <T = unknown>(
   const { config, onUploadProgress, signal } = options;
   const forwardProgress = config?.onUploadProgress;
 
+  const providedHeaders = (config?.headers as Record<string, unknown>) || {};
+  const sanitizedHeaders: Record<string, unknown> = {};
+  Object.keys(providedHeaders).forEach((k) => {
+    if (k.toLowerCase() === 'content-type') return;
+    
+    (sanitizedHeaders as any)[k] = (providedHeaders as any)[k];
+  });
+
+  
+  if (typeof (formData as any)?.getHeaders === 'function') {
+    const nodeHeaders = (formData as any).getHeaders();
+    Object.keys(nodeHeaders).forEach((k) => {
+     
+      (sanitizedHeaders as any)[k] = (nodeHeaders as any)[k];
+    });
+  }
+
   const response = await api.post<T>(url, formData, {
     ...config,
-    // Do not set Content-Type here — let the browser / axios set boundary
-    headers: {
-      ...(config?.headers || {}),
-    },
+    headers: sanitizedHeaders as AxiosRequestConfig['headers'],
+    
+    transformRequest: [(data) => data] as AxiosRequestConfig['transformRequest'],
     signal: signal ?? config?.signal,
     onUploadProgress: (progressEvent: AxiosProgressEvent) => {
       forwardProgress?.(progressEvent);
@@ -35,7 +51,6 @@ export const postFormData = async <T = unknown>(
   return response.data;
 };
 
-// Convenience wrapper for the common storage upload endpoint
 export const uploadToStorage = async <T = { objectId: string; url?: string }>(
   formData: FormData,
   options: PostFormDataOptions = {}
