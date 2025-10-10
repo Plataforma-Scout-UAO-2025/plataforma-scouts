@@ -34,17 +34,14 @@ export const diagnosticImageUpload = async (
   sectionId: string,
   file: File
 ): Promise<UploadDiagnostic> => {
-  console.log('🔬 [DIAGNOSTIC] Iniciando diagnóstico de upload...');
+  // Iniciando diagnóstico de upload
   
   // Paso 1: Obtener estado inicial de la galería
   const initialRama = await getRamaById(tenantSlug, groupSlug, sectionId);
   const initialImageCount = initialRama?.sectionGalleryObjectIds?.length || 0;
   const initialUrls = [...(initialRama?.sectionGalleryObjectIds || [])];
   
-  console.log('📊 [DIAGNOSTIC] Estado inicial:', {
-    imageCount: initialImageCount,
-    urls: initialUrls
-  });
+  // Estado inicial: imageCount, initialUrls
 
   // Paso 2: Subir archivo individual
   const formData = new FormData();
@@ -52,7 +49,7 @@ export const diagnosticImageUpload = async (
   
   const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData);
   
-  console.log('📤 [DIAGNOSTIC] Upload response:', uploadResponse);
+  // Upload response available in uploadResponse
 
   // Paso 3: Agregar a galería usando PATCH
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
@@ -64,7 +61,7 @@ export const diagnosticImageUpload = async (
   };
 
   await api.patch(patchEndpoint, addPayload);
-  console.log('✅ [DIAGNOSTIC] PATCH completado');
+  // PATCH completado
 
   // Paso 4: Obtener estado final
   const finalRama = await getRamaById(tenantSlug, groupSlug, sectionId);
@@ -75,12 +72,7 @@ export const diagnosticImageUpload = async (
   const newUrls = finalUrls.filter(url => !initialUrls.includes(url));
   const addedCount = finalImageCount - initialImageCount;
   
-  console.log('📊 [DIAGNOSTIC] Estado final:', {
-    imageCount: finalImageCount,
-    addedCount,
-    newUrls,
-    allUrls: finalUrls
-  });
+  // Estado final: finalImageCount, addedCount, newUrls, finalUrls
 
   // Análisis
   const isMultipleVariants = addedCount > 1;
@@ -117,7 +109,7 @@ export const diagnosticImageUpload = async (
     }
   };
 
-  console.log('🎯 [DIAGNOSTIC] Resultado completo:', diagnostic);
+  // Resultado completo disponible en `diagnostic`
   return diagnostic;
 };
 
@@ -171,6 +163,4 @@ export const analyzeImageUrls = (urls: string[]): {
 (window as unknown as Record<string, unknown>).diagnosticImageUpload = diagnosticImageUpload;
 (window as unknown as Record<string, unknown>).analyzeImageUrls = analyzeImageUrls;
 
-console.log('🔧 [DIAGNOSTIC] Funciones de diagnóstico cargadas. Usa:');
-console.log('  - diagnosticImageUpload(tenantSlug, groupSlug, sectionId, file)');
-console.log('  - analyzeImageUrls(urls)');
+// Funciones de diagnóstico expuestas: diagnosticImageUpload, analyzeImageUrls

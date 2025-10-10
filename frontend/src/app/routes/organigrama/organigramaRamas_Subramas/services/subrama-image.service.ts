@@ -15,7 +15,7 @@ export const updateSubramaMainImage = async (
   onFileProgress?: (fileName: string, percent: number) => void,
   signal?: AbortSignal
 ): Promise<string> => {
-  console.log('📤 [SubramaImageService] Actualizando foto principal de subrama...');
+  // Actualizando foto principal de subrama
 
   try {
     // 1️⃣ Subir el archivo a storage
@@ -25,7 +25,7 @@ export const updateSubramaMainImage = async (
       onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
       signal,
     });
-    console.log('✅ Archivo subido:', uploadResponse.objectId);
+  // Archivo subido: uploadResponse.objectId
 
     // Si la señal fue abortada inmediatamente después del upload, no asociamos
     // el objeto al backend: el usuario canceló la operación. Lanzamos un
@@ -51,10 +51,10 @@ export const updateSubramaMainImage = async (
     let patched = false;
     let lastErr: unknown = null;
     for (const attempt of attempts) {
-      console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
+      // Intentando PATCH: attempt.description
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as unknown);
-          console.log(`✅ Foto principal de subrama actualizada correctamente con formato: ${attempt.description}`, res?.data ?? res);
+        await api.patch(patchEndpoint, attempt.payload as unknown);
+        // PATCH succeeded for attempt.description
         patched = true;
         break;
       } catch (e: unknown) {
@@ -79,7 +79,7 @@ export const updateSubramaMainImage = async (
   // Prefer new english-named properties, fallback to legacy spanish ones
   const updatedUrl = updatedSubrama?.mainImageUrl ?? updatedSubrama?.imagenPrincipal ?? undefined;
     if (updatedUrl) {
-      console.log('✅ URL actualizada recibida:', updatedUrl);
+      // URL actualizada recibida: updatedUrl
       return updatedUrl;
     }
 
@@ -104,7 +104,7 @@ export const uploadSubramaGalleryImages = async (
   subgroupId: string,
   files: File[]
 ): Promise<string[]> => {
-  console.log('📤 [SubramaImageService] Subiendo imágenes de galería de subrama...');
+  // Subiendo imágenes de galería de subrama
 
   try {
     const objectIds: string[] = [];
@@ -128,9 +128,8 @@ export const uploadSubramaGalleryImages = async (
       operations: objectIds.map(objectId => ({ op: "add", newValue: objectId }))
     };
 
-    console.log('📡 PATCH →', patchEndpoint, galleryPayload);
+    // PATCH gallery payload prepared
   await api.patch(patchEndpoint, galleryPayload);
-    console.log('✅ Galería de subrama actualizada correctamente.');
 
     // Refrescar la subrama
     const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
@@ -152,7 +151,7 @@ export const addSubramaGalleryImage = async (
   subgroupId: string,
   file: File
 ): Promise<string> => {
-  console.log('📤 [SubramaImageService] Agregando imagen individual a galería...');
+  // Agregando imagen individual a galería
 
   try {
     // Subir el archivo
@@ -166,10 +165,8 @@ export const addSubramaGalleryImage = async (
     // PATCH al endpoint de galería
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = { operations: [{ op: "add", newValue: uploadResponse.objectId }] };
-    console.log('📡 PATCH →', patchEndpoint, addPayload);
-
+    // PATCH add payload prepared
   await api.patch(patchEndpoint, addPayload);
-    console.log('✅ Imagen agregada correctamente a la galería.');
 
     return uploadResponse.url || uploadResponse.objectId;
 
@@ -188,7 +185,7 @@ export const replaceSubramaGalleryImage = async (
   targetImageUuid: string,
   newFile: File
 ): Promise<string> => {
-  console.log('🔄 [SubramaImageService] Reemplazando imagen en galería de subrama...');
+  // Reemplazando imagen en galería de subrama
 
   try {
     // 1️⃣ Subir el nuevo archivo
@@ -201,17 +198,15 @@ export const replaceSubramaGalleryImage = async (
 
     // 🧠 Extraer solo UUID limpio
     const cleanUuid = targetImageUuid.match(/[0-9a-fA-F-]{36}/)?.[0] || targetImageUuid;
-    console.log('🧠 UUID limpio para reemplazo:', cleanUuid);
+  // UUID limpio para reemplazo: cleanUuid
 
     // 2️⃣ PATCH con operación replace
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const replacePayload = {
       operations: [{ op: "replace", targetUuid: cleanUuid, newValue: uploadResponse.objectId }]
     };
-    console.log('📡 PATCH →', patchEndpoint, replacePayload);
-
+    // PATCH replace payload prepared
   await api.patch(patchEndpoint, replacePayload);
-    console.log('✅ Imagen reemplazada correctamente en la galería.');
 
     // 3️⃣ Obtener datos actualizados
   const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
@@ -233,7 +228,7 @@ export const removeSubramaMainImage = async (
   sectionId: string,
   subgroupId: string
 ): Promise<void> => {
-  console.log('🗑️ [SubramaImageService] Eliminando foto principal de subrama...');
+  // Eliminando foto principal de subrama
 
   try {
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/photo-principal`;
@@ -249,10 +244,10 @@ export const removeSubramaMainImage = async (
     let lastErr: unknown = null;
     let removed = false;
     for (const attempt of attempts) {
-      console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
+      // Intentando PATCH remove: attempt.description
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as Record<string, unknown>);
-        console.log(`✅ Foto principal de subrama eliminada correctamente con formato: ${attempt.description}`, res?.data ?? res);
+        await api.patch(patchEndpoint, attempt.payload as Record<string, unknown>);
+        // Eliminado con formato: attempt.description
         removed = true;
         break;
       } catch (e: unknown) {
@@ -285,20 +280,18 @@ export const removeSubramaGalleryImage = async (
   subgroupId: string,
   targetImageUuid: string
 ): Promise<void> => {
-  console.log('🗑️ [SubramaImageService] Eliminando imagen de galería de subrama...');
+  // Eliminando imagen de galería de subrama
 
   try {
     // 🧠 Extraer solo UUID limpio
     const cleanUuid = targetImageUuid.match(/[0-9a-fA-F-]{36}/)?.[0] || targetImageUuid;
-    console.log('🧠 UUID limpio para eliminación:', cleanUuid);
+  // UUID limpio para eliminación: cleanUuid
 
     // PATCH con operación remove
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const removePayload = { operations: [{ op: "remove", targetUuid: cleanUuid }] };
-    console.log('📡 PATCH →', patchEndpoint, removePayload);
-
+    // PATCH remove payload prepared
   await api.patch(patchEndpoint, removePayload);
-    console.log('✅ Imagen eliminada correctamente de la galería.');
 
   } catch (error) {
     console.error('❌ Error eliminando imagen de galería de subrama:', error);
@@ -313,16 +306,16 @@ export const getSubramaGalleryImageUuids = async (
   sectionId: string,
   subgroupId: string
 ): Promise<string[]> => {
-  console.log('🔍 [SubramaImageService] Obteniendo UUIDs de galería para subrama:', subgroupId);
+  // Obteniendo UUIDs de galería para subrama: subgroupId
 
   try {
   const subrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
   const uuids = subrama?.galleryObjectIds ?? subrama?.subgroupGalleryObjectIds ?? [];
     if (uuids && uuids.length > 0) {
-      console.log('✅ UUIDs obtenidos:', uuids);
+      // UUIDs obtenidos: uuids
       return uuids;
     }
-    console.log('ℹ️ No hay imágenes en la galería de subrama.');
+    // No hay imágenes en la galería de subrama
     return [];
 
   } catch (error) {

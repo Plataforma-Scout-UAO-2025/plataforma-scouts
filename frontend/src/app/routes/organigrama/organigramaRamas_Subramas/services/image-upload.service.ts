@@ -20,12 +20,8 @@ export const diagnoseBatchImageUpload = async (
   sectionId: string,
   file: File
 ): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
-  console.log("🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...");
-  console.log("📝 [DIAGNÓSTICO] Archivo:", {
-    name: file.name,
-    size: file.size,
-    type: file.type,
-  });
+  // Diagnostic: starting batch image upload analysis
+  // File info available in `file`
 
   try {
     // Paso 1: Subir archivo individual
@@ -33,7 +29,7 @@ export const diagnoseBatchImageUpload = async (
     formData.append("file", file);
 
     const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData);
-    console.log("✅ [DIAGNÓSTICO] Upload exitoso, objectId:", uploadResponse.objectId);
+  // Upload successful; objectId available in uploadResponse.objectId
 
     // Paso 2: Agregar a galería usando PATCH
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
@@ -42,7 +38,7 @@ export const diagnoseBatchImageUpload = async (
     };
 
     await api.patch(patchEndpoint, addPayload);
-    console.log("✅ [DIAGNÓSTICO] PATCH exitoso");
+  // PATCH successful
 
     // Paso 3: Verificar resultado
     const updatedRama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
@@ -64,7 +60,7 @@ export const diagnoseBatchImageUpload = async (
       },
     };
 
-    console.log("🔬 [DIAGNÓSTICO] RESULTADO FINAL:", result);
+  // Diagnostic final result available in `result`
     return result;
   } catch (error) {
     console.error("❌ [DIAGNÓSTICO] Error:", error);
@@ -84,31 +80,23 @@ export const uploadSectionIcon = async (
   onFileProgress?: FileProgressHandler,
   signal?: AbortSignal
 ): Promise<string> => {
-  console.log("📤 [ImageUploadService] Subiendo icono de sección...");
-  console.log("📝 [ImageUploadService] Parámetros:", {
-    tenantSlug,
-    groupSlug,
-    sectionId,
-    fileName: file.name,
-    fileSize: file.size,
-  });
+  // Uploading section icon — parameters available in arguments
 
   try {
     // Paso 1: Subir archivo al sistema de archivos
     const formData = new FormData();
     formData.append("file", file);
 
-    console.log("🔄 [ImageUploadService] Subiendo archivo al storage...");
+    // Upload file to storage
     const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, {
       onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
       signal,
     });
-    console.log("✅ [ImageUploadService] Archivo subido, objectId:", uploadResponse.objectId);
+    // File uploaded; objectId available in uploadResponse.objectId
 
     // Paso 2: Usar endpoint PATCH específico para icono
-    console.log("🔄 [ImageUploadService] Asociando icono usando endpoint PATCH específico...");
+    // Associate icon via PATCH to section
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
-    console.log("📍 [ImageUploadService] Endpoint PATCH:", patchEndpoint);
 
     // Intentaremos varios formatos de payload porque el backend puede esperar snake_case o estructura "operations"
     const attempts = [
@@ -121,10 +109,10 @@ export const uploadSectionIcon = async (
     let lastError: unknown = null;
     let patched = false;
     for (const attempt of attempts) {
-      console.log(`🔄 [ImageUploadService] Intentando PATCH (${attempt.description}) ->`, attempt.payload);
+      // Trying PATCH attempt: attempt.description
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as unknown);
-        console.log(`✅ [ImageUploadService] PATCH exitoso con formato: ${attempt.description}`, res?.data ?? res);
+  await api.patch(patchEndpoint, attempt.payload as unknown);
+  // PATCH succeeded for format: attempt.description
         patched = true;
         break;
       } catch (patchError) {
@@ -144,8 +132,7 @@ export const uploadSectionIcon = async (
       throw lastError;
     }
 
-    console.log("✅ [ImageUploadService] Icono de sección subido con éxito");
-    console.log("📝 [ImageUploadService] ObjectId guardado:", uploadResponse.objectId);
+  // Icon uploaded successfully; objectId available in uploadResponse.objectId
 
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
@@ -163,7 +150,7 @@ export const uploadSectionMainImage = async (
   onFileProgress?: FileProgressHandler,
   signal?: AbortSignal
 ): Promise<string> => {
-  console.log("📤 [ImageUploadService] Subiendo imagen principal de sección...");
+  // Uploading main section image
 
   try {
     // Paso 1: Subir archivo al sistema de archivos
@@ -176,9 +163,7 @@ export const uploadSectionMainImage = async (
     });
 
     // Paso 2: Usar endpoint PATCH específico para imagen principal
-    console.log(
-      "🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico..."
-    );
+    // Associate main image via PATCH to section
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
 
     // Intentar varios formatos por compatibilidad con el backend
@@ -192,10 +177,10 @@ export const uploadSectionMainImage = async (
     let lastMainError: unknown = null;
     let mainPatched = false;
     for (const attempt of attemptsMain) {
-      console.log(`🔄 [ImageUploadService] Intentando PATCH imagen principal (${attempt.description}) ->`, attempt.payload);
+      // Trying PATCH attempt for main image: attempt.description
       try {
-        const res = await api.patch(patchEndpoint, attempt.payload as unknown);
-        console.log(`✅ [ImageUploadService] PATCH imagen principal exitoso con formato: ${attempt.description}`, res?.data ?? res);
+  await api.patch(patchEndpoint, attempt.payload as unknown);
+  // PATCH for main image succeeded for format: attempt.description
         mainPatched = true;
         break;
       } catch (patchError) {
@@ -213,8 +198,7 @@ export const uploadSectionMainImage = async (
       throw lastMainError;
     }
 
-    console.log("✅ [ImageUploadService] Imagen principal de sección subida con éxito");
-    console.log("📝 [ImageUploadService] ObjectId de imagen principal:", uploadResponse.objectId);
+  // Main image uploaded successfully; objectId available in uploadResponse.objectId
 
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {

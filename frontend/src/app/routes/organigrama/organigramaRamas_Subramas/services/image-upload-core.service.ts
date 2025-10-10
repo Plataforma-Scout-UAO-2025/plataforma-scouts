@@ -17,12 +17,8 @@ export const diagnoseBatchImageUpload = async (
   sectionId: string,
   file: File
 ): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
-  console.log('🔬 [DIAGNÓSTICO] Iniciando análisis de comportamiento del backend...');
-  console.log('📝 [DIAGNÓSTICO] Archivo:', {
-    name: file.name,
-    size: file.size,
-    type: file.type
-  });
+  // Diagnostic: starting batch image upload analysis
+  // File info: name, size, type available in `file`
 
   try {
     // Paso 1: Subir archivo individual
@@ -30,7 +26,6 @@ export const diagnoseBatchImageUpload = async (
     formData.append('file', file);
     
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
-    console.log('✅ [DIAGNÓSTICO] Upload exitoso, objectId:', uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
@@ -38,8 +33,7 @@ export const diagnoseBatchImageUpload = async (
       operations: [{ op: "add", newValue: uploadResponse.objectId }]
     };
 
-    await api.patch(patchEndpoint, addPayload);
-    console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
+  await api.patch(patchEndpoint, addPayload);
 
     // Paso 3: Verificar resultado usando una llamada directa al API
     const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
@@ -58,7 +52,7 @@ export const diagnoseBatchImageUpload = async (
       }
     };
 
-    console.log('🔬 [DIAGNÓSTICO] RESULTADO FINAL:', result);
+  // Diagnostic result available in `result`
     return result;
 
   } catch (error) {
@@ -77,32 +71,23 @@ export const uploadSectionIcon = async (
   sectionId: string,
   file: File
 ): Promise<string> => {
-  console.log('📤 [ImageUploadService] Subiendo icono de sección...');
-  console.log('📝 [ImageUploadService] Parámetros:', {
-    tenantSlug,
-    groupSlug,
-    sectionId,
-    fileName: file.name,
-    fileSize: file.size
-  });
+  // Uploading section icon — parameters available in arguments
   
   try {
     // Paso 1: Subir archivo al sistema de archivos
     const formData = new FormData();
     formData.append('file', file);
     
-    console.log('🔄 [ImageUploadService] Subiendo archivo al storage...');
+    // Upload file to storage
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
-    console.log('✅ [ImageUploadService] Archivo subido, objectId:', uploadResponse.objectId);
     
     // Paso 2: Usar endpoint PATCH específico para icono
-    console.log('🔄 [ImageUploadService] Asociando icono usando endpoint PATCH específico...');
+    // Associate icon via PATCH to section
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
-    console.log('📍 [ImageUploadService] Endpoint PATCH:', patchEndpoint);
     
     // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
     const iconPayload = { objectId: uploadResponse.objectId };
-    console.log('🔄 [ImageUploadService] PATCH payload para icono (primary):', iconPayload);
+  // Primary payload: { objectId }
 
     try {
       await api.patch(patchEndpoint, iconPayload);
@@ -113,30 +98,30 @@ export const uploadSectionIcon = async (
 
       // Intentar payload alternativo: snake_case object_id
       const alt1 = { object_id: uploadResponse.objectId };
-      console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (object_id):', alt1);
+  // Attempt alternative payload: snake_case object_id
       try {
         await api.patch(patchEndpoint, alt1);
-        console.log('✅ [ImageUploadService] Icono asociado con payload alternativo (object_id)');
+  // Icon associated with alt payload (object_id)
       } catch (alt1Error: unknown) {
         console.error('❌ [ImageUploadService] Falla alt1 (object_id):', alt1Error);
   console.error('❌ [ImageUploadService] Respuesta backend (alt1):', (alt1Error as MaybeAxiosError)?.response?.data ?? (alt1Error as MaybeAxiosError)?.response ?? alt1Error);
 
         // Intentar formato operations (similar a galería)
         const alt2 = { operations: [{ op: 'add', newValue: uploadResponse.objectId }] };
-        console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations add):', alt2);
+  // Attempt alternative payload: operations add
         try {
           await api.patch(patchEndpoint, alt2);
-          console.log('✅ [ImageUploadService] Icono asociado con payload alternativo (operations add)');
+          // Icon associated with alt payload (operations add)
         } catch (alt2Error: unknown) {
           console.error('❌ [ImageUploadService] Falla alt2 (operations add):', alt2Error);
           console.error('❌ [ImageUploadService] Respuesta backend (alt2):', (alt2Error as MaybeAxiosError)?.response?.data ?? (alt2Error as MaybeAxiosError)?.response ?? alt2Error);
 
           // Intentar operations replace
           const alt3 = { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] };
-          console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations replace):', alt3);
+          // Attempt alternative payload: operations replace
           try {
             await api.patch(patchEndpoint, alt3);
-            console.log('✅ [ImageUploadService] Icono asociado con payload alternativo (operations replace)');
+            // Icon associated with alt payload (operations replace)
           } catch (alt3Error: unknown) {
             console.error('❌ [ImageUploadService] Falla alt3 (operations replace):', alt3Error);
             console.error('❌ [ImageUploadService] Respuesta backend (alt3):', (alt3Error as MaybeAxiosError)?.response?.data ?? (alt3Error as MaybeAxiosError)?.response ?? alt3Error);
@@ -147,8 +132,7 @@ export const uploadSectionIcon = async (
       }
     }
     
-    console.log('✅ [ImageUploadService] Icono de sección subido con éxito');
-    console.log('📝 [ImageUploadService] ObjectId guardado:', uploadResponse.objectId);
+  // Icon uploaded successfully; objectId available in uploadResponse.objectId
     
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
@@ -164,7 +148,7 @@ export const uploadSectionMainImage = async (
   sectionId: string,
   file: File
 ): Promise<string> => {
-  console.log('📤 [ImageUploadService] Subiendo imagen principal de sección...');
+  // Uploading main section image
   
   try {
     // Paso 1: Subir archivo al sistema de archivos
@@ -173,13 +157,11 @@ export const uploadSectionMainImage = async (
     
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
     
-    // Paso 2: Usar endpoint PATCH específico para imagen principal
-    console.log('🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico...');
+    // Associate main image via PATCH to section
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
     
-    // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
+    // Primary payload: { objectId }
     const mainImagePayload = { objectId: uploadResponse.objectId };
-    console.log('🔄 [ImageUploadService] PATCH payload para imagen principal (primary):', mainImagePayload);
 
     try {
       await api.patch(patchEndpoint, mainImagePayload);
@@ -220,8 +202,7 @@ export const uploadSectionMainImage = async (
       }
     }
     
-    console.log('✅ [ImageUploadService] Imagen principal de sección subida con éxito');
-    console.log('📝 [ImageUploadService] ObjectId de imagen principal:', uploadResponse.objectId);
+  // Main image uploaded successfully; objectId available in uploadResponse.objectId
     
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
@@ -237,7 +218,7 @@ export const uploadGalleryImages = async (
   sectionId: string,
   files: File[]
 ): Promise<string[]> => {
-  console.log('📤 [ImageUploadService] Subiendo imágenes de galería...');
+  // Uploading gallery images
   
   try {
     const objectIds: string[] = [];
@@ -253,8 +234,7 @@ export const uploadGalleryImages = async (
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }
     
-    // Paso 2: Usar endpoint PATCH específico para galería
-    console.log('🔄 [ImageUploadService] Asociando galería usando endpoint PATCH específico...');
+    // Use PATCH to associate gallery images
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     
     // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
@@ -265,15 +245,12 @@ export const uploadGalleryImages = async (
       }))
     };
     
-    console.log('🔄 [ImageUploadService] PATCH payload para galería (formato operations):', galleryPayload);
+  // PATCH payload prepared in galleryPayload
     
     try {
-      await api.patch(patchEndpoint, galleryPayload);
-      console.log('✅ [ImageUploadService] Galería asociada correctamente con endpoint PATCH');
-      
-      // Retornar las URLs subidas inicialmente como fallback
-      console.log('✅ [ImageUploadService] Imágenes de galería subidas con éxito');
-      return urls;
+  await api.patch(patchEndpoint, galleryPayload);
+  // Gallery associated successfully; return uploaded URLs as fallback if backend doesn't return updated URLs
+  return urls;
     } catch (patchError) {
       console.error('❌ [ImageUploadService] Error en endpoint PATCH para galería:', patchError);
       console.error('❌ [ImageUploadService] Payload enviado:', JSON.stringify(galleryPayload, null, 2));
