@@ -6,6 +6,7 @@ import type {
 import type { BackendSubgroup as BackendSubrama } from '../types/backend';
 
 import api from "@/api/axios";
+import { subgroupsPath, subgroupPath } from '@/api/organigramaApi';
 import { 
   mapBackendSubramaToFrontend,
   mapFrontendCreateSubramaToBackend,
@@ -25,8 +26,8 @@ export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string,
   }
 
   try {
-    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${encodeURIComponent(normalizedRamaId)}/subgroups`;
-    const response = await api.get<BackendSubrama[]>(endpoint);
+  const endpoint = subgroupsPath(normalizedRamaId, tenantSlug, groupSlug);
+  const response = await api.get<BackendSubrama[]>(endpoint);
     const backendSubramas = response.data;
 
     const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
@@ -42,8 +43,8 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
   console.log('🔄 [SubramaService] Obteniendo subrama por ID:', id);
   
   try {
-    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${id}`;
-    const response = await api.get<BackendSubrama>(endpoint);
+  const endpoint = subgroupPath(sectionId, id, tenantSlug, groupSlug);
+  const response = await api.get<BackendSubrama>(endpoint);
     const backendSubrama = response.data;
 
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
@@ -61,7 +62,7 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
   console.log('🔄 [SubramaService] Creando nueva subrama:', displayName);
   
   try {
-  const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups`;
+  const endpoint = subgroupsPath(sectionId, tenantSlug, groupSlug);
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendCreateSubramaToBackend(data);
@@ -100,7 +101,7 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
       throw new Error('ramaId/branchId es requerido para actualizar subrama');
     }
     
-    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${data.id}`;
+  const endpoint = subgroupPath(sectionId, data.id, tenantSlug, groupSlug);
     
     // Transformar datos del frontend al formato del backend
     const backendData = mapFrontendUpdateSubramaToBackend(data);
@@ -130,7 +131,7 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
   console.log('🔄 [SubramaService] Eliminando subrama:', id);
   
   try {
-    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${id}`;
+    const endpoint = subgroupPath(sectionId, id, tenantSlug, groupSlug);
   await api.delete(endpoint);
     
     console.log('✅ [SubramaService] Subrama eliminada');
