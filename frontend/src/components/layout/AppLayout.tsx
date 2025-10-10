@@ -21,13 +21,13 @@ import {
   LineChart,
   Boxes,
   CalendarDays,
-  Settings,
   HelpCircle,
   LogOut,
   Users,
   Award,
   ChevronRight,
   Network,
+  DollarSign,
 } from "lucide-react"
 import { Outlet, Link, useLocation } from "react-router-dom"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -70,17 +70,17 @@ const adminGrupalItems: MenuItem[] = [
   { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
 ]
 
 const tesoreroItems: MenuItem[] = [
   { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
 ]
 
 const acudienteItems: MenuItem[] = [
   { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/estado-cuenta" },
 ]
 
 const bottomItems: MenuItem[] = [

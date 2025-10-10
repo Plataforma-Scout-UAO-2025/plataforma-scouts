@@ -7,7 +7,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Home from "./app/routes/Home";
 import Dashboard from "./app/routes/Dashboard";
-import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
+import Financiero from "./app/routes/financiero/Financiero";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
@@ -27,7 +27,7 @@ function App() {
             <Route index element={<Dashboard />} />
 
             {/* Rutas para admin de grupo */}
-            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Cuotas /></ProtectedRoute>} />
+            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Financiero /></ProtectedRoute>} />
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />

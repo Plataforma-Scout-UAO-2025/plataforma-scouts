@@ -2,7 +2,7 @@ import { Button } from "@/components/ui";
 import { DollarSign, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function Cuotas() {
+export default function Financiero() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
