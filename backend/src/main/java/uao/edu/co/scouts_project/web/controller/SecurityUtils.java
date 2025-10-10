@@ -22,4 +22,9 @@ public class SecurityUtils {
         return permissionQueryPort.getCurrentUserRoles();
     }
 
+    @GetMapping("/org_id")
+    public String getAuthenticatedUserOrgId() {
+        return permissionQueryPort.getCurrentUserOrgId();
+    }
+
 }
