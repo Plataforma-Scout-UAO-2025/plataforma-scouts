@@ -6,29 +6,41 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import uao.edu.co.scouts_project.finanzas.payments.config.PaymentsExceptionHandler;
 import uao.edu.co.scouts_project.finanzas.payments.dto.PaymentRecordDto;
 import uao.edu.co.scouts_project.finanzas.payments.dto.SectionPaymentDto;
 import uao.edu.co.scouts_project.finanzas.payments.dto.SubgroupPaymentDto;
 import uao.edu.co.scouts_project.finanzas.payments.service.PaymentsService;
 
-@WebMvcTest(PaymentsController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@ActiveProfiles("test")
-
+@ExtendWith(MockitoExtension.class)
 class PaymentsControllerMembersTest {
 
-    @Autowired MockMvc mvc;
+    private MockMvc mvc;
 
-    @MockitoBean PaymentsService service;
+    @Mock
+    PaymentsService service;
+
+    @InjectMocks
+    PaymentsController controller;
+
+    @BeforeEach
+    void setup() {
+        mvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new PaymentsExceptionHandler())
+                .build();
+    }
 
     @Test
     void getMembersByTenant_returns200_andList() throws Exception {
