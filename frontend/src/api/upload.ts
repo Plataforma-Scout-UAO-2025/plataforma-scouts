@@ -15,20 +15,19 @@ export const postFormData = async <T = unknown>(
   const { config, onUploadProgress, signal } = options;
   const forwardProgress = config?.onUploadProgress;
 
-  const providedHeaders = (config?.headers as Record<string, unknown>) || {};
+  const providedHeaders = ((config?.headers as unknown) ?? {}) as Record<string, unknown>;
   const sanitizedHeaders: Record<string, unknown> = {};
   Object.keys(providedHeaders).forEach((k) => {
     if (k.toLowerCase() === 'content-type') return;
-    
-    (sanitizedHeaders as any)[k] = (providedHeaders as any)[k];
+    sanitizedHeaders[k] = providedHeaders[k];
   });
 
-  
-  if (typeof (formData as any)?.getHeaders === 'function') {
-    const nodeHeaders = (formData as any).getHeaders();
+  type NodeFormDataLike = { getHeaders: () => Record<string, string> };
+  const maybeNodeForm = formData as unknown as NodeFormDataLike;
+  if (typeof maybeNodeForm?.getHeaders === 'function') {
+    const nodeHeaders = maybeNodeForm.getHeaders();
     Object.keys(nodeHeaders).forEach((k) => {
-     
-      (sanitizedHeaders as any)[k] = (nodeHeaders as any)[k];
+      sanitizedHeaders[k] = nodeHeaders[k];
     });
   }
 
