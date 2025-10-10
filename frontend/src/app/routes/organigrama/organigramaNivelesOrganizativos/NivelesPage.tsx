@@ -71,13 +71,6 @@ export default function NivelesPage() {
     setShowSuccess(true);
   };
 
-  const handleDeleteNivel = async () => {
-    if (!deleteTarget) return;
-    await removeNivel(deleteTarget.id);
-    setOpenDelete(false);
-    setShowSuccess(true);
-  };
-
   // ===== HANDLERS DE CARGOS =====
 
   const handleCreateCargo = (
