@@ -1,0 +1,20 @@
+# fly.toml app configuration file generated for scouts-frontend on 2025-10-09T17:08:37-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'scouts-backend'
+primary_region = 'gru'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+# Variables de entorno no sensibles
+[env]
+  JAVA_OPTS = ""
+
+[build]
+  dockerfile = "Dockerfile"
+  context = "."
