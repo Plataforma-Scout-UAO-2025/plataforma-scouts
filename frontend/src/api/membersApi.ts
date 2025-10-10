@@ -1,5 +1,5 @@
 import api from "./axios";
-import type { Member } from "../models/types/memberTypes";
+import type { Member } from "@/types/member.type";
 
 // Obtener perfil de miembro
 export const getMember = async (id: string) => {

@@ -1,6 +1,6 @@
 import api from '@/api/axios';
-import { postFormData } from '@/api/formData';
-import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+import { uploadToStorage } from '@/api/upload';
+import { sectionPath } from '@/api/organigramaApi';
 
 // Helper para reemplazar la lista completa de la sección vía PUT (force remove)
 const replaceGalleryList = async (
@@ -9,8 +9,8 @@ const replaceGalleryList = async (
   sectionId: string,
   keepGalleryUuids: string[]
 ): Promise<Record<string, unknown> | null> => {
-  console.log('🔁 [GalleryService] Reemplazando lista completa de galería (PUT) para sección:', sectionId, ' keep:', keepGalleryUuids.length);
-  const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
+  // Reemplazar lista completa de galería (PUT) para sección: info de operación
+  const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
   try {
     // Obtener la rama actual para reutilizar nombre y otros campos requeridos
     const response = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
@@ -28,9 +28,9 @@ const replaceGalleryList = async (
       galleryObjectIds: keepGalleryUuids
     };
 
-    console.log('📦 [GalleryService] PUT payload para reemplazar galería:', payload);
-    const result = await api.put<Record<string, unknown>>(endpoint, payload);
-    console.log('✅ [GalleryService] PUT reemplazo de galería completado');
+  // payload preparado para PUT reemplazo de galería
+  const result = await api.put<Record<string, unknown>>(endpoint, payload);
+  // PUT reemplazo de galería completado
     return result.data ?? null;
   } catch (error) {
     console.error('❌ [GalleryService] Error al reemplazar lista de galería via PUT:', error);
@@ -42,7 +42,7 @@ const replaceGalleryList = async (
 // 🔧 Función auxiliar: obtiene una rama sin dependencias circulares
 // ===============================================================
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
-  const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+  const endpoint = sectionPath(id, tenantSlug, groupSlug);
   // Retornamos un record desconocido y el consumidor puede castear a la forma esperada
   return await api.get<Record<string, unknown> | undefined>(endpoint);
 };
@@ -111,35 +111,29 @@ export const addGalleryImage = async (
   file: File
   , signal?: AbortSignal
 ): Promise<string> => {
-  console.log('📤 [GalleryService] Agregando imagen a galería...');
-  console.log('📝 [GalleryService] Parámetros:', { sectionId, fileName: file.name });
+  // Agregando imagen a galería (inicio de flujo)
+  // Parámetros: sectionId, fileName
 
   try {
     // 1️⃣ Subir archivo a Supabase
     const formData = new FormData();
     formData.append('file', file);
 
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      'storage/upload',
-      formData,
-      {
-        signal,
-      }
-    );
-    console.log('✅ [GalleryService] Nueva imagen subida, objectId:', uploadResponse.objectId);
+  const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, { signal });
+  // Nueva imagen subida
 
     // 2️⃣ Validar UUID del nuevo objeto
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
     // 3️⃣ Enviar PATCH para agregar imagen
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = { operations: [{ op: 'add', newValue: newUuid }] };
 
-    console.log('📦 [GalleryService] PATCH payload para agregar imagen:', addPayload);
-    await api.patch(patchEndpoint, addPayload);
+  // PATCH payload para agregar imagen
+  await api.patch(patchEndpoint, addPayload);
 
-    console.log('✅ [GalleryService] Imagen agregada correctamente a galería');
+  // Imagen agregada correctamente a galería
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
     console.error('❌ [GalleryService] Error agregando imagen a galería:', error);
@@ -155,7 +149,7 @@ export const getGalleryImageUuids = async (
   groupSlug: string,
   sectionId: string
 ): Promise<string[]> => {
-  console.log('🔍 [GalleryService] Obteniendo UUIDs de galería para sección:', sectionId);
+  // Obteniendo UUIDs de galería para sección
 
   try {
     const rama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
@@ -205,11 +199,11 @@ export const getGalleryImageUuids = async (
     // Deduplicate
     const unique = Array.from(new Set(ids));
     if (unique.length > 0) {
-      console.log('✅ [GalleryService] UUIDs de galería obtenidos (normalized):', unique);
+      // UUIDs de galería obtenidos (normalized)
       return unique;
     }
 
-    console.log('ℹ️ [GalleryService] No hay imágenes en la galería (no se detectaron UUIDs)');
+    // No hay imágenes en la galería (no se detectaron UUIDs)
     return [];
     } catch (error) {
     console.error('❌ [GalleryService] Error obteniendo UUIDs de galería:', error);
@@ -228,13 +222,7 @@ export const replaceGalleryImage = async (
   newFile: File
   , signal?: AbortSignal
 ): Promise<string> => {
-  console.log('🔄 [GalleryService] Reemplazando imagen en galería...');
-  console.log('🧾 Parámetros iniciales:', {
-    sectionId,
-    targetImageUuid,
-    newFileName: newFile.name,
-    newFileSize: newFile.size
-  });
+  // Reemplazando imagen en galería: parámetros iniciales (sectionId, targetImageUuid, newFileName, newFileSize)
 
   try {
     // 1️⃣ Extraer y validar UUID de la imagen objetivo
@@ -245,25 +233,19 @@ export const replaceGalleryImage = async (
     }
 
     // 2️⃣ Subir el nuevo archivo
-    console.log('📤 [GalleryService] Subiendo nueva imagen...');
-    const formData = new FormData();
+  // Subiendo nueva imagen
+  const formData = new FormData();
     formData.append('file', newFile);
 
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      'storage/upload',
-      formData,
-      {
-        signal,
-      }
-    );
-    console.log('✅ [GalleryService] Nueva imagen subida:', uploadResponse.objectId);
+    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, { signal });
+  // Nueva imagen subida
 
     // 3️⃣ Validar UUID del nuevo archivo
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
     // 4️⃣ Crear payload y enviar PATCH
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const replacePayload = {
       operations: [
         {
@@ -274,9 +256,9 @@ export const replaceGalleryImage = async (
       ]
     };
 
-    console.log('📦 [GalleryService] PATCH payload para reemplazar imagen:', replacePayload);
-    await api.patch(patchEndpoint, replacePayload);
-    console.log('✅ [GalleryService] Imagen reemplazada correctamente');
+  // PATCH payload para reemplazar imagen
+  await api.patch(patchEndpoint, replacePayload);
+  // Imagen reemplazada correctamente
 
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
@@ -294,8 +276,7 @@ export const removeGalleryImage = async (
   sectionId: string,
   targetImageUuid: string
 ): Promise<void> => {
-  console.log('🗑️ [GalleryService] Eliminando imagen de galería...');
-  console.log('🧾 Parámetros:', { sectionId, targetImageUuid });
+  // Eliminando imagen de galería: parámetros
 
   try {
     const validTargetUuid = extractUuidFromString(targetImageUuid);
@@ -304,13 +285,13 @@ export const removeGalleryImage = async (
       throw new Error('Invalid UUID format detected');
     }
 
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const removePayload = { operations: [{ op: 'remove', targetUuid: validTargetUuid }] };
 
-    console.log('📦 [GalleryService] PATCH payload para eliminar imagen:', removePayload);
-    await api.patch(patchEndpoint, removePayload);
+  // PATCH payload para eliminar imagen
+  await api.patch(patchEndpoint, removePayload);
 
-    console.log('✅ [GalleryService] Imagen eliminada correctamente');
+  // Imagen eliminada correctamente
   } catch (error) {
     console.error('❌ [GalleryService] Error eliminando imagen de galería:', error);
     throw error;
@@ -327,7 +308,7 @@ export const deleteGalleryImageById = async (
   targetImageUuidOrUrl: string,
   deleteFromStorage = false
 ): Promise<Record<string, unknown> | null> => {
-  console.log('🗑️ [GalleryService] Eliminando imagen de galería via DELETE...', { sectionId, targetImageUuidOrUrl, deleteFromStorage });
+  // Eliminando imagen de galería via DELETE: parámetros
 
   try {
     const validTargetUuid = extractUuidFromString(targetImageUuidOrUrl);
@@ -343,26 +324,26 @@ export const deleteGalleryImageById = async (
       throw new Error(`UUID ${validTargetUuid} no encontrado en la galería local de la sección`);
     }
 
-    const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
-    console.log('📍 [GalleryService] DELETE endpoint:', endpoint);
+  const endpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
+  // DELETE endpoint calculado
 
     // La API devuelve el SectionResponseDTO actualizado según el contrato
     const result = await api.delete<Record<string, unknown>>(endpoint);
 
-    console.log('✅ [GalleryService] Eliminación via DELETE completada, servidor devolvió:', result.data);
+  // Eliminación via DELETE completada, servidor devolvió datos
     return result.data ?? null;
   } catch (error) {
     console.error('❌ [GalleryService] Error eliminando imagen de galería via DELETE:', error);
 
     // Si DELETE falla, intentar re-fetch de la sección para confirmar estado
     try {
-      console.log('🔁 [GalleryService] Intentando re-fetch de la sección tras DELETE fallido...');
-      const refreshed = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+  // Intentando re-fetch de la sección tras DELETE fallido
+  const refreshed = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
       const refreshedRec = refreshed as unknown as Record<string, unknown> | undefined;
   const refreshedGallery: string[] = (refreshedRec?.['gallery'] as unknown[] | undefined)?.map((it) => String((it as Record<string, unknown>)?.id)) ?? [];
       const refreshedUuids = (refreshedRec?.['galleryObjectIds'] as string[] | undefined) ?? (refreshedRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
       const combined = Array.from(new Set([...(refreshedGallery || []), ...(refreshedUuids || [])]));
-      console.log('🔍 [GalleryService] UUIDs tras re-fetch:', combined);
+  // UUIDs tras re-fetch: combinado
 
       const validTargetUuid = extractUuidFromString(targetImageUuidOrUrl);
       if (!validTargetUuid) {
@@ -390,10 +371,10 @@ export const deleteGalleryImageById = async (
               const rec = it as unknown as Record<string, unknown>;
               const url = String(rec['url'] ?? '');
               const idField = String(rec['id'] ?? '');
-              if (url.includes(validTargetUuid)) {
+                  if (url.includes(validTargetUuid)) {
                 // Si encontramos una entrada cuyo url contiene el UUID, preferimos usar su id
                 if (idField && idField !== validTargetUuid) {
-                  console.log('🔎 [GalleryService] Encontrado objeto en gallery; usando su id como candidato para eliminación:', idField, ' (url:', url, ')');
+                  // Encontrado objeto en gallery; usando su id como candidato para eliminación
                   candidateId = idField;
                   break;
                 }
@@ -404,12 +385,12 @@ export const deleteGalleryImageById = async (
           }
 
         // Intentar DELETE con candidateId
-        try {
-          const endpointCandidate = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery/${candidateId}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
-          console.log('📍 [GalleryService] Intentando DELETE con candidateId endpoint:', endpointCandidate);
+          try {
+          const endpointCandidate = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${candidateId}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
+          // Intentando DELETE con candidateId endpoint
           await api.delete<Record<string, unknown>>(endpointCandidate);
           const updatedAfterDelete = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-          console.log('✅ [GalleryService] Eliminación con candidateId por DELETE completada, rama actualizada:', updatedAfterDelete.data);
+          // Eliminación con candidateId por DELETE completada
           return updatedAfterDelete.data ?? null;
         } catch (deleteCandidateErr) {
           console.warn('⚠️ [GalleryService] DELETE con candidateId falló, intentando PATCH remove con candidateId:', deleteCandidateErr);
@@ -419,7 +400,7 @@ export const deleteGalleryImageById = async (
         try {
           await removeGalleryImage(tenantSlug, groupSlug, sectionId, candidateId);
           const updated = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-          console.log('✅ [GalleryService] Fallback PATCH remove con candidateId completado, rama actualizada:', updated.data);
+          // Fallback PATCH remove con candidateId completado
           return updated.data ?? null;
           } catch (fallbackErr) {
           console.error('❌ [GalleryService] Fallback con PATCH remove también falló (candidateId):', fallbackErr);
