@@ -6,7 +6,11 @@ const LoginButton = ({ children = "Iniciar Sesión", ...props }) => {
   const { loginWithRedirect } = useAuth0();
 
   const handleClick = () => {
-      loginWithRedirect();
+      loginWithRedirect({
+        authorizationParams: {
+          organization: "org_povsjufF3TEP1DZ7"
+        }
+      });
     }
 
   return (
