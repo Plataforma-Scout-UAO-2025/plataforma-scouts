@@ -1,7 +1,7 @@
-import type { AxiosProgressEvent, AxiosRequestConfig } from "axios";
-import api from "./axios";
+import type { AxiosProgressEvent, AxiosRequestConfig } from 'axios';
+import api from './axios';
 
-type PostFormDataOptions = {
+export type PostFormDataOptions = {
   config?: AxiosRequestConfig;
   onUploadProgress?: (percent: number) => void;
   signal?: AbortSignal;
@@ -17,8 +17,8 @@ export const postFormData = async <T = unknown>(
 
   const response = await api.post<T>(url, formData, {
     ...config,
+    // Do not set Content-Type here — let the browser / axios set boundary
     headers: {
-      "Content-Type": "multipart/form-data",
       ...(config?.headers || {}),
     },
     signal: signal ?? config?.signal,
@@ -34,3 +34,13 @@ export const postFormData = async <T = unknown>(
 
   return response.data;
 };
+
+// Convenience wrapper for the common storage upload endpoint
+export const uploadToStorage = async <T = { objectId: string; url?: string }>(
+  formData: FormData,
+  options: PostFormDataOptions = {}
+): Promise<T> => {
+  return postFormData<T>('/storage/upload', formData, options);
+};
+
+export default postFormData;

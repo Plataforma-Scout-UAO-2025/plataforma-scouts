@@ -1,5 +1,5 @@
 import api from "@/api/axios";
-import { postFormData } from "@/api/formData";
+import { uploadToStorage } from '@/api/upload';
 import { getRamaById } from '../services';
 import { sectionPath } from '@/api/organigramaApi';
 
@@ -50,10 +50,7 @@ export const diagnosticImageUpload = async (
   const formData = new FormData();
   formData.append('file', file);
   
-  const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-    'storage/upload',
-    formData
-  );
+  const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData);
   
   console.log('📤 [DIAGNOSTIC] Upload response:', uploadResponse);
 

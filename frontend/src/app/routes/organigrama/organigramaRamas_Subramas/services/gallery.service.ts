@@ -1,5 +1,5 @@
 import api from '@/api/axios';
-import { postFormData } from '@/api/formData';
+import { uploadToStorage } from '@/api/upload';
 import { sectionPath } from '@/api/organigramaApi';
 
 // Helper para reemplazar la lista completa de la sección vía PUT (force remove)
@@ -119,13 +119,7 @@ export const addGalleryImage = async (
     const formData = new FormData();
     formData.append('file', file);
 
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      'storage/upload',
-      formData,
-      {
-        signal,
-      }
-    );
+    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, { signal });
     console.log('✅ [GalleryService] Nueva imagen subida, objectId:', uploadResponse.objectId);
 
     // 2️⃣ Validar UUID del nuevo objeto
@@ -249,13 +243,7 @@ export const replaceGalleryImage = async (
     const formData = new FormData();
     formData.append('file', newFile);
 
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      'storage/upload',
-      formData,
-      {
-        signal,
-      }
-    );
+    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, { signal });
     console.log('✅ [GalleryService] Nueva imagen subida:', uploadResponse.objectId);
 
     // 3️⃣ Validar UUID del nuevo archivo

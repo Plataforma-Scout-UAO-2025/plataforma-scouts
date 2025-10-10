@@ -1,5 +1,5 @@
 import api from "@/api/axios";
-import { postFormData } from "@/api/formData";
+import { postFormData, uploadToStorage } from '@/api/upload';
 import { subgroupPath } from '@/api/organigramaApi';
 import { getSubramaById } from './subrama.service';
 
@@ -21,14 +21,10 @@ export const updateSubramaMainImage = async (
     // 1️⃣ Subir el archivo a storage
     const formData = new FormData();
     formData.append('file', file);
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      'storage/upload',
-      formData,
-      {
-        onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
-        signal,
-      }
-    );
+    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, {
+      onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
+      signal,
+    });
     console.log('✅ Archivo subido:', uploadResponse.objectId);
 
     // Si la señal fue abortada inmediatamente después del upload, no asociamos

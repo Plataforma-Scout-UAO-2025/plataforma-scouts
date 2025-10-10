@@ -1,5 +1,5 @@
 import api from "@/api/axios";
-import { postFormData } from "@/api/formData";
+import { postFormData, uploadToStorage } from '@/api/upload';
 import { sectionPath, subgroupPath } from '@/api/organigramaApi';
 type MaybeAxiosError = { response?: { data?: unknown } };
 
@@ -32,10 +32,7 @@ export const diagnoseBatchImageUpload = async (
     const formData = new FormData();
     formData.append("file", file);
 
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      "storage/upload",
-      formData
-    );
+    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData);
     console.log("✅ [DIAGNÓSTICO] Upload exitoso, objectId:", uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
@@ -102,14 +99,10 @@ export const uploadSectionIcon = async (
     formData.append("file", file);
 
     console.log("🔄 [ImageUploadService] Subiendo archivo al storage...");
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      "storage/upload",
-      formData,
-      {
-        onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
-        signal,
-      }
-    );
+    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, {
+      onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
+      signal,
+    });
     console.log("✅ [ImageUploadService] Archivo subido, objectId:", uploadResponse.objectId);
 
     // Paso 2: Usar endpoint PATCH específico para icono
@@ -177,14 +170,10 @@ export const uploadSectionMainImage = async (
     const formData = new FormData();
     formData.append("file", file);
 
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      "storage/upload",
-      formData,
-      {
-        onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
-        signal,
-      }
-    );
+    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, {
+      onUploadProgress: (percent: number) => onFileProgress?.(file.name, percent),
+      signal,
+    });
 
     // Paso 2: Usar endpoint PATCH específico para imagen principal
     console.log(
@@ -256,21 +245,17 @@ export const uploadGalleryImages = async (
       const formData = new FormData();
       formData.append("file", file);
 
-      const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-        "storage/upload",
-        formData,
-        {
-          onUploadProgress: (percent: number) => {
-            perFileProgress[file.name] = percent;
-            onFileProgress?.(file.name, percent);
+      const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, {
+        onUploadProgress: (percent: number) => {
+          perFileProgress[file.name] = percent;
+          onFileProgress?.(file.name, percent);
 
-            const sum = Object.values(perFileProgress).reduce((a, b) => a + b, 0);
-            const overall = Math.round(sum / totalFiles);
-            onOverallProgress?.(overall);
-          },
-          signal,
-        }
-      );
+          const sum = Object.values(perFileProgress).reduce((a, b) => a + b, 0);
+          const overall = Math.round(sum / totalFiles);
+          onOverallProgress?.(overall);
+        },
+        signal,
+      });
 
       objectIds.push(uploadResponse.objectId);
       urls.push(uploadResponse.url || uploadResponse.objectId);
