@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
 import api from "@/api/axios";
+import { sectionPath } from '@/api/organigramaApi';
 import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
@@ -48,20 +49,20 @@ export default function RamaDetail() {
         // If mapper didn't provide gallery URLs, try fetching raw backend record as fallback
         if (galleryUrls.length === 0) {
           try {
-            const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
-            console.log('🔎 [RamaDetail] galleryUrls empty; fetching backend raw endpoint as fallback:', endpoint);
+            const endpoint = sectionPath(id ?? '', tenantSlug, groupSlug);
+            // fallback: solicitar registro raw al backend si el mapper no devolvió galleryUrls
             const response = await api.get<Record<string, unknown>>(endpoint);
             const backendRec = response.data;
             if (backendRec) {
               const fromBackendGallery = (backendRec['gallery'] as unknown[] | undefined) ?? [];
               if (Array.isArray(fromBackendGallery) && fromBackendGallery.length > 0) {
                 galleryUrls = (fromBackendGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean);
-                console.log('🔎 [RamaDetail] galleryUrls recuperadas desde backend.gallery:', galleryUrls.length);
+                // galleryUrls recuperadas desde backend.gallery
               } else {
                 const maybeUrls = (backendRec['galleryObjectUrls'] as string[] | undefined) ?? (backendRec['galleryObjectIds'] as string[] | undefined) ?? (backendRec['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
                 if (Array.isArray(maybeUrls) && maybeUrls.length > 0) {
                   galleryUrls = maybeUrls.map(String).filter(Boolean);
-                  console.log('🔎 [RamaDetail] galleryUrls recuperadas desde backend aliases:', galleryUrls.length);
+                  // galleryUrls recuperadas desde aliases del backend
                 }
               }
             }
@@ -70,9 +71,8 @@ export default function RamaDetail() {
           }
         }
 
-        setGaleriaFotos(galleryUrls);
-        console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
-        console.log('📸 [RamaDetail] URLs de galería del backend:', galleryUrls);
+  setGaleriaFotos(galleryUrls);
+  // información: imagen principal y cantidad de imágenes de galería cargadas
       }
     } catch (err) {
       console.error('❌ [RamaDetail] Error cargando rama:', err);
@@ -362,14 +362,12 @@ export default function RamaDetail() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Recargar la rama para obtener la imagen actualizada
-      console.log('🔄 [RamaDetail] Recargando rama para obtener icono actualizado...');
       const updatedRama = await organigramaService.getRamaById(tenantSlug, groupSlug, rama.id);
       if (updatedRama) {
         setRama(updatedRama);
         // marcar 100% visualmente cuando el backend confirma
         setUploadPercent(100);
-        console.log('✅ [RamaDetail] Icono actualizado correctamente');
-        console.log('🔍 [RamaDetail] Nuevo icono URL:', updatedRama.icono);
+        // icono actualizado correctamente
         toast.success('Ícono actualizado correctamente');
       } else {
         console.warn('⚠️ [RamaDetail] No se pudo recargar la rama');
@@ -396,7 +394,7 @@ export default function RamaDetail() {
     const preview = URL.createObjectURL(file);
     const previousMain = imagenPrincipal;
     try {
-      console.log('🔄 [RamaDetail] Subiendo imagen principal:', file.name);
+      // subiendo imagen principal: información del archivo
   // mostrar preview inmediato
   setImagenPrincipal(preview);
   setUploading(true);
@@ -423,14 +421,14 @@ export default function RamaDetail() {
 
       // Recargar la rama para obtener la imagen actualizada
       const updatedRama = await organigramaService.getRamaById(tenantSlug, groupSlug, rama.id);
-      if (updatedRama) {
+        if (updatedRama) {
         setRama(updatedRama);
         // Actualizar también el estado local de imagen principal
         const mainImageUrl = getMainImageUrl(updatedRama);
         setImagenPrincipal(`${mainImageUrl}?v=${Date.now()}`);
         // marcar 100% visualmente cuando el backend confirma
         setUploadPercent(100);
-        console.log('✅ [RamaDetail] Imagen principal actualizada correctamente');
+        // imagen principal actualizada correctamente
         toast.success('Imagen principal actualizada correctamente');
       }
       setImageRefreshToken(Date.now());
@@ -452,7 +450,7 @@ export default function RamaDetail() {
     if (files.length === 0 || !rama) return;
 
     try {
-      console.log('🔄 [RamaDetail] Subiendo galería:', files.length, 'archivos');
+      // subiendo galería: cantidad de archivos
   setUploading(true);
   setUploadCompleteAnnounced(false);
   setUploadPercent(0);
@@ -469,11 +467,10 @@ export default function RamaDetail() {
         await addGalleryImage(sectionId, f);
       }
 
-      // Refrescar todos los datos de la rama para obtener la galería actualizada
-      console.log('🔄 [RamaDetail] Refrescando datos de la rama después de subir galería...');
-      await fetchRama();
+    // Refrescar todos los datos de la rama para obtener la galería actualizada
+    await fetchRama();
       
-  console.log('✅ [RamaDetail] Galería actualizada correctamente');
+  // galería actualizada correctamente
   // marcar 100% visualmente cuando el backend confirma
   setUploadPercent(100);
   toast.success('Galería actualizada correctamente');
@@ -515,9 +512,9 @@ export default function RamaDetail() {
           const rec = data as unknown as Record<string, unknown>;
           let galleryUrls: string[] = [];
           if (Array.isArray(rec['gallery']) && (rec['gallery'] as unknown[]).length > 0) {
-            try {
+              try {
               galleryUrls = (rec['gallery'] as Array<Record<string, unknown>>).map(g => String(g.url)).filter(u => !!u);
-              console.log('📌 [RamaDetail] Extrayendo gallery.urls desde rec["gallery"]');
+              // extrayendo gallery.urls desde rec['gallery']
             } catch {
               galleryUrls = [];
             }
@@ -525,16 +522,14 @@ export default function RamaDetail() {
           // Fallbacks: galleryObjectUrls, galleryObjectIds, sectionGalleryObjectIds
           if (galleryUrls.length === 0) {
             const maybe1 = (rec['galleryObjectUrls'] ?? rec['galleryObjectIds'] ?? rec['galleryObjectIds'] ?? rec['sectionGalleryObjectIds'] ?? []) as string[];
-            if (Array.isArray(maybe1) && maybe1.length > 0) {
+              if (Array.isArray(maybe1) && maybe1.length > 0) {
               galleryUrls = maybe1.map(String).filter(u => !!u);
-              console.log('📌 [RamaDetail] Extrayendo galleryUrls desde alias:', Object.keys(rec).filter(k=>k.toLowerCase().includes('gallery')));
+              // extrayendo galleryUrls desde aliases (keys): mirar campos relacionados con 'gallery'
             }
           }
 
           setGaleriaFotos(galleryUrls);
-          // Log para diagnóstico
-          console.log(`📸 [RamaDetail] Cargada imagen principal y ${galleryUrls.length} imágenes de galería para rama ${data.nombre}`);
-          console.log('📸 [RamaDetail] URLs de galería del backend (resueltas):', galleryUrls);
+          // imagen principal y galería cargadas (fallback)
         }
       } catch (_err) {
         console.error('❌ [RamaDetail] Error cargando rama:', _err);
@@ -594,7 +589,7 @@ export default function RamaDetail() {
                     e.currentTarget.style.display = 'none';
                   }}
                   onLoad={() => {
-                    console.log('✅ Icono de rama cargado correctamente:', rama?.name ?? rama?.nombre);
+                    // icono cargado correctamente
                   }}
                 />
               ) : (

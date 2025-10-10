@@ -17,8 +17,7 @@ import type {
 
 // Mapear datos del backend a formato frontend para Ramas
 export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
-  // 🔍 LOG DETALLADO: Ver qué campos exactos recibimos del backend
-  console.log('🔄 [Mapper] Input del backend completo:', JSON.stringify(backendRama, null, 2));
+  // Input del backend disponible en backendRama (detalle suprimido en logs)
   
   // Intentar extraer el ID canonical que provee el backend desde varios nombres posibles
   const rawId = (backendRama as unknown as Record<string, unknown>).section_id ?? (backendRama as unknown as Record<string, unknown>).sectionId ?? (backendRama as unknown as Record<string, unknown>).id ?? (backendRama as unknown as Record<string, unknown>).ID;
@@ -44,11 +43,7 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   const photoPrincipalUrl = String((backendRama as unknown as Record<string, unknown>).photo_principal_url ?? (backendRama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
   const galleryUrls = ((backendRama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendRama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
 
-  // 🔍 LOG DETALLADO: Ver qué URLs exactas estamos extrayendo
-  console.log('🔍 [Mapper] URLs extraídas:');
-  console.log('   - iconUrl:', iconUrl);
-  console.log('   - photoPrincipalUrl:', photoPrincipalUrl);
-  console.log('   - galleryUrls:', galleryUrls);
+  // URLs extraídas: iconUrl, photoPrincipalUrl, galleryUrls
 
   const mappedRama: Rama = {
     // canonical ids
@@ -120,19 +115,14 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   _mappedRamaAny.section_id = mappedRama.sectionId;
   _mappedRamaAny.ramaId = mappedRama.sectionId;
   
-  const recForLog = backendRama as unknown as Record<string, unknown>;
-  console.log('🔄 [Mapper] Rama mapeada final:', { 
-    backend: { name: recForLog['name'], section_id: recForLog['section_id'] ?? recForLog['sectionId'], id: recForLog['id'] },
-    frontend: { name: mappedRama.name, id: mappedRama.id, iconUrl: mappedRama.iconUrl, mainImageUrl: mappedRama.mainImageUrl }
-  });
+  // Rama mapeada final disponible en mappedRama
   
   return mappedRama;
 };
 
 // Mapear datos del backend a formato frontend para Subramas
 export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Subrama => {
-  // 🔍 LOG DETALLADO: Ver qué campos exactos recibimos del backend para subramas
-  console.log('🔄 [Mapper] Input del backend para SUBRAMA:', JSON.stringify(backendSubrama, null, 2));
+  // Input del backend para SUBRAMA disponible en backendSubrama (detalle suprimido en logs)
   
   // Intentar extraer el ID canonical que provee el backend desde varios nombres posibles
   const rawId = backendSubrama.subgroup_id ?? backendSubrama.subgroupId ?? backendSubrama.id ?? backendSubrama.ID ?? backendSubrama.subgroupIdLegacy;
@@ -168,11 +158,7 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
   const photoPrincipalUrl = String((backendSubrama as unknown as Record<string, unknown>).photo_principal_url ?? (backendSubrama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
   const galleryUrls = ((backendSubrama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendSubrama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
 
-  // 🔍 LOG DETALLADO: Ver qué URLs estamos extrayendo para subramas
-  console.log('🔍 [Mapper] URLs extraídas para SUBRAMA:');
-  console.log('   - iconUrl:', iconUrl);
-  console.log('   - photoPrincipalUrl:', photoPrincipalUrl);
-  console.log('   - galleryUrls:', galleryUrls);
+  // URLs extraídas para subrama: iconUrl, photoPrincipalUrl, galleryUrls
 
   const mappedSubrama: Subrama = {
     id: extractedId ?? consistentId,
@@ -205,17 +191,7 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
   _mappedSubramaAny.subgroup_id = mappedSubrama.id;
   _mappedSubramaAny.ramaId = backendSubrama.section_id ?? backendSubrama.sectionId ?? '';
 
-  const subRecForLog = backendSubrama as unknown as Record<string, unknown>;
-  console.log('🔄 [Mapper] Subrama mapeada final:', { 
-    backend: { name: subRecForLog['subgroupName'] ?? subRecForLog['name'], subgroupId: subRecForLog['subgroup_id'] ?? subRecForLog['subgroupId'] },
-    frontend: { 
-      name: mappedSubrama.name, 
-      id: mappedSubrama.id, 
-      iconUrl: mappedSubrama.iconUrl, 
-      mainImageUrl: mappedSubrama.mainImageUrl,
-      galleryCount: mappedSubrama.galleryObjectIds?.length || 0
-    }
-  });
+  // Subrama mapeada final disponible en mappedSubrama
 
   return mappedSubrama;
 };
