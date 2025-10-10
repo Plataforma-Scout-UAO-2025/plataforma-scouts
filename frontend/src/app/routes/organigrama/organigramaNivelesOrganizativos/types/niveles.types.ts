@@ -3,14 +3,14 @@ export type Cargo = {
   nombre: string;
   titular?: string;
   visible: boolean;
-  descripcion?: string; // ✅ agregado
+  descripcion?: string; 
 };
 
 export type Nivel = {
   id: string;
   nombre: string;
   visible: boolean;
-  descripcion?: string; // ✅ agregado
+  descripcion?: string; 
   cargos: Cargo[];
 };
 

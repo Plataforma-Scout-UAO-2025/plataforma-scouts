@@ -32,26 +32,49 @@ export default function EditCargoModal({ open, cargo, onClose, onSave }: Props) 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md rounded-xl bg-card border border-border shadow-md p-6">
         <DialogHeader>
-          <DialogTitle className="text-emerald-900 text-2xl font-bold">Editar Cargo</DialogTitle>
+          <DialogTitle className="text-primary text-2xl font-extrabold">
+            Editar Cargo
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+
+        <div className="space-y-4 mt-2">
           <div>
-            <label className="block text-sm font-medium mb-1">Nombre del Cargo *</label>
+            <label className="block text-sm font-medium mb-1 text-foreground">
+              Nombre del Cargo *
+            </label>
             <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-1">Persona Asignada *</label>
+            <label className="block text-sm font-medium mb-1 text-foreground">
+              Persona Asignada *
+            </label>
             <Input value={titular} onChange={(e) => setTitular(e.target.value)} />
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-1">Descripción</label>
+            <label className="block text-sm font-medium mb-1 text-foreground">
+              Descripción
+            </label>
             <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
           </div>
-          <div className="flex justify-end gap-2 mt-2">
-            <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-            <Button className="bg-emerald-900 hover:bg-emerald-800" onClick={handleSave}>Guardar Cambios</Button>
+
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="border border-secondary text-secondary hover:bg-accent hover:text-secondary-foreground"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="bg-primary text-white hover:bg-primary-hover"
+            >
+              Guardar Cambios
+            </Button>
           </div>
         </div>
       </DialogContent>
