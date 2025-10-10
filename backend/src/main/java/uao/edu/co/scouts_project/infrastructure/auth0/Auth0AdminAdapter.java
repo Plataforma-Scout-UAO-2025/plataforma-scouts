@@ -6,6 +6,12 @@ import com.auth0.json.mgmt.RolesPage;
 import com.auth0.json.mgmt.organizations.OrganizationsPage;
 import com.auth0.json.mgmt.users.User;
 import com.auth0.json.mgmt.users.UsersPage;
+import com.auth0.client.mgmt.filter.PageFilter;
+import com.auth0.client.mgmt.filter.UserFilter;
+import com.auth0.json.mgmt.organizations.Member;
+import com.auth0.json.mgmt.organizations.Members;
+import com.auth0.json.mgmt.organizations.MembersPage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -13,6 +19,9 @@ import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
+import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
+import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
+import uao.edu.co.scouts_project.domain.exception.auth0.UserNotMemberException;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 
@@ -39,7 +48,6 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         return provider.getManagementAPI();
     }
 
-    @Override
     @SuppressWarnings("deprecation") // setPassword está deprecado en SDK actual; mantener hasta migrar estrategia de creación.
     public CreatedUserDTO createUser(CreateUserCommandDTO cmd) {
         try {
@@ -56,7 +64,16 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
-    @Override
+    public UserSummaryDTO getUserById(String userId) {
+        try {
+            User user = api().users().get(userId, (UserFilter) null).execute();
+            return new UserSummaryDTO(user.getId(), user.getEmail(), user.getUsername());
+        } catch (Auth0Exception e) {
+            log.error("Error obteniendo usuario {}: {}", userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo obteniendo usuario", e);
+        }
+    }
+
     public void assignRole(String userId, String roleId) {
         try {
             api().users().addRoles(userId, List.of(roleId)).execute();
@@ -66,7 +83,6 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
-    @Override
     public List<UserSummaryDTO> listUsers() {
         try {
             UsersPage users = api().users().list(null).execute(); // sin paginación explícita (usa defaults de Auth0)
@@ -79,7 +95,6 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
-    @Override
     public List<RoleSummaryDTO> listRoles() {
         try {
             RolesPage roles = api().roles().list(null).execute();
@@ -92,7 +107,6 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
-    @Override
     public List<OrganizationSummaryDTO> listOrganizations() {
         try {
             OrganizationsPage orgs = api().organizations().list(null).execute();
@@ -105,7 +119,67 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
-    @Override
+    public void addUserToOrganization(String organizationId, String userId) {
+        try {
+            // Validar si ya es miembro antes de intentar agregarlo
+            if (isUserMemberOfOrganization(organizationId, userId)) {
+                throw new UserAlreadyMemberException(userId, organizationId);
+            }
+
+            // Si no es miembro, lo agregamos
+            api().organizations()
+                .addMembers(organizationId, new Members(java.util.List.of(userId)))
+                .execute();
+        } catch (UserAlreadyMemberException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new Auth0GatewayException("Error agregando miembro a la organización", ex);
+        }
+    }
+
+    // Recorre paginado de miembros de la organización y busca el userId
+    private boolean isUserMemberOfOrganization(String organizationId, String userId) throws Exception {
+        int page = 0;
+        final int perPage = 50;
+        while (true) {
+            MembersPage membersPage = api().organizations()
+                    .getMembers(organizationId, new PageFilter().withPage(page, perPage))
+                    .execute();
+
+            if (membersPage == null || membersPage.getItems() == null || membersPage.getItems().isEmpty()) {
+                return false;
+            }
+
+            for (Member m : membersPage.getItems()) {
+                if (userId.equals(m.getUserId())) {
+                    return true;
+                }
+            }
+
+            if (membersPage.getItems().size() < perPage) {
+                return false;
+            }
+            page++;
+        }
+    }
+
+    public UserSummaryDTO getUserInOrganization(String organizationId, String userId) {
+        try {
+            if (!isUserMemberOfOrganization(organizationId, userId)) {
+                throw new UserNotMemberException(userId, organizationId);
+            }
+            User user = api().users().get(userId, (UserFilter) null).execute();
+            return new UserSummaryDTO(user.getId(), user.getEmail(), user.getUsername());
+        } catch (UserNotMemberException ex) {
+            throw ex;
+        } catch (Auth0Exception e) {
+            log.error("Error obteniendo usuario {} dentro de organización {}: {}", userId, organizationId, e.getMessage());
+            throw new Auth0GatewayException("Fallo obteniendo usuario en organización", e);
+        } catch (Exception e) {
+            throw new Auth0GatewayException("Error consultando membresía de organización", e);
+        }
+    }
+
     public int countRoles() {
         try {
             RolesPage roles = api().roles().list(null).execute();
@@ -116,10 +190,5 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
-    // Excepción específica para separar errores de integración
-    public static class Auth0GatewayException extends RuntimeException {
-        public Auth0GatewayException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
+   
 }

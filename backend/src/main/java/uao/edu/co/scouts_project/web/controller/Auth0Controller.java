@@ -1,137 +1,204 @@
 package uao.edu.co.scouts_project.web.controller;
 
-
-import com.auth0.client.mgmt.ManagementAPI;
-import com.auth0.exception.Auth0Exception;
-import com.auth0.json.mgmt.RolesPage;
-import com.auth0.json.mgmt.users.User;
-import com.auth0.json.mgmt.users.UsersPage;
-
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import uao.edu.co.scouts_project.infrastructure.auth0.Auth0ManagementClientProvider;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
+import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
+import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
+import uao.edu.co.scouts_project.service.auth0.IAuth0Service;
+// no param-level constraints to keep errors in-controller
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth0")
 @Tag(name = "Auth0 Management", description = "Endpoints para interactuar con Auth0 Management API")
 public class Auth0Controller {
 
-    private static final Logger log = LoggerFactory.getLogger(Auth0Controller.class);
-    private final Auth0ManagementClientProvider clientProvider;
+    // Logger can be added if needed
+    private final IAuth0Service auth0Service;
 
-    public Auth0Controller(Auth0ManagementClientProvider clientProvider) {
-        this.clientProvider = clientProvider;
+    public Auth0Controller(IAuth0Service auth0Service) {
+        this.auth0Service = auth0Service;
     }
 
-
-    // --- 🔹 Listar usuarios ---
-@GetMapping("/users")
-@Operation(summary = "Lista todos los usuarios registrados en Auth0")
-public ResponseEntity<?> listUsers() {
-    try {
-        ManagementAPI api = clientProvider.getManagementAPI();
-        UsersPage users = api.users().list(null).execute();
-        return ResponseEntity.ok(users.getItems());
-    } catch (Auth0Exception e) {
-        log.error("Error listando usuarios: {}", e.getMessage());
-        return ResponseEntity.internalServerError().body(e.getMessage());
-    }
-}
-
-// --- 🔹 Listar roles ---
-@GetMapping("/roles")
-@Operation(summary = "Lista todos los roles configurados en Auth0")
-public ResponseEntity<?> listRoles() {
-    try {
-        ManagementAPI api = clientProvider.getManagementAPI();
-        RolesPage roles = api.roles().list(null).execute();
-        return ResponseEntity.ok(roles.getItems());
-    } catch (Auth0Exception e) {
-        log.error("Error listando roles: {}", e.getMessage());
-        return ResponseEntity.internalServerError().body(e.getMessage());
-    }
-}
-
-
-    // --- 1️⃣ Crear usuario ---
-    @PostMapping("/users")
-    @Operation(summary = "Crea un nuevo usuario en Auth0 con email, password y username")
-    public ResponseEntity<?> createUser(
-            @RequestParam String email,
-            @RequestParam String password,
-            @RequestParam String username
-    ) {
+    @GetMapping("/users")
+    @Operation(summary = "Lista todos los usuarios registrados en Auth0", responses = {
+            @ApiResponse(responseCode = "200", description = "Listado de usuarios devuelto correctamente"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+    })
+    public ResponseEntity<?> listUsers() {
         try {
-            ManagementAPI api = clientProvider.getManagementAPI();
-
-            User user = new User("Username-Password-Authentication");
-            user.setEmail(email);
-            user.setPassword(password);
-            user.setUsername(username);
-            user.setEmailVerified(false);
-
-            User created = api.users().create(user).execute();
-            return ResponseEntity.ok(created);
-        } catch (Auth0Exception e) {
-            log.error("Error creando usuario: {}", e.getMessage());
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            List<UserSummaryDTO> users = auth0Service.listUsers();
+            return ResponseEntity.ok(users);
+        } catch (Auth0GatewayException ex) {
+            return toGatewayError(ex, "Fallo listando usuarios");
         }
     }
 
-    // --- 2️⃣ Asignar rol a usuario ---
+    @GetMapping("/organizations")
+    @Operation(summary = "Lista todas las organizaciones registradas en Auth0", responses = {
+            @ApiResponse(responseCode = "200", description = "Listado de organizaciones devuelto correctamente"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+    })
+    public ResponseEntity<?> listOrganizations() {
+        try {
+            List<OrganizationSummaryDTO> orgs = auth0Service.listOrganizations();
+            return ResponseEntity.ok(orgs);
+        } catch (Auth0GatewayException ex) {
+            return toGatewayError(ex, "Fallo listando organizaciones");
+        }
+    }
+
+    @GetMapping("/roles")
+    @Operation(summary = "Lista todos los roles configurados en Auth0", responses = {
+            @ApiResponse(responseCode = "200", description = "Listado de roles devuelto correctamente"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+    })
+    public ResponseEntity<?> listRoles() {
+        try {
+            List<RoleSummaryDTO> roles = auth0Service.listRoles();
+            return ResponseEntity.ok(roles);
+        } catch (Auth0GatewayException ex) {
+            return toGatewayError(ex, "Fallo listando roles");
+        }
+    }
+
+    @GetMapping("/users/{userId}")
+    @Operation(summary = "Obtiene un usuario por su ID en Auth0", responses = {
+            @ApiResponse(responseCode = "200", description = "Usuario encontrado", content = @Content(schema = @Schema(implementation = UserSummaryDTO.class))),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+    })
+    public ResponseEntity<?> getUserById(@PathVariable String userId) {
+        try {
+            UserSummaryDTO user = auth0Service.getUserById(userId);
+            return ResponseEntity.ok(user);
+        } catch (Auth0GatewayException ex) {
+            return toGatewayError(ex, "Fallo obteniendo usuario");
+        }
+    }
+
     @PostMapping("/users/{userId}/roles")
-    @Operation(summary = "Asigna un rol a un usuario existente en Auth0")
+    @Operation(summary = "Asigna un rol a un usuario existente en Auth0", responses = {
+            @ApiResponse(responseCode = "200", description = "Rol asignado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida (parámetros requeridos o inválidos)"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+    })
     public ResponseEntity<?> assignRoleToUser(@PathVariable String userId, @RequestParam String roleId) {
+        if (roleId == null || roleId.isBlank()) {
+            return badRequest("roleId es obligatorio");
+        }
         try {
-            ManagementAPI api = clientProvider.getManagementAPI();
-            api.users().addRoles(userId, List.of(roleId)).execute();
-            return ResponseEntity.ok("Rol asignado correctamente al usuario " + userId);
-        } catch (Auth0Exception e) {
-            log.error("Error asignando rol: {}", e.getMessage());
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            auth0Service.assignRole(userId, roleId);
+            Map<String, Object> body = Map.of(
+                    "message", "Rol asignado correctamente",
+                    "userId", userId,
+                    "roleId", roleId);
+            return ResponseEntity.ok(body);
+        } catch (IllegalArgumentException ex) {
+            return badRequest(ex.getMessage());
+        } catch (Auth0GatewayException ex) {
+            return toGatewayError(ex, "Fallo asignando rol");
         }
     }
 
-    // --- 3️⃣ Verificar autenticación real ---
-    @GetMapping("/verify")
-    @Operation(summary = "Verifica que la API esté autenticada correctamente contra Auth0")
-    public ResponseEntity<?> verifyAuth() {
+    @PostMapping("/organizations/{organizationId}/members")
+    @Operation(summary = "Asocia un usuario a una organización en Auth0", responses = {
+            @ApiResponse(responseCode = "200", description = "Usuario asociado a la organización"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "409", description = "El usuario ya pertenece a la organización"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+    })
+    public ResponseEntity<?> addUserToOrganization(@PathVariable String organizationId, @RequestParam String userId) {
+        if (userId == null || userId.isBlank()) {
+            return badRequest("userId es obligatorio");
+        }
         try {
-            ManagementAPI api = clientProvider.getManagementAPI();
-            RolesPage roles = api.roles().list(null).execute();
-            return ResponseEntity.ok("✅ Conexión válida con Auth0. Roles disponibles: " + roles.getItems().size());
-        } catch (Auth0Exception e) {
-            log.error("Error verificando autenticación: {}", e.getMessage());
-            return ResponseEntity.status(401).body("❌ No autenticado con Auth0: " + e.getMessage());
+            auth0Service.addUserToOrganization(organizationId, userId);
+            Map<String, Object> body = Map.of(
+                    "message", "Usuario agregado a la organización",
+                    "organizationId", organizationId,
+                    "userId", userId);
+            return ResponseEntity.ok(body);
+        } catch (UserAlreadyMemberException ex) {
+            Map<String, Object> body = Map.of(
+                    "message", "El usuario ya pertenece a la organización",
+                    "organizationId", organizationId,
+                    "userId", userId);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        } catch (IllegalArgumentException ex) {
+            return badRequest(ex.getMessage());
+        } catch (Auth0GatewayException ex) {
+            return toGatewayError(ex, "Fallo agregando usuario a organización");
         }
     }
 
-
-
-
-        // --- 🔹 Listar organizaciones ---
-        @GetMapping("/organizations")
-        @Operation(summary = "Lista todas las organizaciones registradas en Auth0")
-        public ResponseEntity<?> listOrganizations() {
-            try {
-                ManagementAPI api = clientProvider.getManagementAPI();
-                var orgs = api.organizations().list(null).execute();
-                return ResponseEntity.ok(orgs.getItems());
-            } catch (Auth0Exception e) {
-                log.error("Error listando organizaciones: {}", e.getMessage());
-                return ResponseEntity.internalServerError().body(e.getMessage());
+    @PostMapping("/users")
+    @Operation(summary = "Crea un nuevo usuario en Auth0 con email, password y username", responses = {
+            @ApiResponse(responseCode = "200", description = "Usuario creado", content = @Content(schema = @Schema(implementation = CreatedUserDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+    })
+    @RequestBody(required = true, description = "Datos para crear el usuario", content = @Content(schema = @Schema(implementation = CreateUserCommandDTO.class)))
+    public ResponseEntity<?> createUser(
+            @Valid @org.springframework.web.bind.annotation.RequestBody CreateUserCommandDTO request,
+            BindingResult bindingResult) {
+        try {
+            if (bindingResult.hasErrors()) {
+                return validationError(bindingResult);
             }
+            CreatedUserDTO created = auth0Service.createUser(request);
+            return ResponseEntity.ok(created);
+        } catch (IllegalArgumentException ex) {
+            return badRequest(ex.getMessage());
+        } catch (Auth0GatewayException ex) {
+            return toGatewayError(ex, "Fallo creando usuario");
         }
+    }
 
+    private ResponseEntity<Map<String, Object>> validationError(BindingResult bindingResult) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "Solicitud inválida");
+        Map<String, String> errors = new HashMap<>();
+        for (var error : bindingResult.getFieldErrors()) {
+            errors.put(((FieldError) error).getField(), error.getDefaultMessage());
+        }
+        body.put("errors", errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 
+    private ResponseEntity<Map<String, Object>> toGatewayError(Auth0GatewayException ex, String fallbackMessage) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", fallbackMessage);
+        body.put("detail", ex.getMessage());
+        Throwable cause = ex.getCause();
+        if (cause != null) {
+            body.put("cause", cause.getClass().getSimpleName());
+            body.put("causeMessage", cause.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
+    }
 
-
+    private ResponseEntity<Map<String, Object>> badRequest(String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 
 }
