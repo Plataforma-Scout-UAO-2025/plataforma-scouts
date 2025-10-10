@@ -1,9 +1,9 @@
 # Stage 1: Build the React Vite application
 FROM node:24-alpine AS builder
 WORKDIR /app
-COPY frontend/package*.json ./
+COPY package*.json ./
 RUN npm ci || npm install
-COPY frontend/ .
+COPY . .
 
 RUN npm run build
 
