@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
 import api from "@/api/axios";
+import { sectionPath } from '@/api/organigramaApi';
 import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
@@ -48,7 +49,7 @@ export default function RamaDetail() {
         // If mapper didn't provide gallery URLs, try fetching raw backend record as fallback
         if (galleryUrls.length === 0) {
           try {
-            const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+            const endpoint = sectionPath(id ?? '', tenantSlug, groupSlug);
             console.log('🔎 [RamaDetail] galleryUrls empty; fetching backend raw endpoint as fallback:', endpoint);
             const response = await api.get<Record<string, unknown>>(endpoint);
             const backendRec = response.data;

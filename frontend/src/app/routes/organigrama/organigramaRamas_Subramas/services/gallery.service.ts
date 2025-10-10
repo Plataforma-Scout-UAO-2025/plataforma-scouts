@@ -1,6 +1,6 @@
 import api from '@/api/axios';
 import { postFormData } from '@/api/formData';
-import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+import { sectionPath } from '@/api/organigramaApi';
 
 // Helper para reemplazar la lista completa de la sección vía PUT (force remove)
 const replaceGalleryList = async (
@@ -10,7 +10,7 @@ const replaceGalleryList = async (
   keepGalleryUuids: string[]
 ): Promise<Record<string, unknown> | null> => {
   console.log('🔁 [GalleryService] Reemplazando lista completa de galería (PUT) para sección:', sectionId, ' keep:', keepGalleryUuids.length);
-  const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
+  const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
   try {
     // Obtener la rama actual para reutilizar nombre y otros campos requeridos
     const response = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
@@ -42,7 +42,7 @@ const replaceGalleryList = async (
 // 🔧 Función auxiliar: obtiene una rama sin dependencias circulares
 // ===============================================================
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
-  const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+  const endpoint = sectionPath(id, tenantSlug, groupSlug);
   // Retornamos un record desconocido y el consumidor puede castear a la forma esperada
   return await api.get<Record<string, unknown> | undefined>(endpoint);
 };
@@ -133,7 +133,7 @@ export const addGalleryImage = async (
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
     // 3️⃣ Enviar PATCH para agregar imagen
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = { operations: [{ op: 'add', newValue: newUuid }] };
 
     console.log('📦 [GalleryService] PATCH payload para agregar imagen:', addPayload);
@@ -263,7 +263,7 @@ export const replaceGalleryImage = async (
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
     // 4️⃣ Crear payload y enviar PATCH
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const replacePayload = {
       operations: [
         {
@@ -304,7 +304,7 @@ export const removeGalleryImage = async (
       throw new Error('Invalid UUID format detected');
     }
 
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const removePayload = { operations: [{ op: 'remove', targetUuid: validTargetUuid }] };
 
     console.log('📦 [GalleryService] PATCH payload para eliminar imagen:', removePayload);
@@ -343,7 +343,7 @@ export const deleteGalleryImageById = async (
       throw new Error(`UUID ${validTargetUuid} no encontrado en la galería local de la sección`);
     }
 
-    const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
+  const endpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
     console.log('📍 [GalleryService] DELETE endpoint:', endpoint);
 
     // La API devuelve el SectionResponseDTO actualizado según el contrato
@@ -405,7 +405,7 @@ export const deleteGalleryImageById = async (
 
         // Intentar DELETE con candidateId
         try {
-          const endpointCandidate = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery/${candidateId}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
+          const endpointCandidate = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${candidateId}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
           console.log('📍 [GalleryService] Intentando DELETE con candidateId endpoint:', endpointCandidate);
           await api.delete<Record<string, unknown>>(endpointCandidate);
           const updatedAfterDelete = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);

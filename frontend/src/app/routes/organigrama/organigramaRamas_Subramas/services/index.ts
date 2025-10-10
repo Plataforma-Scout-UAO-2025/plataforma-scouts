@@ -63,7 +63,8 @@ export {
 } from './subrama-image.service';
 
 // Constantes y configuraciones
-export { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+// NOTE: `PATCH_ENDPOINTS` has been deprecated in favor of builders in `src/api/organigramaApi.ts`
+// Los consumers deben usar builders como `sectionPath`/`subgroupPath`.
 
 // ============================================================================
 // UTILIDADES Y HELPERS

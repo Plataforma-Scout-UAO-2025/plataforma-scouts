@@ -1,6 +1,7 @@
 import api from "@/api/axios";
 import { postFormData } from "@/api/formData";
 import { getRamaById } from '../services';
+import { sectionPath } from '@/api/organigramaApi';
 
 interface UploadDiagnostic {
   fileInfo: {
@@ -57,7 +58,7 @@ export const diagnosticImageUpload = async (
   console.log('📤 [DIAGNOSTIC] Upload response:', uploadResponse);
 
   // Paso 3: Agregar a galería usando PATCH
-  const patchEndpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/gallery`;
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
   const addPayload = {
     operations: [{ 
       op: "add", 

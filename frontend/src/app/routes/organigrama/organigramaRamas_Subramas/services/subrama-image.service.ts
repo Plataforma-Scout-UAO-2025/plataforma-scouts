@@ -1,6 +1,6 @@
 import api from "@/api/axios";
 import { postFormData } from "@/api/formData";
-import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+import { subgroupPath } from '@/api/organigramaApi';
 import { getSubramaById } from './subrama.service';
 
 // ============================================================================
@@ -44,7 +44,7 @@ export const updateSubramaMainImage = async (
     }
 
     // 2️⃣ PATCH al endpoint de imagen principal: intentaremos varios formatos porque el backend puede esperar snake_case u operaciones
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_MAIN_IMAGE(tenantSlug, groupSlug, sectionId, subgroupId);
+  const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/photo-principal`;
     const attempts = [
       { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
       { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
@@ -127,7 +127,7 @@ export const uploadSubramaGalleryImages = async (
     }
 
     // PATCH al endpoint de galería
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+  const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const galleryPayload = {
       operations: objectIds.map(objectId => ({ op: "add", newValue: objectId }))
     };
@@ -168,7 +168,7 @@ export const addSubramaGalleryImage = async (
     );
 
     // PATCH al endpoint de galería
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+  const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = { operations: [{ op: "add", newValue: uploadResponse.objectId }] };
     console.log('📡 PATCH →', patchEndpoint, addPayload);
 
@@ -208,7 +208,7 @@ export const replaceSubramaGalleryImage = async (
     console.log('🧠 UUID limpio para reemplazo:', cleanUuid);
 
     // 2️⃣ PATCH con operación replace
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+  const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const replacePayload = {
       operations: [{ op: "replace", targetUuid: cleanUuid, newValue: uploadResponse.objectId }]
     };
@@ -240,7 +240,7 @@ export const removeSubramaMainImage = async (
   console.log('🗑️ [SubramaImageService] Eliminando foto principal de subrama...');
 
   try {
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_MAIN_IMAGE(tenantSlug, groupSlug, sectionId, subgroupId);
+  const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/photo-principal`;
 
     // Intentar varios formatos por compatibilidad
     const attempts = [
@@ -297,7 +297,7 @@ export const removeSubramaGalleryImage = async (
     console.log('🧠 UUID limpio para eliminación:', cleanUuid);
 
     // PATCH con operación remove
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(tenantSlug, groupSlug, sectionId, subgroupId);
+  const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const removePayload = { operations: [{ op: "remove", targetUuid: cleanUuid }] };
     console.log('📡 PATCH →', patchEndpoint, removePayload);
 

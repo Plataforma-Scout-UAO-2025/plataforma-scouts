@@ -1,6 +1,6 @@
 import api from '@/api/axios';
 import { postFormData } from '@/api/formData';
-import { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+import { sectionPath } from '@/api/organigramaApi';
 
 type MaybeAxiosError = { response?: { data?: unknown } };
 
@@ -33,7 +33,7 @@ export const diagnoseBatchImageUpload = async (
     console.log('✅ [DIAGNÓSTICO] Upload exitoso, objectId:', uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = {
       operations: [{ op: "add", newValue: uploadResponse.objectId }]
     };
@@ -42,7 +42,7 @@ export const diagnoseBatchImageUpload = async (
     console.log('✅ [DIAGNÓSTICO] PATCH exitoso');
 
     // Paso 3: Verificar resultado usando una llamada directa al API
-    const endpoint = `/tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}`;
+    const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
   const backendRama = await api.get<Record<string, unknown> | undefined>(endpoint);
   const backendRec = backendRama as unknown as Record<string, unknown> | undefined;
   const gallery: string[] = (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
@@ -97,7 +97,7 @@ export const uploadSectionIcon = async (
     
     // Paso 2: Usar endpoint PATCH específico para icono
     console.log('🔄 [ImageUploadService] Asociando icono usando endpoint PATCH específico...');
-    const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
     console.log('📍 [ImageUploadService] Endpoint PATCH:', patchEndpoint);
     
     // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
@@ -175,7 +175,7 @@ export const uploadSectionMainImage = async (
     
     // Paso 2: Usar endpoint PATCH específico para imagen principal
     console.log('🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico...');
-    const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
     
     // Basándome en las pruebas de Postman, el payload es: { "objectId": "uuid" }
     const mainImagePayload = { objectId: uploadResponse.objectId };
@@ -255,7 +255,7 @@ export const uploadGalleryImages = async (
     
     // Paso 2: Usar endpoint PATCH específico para galería
     console.log('🔄 [ImageUploadService] Asociando galería usando endpoint PATCH específico...');
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     
     // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
     const galleryPayload = {
@@ -295,7 +295,7 @@ export const removeSectionIcon = async (
   sectionId: string
 ): Promise<void> => {
   console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...");
-  const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
 
   const attempts = [
     { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
@@ -339,7 +339,7 @@ export const removeSectionMainImage = async (
   sectionId: string
 ): Promise<void> => {
   console.log("🗑️ [ImageUploadService] Eliminando imagen principal de sección...");
-  const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
 
   const attempts = [
     { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },

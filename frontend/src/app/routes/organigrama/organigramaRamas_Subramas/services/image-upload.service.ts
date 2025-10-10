@@ -1,6 +1,6 @@
 import api from "@/api/axios";
 import { postFormData } from "@/api/formData";
-import { PATCH_ENDPOINTS } from "../constants/api-endpoints";
+import { sectionPath, subgroupPath } from '@/api/organigramaApi';
 type MaybeAxiosError = { response?: { data?: unknown } };
 
 type FileProgressHandler = (fileName: string, percent: number) => void;
@@ -8,7 +8,7 @@ type OverallProgressHandler = (percent: number) => void;
 
 // Función auxiliar para obtener rama directamente sin dependencias circulares
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
-  const endpoint = `tenants/${tenantSlug}/groups/${groupSlug}/sections/${id}`;
+  const endpoint = sectionPath(id, tenantSlug, groupSlug);
   const response = await api.get<Record<string, unknown> | undefined>(endpoint);
   return response.data;
 };
@@ -39,7 +39,7 @@ export const diagnoseBatchImageUpload = async (
     console.log("✅ [DIAGNÓSTICO] Upload exitoso, objectId:", uploadResponse.objectId);
 
     // Paso 2: Agregar a galería usando PATCH
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = {
       operations: [{ op: "add", newValue: uploadResponse.objectId }],
     };
@@ -114,7 +114,7 @@ export const uploadSectionIcon = async (
 
     // Paso 2: Usar endpoint PATCH específico para icono
     console.log("🔄 [ImageUploadService] Asociando icono usando endpoint PATCH específico...");
-    const patchEndpoint = PATCH_ENDPOINTS.ICON(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
     console.log("📍 [ImageUploadService] Endpoint PATCH:", patchEndpoint);
 
     // Intentaremos varios formatos de payload porque el backend puede esperar snake_case o estructura "operations"
@@ -190,7 +190,7 @@ export const uploadSectionMainImage = async (
     console.log(
       "🔄 [ImageUploadService] Asociando imagen principal usando endpoint PATCH específico..."
     );
-    const patchEndpoint = PATCH_ENDPOINTS.MAIN_IMAGE(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
 
     // Intentar varios formatos por compatibilidad con el backend
     const attemptsMain = [
@@ -277,7 +277,7 @@ export const uploadGalleryImages = async (
     }
 
     console.log("🔄 [ImageUploadService] Asociando galería usando endpoint PATCH específico...");
-    const patchEndpoint = PATCH_ENDPOINTS.GALLERY(tenantSlug, groupSlug, sectionId);
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
 
     const galleryPayload = {
       operations: objectIds.map((objectId) => ({
@@ -349,12 +349,7 @@ export const replaceSubramaGalleryImage = async (
       formData
     );
 
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(
-      tenantSlug,
-      groupSlug,
-      sectionId,
-      subgroupId
-    );
+    const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const replaceOp = {
       operations: [
         {
@@ -369,7 +364,7 @@ export const replaceSubramaGalleryImage = async (
     console.log("✅ [ImageUploadService] Replace PATCH enviado con éxito");
 
     const response = await api.get<Record<string, unknown>>(
-      `tenants/${tenantSlug}/groups/${groupSlug}/sections/${sectionId}/subgroups/${subgroupId}`
+      subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)
     );
     const rec = response.data as Record<string, unknown> | undefined;
     const galleryUrls =
@@ -402,12 +397,7 @@ export const removeSubramaGalleryImage = async (
     objectIdToRemove,
   });
   try {
-    const patchEndpoint = PATCH_ENDPOINTS.SUBRAMA_GALLERY(
-      tenantSlug,
-      groupSlug,
-      sectionId,
-      subgroupId
-    );
+    const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const payload = {
       operations: [
         {
