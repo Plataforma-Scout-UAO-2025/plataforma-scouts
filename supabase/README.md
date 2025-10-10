@@ -1,7 +1,7 @@
 # Supabase Database Setup Guide
 
-**Last Updated**: September 26, 2025  
-**Version**: 1.0.1  
+**Last Updated**: October 10, 2025  
+**Version**: 1.0.2
 **Maintainer**: DBA
 
 This README provides comprehensive instructions for setting up and deploying the Supabase database migrations for the Scout Management System.
@@ -11,6 +11,7 @@ This README provides comprehensive instructions for setting up and deploying the
 Before setting up the database, ensure you have:
 
 1. **Supabase CLI installed (either using npm, pnpm or manually installing binaries)**:
+
    ```bash
    # Via npm (recommended)
    npm install -g @supabase/supabase-cli
@@ -22,7 +23,7 @@ Before setting up the database, ensure you have:
    ```
 
 2. **Supabase Project**:
-   - Note your project reference ID from dashboard URL: `https://supabase.com/dashboard/project/<project-id>`
+   - Ask for your project reference ID with your DBA team`
    - Save your database password
 
 3. **Git Repository Access**:
@@ -31,14 +32,12 @@ Before setting up the database, ensure you have:
 
 ## Project Structure
 
-```
+```text
 plataforma-scouts/
 ├── backend/                     # Java Spring Boot backend
 ├── frontend/                    # React frontend
 ├── supabase/                    # Database configuration
 │   ├── migrations/              # SQL migration files
-│   ├── config.toml             # Supabase configuration
-│   ├── .env.example            # Environment variables template
 └── README.md
 ```
 
@@ -47,21 +46,25 @@ plataforma-scouts/
 ### Local Development
 
 1. **Navigate to project directory**:
+
    ```bash
    cd plataforma-scouts/supabase
    ```
 
 2. **Initialize Supabase (if not already done)**:
+
    ```bash
    supabase init
    ```
 
 3. **Start local Supabase**:
+
    ```bash
    supabase start
    ```
 
 4. **Apply migrations locally**:
+
    ```bash
    supabase db reset
    ```
@@ -84,22 +87,30 @@ plataforma-scouts/
 #### Direct Migration Push (Recommended)
 
 1. **Login to Supabase CLI**:
+
    ```bash
+
    supabase login
    ```
 
 2. **Link to your production project**:
+
    ```bash
+
    supabase link --project-ref YOUR_PROJECT_REF
    ```
 
 3. **Push all migrations**:
+
    ```bash
+
    supabase db push
    ```
 
 4. **Push configuration**:
+
    ```bash
+
    supabase config push
    ```
 
