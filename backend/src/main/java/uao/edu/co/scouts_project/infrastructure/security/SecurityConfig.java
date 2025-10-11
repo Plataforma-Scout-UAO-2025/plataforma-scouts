@@ -37,67 +37,83 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/mock/scouts/member").hasAnyRole(DEV_SUPPORT.name())
 
                         // Organigrama
-                          
-                            //Operaciones CRUD en tenants
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                        // Operaciones CRUD en tenants
 
-                            //Operaciones CRUD en grupos
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        // Operaciones CRUD en grupos
 
-                            //Operaciones de consulta en grupos
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/groups/**")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/groups/**")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/groups/**")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
 
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(), SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(), SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(), SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
+                        // Operaciones de consulta en grupos
 
-                            // Operaciones en almacenamiento de imagenes
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        // Operaciones en almacenamiento de imagenes
 
+                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/**")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
 
+                        // ==== Auth0 Management Endpoints ====
 
+                        // ACUDIENTE: Solo puede CREAR (POST)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
+                        .hasAnyAuthority("ACUDIENTE", "ADMIN_GRUPO", "ADMIN_GLOBAL")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users/*/roles")
+                        .hasAnyAuthority("ACUDIENTE", "ADMIN_GRUPO", "ADMIN_GLOBAL")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth0/organizations/*/members")
+                        .hasAnyAuthority("ACUDIENTE", "ADMIN_GRUPO", "ADMIN_GLOBAL")
+
+                        // SOLO ADMINS: Pueden CONSULTAR (GET)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth0/**")
+                        .hasAnyAuthority("ADMIN_GRUPO", "ADMIN_GLOBAL")
+
+                        // Cualquier otra operación en auth0: SOLO ADMINS
+                        .requestMatchers("/api/v1/auth0/**").hasAnyAuthority("ADMIN_GRUPO", "ADMIN_GLOBAL")
 
                         //
                         // Datos básicos de miembros
 
-
-
-
                         //
                         // Acudientes
-
-
-
 
                         //
                         // Datos médicos
 
-
-
-
                         //
                         // Pagos
-                        .requestMatchers("/api/v1/finanzas/payments/**").permitAll() // Cambiar a .hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/finanzas/payments/**").permitAll() // Cambiar a
+                                                                                     // .hasAnyRole(TESORERO.name())
                         .requestMatchers("/api/v1/finanzas/payments").permitAll()
 
-
-
                         // Cuotas
-                        .requestMatchers( "/api/v1/finanzas/fees/**").permitAll() //Cambiar a .hasAnyRole(TESORERO.name()) 
-                        .requestMatchers("/api/v1/finanzas/fees").permitAll() 
+                        .requestMatchers("/api/v1/finanzas/fees/**").permitAll() // Cambiar a
+                                                                                 // .hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/finanzas/fees").permitAll()
 
                         //
                         // Planes de adelanto
-
-
-
 
                         //
                         .anyRequest().permitAll()
@@ -105,8 +121,7 @@ public class SecurityConfig {
                 )
                 .cors(withDefaults())
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                )
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
     }
 
@@ -117,42 +132,48 @@ public class SecurityConfig {
     }
 
     /*
-    @Bean
-    @Profile("production")
-    public SecurityFilterChain productionFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(productionCorsConfigurationSource()))
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/v1/qa/").denyAll()   // No endpoints de QA en producción
-                        .requestMatchers("/swagger-ui/").denyAll()   // No Swagger en producción
-                        .requestMatchers("/v3/api-docs/").denyAll()
-                        .requestMatchers("/actuator/health").permitAll() // Solo health check
-                        .anyRequest().authenticated()
-                );
-
-        return http.build();
-    }
-
-    @Bean
-    @Profile("production")
-    public CorsConfigurationSource productionCorsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        // Solo dominios de producción específicos
-        configuration.setAllowedOrigins(Arrays.asList(
-                "https://scouts.uao.edu.co",
-                "https://app.scouts.uao.edu.co"
-        ));
-
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/", configuration);
-        return source;
-    }
-    */
+     * @Bean
+     * 
+     * @Profile("production")
+     * public SecurityFilterChain productionFilterChain(HttpSecurity http) throws
+     * Exception {
+     * http
+     * .csrf(csrf -> csrf.disable())
+     * .cors(cors -> cors.configurationSource(productionCorsConfigurationSource()))
+     * .authorizeHttpRequests(authz -> authz
+     * .requestMatchers("/api/v1/qa/").denyAll() // No endpoints de QA en producción
+     * .requestMatchers("/swagger-ui/").denyAll() // No Swagger en producción
+     * .requestMatchers("/v3/api-docs/").denyAll()
+     * .requestMatchers("/actuator/health").permitAll() // Solo health check
+     * .anyRequest().authenticated()
+     * );
+     * 
+     * return http.build();
+     * }
+     * 
+     * @Bean
+     * 
+     * @Profile("production")
+     * public CorsConfigurationSource productionCorsConfigurationSource() {
+     * CorsConfiguration configuration = new CorsConfiguration();
+     * 
+     * // Solo dominios de producción específicos
+     * configuration.setAllowedOrigins(Arrays.asList(
+     * "https://scouts.uao.edu.co",
+     * "https://app.scouts.uao.edu.co"
+     * ));
+     * 
+     * configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT",
+     * "DELETE"));
+     * configuration.setAllowedHeaders(Arrays.asList("Authorization",
+     * "Content-Type"));
+     * configuration.setAllowCredentials(true);
+     * 
+     * UrlBasedCorsConfigurationSource source = new
+     * UrlBasedCorsConfigurationSource();
+     * source.registerCorsConfiguration("/api/", configuration);
+     * return source;
+     * }
+     */
 
 }

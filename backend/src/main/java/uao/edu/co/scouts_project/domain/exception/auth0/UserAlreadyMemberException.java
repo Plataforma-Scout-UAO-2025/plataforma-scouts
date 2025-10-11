@@ -5,4 +5,8 @@ public class UserAlreadyMemberException extends RuntimeException {
     public UserAlreadyMemberException(String userId, String organizationId) {
         super("El usuario " + userId + " ya pertenece a la organización " + organizationId);
     }
+
+    public UserAlreadyMemberException(String message) {
+        super(message);
+    }
 }

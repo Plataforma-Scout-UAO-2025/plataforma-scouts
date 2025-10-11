@@ -20,10 +20,12 @@ import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
+import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserNotMemberException;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
+import com.auth0.exception.APIException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,6 +70,13 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         try {
             User user = api().users().get(userId, (UserFilter) null).execute();
             return new UserSummaryDTO(user.getId(), user.getEmail(), user.getUsername());
+        } catch (APIException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn("Usuario no encontrado en Auth0: {}", userId);
+                throw new ResourceNotFoundException("User not found: " + userId);
+            }
+            log.error("Error obteniendo usuario {}: {}", userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo obteniendo usuario", e);
         } catch (Auth0Exception e) {
             log.error("Error obteniendo usuario {}: {}", userId, e.getMessage());
             throw new Auth0GatewayException("Fallo obteniendo usuario", e);
@@ -77,6 +86,14 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
     public void assignRole(String userId, String roleId) {
         try {
             api().users().addRoles(userId, List.of(roleId)).execute();
+        } catch (APIException e) {
+            if (e.getStatusCode() == 404) {
+                // Auth0 devuelve 404 si el usuario o el rol no existen
+                log.warn("Usuario {} o rol {} no encontrado en Auth0", userId, roleId);
+                throw new ResourceNotFoundException("User or role not found: userId=" + userId + ", roleId=" + roleId);
+            }
+            log.error("Error asignando rol {} a usuario {}: {}", roleId, userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo asignando rol", e);
         } catch (Auth0Exception e) {
             log.error("Error asignando rol {} a usuario {}: {}", roleId, userId, e.getMessage());
             throw new Auth0GatewayException("Fallo asignando rol", e);
@@ -132,7 +149,16 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
                 .execute();
         } catch (UserAlreadyMemberException ex) {
             throw ex;
+        } catch (APIException e) {
+            if (e.getStatusCode() == 404) {
+                // Auth0 devuelve 404 si la organización no existe
+                log.warn("Organización {} no encontrada en Auth0", organizationId);
+                throw new ResourceNotFoundException("Organization not found: " + organizationId);
+            }
+            log.error("Error agregando usuario {} a organización {}: {}", userId, organizationId, e.getMessage());
+            throw new Auth0GatewayException("Error agregando miembro a la organización", e);
         } catch (Exception ex) {
+            log.error("Error agregando usuario {} a organización {}: {}", userId, organizationId, ex.getMessage());
             throw new Auth0GatewayException("Error agregando miembro a la organización", ex);
         }
     }
@@ -172,6 +198,13 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
             return new UserSummaryDTO(user.getId(), user.getEmail(), user.getUsername());
         } catch (UserNotMemberException ex) {
             throw ex;
+        } catch (APIException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn("Usuario {} u organización {} no encontrados en Auth0", userId, organizationId);
+                throw new ResourceNotFoundException("User or organization not found: userId=" + userId + ", orgId=" + organizationId);
+            }
+            log.error("Error obteniendo usuario {} dentro de organización {}: {}", userId, organizationId, e.getMessage());
+            throw new Auth0GatewayException("Fallo obteniendo usuario en organización", e);
         } catch (Auth0Exception e) {
             log.error("Error obteniendo usuario {} dentro de organización {}: {}", userId, organizationId, e.getMessage());
             throw new Auth0GatewayException("Fallo obteniendo usuario en organización", e);

@@ -18,6 +18,7 @@ import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
+import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
 import uao.edu.co.scouts_project.service.auth0.IAuth0Service;
 // no param-level constraints to keep errors in-controller
@@ -83,12 +84,15 @@ public class Auth0Controller {
     @GetMapping("/users/{userId}")
     @Operation(summary = "Obtiene un usuario por su ID en Auth0", responses = {
             @ApiResponse(responseCode = "200", description = "Usuario encontrado", content = @Content(schema = @Schema(implementation = UserSummaryDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
     })
     public ResponseEntity<?> getUserById(@PathVariable String userId) {
         try {
             UserSummaryDTO user = auth0Service.getUserById(userId);
             return ResponseEntity.ok(user);
+        } catch (ResourceNotFoundException ex) {
+            return notFound(ex.getMessage());
         } catch (Auth0GatewayException ex) {
             return toGatewayError(ex, "Fallo obteniendo usuario");
         }
@@ -98,6 +102,7 @@ public class Auth0Controller {
     @Operation(summary = "Asigna un rol a un usuario existente en Auth0", responses = {
             @ApiResponse(responseCode = "200", description = "Rol asignado correctamente"),
             @ApiResponse(responseCode = "400", description = "Solicitud inválida (parámetros requeridos o inválidos)"),
+            @ApiResponse(responseCode = "404", description = "Usuario o rol no encontrado"),
             @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
     })
     public ResponseEntity<?> assignRoleToUser(@PathVariable String userId, @RequestParam String roleId) {
@@ -111,6 +116,8 @@ public class Auth0Controller {
                     "userId", userId,
                     "roleId", roleId);
             return ResponseEntity.ok(body);
+        } catch (ResourceNotFoundException ex) {
+            return notFound(ex.getMessage());
         } catch (IllegalArgumentException ex) {
             return badRequest(ex.getMessage());
         } catch (Auth0GatewayException ex) {
@@ -122,6 +129,7 @@ public class Auth0Controller {
     @Operation(summary = "Asocia un usuario a una organización en Auth0", responses = {
             @ApiResponse(responseCode = "200", description = "Usuario asociado a la organización"),
             @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "404", description = "Organización o usuario no encontrado"),
             @ApiResponse(responseCode = "409", description = "El usuario ya pertenece a la organización"),
             @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
     })
@@ -142,6 +150,8 @@ public class Auth0Controller {
                     "organizationId", organizationId,
                     "userId", userId);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        } catch (ResourceNotFoundException ex) {
+            return notFound(ex.getMessage());
         } catch (IllegalArgumentException ex) {
             return badRequest(ex.getMessage());
         } catch (Auth0GatewayException ex) {
@@ -199,6 +209,12 @@ public class Auth0Controller {
         Map<String, Object> body = new HashMap<>();
         body.put("message", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    private ResponseEntity<Map<String, Object>> notFound(String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", message);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
 }
