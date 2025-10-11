@@ -57,7 +57,7 @@ export {
 } from './subrama-image.service';
 
 // Constantes y configuraciones
-export { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+// NOTE: `PATCH_ENDPOINTS` was removed — use builders from `src/api/organigramaApi.ts` instead.
 
 // ============================================================================
 // FUNCIONES AUXILIARES Y UTILITARIOS
