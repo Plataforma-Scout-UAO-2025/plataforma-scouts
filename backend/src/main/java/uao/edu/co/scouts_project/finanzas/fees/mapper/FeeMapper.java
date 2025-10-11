@@ -51,7 +51,7 @@ public class FeeMapper {
     }
 
     /**
-     * Construye un CuotaDto a partir del FeePlan y un MemberPaymentDto (puede ser null).
+     * Construye un CuotaDto a partir del FeePlan.
      */
     public CuotaDto toCuotaDto(FeePlan fp, MemberPaymentDto memberOrNull) {
         if (fp == null) return null;
@@ -69,7 +69,7 @@ public class FeeMapper {
             scope,
             fp.getStartDate(),
             fp.getEndDate(),
-            fp.getAssociatedTo() // puede ser null si scope != SCOUT o no hay targetMember
+            fp.getAssociatedTo() 
         );
     }
 

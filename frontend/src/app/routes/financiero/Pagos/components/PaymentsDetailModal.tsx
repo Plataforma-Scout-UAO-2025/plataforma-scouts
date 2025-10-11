@@ -16,7 +16,7 @@ export default function PaymentsDetailModal({member}: {member: PaymentRecord}) {
   const fetchInstallment = useCallback(async () => {
     const response = await api.get(`/finanzas/payments/installments/${tenantId}/${member.member_id}`);
     setInstallment(response.data);
-  }, [member.member_id]);
+  }, [member.member_id, tenantId]);
 
   useEffect(() => {
     if (open) {
