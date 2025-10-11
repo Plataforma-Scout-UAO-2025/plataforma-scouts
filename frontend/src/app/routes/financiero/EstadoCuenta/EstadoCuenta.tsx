@@ -13,6 +13,7 @@ import EstadoCuentaTable from "./components/EstadoCuentaTable";
 import { useRoleContext } from "@/hooks/useRoleContext";
 import { RawRole } from "@/roles/roles";
 import api from "@/api/axios";
+import { useTenant } from "@/hooks/useTenant";
 
 export default function EstadoCuenta() {
   const { currentUserRole } = useRoleContext();
@@ -24,17 +25,16 @@ export default function EstadoCuenta() {
   const isAcudiente = currentUserRole === RawRole.ACUDIENTE;
   const isAdminGrupo = currentUserRole === RawRole.ADMIN_GRUPO;
   const isTesoreroOrAdmin = isTesorero || isAdminGrupo;
+  // Obtener el tenantId
+  const tenantId = useTenant();
 
   // Cargar datos al montar el componente
   useEffect(() => {
     const fetchEstadoCuenta = async () => {
       setLoading(true);
 
-      try {
-        
-        
-        const orgId = "org_6B3k4dao2Wf6eGxa";
-        let endpoint = `/finanzas/payments/status/${orgId}`;
+      try {   
+        let endpoint = `/finanzas/payments/status/${tenantId}`;
         
         if (!isTesoreroOrAdmin) {
           // Para acudiente, agregar el ID (quemado a 83 por ahora)
@@ -58,7 +58,7 @@ export default function EstadoCuenta() {
     };
 
     fetchEstadoCuenta();
-  }, [isTesoreroOrAdmin, isAcudiente]);
+  }, [isTesoreroOrAdmin, isAcudiente, tenantId]);
 
   // Filtrar cuotas por miembro seleccionado (solo para acudiente)
   const cuotasFiltradas = useMemo<CuotasEstado[]>(() => {

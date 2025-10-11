@@ -152,7 +152,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
       const fecha = row.getValue("paid_at") as Date | null;
       return (
         <div>
-          {fecha ? new Date(fecha).toLocaleDateString("es-CO") : "N/A"}
+          {fecha ? new Date(fecha).toLocaleDateString("es-CO") : "-"}
         </div>
       );
     },
@@ -162,7 +162,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
     header: "Método",
     cell: ({ row }) => {
       const method = row.getValue("method") as string | null;
-      return <div>{method || "N/A"}</div>;
+      return <div>{method || "-"}</div>;
     },
   },
   {
@@ -170,7 +170,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
     header: "Referencia",
     cell: ({ row }) => {
       const reference = row.getValue("reference") as string | null;
-      return <div className="max-w-[150px] truncate">{reference || "N/A"}</div>;
+      return <div className="max-w-[150px] truncate">{reference || "-"}</div>;
     },
   },
 ];

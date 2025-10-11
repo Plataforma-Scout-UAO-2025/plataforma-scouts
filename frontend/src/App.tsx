@@ -45,10 +45,6 @@ function App() {
             <Route path="organigrama/niveles-organizativos" element={<NivelesPage />} />
             <Route path="organigrama/resumen" element={<div>Vista resumen (en desarrollo)</div>} />
 
-            {/* ===================== FINANCIERO ===================== */}
-            <Route path="financiero/cuotas" element={<Financiero />} />
-            <Route path="financiero/cuotas/gestion" element={<Gestion />} />
-
             {/* ===================== GRUPOS ===================== */}
             <Route path="grupos" element={<Grupos />} />
             <Route path="grupos/medical-info" element={<MedicalInfo />} />

@@ -59,7 +59,7 @@ export default function CreateCuotaForm({
   isEditMode = false,
   onRefresh,
 }: CreateCuotaFormProps) {
-  const { tenantId } = useTenant();
+  const tenantId = useTenant();
   const navigate = useNavigate();
 
   const [showAssociatedToField, setShowAssociatedToField] = useState(false);
