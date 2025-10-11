@@ -2,6 +2,7 @@ import api from "@/api/axios";
 import { postFormData, uploadToStorage } from '@/api/upload';
 import { sectionPath, subgroupPath } from '@/api/organigramaApi';
 import { createAddPayload, createReplacePayload, createAddsPayloadFromArray, createRemovePayload, createPayloadForBackend } from '../utils/galleryPayload';
+import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 type MaybeAxiosError = { response?: { data?: unknown } };
 
 type FileProgressHandler = (fileName: string, percent: number) => void;
@@ -109,7 +110,9 @@ export const uploadSectionIcon = async (
       // Trying PATCH attempt: attempt.description
       try {
         const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-          ? createPayloadForBackend((attempt.payload as any).operations)
+          ? (Array.isArray((attempt.payload as unknown as { operations?: unknown }).operations)
+              ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
+              : attempt.payload)
           : attempt.payload;
         console.info('🔄 [ImageUploadService] Enviando PATCH (icon):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
         await api.patch(patchEndpoint, payloadToSend as unknown);
@@ -180,7 +183,9 @@ export const uploadSectionMainImage = async (
       // Trying PATCH attempt for main image: attempt.description
       try {
         const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-          ? createPayloadForBackend((attempt.payload as any).operations)
+          ? (Array.isArray((attempt.payload as unknown as { operations?: unknown }).operations)
+              ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
+              : attempt.payload)
           : attempt.payload;
         console.info('🔄 [ImageUploadService] Enviando PATCH (main image):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
         await api.patch(patchEndpoint, payloadToSend as unknown);
@@ -258,7 +263,9 @@ export const uploadGalleryImages = async (
 
     try {
       const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
-        ? createPayloadForBackend((galleryPayload as any).operations)
+        ? (Array.isArray((galleryPayload as unknown as { operations?: unknown }).operations)
+            ? createPayloadForBackend((galleryPayload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
+            : galleryPayload)
         : galleryPayload;
       console.info('🔄 [ImageUploadService] Enviando PATCH (gallery):', { endpoint: patchEndpoint, payload: galleryPayloadToSend });
       await api.patch(patchEndpoint, galleryPayloadToSend);
@@ -325,7 +332,9 @@ export const replaceSubramaGalleryImage = async (
   const targetForReplace = oldObjectId ?? '';
     const replaceOp = createReplacePayload(targetForReplace, uploadResponse.objectId);
     const replaceOpToSend = replaceOp && typeof replaceOp === 'object' && 'operations' in replaceOp
-      ? createPayloadForBackend((replaceOp as any).operations)
+      ? (Array.isArray((replaceOp as unknown as { operations?: unknown }).operations)
+          ? createPayloadForBackend((replaceOp as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+          : replaceOp)
       : replaceOp;
     await api.patch(patchEndpoint, replaceOpToSend);
     console.log("✅ [ImageUploadService] Replace PATCH enviado con éxito");
@@ -367,7 +376,7 @@ export const removeSubramaGalleryImage = async (
     const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const payload = createRemovePayload(objectIdToRemove);
     const payloadToSend = payload && typeof payload === 'object' && 'operations' in payload
-      ? createPayloadForBackend((payload as any).operations)
+  ? createPayloadForBackend((payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
       : payload;
     await api.patch(patchEndpoint, payloadToSend);
     console.log("✅ [ImageUploadService] Imagen eliminada de la galería de subrama");

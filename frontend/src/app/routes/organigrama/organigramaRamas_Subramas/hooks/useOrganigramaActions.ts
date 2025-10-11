@@ -37,8 +37,11 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     }, 2000);
     try {
       if (showSuccess) showSuccess(msg);
-    } catch {
-      // noop
+    } catch (e) {
+      // Si la función externa falla, registramos para diagnóstico pero no rompemos la UI
+      // Esto evita el bloque vacío que ESLint marca como error
+      // eslint-disable-next-line no-console
+      console.warn('[useOrganigramaActions] showSuccess hook threw:', e);
     }
   }, [showSuccess]);
 
@@ -131,9 +134,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     }
   }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
-  // =====================================================
   // Acciones de galería para Secciones (Ramas)
-  // =====================================================
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
 
   const addGalleryImage = useCallback(async (sectionId: string, file: File) => {
@@ -170,11 +171,9 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     setIsLoadingGallery(true);
     try {
-      // deleteGalleryImageById acepta UUID o URL (extrae UUID internamente)
       const result = await organigramaService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, targetUuidOrUrl, deleteFromStorage);
       await loadRamas();
       
-      // Mensajes según las instrucciones UX
       if (deleteFromStorage) {
         if (result) {
           showSuccessLocal('Imagen eliminada físicamente de la galería y del servidor');
@@ -192,12 +191,10 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     }
   }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
 
-  // Función específica para remover de galería sin eliminar físicamente (PATCH) según las instrucciones
   const removeImageFromGalleryOnly = useCallback(async (sectionId: string, targetUuidOrUrl: string) => {
     if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     setIsLoadingGallery(true);
     try {
-      // Usar PATCH remove (más eficiente para solo desvincular)
       await organigramaService.removeGalleryImage(tenantSlug, groupSlug, sectionId, targetUuidOrUrl);
       await loadRamas();
       showSuccessLocal('Imagen removida de la galería. El archivo permanece en el servidor y puede ser reagregado más tarde.');

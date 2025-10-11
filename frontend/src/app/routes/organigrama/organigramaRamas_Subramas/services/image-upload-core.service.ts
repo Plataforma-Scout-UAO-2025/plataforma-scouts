@@ -2,8 +2,10 @@ import api from '@/api/axios';
 import { uploadToStorage } from '@/api/upload';
 import { sectionPath } from '@/api/organigramaApi';
 import { createAddPayload, createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
+import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 
 type MaybeAxiosError = { response?: { data?: unknown } };
+type PayloadWithOperations = { operations?: unknown };
 
 // Tipo para la respuesta del upload de archivos
 interface UploadResponse {
@@ -32,7 +34,9 @@ export const diagnoseBatchImageUpload = async (
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = createAddPayload(uploadResponse.objectId);
     const addPayloadToSend = addPayload && typeof addPayload === 'object' && 'operations' in addPayload
-      ? createPayloadForBackend((addPayload as any).operations)
+      ? (Array.isArray((addPayload as unknown as PayloadWithOperations).operations)
+          ? createPayloadForBackend((addPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+          : addPayload)
       : addPayload;
     console.info('🔄 [ImageUploadCore] Enviando PATCH (gallery add):', { endpoint: patchEndpoint, payload: addPayloadToSend });
     await api.patch(patchEndpoint, addPayloadToSend);
@@ -96,9 +100,11 @@ export const uploadSectionIcon = async (
     let patched = false;
     for (const attempt of attempts) {
       try {
-        const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-          ? createPayloadForBackend((attempt.payload as any).operations)
-          : attempt.payload;
+    const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
+  ? (Array.isArray((attempt.payload as unknown as PayloadWithOperations).operations)
+  ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
+    : attempt.payload)
+  : attempt.payload;
         console.info('🔄 [ImageUploadCore] Enviando PATCH (icon):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
         await api.patch(patchEndpoint, payloadToSend as unknown);
         console.log('✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH (primary)');
@@ -201,7 +207,9 @@ export const uploadGalleryImages = async (
     
     try {
       const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
-        ? createPayloadForBackend((galleryPayload as any).operations)
+        ? (Array.isArray((galleryPayload as unknown as PayloadWithOperations).operations)
+            ? createPayloadForBackend((galleryPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+            : galleryPayload)
         : galleryPayload;
       await api.patch(patchEndpoint, galleryPayloadToSend);
   // Gallery associated successfully; return uploaded URLs as fallback if backend doesn't return updated URLs
@@ -239,9 +247,11 @@ export const removeSectionIcon = async (
   for (const attempt of attempts) {
     console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
   try {
-  const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-    ? createPayloadForBackend((attempt.payload as any).operations)
-    : attempt.payload;
+    const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
+  ? (Array.isArray((attempt.payload as unknown as PayloadWithOperations).operations)
+    ? createPayloadForBackend((attempt.payload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+    : attempt.payload)
+  : attempt.payload;
   const res = await api.patch(patchEndpoint, payloadToSend as unknown);
   console.log(`✅ Ícono eliminado correctamente con formato: ${attempt.description}`, res?.data ?? res);
       removed = true;
@@ -285,7 +295,9 @@ export const removeSectionMainImage = async (
     console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
     try {
       const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-        ? createPayloadForBackend((attempt.payload as any).operations)
+        ? (Array.isArray((attempt.payload as unknown as { operations?: unknown }).operations)
+            ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
+            : attempt.payload)
         : attempt.payload;
       const res = await api.patch(patchEndpoint, payloadToSend as unknown);
       console.log(`✅ Imagen principal eliminada correctamente con formato: ${attempt.description}`, res?.data ?? res);

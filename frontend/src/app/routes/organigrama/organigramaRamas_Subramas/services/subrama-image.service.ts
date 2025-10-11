@@ -3,6 +3,7 @@ import { postFormData, uploadToStorage } from '@/api/upload';
 import { subgroupPath } from '@/api/organigramaApi';
 import { getSubramaById } from './subrama.service';
 import { createAddsPayloadFromArray, createAddPayload, createReplacePayload, createRemovePayload, createPayloadForBackend } from '../utils/galleryPayload';
+import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 
 
 export const updateSubramaMainImage = async (
@@ -43,7 +44,9 @@ export const updateSubramaMainImage = async (
     for (const attempt of attempts) {
       try {
         const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-          ? createPayloadForBackend((attempt.payload as any).operations)
+          ? (Array.isArray((attempt.payload as unknown as { operations?: unknown }).operations)
+              ? createPayloadForBackend((attempt.payload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+              : attempt.payload)
           : attempt.payload;
         console.info('🔄 [SubramaImageService] Enviando PATCH (main image):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
         await api.patch(patchEndpoint, payloadToSend as unknown);
@@ -111,7 +114,9 @@ export const uploadSubramaGalleryImages = async (
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const galleryPayload = createAddsPayloadFromArray(objectIds);
     const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
-      ? createPayloadForBackend((galleryPayload as any).operations)
+      ? (Array.isArray((galleryPayload as unknown as { operations?: unknown }).operations)
+          ? createPayloadForBackend((galleryPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+          : galleryPayload)
       : galleryPayload;
     await api.patch(patchEndpoint, galleryPayloadToSend);
 
@@ -145,7 +150,9 @@ export const addSubramaGalleryImage = async (
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = createAddPayload(uploadResponse.objectId);
     const addPayloadToSend = addPayload && typeof addPayload === 'object' && 'operations' in addPayload
-      ? createPayloadForBackend((addPayload as any).operations)
+      ? (Array.isArray((addPayload as unknown as { operations?: unknown }).operations)
+          ? createPayloadForBackend((addPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+          : addPayload)
       : addPayload;
     await api.patch(patchEndpoint, addPayloadToSend);
 
@@ -179,7 +186,9 @@ export const replaceSubramaGalleryImage = async (
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const replacePayload = createReplacePayload(cleanUuid, uploadResponse.objectId);
     const replacePayloadToSend = replacePayload && typeof replacePayload === 'object' && 'operations' in replacePayload
-      ? createPayloadForBackend((replacePayload as any).operations)
+      ? (Array.isArray((replacePayload as unknown as { operations?: unknown }).operations)
+          ? createPayloadForBackend((replacePayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+          : replacePayload)
       : replacePayload;
     await api.patch(patchEndpoint, replacePayloadToSend);
 
@@ -217,11 +226,13 @@ export const removeSubramaMainImage = async (
     for (const attempt of attempts) {
       try {
         const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-          ? createPayloadForBackend((attempt.payload as any).operations)
+          ? (Array.isArray((attempt.payload as unknown as { operations?: unknown }).operations)
+              ? createPayloadForBackend((attempt.payload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+              : attempt.payload)
           : attempt.payload;
         console.debug('🔁 [SubramaImageService] Intentando PATCH remove (main image):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
         const resp = await api.patch(patchEndpoint, payloadToSend as Record<string, unknown>);
-        console.debug('🔁 [SubramaImageService] Respuesta PATCH remove (main image):', { status: (resp as any)?.status, data: (resp as any)?.data });
+  console.debug('🔁 [SubramaImageService] Respuesta PATCH remove (main image):', { status: (resp as unknown as { status?: number })?.status, data: (resp as unknown as { data?: unknown })?.data });
         removed = true;
         break;
       } catch (e: unknown) {
@@ -274,12 +285,14 @@ export const removeSubramaGalleryImage = async (
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
     const removePayload = createRemovePayload(cleanUuid);
     const removePayloadToSend = removePayload && typeof removePayload === 'object' && 'operations' in removePayload
-      ? createPayloadForBackend((removePayload as any).operations)
+      ? (Array.isArray((removePayload as unknown as { operations?: unknown }).operations)
+          ? createPayloadForBackend((removePayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+          : removePayload)
       : removePayload;
     try {
       console.debug('🔁 [SubramaImageService] Enviando PATCH remove (gallery):', { endpoint: patchEndpoint, payload: removePayloadToSend });
       const resp = await api.patch(patchEndpoint, removePayloadToSend);
-      console.debug('🔁 [SubramaImageService] Respuesta PATCH remove (gallery):', { status: (resp as any)?.status, data: (resp as any)?.data });
+  console.debug('🔁 [SubramaImageService] Respuesta PATCH remove (gallery):', { status: (resp as unknown as { status?: number })?.status, data: (resp as unknown as { data?: unknown })?.data });
     } catch (patchErr) {
       console.error('❌ Error PATCH remove en galería:', patchErr);
       throw patchErr;
