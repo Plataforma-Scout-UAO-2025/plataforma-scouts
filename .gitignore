@@ -63,6 +63,13 @@ postman_collection.json
 *.iml
 *.ipr
 
+# Application.properties
+backend/src/main/resources/application.properties
+backend/src/test/resources/application-test.properties
+backend/src/main/resources/application.properties
+backend/src/test/resources/application-test.properties
+
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
