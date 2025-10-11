@@ -34,9 +34,8 @@ function exportPDF(data: OrganigramaNiveles) {
         nivel.nombre,
         "—",
         "—",
-        nivel.visible ? "Sí" : "No",
-        "—",
-        data.anio,
+        "—", // Periodo (Año)
+        nivel.descripcion || "—", // Descripción
       ]);
     } else {
       nivel.cargos.forEach((cargo) => {
@@ -44,16 +43,17 @@ function exportPDF(data: OrganigramaNiveles) {
           nivel.nombre,
           cargo.nombre,
           cargo.titular || "—",
-          nivel.visible ? "Sí" : "No",
-          cargo.visible ? "Sí" : "No",
-          data.anio,
+          data.anio, // Periodo (Año)
+          cargo.descripcion || "—", // Descripción
         ]);
       });
     }
   });
 
   autoTable(doc, {
-    head: [["Nivel", "Cargo", "Titular", "Visible (Nivel)", "Visible (Cargo)", "Año"]],
+    head: [
+      ["Nivel", "Cargo", "Titular", "Año", "Descripción"], // Columnas requeridas
+    ],
     body: tableData,
     startY: 35,
     theme: "striped",
@@ -73,25 +73,25 @@ function exportPDF(data: OrganigramaNiveles) {
   doc.save(`organigrama_niveles_${data.anio}.pdf`);
 }
 
+
 /* ============================================================
    📊 Exportación a CSV
    ============================================================ */
 function exportCSV(data: OrganigramaNiveles) {
-  const header = ["Nivel", "Cargo", "Titular", "Visible (Nivel)", "Visible (Cargo)", "Año"];
+  const header = ["Nivel", "Cargo", "Titular", "Año", "Descripción"];
   const rows: string[][] = [];
 
   data.niveles.forEach((nivel) => {
     if (nivel.cargos.length === 0) {
-      rows.push([nivel.nombre, "—", "—", nivel.visible ? "Sí" : "No", "—", String(data.anio)]);
+      rows.push([nivel.nombre, "—", "—", String(data.anio), nivel.descripcion || "—"]);
     } else {
       nivel.cargos.forEach((cargo) => {
         rows.push([
           nivel.nombre,
           cargo.nombre,
           cargo.titular || "—",
-          nivel.visible ? "Sí" : "No",
-          cargo.visible ? "Sí" : "No",
-          String(data.anio),
+          String(data.anio), // Año
+          cargo.descripcion || "—", // Descripción
         ]);
       });
     }
@@ -112,6 +112,7 @@ function exportCSV(data: OrganigramaNiveles) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 /* ============================================================
    📦 Componente ExportMenu
