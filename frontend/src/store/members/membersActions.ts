@@ -2,8 +2,8 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { getMember, getMembers, updateMember } from "../../api/membersApi";
 import { validateClient } from "../../lib/zodUtils";
-import { updateMemberSchema } from "@/schemas/memberSchema";
-import type { Member } from "@/types/member.type";
+import { updateMemberSchema } from "@/models/models/memberSchema";
+import type { Member } from "@/models/types/memberTypes";
 
 // Obtener datos de un miembro desde Firestore
 export const fetchMemberAction = createAsyncThunk<

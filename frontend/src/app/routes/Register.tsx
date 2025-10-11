@@ -103,6 +103,7 @@ const Register = () => {
                 />
                 <Button
                   variant="iconbutton"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
                   type="button"
                 >
@@ -142,6 +143,7 @@ const Register = () => {
                 />
                 <Button
                   variant="iconbutton"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                   onClick={() => setShowConfirm(!showConfirm)}
                   type="button"
                 >

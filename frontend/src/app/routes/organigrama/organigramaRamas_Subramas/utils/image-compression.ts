@@ -1,3 +1,10 @@
+/**
+ * Utilidades simples para compresión de imágenes
+ */
+
+/**
+ * Comprime una imagen reduciendo su calidad y dimensiones
+ */
 export const compressImage = (
   file: File, 
   maxWidth: number = 800, 
@@ -52,8 +59,26 @@ export const compressImage = (
  * Limpia localStorage de imágenes antiguas si está lleno
  */
 export const cleanupOldImages = (): void => {
-  // La gestión de almacenamiento y limpieza se delega al backend (Supabase).
-  // Evitar cualquier uso de localStorage para imágenes en el navegador.
-  // Esta función queda como no-op informativa.
-  console.log('🧹 [ImageCompression] Limpieza de imágenes deshabilitada en cliente; usar backend para gestión de objetos.');
+  const imageKeys: string[] = [];
+  
+  // Recopilar todas las claves de imágenes
+<<<<<<< HEAD
+  for (let key in localStorage) {
+=======
+  for (const key in localStorage) {
+>>>>>>> cef7580cf5e0da05d144eedbaae2249b5c47eb3f
+    if (key.startsWith('organigrama_images_')) {
+      imageKeys.push(key);
+    }
+  }
+
+  // Si hay más de 20 imágenes, eliminar las más antiguas
+  if (imageKeys.length > 20) {
+    const keysToRemove = imageKeys.slice(0, imageKeys.length - 20);
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    console.log(`🧹 [ImageCompression] ${keysToRemove.length} imágenes antiguas eliminadas`);
+  }
 };
