@@ -32,6 +32,6 @@ public interface IFeeService {
   /** Actualiza parcialmente una cuota. Solo cambios no disruptivos (amount, name, description), solo deberia ser usado *antes* de que se realice ningun pago */
   CuotaDto patch(Long feePlanId, CuotaDto patchDto, String tenantId);
 
-  /** Borra una cuota, sus installments y su concepto. Usar con cuidado */
+  /** Borra una cuota, sus installments sin pagar y su concepto si este queda sin ninguna relacion */
   void deleteFeePlan(Long feePlanId, String tenantId);
 }

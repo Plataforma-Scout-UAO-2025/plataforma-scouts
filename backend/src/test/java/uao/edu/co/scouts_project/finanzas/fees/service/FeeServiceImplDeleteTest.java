@@ -1,6 +1,7 @@
 package uao.edu.co.scouts_project.finanzas.fees.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.NoSuchElementException;
@@ -48,25 +49,33 @@ class FeeServiceImplDeleteTest {
     when(feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenant))
         .thenReturn(Optional.of(fp));
 
-    // Stub: retorna cantidad de filas “vacías” eliminadas (cualquier número > 0 está bien)
     when(installmentRepo.deleteEmptyPaymentsByConcept(conceptId)).thenReturn(2);
-    // Luego de eliminar vacíos, ya no quedan installments del concepto
     when(installmentRepo.countAllByConcept(conceptId)).thenReturn(0L);
+
+    // nuevo: el servicio pregunta si quedan fee plans del mismo concepto
+    when(feePlanRepo.countByConcept_ConceptId(conceptId)).thenReturn(0L);
 
     service.deleteFeePlan(feePlanId, tenant);
 
     verify(feePlanRepo).findByFeePlanIdAndConcept_TenantId(feePlanId, tenant);
     verify(installmentRepo).deleteEmptyPaymentsByConcept(conceptId);
+
+    verify(feePlanRepo).delete(fp);
+    // nuevo: se fuerza orden de borrado
+    verify(feePlanRepo).flush();
+
+    verify(feePlanRepo).countByConcept_ConceptId(conceptId);
     verify(installmentRepo).countAllByConcept(conceptId);
 
-    // FeePlan SIEMPRE se borra
-    verify(feePlanRepo).delete(fp);
-    // Como no quedan installments ⇒ borrar Concept
+    // como no quedan fee plans ni installments → borra el concepto
     verify(conceptRepo).delete(concept);
 
-    verify(feePlanRepo, never()).existsByConcept(any());
+    // quitar esta verificación (ya no usamos existsByConcept)
+    // verify(feePlanRepo, never()).existsByConcept(any());
+
     verifyNoMoreInteractions(feePlanRepo, installmentRepo, conceptRepo);
   }
+
 
   @Test
   void deleteFeePlan_sqlNative_mixed_keepConcept() {
@@ -80,25 +89,31 @@ class FeeServiceImplDeleteTest {
     when(feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenant))
         .thenReturn(Optional.of(fp));
 
-    // Stub: elimina algunos vacíos
     when(installmentRepo.deleteEmptyPaymentsByConcept(conceptId)).thenReturn(1);
-    // Quedan installments con pagos
     when(installmentRepo.countAllByConcept(conceptId)).thenReturn(2L);
+
+    // nuevo: aún quedan fee plans de ese concepto (o al menos 1)
+    when(feePlanRepo.countByConcept_ConceptId(conceptId)).thenReturn(1L);
 
     service.deleteFeePlan(feePlanId, tenant);
 
     verify(feePlanRepo).findByFeePlanIdAndConcept_TenantId(feePlanId, tenant);
     verify(installmentRepo).deleteEmptyPaymentsByConcept(conceptId);
+
+    verify(feePlanRepo).delete(fp);
+    verify(feePlanRepo).flush();
+
+    verify(feePlanRepo).countByConcept_ConceptId(conceptId);
     verify(installmentRepo).countAllByConcept(conceptId);
 
-    // FeePlan SIEMPRE se borra
-    verify(feePlanRepo).delete(fp);
-    // Como aún quedan installments ⇒ NO borrar Concept
     verify(conceptRepo, never()).delete(any());
 
-    verify(feePlanRepo, never()).existsByConcept(any());
+    // quitar existsByConcept
+    // verify(feePlanRepo, never()).existsByConcept(any());
+
     verifyNoMoreInteractions(feePlanRepo, installmentRepo, conceptRepo);
   }
+
 
   @Test
   void deleteFeePlan_notFound_throwsNoSuchElement() {
