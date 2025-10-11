@@ -1,89 +1,37 @@
-import { useState } from 'react';
-import MembersTable from '@/app/routes/guardians/members/components/tables/MembersTable';
-import MemberDetailsSheet from '@/app/routes/guardians/members/components/modals/MemberDetailsSheet';
-import EditMemberModal from '@/app/routes/guardians/members/components/modals/EditMemberModal';
-import type { Member } from '@/app/routes/guardians/members/types/member.type';
-import type { MemberFormData } from '@/app/routes/guardians/members/schemas/MemberForm.schema';
-import { mockMembersData } from '@/app/routes/guardians/shared/mockData';
+import StatsCards from '@/app/routes/guardians/dashboard/components/StatsCards';
+import QuickActions from '@/app/routes/guardians/dashboard/components/QuickActions';
+import RecentNotifications from '@/app/routes/guardians/dashboard/components/RecentNotifications';
 
-/**
- * AcudienteView - Dashboard principal para acudientes
- * Muestra la tabla de miembros a cargo del acudiente
- */
-const AcudienteView = () => {
-  const [miembros, setMiembros] = useState<Member[]>(mockMembersData);
-  const [selectedMiembro, setSelectedMiembro] = useState<Member | null>(null);
-  const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  const handleViewDetails = (miembro: Member) => {
-    setSelectedMiembro(miembro);
-    setIsDetailsSheetOpen(true);
-  };
-
-  const handleEdit = (miembro: Member) => {
-    setSelectedMiembro(miembro);
-    setIsEditModalOpen(true);
-    setIsDetailsSheetOpen(false);
-  };
-
-  const handleSaveEdit = (data: MemberFormData) => {
-    if (!selectedMiembro) return;
-
-    const updatedMiembro: Member = {
-      ...selectedMiembro,
-      ...data,
-    };
-
-    setMiembros(prev => 
-      prev.map(m => m.id === selectedMiembro.id ? updatedMiembro : m)
-    );
-    
-    setSelectedMiembro(null);
-    setIsEditModalOpen(false);
+export default function AcudienteView() {
+  // Datos de ejemplo para el dashboard
+  const dashboardData = {
+    miembrosACargo: 3,
+    activosThisMes: 2,
+    proximosEventos: 2,
+    cuotasPendientes: 2,
+    totalPendiente: 170000
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Miembros a Cargo
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Visualiza y gestiona los miembros scouts que tienes bajo tu responsabilidad
-        </p>
+      {/* Header de bienvenida */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">¡Bienvenido, Juan Esteban!</h1>
+          <p className="text-muted-foreground">
+            MANADA KUNA - Panel de Acudiente
+          </p>
+        </div>
       </div>
 
-      {/* Tabla de miembros */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <MembersTable
-          members={miembros}
-          onViewDetails={handleViewDetails}
-          onEdit={handleEdit}
-        />
-      </div>
+      {/* Cards de resumen */}
+      <StatsCards data={dashboardData} />
 
-      {/* Sheet de detalles */}
-      <MemberDetailsSheet
-        isOpen={isDetailsSheetOpen}
-        onClose={() => setIsDetailsSheetOpen(false)}
-        miembro={selectedMiembro}
-        onEdit={handleEdit}
-      />
+      {/* Acciones rápidas */}
+      <QuickActions />
 
-      {/* Modal de edición */}
-      <EditMemberModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedMiembro(null);
-        }}
-        miembro={selectedMiembro}
-        onSave={handleSaveEdit}
-      />
+      {/* Notificaciones recientes */}
+      <RecentNotifications />
     </div>
   );
 }
-
-export default AcudienteView;

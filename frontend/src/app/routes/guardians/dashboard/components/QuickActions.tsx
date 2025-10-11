@@ -19,7 +19,7 @@ export default function QuickActions() {
       title: "Ver Miembros a Cargo",
       description: "Gestiona la información de tus miembros",
       icon: Users,
-      action: () => navigate('/app/acudiente/dashboard'),
+      action: () => navigate('/app/acudiente/miembros'),
       color: "bg-blue-500"
     },
     {

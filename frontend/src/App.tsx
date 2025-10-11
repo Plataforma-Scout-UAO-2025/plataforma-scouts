@@ -22,7 +22,7 @@ import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
 
 // Pages - Guardians/Acudientes
-import GuardianHome from "./app/routes/guardians/home/GuardianHome";
+import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
 import WelcomeAddMember from "./app/routes/guardians/members/components/views/WelcomeAddMember";
 
@@ -178,19 +178,21 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* Dashboard del acudiente (vista principal con stats y acciones) */}
             <Route
-              path="acudiente/dashboard"
+              path="acudiente"
               element={
                 <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
                   <Dashboard />
                 </ProtectedRoute>
               }
             />
+            {/* Tabla de miembros a cargo */}
             <Route
-              path="acudiente"
+              path="acudiente/miembros"
               element={
                 <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <GuardianHome />
+                  <MembersInCharge />
                 </ProtectedRoute>
               }
             />

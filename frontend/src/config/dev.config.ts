@@ -5,7 +5,7 @@
  * Solo para visualización y pruebas de UI
  */
 
-export const DEV_MODE = false; // Cambia a true para activar el modo DEV
+export const DEV_MODE = true; // Cambia a true para activar el modo DEV
 
 export const DEV_USER = {
   name: "Juan Esteban Pérez",
