@@ -6,8 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.guardian.shared.enums.Status;
-import uao.edu.co.scouts_project.organigram.Subgroup;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class MemberDTO {
     private String userId;
     private String tenantId;
-    private Subgroup subgroup;
+    private SubgroupDTO subgroup;
     private String firstName;
     private String lastName;
     private Integer age;
