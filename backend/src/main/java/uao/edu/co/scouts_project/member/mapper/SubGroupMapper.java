@@ -9,6 +9,10 @@ import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
  */
 public class SubGroupMapper {
 
+    private SubGroupMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
      * Convierte una entidad Subgroup a un DTO SubgroupDTO.
      *

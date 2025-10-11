@@ -9,6 +9,9 @@ import uao.edu.co.scouts_project.member.dto.SchoolDataDto;
  */
 public class SchoolDataMapper {
 
+    private SchoolDataMapper() {
+        throw new IllegalStateException("Utility class");
+    }
     /**
      * Convierte una entidad SchoolData a un DTO SchoolDataDto.
      *
