@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui";
-import { DollarSign, FileText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { DollarSign, FileText, ListChecks } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Financiero() {
@@ -7,83 +7,46 @@ export default function Financiero() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-5xl font-bold tracking-tight text-primary">Modulo financiero</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-5xl font-bold tracking-tight text-primary">
+            Modulo financiero
+          </h1>
+          <p className="text-muted-foreground pt-2">
             Gestiona las cuotas y pagos de los scouts
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="primary" asChild>
-            <Link to="/app/financiero/estado-cuenta">
-              <FileText className="text-white" />
-              Ver estado de cuenta
-            </Link>
-          </Button>
-          <Button variant="primary" asChild>
-            <Link to="/app/financiero/pagos">
-              <DollarSign className="text-white" />
-              Gestionar pagos
-            </Link>
-          </Button>
-          <Button variant="primary" asChild>
-            <Link to="/app/financiero/cuotas/gestion">
-              <FileText className="text-white" />
-              Gestionar cuotas
-            </Link>
-          </Button>
-        </div>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Total Recaudado</h3>
-          <p className="text-2xl font-bold">$2,450,000</p>
-        </div>
-        <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Pendientes</h3>
-          <p className="text-2xl font-bold">$850,000</p>
-        </div>
-        <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Scouts Activos</h3>
-          <p className="text-2xl font-bold">45</p>
-        </div>
-        <div className="rounded-lg border p-4">
-          <h3 className="font-medium text-sm text-muted-foreground">Mes Actual</h3>
-          <p className="text-2xl font-bold">Enero</p>
-        </div>
-      </div>
-
-      <div className="rounded-lg border">
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Lista de Cuotas</h2>
-          <div className="space-y-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <span className="text-primary font-medium">
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium">Scout {i + 1}</p>
-                    <p className="text-sm text-muted-foreground">Manada Kuna</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">$50,000</p>
-                  <p className={`text-sm ${
-                    i % 3 === 0 ? 'text-green-600' : 
-                    i % 3 === 1 ? 'text-yellow-600' : 'text-red-600'
-                  }`}>
-                    {i % 3 === 0 ? 'Pagado' : i % 3 === 1 ? 'Pendiente' : 'Vencido'}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6">
+        <Link to="/app/financiero/cuotas/gestion" className="block">
+          <Card className="cursor-pointer hover:shadow-lg h-full border-primary border-2 hover:bg-primary group transition-colors duration-200">
+            <CardContent className="flex flex-col items-center justify-center gap-4 py-8">
+              <ListChecks className="text-primary size-10 group-hover:text-white" />
+              <span className="text-lg font-semibold text-center text-primary group-hover:text-white">
+                Gestionar cuotas
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/app/financiero/pagos" className="block">
+          <Card className="cursor-pointer hover:shadow-lg h-full border-primary border-2 hover:bg-primary group transition-colors duration-200">
+            <CardContent className="flex flex-col items-center justify-center gap-4 py-8">
+              <DollarSign className="text-primary size-10 group-hover:text-white" />
+              <span className="text-lg font-semibold text-center text-primary group-hover:text-white">
+                Gestionar pagos
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/app/financiero/estado-cuenta" className="block">
+          <Card className="cursor-pointer hover:shadow-lg h-full border-primary border-2 hover:bg-primary group transition-colors duration-200">
+            <CardContent className="flex flex-col items-center justify-center gap-4 py-8">
+              <FileText className="text-primary size-10 group-hover:text-white"/>
+              <span className="text-lg font-semibold text-center text-primary group-hover:text-white">
+                Ver estado de cuenta
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
-  )
+  );
 }
