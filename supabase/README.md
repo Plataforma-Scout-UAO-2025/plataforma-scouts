@@ -1,8 +1,6 @@
 # Supabase Database Setup Guide
 
-**Last Updated**: October 10, 2025  
-**Version**: 1.0.2
-**Maintainer**: DBA
+**Last Updated**: October 11, 2025 | **Version**: 1.0.3 | **Maintainer**: DBA
 
 This README provides comprehensive instructions for setting up and deploying the Supabase database migrations for the Scout Management System.
 
@@ -23,8 +21,7 @@ Before setting up the database, ensure you have:
    ```
 
 2. **Supabase Project**:
-   - Ask for your project reference ID with your DBA team`
-   - Save your database password
+   - Ask for your project crededntials with your DBA team
 
 3. **Git Repository Access**:
    - Clone this repository
@@ -38,6 +35,7 @@ plataforma-scouts/
 ├── frontend/                    # React frontend
 ├── supabase/                    # Database configuration
 │   ├── migrations/              # SQL migration files
+│     └── README.md
 └── README.md
 ```
 
@@ -142,4 +140,4 @@ For issues or questions:
 1. Check the [Supabase Documentation](https://supabase.com/docs)
 2. Review migration files for comments and explanations
 3. Create an issue in the project repository
-4. or contact the DBAs/lead team instead, lol ;)
+4. or contact the DBAs/lead team instead ;)
