@@ -30,6 +30,7 @@ import lombok.Setter;
 import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.guardian.shared.enums.Status;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 
 @Builder
 @Entity
