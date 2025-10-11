@@ -25,7 +25,6 @@ import {
   Users,
   Award,
   ChevronRight,
-  Network,
   DollarSign,
   CalendarDays,
 } from "lucide-react";
@@ -89,12 +88,12 @@ const adminGrupalItems: MenuItem[] = [
 ]
 
 const tesoreroItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
 ]
 
 const acudienteItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/estado-cuenta" },
 ]
 
