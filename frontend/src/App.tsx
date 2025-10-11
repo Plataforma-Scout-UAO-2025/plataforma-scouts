@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Home from "./app/routes/Home";
-import Dashboard from "./app/routes/Dashboard";
+import Dashboard from "./app/routes/dashboard/Dashboard";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
@@ -23,7 +23,6 @@ import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
 
 // Pages - Guardians/Acudientes
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
-import GuardianDashboard from "./app/routes/guardians/members/components/dashboard/GuardianDashboard";
 import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
 import WelcomeAddMember from "./app/routes/guardians/members/components/views/WelcomeAddMember";
 
@@ -173,7 +172,7 @@ function App() {
               path="acudiente"
               element={
                 <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <GuardianDashboard />
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
