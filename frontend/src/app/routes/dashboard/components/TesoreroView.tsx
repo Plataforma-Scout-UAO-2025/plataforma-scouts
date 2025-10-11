@@ -1,8 +1,30 @@
 import React from 'react'
 import type { DashboardFinanciero } from '@/types/dashboard-tesorero.types'
+import type { InstallmentPayment, PaymentStatus } from '@/types/pago.type'
+import type { MiembroMora } from '@/types/dashboard-tesorero.types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CircleDollarSign, TrendingDown, AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+  type ColumnDef,
+} from '@tanstack/react-table'
+import { format } from 'date-fns'
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+import { Doughnut } from 'react-chartjs-2'
+
+// Registrar los componentes necesarios de Chart.js
+ChartJS.register(ArcElement, Tooltip, Legend)
 
 // Mock Data
 const mockDashboardData: DashboardFinanciero = {
@@ -23,7 +45,7 @@ const mockDashboardData: DashboardFinanciero = {
       name: "Cuota Enero",
       due_date: new Date("2025-01-15"),
       amount: 50000,
-      status: "PAID",
+      status: "PAID" as PaymentStatus,
       payment_id: "p1",
       paid_at: new Date("2025-01-10"),
       method: "Transferencia",
@@ -35,7 +57,7 @@ const mockDashboardData: DashboardFinanciero = {
       name: "Cuota Febrero",
       due_date: new Date("2025-02-15"),
       amount: 50000,
-      status: "PAID",
+      status: "PAID" as PaymentStatus,
       payment_id: "p2",
       paid_at: new Date("2025-02-12"),
       method: "Efectivo",
@@ -47,7 +69,7 @@ const mockDashboardData: DashboardFinanciero = {
       name: "Cuota Marzo",
       due_date: new Date("2025-03-15"),
       amount: 50000,
-      status: "PAID",
+      status: "PAID" as PaymentStatus,
       payment_id: "p3",
       paid_at: new Date("2025-03-08"),
       method: "Transferencia",
@@ -59,7 +81,7 @@ const mockDashboardData: DashboardFinanciero = {
       name: "Cuota Abril",
       due_date: new Date("2025-04-15"),
       amount: 50000,
-      status: "PAID",
+      status: "PAID" as PaymentStatus,
       payment_id: "p4",
       paid_at: new Date("2025-04-10"),
       method: "PSE",
@@ -71,12 +93,72 @@ const mockDashboardData: DashboardFinanciero = {
       name: "Cuota Mayo",
       due_date: new Date("2025-05-15"),
       amount: 50000,
-      status: "PAID",
+      status: "PAID" as PaymentStatus,
       payment_id: "p5",
       paid_at: new Date("2025-05-09"),
       method: "Transferencia",
       reference: "REF005",
       payer_member_id: "m5",
+    },
+    {
+      installment_id: "6",
+      name: "Cuota Junio",
+      due_date: new Date("2025-06-15"),
+      amount: 50000,
+      status: "PAID" as PaymentStatus,
+      payment_id: "p6",
+      paid_at: new Date("2025-06-08"),
+      method: "PSE",
+      reference: "REF006",
+      payer_member_id: "m6",
+    },
+    {
+      installment_id: "7",
+      name: "Cuota Julio",
+      due_date: new Date("2025-07-15"),
+      amount: 50000,
+      status: "PAID" as PaymentStatus,
+      payment_id: "p7",
+      paid_at: new Date("2025-07-12"),
+      method: "Transferencia",
+      reference: "REF007",
+      payer_member_id: "m7",
+    },
+    {
+      installment_id: "8",
+      name: "Cuota Agosto",
+      due_date: new Date("2025-08-15"),
+      amount: 50000,
+      status: "PAID" as PaymentStatus,
+      payment_id: "p8",
+      paid_at: new Date("2025-08-09"),
+      method: "Efectivo",
+      reference: "REF008",
+      payer_member_id: "m8",
+    },
+    {
+      installment_id: "9",
+      name: "Cuota Septiembre",
+      due_date: new Date("2025-09-15"),
+      amount: 50000,
+      status: "PAID" as PaymentStatus,
+      payment_id: "p9",
+      paid_at: new Date("2025-09-10"),
+      method: "Transferencia",
+      reference: "REF009",
+      payer_member_id: "m9",
+    },
+    {
+      installment_id: "10",
+      name: "Cuota Octubre",
+      due_date: new Date("2025-10-15"),
+      amount: 50000,
+      status: "PAID" as PaymentStatus,
+      payment_id: "p10",
+      paid_at: new Date("2025-10-08"),
+      method: "PSE",
+      reference: "REF010",
+      payer_member_id: "m10",
     },
   ],
   miembros_mora: [
@@ -108,6 +190,62 @@ const mockDashboardData: DashboardFinanciero = {
       subgroup_name: "Clan",
       amount_debt: 50000,
     },
+    {
+      member_id: 105,
+      first_name: "Luis",
+      last_name: "Fernández",
+      subgroup_name: "Manada",
+      amount_debt: 75000,
+    },
+    {
+      member_id: 106,
+      first_name: "Sofía",
+      last_name: "Torres",
+      subgroup_name: "Tropa",
+      amount_debt: 125000,
+    },
+    {
+      member_id: 107,
+      first_name: "Diego",
+      last_name: "Ramírez",
+      subgroup_name: "Comunidad",
+      amount_debt: 180000,
+    },
+    {
+      member_id: 108,
+      first_name: "Valentina",
+      last_name: "López",
+      subgroup_name: "Clan",
+      amount_debt: 90000,
+    },
+    {
+      member_id: 109,
+      first_name: "Andrés",
+      last_name: "Hernández",
+      subgroup_name: "Manada",
+      amount_debt: 110000,
+    },
+    {
+      member_id: 110,
+      first_name: "Camila",
+      last_name: "Díaz",
+      subgroup_name: "Tropa",
+      amount_debt: 160000,
+    },
+    {
+      member_id: 111,
+      first_name: "Santiago",
+      last_name: "Vargas",
+      subgroup_name: "Comunidad",
+      amount_debt: 95000,
+    },
+    {
+      member_id: 112,
+      first_name: "Isabella",
+      last_name: "Castro",
+      subgroup_name: "Clan",
+      amount_debt: 140000,
+    },
   ],
   distribucion_pago: {
     porcentaje_pagado: 60,
@@ -125,6 +263,115 @@ const formatCurrency = (amount: number): string => {
   }).format(amount)
 }
 
+// Diccionario de estados
+const statusDict: Record<PaymentStatus, string> = {
+  PENDING: "Pendiente",
+  PARTIAL: "Parcial",
+  PAID: "Pagado",
+  OVERDUE: "Vencido",
+}
+
+// Columnas para la tabla de últimos pagos
+const ultimosPagosColumns: ColumnDef<InstallmentPayment>[] = [
+  {
+    accessorKey: "installment_id",
+    header: "ID",
+  },
+  {
+    accessorKey: "name",
+    header: "Nombre",
+  },
+  {
+    accessorKey: "due_date",
+    header: "Fecha de vencimiento",
+    cell: ({ row }) =>
+      row.original.due_date ? format(row.original.due_date, "dd/MM/yyyy") : "-",
+  },
+  {
+    accessorKey: "amount",
+    header: "Monto",
+    cell: ({ row }) => formatCurrency(row.original.amount),
+  },
+  {
+    accessorKey: "status",
+    header: "Estado",
+    cell: ({ row }) => {
+      const installment = row.original
+      return (
+        <div
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            installment.status === "PENDING"
+              ? "bg-yellow-100 text-yellow-800"
+              : installment.status === "PAID"
+              ? "bg-green-100 text-green-800"
+              : installment.status === "OVERDUE"
+              ? "bg-red-100 text-red-800"
+              : "bg-blue-100 text-blue-800"
+          }`}
+        >
+          {statusDict[installment.status]}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "payment_id",
+    header: "ID de pago",
+    cell: ({ row }) => {
+      const installment = row.original
+      return installment.payment_id ? installment.payment_id : "-"
+    },
+  },
+  {
+    accessorKey: "paid_at",
+    header: "Fecha de pago",
+    cell: ({ row }) =>
+      row.original.paid_at ? format(row.original.paid_at, "dd/MM/yyyy") : "-",
+  },
+  {
+    accessorKey: "method",
+    header: "Método",
+    cell: ({ row }) => {
+      const installment = row.original
+      return installment.method ? installment.method : "-"
+    },
+  },
+  {
+    accessorKey: "reference",
+    header: "Referencia",
+    cell: ({ row }) => {
+      const installment = row.original
+      return installment.reference ? installment.reference : "-"
+    },
+  },
+]
+
+// Columnas para la tabla de miembros en mora
+const miembrosMoraColumns: ColumnDef<MiembroMora>[] = [
+  {
+    accessorKey: "member_id",
+    header: "ID",
+  },
+  {
+    accessorKey: "first_name",
+    header: "Nombre",
+    cell: ({ row }) => `${row.original.first_name} ${row.original.last_name}`,
+  },
+  {
+    accessorKey: "subgroup_name",
+    header: "Subgrupo",
+  },
+  {
+    accessorKey: "amount_debt",
+    header: "Cantidad adeudada",
+    cell: ({ row }) => (
+      <span className="font-semibold text-red-600">
+        {formatCurrency(row.original.amount_debt)}
+      </span>
+    ),
+  },
+]
+
 // Componente KPI Card
 interface KPICardProps {
   icon: React.ElementType
@@ -138,7 +385,7 @@ const KPICard = ({ icon: Icon, label, value, iconColor = "text-primary" }: KPICa
     <div className="border rounded-xl shadow-sm p-4 flex items-center flex-1">
       <div className="p-4 w-full">
         <div className="pb-4 flex justify-between items-center">
-          <p className="text-lg md:text-xl text-text font-bold">
+          <p className="text-lg text-text">
             {label}
           </p>
           <Icon className={`${iconColor} flex-shrink-0 w-10 h-10`} />
@@ -151,7 +398,206 @@ const KPICard = ({ icon: Icon, label, value, iconColor = "text-primary" }: KPICa
   )
 }
 
-// Componente de gráfico circular
+// Componente tabla de últimos pagos con paginación
+interface UltimosPagosTableProps {
+  data: InstallmentPayment[]
+}
+
+const UltimosPagosTable = ({ data }: UltimosPagosTableProps) => {
+  const table = useReactTable({
+    data,
+    columns: ultimosPagosColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 5,
+      },
+    },
+  })
+
+  return (
+    <Card className='col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-2'>
+      <CardHeader className='flex flex-row justify-between items-center'>
+        <CardTitle>Últimos pagos</CardTitle>
+        <Button variant="link" className='w-min'>
+          <Link to="/app/financiero/pagos">Ver todos</Link>
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={ultimosPagosColumns.length}
+                    className="h-24 text-center"
+                  >
+                    No hay resultados.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="text-muted-foreground flex-1 text-sm">
+            Página {table.getState().pagination.pageIndex + 1} de{" "}
+            {table.getPageCount()}
+          </div>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Siguiente
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Componente tabla de miembros en mora con paginación
+interface MiembrosMoraTableProps {
+  data: MiembroMora[]
+}
+
+const MiembrosMoraTable = ({ data }: MiembrosMoraTableProps) => {
+  const table = useReactTable({
+    data,
+    columns: miembrosMoraColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 5,
+      },
+    },
+  })
+
+  return (
+    <Card className='col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-2'>
+      <CardHeader>
+        <CardTitle>Miembros en mora</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={miembrosMoraColumns.length}
+                    className="h-24 text-center"
+                  >
+                    No hay resultados.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="text-muted-foreground flex-1 text-sm">
+            Página {table.getState().pagination.pageIndex + 1} de{" "}
+            {table.getPageCount()}
+          </div>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Siguiente
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Componente de gráfico doughnut con Chart.js
 interface PieChartProps {
   data: {
     porcentaje_pagado: number
@@ -162,67 +608,63 @@ interface PieChartProps {
 
 const PieChart = ({ data }: PieChartProps) => {
   const { porcentaje_pagado, porcentaje_pendiente, porcentaje_vencido } = data
-  
-  // Calcular los ángulos para el SVG
-  const total = porcentaje_pagado + porcentaje_pendiente + porcentaje_vencido
-  const pagadoAngle = (porcentaje_pagado / total) * 360
-  const pendienteAngle = (porcentaje_pendiente / total) * 360
 
-  // Función para crear el path del arco
-  const createArc = (startAngle: number, endAngle: number) => {
-    const start = polarToCartesian(50, 50, 40, endAngle)
-    const end = polarToCartesian(50, 50, 40, startAngle)
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1"
-    
-    return [
-      "M", 50, 50,
-      "L", start.x, start.y,
-      "A", 40, 40, 0, largeArcFlag, 0, end.x, end.y,
-      "Z"
-    ].join(" ")
+  const chartData = {
+    labels: ['Pagado', 'Pendiente', 'Vencido'],
+    datasets: [
+      {
+        data: [porcentaje_pagado, porcentaje_pendiente, porcentaje_vencido],
+        backgroundColor: [
+          '#22c55e', // Verde para pagado
+          '#eab308', // Amarillo para pendiente
+          '#ef4444', // Rojo para vencido
+        ],
+        borderColor: [
+          '#16a34a',
+          '#ca8a04',
+          '#dc2626',
+        ],
+        borderWidth: 2,
+        hoverBackgroundColor: [
+          '#16a34a',
+          '#ca8a04',
+          '#dc2626',
+        ],
+      },
+    ],
   }
 
-  const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
-    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0
-    return {
-      x: centerX + (radius * Math.cos(angleInRadians)),
-      y: centerY + (radius * Math.sin(angleInRadians))
-    }
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            const label = context.label || ''
+            const value = context.parsed
+            return `${label}: ${value}%`
+          },
+        },
+      },
+    },
+    cutout: '60%', // Para hacer el gráfico doughnut (con agujero en el centro)
   }
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-4">
-      <svg viewBox="0 0 100 100" className="w-48 h-48">
-        <path
-          d={createArc(0, pagadoAngle)}
-          fill="#22c55e"
-          className="transition-all duration-300"
-        />
-        <path
-          d={createArc(pagadoAngle, pagadoAngle + pendienteAngle)}
-          fill="#eab308"
-          className="transition-all duration-300"
-        />
-        <path
-          d={createArc(pagadoAngle + pendienteAngle, 360)}
-          fill="#ef4444"
-          className="transition-all duration-300"
-        />
-      </svg>
-      
-      <div className="flex flex-col space-y-2">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-green-500 rounded"></div>
-          <span className="text-sm">Pagado ({porcentaje_pagado}%)</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-          <span className="text-sm">Pendiente ({porcentaje_pendiente}%)</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-red-500 rounded"></div>
-          <span className="text-sm">Vencido ({porcentaje_vencido}%)</span>
-        </div>
+    <div className="w-full h-80 flex flex-col items-center justify-center">
+      <div className="w-64 h-64">
+        <Doughnut data={chartData} options={options} />
       </div>
     </div>
   )
@@ -235,7 +677,7 @@ export default function TesoreroView() {
     <div className="mx-4 space-y-6">
 
       {/* KPIs - Primera fila */}
-      <section className="flex gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         <KPICard
           icon={CircleDollarSign}
           label="Total recaudado"
@@ -250,18 +692,18 @@ export default function TesoreroView() {
         />
         <KPICard
           icon={AlertTriangle}
-          label="Pagos cuotas vencidas"
+          label="Pagos vencidos"
           value={data.kpis.pagos_vencidos}
           iconColor="text-red-600"
         />
       </section>
 
       {/* Segunda fila - Cumplimiento y Mora */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Porcentaje de cumplimiento mensual por subgrupo */}
-        <Card>
+        <Card className='col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-1'>
           <CardHeader>
-            <CardTitle>% de cumplimiento mensual por subgrupo</CardTitle>
+            <CardTitle>Porcentaje de cumplimiento mensual por subgrupo</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -288,78 +730,16 @@ export default function TesoreroView() {
         </Card>
 
         {/* Miembros en mora */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Miembros en mora</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Subgrupo</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.miembros_mora.map((miembro) => (
-                  <TableRow key={miembro.member_id}>
-                    <TableCell className="font-medium">
-                      {miembro.first_name} {miembro.last_name}
-                    </TableCell>
-                    <TableCell>{miembro.subgroup_name}</TableCell>
-                    <TableCell className="text-right font-semibold text-red-600">
-                      {formatCurrency(miembro.amount_debt)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <MiembrosMoraTable data={data.miembros_mora} />
       </section>
 
       {/* Tercera fila - Últimos pagos y Distribución */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Últimos pagos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Últimos pagos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cuota</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Método</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.ultimos_pagos.map((pago) => (
-                  <TableRow key={pago.payment_id}>
-                    <TableCell className="font-medium">{pago.name}</TableCell>
-                    <TableCell>
-                      {pago.paid_at?.toLocaleDateString('es-CO', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
-                    </TableCell>
-                    <TableCell>{pago.method}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(pago.amount)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <UltimosPagosTable data={data.ultimos_pagos} />
 
         {/* Distribución estado de pagos mes actual */}
-        <Card>
+        <Card className='col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-1'>
           <CardHeader>
             <CardTitle>Distribución estado de pagos mes actual</CardTitle>
           </CardHeader>
