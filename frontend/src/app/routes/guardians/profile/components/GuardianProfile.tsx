@@ -7,6 +7,9 @@ import ProfileHeader from './ProfileHeader';
 import ProfileInfoCard from './ProfileInfoCard';
 import MembersInChargeCard from './MembersInChargeCard';
 import EditProfileModal from './EditProfileModal';
+import MemberDetailsSheet from '../../members/components/modals/MemberDetailsSheet';
+import { mockMembersData } from '../../shared/mockData';
+import type { Member } from '../../members/types/member.type';
 
 interface MembersInCharge {
   id: number;
@@ -36,6 +39,8 @@ interface GuardianProfile {
 const GuardianProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
 
   const [guardianData, setGuardianData] = useState<GuardianProfile>({
     firstName: "Juan Esteban",
@@ -64,7 +69,19 @@ const GuardianProfilePage: React.FC = () => {
   };
 
   const handleViewMemberProfile = (id: number) => {
-    navigate(`/app/acudiente/miembros/${id}`);
+    // Buscar el miembro en los datos mock compartidos
+    const member = mockMembersData.find(m => m.id === id);
+    if (member) {
+      setSelectedMember(member);
+      setIsDetailsSheetOpen(true);
+    } else {
+      toast.error('No se encontró información del miembro');
+    }
+  };
+
+  const handleEditMember = (_member: Member) => {
+    setIsDetailsSheetOpen(false);
+    toast.info('Funcionalidad de edición en desarrollo');
   };
 
   return (
@@ -127,6 +144,12 @@ const GuardianProfilePage: React.FC = () => {
           phoneAlt: guardianData.phoneAlt,
           address: guardianData.address
         }} 
+      />
+      <MemberDetailsSheet 
+        isOpen={isDetailsSheetOpen}
+        onClose={() => setIsDetailsSheetOpen(false)}
+        miembro={selectedMember}
+        onEdit={handleEditMember}
       />
     </div>
   );

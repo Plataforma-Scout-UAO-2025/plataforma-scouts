@@ -1,182 +1,87 @@
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Users, UserCheck, Calendar, DollarSign, Bell, Settings } from 'lucide-react';
+import { useState } from 'react';
+import MembersTable from '@/app/routes/guardians/members/components/tables/MembersTable';
+import MemberDetailsSheet from '@/app/routes/guardians/members/components/modals/MemberDetailsSheet';
+import EditMemberModal from '@/app/routes/guardians/members/components/modals/EditMemberModal';
+import type { Member } from '@/app/routes/guardians/members/types/member.type';
+import type { MemberFormData } from '@/app/routes/guardians/members/schemas/MemberForm.schema';
+import { mockMembersData } from '@/app/routes/guardians/shared/mockData';
 
+/**
+ * AcudienteView - Dashboard principal para acudientes
+ * Muestra la tabla de miembros a cargo del acudiente
+ */
 const AcudienteView = () => {
-  const navigate = useNavigate();
+  const [miembros, setMiembros] = useState<Member[]>(mockMembersData);
+  const [selectedMiembro, setSelectedMiembro] = useState<Member | null>(null);
+  const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Datos de ejemplo para el dashboard
-  const dashboardData = {
-    miembrosACargo: 3,
-    activosThisMes: 2,
-    proximosEventos: 2,
-    cuotasPendientes: 2,
-    totalPendiente: 170000
+  const handleViewDetails = (miembro: Member) => {
+    setSelectedMiembro(miembro);
+    setIsDetailsSheetOpen(true);
   };
 
-  const formatearMoneda = (monto: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(monto);
+  const handleEdit = (miembro: Member) => {
+    setSelectedMiembro(miembro);
+    setIsEditModalOpen(true);
+    setIsDetailsSheetOpen(false);
   };
 
-  const quickActions = [
-    {
-      title: "Ver Miembros a Cargo",
-      description: "Gestiona la información de tus miembros",
-      icon: Users,
-      action: () => navigate('/app/acudiente/miembros'),
-      color: "bg-blue-500"
-    },
-    {
-      title: "Mi Perfil",
-      description: "Actualiza tu información personal",
-      icon: Settings,
-      action: () => navigate('/app/acudiente/perfil'),
-      color: "bg-green-500"
-    }
-  ];
+  const handleSaveEdit = (data: MemberFormData) => {
+    if (!selectedMiembro) return;
+
+    const updatedMiembro: Member = {
+      ...selectedMiembro,
+      ...data,
+    };
+
+    setMiembros(prev => 
+      prev.map(m => m.id === selectedMiembro.id ? updatedMiembro : m)
+    );
+    
+    setSelectedMiembro(null);
+    setIsEditModalOpen(false);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header de bienvenida */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">¡Bienvenido, Juan Esteban!</h1>
-          <p className="text-muted-foreground">
-            MANADA KUNA - Panel de Acudiente
-          </p>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Miembros a Cargo
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Visualiza y gestiona los miembros scouts que tienes bajo tu responsabilidad
+        </p>
       </div>
 
-      {/* Cards de resumen */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Miembros a Cargo</CardTitle>
-            <Users className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {dashboardData.miembrosACargo}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total de miembros
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Activos Este Mes</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {dashboardData.activosThisMes}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Participando en actividades
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Próximos Eventos</CardTitle>
-            <Calendar className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {dashboardData.proximosEventos}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Este mes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cuotas Pendientes</CardTitle>
-            <DollarSign className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {formatearMoneda(dashboardData.totalPendiente)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {dashboardData.cuotasPendientes} cuotas pendientes
-            </p>
-          </CardContent>
-        </Card>
+      {/* Tabla de miembros */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <MembersTable
+          members={miembros}
+          onViewDetails={handleViewDetails}
+          onEdit={handleEdit}
+        />
       </div>
 
-      {/* Acciones rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {quickActions.map((action, index) => {
-          const IconComponent = action.icon;
-          return (
-            <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer" onClick={action.action}>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-lg ${action.color}`}>
-                    <IconComponent className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{action.title}</h3>
-                    <p className="text-sm text-muted-foreground">{action.description}</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Ir
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Sheet de detalles */}
+      <MemberDetailsSheet
+        isOpen={isDetailsSheetOpen}
+        onClose={() => setIsDetailsSheetOpen(false)}
+        miembro={selectedMiembro}
+        onEdit={handleEdit}
+      />
 
-      {/* Notificaciones recientes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notificaciones Recientes
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-              <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Nuevo evento disponible</p>
-                <p className="text-xs text-muted-foreground">Campamento de Otoño - Inscripciones abiertas hasta el 10 de octubre</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
-              <DollarSign className="h-5 w-5 text-yellow-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Recordatorio de pago</p>
-                <p className="text-xs text-muted-foreground">Cuota mensual de octubre vence el 31 de octubre</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
-              <UserCheck className="h-5 w-5 text-green-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Actividad completada</p>
-                <p className="text-xs text-muted-foreground">José Alberto participó en la actividad de servicio comunitario</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modal de edición */}
+      <EditMemberModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedMiembro(null);
+        }}
+        miembro={selectedMiembro}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }

@@ -22,8 +22,8 @@ import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
 
 // Pages - Guardians/Acudientes
+import GuardianHome from "./app/routes/guardians/home/GuardianHome";
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
-import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
 import WelcomeAddMember from "./app/routes/guardians/members/components/views/WelcomeAddMember";
 
 import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
@@ -36,15 +36,25 @@ import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/co
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
 
+// ⚠️ DEV MODE
+import { DEV_CONFIG } from "./config/dev.config";
+
 function App() {
   useAuth0ApiWrapper();
 
   return (
     <BrowserRouter>
+      {/* ⚠️ BANNER DE MODO DESARROLLO */}
+      {DEV_CONFIG.showDevBanner && (
+        <div className="bg-yellow-400 text-black px-4 py-2 text-center font-semibold text-sm sticky top-0 z-50">
+          🚧 MODO DESARROLLO - Sin Backend - Solo Visualización 🚧
+        </div>
+      )}
+      
       <div className="h-screen w-screen">
         <Routes>
           {/* 🔹 Login & Registro */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={DEV_CONFIG.skipAuth ? <Navigate to="/app/acudiente" replace /> : <Home />} />
           
           {/* ============================================
               RUTAS DE INSCRIPCIÓN Y SCOUT (Sin auth requerida aún)
@@ -169,7 +179,7 @@ function App() {
               }
             />
             <Route
-              path="acudiente"
+              path="acudiente/dashboard"
               element={
                 <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
                   <Dashboard />
@@ -177,10 +187,10 @@ function App() {
               }
             />
             <Route
-              path="acudiente/miembros"
+              path="acudiente"
               element={
                 <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <MembersInCharge />
+                  <GuardianHome />
                 </ProtectedRoute>
               }
             />

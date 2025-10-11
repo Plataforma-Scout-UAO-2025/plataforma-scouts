@@ -95,7 +95,7 @@ const acudienteItems: MenuItem[] = [
     id: "miembros", 
     label: "Mis Miembros", 
     icon: <Users />, 
-    href: "/app/acudiente/miembros" 
+    href: "/app/acudiente/dashboard" 
   },
   { 
     id: "estado-cuenta", 

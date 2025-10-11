@@ -4,6 +4,7 @@ import api from '@/api/axios';
 import { buildRoleInfo, RawRole, getRoleLabel } from '@/roles/roles';
 import { RoleContext } from './role-context';
 import type { RoleStatus, RoleContextValue } from './role-context';
+import { DEV_CONFIG } from '@/config/dev.config';
 
 interface FetchResult {
   roles: string[];
@@ -40,6 +41,16 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchingRef = useRef(false);
   const lastAttemptRef = useRef<number>(0);
 
+  // ⚠️ MODO DEV: Configurar role directamente sin API
+  useEffect(() => {
+    if (DEV_CONFIG.skipAuth) {
+      setRoles([DEV_CONFIG.mockRole]);
+      setCurrentUserRole(DEV_CONFIG.mockRole);
+      setStatus('success');
+      return;
+    }
+  }, []);
+
   const loadRoles = useCallback(async () => {
     if (!isAuthenticated) return;
     if (fetchingRef.current) return;
@@ -63,6 +74,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isAuthenticated]);
 
   useEffect(() => {
+    if (DEV_CONFIG.skipAuth) return; // Skip en modo DEV
     if (isAuthenticated && status === 'idle') {
       loadRoles();
     }

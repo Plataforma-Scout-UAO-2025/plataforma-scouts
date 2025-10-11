@@ -76,7 +76,7 @@ export default function MembersInChargeCard({
                     onClick={() => onViewMember(miembro.id)}
                     className="text-xs border-[#1a4134] text-[#1a4134] hover:bg-[#1a4134] hover:text-white"
                   >
-                    Ver perfil
+                    Ver detalles
                   </Button>
                 </div>
               </div>
