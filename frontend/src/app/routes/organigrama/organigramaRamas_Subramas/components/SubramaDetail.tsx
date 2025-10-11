@@ -455,19 +455,59 @@ export default function SubramaDetail() {
           String(sectionIdDel),
           String(subgroupIdDel)
         );
+        // Tras intentar remove (patch), hacer re-check para confirmar
+        try {
+          const refreshed = await organigramaService.getSubramaById(tenantSlug, groupSlug, String(sectionIdDel), String(subgroupIdDel));
+          const mainStill = refreshed?.imagenPrincipal ?? refreshed?.mainImageUrl ?? null;
+          if (mainStill) {
+            console.warn('[SubramaDetail] La imagen principal sigue presente tras remove; la eliminación física pudo fallar o no aplicarse');
+            toast.warning('La imagen fue desvinculada, pero su eliminación física puede haber fallado. Por favor verifica en el servidor.');
+          } else {
+            toast.success('Imagen principal eliminada correctamente');
+          }
+        } catch (err) {
+          console.warn('[SubramaDetail] No se pudo verificar estado tras remove main image:', err);
+          toast('Operación completada. Verificar estado en el servidor si es necesario');
+        }
       } else if (fotoTipo === "galeria") {
-        // 🧠 Extraer UUID limpio
-  // galeriaObjetivo está deshabilitado; usar fallback vacío
-  const cleanUuid = ''.match(/[0-9a-fA-F-]{36}/)?.[0] || '';
-  const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-  const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
-        await organigramaService.removeSubramaGalleryImage(
-          tenantSlug,
-          groupSlug,
-          String(sectionIdDel),
-          String(subgroupIdDel),
-          cleanUuid
-        );
+        // Para eliminación física usar DELETE con deleteFromStorage=true cuando sea posible.
+        // Extraer UUID desde la URL seleccionada o desde la cadena fotoSeleccionada
+        const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+        const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
+        const candidate = fotoSeleccionada || '';
+        const cleanUuid = (candidate.match(/[0-9a-fA-F-]{36}/) || [])[0] || '';
+
+        if (!cleanUuid) {
+          console.warn('[SubramaDetail] No se pudo extraer UUID de la foto seleccionada, usando fallback remove (PATCH)');
+          await organigramaService.removeSubramaGalleryImage(
+            tenantSlug,
+            groupSlug,
+            String(sectionIdDel),
+            String(subgroupIdDel),
+            ''
+          );
+          toast.success('Foto removida de la galería (fallback).');
+        } else {
+          try {
+            const result = await organigramaService.deleteGalleryImageById(
+              tenantSlug,
+              groupSlug,
+              String(sectionIdDel),
+              cleanUuid,
+              true // deleteFromStorage = true
+            );
+
+            // result == null significa que no fue necesario (ya removido) o fallback
+            if (result === null) {
+              toast.success('La foto ya no estaba presente o fue removida anteriormente.');
+            } else {
+              toast.success('Foto eliminada físicamente (intento realizado).');
+            }
+          } catch (err) {
+            console.error('[SubramaDetail] Error intentando DELETE físico de galería:', err);
+            toast.error('No fue posible eliminar físicamente la foto. Se intentó desvincular la referencia.');
+          }
+        }
       }
 
       // Al completar la petición de eliminación, marcar 100% y anunciar procesamiento

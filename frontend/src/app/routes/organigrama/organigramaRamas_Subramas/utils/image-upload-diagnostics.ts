@@ -1,5 +1,6 @@
 import api from "@/api/axios";
 import { uploadToStorage } from '@/api/upload';
+import { createPayloadForBackend } from '../utils/galleryPayload';
 import { getRamaById } from '../services';
 import { sectionPath } from '@/api/organigramaApi';
 
@@ -60,7 +61,8 @@ export const diagnosticImageUpload = async (
     }]
   };
 
-  await api.patch(patchEndpoint, addPayload);
+  const addPayloadToSend = createPayloadForBackend(addPayload.operations as any);
+  await api.patch(patchEndpoint, addPayloadToSend);
   // PATCH completado
 
   // Paso 4: Obtener estado final
@@ -162,5 +164,43 @@ export const analyzeImageUrls = (urls: string[]): {
  */
 (window as unknown as Record<string, unknown>).diagnosticImageUpload = diagnosticImageUpload;
 (window as unknown as Record<string, unknown>).analyzeImageUrls = analyzeImageUrls;
+
+/**
+ * Envía varias variantes de payload al endpoint /gallery para detectar qué formato acepta el backend.
+ * Exponer esta función en `window.tryGalleryPayloadVariants` para ejecutarla desde la consola del navegador.
+ */
+export const tryGalleryPayloadVariants = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  objectId: string
+) => {
+  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+
+  const variants = [
+  { name: 'value (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any]) },
+  { name: 'newValue (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any]) },
+    { name: 'objectId root', payload: { objectId } },
+    { name: 'object_id snake_case', payload: { object_id: objectId } },
+  { name: 'raw array operations', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any, { op: 'replace', newValue: objectId } as any]) },
+  ];
+
+  const results: Record<string, { success: boolean; status?: number; data?: unknown; error?: unknown }> = {};
+
+  for (const v of variants) {
+    try {
+      const resp = await api.patch(patchEndpoint, v.payload);
+      results[v.name] = { success: true, status: (resp as any)?.status, data: (resp as any)?.data };
+      console.log(`✅ Variant ${v.name} succeeded:`, resp);
+    } catch (err) {
+      results[v.name] = { success: false, error: err };
+      console.warn(`❌ Variant ${v.name} failed:`, err);
+    }
+  }
+
+  return results;
+};
+
+(window as unknown as Record<string, unknown>).tryGalleryPayloadVariants = tryGalleryPayloadVariants;
 
 // Funciones de diagnóstico expuestas: diagnosticImageUpload, analyzeImageUrls

@@ -177,9 +177,36 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     setIsLoadingGallery(true);
     try {
       // deleteGalleryImageById acepta UUID o URL (extrae UUID internamente)
-      await organigramaService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, targetUuidOrUrl, deleteFromStorage);
+      const result = await organigramaService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, targetUuidOrUrl, deleteFromStorage);
       await loadRamas();
-      showSuccessLocal('Imagen eliminada de la galería');
+      
+      // Mensajes según las instrucciones UX
+      if (deleteFromStorage) {
+        if (result) {
+          showSuccessLocal('Imagen eliminada físicamente de la galería y del servidor');
+        } else {
+          showSuccessLocal('Imagen removida de la galería. La eliminación física del archivo puede tardar o fallar; si necesitas borrarlo permanentemente, contacta al administrador.');
+        }
+      } else {
+        showSuccessLocal('Imagen removida de la galería. El archivo permanece en el servidor y puede ser reagregado más tarde.');
+      }
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
+
+  // Función específica para remover de galería sin eliminar físicamente (PATCH) según las instrucciones
+  const removeImageFromGalleryOnly = useCallback(async (sectionId: string, targetUuidOrUrl: string) => {
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
+    setIsLoadingGallery(true);
+    try {
+      // Usar PATCH remove (más eficiente para solo desvincular)
+      await organigramaService.removeGalleryImage(tenantSlug, groupSlug, sectionId, targetUuidOrUrl);
+      await loadRamas();
+      showSuccessLocal('Imagen removida de la galería. El archivo permanece en el servidor y puede ser reagregado más tarde.');
     } catch (err) {
       handleError(err);
       throw err;
@@ -202,6 +229,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     addGalleryImage,
     replaceGalleryImage,
     removeGalleryImage,
+    removeImageFromGalleryOnly, // Nueva función para PATCH remove según las instrucciones
     isLoadingGallery,
   };
 }

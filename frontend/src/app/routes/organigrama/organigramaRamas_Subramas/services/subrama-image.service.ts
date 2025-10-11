@@ -2,6 +2,7 @@ import api from "@/api/axios";
 import { postFormData, uploadToStorage } from '@/api/upload';
 import { subgroupPath } from '@/api/organigramaApi';
 import { getSubramaById } from './subrama.service';
+import { createAddsPayloadFromArray, createAddPayload, createReplacePayload, createRemovePayload, createPayloadForBackend } from '../utils/galleryPayload';
 
 // ============================================================================
 // 📸 ACTUALIZAR FOTO PRINCIPAL DE SUBRAMA
@@ -44,8 +45,8 @@ export const updateSubramaMainImage = async (
     const attempts = [
       { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
       { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
-      { description: 'operations add', payload: { operations: [{ op: 'add', newValue: uploadResponse.objectId }] } },
-      { description: 'operations replace', payload: { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] } },
+      { description: 'operations add', payload: createAddPayload(uploadResponse.objectId) },
+      { description: 'operations replace', payload: createReplacePayload(uploadResponse.objectId, uploadResponse.objectId) },
     ];
 
     let patched = false;
@@ -53,7 +54,10 @@ export const updateSubramaMainImage = async (
     for (const attempt of attempts) {
       // Intentando PATCH: attempt.description
       try {
-        await api.patch(patchEndpoint, attempt.payload as unknown);
+        const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
+          ? createPayloadForBackend((attempt.payload as any).operations)
+          : attempt.payload;
+        await api.patch(patchEndpoint, payloadToSend as unknown);
         // PATCH succeeded for attempt.description
         patched = true;
         break;
@@ -124,12 +128,12 @@ export const uploadSubramaGalleryImages = async (
 
     // PATCH al endpoint de galería
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
-    const galleryPayload = {
-      operations: objectIds.map(objectId => ({ op: "add", newValue: objectId }))
-    };
-
+    const galleryPayload = createAddsPayloadFromArray(objectIds);
     // PATCH gallery payload prepared
-  await api.patch(patchEndpoint, galleryPayload);
+    const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
+      ? createPayloadForBackend((galleryPayload as any).operations)
+      : galleryPayload;
+    await api.patch(patchEndpoint, galleryPayloadToSend);
 
     // Refrescar la subrama
     const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
@@ -164,9 +168,12 @@ export const addSubramaGalleryImage = async (
 
     // PATCH al endpoint de galería
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
-    const addPayload = { operations: [{ op: "add", newValue: uploadResponse.objectId }] };
+    const addPayload = createAddPayload(uploadResponse.objectId);
     // PATCH add payload prepared
-  await api.patch(patchEndpoint, addPayload);
+    const addPayloadToSend = addPayload && typeof addPayload === 'object' && 'operations' in addPayload
+      ? createPayloadForBackend((addPayload as any).operations)
+      : addPayload;
+    await api.patch(patchEndpoint, addPayloadToSend);
 
     return uploadResponse.url || uploadResponse.objectId;
 
@@ -202,11 +209,12 @@ export const replaceSubramaGalleryImage = async (
 
     // 2️⃣ PATCH con operación replace
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
-    const replacePayload = {
-      operations: [{ op: "replace", targetUuid: cleanUuid, newValue: uploadResponse.objectId }]
-    };
+    const replacePayload = createReplacePayload(cleanUuid, uploadResponse.objectId);
     // PATCH replace payload prepared
-  await api.patch(patchEndpoint, replacePayload);
+    const replacePayloadToSend = replacePayload && typeof replacePayload === 'object' && 'operations' in replacePayload
+      ? createPayloadForBackend((replacePayload as any).operations)
+      : replacePayload;
+    await api.patch(patchEndpoint, replacePayloadToSend);
 
     // 3️⃣ Obtener datos actualizados
   const updatedSubrama = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
@@ -237,8 +245,8 @@ export const removeSubramaMainImage = async (
     const attempts = [
       { description: 'camelCase objectId null', payload: { objectId: null } },
       { description: 'snake_case object_id null', payload: { object_id: null } },
-      { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
-      { description: 'operations remove (newValue null)', payload: { operations: [{ op: 'remove', newValue: null }] } },
+  { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
+  { description: 'operations remove (value null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
     ];
 
     let lastErr: unknown = null;
@@ -246,7 +254,12 @@ export const removeSubramaMainImage = async (
     for (const attempt of attempts) {
       // Intentando PATCH remove: attempt.description
       try {
-        await api.patch(patchEndpoint, attempt.payload as Record<string, unknown>);
+        const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
+          ? createPayloadForBackend((attempt.payload as any).operations)
+          : attempt.payload;
+        console.debug('🔁 [SubramaImageService] Intentando PATCH remove (main image):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
+        const resp = await api.patch(patchEndpoint, payloadToSend as Record<string, unknown>);
+        console.debug('🔁 [SubramaImageService] Respuesta PATCH remove (main image):', { status: (resp as any)?.status, data: (resp as any)?.data });
         // Eliminado con formato: attempt.description
         removed = true;
         break;
@@ -264,6 +277,20 @@ export const removeSubramaMainImage = async (
     if (!removed) {
       console.error('❌ Ningún formato funcionó para eliminar la foto principal de subrama. Último error:', lastErr);
       throw lastErr;
+    }
+    // After a successful remove attempt for main image, refresh and verify
+    try {
+      const refreshed = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+      const mainStill = refreshed?.mainImageUrl ?? refreshed?.imagenPrincipal ?? null;
+      if (mainStill) {
+        console.warn('⚠️ [SubramaImageService] El PATCH de remove devolvió éxito pero la referencia a mainImage sigue presente:', mainStill);
+        console.info('[TELEMETRY] remove_main_image.result', { tenantSlug, groupSlug, sectionId, subgroupId, removed: false });
+      } else {
+        console.info('[TELEMETRY] remove_main_image.result', { tenantSlug, groupSlug, sectionId, subgroupId, removed: true });
+      }
+    } catch (refreshErr) {
+      console.error('❌ Error refrescando subrama tras remove main image:', refreshErr);
+      console.info('[TELEMETRY] remove_main_image.result', { tenantSlug, groupSlug, sectionId, subgroupId, removed: 'unknown', error: String(refreshErr) });
     }
   } catch (error) {
     console.error('❌ Error eliminando foto principal de subrama:', error);
@@ -289,9 +316,36 @@ export const removeSubramaGalleryImage = async (
 
     // PATCH con operación remove
   const patchEndpoint = `${subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug)}/gallery`;
-    const removePayload = { operations: [{ op: "remove", targetUuid: cleanUuid }] };
+    const removePayload = createRemovePayload(cleanUuid);
     // PATCH remove payload prepared
-  await api.patch(patchEndpoint, removePayload);
+    const removePayloadToSend = removePayload && typeof removePayload === 'object' && 'operations' in removePayload
+      ? createPayloadForBackend((removePayload as any).operations)
+      : removePayload;
+    try {
+      console.debug('🔁 [SubramaImageService] Enviando PATCH remove (gallery):', { endpoint: patchEndpoint, payload: removePayloadToSend });
+      const resp = await api.patch(patchEndpoint, removePayloadToSend);
+      console.debug('🔁 [SubramaImageService] Respuesta PATCH remove (gallery):', { status: (resp as any)?.status, data: (resp as any)?.data });
+    } catch (patchErr) {
+      console.error('❌ Error PATCH remove en galería:', patchErr);
+      throw patchErr;
+    }
+
+    // After PATCH, refresh and check whether the UUID is still present in the gallery
+    try {
+      const updated = await getSubramaById(tenantSlug, groupSlug, sectionId, subgroupId);
+      const remaining = updated?.galleryObjectIds ?? updated?.subgroupGalleryObjectIds ?? [];
+      const stillPresent = remaining.some((u: string) => u.includes(cleanUuid));
+      if (stillPresent) {
+        console.warn(`⚠️ [SubramaImageService] Remove operation reported success but UUID still present: ${cleanUuid}`);
+        console.info('[TELEMETRY] remove_gallery_reference.result', { tenantSlug, groupSlug, sectionId, subgroupId, targetUuid: cleanUuid, removed: false });
+      } else {
+        console.info(`✅ [SubramaImageService] Reference removed from gallery: ${cleanUuid}`);
+        console.info('[TELEMETRY] remove_gallery_reference.result', { tenantSlug, groupSlug, sectionId, subgroupId, targetUuid: cleanUuid, removed: true });
+      }
+    } catch (refreshErr) {
+      console.error('❌ Error refrescando subrama tras remove gallery:', refreshErr);
+      console.info('[TELEMETRY] remove_gallery_reference.result', { tenantSlug, groupSlug, sectionId, subgroupId, targetUuid: cleanUuid, removed: 'unknown', error: String(refreshErr) });
+    }
 
   } catch (error) {
     console.error('❌ Error eliminando imagen de galería de subrama:', error);

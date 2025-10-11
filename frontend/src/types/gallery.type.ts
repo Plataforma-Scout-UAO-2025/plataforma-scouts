@@ -13,10 +13,10 @@ export interface GalleryItem {
 export interface GalleryPatchOperation {
   /** Tipo de operación a realizar */
   op: 'add' | 'replace' | 'remove';
-  /** UUID para operaciones add/replace */
-  value?: string;
-  /** Índice para operaciones replace/remove */
-  index?: number;
+  /** UUID de la imagen objetivo para replace/remove */
+  targetUuid?: string;
+  /** UUID del nuevo archivo para add/replace */
+  newValue?: string;
 }
 
 export interface GalleryPatchRequest {

@@ -281,7 +281,28 @@ export default function RamaDetail() {
         }
 
         const finalTarget = resolvedObjectId ?? galeriaObjetivo;
-        await removeGalleryImage(sectionId, finalTarget, false);
+        
+        // Usar DELETE con deleteFromStorage=true para eliminación física
+        try {
+          const result = await organigramaService.deleteGalleryImageById(
+            tenantSlug,
+            groupSlug,
+            sectionId,
+            finalTarget,
+            true // deleteFromStorage = true para eliminación física
+          );
+          
+          if (result === null) {
+            toast.success('La imagen ya no estaba presente o fue removida anteriormente.');
+          } else {
+            toast.success('Imagen eliminada físicamente del servidor.');
+          }
+        } catch (deleteErr) {
+          console.warn('❌ [RamaDetail] DELETE físico falló, intentando fallback con PATCH remove:', deleteErr);
+          // Fallback: usar PATCH remove si DELETE falla
+          await removeGalleryImage(sectionId, finalTarget, false);
+          toast.warning('Imagen desvinculada de la galería. La eliminación física pudo fallar.');
+        }
       }
 
       toast.success("Foto eliminada correctamente");
