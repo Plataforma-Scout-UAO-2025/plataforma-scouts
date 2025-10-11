@@ -11,7 +11,7 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
     
     let data = ramas;
     
-    // SIEMPRE intentar obtener datos frescos del backend si tenemos los parámetros necesarios
+    
     if (opts?.tenantSlug && opts?.groupSlug) {
       console.log('📡 [useOrganigramaExport] Obteniendo datos frescos del backend para PDF...');
       console.log('📡 [useOrganigramaExport] Parámetros:', { 
@@ -37,7 +37,6 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
         console.error('❌ [useOrganigramaExport] Error obteniendo datos del backend para PDF:', e);
         console.log('🔄 [useOrganigramaExport] Usando datos locales como fallback para PDF');
         
-        // Si hay error 403, es un problema de autenticación/autorización
         if ((e as Error & { status?: number; response?: { status?: number } })?.status === 403 || 
             (e as Error & { status?: number; response?: { status?: number } })?.response?.status === 403) {
           console.warn('🔐 [useOrganigramaExport] Error 403: Problema de autenticación. Verificar permisos o tokens.');
@@ -59,7 +58,6 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
     
     let data = ramas;
     
-    // SIEMPRE intentar obtener datos frescos del backend si tenemos los parámetros necesarios
     if (opts?.tenantSlug && opts?.groupSlug) {
       console.log('📡 [useOrganigramaExport] Obteniendo datos frescos del backend para CSV...');
       console.log('📡 [useOrganigramaExport] Parámetros:', { 
@@ -102,7 +100,6 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
   return {
     exportPDF,
     exportExcel,
-    // Propiedades adicionales para debugging/información
     hasBackendConfig: Boolean(opts?.tenantSlug && opts?.groupSlug),
     selectedYear,
     localRamasCount: ramas.length

@@ -19,8 +19,8 @@ export const useTenantParams = (): TenantParams => {
         groupSlug: groupFromEnv
       };
     }
-    
-    // Valores por defecto más comunes - CAMBIAR ESTOS POR VALORES REALES
+
+    // Valores hardcodeados como fallback
     return {
       tenantSlug: 'staging-centinelas-113',
       groupSlug: 'grupo-scout-centinelas-113'     

@@ -39,8 +39,9 @@ export const diagnosticImageUpload = async (
   
   // Paso 1: Obtener estado inicial de la galería
   const initialRama = await getRamaById(tenantSlug, groupSlug, sectionId);
-  const initialImageCount = initialRama?.sectionGalleryObjectIds?.length || 0;
-  const initialUrls = [...(initialRama?.sectionGalleryObjectIds || [])];
+  const initialGallery = (initialRama as unknown as Record<string, unknown>)?.['gallery'] as unknown[] | undefined;
+  const initialUrls = Array.isArray(initialGallery) ? (initialGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean) : [...(initialRama?.sectionGalleryObjectIds || [])];
+  const initialImageCount = initialUrls.length;
   
   // Estado inicial: imageCount, initialUrls
 
@@ -67,8 +68,9 @@ export const diagnosticImageUpload = async (
 
   // Paso 4: Obtener estado final
   const finalRama = await getRamaById(tenantSlug, groupSlug, sectionId);
-  const finalImageCount = finalRama?.sectionGalleryObjectIds?.length || 0;
-  const finalUrls = [...(finalRama?.sectionGalleryObjectIds || [])];
+  const finalGallery = (finalRama as unknown as Record<string, unknown>)?.['gallery'] as unknown[] | undefined;
+  const finalUrls = Array.isArray(finalGallery) ? (finalGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean) : [...(finalRama?.sectionGalleryObjectIds || [])];
+  const finalImageCount = finalUrls.length;
   
   // Paso 5: Analizar diferencias
   const newUrls = finalUrls.filter(url => !initialUrls.includes(url));
