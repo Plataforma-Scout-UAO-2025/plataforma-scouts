@@ -18,9 +18,10 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                    "http://localhost:5173",  // Vite dev server
-                    "http://localhost:3000",  // React dev server alternativo
-                    "http://127.0.0.1:5173"   // IP local
+                        "http://localhost:5173",  // Vite dev server
+                        "http://localhost:3000",  // React dev server alternativo
+                        "http://127.0.0.1:5173",   // IP local
+                        "https://scouts-frontend.fly.dev/" // Producción Fly
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
@@ -34,9 +35,10 @@ public class CorsConfig implements WebMvcConfigurer {
         
         // Orígenes permitidos
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:5173",
-            "http://localhost:3000", 
-            "http://127.0.0.1:5173"
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://127.0.0.1:5173",
+                "https://scouts-frontend.fly.dev/"
         ));
         
         // Métodos HTTP permitidos
