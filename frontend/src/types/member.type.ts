@@ -1,7 +1,7 @@
 import type { Section } from "./section.type";
 
 export interface Member {
-  member_id: number;
+  member_id?: number;
   first_name?: string;
   last_name?: string;
   subgroup_id?: number;
@@ -20,7 +20,7 @@ export interface Member {
   document_type?: string;
   email?: string;
   gender?: string;
-  birth_day?: Date;
+  birth_date?: string | Date;
   address?: string;
   phone?: string;
   weight?: string;
@@ -29,8 +29,14 @@ export interface Member {
   sports?: string;
   instruments?: string;
   acceptance_date?: Date;
-  emergency_phone?: [string];
+  emergency_contacts?: EmergencyContact[];
   created_at?: string;
   updated_at?: string;
   branch?: Section[];
+}
+
+export interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
 }
