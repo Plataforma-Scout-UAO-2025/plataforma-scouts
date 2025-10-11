@@ -180,8 +180,8 @@ export default function NivelesPage() {
             <SelectValue placeholder="Seleccionar año" />
           </SelectTrigger>
           <SelectContent>
-            {years.map((y) => (
-              <SelectItem key={y} value={String(y)}>
+            {years.map((y, index) => (
+              <SelectItem key={`${y}-${index}`} value={String(y)}>
                 {y}
               </SelectItem>
             ))}
