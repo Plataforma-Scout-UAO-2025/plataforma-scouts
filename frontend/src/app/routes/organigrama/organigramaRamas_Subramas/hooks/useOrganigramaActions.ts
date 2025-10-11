@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import * as organigramaService from '../services';
 import type { CreateBranchData, UpdateBranchData, CreateSubgroupData, UpdateSubgroupData } from '../types/frontend';
-import type { CreateSubramaFormData, UpdateRamaFormData, UpdateSubramaFormData } from '@/models/models/rama.schema';
+import type { CreateSubramaFormData, UpdateRamaFormData, UpdateSubramaFormData } from '@/schemas/rama.schema';
 
 type ActionsParams = {
   tenantSlug?: string;

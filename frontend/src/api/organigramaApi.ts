@@ -22,25 +22,35 @@ const resolveSlugs = (tenantSlug?: string, groupSlug?: string): SlugPair => {
   return { tenant, group };
 };
 
-const sectionsUrl = (tenantSlug?: string, groupSlug?: string) => {
+export const sectionsPath = (tenantSlug?: string, groupSlug?: string) => {
   const { tenant, group } = resolveSlugs(tenantSlug, groupSlug);
-  return `/tenants/${tenant}/groups/${group}/sections`;
+  return `/tenants/${encodeURIComponent(tenant)}/groups/${encodeURIComponent(group)}/sections`;
 };
 
-const subgroupsUrl = (sectionId: number, tenantSlug?: string, groupSlug?: string) =>
-  `${sectionsUrl(tenantSlug, groupSlug)}/${sectionId}/subgroups`;
+export const sectionPath = (sectionId: string | number, tenantSlug?: string, groupSlug?: string) =>
+  `${sectionsPath(tenantSlug, groupSlug)}/${encodeURIComponent(String(sectionId))}`;
+
+export const subgroupsPath = (sectionId: string | number, tenantSlug?: string, groupSlug?: string) =>
+  `${sectionPath(sectionId, tenantSlug, groupSlug)}/subgroups`;
+
+export const subgroupPath = (
+  sectionId: string | number,
+  subgroupId: string | number,
+  tenantSlug?: string,
+  groupSlug?: string
+) => `${subgroupsPath(sectionId, tenantSlug, groupSlug)}/${encodeURIComponent(String(subgroupId))}`;
 
 export const getSections = async <T = unknown>(tenantSlug?: string, groupSlug?: string) => {
-  const { data } = await api.get<T[]>(sectionsUrl(tenantSlug, groupSlug));
+  const { data } = await api.get<T[]>(sectionsPath(tenantSlug, groupSlug));
   return data;
 };
 
 export const getSection = async <T = unknown>(
-  sectionId: number,
+  sectionId: string | number,
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  const { data } = await api.get<T>(`${sectionsUrl(tenantSlug, groupSlug)}/${sectionId}`);
+  const { data } = await api.get<T>(sectionPath(sectionId, tenantSlug, groupSlug));
   return data;
 };
 
@@ -49,63 +59,63 @@ export const createSection = async <T = unknown>(
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  const { data } = await api.post<T>(sectionsUrl(tenantSlug, groupSlug), payload);
+  const { data } = await api.post<T>(sectionsPath(tenantSlug, groupSlug), payload);
   return data;
 };
 
 export const updateSection = async <T = unknown>(
-  sectionId: number,
+  sectionId: string | number,
   payload: unknown,
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  const { data } = await api.put<T>(`${sectionsUrl(tenantSlug, groupSlug)}/${sectionId}`, payload);
+  const { data } = await api.put<T>(sectionPath(sectionId, tenantSlug, groupSlug), payload);
   return data;
 };
 
 export const deleteSection = async (
-  sectionId: number,
+  sectionId: string | number,
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  await api.delete(`${sectionsUrl(tenantSlug, groupSlug)}/${sectionId}`);
+  await api.delete(sectionPath(sectionId, tenantSlug, groupSlug));
 };
 
 export const getSubgroups = async <T = unknown>(
-  sectionId: number,
+  sectionId: string | number,
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  const { data } = await api.get<T[]>(subgroupsUrl(sectionId, tenantSlug, groupSlug));
+  const { data } = await api.get<T[]>(subgroupsPath(sectionId, tenantSlug, groupSlug));
   return data;
 };
 
 export const createSubgroup = async <T = unknown>(
-  sectionId: number,
+  sectionId: string | number,
   payload: unknown,
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  const { data } = await api.post<T>(subgroupsUrl(sectionId, tenantSlug, groupSlug), payload);
+  const { data } = await api.post<T>(subgroupsPath(sectionId, tenantSlug, groupSlug), payload);
   return data;
 };
 
 export const updateSubgroup = async <T = unknown>(
-  sectionId: number,
-  subgroupId: number,
+  sectionId: string | number,
+  subgroupId: string | number,
   payload: unknown,
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  const { data } = await api.put<T>(`${subgroupsUrl(sectionId, tenantSlug, groupSlug)}/${subgroupId}`, payload);
+  const { data } = await api.put<T>(subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug), payload);
   return data;
 };
 
 export const deleteSubgroup = async (
-  sectionId: number,
-  subgroupId: number,
+  sectionId: string | number,
+  subgroupId: string | number,
   tenantSlug?: string,
   groupSlug?: string
 ) => {
-  await api.delete(`${subgroupsUrl(sectionId, tenantSlug, groupSlug)}/${subgroupId}`);
+  await api.delete(subgroupPath(sectionId, subgroupId, tenantSlug, groupSlug));
 };

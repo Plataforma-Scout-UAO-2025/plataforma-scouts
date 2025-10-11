@@ -6,7 +6,8 @@ import { Toaster } from "sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Home from "./app/routes/Home";
-import Dashboard from "./app/routes/Dashboard";
+import Dashboard from "./app/routes/dashboard/Dashboard";
+import Miembros from "./app/routes/admin-grupal/Miembros/Miembros";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
@@ -57,13 +58,10 @@ function App() {
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
+            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
             {/*
-            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><TeamMembers /></ProtectedRoute>} />
             <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
-            <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Organigrama /></ProtectedRoute>} /> 
-            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><RamaDetail /></ProtectedRoute>} />
-            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><SubramaDetail /></ProtectedRoute>} /> 
             */}
 
             {/* Rutas para acudiente */}
