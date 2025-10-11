@@ -22,6 +22,8 @@ import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/compo
 import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
+import { RawRole } from './roles/roles';
+import OrgAuthGuard from './app/routes/organigrama/OrgAuthGuard';
 
 function App() {
   useAuth0ApiWrapper();
@@ -39,10 +41,47 @@ function App() {
 
             {/* ===================== ORGANIGRAMA ===================== */}
             <Route path="organigrama" element={<OrganigramaHome />} />
-            <Route path="organigrama/ramas-y-subramas" element={<Organigrama />} />
-            <Route path="organigrama/rama/:id" element={<RamaDetail />} />
-            <Route path="organigrama/subrama/:id" element={<SubramaDetail />} />
-            <Route path="organigrama/niveles-organizativos" element={<NivelesPage />} />
+            {/* Rutas CRUD del organigrama: protegidas según roles del backend */}
+            <Route
+              path="organigrama/ramas-y-subramas"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <Organigrama />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
+            <Route
+              path="organigrama/rama/:id"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <RamaDetail />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
+            <Route
+              path="organigrama/subrama/:id"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <SubramaDetail />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
+            <Route
+              path="organigrama/niveles-organizativos"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <NivelesPage />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
             <Route path="organigrama/resumen" element={<div>Vista resumen (en desarrollo)</div>} />
 
             {/* ===================== FINANCIERO ===================== */}
