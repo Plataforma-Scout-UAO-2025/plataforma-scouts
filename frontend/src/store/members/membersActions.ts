@@ -7,8 +7,8 @@ import {
   getMembersByStatus,
 } from "../../api/membersApi";
 import { validateClient } from "../../lib/zodUtils";
-import { updateMemberSchema } from "@/models/models/memberSchema";
-import type { Member } from "@/models/types/memberTypes";
+import { updateMemberSchema } from "@/schemas/memberSchema";
+import type { Member } from "@/types/member.type";
 
 // Obtener datos de un miembro desde Firestore
 export const fetchMemberAction = createAsyncThunk<

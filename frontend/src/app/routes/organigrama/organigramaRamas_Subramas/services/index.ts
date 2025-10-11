@@ -63,7 +63,8 @@ export {
 } from './subrama-image.service';
 
 // Constantes y configuraciones
-export { PATCH_ENDPOINTS } from '../constants/api-endpoints';
+// NOTE: `PATCH_ENDPOINTS` has been deprecated in favor of builders in `src/api/organigramaApi.ts`
+// Los consumers deben usar builders como `sectionPath`/`subgroupPath`.
 
 // ============================================================================
 // UTILIDADES Y HELPERS
@@ -93,13 +94,4 @@ export const clearAllStorageData = (): void => {
 // ============================================================================
 // INFORMACIÓN DE LA REFACTORIZACIÓN
 // ============================================================================
-console.log('✅ [OrganigamaServices] Servicios refactorizados cargados:');
-console.log('   📁 rama.service.ts - CRUD de Ramas (separado)');
-console.log('   📁 subrama.service.ts - CRUD de Subramas (separado)');
-console.log('   📁 image-upload-core.service.ts - Upload básico (separado)');
-console.log('   📁 gallery.service.ts - Gestión galería Ramas (separado)');
-console.log('   📁 subrama-image.service.ts - Gestión imágenes Subramas (separado)');
-console.log('   📁 api-endpoints.ts - Configuración endpoints (separado)');
-console.log('🚀 [OrganigamaServices] Arquitectura modular implementada exitosamente');
-console.log('📝 [OrganigamaServices] Archivo original: ~1227 líneas → 6 módulos especializados');
-console.log('🎯 [OrganigamaServices] Beneficios: Mantenibilidad, Separación de responsabilidades, Testing unitario');
+// Servicios refactorizados cargados — ver exports en este archivo.

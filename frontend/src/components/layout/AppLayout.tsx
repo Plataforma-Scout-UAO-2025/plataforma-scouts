@@ -20,7 +20,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   LineChart,
   Boxes,
-  CalendarDays,
   Settings,
   HelpCircle,
   LogOut,
@@ -28,7 +27,6 @@ import {
   Award,
   ChevronRight,
   Network,
-  Pencil,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -76,27 +74,85 @@ const adminGlobalItems: MenuItem[] = [
 ];
 
 const adminGrupalItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "inscripcion", label: "Inscripcion", icon: <Pencil />, href: "/app/inscripcion", },
-  { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
-  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
-  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
-  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
-  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
-  { id: "medico", label: "Información Médica", icon: <Settings />, href: "/app/grupos/informacion-medica" },
-]
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "miembros", 
+    label: "Miembros", 
+    icon: <Users />, 
+    href: "/app/miembros" 
+  },
+  {
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: <Boxes />,
+    href: "/app/solicitudes",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <Settings />,
+    href: "/app/financiero/cuotas",
+  },
+  { 
+    id: "medico", 
+    label: "Información Médica", 
+    icon: <Settings />, 
+    href: "/app/grupos/informacion-medica" 
+  },
+];
 
 const tesoreroItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/cuotas" },
-]
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <Settings />,
+    href: "/app/financiero/cuotas",
+  },
+];
 
 const acudienteItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
-  { id: "financiero", label: "Financiero", icon: <Settings />, href: "/app/financiero/estado-cuenta" },
-]
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <Settings />,
+    href: "/app/financiero/estado-cuenta",
+  },
+];
 
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
@@ -104,14 +160,15 @@ const bottomItems: MenuItem[] = [
 ];
 
 function AppLayoutContent() {
-  const location = useLocation()
+  const location = useLocation();
   const { user, logout, getAccessTokenSilently } = useAuth0();
-  const { status, currentUserRole, currentUserRoleLabel, error, retry } = useRoleContext();
+  const { status, currentUserRole, currentUserRoleLabel, error, retry } =
+    useRoleContext();
 
   // Determinar qué menú mostrar según el rol del usuario
   const getMenuItems = (): MenuItem[] => {
-    const isAdminGlobalRoute = location.pathname.startsWith('/app/adminGlobal');
-    
+    const isAdminGlobalRoute = location.pathname.startsWith("/app/adminGlobal");
+
     if (isAdminGlobalRoute) {
       return adminGlobalItems;
     }
@@ -134,7 +191,7 @@ function AppLayoutContent() {
   useEffect(() => {
     if (getAccessTokenSilently) {
       setAuth0TokenProvider(getAccessTokenSilently);
-      console.log('🔗 [Auth] Token provider conectado con axios centralizado');
+      console.log("🔗 [Auth] Token provider conectado con axios centralizado");
     }
   }, [getAccessTokenSilently]);
 
@@ -165,6 +222,15 @@ function AppLayoutContent() {
     );
   }
 
+  function truncateUsername(username: string, maxLength: number) {
+    if (username.length > maxLength) {
+      return username.slice(0, maxLength) + "...";
+    }
+    return username;
+  }
+
+  const displayName = truncateUsername(user?.nickname || "", 17);
+
   return (
     <SidebarProvider>
       <Sidebar
@@ -180,7 +246,7 @@ function AppLayoutContent() {
               className="size-10 rounded-full object-cover"
             />
             <div className="leading-tight">
-              <div className="text-base font-semibold">{user?.nickname}</div>
+              <div className="text-base font-semibold">{displayName}</div>
               <div className="text-xs opacity-80">{currentUserRoleLabel}</div>
             </div>
           </div>

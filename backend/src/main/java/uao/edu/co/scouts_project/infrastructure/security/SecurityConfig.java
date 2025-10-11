@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
 
                         .requestMatchers("/api/v1/sec/roles").authenticated()
+                        .requestMatchers("/api/v1/sec/org_id").authenticated()
 
                         .requestMatchers("/api/v1/mock/scouts/list").hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
                         .requestMatchers("/api/v1/mock/scouts/add/member").hasAnyRole(TESORERO.name())

@@ -1,5 +1,5 @@
 import api from "./axios";
-import type { Member } from "../models/types/memberTypes";
+import type { Member } from "@/types/member.type";
 import type {
   CreateMemberRequest,
   CreateMemberWithSchoolRequest,

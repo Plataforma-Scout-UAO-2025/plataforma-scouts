@@ -4,7 +4,7 @@ import { Auth0Provider } from "@auth0/auth0-react";
 import "./styles/global.css";
 import App from "./App.tsx";
 import { RoleProvider } from "@/context/RoleProvider";
-import { store } from "./store/store";
+import { store } from "./store/store.ts";
 import { Provider } from "react-redux";
 import { Provider as TooltipProvider } from "@radix-ui/react-tooltip";
 

@@ -5,7 +5,7 @@ import {
   fetchMembersByStatusAction,
   updateMemberAction,
 } from "./membersActions";
-import type { Member } from "@/models/types/memberTypes";
+import type { Member } from "@/types/member.type";
 
 interface MembersState {
   members: Member[] | null;
