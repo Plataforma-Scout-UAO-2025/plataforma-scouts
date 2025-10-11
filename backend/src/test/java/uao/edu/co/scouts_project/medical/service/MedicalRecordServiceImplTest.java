@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.medical.record.service;
+package uao.edu.co.scouts_project.medical.service;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

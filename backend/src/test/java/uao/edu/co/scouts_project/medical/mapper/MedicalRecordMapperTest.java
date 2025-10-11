@@ -1,11 +1,10 @@
-package uao.edu.co.scouts_project.medical.record.mapper;
+package uao.edu.co.scouts_project.medical.mapper;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uao.edu.co.scouts_project.medical.record.dto.*;
+import uao.edu.co.scouts_project.medical.record.mapper.MedicalRecordMapper;
 import uao.edu.co.scouts_project.medical.record.model.MedicalRecord;
-import uao.edu.co.scouts_project.medical.record.repository.jpa.MedicalRecordEntity;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.medical.record.controller;
+package uao.edu.co.scouts_project.medical.controller;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 
+import uao.edu.co.scouts_project.medical.record.controller.MedicalRecordController;
 import uao.edu.co.scouts_project.medical.record.dto.*;
 import uao.edu.co.scouts_project.medical.record.service.IMedicalRecordService;
 
