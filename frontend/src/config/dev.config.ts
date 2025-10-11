@@ -5,7 +5,7 @@
  * Solo para visualización y pruebas de UI
  */
 
-export const DEV_MODE = true;
+export const DEV_MODE = false; // Cambia a true para activar el modo DEV
 
 export const DEV_USER = {
   name: "Juan Esteban Pérez",
@@ -15,7 +15,7 @@ export const DEV_USER = {
 };
 
 export const DEV_CONFIG = {
-  skipAuth: true,
+  skipAuth: DEV_MODE, // Ahora depende de DEV_MODE
   mockRole: "ACUDIENTE" as const,
-  showDevBanner: true
+  showDevBanner: DEV_MODE // Ahora depende de DEV_MODE
 };
