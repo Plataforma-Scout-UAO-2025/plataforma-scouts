@@ -48,8 +48,38 @@ const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: stri
 };
 
 // ===============================================================
-// 🧩 Función auxiliar: extraer UUID válido desde string o URL
+// 🔍 Obtener índice de imagen en galería por UUID
 // ===============================================================
+const getImageIndexInGallery = async (
+  tenantSlug: string,
+  groupSlug: string,
+  sectionId: string,
+  targetUuid: string
+): Promise<number> => {
+  try {
+    const backend = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+    const rec = backend?.data as Record<string, unknown> | undefined;
+    const galleryArr = (rec?.['gallery'] as unknown[] | undefined) ?? [];
+    
+    const validTargetUuid = extractUuidFromString(targetUuid);
+    if (!validTargetUuid) return -1;
+    
+    for (let i = 0; i < galleryArr.length; i++) {
+      const item = galleryArr[i] as Record<string, unknown>;
+      const id = String(item['id'] ?? item['objectId'] ?? '');
+      const url = String(item['url'] ?? '');
+      
+      if (id === validTargetUuid || extractUuidFromString(url) === validTargetUuid) {
+        return i;
+      }
+    }
+    
+    return -1;
+  } catch (error) {
+    console.error('❌ [GalleryService] Error obteniendo índice de imagen:', error);
+    return -1;
+  }
+};
 const extractUuidFromString = (value: string): string | null => {
   if (!value) return null;
   const match = value.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
@@ -127,10 +157,8 @@ export const addGalleryImage = async (
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
     // 3️⃣ Enviar PATCH para agregar imagen
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
-    const addPayload = { operations: [{ op: 'add', newValue: newUuid }] };
-
-  // PATCH payload para agregar imagen
+    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+    const addPayload = { operations: [{ op: 'add', value: newUuid }] };  // PATCH payload para agregar imagen
   await api.patch(patchEndpoint, addPayload);
 
   // Imagen agregada correctamente a galería
@@ -244,19 +272,23 @@ export const replaceGalleryImage = async (
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
-    // 4️⃣ Crear payload y enviar PATCH
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+    // 4️⃣ Obtener índice de la imagen objetivo
+    const targetIndex = await getImageIndexInGallery(tenantSlug, groupSlug, sectionId, validTargetUuid);
+    if (targetIndex === -1) {
+      throw new Error(`Imagen con UUID ${validTargetUuid} no encontrada en la galería`);
+    }
+
+    // 5️⃣ Crear payload y enviar PATCH
+    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const replacePayload = {
       operations: [
         {
           op: 'replace' as const,
-          targetUuid: validTargetUuid,
-          newValue: newUuid
+          index: targetIndex,
+          value: newUuid
         }
       ]
-    };
-
-  // PATCH payload para reemplazar imagen
+    };  // PATCH payload para reemplazar imagen
   await api.patch(patchEndpoint, replacePayload);
   // Imagen reemplazada correctamente
 
@@ -285,20 +317,24 @@ export const removeGalleryImage = async (
       throw new Error('Invalid UUID format detected');
     }
 
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
-    const removePayload = { operations: [{ op: 'remove', targetUuid: validTargetUuid }] };
+    // Obtener índice de la imagen objetivo
+    const targetIndex = await getImageIndexInGallery(tenantSlug, groupSlug, sectionId, validTargetUuid);
+    if (targetIndex === -1) {
+      throw new Error(`Imagen con UUID ${validTargetUuid} no encontrada en la galería`);
+    }
 
-  // PATCH payload para eliminar imagen
-  await api.patch(patchEndpoint, removePayload);
+    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+    const removePayload = { operations: [{ op: 'remove', index: targetIndex }] };
 
-  // Imagen eliminada correctamente
+    // PATCH payload para eliminar imagen
+    await api.patch(patchEndpoint, removePayload);
+
+    // Imagen eliminada correctamente
   } catch (error) {
     console.error('❌ [GalleryService] Error eliminando imagen de galería:', error);
     throw error;
   }
-};
-
-// ===============================================================
+};// ===============================================================
 // 🗑️ Eliminar imagen de galería usando endpoint DELETE por objectId
 // ===============================================================
 export const deleteGalleryImageById = async (
