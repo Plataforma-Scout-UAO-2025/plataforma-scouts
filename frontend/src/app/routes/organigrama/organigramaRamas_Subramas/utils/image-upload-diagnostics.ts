@@ -182,7 +182,6 @@ export const tryGalleryPayloadVariants = async (
   const variants = [
   { name: 'value (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any]) },
   { name: 'newValue (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any]) },
-    { name: 'objectId root', payload: { objectId } },
     { name: 'object_id snake_case', payload: { object_id: objectId } },
   { name: 'raw array operations', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any, { op: 'replace', newValue: objectId } as any]) },
   ];

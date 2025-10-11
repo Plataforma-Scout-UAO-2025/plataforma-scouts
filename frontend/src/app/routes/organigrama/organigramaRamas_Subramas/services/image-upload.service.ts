@@ -97,11 +97,10 @@ export const uploadSectionIcon = async (
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
 
     // Intentaremos varios formatos de payload porque el backend puede esperar snake_case o estructura "operations"
+    // Prioritize snake_case (backend expects SNAKE_CASE). Keep operations payloads as fallback.
+    // Backend expects UpdateImageRequest (snake_case). Avoid sending `operations` for /icon.
     const attempts = [
-      { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
       { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
-      { description: 'operations add', payload: createAddPayload(uploadResponse.objectId) },
-      { description: 'operations replace', payload: createReplacePayload(uploadResponse.objectId, uploadResponse.objectId) },
     ];
 
     let lastError: unknown = null;
@@ -112,6 +111,7 @@ export const uploadSectionIcon = async (
         const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
           ? createPayloadForBackend((attempt.payload as any).operations)
           : attempt.payload;
+        console.info('🔄 [ImageUploadService] Enviando PATCH (icon):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
         await api.patch(patchEndpoint, payloadToSend as unknown);
         // PATCH succeeded for format: attempt.description
         patched = true;
@@ -168,11 +168,10 @@ export const uploadSectionMainImage = async (
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
 
     // Intentar varios formatos por compatibilidad con el backend
+    // Prioritize snake_case (backend expects SNAKE_CASE). Keep operations payloads as fallback.
+    // Backend expects UpdateImageRequest (snake_case). Avoid sending `operations` for /photo-principal.
     const attemptsMain = [
-      { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
       { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
-      { description: 'operations add', payload: createAddPayload(uploadResponse.objectId) },
-      { description: 'operations replace', payload: createReplacePayload(uploadResponse.objectId, uploadResponse.objectId) },
     ];
 
     let lastMainError: unknown = null;
@@ -183,6 +182,7 @@ export const uploadSectionMainImage = async (
         const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
           ? createPayloadForBackend((attempt.payload as any).operations)
           : attempt.payload;
+        console.info('🔄 [ImageUploadService] Enviando PATCH (main image):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
         await api.patch(patchEndpoint, payloadToSend as unknown);
         // PATCH for main image succeeded for format: attempt.description
         mainPatched = true;
@@ -254,12 +254,13 @@ export const uploadGalleryImages = async (
 
     const galleryPayload = createAddsPayloadFromArray(objectIds);
 
-    console.log("🔄 [ImageUploadService] PATCH payload para galería (formato operations):", galleryPayload);
+  console.log("🔄 [ImageUploadService] PATCH payload para galería (formato operations):", galleryPayload);
 
     try {
       const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
         ? createPayloadForBackend((galleryPayload as any).operations)
         : galleryPayload;
+      console.info('🔄 [ImageUploadService] Enviando PATCH (gallery):', { endpoint: patchEndpoint, payload: galleryPayloadToSend });
       await api.patch(patchEndpoint, galleryPayloadToSend);
       console.log("✅ [ImageUploadService] Galería asociada correctamente con endpoint PATCH");
 

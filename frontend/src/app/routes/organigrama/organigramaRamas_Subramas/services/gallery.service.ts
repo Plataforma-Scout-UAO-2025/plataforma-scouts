@@ -173,7 +173,7 @@ export const addGalleryImage = async (
 };
 
 // Helper para reemplazar la lista completa de la sección vía PUT (force remove)
-const replaceGalleryList = async (
+export const replaceGalleryList = async (
   tenantSlug: string,
   groupSlug: string,
   sectionId: string,
