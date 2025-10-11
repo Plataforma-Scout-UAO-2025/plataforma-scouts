@@ -25,7 +25,6 @@ import {
   Users,
   Award,
   ChevronRight,
-  Network,
   DollarSign,
   CalendarDays,
 } from "lucide-react";
