@@ -54,6 +54,17 @@ export const updateMemberStatus = async (
   return response.data;
 };
 
+// Actualizar rol de un miembro
+export const updateMemberRole = async (
+  id: string | number,
+  role: string
+) => {
+  const response = await api.put(`/members/update_member_role/${id}`, null, {
+    params: { role },
+  });
+  return response.data;
+};
+
 // Actualizar miembro por ID
 export const updateMember = async (
   id: string | number,

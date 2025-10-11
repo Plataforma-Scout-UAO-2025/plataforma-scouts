@@ -1,7 +1,9 @@
-import api from '@/api/axios';
+import { getGuardianById, updateGuardian, createGuardian } from '@/api/guardiansApi';
+import type { Guardian, CreateGuardianDTO } from '@/api/guardian.types';
 
 /**
  * Interface que coincide con GuardianDTO del backend
+ * @deprecated Use Guardian from @/api/guardian.types instead
  */
 export interface GuardianData {
   userId: string;
@@ -30,6 +32,7 @@ export interface GuardianData {
 
 /**
  * DTO para actualizar datos del guardian
+ * @deprecated Use UpdateGuardianDTO from @/api/guardian.types instead
  */
 export interface UpdateGuardianData {
   identification?: string;
@@ -43,6 +46,7 @@ export interface UpdateGuardianData {
 
 /**
  * DTO para crear un guardian completo
+ * @deprecated Use CreateGuardianDTO from @/api/guardian.types instead
  */
 export interface CreateGuardianData {
   tenantId: string;
@@ -71,29 +75,19 @@ export interface CreateGuardianData {
 
 /**
  * Servicio para interactuar con los endpoints de guardians/acudientes
+ * 
+ * Este servicio agrega lógica de negocio adicional sobre las funciones base de la API.
+ * Para operaciones simples de API, usar directamente las funciones de @/api/guardiansApi
  */
 export const guardianService = {
-  /**
-   * Obtener todos los guardians
-   */
-  getAllGuardians: async (): Promise<GuardianData[]> => {
-    try {
-      const response = await api.get<GuardianData[]>('/members/guardians/list');
-      return response.data;
-    } catch (error) {
-      console.error('Error obteniendo guardians:', error);
-      throw error;
-    }
-  },
-
   /**
    * Obtener un guardian específico por ID
    * @param guardianId - ID del guardian (userId)
    */
-  getGuardianById: async (guardianId: string): Promise<GuardianData | null> => {
+  getGuardianById: async (guardianId: string): Promise<Guardian | null> => {
     try {
-      const response = await api.get<GuardianData>(`/members/guardians/${guardianId}`);
-      return response.data;
+      const guardian = await getGuardianById(guardianId);
+      return guardian;
     } catch (error) {
       if ((error as any).response?.status === 404) {
         return null; // Guardian no encontrado
@@ -139,7 +133,7 @@ export const guardianService = {
    * @param guardianId - ID del guardian (userId)
    * @param datos - Datos a actualizar
    */
-  updateData: async (guardianId: string, datos: UpdateGuardianData): Promise<GuardianData> => {
+  updateData: async (guardianId: string, datos: UpdateGuardianData): Promise<Guardian> => {
     try {
       // Primero obtenemos el guardian actual
       const guardianActual = await guardianService.getGuardianById(guardianId);
@@ -151,7 +145,9 @@ export const guardianService = {
       // Construimos el objeto completo para el PUT (GuardianCreateDTO del backend)
       const guardianActualizado: CreateGuardianData = {
         tenantId: guardianActual.tenantId,
-        subgroupId: parseInt(guardianActual.subgroupId),
+        subgroupId: typeof guardianActual.subgroupId === 'string' 
+          ? parseInt(guardianActual.subgroupId) 
+          : guardianActual.subgroupId,
         firstName: guardianActual.firstName,
         lastName: guardianActual.lastName,
         age: datos.age || guardianActual.age,
@@ -168,13 +164,9 @@ export const guardianService = {
         acceptanceDate: guardianActual.acceptanceDate,
       };
 
-      // Enviamos el PUT con todos los datos
-      const response = await api.put<GuardianData>(
-        `/members/guardians/${guardianId}`,
-        guardianActualizado
-      );
-
-      return response.data;
+      // Enviamos el PUT usando la función de la API
+      const updated = await updateGuardian(guardianId, guardianActualizado as any);
+      return updated;
     } catch (error) {
       console.error('Error actualizando datos del guardian:', error);
       throw error;
@@ -185,28 +177,12 @@ export const guardianService = {
    * Crear un nuevo guardian
    * @param datos - Datos del guardian a crear
    */
-  crearGuardian: async (datos: CreateGuardianData): Promise<GuardianData> => {
+  crearGuardian: async (datos: CreateGuardianData): Promise<Guardian> => {
     try {
-      const response = await api.post<GuardianData>('/members/guardians/create', datos);
-      return response.data;
+      const newGuardian = await createGuardian(datos as CreateGuardianDTO);
+      return newGuardian;
     } catch (error) {
       console.error('Error creando guardian:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Obtener guardians por estado (activo/inactivo)
-   * @param activo - true para activos, false para inactivos
-   */
-  getGuardiansByState: async (activo: boolean): Promise<GuardianData[]> => {
-    try {
-      const response = await api.get<GuardianData[]>(
-        `/members/guardians/by_status?active=${activo}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error obteniendo guardians por estado:', error);
       throw error;
     }
   },
