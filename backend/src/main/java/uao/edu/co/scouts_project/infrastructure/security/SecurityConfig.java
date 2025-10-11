@@ -4,6 +4,7 @@ import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -30,12 +31,36 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
 
                         .requestMatchers("/api/v1/sec/roles").authenticated()
+                        .requestMatchers("/api/v1/sec/org_id").authenticated()
 
                         .requestMatchers("/api/v1/mock/scouts/list").hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
                         .requestMatchers("/api/v1/mock/scouts/add/member").hasAnyRole(TESORERO.name())
                         .requestMatchers("/api/v1/mock/scouts/member").hasAnyRole(DEV_SUPPORT.name())
 
                         // Organigrama
+                          
+                            //Operaciones CRUD en tenants
+
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+
+                            //Operaciones CRUD en grupos
+
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+
+                            //Operaciones de consulta en grupos
+
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(), SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(), SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(), SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
+
+                            // Operaciones en almacenamiento de imagenes
+
+                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
 
 
 
@@ -132,4 +157,3 @@ public class SecurityConfig {
     */
 
 }
-

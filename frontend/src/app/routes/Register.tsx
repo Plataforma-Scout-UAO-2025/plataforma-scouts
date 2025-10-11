@@ -102,7 +102,7 @@ const Register = () => {
                   })}
                 />
                 <Button
-                  variant="eyebutton"
+                  variant="iconbutton"
                   onClick={() => setShowPassword(!showPassword)}
                   type="button"
                 >
@@ -141,7 +141,7 @@ const Register = () => {
                   })}
                 />
                 <Button
-                  variant="eyebutton"
+                  variant="iconbutton"
                   onClick={() => setShowConfirm(!showConfirm)}
                   type="button"
                 >
