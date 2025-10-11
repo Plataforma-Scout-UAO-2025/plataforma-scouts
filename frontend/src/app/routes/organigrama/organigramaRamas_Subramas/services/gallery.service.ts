@@ -1,6 +1,13 @@
 import api from '@/api/axios';
 import { uploadToStorage } from '@/api/upload';
 import { sectionPath } from '@/api/organigramaApi';
+import {
+  createAddPayload,
+  createReplacePayload,
+  createRemovePayload,
+  createPayloadForBackend,
+  retryGalleryOperation,
+} from '../utils/galleryPayload';
 
 // Helper para reemplazar la lista completa de la sección vía PUT (force remove)
 const replaceGalleryList = async (
@@ -127,11 +134,9 @@ export const addGalleryImage = async (
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
     // 3️⃣ Enviar PATCH para agregar imagen
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
-    const addPayload = { operations: [{ op: 'add', newValue: newUuid }] };
-
-  // PATCH payload para agregar imagen
-  await api.patch(patchEndpoint, addPayload);
+    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+  const addPayload = createAddPayload(newUuid);
+  await api.patch(patchEndpoint, createPayloadForBackend(addPayload.operations));
 
   // Imagen agregada correctamente a galería
     return uploadResponse.url || uploadResponse.objectId;
@@ -233,31 +238,19 @@ export const replaceGalleryImage = async (
     }
 
     // 2️⃣ Subir el nuevo archivo
-  // Subiendo nueva imagen
-  const formData = new FormData();
+    // Subiendo nueva imagen
+    const formData = new FormData();
     formData.append('file', newFile);
 
     const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, { signal });
-  // Nueva imagen subida
+    // Nueva imagen subida
 
     // 3️⃣ Validar UUID del nuevo archivo
     const newUuid = extractUuidFromString(uploadResponse.objectId);
-    if (!newUuid) throw new Error('Upload did not return a valid UUID');
-
-    // 4️⃣ Crear payload y enviar PATCH
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
-    const replacePayload = {
-      operations: [
-        {
-          op: 'replace' as const,
-          targetUuid: validTargetUuid,
-          newValue: newUuid
-        }
-      ]
-    };
-
-  // PATCH payload para reemplazar imagen
-  await api.patch(patchEndpoint, replacePayload);
+    if (!newUuid) throw new Error('Upload did not return a valid UUID');    // 5️⃣ Crear payload y enviar PATCH
+    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+  const replacePayload = createReplacePayload(validTargetUuid, newUuid);
+  await api.patch(patchEndpoint, createPayloadForBackend(replacePayload.operations));
   // Imagen reemplazada correctamente
 
     return uploadResponse.url || uploadResponse.objectId;
@@ -276,29 +269,32 @@ export const removeGalleryImage = async (
   sectionId: string,
   targetImageUuid: string
 ): Promise<void> => {
-  // Eliminando imagen de galería: parámetros
+  console.info('🗑️ [GalleryService] Iniciando eliminación de imagen de galería (PATCH remove):', { targetImageUuid });
 
-  try {
+  return retryGalleryOperation(async () => {
     const validTargetUuid = extractUuidFromString(targetImageUuid);
     if (!validTargetUuid) {
       console.error('❌ [GalleryService] UUID inválido detectado. Abortando eliminación.');
       throw new Error('Invalid UUID format detected');
     }
 
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
-    const removePayload = { operations: [{ op: 'remove', targetUuid: validTargetUuid }] };
+    // Check-before-delete: verificar que la imagen existe en la galería antes de intentar eliminarla
+    console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de PATCH remove...');
+    const currentUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
+    if (!currentUuids.includes(validTargetUuid)) {
+      console.warn('⚠️ [GalleryService] UUID no encontrado en galería. La imagen ya fue removida por otra operación:', { validTargetUuid, currentUuids });
+      return; // No error - la imagen ya no está en la galería
+    }
 
-  // PATCH payload para eliminar imagen
-  await api.patch(patchEndpoint, removePayload);
+    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+    const removePayload = createRemovePayload(validTargetUuid);
+    
+    console.info('📤 [GalleryService] Enviando PATCH remove al endpoint:', { patchEndpoint, payload: removePayload });
+    await api.patch(patchEndpoint, createPayloadForBackend(removePayload.operations));
 
-  // Imagen eliminada correctamente
-  } catch (error) {
-    console.error('❌ [GalleryService] Error eliminando imagen de galería:', error);
-    throw error;
-  }
-};
-
-// ===============================================================
+    console.info('✅ [GalleryService] Imagen removida de galería correctamente (PATCH)');
+  }, 'RemoveGalleryImage-PATCH');
+};// ===============================================================
 // 🗑️ Eliminar imagen de galería usando endpoint DELETE por objectId
 // ===============================================================
 export const deleteGalleryImageById = async (
@@ -308,7 +304,11 @@ export const deleteGalleryImageById = async (
   targetImageUuidOrUrl: string,
   deleteFromStorage = false
 ): Promise<Record<string, unknown> | null> => {
-  // Eliminando imagen de galería via DELETE: parámetros
+  console.info('🗑️ [GalleryService] Iniciando eliminación de imagen por ID (DELETE):', { 
+    targetImageUuidOrUrl, 
+    deleteFromStorage,
+    sectionId 
+  });
 
   try {
     const validTargetUuid = extractUuidFromString(targetImageUuidOrUrl);
@@ -317,21 +317,33 @@ export const deleteGalleryImageById = async (
       throw new Error('Invalid UUID format detected');
     }
 
-    // Pre-check: asegurarse que el UUID objetivo pertenece actualmente a la galería
+    // Pre-check mejorado: asegurarse que el UUID objetivo pertenece actualmente a la galería
+    console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de DELETE...');
     const currentUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
     if (!currentUuids.includes(validTargetUuid)) {
-      console.warn('⚠️ [GalleryService] UUID objetivo no pertenece a la galería actual. Abortando DELETE/PATCH.', { validTargetUuid, currentUuids });
-      throw new Error(`UUID ${validTargetUuid} no encontrado en la galería local de la sección`);
+      console.warn('⚠️ [GalleryService] UUID objetivo no pertenece a la galería local (primer check). Intentando re-fetch antes de abortar.', { validTargetUuid, currentUuids });
+      // Re-check inmediato para cubrir condiciones de carrera donde otra operación ya haya quitado la referencia
+      const recheckUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
+      if (!recheckUuids.includes(validTargetUuid)) {
+        console.warn('⚠️ [GalleryService] Tras re-fetch la imagen no figura en la galería; abortando operación sin error:', { validTargetUuid, recheckUuids });
+        // Devolver null indica que no fue necesario eliminar porque la referencia ya no existe
+        return null;
+      }
+      // Si tras el re-check ahora sí está presente, continuamos con la eliminación
+      console.info('ℹ️ [GalleryService] Re-check detectó la UUID en la galería; procediendo con DELETE:', { validTargetUuid });
     }
 
-  const endpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
-  // DELETE endpoint calculado
+    const endpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
+    console.info('📤 [GalleryService] Enviando DELETE al endpoint:', { endpoint });
 
-    // La API devuelve el SectionResponseDTO actualizado según el contrato
-    const result = await api.delete<Record<string, unknown>>(endpoint);
+    // Usar retry para la operación DELETE principal
+    const result = await retryGalleryOperation(async () => {
+      return await api.delete<Record<string, unknown>>(endpoint);
+    }, `DeleteGalleryImageById-${deleteFromStorage ? 'WithStorage' : 'NoStorage'}`);
 
-  // Eliminación via DELETE completada, servidor devolvió datos
+    console.info('✅ [GalleryService] Eliminación via DELETE completada, servidor devolvió datos');
     return result.data ?? null;
+    
   } catch (error) {
     console.error('❌ [GalleryService] Error eliminando imagen de galería via DELETE:', error);
 

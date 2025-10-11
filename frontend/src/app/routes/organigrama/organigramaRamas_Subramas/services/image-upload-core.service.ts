@@ -1,6 +1,7 @@
 import api from '@/api/axios';
 import { uploadToStorage } from '@/api/upload';
 import { sectionPath } from '@/api/organigramaApi';
+import { createAddPayload, createReplacePayload, createAddsPayloadFromArray, createRemovePayload, createPayloadForBackend } from '../utils/galleryPayload';
 
 type MaybeAxiosError = { response?: { data?: unknown } };
 
@@ -29,11 +30,11 @@ export const diagnoseBatchImageUpload = async (
 
     // Paso 2: Agregar a galería usando PATCH
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
-    const addPayload = {
-      operations: [{ op: "add", newValue: uploadResponse.objectId }]
-    };
-
-  await api.patch(patchEndpoint, addPayload);
+    const addPayload = createAddPayload(uploadResponse.objectId);
+    const addPayloadToSend = addPayload && typeof addPayload === 'object' && 'operations' in addPayload
+      ? createPayloadForBackend((addPayload as any).operations)
+      : addPayload;
+    await api.patch(patchEndpoint, addPayloadToSend);
 
     // Paso 3: Verificar resultado usando una llamada directa al API
     const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
@@ -106,21 +107,27 @@ export const uploadSectionIcon = async (
         console.error('❌ [ImageUploadService] Falla alt1 (object_id):', alt1Error);
   console.error('❌ [ImageUploadService] Respuesta backend (alt1):', (alt1Error as MaybeAxiosError)?.response?.data ?? (alt1Error as MaybeAxiosError)?.response ?? alt1Error);
 
-        // Intentar formato operations (similar a galería)
-        const alt2 = { operations: [{ op: 'add', newValue: uploadResponse.objectId }] };
+  // Intentar formato operations (similar a galería)
+  const alt2 = createAddPayload(uploadResponse.objectId);
   // Attempt alternative payload: operations add
         try {
-          await api.patch(patchEndpoint, alt2);
+          const alt2ToSend = alt2 && typeof alt2 === 'object' && 'operations' in alt2
+            ? createPayloadForBackend((alt2 as any).operations)
+            : alt2;
+          await api.patch(patchEndpoint, alt2ToSend);
           // Icon associated with alt payload (operations add)
         } catch (alt2Error: unknown) {
           console.error('❌ [ImageUploadService] Falla alt2 (operations add):', alt2Error);
           console.error('❌ [ImageUploadService] Respuesta backend (alt2):', (alt2Error as MaybeAxiosError)?.response?.data ?? (alt2Error as MaybeAxiosError)?.response ?? alt2Error);
 
           // Intentar operations replace
-          const alt3 = { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] };
+          const alt3 = createReplacePayload(uploadResponse.objectId, uploadResponse.objectId);
           // Attempt alternative payload: operations replace
           try {
-            await api.patch(patchEndpoint, alt3);
+            const alt3ToSend = alt3 && typeof alt3 === 'object' && 'operations' in alt3
+              ? createPayloadForBackend((alt3 as any).operations)
+              : alt3;
+            await api.patch(patchEndpoint, alt3ToSend);
             // Icon associated with alt payload (operations replace)
           } catch (alt3Error: unknown) {
             console.error('❌ [ImageUploadService] Falla alt3 (operations replace):', alt3Error);
@@ -179,10 +186,13 @@ export const uploadSectionMainImage = async (
   console.error('❌ [ImageUploadService] Falla alt1 (object_id) imagen principal:', alt1Error);
           console.error('❌ [ImageUploadService] Respuesta backend (alt1):', (alt1Error as MaybeAxiosError)?.response?.data ?? (alt1Error as MaybeAxiosError)?.response ?? alt1Error);
 
-        const alt2 = { operations: [{ op: 'add', newValue: uploadResponse.objectId }] };
+  const alt2 = { operations: [{ op: 'add', newValue: uploadResponse.objectId }] };
         console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations add) para imagen principal:', alt2);
         try {
-          await api.patch(patchEndpoint, alt2);
+          const alt2ToSend = alt2 && typeof alt2 === 'object' && 'operations' in alt2
+            ? createPayloadForBackend((alt2 as any).operations)
+            : alt2;
+          await api.patch(patchEndpoint, alt2ToSend);
           console.log('✅ [ImageUploadService] Imagen principal asociada con payload alternativo (operations add)');
         } catch (alt2Error: unknown) {
           console.error('❌ [ImageUploadService] Falla alt2 (operations add) imagen principal:', alt2Error);
@@ -191,7 +201,10 @@ export const uploadSectionMainImage = async (
           const alt3 = { operations: [{ op: 'replace', newValue: uploadResponse.objectId }] };
           console.log('🔄 [ImageUploadService] Intentando PATCH alternativo (operations replace) para imagen principal:', alt3);
           try {
-            await api.patch(patchEndpoint, alt3);
+            const alt3ToSend = alt3 && typeof alt3 === 'object' && 'operations' in alt3
+              ? createPayloadForBackend((alt3 as any).operations)
+              : alt3;
+            await api.patch(patchEndpoint, alt3ToSend);
             console.log('✅ [ImageUploadService] Imagen principal asociada con payload alternativo (operations replace)');
           } catch (alt3Error: unknown) {
             console.error('❌ [ImageUploadService] Falla alt3 (operations replace) imagen principal:', alt3Error);
@@ -238,17 +251,15 @@ export const uploadGalleryImages = async (
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     
     // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
-    const galleryPayload = {
-      operations: objectIds.map(objectId => ({
-        op: "add",
-        newValue: objectId
-      }))
-    };
+    const galleryPayload = createAddsPayloadFromArray(objectIds);
     
-  // PATCH payload prepared in galleryPayload
+    // PATCH payload prepared in galleryPayload
     
     try {
-  await api.patch(patchEndpoint, galleryPayload);
+      const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
+        ? createPayloadForBackend((galleryPayload as any).operations)
+        : galleryPayload;
+      await api.patch(patchEndpoint, galleryPayloadToSend);
   // Gallery associated successfully; return uploaded URLs as fallback if backend doesn't return updated URLs
   return urls;
     } catch (patchError) {
@@ -274,9 +285,9 @@ export const removeSectionIcon = async (
   console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...");
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
 
-  const attempts = [
-    { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
-    { description: 'operations remove (newValue null)', payload: { operations: [{ op: 'remove', newValue: null }] } },
+    const attempts = [
+  { description: 'operations remove (targetUuid null)', payload: createRemovePayload(null) },
+  { description: 'operations remove (value null)', payload: createRemovePayload(null) },
     { description: 'camelCase objectId null', payload: { objectId: null } },
     { description: 'snake_case object_id null', payload: { object_id: null } },
   ];
@@ -286,7 +297,10 @@ export const removeSectionIcon = async (
   for (const attempt of attempts) {
     console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
   try {
-  const res = await api.patch(patchEndpoint, attempt.payload as unknown);
+  const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
+    ? createPayloadForBackend((attempt.payload as any).operations)
+    : attempt.payload;
+  const res = await api.patch(patchEndpoint, payloadToSend as unknown);
   console.log(`✅ Ícono eliminado correctamente con formato: ${attempt.description}`, res?.data ?? res);
       removed = true;
       break;
@@ -319,8 +333,8 @@ export const removeSectionMainImage = async (
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
 
   const attempts = [
-    { description: 'operations remove (targetUuid null)', payload: { operations: [{ op: 'remove', targetUuid: null }] } },
-    { description: 'operations remove (newValue null)', payload: { operations: [{ op: 'remove', newValue: null }] } },
+  { description: 'operations remove (targetUuid null)', payload: createRemovePayload(null) },
+  { description: 'operations remove (value null)', payload: createRemovePayload(null) },
     { description: 'camelCase objectId null', payload: { objectId: null } },
     { description: 'snake_case object_id null', payload: { object_id: null } },
   ];
@@ -330,7 +344,10 @@ export const removeSectionMainImage = async (
   for (const attempt of attempts) {
     console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
     try {
-      const res = await api.patch(patchEndpoint, attempt.payload as unknown);
+      const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
+        ? createPayloadForBackend((attempt.payload as any).operations)
+        : attempt.payload;
+      const res = await api.patch(patchEndpoint, payloadToSend as unknown);
       console.log(`✅ Imagen principal eliminada correctamente con formato: ${attempt.description}`, res?.data ?? res);
       removed = true;
       break;
