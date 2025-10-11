@@ -19,3 +19,12 @@ export function saveAll(data: Record<string, OrganigramaNiveles>) {
     console.error("Error al guardar los niveles organizativos:", error);
   }
 }
+
+// Elimina la entrada completa de niveles organizativos del localStorage.
+export function clearAll() {
+  try {
+    localStorage.removeItem(KEY);
+  } catch (error) {
+    console.error("Error al limpiar los niveles organizativos:", error);
+  }
+}

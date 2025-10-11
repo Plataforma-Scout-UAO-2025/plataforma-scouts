@@ -29,6 +29,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Juan Carlos Gómez",
           descripcion: "Dirige y coordina las actividades de la región.",
           visible: true,
+          inicio: 2020,
+          fin: 2025,
         },
         {
           id: "c2",
@@ -36,6 +38,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Ana María Pérez",
           descripcion: "Apoya al Director de Región en las funciones asignadas.",
           visible: true,
+          inicio: 2021,
+          fin: 2025,
         },
         {
           id: "c3",
@@ -43,6 +47,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Carlos Rodríguez",
           descripcion: "Encargado de la gestión de los grupos dentro de la región.",
           visible: true,
+          inicio: 2019,
+          fin: 2025,
         },
         {
           id: "c4",
@@ -50,6 +56,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Beatriz Sánchez",
           descripcion: "Apoya en la gestión de los grupos de la región.",
           visible: true,
+          inicio: 2022,
+          fin: 2025,
         },
         {
           id: "c5",
@@ -57,6 +65,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Luis García",
           descripcion: "Coordina las actividades de cada rama dentro de la región.",
           visible: true,
+          inicio: 2020,
+          fin: 2025,
         },
       ],
     },
@@ -72,6 +82,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Pedro Martínez",
           descripcion: "Representa al Comité de Padres en todas las instancias.",
           visible: true,
+          inicio: 2021,
+          fin: 2025,
         },
         {
           id: "c7",
@@ -79,6 +91,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Laura López",
           descripcion: "Asiste al Presidente en sus funciones.",
           visible: true,
+          inicio: 2022,
+          fin: 2025,
         },
         {
           id: "c8",
@@ -86,6 +100,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Ricardo Fernández",
           descripcion: "Gestiona las actas y la correspondencia del comité.",
           visible: true,
+          inicio: 2020,
+          fin: 2025,
         },
         {
           id: "c9",
@@ -93,6 +109,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Isabel Romero",
           descripcion: "Administra los fondos y recursos del Comité de Padres.",
           visible: true,
+          inicio: 2019,
+          fin: 2025,
         },
         {
           id: "c10",
@@ -100,6 +118,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Julio López",
           descripcion: "Supervisa la correcta gestión de los recursos financieros.",
           visible: true,
+          inicio: 2020,
+          fin: 2025,
         },
         {
           id: "c11",
@@ -107,6 +127,8 @@ export const nivelesMock2025: OrganigramaNiveles = {
           titular: "Carlos Pérez",
           descripcion: "Apoya en las decisiones y gestión del Comité de Padres.",
           visible: true,
+          inicio: 2021,
+          fin: 2025,
         },
       ],
     },
@@ -135,6 +157,8 @@ export const nivelesMock2024: OrganigramaNiveles = {
           titular: "Ana Ramírez",
           descripcion: "Administra recursos y estados financieros.",
           visible: true,
+          inicio: 2020,
+          fin: 2024,
         },
       ],
     },

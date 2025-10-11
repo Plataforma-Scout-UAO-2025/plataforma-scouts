@@ -4,6 +4,8 @@ export type Cargo = {
   titular?: string;
   visible: boolean;
   descripcion?: string;  // Descripción opcional para dar más contexto al cargo.
+  inicio?: number;      // Fecha de inicio del cargo (formato ISO).
+  fin?: number;         // Fecha de fin del cargo (formato ISO).
 };
 
 export type Nivel = {

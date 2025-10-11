@@ -39,11 +39,12 @@ function exportPDF(data: OrganigramaNiveles) {
       ]);
     } else {
       nivel.cargos.forEach((cargo) => {
+        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
         tableData.push([
           nivel.nombre,
           cargo.nombre,
           cargo.titular || "—",
-          data.anio, // Periodo (Año)
+          periodo, // Periodo (Año)
           cargo.descripcion || "—", // Descripción
         ]);
       });
@@ -52,7 +53,7 @@ function exportPDF(data: OrganigramaNiveles) {
 
   autoTable(doc, {
     head: [
-      ["Nivel", "Cargo", "Titular", "Año", "Descripción"], // Columnas requeridas
+      ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"], // Columnas requeridas
     ],
     body: tableData,
     startY: 35,
@@ -78,7 +79,7 @@ function exportPDF(data: OrganigramaNiveles) {
    📊 Exportación a CSV
    ============================================================ */
 function exportCSV(data: OrganigramaNiveles) {
-  const header = ["Nivel", "Cargo", "Titular", "Año", "Descripción"];
+  const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
   const rows: string[][] = [];
 
   data.niveles.forEach((nivel) => {
@@ -86,11 +87,12 @@ function exportCSV(data: OrganigramaNiveles) {
       rows.push([nivel.nombre, "—", "—", String(data.anio), nivel.descripcion || "—"]);
     } else {
       nivel.cargos.forEach((cargo) => {
+        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
         rows.push([
           nivel.nombre,
           cargo.nombre,
           cargo.titular || "—",
-          String(data.anio), // Año
+          periodo, // Periodo (Año)
           cargo.descripcion || "—", // Descripción
         ]);
       });

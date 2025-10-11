@@ -24,7 +24,7 @@ export function useNiveles(anioInicial: number) {
     (async () => {
       try {
         setLoading(true);
-        const d = await service.getByAnio(anio);
+        const d = await service.getByAnio(anio); // Carga los datos del año seleccionado, incluyendo los mocks
         if (mounted) setData(d);
       } finally {
         if (mounted) setLoading(false);
@@ -96,13 +96,17 @@ export function useNiveles(anioInicial: number) {
     nivelId: string,
     nombre: string,
     titular?: string,
-    descripcion?: string
+    descripcion?: string,
+    inicio?: number,
+    fin?: number
   ) => {
     const cargo: Cargo = {
       id: crypto.randomUUID(),
       nombre,
       titular,
       descripcion,
+      inicio,
+      fin,
       visible: true,
     };
     await service.upsertCargo(anio, nivelId, cargo);
