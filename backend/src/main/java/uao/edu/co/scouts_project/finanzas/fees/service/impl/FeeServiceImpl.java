@@ -332,29 +332,26 @@ public class FeeServiceImpl implements IFeeService {
   // ---------------------------------------------------------------------
   // DELETE
   // ---------------------------------------------------------------------
-  @Override
-  public void deleteFeePlan(Long feePlanId, String tenantId) {
-      // 1) Validar pertenencia al tenant
-      FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
-          .orElseThrow(() -> new NoSuchElementException("FeePlan not found for this tenant"));
+@Transactional
+public void deleteFeePlan(Long feePlanId, String tenantId) {
+    FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
+            .orElseThrow(() -> new NoSuchElementException("FeePlan not found for this tenant"));
 
-      Concept concept = fp.getConcept();
+    Concept concept = fp.getConcept();
 
-      // 2) Borrar installments ligados al concept
-      List<Installment> related = installmentRepo.findByConceptId(concept.getConceptId());
-      if (!related.isEmpty()) {
-          installmentRepo.deleteAll(related);
-      }
+    // borrar únicamente los vacíos en DB
+    installmentRepo.deleteEmptyPaymentsByConcept(concept.getConceptId());
 
-      // 3) Borrar el fee plan
-      feePlanRepo.delete(fp);
+    // eliminar siempre el fee plan
+    feePlanRepo.delete(fp);
 
-      // 4) Si el concepto ya no está asociado a ningún fee plan, eliminarlo
-      boolean stillUsed = feePlanRepo.existsByConcept(concept);
-      if (!stillUsed) {
-          conceptRepo.delete(concept);
-      }
-  }
+    // si ahora no quedan installments para ese concepto, eliminar el concepto
+    long remaining = installmentRepo.countAllByConcept(concept.getConceptId());
+    if (remaining == 0L) {
+        conceptRepo.delete(concept);
+    }
+}
+
 
   // ---------------------------------------------------------------------
   // Helpers
