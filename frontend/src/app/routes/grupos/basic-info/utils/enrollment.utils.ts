@@ -23,7 +23,7 @@ export const transformData = (data: PersonalData): Member => {
     }));
 
   return {
-    tenant_id: "org_6B3k4dao2Wf6eGxa",
+    tenant_id: data.tenantId,
     first_name: data.firstname,
     last_name: data.lastname,
     age: edad,
@@ -40,7 +40,7 @@ export const transformData = (data: PersonalData): Member => {
     hobbies: data.hobbies,
     sports: data.sports,
     instruments: data.instruments,
-    isActive: true,
+    is_active: true,
     status: "PENDING",
     emergency_contacts,
   };

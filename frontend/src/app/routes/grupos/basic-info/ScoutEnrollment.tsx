@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,15 +21,20 @@ import type {
   EmergencyContactField,
 } from "@/types/enrollment.type";
 import type { Member } from "@/types/member.type";
+import type { GroupResponseDTO, TenantDTO } from "@/types/group.type";
 import { transformData } from "./utils/enrollment.utils";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useMember } from "@/hooks/useMember";
 import { createMemberAction } from "@/store/members/membersActions";
+import { getAllTenants, getGroupsByTenant } from "@/api/organigramaApi";
 
 function ScoutEnrollment() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { loading } = useMember();
+  const [groups, setGroups] = useState<GroupResponseDTO[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+  
   const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     firstname: "",
     lastname: "",
@@ -47,6 +52,7 @@ function ScoutEnrollment() {
     sports: "",
     instruments: "",
     group: "",
+    tenantId: "",
     emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
 
@@ -63,9 +69,46 @@ function ScoutEnrollment() {
     useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
 
+  // Cargar grupos
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setLoadingGroups(true);
+
+        const tenants = await getAllTenants<TenantDTO>();
+        
+        const allGroupsPromises = tenants.map((tenant) =>
+          getGroupsByTenant<GroupResponseDTO>(tenant.slug)
+        );
+        const allGroupsArrays = await Promise.all(allGroupsPromises);
+        
+        setGroups(allGroupsArrays.flat());
+      } catch (error) {
+        console.error("Error al cargar los grupos:", error);
+        alert("Error al cargar la lista de grupos. Por favor, recarga la página.");
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+
+    fetchGroups();
+  }, []);
+
   const handlePersonalChange = (e: ChangeEvent): void => {
     const { name, value } = e.target;
-    setDatosPersonales((prev) => ({ ...prev, [name]: value }));
+    
+    // Se guarda el tenantId
+    if (name === "group") {
+      const selectedGroup = groups.find(g => g.name === value);
+      
+      setDatosPersonales((prev) => ({ 
+        ...prev, 
+        [name]: value,
+        tenantId: selectedGroup?.tenant_id || ""
+      }));
+    } else {
+      setDatosPersonales((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSchoolChange = (e: ChangeEvent): void => {
@@ -330,11 +373,22 @@ function ScoutEnrollment() {
           onChange={handlePersonalChange}
           className="w-full border border-input rounded-md h-10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           required
+          disabled={loadingGroups}
         >
-          <option value="">Selecciona un grupo...</option>
-          <option value="Centinelas 113">Centinelas 113</option>
-          <option value="803 Chiminigagua">803 Chiminigagua</option>
+          <option value="">
+            {loadingGroups ? "Cargando grupos..." : "Selecciona un grupo..."}
+          </option>
+          {groups.map((group, groupId) => (
+            <option key={groupId} value={group.name}>
+              {group.name}
+            </option>
+          ))}
         </select>
+        {!loadingGroups && groups.length === 0 && (
+          <p className="text-sm text-red-600 mt-1">
+            No se encontraron grupos disponibles
+          </p>
+        )}
       </div>
 
       {/* Contactos de emergencia */}

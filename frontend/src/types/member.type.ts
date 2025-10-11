@@ -15,7 +15,7 @@ export interface Member {
   relationship?: string;
   role?: "admin_group" | "admin_global" | "scout";
   status?: string;
-  isActive?: boolean;
+  is_active?: boolean;
   identification?: string;
   document_type?: string;
   email?: string;

@@ -31,6 +31,7 @@ export interface PersonalData {
   sports: string;
   instruments: string;
   group: string;
+  tenantId: string;
   emergency_contacts: EmergencyContact[];
 }
 
