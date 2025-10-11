@@ -587,15 +587,17 @@ export default function SubramaDetail() {
             setImagenPrincipal('');
           }
 
-          // Cargar galería desde backend (URLs directas)
-          const galleryUrls = subramaEncontrada.galleryObjectIds ?? subramaEncontrada.subgroupGalleryObjectIds ?? [];
+          // Cargar galería desde backend (preferir gallery[].url)
+          const rawGallery = (subramaEncontrada as unknown as Record<string, unknown>)['gallery'] as unknown[] | undefined;
+          const galleryUrls = Array.isArray(rawGallery) && rawGallery.length > 0
+            ? (rawGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean)
+            : (subramaEncontrada.galleryObjectIds ?? subramaEncontrada.subgroupGalleryObjectIds ?? []);
+
           if (galleryUrls && galleryUrls.length > 0) {
-            // setGaleriaFotos(galleryUrls);
             console.log(`📸 [SubramaDetail] Cargadas ${galleryUrls.length} imágenes de galería desde backend`);
             console.log('🔗 [SubramaDetail] URLs de galería:', galleryUrls);
           } else {
             console.log('ℹ️ [SubramaDetail] No hay imágenes en la galería de la subrama');
-            // setGaleriaFotos([]);
           }
         } else {
           console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);

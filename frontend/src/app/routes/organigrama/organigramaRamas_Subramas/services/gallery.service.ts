@@ -20,6 +20,7 @@ const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: stri
 // 🧩 Función auxiliar: extraer UUID válido desde string o URL
 // ===============================================================
 const extractUuidFromString = (value: string | null | undefined): string | null => {
+  console.info('🔎 [GalleryService] extractUuidFromString called with:', String(value)?.slice?.(0, 120));
   if (!value) return null;
   const match = String(value).match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
   return match ? match[0] : null;
@@ -34,6 +35,7 @@ export const getGalleryImageUuids = async (
   sectionId: string
 ): Promise<string[]> => {
   try {
+    console.info('🔎 [GalleryService] getGalleryImageUuids called for:', { tenantSlug, groupSlug, sectionId });
     const rama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
     const maybe = rama as unknown as Record<string, unknown> | undefined;
 
@@ -100,6 +102,7 @@ export const resolveGalleryItem = async (
   targetUuidOrUrl: string
 ): Promise<{ id: string; url: string } | null> => {
   try {
+    console.info('🔎 [GalleryService] resolveGalleryItem called for:', { tenantSlug, groupSlug, sectionId, target: String(targetUuidOrUrl)?.slice?.(0,120) });
     const backend = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
     const rec = backend as unknown as Record<string, unknown> | undefined;
     const galleryArr = (rec?.['gallery'] as unknown[] | undefined) ?? [];
@@ -146,6 +149,7 @@ export const addGalleryImage = async (
   , signal?: AbortSignal
 ): Promise<string> => {
   try {
+    console.info('🆕 [GalleryService] addGalleryImage called:', { tenantSlug, groupSlug, sectionId, filename: file?.name });
     // 1️⃣ Subir archivo a Supabase
     const formData = new FormData();
     formData.append('file', file);
@@ -176,6 +180,7 @@ const replaceGalleryList = async (
   keepGalleryUuids: string[]
 ): Promise<Record<string, unknown> | null> => {
   // Reemplazar lista completa de galería (PUT) para sección: info de operación
+  console.info('⚠️ [GalleryService] replaceGalleryList called (force replace):', { tenantSlug, groupSlug, sectionId, keep: keepGalleryUuids?.length });
   const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
   try {
     // Obtener la rama actual para reutilizar nombre y otros campos requeridos
@@ -215,6 +220,7 @@ export const replaceGalleryImage = async (
   // Reemplazando imagen en galería: parámetros iniciales (sectionId, targetImageUuid, newFileName, newFileSize)
 
   try {
+    console.info('🔁 [GalleryService] replaceGalleryImage called:', { tenantSlug, groupSlug, sectionId, targetImageUuid, filename: newFile?.name });
     // 1️⃣ Extraer y validar UUID de la imagen objetivo
     const validTargetUuid = extractUuidFromString(targetImageUuid);
     if (!validTargetUuid) {

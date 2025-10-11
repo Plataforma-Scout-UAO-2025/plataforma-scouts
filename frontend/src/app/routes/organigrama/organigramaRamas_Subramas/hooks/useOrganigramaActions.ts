@@ -35,7 +35,6 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
       setSuccessOpen(false);
       successTimeoutRef.current = null;
     }, 2000);
-    // también invocar callback externo si fue proveído (compatibilidad)
     try {
       if (showSuccess) showSuccess(msg);
     } catch {
@@ -54,7 +53,6 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
   const createRama = useCallback(async (data: CreateBranchData) => {
     try {
       if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
-        // Pasar el payload frontend al servicio; el servicio espera CreateBranchData
         await organigramaService.createRama(tenantSlug, groupSlug, data);
       await loadRamas();
       showSuccessLocal('Rama creada con éxito');
@@ -68,7 +66,6 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     try {
       if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
   const frontendData: UpdateBranchData = (data as UpdateBranchData);
-        // Pasar frontend payload (servicio mapea a backend)
         await organigramaService.updateRama(tenantSlug, groupSlug, frontendData);
       await loadRamas();
       showSuccessLocal('Rama actualizada con éxito');
@@ -82,7 +79,6 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     try {
       if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
       const frontendData = data as CreateSubgroupData;
-        // El servicio espera (sectionId, CreateSubramaData) y mapeará internamente
         await organigramaService.createSubrama(tenantSlug, groupSlug, frontendData.branchId, frontendData);
       await loadRamas();
       showSuccessLocal('Subrama creada con éxito');
@@ -96,10 +92,8 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     try {
       if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
       const frontendData = data as UpdateSubgroupData;
-        // Asegurar que el servicio recibe ramaId (ramaId esperado en UpdateSubramaData)
         const servicePayload: UpdateSubgroupData = { ...frontendData };
         if (!servicePayload.branchId) {
-          // intentar obtener ramaId/section_id si fue pasado en forma legacy
           const fd = frontendData as unknown as Record<string, unknown>;
           const maybeRamaId = (fd['ramaId'] ?? fd['section_id'] ?? fd['branchId']) as string | number | undefined;
           if (maybeRamaId) servicePayload.branchId = String(maybeRamaId);
@@ -229,7 +223,7 @@ export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSu
     addGalleryImage,
     replaceGalleryImage,
     removeGalleryImage,
-    removeImageFromGalleryOnly, // Nueva función para PATCH remove según las instrucciones
+    removeImageFromGalleryOnly,
     isLoadingGallery,
   };
 }
