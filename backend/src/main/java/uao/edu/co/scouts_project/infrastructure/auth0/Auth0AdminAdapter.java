@@ -147,8 +147,6 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
             api().organizations()
                 .addMembers(organizationId, new Members(java.util.List.of(userId)))
                 .execute();
-        } catch (UserAlreadyMemberException ex) {
-            throw ex;
         } catch (APIException e) {
             if (e.getStatusCode() == 404) {
                 // Auth0 devuelve 404 si la organización no existe
@@ -157,6 +155,8 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
             }
             log.error("Error agregando usuario {} a organización {}: {}", userId, organizationId, e.getMessage());
             throw new Auth0GatewayException("Error agregando miembro a la organización", e);
+        } catch (UserAlreadyMemberException ex) {
+            throw ex;
         } catch (Exception ex) {
             log.error("Error agregando usuario {} a organización {}: {}", userId, organizationId, ex.getMessage());
             throw new Auth0GatewayException("Error agregando miembro a la organización", ex);

@@ -1,24 +1,24 @@
 package uao.edu.co.scouts_project.application.service;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class Auth0AdminServiceTest {
 
+    @Mock
     private Auth0AdminPort port;
-    private Auth0AdminService service;
 
-    @BeforeEach
-    void setup() {
-        port = Mockito.mock(Auth0AdminPort.class);
-        service = new Auth0AdminService(port);
-    }
+    @InjectMocks
+    private Auth0AdminService service;
 
     @Test
     void createUserDelegatesAndReturnsDto() {

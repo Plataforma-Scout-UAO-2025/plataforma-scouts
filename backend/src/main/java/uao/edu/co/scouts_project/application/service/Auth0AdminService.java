@@ -44,19 +44,19 @@ public class Auth0AdminService {
     }
 
     public CreatedUserDTO createUser(String email, String password, String username) {
-        validateEmail(email);
-        validatePassword(password);
-        if (!StringUtils.hasText(username)) {
-            throw new IllegalArgumentException("username obligatorio");
-        }
-    var created = port.createUser(new CreateUserCommandDTO(email.trim(), password, username.trim()));
-    log.debug("Usuario Auth0 creado id={} email={}", created.getId(), created.getEmail());
+        // Las validaciones de @Email, @Size, @NotBlank se aplican automáticamente en el DTO
+        CreatedUserDTO created = port.createUser(new CreateUserCommandDTO(email.trim(), password, username.trim()));
+        log.debug("Usuario Auth0 creado id={} email={}", created.getId(), created.getEmail());
         return created;
     }
 
     public void assignRole(String userId, String roleId) {
-        if (!StringUtils.hasText(userId)) throw new IllegalArgumentException("userId vacío");
-        if (!StringUtils.hasText(roleId)) throw new IllegalArgumentException("roleId vacío");
+        if (!StringUtils.hasText(userId)) {
+            throw new IllegalArgumentException("userId vacío");
+        }
+        if (!StringUtils.hasText(roleId)) {
+            throw new IllegalArgumentException("roleId vacío");
+        }
         port.assignRole(userId.trim(), roleId.trim());
         log.debug("Rol {} asignado a usuario {}", roleId, userId);
     }
@@ -79,18 +79,6 @@ public class Auth0AdminService {
             return count >= 0; // si no lanza excepción asumimos OK
         } catch (RuntimeException ex) {
             return false;
-        }
-    }
-
-    private void validateEmail(String email) {
-        if (!StringUtils.hasText(email) || !email.contains("@")) {
-            throw new IllegalArgumentException("email inválido");
-        }
-    }
-
-    private void validatePassword(String password) {
-        if (!StringUtils.hasText(password) || password.length() < 6) {
-            throw new IllegalArgumentException("password demasiado corta (>=6)");
         }
     }
 }
