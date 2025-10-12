@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GuardianServiceImpl implements GuardianService {
 
-    private static final Logger logger = LoggerFactory.getLogger(GuardianServiceImpl.class);
     private final GuardianRepository memberRepository;
 
     public GuardianServiceImpl(GuardianRepository memberRepository) {
@@ -104,7 +103,6 @@ public class GuardianServiceImpl implements GuardianService {
     @Override
     @Transactional
     public void addMemberToGuardian(Long guardianId, Long memberId) {
-        logger.info("Añadiendo miembro {} al guardian {}", memberId, guardianId);
 
         Member guardianToAdd = memberRepository.findById(guardianId)
                 .orElseThrow(() -> new GuardianNotFoundException("Guardian con ID " + guardianId + " no encontrado"));

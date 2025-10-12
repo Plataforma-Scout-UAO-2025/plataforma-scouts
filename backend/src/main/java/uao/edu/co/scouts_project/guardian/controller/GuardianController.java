@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.constraints.NotNull;
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
@@ -21,19 +22,19 @@ public class GuardianController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GuardianCreateDTO> getGuardianById(@PathVariable Long id) {
+    public ResponseEntity<GuardianCreateDTO> getGuardianById(@PathVariable @NotNull Long id) {
         GuardianCreateDTO guardian = guardianService.findGuardianById(id);
         return ResponseEntity.ok(guardian);
     }
 
     @GetMapping("/{id}/members")
-    public ResponseEntity<GuardianWithMembersDTO> getGuardianWithMembers(@PathVariable Long id) {
+    public ResponseEntity<GuardianWithMembersDTO> getGuardianWithMembers(@PathVariable @NotNull Long id) {
         GuardianWithMembersDTO guardianWithMembers = guardianService.findGuardianWithMembers(id);
         return ResponseEntity.ok(guardianWithMembers);
     }
 
     @GetMapping("/{guardianId}/members-list")
-    public ResponseEntity<List<MemberDTO>> getMembersInChargeOf(@PathVariable Long guardianId) {
+    public ResponseEntity<List<MemberDTO>> getMembersInChargeOf(@PathVariable @NotNull Long guardianId) {
         List<MemberDTO> members = guardianService.findMembersInChargeOf(guardianId);
         return ResponseEntity.ok(members);
     }
@@ -52,19 +53,19 @@ public class GuardianController {
     }
 
     @PostMapping("/{guardianId}/members/{memberId}")
-    public ResponseEntity<Void> addMemberToGuardian(@PathVariable Long guardianId, @PathVariable Long memberId) {
+    public ResponseEntity<Void> addMemberToGuardian(@PathVariable @NotNull Long guardianId, @PathVariable @NotNull Long memberId) {
         guardianService.addMemberToGuardian(guardianId, memberId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{guardianId}/members/{memberId}")
-    public ResponseEntity<Void> removeMemberFromGuardian(@PathVariable Long guardianId, @PathVariable Long memberId) {
+    public ResponseEntity<Void> removeMemberFromGuardian(@PathVariable @NotNull Long guardianId, @PathVariable @NotNull Long memberId) {
         guardianService.removeGuardianIdFromMember(guardianId, memberId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGuardian(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteGuardian(@PathVariable @NotNull Long id) {
         guardianService.deleteGuardianById(id);
         return ResponseEntity.noContent().build();
     }
