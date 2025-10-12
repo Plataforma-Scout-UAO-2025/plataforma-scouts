@@ -14,7 +14,7 @@ export const calculateAge = (fecha: string): number => {
 export const transformData = (data: PersonalData): Member => {
   const edad = calculateAge(data.birth_date);
 
-  const emergency_contacts: EmergencyContact[] = data.emergency_contacts
+  const emergencyContacts: EmergencyContact[] = data.emergency_contacts
     .filter((contact) => contact.name && contact.phone)
     .map((contact) => ({
       name: contact.name,
@@ -23,16 +23,16 @@ export const transformData = (data: PersonalData): Member => {
     }));
 
   return {
-    tenant_id: data.tenantId,
-    first_name: data.firstname,
-    last_name: data.lastname,
+    tenantId: data.tenantId,
+    firstName: data.firstname,
+    lastName: data.lastname,
     age: edad,
     identification: data.identification,
-    document_type: data.document_type,
+    documentType: data.document_type,
     email: data.email,
     gender: data.gender,
     role: "scout",
-    birth_date: new Date(data.birth_date),
+    birthDate: new Date(data.birth_date),
     address: data.address,
     phone: data.phone,
     weight: data.weight,
@@ -40,8 +40,8 @@ export const transformData = (data: PersonalData): Member => {
     hobbies: data.hobbies,
     sports: data.sports,
     instruments: data.instruments,
-    is_active: true,
+    isActive: true,
     status: "PENDING",
-    emergency_contacts,
+    emergencyContacts,
   };
 };

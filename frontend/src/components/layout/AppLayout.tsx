@@ -150,6 +150,33 @@ const acudienteItems: MenuItem[] = [
   },
 ];
 
+const ScoutItems: MenuItem[] = [
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <Settings />,
+    href: "/app/financiero/cuotas",
+  },
+];
+
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
@@ -174,6 +201,8 @@ function AppLayoutContent() {
         return acudienteItems;
       case RawRole.TESORERO:
         return tesoreroItems;
+      case RawRole.SCOUT || RawRole.GUEST:
+        return ScoutItems;
       case RawRole.ADMIN_GRUPO:
       case RawRole.COMITE_ADMIN:
       default:
