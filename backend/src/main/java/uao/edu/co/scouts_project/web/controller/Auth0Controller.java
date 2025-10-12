@@ -14,6 +14,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
+import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
@@ -21,8 +22,6 @@ import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
-import uao.edu.co.scouts_project.service.auth0.IAuth0Service;
-// no param-level constraints to keep errors in-controller
 
 import java.util.HashMap;
 import java.util.List;
@@ -160,7 +159,8 @@ public class Auth0Controller {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
         } catch (Auth0GatewayException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(gatewayErrorBody(ex, "Fallo agregando usuario a organización"));
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(gatewayErrorBody(ex, "Fallo agregando usuario a organización"));
         }
     }
 

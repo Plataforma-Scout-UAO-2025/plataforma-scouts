@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.service.auth0;
+package uao.edu.co.scouts_project.application.service;
 
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;

@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.service.auth0;
+package uao.edu.co.scouts_project.application.service;
 
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;

@@ -8,13 +8,14 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
-import uao.edu.co.scouts_project.service.auth0.IAuth0Service;
 
 import java.util.List;
 
