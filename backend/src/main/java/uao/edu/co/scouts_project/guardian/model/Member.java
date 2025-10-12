@@ -54,7 +54,7 @@ public class Member {
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
 
-    private Integer guardianId;
+    private Long guardianId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subgroup_id")
