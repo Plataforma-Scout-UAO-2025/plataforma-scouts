@@ -10,7 +10,6 @@ import uao.edu.co.scouts_project.guardian.shared.enums.Status;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -37,7 +36,7 @@ import jakarta.validation.constraints.Size;
 public class GuardianCreateDTO {
     private String userId;
     private SubgroupDTO subgroup;
-    private List<Role> roles;
+    private Role rol;
     private String tenantId;
     private String subgroupId;
     @NotBlank
