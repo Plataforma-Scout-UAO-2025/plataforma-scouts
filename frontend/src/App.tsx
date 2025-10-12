@@ -28,9 +28,6 @@ import OrgAuthGuard from './app/routes/organigrama/OrgAuthGuard';
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 
-// Miembros
-import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
-
 function App() {
   useAuth0ApiWrapper();
 

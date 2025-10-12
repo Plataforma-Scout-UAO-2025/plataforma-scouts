@@ -486,10 +486,4 @@ public class SubgroupService {
         log.info("Buscando subgroup asociado al miembro con ID: {}", memberId);
         return subgroupRepository.findByMemberId(memberId);
     }
-
-    //Lo necesita Qbyte
-    public Optional<Subgroup> getSubgroupByMemberId(Long memberId) {
-        log.info("Buscando subgroup asociado al miembro con ID: {}", memberId);
-        return subgroupRepository.findByMemberId(memberId);
-    }
 }
