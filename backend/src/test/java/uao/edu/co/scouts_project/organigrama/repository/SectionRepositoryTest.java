@@ -25,7 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
-@DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=none")
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 // 1) Desactiva el auto-config por defecto de repos en esta clase de test
 @ImportAutoConfiguration(exclude = JpaRepositoriesAutoConfiguration.class)
@@ -37,7 +37,7 @@ class SectionRepositoryTest {
 
     @Configuration
     @EnableJpaRepositories(basePackageClasses = SectionRepository.class)
-    @EntityScan(basePackageClasses = Section.class)
+    @EntityScan(basePackages = "uao.edu.co.scouts_project")
     static class JpaSliceConfig { }
 
     @Autowired

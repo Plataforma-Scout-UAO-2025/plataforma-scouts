@@ -1,0 +1,45 @@
+package uao.edu.co.scouts_project.member.repository;
+
+import org.jetbrains.annotations.NotNull;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import uao.edu.co.scouts_project.member.model.Member;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repositorio JPA para la entidad {@link Member}.
+ * <p>
+ * Proporciona métodos para realizar operaciones CRUD y consultas personalizadas
+ * sobre los miembros registrados en el sistema.
+ */
+public interface IMemberRepository extends JpaRepository<Member, Long> {
+
+    /**
+     * Busca un miembro por su número de identificación.
+     *
+     * @param identification Número de identificación único del miembro.
+     * @return {@link Optional} que contiene el miembro si existe, o vacío si no se encuentra.
+     */
+    Optional<Member> findByIdentification(@NotNull String identification);
+
+    /**
+     * Obtiene una lista de miembros filtrados por su estado.
+     *
+     * @param status Estado del miembro (por ejemplo, ACTIVE, INACTIVE, SUSPENDED).
+     * @return Lista de miembros que coinciden con el estado proporcionado.
+     */
+    List<Member> findByStatus(Status status);
+
+    /**
+     * Recupera todos los miembros que pertenecen a un subGrupo dado
+     * en una sola consulta para evitar problemas de lazy loading (N+1 queries).
+     *
+     * @return Lista de miembros
+     */
+    @Query("SELECT m FROM Member m WHERE m.subgroup.subgroupId = :subGroupId")
+    List<Member> findBySubGroupId(@Param("subGroupId") Long subGroupId);
+}

@@ -36,7 +36,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
-              <TableRow key={member.user_id}>
+              <TableRow key={member.member_id}>
                 <TableCell className="pl-4 font-medium">{member.user_id}</TableCell>
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
