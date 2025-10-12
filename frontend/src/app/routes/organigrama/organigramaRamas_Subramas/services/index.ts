@@ -1,12 +1,4 @@
-// ============================================================================
-// ÍNDICE PRINCIPAL DE SERVICIOS DE ORGANIGRAMA - REFACTORIZADO
-// ============================================================================
-// Este archivo sirve como punto de entrada único para todos los servicios
-// del módulo de organigrama refactorizado
 
-// ============================================================================
-// SERVICIOS PRINCIPALES REFACTORIZADOS
-// ============================================================================
 
 // CRUD para Ramas
 export {
@@ -91,7 +83,3 @@ export const clearAllStorageData = (): void => {
 };
 
 
-// ============================================================================
-// INFORMACIÓN DE LA REFACTORIZACIÓN
-// ============================================================================
-// Servicios refactorizados cargados — ver exports en este archivo.

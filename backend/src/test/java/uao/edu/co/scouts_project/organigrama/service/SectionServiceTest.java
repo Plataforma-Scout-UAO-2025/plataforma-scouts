@@ -9,6 +9,9 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
 import uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest;
 import uao.edu.co.scouts_project.organigrama.dto.SectionDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
@@ -21,11 +24,14 @@ import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -615,5 +621,78 @@ class SectionServiceTest {
                 "tenant-slug", "group-slug", 1L, invalidOps))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Operación no soportada: invalid");
+    }
+
+    @Test
+    @DisplayName("Debe continuar cuando Supabase alcanza MaxClientsInSessionMode")
+    void testGetSectionsByGroup_RateLimitFallback() {
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupId("tenant1", 1L))
+                .thenReturn(Collections.singletonList(section));
+        when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any()))
+                .thenThrow(new RuntimeException("maxclientsinsessionmode: max clients reached"));
+
+        List<SectionResponseDTO> result = sectionService.getSectionsByGroup("tenant-slug", "group-slug");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).iconObjectUrl()).isNull();
+        assertThat(result.get(0).photoPrincipalUrl()).isNull();
+    }
+
+    @Test
+    @DisplayName("Debe capturar errores de permisos al eliminar archivos en Supabase")
+    void testDeleteSection_PermissionError() {
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
+                .thenReturn(Optional.of(section));
+
+        doThrow(new RuntimeException("403 access denied"))
+                .when(storageService).deleteFileByObjectId(any(UUID.class));
+
+        assertThatCode(() -> sectionService.deleteSection("tenant-slug", "group-slug", 1L))
+                .doesNotThrowAnyException();
+
+        verify(sectionRepository).delete(section);
+        verify(storageService, atLeastOnce()).deleteFileByObjectId(any(UUID.class));
+    }
+
+    @ParameterizedTest(name = "Clasifica mensaje Supabase: {0}")
+    @MethodSource("supabaseErrorMessages")
+    void shouldClassifySupabaseErrorsWithoutThrowing(String message, String bucket, UUID objectId, Long fileSize) throws Exception {
+        Method method = SectionService.class.getDeclaredMethod(
+                "classifyAndLogSupabaseError",
+                Exception.class,
+                String.class,
+                String.class,
+                UUID.class,
+                Long.class
+        );
+        method.setAccessible(true);
+
+        assertThatCode(() -> method.invoke(
+                sectionService,
+                new RuntimeException(message),
+                "diagnostic",
+                bucket,
+                objectId,
+                fileSize
+        )).doesNotThrowAnyException();
+    }
+
+    private static Stream<Arguments> supabaseErrorMessages() {
+        UUID sampleId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        return Stream.of(
+                Arguments.of("invalid jwt token", null, null, null),
+                Arguments.of("403 access denied", null, null, null),
+                Arguments.of("404 no such bucket", "gallery-bucket", sampleId, null),
+                Arguments.of("409 resourcealreadyexists", null, null, null),
+                Arguments.of("413 entity too large", null, null, 1_048_576L),
+                Arguments.of("maxclientsinsessionmode: max clients reached", null, null, null),
+                Arguments.of("failed to fetch due to cors", null, null, null),
+                Arguments.of("500 internal server error", null, null, null),
+                Arguments.of("unexpected supabase outage", null, null, null)
+        );
     }
 }

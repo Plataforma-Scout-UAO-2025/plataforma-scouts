@@ -38,12 +38,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/mock/scouts/member").hasAnyRole(DEV_SUPPORT.name())
 
                         // Organigrama
-                          
+                        
                             //Operaciones CRUD en tenants
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants").hasAnyRole(ADMIN_GLOBAL.name())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*").hasAnyRole(ADMIN_GLOBAL.name())
 
                             //Operaciones CRUD en grupos
 
@@ -61,7 +61,6 @@ public class SecurityConfig {
                             // Operaciones en almacenamiento de imagenes
 
                         .requestMatchers(HttpMethod.POST, "/api/v1/storage/**").hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
-
 
 
 
