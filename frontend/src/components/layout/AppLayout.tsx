@@ -39,9 +39,9 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useRoleContext } from "@/hooks/useRoleContext";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
 import FullScreenError from "@/components/common/FullScreenError";
-import { RawRole } from '@/roles/roles';
-import { setAuth0TokenProvider } from '@/api/axios';
-import { useEffect } from 'react';
+import { RawRole } from "@/roles/roles";
+import { setAuth0TokenProvider } from "@/api/axios";
+import { useEffect } from "react";
 
 type SubMenuItem = {
   id: string;

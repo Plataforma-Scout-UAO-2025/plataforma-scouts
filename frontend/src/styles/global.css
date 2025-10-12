@@ -21,12 +21,12 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: #1a4134;
   --primary-foreground: oklch(0.985 0 0);
-  --primary-hover: #29765c;
+  --primary-hover: #29765C;
   --secondary: #916e5a;
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(55.553% 0.00006 271.152);
-  --accent: #ededed;
+  --accent: #EDEDED;
   --accent-foreground: #717171;
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);

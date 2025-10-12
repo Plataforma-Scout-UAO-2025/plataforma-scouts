@@ -119,7 +119,7 @@
 			<artifactId>json-patch</artifactId>
 			<version>1.13</version>
 		</dependency>
-		
+
 		<!-- H2 Database for testing -->
 		<dependency>
 			<groupId>com.h2database</groupId>
@@ -156,6 +156,7 @@
 			<artifactId>mvc-auth-commons</artifactId>
 			<version>1.9.1</version>
 		</dependency>
+
     </dependencies>
 
 
