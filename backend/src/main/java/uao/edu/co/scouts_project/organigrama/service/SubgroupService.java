@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+//Anotación para manejar Logs
+@Slf4j
 @Service
 @Transactional
 public class SubgroupService {
@@ -476,5 +479,11 @@ public class SubgroupService {
         System.err.println("[UPLOAD] supabase-error → CATEGORÍA=GENÉRICO → " +
                          "hint=Error no clasificado de Supabase. Revisar mensaje completo y documentación. " +
                          "Si el problema persiste, contactar soporte.");
+    }
+
+    //Lo necesita Qbyte
+    public Optional<Subgroup> getSubgroupByMemberId(Long memberId) {
+        log.info("Buscando subgroup asociado al miembro con ID: {}", memberId);
+        return subgroupRepository.findByMemberId(memberId);
     }
 }
