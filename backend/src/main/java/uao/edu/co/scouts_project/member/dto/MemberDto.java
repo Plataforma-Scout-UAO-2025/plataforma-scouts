@@ -26,17 +26,17 @@ import java.util.List;
 @NoArgsConstructor
 public class MemberDto {
 
-    @JsonProperty("member_id")
+    @JsonProperty("memberId")
     private Long memberId;
 
-    @JsonProperty("user_id")
+    @JsonProperty("userId")
     private String userId;
 
     @NotBlank(message = "El tenant_id es obligatorio")
-    @JsonProperty("tenant_id")
+    @JsonProperty("tenantId")
     private String tenantId;
 
-    @JsonProperty("guardian_id")
+    @JsonProperty("guardianId")
     private Integer guardianId;
 
     @JsonProperty("subgroup")
@@ -45,12 +45,12 @@ public class MemberDto {
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(min = 2, max = 100, message = "El nombre debe tener entre 2 y 100 caracteres")
-    @JsonProperty("first_name")
+    @JsonProperty("firstName")
     private String firstName;
 
     @NotBlank(message = "El apellido es obligatorio")
     @Size(min = 2, max = 100, message = "El apellido debe tener entre 2 y 100 caracteres")
-    @JsonProperty("last_name")
+    @JsonProperty("lastName")
     private String lastName;
 
     @Min(value = 0, message = "La edad no puede ser negativa")
@@ -65,7 +65,7 @@ public class MemberDto {
     @NotBlank(message = "El tipo de documento es obligatorio")
     @Pattern(regexp = "^(CC|TI|CE|PASSPORT|RC|NUIP)$", 
              message = "Tipo de documento inválido. Valores permitidos: CC, TI, CE, PASSPORT, RC, NUIP")
-    @JsonProperty("document_type")
+    @JsonProperty("documentType")
     private String documentType;
 
     @Email(message = "El formato del email es inválido")
@@ -73,7 +73,7 @@ public class MemberDto {
 
     private String gender;
 
-    @JsonProperty("birth_date")
+    @JsonProperty("birthDate")
     private LocalDate birthDate;
 
     private String address;
@@ -95,7 +95,7 @@ public class MemberDto {
     @Size(max = 500, message = "Los instrumentos no pueden exceder 500 caracteres")
     private String instruments;
 
-    @JsonProperty("is_active")
+    @JsonProperty("isActive")
     private Boolean isActive;
 
     private String relationship;
@@ -105,10 +105,10 @@ public class MemberDto {
              message = "Estado inválido. Valores permitidos: ACTIVE, INACTIVE, SUSPENDED, PENDING")
     private String status;
 
-    @JsonProperty("acceptance_date")
+    @JsonProperty("acceptanceDate")
     private LocalDate acceptanceDate;
 
-    @JsonProperty("emergency_contacts")
+    @JsonProperty("emergencyContacts")
     @Valid
     private List<EmergencyContactDto> emergencyContacts;
 

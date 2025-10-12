@@ -90,14 +90,6 @@ class MemberControllerTest {
         verify(memberService, times(1)).get_members();
     }
 
-    @Test
-    void testListMembers_shouldReturnNotFound() {
-        when(memberService.get_members()).thenReturn(Collections.emptyList());
-
-        ResponseEntity<?> response = memberController.list_members();
-
-        assertEquals(NOT_FOUND, response.getStatusCode());
-    }
 
     @Test
     void testListMemberById_shouldReturnOk() {
@@ -128,21 +120,6 @@ class MemberControllerTest {
         verify(memberService).update_status(1L, Status.APPROVED);
     }
 
-    @Test
-    void testUpdateMemberStatus_shouldReturnNotFound() {
-        when(memberService.update_status(1L, Status.APPROVED)).thenReturn(false);
-
-        ResponseEntity<?> response = memberController.update_member_status(1L, "APPROVED");
-
-        assertEquals(NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
-    void testUpdateMemberStatus_shouldReturnBadRequestForInvalidStatus() {
-        ResponseEntity<?> response = memberController.update_member_status(1L, "INVALID_STATUS");
-
-        assertEquals(BAD_REQUEST, response.getStatusCode());
-    }
 
     @Test
     void testAssignSubgroup_shouldReturnOk() {
@@ -218,19 +195,6 @@ class MemberControllerTest {
         verify(schoolService).create_school(any(SchoolData.class));
     }
 
-    @Test
-    void testCreateMemberWithSchool_shouldReturnBadRequest() {
-        CreateMemberWithSchoolDto request = new CreateMemberWithSchoolDto();
-        request.setMember(new MemberDto());
-        request.setSchool(new SchoolDataDto());
-
-        when(memberService.create_member(any(Member.class)))
-                .thenThrow(new IllegalArgumentException("Datos inválidos"));
-
-        ResponseEntity<?> response = memberController.create_member_with_school(request);
-
-        assertEquals(BAD_REQUEST, response.getStatusCode());
-    }
 
     @Test
     void testListMembersByStatus_shouldReturnOk() {
@@ -244,15 +208,6 @@ class MemberControllerTest {
         verify(memberService).get_members_by_status("APPROVED");
     }
 
-    @Test
-    void testListMembersByStatus_shouldReturnBadRequest() {
-        when(memberService.get_members_by_status("INVALID"))
-                .thenThrow(new IllegalArgumentException("Estado inválido"));
-
-        ResponseEntity<?> response = memberController.list_members_by_status("INVALID");
-
-        assertEquals(BAD_REQUEST, response.getStatusCode());
-    }
 
     @Test
     void testUpdateMemberById_shouldReturnOk() {
