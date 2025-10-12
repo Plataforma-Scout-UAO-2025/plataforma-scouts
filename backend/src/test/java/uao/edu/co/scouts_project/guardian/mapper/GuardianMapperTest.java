@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
-import uao.edu.co.scouts_project.guardian.dto.out.GuardianWIthMemberDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.model.Member;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
@@ -59,7 +59,7 @@ public class GuardianMapperTest {
                 .relationship("Father")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.of(2023, 1, 15))
-                .roles(List.of(Role.ACUDIENTE))
+                .rol(Role.ACUDIENTE)
                 .build();
 
         // Setup Member with full data
@@ -110,13 +110,17 @@ public class GuardianMapperTest {
                 .build();
 
         // Setup MemberCustom
-        memberCustom = new MemberCustom(
-                2L,
-                "Jane",
-                "Smith",
-                "FEMALE",
-                "3009876543",
-                LocalDate.of(2013, 8, 10));
+        memberCustom = MemberCustom.builder()
+                .firstName("Jane")
+                .lastName("Smith")
+                .identification("9876543210")
+                .documentType(DocumentType.TI)
+                .emergencyContacts(Collections.emptyList())
+                .age(10)
+                .gender("FEMALE")
+                .phone("3009876543")
+                .birthDate(LocalDate.of(2013, 8, 10))
+                .build();
 
         // Setup members in charge
         membersInCharge = Arrays.asList(
@@ -161,10 +165,10 @@ public class GuardianMapperTest {
         }
 
         @Test
-        @DisplayName("Should use first role from roles list")
-        void shouldUseFirstRoleFromList() {
+        @DisplayName("Should use the role from rol field")
+        void shouldUseRoleFromRolField() {
             // Arrange
-            GuardianCreateDTO dtoWithMultipleRoles = GuardianCreateDTO.builder()
+            GuardianCreateDTO dtoWithRole = GuardianCreateDTO.builder()
                     .userId("guardian-123")
                     .tenantId("tenant-1")
                     .firstName("John")
@@ -177,14 +181,14 @@ public class GuardianMapperTest {
                     .relationship("Father")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
-                    .roles(List.of(Role.ACUDIENTE, Role.SCOUTER, Role.ADMIN_GLOBAL))
+                    .rol(Role.ACUDIENTE)
                     .build();
 
             // Act
-            Member result = GuardianMapper.toEntity(dtoWithMultipleRoles);
+            Member result = GuardianMapper.toEntity(dtoWithRole);
 
             // Assert
-            assertEquals(Role.ACUDIENTE, result.getRole(), "Should use first role in list");
+            assertEquals(Role.ACUDIENTE, result.getRole(), "Should use role from rol field");
         }
 
         @Test
@@ -232,7 +236,7 @@ public class GuardianMapperTest {
         @DisplayName("Should convert Member to GuardianWIthMemberDTO with members")
         void shouldConvertMemberToGuardianWIthMemberDTO() {
             // Act
-            GuardianWIthMemberDTO result = GuardianMapper.toDTO(guardianMember, membersInCharge);
+            GuardianWithMembersDTO result = GuardianMapper.toDTO(guardianMember, membersInCharge);
 
             // Assert
             assertNotNull(result);
@@ -259,7 +263,7 @@ public class GuardianMapperTest {
         @DisplayName("Should include empty members list when no members in charge")
         void shouldHandleEmptyMembersList() {
             // Act
-            GuardianWIthMemberDTO result = GuardianMapper.toDTO(guardianMember, Collections.emptyList());
+            GuardianWithMembersDTO result = GuardianMapper.toDTO(guardianMember, Collections.emptyList());
 
             // Assert
             assertNotNull(result);
@@ -271,7 +275,7 @@ public class GuardianMapperTest {
         @DisplayName("Should correctly map subgroup information")
         void shouldMapSubgroupInformation() {
             // Act
-            GuardianWIthMemberDTO result = GuardianMapper.toDTO(guardianMember, membersInCharge);
+            GuardianWithMembersDTO result = GuardianMapper.toDTO(guardianMember, membersInCharge);
 
             // Assert
             assertNotNull(result.getSubgroup());
@@ -283,7 +287,7 @@ public class GuardianMapperTest {
         @DisplayName("Should maintain member list order and content")
         void shouldMaintainMemberListOrderAndContent() {
             // Act
-            GuardianWIthMemberDTO result = GuardianMapper.toDTO(guardianMember, membersInCharge);
+            GuardianWithMembersDTO result = GuardianMapper.toDTO(guardianMember, membersInCharge);
 
             // Assert
             assertNotNull(result.getMembers());
@@ -319,21 +323,19 @@ public class GuardianMapperTest {
             assertEquals("Father", result.getRelationship());
             assertEquals(Status.APPROVED, result.getStatus());
             assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertNotNull(result.getRoles());
-            assertEquals(1, result.getRoles().size());
-            assertEquals(Role.ACUDIENTE, result.getRoles().get(0));
+            assertNotNull(result.getRol());
+            assertEquals(Role.ACUDIENTE, result.getRol());
         }
 
         @Test
-        @DisplayName("Should wrap role in list correctly")
-        void shouldWrapRoleInList() {
+        @DisplayName("Should map role correctly")
+        void shouldMapRoleCorrectly() {
             // Act
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertNotNull(result.getRoles());
-            assertEquals(1, result.getRoles().size());
-            assertEquals(Role.ACUDIENTE, result.getRoles().get(0));
+            assertNotNull(result.getRol());
+            assertEquals(Role.ACUDIENTE, result.getRol());
         }
 
         @Test
@@ -346,7 +348,7 @@ public class GuardianMapperTest {
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertEquals(Role.SCOUTER, result.getRoles().get(0));
+            assertEquals(Role.SCOUTER, result.getRol());
         }
 
         @Test
@@ -447,7 +449,6 @@ public class GuardianMapperTest {
 
             // Assert
             assertNotNull(result);
-            assertEquals("2", result.getUserId());
             assertEquals("Jane", result.getFirstName());
             assertEquals("Smith", result.getLastName());
             assertEquals("FEMALE", result.getGender());
@@ -456,33 +457,25 @@ public class GuardianMapperTest {
         }
 
         @Test
-        @DisplayName("Should convert memberId Long to String")
-        void shouldConvertMemberIdLongToString() {
-            // Act
-            MemberDTO result = GuardianMapper.toMemberDTO(memberCustom);
-
-            // Assert
-            assertEquals("2", result.getUserId());
-            assertTrue(result.getUserId() instanceof String);
-        }
-
-        @Test
-        @DisplayName("Should handle different memberId values")
-        void shouldHandleDifferentMemberIdValues() {
+        @DisplayName("Should handle different member values")
+        void shouldHandleDifferentMemberValues() {
             // Arrange
-            MemberCustom customMember = new MemberCustom(
-                    999L,
-                    "Test",
-                    "User",
-                    "OTHER",
-                    "3001112233",
-                    LocalDate.of(2015, 12, 31));
+            MemberCustom customMember = MemberCustom.builder()
+                    .firstName("Test")
+                    .lastName("User")
+                    .identification("123456789")
+                    .documentType(DocumentType.CC)
+                    .emergencyContacts(Collections.emptyList())
+                    .age(25)
+                    .gender("OTHER")
+                    .phone("3001112233")
+                    .birthDate(LocalDate.of(2015, 12, 31))
+                    .build();
 
             // Act
             MemberDTO result = GuardianMapper.toMemberDTO(customMember);
 
             // Assert
-            assertEquals("999", result.getUserId());
             assertEquals("Test", result.getFirstName());
             assertEquals("User", result.getLastName());
         }
@@ -501,9 +494,18 @@ public class GuardianMapperTest {
         @DisplayName("Should handle all gender types")
         void shouldHandleAllGenderTypes() {
             // Arrange
-            MemberCustom maleMember = new MemberCustom(3L, "John", "Doe", "MALE", "3001234567", LocalDate.now());
-            MemberCustom femaleMember = new MemberCustom(4L, "Jane", "Doe", "FEMALE", "3001234567", LocalDate.now());
-            MemberCustom otherMember = new MemberCustom(5L, "Alex", "Doe", "OTHER", "3001234567", LocalDate.now());
+            MemberCustom maleMember = MemberCustom.builder()
+                    .firstName("John").lastName("Doe").identification("123").documentType(DocumentType.CC)
+                    .emergencyContacts(Collections.emptyList()).age(30).gender("MALE")
+                    .phone("3001234567").birthDate(LocalDate.now()).build();
+            MemberCustom femaleMember = MemberCustom.builder()
+                    .firstName("Jane").lastName("Doe").identification("456").documentType(DocumentType.CC)
+                    .emergencyContacts(Collections.emptyList()).age(25).gender("FEMALE")
+                    .phone("3001234567").birthDate(LocalDate.now()).build();
+            MemberCustom otherMember = MemberCustom.builder()
+                    .firstName("Alex").lastName("Doe").identification("789").documentType(DocumentType.CC)
+                    .emergencyContacts(Collections.emptyList()).age(28).gender("OTHER")
+                    .phone("3001234567").birthDate(LocalDate.now()).build();
 
             // Act
             MemberDTO maleResult = GuardianMapper.toMemberDTO(maleMember);
@@ -538,7 +540,7 @@ public class GuardianMapperTest {
                     .relationship("Guardian")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
-                    .roles(List.of(Role.ACUDIENTE))
+                    .rol(Role.ACUDIENTE)
                     .build();
 
             // Act
