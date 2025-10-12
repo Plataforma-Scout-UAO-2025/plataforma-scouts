@@ -66,12 +66,26 @@ public class SubgroupService {
             .collect(Collectors.toSet());
         
         // 3. UNA SOLA consulta para obtener todas las URLs
-        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(allImageIds);
-
-        // 4. Construir las respuestas usando el mapa eficiente
-        return subgroups.stream()
-                .map(subgroup -> toResponseDTO(subgroup, urlMap))
-                .collect(Collectors.toList());
+        try {
+            System.out.println("[UPLOAD] start → event=fetch_subgroups_urls, subgroupCount=" + subgroups.size() + 
+                             ", totalImages=" + allImageIds.size() + ", service=supabase_storage");
+            Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(allImageIds);
+            
+            if (urlMap != null && !urlMap.isEmpty()) {
+                System.out.println("[UPLOAD] success → event=fetch_subgroups_urls, urlsRetrieved=" + urlMap.size());
+            }
+            
+            // 4. Construir las respuestas usando el mapa eficiente
+            return subgroups.stream()
+                    .map(subgroup -> toResponseDTO(subgroup, urlMap))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            classifyAndLogSupabaseError(e, "fetch_subgroups_urls", null, null, null);
+            // Si falla, devolver sin URLs
+            return subgroups.stream()
+                    .map(subgroup -> toResponseDTO(subgroup, Collections.emptyMap()))
+                    .collect(Collectors.toList());
+        }
     }
 
     @Transactional(readOnly = true)
@@ -126,7 +140,7 @@ public class SubgroupService {
             existing.setDescription(dto.description());
         }
         if (dto.photoPrincipal() != null && !Objects.equals(dto.photoPrincipal(), existing.getPhotoPrincipal())) {
-            storageService.deleteFileByObjectId(existing.getPhotoPrincipal());
+            safeDeleteFromStorage(existing.getPhotoPrincipal());
             existing.setPhotoPrincipal(dto.photoPrincipal());
         }
         // TODO: GALERÍA DE FOTOS - Lógica de actualización de galería temporalmente deshabilitada
@@ -156,10 +170,10 @@ public class SubgroupService {
     public void deleteSubgroup(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
         Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
         
-        storageService.deleteFileByObjectId(subgroup.getPhotoPrincipal());
+        safeDeleteFromStorage(subgroup.getPhotoPrincipal());
         // TODO: GALERÍA DE FOTOS - Eliminación de galería temporalmente deshabilitada
         /*if (subgroup.getGalleryObjectIds() != null) {
-            Arrays.stream(subgroup.getGalleryObjectIds()).forEach(storageService::deleteFileByObjectId);
+            Arrays.stream(subgroup.getGalleryObjectIds()).forEach(this::safeDeleteFromStorage);
         }*/
 
         subgroupRepository.delete(subgroup);
@@ -188,7 +202,7 @@ public class SubgroupService {
         
         UUID photoPrincipalIdToDelete = subgroup.getPhotoPrincipal();
         if (photoPrincipalIdToDelete != null) {
-            storageService.deleteFileByObjectId(photoPrincipalIdToDelete);
+            safeDeleteFromStorage(photoPrincipalIdToDelete);
             subgroup.setPhotoPrincipal(null);
             subgroupRepository.save(subgroup);
         }
@@ -200,11 +214,25 @@ public class SubgroupService {
         
         // Eliminar foto anterior si existe y es diferente
         if (subgroup.getPhotoPrincipal() != null && !subgroup.getPhotoPrincipal().equals(photoObjectId)) {
-            storageService.deleteFileByObjectId(subgroup.getPhotoPrincipal());
+            safeDeleteFromStorage(subgroup.getPhotoPrincipal());
         }
         
         subgroup.setPhotoPrincipal(photoObjectId);
         subgroupRepository.save(subgroup);
+    }
+    
+    /**
+     * Eliminación best-effort del storage (no rompe la operación si falla el borrado).
+     */
+    private void safeDeleteFromStorage(UUID objectId) {
+        if (storageService == null || objectId == null) return;
+        try {
+            System.out.println("[UPLOAD] start → event=delete_file, objectId=" + objectId + ", service=supabase_storage");
+            storageService.deleteFileByObjectId(objectId);
+            System.out.println("[UPLOAD] success → event=delete_file, objectId=" + objectId + ", hint=Archivo eliminado correctamente de Supabase");
+        } catch (Exception ex) {
+            classifyAndLogSupabaseError(ex, "delete_file", null, objectId, null);
+        }
     }
     
     // TODO: GALERÍA DE FOTOS - Método temporalmente deshabilitado
@@ -342,8 +370,121 @@ public class SubgroupService {
             return toResponseDTO(subgroup, Collections.emptyMap());
         }
 
-        Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
-        return toResponseDTO(subgroup, urlMap);
+        try {
+            System.out.println("[UPLOAD] start → event=fetch_single_subgroup_urls, subgroupId=" + subgroup.getSubgroupId() + 
+                             ", imageCount=" + ids.size() + ", service=supabase_storage");
+            Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
+            
+            if (urlMap != null && !urlMap.isEmpty()) {
+                System.out.println("[UPLOAD] success → event=fetch_single_subgroup_urls, urlsRetrieved=" + urlMap.size());
+            }
+            
+            return toResponseDTO(subgroup, urlMap);
+        } catch (Exception e) {
+            classifyAndLogSupabaseError(e, "fetch_single_subgroup_urls", null, null, null);
+            return toResponseDTO(subgroup, Collections.emptyMap());
+        }
+    }
+
+    /**
+     * Clasifica y loguea errores de Supabase según la documentación de diagnóstico
+     */
+    private void classifyAndLogSupabaseError(Exception e, String event, String bucket, UUID objectId, Long fileSize) {
+        String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+        String exceptionType = e.getClass().getSimpleName();
+        
+        System.err.println("[UPLOAD] supabase-error → event=" + event + 
+                          ", exceptionType=" + exceptionType + 
+                          ", message=" + e.getMessage());
+
+        // AUTH (401 / token inválido)
+        if (errorMessage.contains("invalid jwt") || errorMessage.contains("unauthorized") || 
+            errorMessage.contains("401") || errorMessage.contains("token")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=AUTH → status=401, " +
+                             "hint=Sesión expirada o token inválido. ACCIÓN FRONT: Reautenticar/refrescar sesión. " +
+                             "ACCIÓN BACK: Verificar flujo de Auth.");
+            return;
+        }
+
+        // PERMISOS RLS (403 AccessDenied)
+        if (errorMessage.contains("403") || errorMessage.contains("access denied") || 
+            errorMessage.contains("forbidden") || errorMessage.contains("permission")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=PERMISOS_RLS → status=403, " +
+                             "hint=No tienes permiso para esta operación. ACCIÓN BACK/DBA: Crear políticas RLS en storage.objects " +
+                             "para INSERT/UPDATE/SELECT en este bucket/path. Los buckets son privados por defecto.");
+            return;
+        }
+
+        // RUTA/BUCKET (404 NoSuchBucket/NoSuchKey)
+        if (errorMessage.contains("404") || errorMessage.contains("not found") || 
+            errorMessage.contains("no such bucket") || errorMessage.contains("no such key")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=RUTA_BUCKET → status=404, " +
+                             (bucket != null ? "bucket=" + bucket + ", " : "") +
+                             (objectId != null ? "objectId=" + objectId + ", " : "") +
+                             "hint=Ruta o bucket inválidos. ACCIÓN FRONT: Corrige el path (formato: carpeta/subcarpeta/archivo.ext).");
+            return;
+        }
+
+        // CONFLICTO (409 ResourceAlreadyExists/KeyAlreadyExists)
+        if (errorMessage.contains("409") || errorMessage.contains("already exists") || 
+            errorMessage.contains("conflict") || errorMessage.contains("duplicate")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=CONFLICTO → status=409, " +
+                             "hint=Ya existe un archivo en ese path. ACCIÓN FRONT: Cambiar nombre o habilitar sobrescritura (upsert).");
+            return;
+        }
+
+        // TAMAÑO (413 EntityTooLarge)
+        if (errorMessage.contains("413") || errorMessage.contains("entity too large") || 
+            errorMessage.contains("file too large") || errorMessage.contains("size limit")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=TAMAÑO → status=413, " +
+                             (fileSize != null ? "fileSize=" + fileSize + " bytes, " : "") +
+                             "hint=Archivo excede límites configurados. ACCIÓN FRONT: Comprimir/recortar; usar resumable para >6 MB. " +
+                             "ACCIÓN PROYECTO: Ajustar Global file size limit (Free: max 50 MB, Pro: hasta 500 GB).");
+            return;
+        }
+
+        // RATE LIMIT / CAPACIDAD (429 / 503 SlowDown / MaxClientsInSessionMode)
+        if (errorMessage.contains("429") || errorMessage.contains("too many requests") || 
+            errorMessage.contains("rate limit") || errorMessage.contains("503") || 
+            errorMessage.contains("slow down") || errorMessage.contains("maxclientsinsessionmode") ||
+            errorMessage.contains("max clients reached") || errorMessage.contains("pool_size")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=RATE_LIMIT_CAPACIDAD → status=429/503, " +
+                             "hint=Demasiadas solicitudes o límite de conexiones alcanzado (MaxClientsInSessionMode). " +
+                             "ACCIÓN FRONT: Backoff exponencial, reducir concurrencia, reintentar en unos segundos. " +
+                             "ACCIÓN PROYECTO: Revisar límites/compute del proyecto y pool de conexiones. " +
+                             "NOTA: Este NO es un error del frontend, es un límite de capacidad de Supabase.");
+            return;
+        }
+
+        // RED / CORS (TypeError: Failed to fetch) - aunque en backend es menos común
+        if (errorMessage.contains("failed to fetch") || errorMessage.contains("cors") || 
+            errorMessage.contains("network") || errorMessage.contains("connection")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=RED_CORS → " +
+                             "hint=Problema de red/conectividad con Supabase. ACCIÓN FRONT: Revisar URL, CORS, conectividad. " +
+                             "ACCIÓN BACK: Verificar configuración de red y acceso a Supabase.");
+            return;
+        }
+
+        // SERVIDOR (5xx distintos a 503 SlowDown)
+        if (errorMessage.contains("500") || errorMessage.contains("502") || 
+            errorMessage.contains("504") || errorMessage.contains("internal server error") ||
+            errorMessage.contains("bad gateway") || errorMessage.contains("gateway timeout")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=SERVIDOR → status=5xx, " +
+                             "hint=Problema del servidor de Supabase. ACCIÓN FRONT: Reintentar con backoff corto; si persiste, notificar. " +
+                             "ACCIÓN PROYECTO: Verificar estado del servicio y logs de Supabase.");
+            return;
+        }
+
+        // ERROR GENÉRICO (sin clasificación específica)
+        System.err.println("[UPLOAD] supabase-error → CATEGORÍA=GENÉRICO → " +
+                         "hint=Error no clasificado de Supabase. Revisar mensaje completo y documentación. " +
+                         "Si el problema persiste, contactar soporte.");
+    }
+
+    //Lo necesita Qbyte
+    public Optional<Subgroup> getSubgroupByMemberId(Long memberId) {
+        log.info("Buscando subgroup asociado al miembro con ID: {}", memberId);
+        return subgroupRepository.findByMemberId(memberId);
     }
 
     //Lo necesita Qbyte

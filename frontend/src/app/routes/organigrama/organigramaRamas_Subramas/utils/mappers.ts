@@ -41,7 +41,10 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   // Extraer URLs soportando diferentes convenciones (snake_case y camelCase)
   const iconUrl = String((backendRama as unknown as Record<string, unknown>).icon_object_url ?? (backendRama as unknown as Record<string, unknown>).iconObjectUrl ?? '');
   const photoPrincipalUrl = String((backendRama as unknown as Record<string, unknown>).photo_principal_url ?? (backendRama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
+  // Prefer canonical backend.gallery (array of {id, url}). Fallback to legacy arrays if absent.
+  const rawGallery = (backendRama as unknown as Record<string, unknown>)['gallery'] as unknown[] | undefined;
   const galleryUrls = ((backendRama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendRama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
+  const galleryArray = Array.isArray(rawGallery) ? (rawGallery as Array<Record<string, unknown>>) : undefined;
 
   // URLs extraídas: iconUrl, photoPrincipalUrl, galleryUrls
 
@@ -87,10 +90,9 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
     status: 'active',
     createdAt: backendRama.createdAt ? backendRama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
 
-    // gallery
-  galleryObjectIds: galleryUrls,
-      // canonical gallery array of objects (id + url) if backend provided it
-  gallery: ((backendRama as unknown as Record<string, unknown>)['gallery'] && Array.isArray((backendRama as unknown as Record<string, unknown>)['gallery'])) ? ( (backendRama as unknown as Record<string, unknown>)['gallery'] as unknown[] ).map((g) => { const rec = g as unknown as Record<string, unknown>; return { id: String(rec['id'] ?? rec['objectId'] ?? ''), url: String(rec['url'] ?? '') }; }) : undefined,
+    // gallery: prefer canonical array, expose ids as galleryObjectIds
+  galleryObjectIds: galleryArray ? galleryArray.map(g => String(g['id'] ?? g['objectId'] ?? '')).filter(Boolean) : galleryUrls,
+  gallery: galleryArray ? galleryArray.map((g) => { const rec = g as unknown as Record<string, unknown>; return { id: String(rec['id'] ?? rec['objectId'] ?? ''), url: String(rec['url'] ?? '') }; }) : undefined,
 
     // subgroups loaded separately
     subgroups: [],
@@ -156,7 +158,9 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
   // 🔍 CRÍTICO: Extraer URLs de imágenes (soportar snake_case y camelCase como en mapBackendRamaToFrontend)
   const iconUrl = String((backendSubrama as unknown as Record<string, unknown>).icon_object_url ?? (backendSubrama as unknown as Record<string, unknown>).iconObjectUrl ?? '');
   const photoPrincipalUrl = String((backendSubrama as unknown as Record<string, unknown>).photo_principal_url ?? (backendSubrama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
+  const rawGallerySub = (backendSubrama as unknown as Record<string, unknown>)['gallery'] as unknown[] | undefined;
   const galleryUrls = ((backendSubrama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendSubrama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
+  const galleryArraySub = Array.isArray(rawGallerySub) ? (rawGallerySub as Array<Record<string, unknown>>) : undefined;
 
   // URLs extraídas para subrama: iconUrl, photoPrincipalUrl, galleryUrls
 
@@ -178,7 +182,7 @@ export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Sub
     createdAt: backendSubrama.createdAt ? backendSubrama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
 
     memberCount: backendSubrama.memberCount || backendSubrama.members || 0,
-    galleryObjectIds: galleryUrls
+    galleryObjectIds: galleryArraySub ? galleryArraySub.map(g => String(g['id'] ?? g['objectId'] ?? '')).filter(Boolean) : galleryUrls
   };
 
   // Spanish compatibility aliases for Subrama

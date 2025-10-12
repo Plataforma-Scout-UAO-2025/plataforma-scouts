@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
 
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
@@ -19,8 +22,10 @@ import uao.edu.co.scouts_project.organigrama.repository.SubgroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -52,16 +57,16 @@ class SubgroupServiceTest {
     @BeforeEach
     void setup() {
         tenant = mock(Tenant.class);
-        when(tenant.getTenantId()).thenReturn(TENANT_ID);
-        when(tenantRepository.findBySlug(TENANT_SLUG)).thenReturn(Optional.of(tenant));
+        lenient().when(tenant.getTenantId()).thenReturn(TENANT_ID);
+        lenient().when(tenantRepository.findBySlug(TENANT_SLUG)).thenReturn(Optional.of(tenant));
 
         group = mock(Group.class);
-        when(group.getGroupId()).thenReturn(GROUP_ID);
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
+        lenient().when(group.getGroupId()).thenReturn(GROUP_ID);
+        lenient().when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
 
         section = mock(Section.class);
-        when(section.getGroupId()).thenReturn(GROUP_ID);
-        when(sectionRepository.findById(SECTION_ID)).thenReturn(Optional.of(section));
+        lenient().when(section.getGroupId()).thenReturn(GROUP_ID);
+        lenient().when(sectionRepository.findById(SECTION_ID)).thenReturn(Optional.of(section));
 
     }
 
@@ -219,5 +224,73 @@ class SubgroupServiceTest {
 
         verify(storageService).deleteFileByObjectId(pic);
         verify(subgroupRepository).save(argThat(s -> s.getPhotoPrincipal() == null));
+    }
+
+    @Test
+    @DisplayName("getSubgroupsBySection: devuelve sin URLs cuando Supabase limita conexiones")
+    void list_rateLimit_fallback() {
+        UUID pic = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        when(subgroupRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, GROUP_ID, SECTION_ID))
+            .thenReturn(List.of(makeEntity("Panteras", pic)));
+        when(storageService.getPublicUrlsFromObjectIds(anySet()))
+            .thenThrow(new RuntimeException("maxclientsinsessionmode: max clients reached"));
+
+        List<SubgroupResponseDTO> out = service.getSubgroupsBySection(TENANT_SLUG, GROUP_SLUG, SECTION_ID);
+
+        assertThat(out).hasSize(1);
+        assertThat(out.get(0).photoPrincipalUrl()).isNull();
+    }
+
+    @Test
+    @DisplayName("deleteSubgroup: continúa aun cuando Supabase retorna 403 en eliminación")
+    void delete_permission_error() {
+        UUID pic = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        when(subgroupRepository.findById(SUB_ID)).thenReturn(Optional.of(makeEntity("Panteras", pic)));
+        doThrow(new RuntimeException("403 access denied"))
+            .when(storageService).deleteFileByObjectId(pic);
+
+        assertThatCode(() -> service.deleteSubgroup(TENANT_SLUG, GROUP_SLUG, SECTION_ID, SUB_ID))
+            .doesNotThrowAnyException();
+
+        verify(subgroupRepository).delete(any(Subgroup.class));
+        verify(storageService).deleteFileByObjectId(pic);
+    }
+
+    @ParameterizedTest(name = "Clasificación SubgroupService: {0}")
+    @MethodSource("supabaseErrorMessages")
+    void classify_supabase_errors(String message, String bucket, UUID objectId, Long fileSize) throws Exception {
+        Method method = SubgroupService.class.getDeclaredMethod(
+                "classifyAndLogSupabaseError",
+                Exception.class,
+                String.class,
+                String.class,
+                UUID.class,
+                Long.class
+        );
+        method.setAccessible(true);
+
+        assertThatCode(() -> method.invoke(
+                service,
+                new RuntimeException(message),
+                "diagnostic",
+                bucket,
+                objectId,
+                fileSize
+        )).doesNotThrowAnyException();
+    }
+
+    private static Stream<Arguments> supabaseErrorMessages() {
+        UUID sampleId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        return Stream.of(
+                Arguments.of("invalid jwt token", null, null, null),
+                Arguments.of("403 access denied", null, null, null),
+                Arguments.of("404 no such bucket", "gallery-bucket", sampleId, null),
+                Arguments.of("409 resourcealreadyexists", null, null, null),
+                Arguments.of("413 entity too large", null, null, 1_048_576L),
+                Arguments.of("maxclientsinsessionmode: max clients reached", null, null, null),
+                Arguments.of("failed to fetch due to cors", null, null, null),
+                Arguments.of("500 internal server error", null, null, null),
+                Arguments.of("unexpected supabase outage", null, null, null)
+        );
     }
 }

@@ -417,10 +417,17 @@ public class SectionService {
         }
 
         try {
+            System.out.println("[UPLOAD] start → event=fetch_single_section_urls, sectionId=" + section.getSectionId() + 
+                             ", imageCount=" + ids.size() + ", service=supabase_storage");
             Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
+            
+            if (urlMap != null && !urlMap.isEmpty()) {
+                System.out.println("[UPLOAD] success → event=fetch_single_section_urls, urlsRetrieved=" + urlMap.size());
+            }
+            
             return toResponseDTO(section, urlMap != null ? urlMap : Collections.emptyMap());
         } catch (Exception e) {
-            System.err.println("Error obteniendo URLs del servicio de almacenamiento: " + e.getMessage());
+            classifyAndLogSupabaseError(e, "fetch_single_section_urls", null, null, null);
             return toResponseDTO(section, Collections.emptyMap());
         }
     }
@@ -434,10 +441,16 @@ public class SectionService {
         }
 
         try {
+            System.out.println("[UPLOAD] start → event=fetch_urls, imageCount=" + imageIds.size() + ", service=supabase_storage");
             Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(imageIds);
+            
+            if (urlMap != null && !urlMap.isEmpty()) {
+                System.out.println("[UPLOAD] success → event=fetch_urls, urlsRetrieved=" + urlMap.size() + ", hint=URLs obtenidas correctamente desde Supabase");
+            }
+            
             return urlMap != null ? urlMap : Collections.emptyMap();
         } catch (Exception e) {
-            System.err.println("Error obteniendo URLs del servicio de almacenamiento: " + e.getMessage());
+            classifyAndLogSupabaseError(e, "fetch_urls", null, null, null);
             return Collections.emptyMap();
         }
     }
@@ -448,9 +461,106 @@ public class SectionService {
     private void safeDeleteFromStorage(UUID objectId) {
         if (storageService == null || objectId == null) return;
         try {
+            System.out.println("[UPLOAD] start → event=delete_file, objectId=" + objectId + ", service=supabase_storage");
             storageService.deleteFileByObjectId(objectId);
+            System.out.println("[UPLOAD] success → event=delete_file, objectId=" + objectId + ", hint=Archivo eliminado correctamente de Supabase");
         } catch (Exception ex) {
-            System.err.println("No se pudo eliminar objeto de storage " + objectId + ": " + ex.getMessage());
+            classifyAndLogSupabaseError(ex, "delete_file", null, objectId, null);
         }
+    }
+
+    /**
+     * Clasifica y loguea errores de Supabase según la documentación de diagnóstico
+     */
+    private void classifyAndLogSupabaseError(Exception e, String event, String bucket, UUID objectId, Long fileSize) {
+        String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+        String exceptionType = e.getClass().getSimpleName();
+        
+        System.err.println("[UPLOAD] supabase-error → event=" + event + 
+                          ", exceptionType=" + exceptionType + 
+                          ", message=" + e.getMessage());
+
+        // AUTH (401 / token inválido)
+        if (errorMessage.contains("invalid jwt") || errorMessage.contains("unauthorized") || 
+            errorMessage.contains("401") || errorMessage.contains("token")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=AUTH → status=401, " +
+                             "hint=Sesión expirada o token inválido. ACCIÓN FRONT: Reautenticar/refrescar sesión. " +
+                             "ACCIÓN BACK: Verificar flujo de Auth.");
+            return;
+        }
+
+        // PERMISOS RLS (403 AccessDenied)
+        if (errorMessage.contains("403") || errorMessage.contains("access denied") || 
+            errorMessage.contains("forbidden") || errorMessage.contains("permission")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=PERMISOS_RLS → status=403, " +
+                             "hint=No tienes permiso para esta operación. ACCIÓN BACK/DBA: Crear políticas RLS en storage.objects " +
+                             "para INSERT/UPDATE/SELECT en este bucket/path. Los buckets son privados por defecto.");
+            return;
+        }
+
+        // RUTA/BUCKET (404 NoSuchBucket/NoSuchKey)
+        if (errorMessage.contains("404") || errorMessage.contains("not found") || 
+            errorMessage.contains("no such bucket") || errorMessage.contains("no such key")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=RUTA_BUCKET → status=404, " +
+                             (bucket != null ? "bucket=" + bucket + ", " : "") +
+                             (objectId != null ? "objectId=" + objectId + ", " : "") +
+                             "hint=Ruta o bucket inválidos. ACCIÓN FRONT: Corrige el path (formato: carpeta/subcarpeta/archivo.ext).");
+            return;
+        }
+
+        // CONFLICTO (409 ResourceAlreadyExists/KeyAlreadyExists)
+        if (errorMessage.contains("409") || errorMessage.contains("already exists") || 
+            errorMessage.contains("conflict") || errorMessage.contains("duplicate")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=CONFLICTO → status=409, " +
+                             "hint=Ya existe un archivo en ese path. ACCIÓN FRONT: Cambiar nombre o habilitar sobrescritura (upsert).");
+            return;
+        }
+
+        // TAMAÑO (413 EntityTooLarge)
+        if (errorMessage.contains("413") || errorMessage.contains("entity too large") || 
+            errorMessage.contains("file too large") || errorMessage.contains("size limit")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=TAMAÑO → status=413, " +
+                             (fileSize != null ? "fileSize=" + fileSize + " bytes, " : "") +
+                             "hint=Archivo excede límites configurados. ACCIÓN FRONT: Comprimir/recortar; usar resumable para >6 MB. " +
+                             "ACCIÓN PROYECTO: Ajustar Global file size limit (Free: max 50 MB, Pro: hasta 500 GB).");
+            return;
+        }
+
+        // RATE LIMIT / CAPACIDAD (429 / 503 SlowDown / MaxClientsInSessionMode)
+        if (errorMessage.contains("429") || errorMessage.contains("too many requests") || 
+            errorMessage.contains("rate limit") || errorMessage.contains("503") || 
+            errorMessage.contains("slow down") || errorMessage.contains("maxclientsinsessionmode") ||
+            errorMessage.contains("max clients reached") || errorMessage.contains("pool_size")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=RATE_LIMIT_CAPACIDAD → status=429/503, " +
+                             "hint=Demasiadas solicitudes o límite de conexiones alcanzado (MaxClientsInSessionMode). " +
+                             "ACCIÓN FRONT: Backoff exponencial, reducir concurrencia, reintentar en unos segundos. " +
+                             "ACCIÓN PROYECTO: Revisar límites/compute del proyecto y pool de conexiones. " +
+                             "NOTA: Este NO es un error del frontend, es un límite de capacidad de Supabase.");
+            return;
+        }
+
+        // RED / CORS (TypeError: Failed to fetch) - aunque en backend es menos común
+        if (errorMessage.contains("failed to fetch") || errorMessage.contains("cors") || 
+            errorMessage.contains("network") || errorMessage.contains("connection")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=RED_CORS → " +
+                             "hint=Problema de red/conectividad con Supabase. ACCIÓN FRONT: Revisar URL, CORS, conectividad. " +
+                             "ACCIÓN BACK: Verificar configuración de red y acceso a Supabase.");
+            return;
+        }
+
+        // SERVIDOR (5xx distintos a 503 SlowDown)
+        if (errorMessage.contains("500") || errorMessage.contains("502") || 
+            errorMessage.contains("504") || errorMessage.contains("internal server error") ||
+            errorMessage.contains("bad gateway") || errorMessage.contains("gateway timeout")) {
+            System.err.println("[UPLOAD] supabase-error → CATEGORÍA=SERVIDOR → status=5xx, " +
+                             "hint=Problema del servidor de Supabase. ACCIÓN FRONT: Reintentar con backoff corto; si persiste, notificar. " +
+                             "ACCIÓN PROYECTO: Verificar estado del servicio y logs de Supabase.");
+            return;
+        }
+
+        // ERROR GENÉRICO (sin clasificación específica)
+        System.err.println("[UPLOAD] supabase-error → CATEGORÍA=GENÉRICO → " +
+                         "hint=Error no clasificado de Supabase. Revisar mensaje completo y documentación. " +
+                         "Si el problema persiste, contactar soporte.");
     }
 }
