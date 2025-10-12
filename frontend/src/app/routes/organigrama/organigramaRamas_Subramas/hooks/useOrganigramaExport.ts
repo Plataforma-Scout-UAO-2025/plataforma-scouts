@@ -42,7 +42,6 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
           console.warn('🔐 [useOrganigramaExport] Error 403: Problema de autenticación. Verificar permisos o tokens.');
         }
         
-        // fallback a `ramas` si la petición falla
       }
     } else {
       console.warn('⚠️ [useOrganigramaExport] No se proporcionaron tenantSlug/groupSlug, usando datos locales para PDF');

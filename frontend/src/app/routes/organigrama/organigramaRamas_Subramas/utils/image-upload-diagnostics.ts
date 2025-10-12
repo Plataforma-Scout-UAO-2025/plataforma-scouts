@@ -1,6 +1,7 @@
 import api from "@/api/axios";
 import { uploadToStorage } from '@/api/upload';
 import { createPayloadForBackend } from '../utils/galleryPayload';
+import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 import { getRamaById } from '../services';
 import { sectionPath } from '@/api/organigramaApi';
 
@@ -62,7 +63,9 @@ export const diagnosticImageUpload = async (
     }]
   };
 
-  const addPayloadToSend = createPayloadForBackend(addPayload.operations as any);
+  const addPayloadToSend = Array.isArray(addPayload.operations)
+    ? createPayloadForBackend(addPayload.operations as unknown as (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[])
+    : createPayloadForBackend([]);
   await api.patch(patchEndpoint, addPayloadToSend);
   // PATCH completado
 
@@ -180,19 +183,18 @@ export const tryGalleryPayloadVariants = async (
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
 
   const variants = [
-  { name: 'value (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any]) },
-  { name: 'newValue (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any]) },
-    { name: 'objectId root', payload: { objectId } },
+  { name: 'value (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as GalleryAddOperation]) },
+  { name: 'newValue (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as GalleryAddOperation]) },
     { name: 'object_id snake_case', payload: { object_id: objectId } },
-  { name: 'raw array operations', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as any, { op: 'replace', newValue: objectId } as any]) },
+  { name: 'raw array operations', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as GalleryAddOperation, { op: 'replace', targetUuid: objectId, newValue: objectId } as GalleryReplaceOperation]) },
   ];
 
   const results: Record<string, { success: boolean; status?: number; data?: unknown; error?: unknown }> = {};
 
   for (const v of variants) {
     try {
-      const resp = await api.patch(patchEndpoint, v.payload);
-      results[v.name] = { success: true, status: (resp as any)?.status, data: (resp as any)?.data };
+  const resp = await api.patch(patchEndpoint, v.payload);
+  results[v.name] = { success: true, status: (resp as unknown as { status?: number })?.status, data: (resp as unknown as { data?: unknown })?.data };
       console.log(`✅ Variant ${v.name} succeeded:`, resp);
     } catch (err) {
       results[v.name] = { success: false, error: err };

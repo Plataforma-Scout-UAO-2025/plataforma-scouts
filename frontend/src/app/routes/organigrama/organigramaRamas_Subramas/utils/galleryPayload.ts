@@ -26,9 +26,9 @@ const opToSnake = (op: GalleryAddOperation | GalleryReplaceOperation | GalleryRe
   // Map fields camelCase -> snake_case (newValue -> new_value, targetUuid -> target_uuid)
   const base: Record<string, unknown> = { op: op.op };
   // Preserve explicit targetUuid even if null (backend may expect key with null)
-  if ('targetUuid' in op) base['target_uuid'] = (op as any).targetUuid;
-  if ('newValue' in op && (op as any).newValue !== undefined) base['new_value'] = (op as any).newValue;
-  if ('value' in op && (op as any).value !== undefined) base['new_value'] = (op as any).value; // fallback if any
+  if ('targetUuid' in op) base['target_uuid'] = (op as unknown as { targetUuid?: unknown }).targetUuid;
+  if ('newValue' in op && (op as unknown as { newValue?: unknown }).newValue !== undefined) base['new_value'] = (op as unknown as { newValue?: unknown }).newValue;
+  if ('value' in op && (op as unknown as { value?: unknown }).value !== undefined) base['new_value'] = (op as unknown as { value?: unknown }).value; // fallback if any
   return base;
 };
 
@@ -52,8 +52,17 @@ export interface RetryOptions {
   attempts?: number;
   baseDelay?: number;
   maxDelay?: number;
-  shouldRetry?: (error: any) => boolean;
+  shouldRetry?: (error: unknown) => boolean;
 }
+
+const getHttpStatus = (error: unknown): number | undefined => {
+  try {
+    const maybe = error as { response?: { status?: number } };
+    return typeof maybe?.response?.status === 'number' ? maybe.response.status : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  * Ejecuta una función con retry y backoff exponencial según las instrucciones
@@ -68,24 +77,19 @@ export async function retry<T>(
     maxDelay = 2000,
     shouldRetry = (error) => {
       // No reintentar si la imagen ya no está en la galería (404)
-      if (error?.response?.status === 404) {
-        return false;
-      }
-      // Reintentar solo en errores temporales (429, 5xx)
-      if (error?.response?.status) {
-        const status = error.response.status;
-        return status === 429 || (status >= 500 && status < 600);
-      }
+      const status = getHttpStatus(error);
+      if (status === 404) return false;
+      if (typeof status === 'number') return status === 429 || (status >= 500 && status < 600);
       return true; // Reintentar otros errores de red por defecto
     }
   } = options;
 
-  let lastError: any;
+  let lastError: unknown;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: unknown) {
       lastError = error;
       
       // No reintentar si es el último intento o si no debemos reintentar este error
@@ -121,19 +125,19 @@ export async function retryGalleryOperation<T>(
       console.warn(`⚠️ [${operationName}] Operation failed:`, error);
       
       // No reintentar si la imagen ya no está en la galería (404)
-      if (error?.response?.status === 404) {
+      const status = getHttpStatus(error);
+      if (status === 404) {
         console.info(`ℹ️ [${operationName}] Not retrying 404 - resource may have been deleted by another operation`);
         return false;
       }
-      
+
       // Reintentar solo en errores temporales
-      if (error?.response?.status) {
-        const status = error.response.status;
+      if (typeof status === 'number') {
         const shouldRetryStatus = status === 429 || (status >= 500 && status < 600);
         console.info(`ℹ️ [${operationName}] Status ${status}, will retry: ${shouldRetryStatus}`);
         return shouldRetryStatus;
       }
-      
+
       // Reintentar errores de red
       console.info(`ℹ️ [${operationName}] Network error, will retry`);
       return true;
