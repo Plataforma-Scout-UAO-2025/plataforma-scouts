@@ -5,96 +5,67 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.service.GuardianService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/members")
+@RequestMapping("/guardian")
 public class GuardianController {
-    private final GuardianService memberService;
+    private final GuardianService guardianService;
 
-    public GuardianController(GuardianService memberService) {
-        this.memberService = memberService;
-    }
-    // ======= ENDPOINTS PARA MEMBER =======
-
-
-    // Listar todos los guardians
-    @GetMapping("/guardians/list")
-    public ResponseEntity<List<GuardianCreateDTO>> getAllGuardians() {
-        return ResponseEntity.ok(memberService.findAllGuardians());
+    public GuardianController(GuardianService guardianService) {
+        this.guardianService = guardianService;
     }
 
-    // Listar guardian por id
-    @GetMapping("/guardians/{id}")
-    public ResponseEntity<GuardianCreateDTO> getGuardianById(@PathVariable String id) {
-        GuardianCreateDTO guardian = memberService.findGuardianById(id);
-        if (guardian != null) {
-            return ResponseEntity.ok(guardian);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
+    @GetMapping("/{id}")
+    public ResponseEntity<GuardianCreateDTO> getGuardianById(@PathVariable Long id) {
+        GuardianCreateDTO guardian = guardianService.findGuardianById(id);
+        return ResponseEntity.ok(guardian);
     }
 
-    // Listar guardians por estado
-    @GetMapping("/guardians/by_status")
-    public ResponseEntity<List<GuardianCreateDTO>> getGuardiansByStatus(@RequestParam boolean active) {
-        return ResponseEntity.ok(memberService.findGuardiansByStatus(active));
+    @GetMapping("/{id}/members")
+    public ResponseEntity<GuardianWithMembersDTO> getGuardianWithMembers(@PathVariable Long id) {
+        GuardianWithMembersDTO guardianWithMembers = guardianService.findGuardianWithMembers(id);
+        return ResponseEntity.ok(guardianWithMembers);
     }
 
-    // Crear un nuevo guardian
-    @PostMapping("/guardians/create")
-    public ResponseEntity<GuardianCreateDTO> createGuardian(@RequestBody GuardianCreateDTO guardianCreateDTO) {
-        GuardianCreateDTO createdGuardian = memberService.saveGuardian(guardianCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdGuardian);
+    @GetMapping("/{guardianId}/members-list")
+    public ResponseEntity<List<MemberDTO>> getMembersInChargeOf(@PathVariable Long guardianId) {
+        List<MemberDTO> members = guardianService.findMembersInChargeOf(guardianId);
+        return ResponseEntity.ok(members);
     }
 
-    // Actualizar guardian por id
-    @PutMapping("/guardians/{id}")
-    public ResponseEntity<GuardianCreateDTO> updateGuardian(@PathVariable String id, @RequestBody GuardianCreateDTO guardianCreateDTO) {
-        GuardianCreateDTO updatedGuardian = memberService.updateGuardianById(id, guardianCreateDTO);
-        if (updatedGuardian != null) {
-            return ResponseEntity.ok(updatedGuardian);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
+    @PostMapping
+    public ResponseEntity<Void> createGuardian(@RequestBody GuardianCreateDTO guardianCreateDTO) {
+        guardianService.saveGuardian(guardianCreateDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // Añadir miembro al guardian
-    @PostMapping("/guardians/{guardianId}/add-member/{memberId}")
-    public ResponseEntity<GuardianCreateDTO> addMemberToGuardian(@PathVariable String guardianId, @PathVariable String memberId) {
-        GuardianCreateDTO updatedGuardian = memberService.addMemberToGuardian(guardianId, memberId);
-        if (updatedGuardian != null) {
-            return ResponseEntity.ok(updatedGuardian);
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateGuardian(@PathVariable Long id,
+            @RequestBody GuardianCreateDTO guardianCreateDTO) {
+        guardianService.updateGuardianById(id, guardianCreateDTO);
+        return ResponseEntity.ok().build();
     }
 
-    // Remover miembro del guardian
-    @DeleteMapping("/guardians/{guardianId}/remove-member/{memberId}")
-    public ResponseEntity<GuardianCreateDTO> removeMemberFromGuardian(@PathVariable String guardianId, @PathVariable String memberId) {
-        GuardianCreateDTO updatedGuardian = memberService.removeMemberFromGuardian(guardianId, memberId);
-        if (updatedGuardian != null) {
-            return ResponseEntity.ok(updatedGuardian);
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    @PostMapping("/{guardianId}/members/{memberId}")
+    public ResponseEntity<Void> addMemberToGuardian(@PathVariable Long guardianId, @PathVariable Long memberId) {
+        guardianService.addMemberToGuardian(guardianId, memberId);
+        return ResponseEntity.ok().build();
     }
 
-    // Eliminar guardian (con cascada)
-    @DeleteMapping("/guardians/{id}")
-    public ResponseEntity<Void> deleteGuardian(@PathVariable String id) {
-        boolean deleted = memberService.deleteGuardianById(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    @DeleteMapping("/{guardianId}/members/{memberId}")
+    public ResponseEntity<Void> removeMemberFromGuardian(@PathVariable Long guardianId, @PathVariable Long memberId) {
+        guardianService.removeGuardianIdFromMember(guardianId, memberId);
+        return ResponseEntity.noContent().build();
     }
 
-    // Listar miembros disponibles para asignar a guardian
-    @GetMapping("/available-for-guardian")
-    public ResponseEntity<List<MemberDTO>> getAvailableMembers() {
-        return ResponseEntity.ok(memberService.findAvailableMembers());
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteGuardian(@PathVariable Long id) {
+        guardianService.deleteGuardianById(id);
+        return ResponseEntity.noContent().build();
     }
 }
