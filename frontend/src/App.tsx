@@ -23,6 +23,9 @@ import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/co
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
 
+// Miembros
+import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
+
 function App() {
   useAuth0ApiWrapper();
 
@@ -58,6 +61,7 @@ function App() {
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST"]}><ScoutEnrollment /></ProtectedRoute>}/>
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
