@@ -302,6 +302,8 @@ export const branchCounts = [
 
 export const cities = ["Cali", "Jamundí", "Dagua", "Popayan", "Palmira"];
 
+export const branches = ["Cachorros", "Lobatos", "Scouts", "Caminantes", "Rovers"];
+
 export const eventsData = [
   {
     id: 1,

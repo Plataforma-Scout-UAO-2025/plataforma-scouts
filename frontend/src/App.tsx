@@ -13,9 +13,7 @@ import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
 
 // Pages - Admin Grupal
-import TeamMembers from "./app/routes/adminGrupal/Miembros/Miembros";
-import Requests from "./app/routes/adminGrupal/Solicitudes/Requests";
-import Rejected from "./app/routes/adminGrupal/Solicitudes/Rejected";
+import TeamMembers from "./app/routes/admin-grupal/Miembros/Miembros";
 
 // Pages - Scout
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
@@ -132,12 +130,12 @@ function App() {
               }
             />
             
-            {/* Solicitudes */}
-            <Route
+            {/* TODO: Solicitudes pendientes y rechazadas - revisar en develop */}
+            {/* <Route
               path="solicitudes/pendientes"
               element={
                 <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                  <Requests />
+                  <div>Solicitudes Pendientes</div>
                 </ProtectedRoute>
               }
             />
@@ -145,10 +143,10 @@ function App() {
               path="solicitudes/rechazadas"
               element={
                 <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                  <Rejected />
+                  <div>Solicitudes Rechazadas</div>
                 </ProtectedRoute>
               }
-            />
+            /> */}
             
             {/* ============================================
                 RUTAS PARA ACUDIENTE
