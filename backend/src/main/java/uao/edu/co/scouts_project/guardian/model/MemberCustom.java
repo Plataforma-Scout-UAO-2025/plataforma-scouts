@@ -30,4 +30,18 @@ public class MemberCustom {
     private String phone;
     private LocalDate birthDate;
 
+    public MemberCustom(String firstName, String lastName, String identification,
+            DocumentType documentType, Integer age, String gender,
+            String phone, LocalDate birthDate) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.identification = identification;
+        this.documentType = documentType;
+        this.age = age;
+        this.gender = gender;
+        this.phone = phone;
+        this.birthDate = birthDate;
+        this.emergencyContacts = null;
+    }
+
 }
