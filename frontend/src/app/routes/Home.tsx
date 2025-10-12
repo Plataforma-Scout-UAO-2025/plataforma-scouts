@@ -6,11 +6,22 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex-col">
       <header className="bg-primary py-4">
-        <div className="container mx-auto px-4 flex items-center justify-end">
-          <LoginButton
-            variant="secondary"
-            className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
-          />
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <img src="/logo.jpg"
+               alt="Logo"
+               className="h-10 w-auto"/>
+
+          <div>
+            <LoginButton organization="org_6B3k4dao2Wf6eGxa"
+                         className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
+              Grupo Chiminigagua 803
+            </LoginButton>
+            <LoginButton organization="org_povsjufF3TEP1DZ7"
+                         className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
+              Grupo Centinelas 113
+            </LoginButton>
+          </div>
+
         </div>
       </header>
 
