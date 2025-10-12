@@ -17,7 +17,6 @@ import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
 import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.guardian.shared.enums.Status;
-import uao.edu.co.scouts_project.infrastructure.security.Role;
 
 
 /**
@@ -37,13 +36,11 @@ import uao.edu.co.scouts_project.infrastructure.security.Role;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class GuardianWIthMemberDTO {
+public class GuardianWithMembersDTO {
 
     private String userId;
     private SubgroupDTO subgroup;
-    private List<Role> roles;
     private String tenantId;
-    private SubgroupDTO subgroupId;
     @NotBlank
     private String firstName;
     @NotBlank
