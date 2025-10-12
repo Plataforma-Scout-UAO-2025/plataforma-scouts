@@ -10,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import uao.edu.co.scouts_project.member.MemberStatusException;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
@@ -197,7 +199,7 @@ public class MemberServiceImp implements IMemberService {
 
         if (member.getStatus() == enumStatus) {
             log.info("Member {} already has status {}", memberId, enumStatus);
-            return false;
+            throw new MemberStatusException(memberId, enumStatus.name());
         }
 
         member.setStatus(enumStatus);

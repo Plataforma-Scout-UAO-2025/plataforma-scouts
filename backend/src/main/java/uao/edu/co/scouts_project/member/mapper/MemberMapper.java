@@ -69,6 +69,7 @@ public class MemberMapper {
      *
      * @param dto Objeto DTO a convertir.
      * @return Entidad Member lista para persistir.
+     * @throws IllegalArgumentException si los valores de los enums son inválidos
      */
     public static Member toEntity(MemberDto dto) {
         if (dto == null) return null;
@@ -90,8 +91,9 @@ public class MemberMapper {
         member.setRole(dto.getRole());
         member.setIdentification(dto.getIdentification());
 
+        // Conversión segura de DocumentType con normalización
         if (dto.getDocumentType() != null) {
-            member.setDocumentType(DocumentType.valueOf(dto.getDocumentType()));
+            member.setDocumentType(parseDocumentType(dto.getDocumentType()));
         }
 
         member.setEmail(dto.getEmail());
@@ -107,8 +109,9 @@ public class MemberMapper {
         member.setIsActive(dto.getIsActive());
         member.setRelationship(dto.getRelationship());
 
+        // Conversión segura de Status con normalización
         if (dto.getStatus() != null) {
-            member.setStatus(Status.valueOf(dto.getStatus()));
+            member.setStatus(parseStatus(dto.getStatus()));
         }
 
         member.setAcceptanceDate(dto.getAcceptanceDate());
@@ -126,5 +129,87 @@ public class MemberMapper {
         }
 
         return member;
+    }
+
+    /**
+     * Convierte de forma segura un String a DocumentType, normalizando mayúsculas/minúsculas.
+     *
+     * @param documentTypeStr String con el tipo de documento
+     * @return DocumentType correspondiente
+     * @throws IllegalArgumentException si el valor no es válido
+     */
+    private static DocumentType parseDocumentType(String documentTypeStr) {
+        if (documentTypeStr == null || documentTypeStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("El tipo de documento no puede estar vacío");
+        }
+
+        // Normalizar a mayúsculas y eliminar espacios
+        String normalized = documentTypeStr.trim().toUpperCase();
+
+        try {
+            return DocumentType.valueOf(normalized);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    String.format("Tipo de documento inválido: '%s'. Valores permitidos: %s",
+                            documentTypeStr,
+                            String.join(", ", getDocumentTypeValues())
+                    )
+            );
+        }
+    }
+
+    /**
+     * Convierte de forma segura un String a Status, normalizando mayúsculas/minúsculas.
+     *
+     * @param statusStr String con el estado
+     * @return Status correspondiente
+     * @throws IllegalArgumentException si el valor no es válido
+     */
+    private static Status parseStatus(String statusStr) {
+        if (statusStr == null || statusStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("El estado no puede estar vacío");
+        }
+
+        // Normalizar a mayúsculas y eliminar espacios
+        String normalized = statusStr.trim().toUpperCase();
+
+        try {
+            return Status.valueOf(normalized);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    String.format("Estado inválido: '%s'. Valores permitidos: %s",
+                            statusStr,
+                            String.join(", ", getStatusValues())
+                    )
+            );
+        }
+    }
+
+    /**
+     * Obtiene los valores válidos de DocumentType como lista de Strings.
+     *
+     * @return Array con los nombres de los valores del enum
+     */
+    private static String[] getDocumentTypeValues() {
+        DocumentType[] types = DocumentType.values();
+        String[] values = new String[types.length];
+        for (int i = 0; i < types.length; i++) {
+            values[i] = types[i].name();
+        }
+        return values;
+    }
+
+    /**
+     * Obtiene los valores válidos de Status como lista de Strings.
+     *
+     * @return Array con los nombres de los valores del enum
+     */
+    private static String[] getStatusValues() {
+        Status[] statuses = Status.values();
+        String[] values = new String[statuses.length];
+        for (int i = 0; i < statuses.length; i++) {
+            values[i] = statuses[i].name();
+        }
+        return values;
     }
 }
