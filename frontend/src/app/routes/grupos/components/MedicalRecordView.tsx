@@ -4,9 +4,10 @@ import { Plus } from 'lucide-react';
 import type { MedicalRecord } from '../../../../types/medical-record.type';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
-import type { ApiMember, MedicalFormData } from '../../../../types/medical-form.type';
+import type { MedicalFormData } from '../../../../types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
+import type { Member } from '@/types/member.type';
 
 // Interface para la respuesta de la API
 interface ApiMedicalRecord {
@@ -64,9 +65,9 @@ export default function MedicalRecordsView() {
             const membersResponse = await api.get('/members/list_members');
             const membersMap = new Map();
 
-            membersResponse.data.forEach((member: ApiMember) => {
-                if (member.status === 'APPROVED' && member.isActive !== false) {
-                    membersMap.set(member.memberId, `${member.firstName} ${member.lastName}`);
+            membersResponse.data.forEach((member: Member) => {
+                if (member.status === 'APPROVED' && member.is_active !== false) {
+                    membersMap.set(member.member_id, `${member.first_name} ${member.last_name}`);
                 }
             });
 

@@ -3,7 +3,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Save } from 'lucide-react';
 import { medicalFormSchema } from '../schemas/CreateMedicalInfoForm.schema';
-import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail, ApiMember } from '../../../../../types/medical-form.type';
+import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail } from '../../../../../types/medical-form.type';
+import type { Member } from '@/types/member.type';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
 import axios from 'axios';
@@ -14,14 +15,6 @@ interface MedicalWizardFormProps {
   onSubmit: (data: MedicalFormData) => void;
   onCancel?: () => void;
   initialData?: MedicalFormData;
-}
-
-interface Member {
-  memberId: number;
-  firstName: string;
-  lastName: string;
-  identification: string;
-  role: string;
 }
 
 export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initialData }: MedicalWizardFormProps) {
@@ -79,10 +72,10 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
       const response = await api.get('/members/list_members');
       
       // Filtrar solo miembros aprobados y activos
-      const scoutMembers = response.data.filter((member: ApiMember) => 
+      const scoutMembers = response.data.filter((member: Member) => 
       member.role === 'SCOUT' && 
       member.status === 'APPROVED' && 
-      member.isActive !== false
+      member.is_active !== false
     );
     
     setMembers(scoutMembers);
@@ -466,8 +459,8 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                       </SelectTrigger>
                       <SelectContent>
                         {members.map(member => (
-                          <SelectItem key={member.memberId} value={member.memberId.toString()}>
-                            {member.firstName} {member.lastName} - {member.identification} ({member.role})
+                          <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
+                            {member.first_name} {member.last_name} - ID {member.identification} ({member.role})
                           </SelectItem>
                         ))}
                       </SelectContent>
