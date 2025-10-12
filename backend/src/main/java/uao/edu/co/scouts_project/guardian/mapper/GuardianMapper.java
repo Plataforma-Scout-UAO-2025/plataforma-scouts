@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
-import uao.edu.co.scouts_project.guardian.dto.out.GuardianWIthMemberDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
 import uao.edu.co.scouts_project.guardian.model.Member;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
@@ -30,13 +30,13 @@ public class GuardianMapper {
                 .relationship(dto.getRelationship())
                 .status(dto.getStatus())
                 .acceptanceDate(dto.getAcceptanceDate())
-                .role(dto.getRoles().get(0))
+                .role(dto.getRol())
                 .build();
     }
 
     // Convert Member entity to GuardianWithMemberDTO usually for returning guardian info with members they are in charge of (TODO: this have to be implemented in the service layer)
-    public static GuardianWIthMemberDTO toDTO(Member entity, List<MemberDTO> membersInCharge) {
-        return GuardianWIthMemberDTO.builder()
+    public static GuardianWithMembersDTO toDTO(Member entity, List<MemberDTO> membersInCharge) {
+        return GuardianWithMembersDTO.builder()
                 .userId(entity.getUserId())
                 .tenantId(entity.getTenantId())
                 .subgroup(SubgroupDTO.builder()
@@ -71,7 +71,7 @@ public class GuardianMapper {
                 .relationship(member.getRelationship())
                 .status(member.getStatus())
                 .acceptanceDate(member.getAcceptanceDate())
-                .roles(List.of(member.getRole()))
+                .rol(member.getRole()) // Assuming a single role for simplicity
                 .build();
     }
 
@@ -90,7 +90,6 @@ public class GuardianMapper {
 
     public static MemberDTO toMemberDTO(MemberCustom memberCustom) {
         return MemberDTO.builder()
-                .userId(memberCustom.getMemberId().toString())
                 .firstName(memberCustom.getFirstName())
                 .lastName(memberCustom.getLastName())
                 .gender(memberCustom.getGender())
