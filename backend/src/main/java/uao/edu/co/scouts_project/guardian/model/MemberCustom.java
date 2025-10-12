@@ -1,34 +1,33 @@
 package uao.edu.co.scouts_project.guardian.model;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import uao.edu.co.scouts_project.guardian.model.Member.EmergencyContact;
+import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
 
 @Getter
 @Setter
 @EqualsAndHashCode
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class MemberCustom {
 
-    private Long memberId;
     private String firstName;
     private String lastName;
+    private String identification;
+    private DocumentType documentType;
+    private List<EmergencyContact> emergencyContacts;
+    private Integer age;
     private String gender;
     private String phone;
     private LocalDate birthDate;
 
-    // Constructor for JPA projection queries
-    public MemberCustom(Long memberId, String firstName, String lastName, String gender, String phone, LocalDate birthDate) {
-        this.memberId = memberId;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.gender = gender;
-        this.phone = phone;
-        this.birthDate = birthDate;
-    }
 }
