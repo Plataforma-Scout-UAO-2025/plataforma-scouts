@@ -27,7 +27,6 @@ import {
   ChevronRight,
   DollarSign,
   CalendarDays,
-  Network,
   Pencil,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
