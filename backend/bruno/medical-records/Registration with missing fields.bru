@@ -5,14 +5,18 @@ meta {
 }
 
 post {
-  url: {{baseurl}}api/v1/medical_record/create_record
+  url: {{baseurl}}api/v1/medical_record/create_record/21
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 body:json {
   {
-    "member_id": 123,
     // campo blood_type faltante
     "eps": "Sura",
     "allergies": "Piña",
@@ -27,11 +31,11 @@ body:json {
 
 tests {
   test("Validar petición fallida", function () {
-    expect(res.status).to.equal("400");
+    expect(res.status).to.equal(400);
   });
   
   test("Validar mensaje de error", function () {
-    expect(res.body.message).to.equal("ERROR: campos faltantes.");
+    expect(res.body.message).to.equal("ERROR: datos inválidos.");
   });
   
 }
@@ -43,7 +47,7 @@ settings {
 docs {
   **Nombre:** Registro con campos faltantes
   
-  **Endpoint:** /api/v1/medical_record/create_record
+  **Endpoint:** /api/v1/medical_record/create_record/{id}
   
   **HU relacionadas:** HU-INN-1.1
   
@@ -53,6 +57,6 @@ docs {
   
   **Responsable:** Camilo Franco Moya
   
-  **Última Actualización:** 2025-10-01
+  **Última Actualización:** 2025-10-08
   
 }

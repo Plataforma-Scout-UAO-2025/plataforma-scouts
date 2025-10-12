@@ -10,9 +10,14 @@ get {
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 tests {
   test("Validar petición fallida", function () {
-    expect(res.status).to.equal("404");
+    expect(res.status).to.equal(404);
   });
   
   test("Validar mensaje de error", function () {

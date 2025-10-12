@@ -10,9 +10,14 @@ get {
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 tests {
   test("Validar petición exitosa", function () {
-    expect(res.status).to.equal("200");
+    expect(res.status).to.equal(200);
   });
   
   test("Validar tipos de todos los campos", function () {
@@ -91,7 +96,7 @@ settings {
 }
 
 docs {
-  **Nombre:** Listado exitoso
+  **Nombre:** Listado exitoso de todos
   
   **Endpoint:** /api/v1/medical_record/list_record/
   
@@ -106,9 +111,11 @@ docs {
   ```
   res.body [{
   
-    "medical_record_id": bigint,
+    "id": string,
     
-    "member_id": bigint,
+    "tenant_id": string,
+    
+    "member_id": string,
   
     "blood_type": string,
   
@@ -126,13 +133,13 @@ docs {
     
     "vaccines_detail": [{
       "name": string,
-      "date": date
+      "applied_at": string
     }],
     
     "medications_detail": [{
       "name": string,
       "dose": string,
-      "frecuency": string
+      "frequency": string
     }],
     
     "created_at": date,

@@ -5,14 +5,18 @@ meta {
 }
 
 post {
-  url: {{baseurl}}api/v1/medical_record/create_record
+  url: {{baseurl}}api/medical_record/create_record/21
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 body:json {
   {
-    "member_id": 123,
     "blood_type": "AB+",
     "eps": "Sura",
     "allergies": "Piña",
@@ -21,12 +25,12 @@ body:json {
     "surgical_history": "Apendicectomía",
     "vaccines_detail": [{
       "name": "COVID-19 (Pfizer)",
-      "date": "2022-04-23T18:25:43.511Z"
+      "applied_at": "2022-04-23T18:25:43.511Z"
     }],
     "medications_detail": [{
       "name": "Aspirina",
       "dose": "50 mg",
-      "frecuency": "2 veces al día"
+      "frequency": "2 veces al día"
     }]
   }
   
@@ -34,7 +38,7 @@ body:json {
 
 tests {
   test("Validar petición exitosa", function () {
-    expect(res.status).to.equal("200");
+    expect(res.status).to.equal(200);
   });
   
   test("Validar mensaje de exito", function () {
@@ -50,7 +54,7 @@ settings {
 docs {
   **Nombre:** Registro exitoso
   
-  **Endpoint:** /api/v1/medical_record/create_record
+  **Endpoint:** /api/v1/medical_record/create_record/{id}
   
   **HU relacionadas:** HU-INN-1.1
   
@@ -62,8 +66,6 @@ docs {
   
   ```
   req.body {
-  
-    "member_id": bigint,
   
     "blood_type": string,
   
@@ -79,12 +81,13 @@ docs {
     
     "vaccines_detail": [{
       "name": string,
-      "date": date
+      "applied_at": string
     }],
-    
+  
     "medications_detail": [{
       "name": string,
-      "frecuency": string
+      "dose": string,
+      "frequency": string
     }]
     
   }
@@ -102,6 +105,6 @@ docs {
   
   **Responsable:** Camilo Franco Moya
   
-  **Última Actualización:** 2025-10-01
+  **Última Actualización:** 2025-10-08
   
 }

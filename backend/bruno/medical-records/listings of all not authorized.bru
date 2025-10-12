@@ -10,9 +10,14 @@ get {
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: aaa
+}
+
 tests {
   test("Validar petición fallida", function () {
-    expect(res.status).to.equal("404");
+    expect(res.status).to.equal(404);
   });
   
   test("Validar mensaje de error", function () {
@@ -26,9 +31,9 @@ settings {
 }
 
 docs {
-  **Nombre:** Listado no autorizado
+  **Nombre:** Listado no autorizado de todos
   
-  **Endpoint:** /api/v1/medical_record/list_record/{id}
+  **Endpoint:** /api/v1/medical_record/list_record/
   
   **HU relacionadas:** HU-INN-2.1 HU-INN-2.2
   

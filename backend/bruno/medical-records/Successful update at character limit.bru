@@ -5,14 +5,18 @@ meta {
 }
 
 put {
-  url: {{baseurl}}api/v1/medical_record/update_record
+  url: {{baseurl}}api/v1/medical_record/update_record/21
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 body:json {
   {
-    "member_id": 123,
     "blood_type": "O+", // valor a actualizar
     "eps": "Salud Bólivar EPS SAS Salud Bólivar EPS SAS", // limite: 50
     "allergies": "Piña,Perro,Gato,Polen,Abejas,Latex", // limite: 1000
@@ -34,7 +38,7 @@ body:json {
 
 tests {
   test("Validar petición exitosa", function () {
-    expect(res.status).to.equal("200");
+    expect(res.status).to.equal(200);
   });
   
   test("Validar mensaje de exito", function () {

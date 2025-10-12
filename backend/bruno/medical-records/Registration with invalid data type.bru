@@ -5,14 +5,18 @@ meta {
 }
 
 post {
-  url: {{baseurl}}api/v1/medical_record/create_record
+  url: {{baseurl}}api/v1/medical_record/create_record/21
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 body:json {
   {
-    "member_id": 123,
     "blood_type": "AB+",
     "eps": 1, // dato inválido
     "allergies": "Piña",
@@ -27,7 +31,7 @@ body:json {
 
 tests {
   test("Validar petición fallida", function () {
-    expect(res.status).to.equal("400");
+    expect(res.status).to.equal(400);
   });
   
   test("Validar mensaje de error", function () {
@@ -43,7 +47,7 @@ settings {
 docs {
   **Nombre:** Registro con tipo de dato inválido
   
-  **Endpoint:** /api/v1/medical_record/create_record
+  **Endpoint:** /api/v1/medical_record/create_record/{id}
   
   **HU relacionadas:** HU-INN-1.1
   
@@ -53,5 +57,5 @@ docs {
   
   **Responsable:** Camilo Franco Moya
   
-  **Última Actualización:** 2025-10-01
+  **Última Actualización:** 2025-10-08
 }

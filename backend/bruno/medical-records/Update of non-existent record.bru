@@ -5,14 +5,18 @@ meta {
 }
 
 put {
-  url: {{baseurl}}api/v1/medical_record/update_record
+  url: {{baseurl}}api/v1/medical_record/update_record/999
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 body:json {
   {
-    "member_id": 456, // miembro con registro no existente
     "blood_type": "O+", // valor a actualizar
     "eps": "Sura",
     "allergies": "Piña",
@@ -27,7 +31,7 @@ body:json {
 
 tests {
   test("Validar petición fallida", function () {
-    expect(res.status).to.equal("404");
+    expect(res.status).to.equal(404);
   });
   
   test("Validar mensaje de error", function () {

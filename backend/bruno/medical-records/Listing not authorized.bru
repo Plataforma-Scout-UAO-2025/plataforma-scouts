@@ -5,14 +5,19 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/medical_record/list_record/1
+  url: {{baseurl}}api/v1/medical_record/list_record/999
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: aaa
+}
+
 tests {
   test("Validar petición fallida", function () {
-    expect(res.status).to.equal("403");
+    expect(res.status).to.equal(403);
   });
   
   test("Validar mensaje de error", function () {

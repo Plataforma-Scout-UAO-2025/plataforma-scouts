@@ -5,19 +5,25 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/medical_record/list_record/1
+  url: {{baseurl}}api/medical_record/list_record/21
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
 tests {
   test("Validar petición exitosa", function () {
-    expect(res.status).to.equal("200");
+    expect(res.status).to.equal(200);
   });
   
   test("Validar tipos de todos los campos", function () {
-    expect(res.body.medical_record_id).to.be.a('bigint');
-    expect(res.body.member_id).to.be.a('bigint');
+    expect(res.body.id).to.be.a('string');
+    expect(res.body.member_id).to.be.a('string');
+    expect(res.body.member_id).to.be.a('string');
   
     expect(res.body.blood_type).to.be.a('string');
     expect(res.body.eps).to.be.a('string');
@@ -30,22 +36,19 @@ tests {
     
     expect(res.body.vaccines_detail).to.be.a('array').that.is.not.empty;
     expect(res.body.vaccines_detail[0].name).to.be.a('string');
-    expect(res.body.vaccines_detail[0].date).to.be.a('date');
+    expect(res.body.vaccines_detail[0].applied_at).to.be.a('string');
   
     expect(res.body.medications_detail).to.be.a('array').that.is.not.empty;
     expect(res.body.medications_detail[0].name).to.be.a('string');
     expect(res.body.medications_detail[0].dose).to.be.a('string');
-    expect(res.body.medications_detail[0].frecuency).to.be.a('string');
+    expect(res.body.medications_detail[0].frequency).to.be.a('string');
   
-    expect(res.body.created_at).to.be.a('date');
-    expect(res.body.updated_at).to.be.a('date');
+    expect(res.body.created_at).to.be.a('string');
+    expect(res.body.updated_at).to.be.a('string');
   });
   
   test("Validar campos obligatorios", function () {
-    expect(res.body.medical_record_id).to.be.at.least(0);
-    expect(res.body.member_id).to.be.at.least(0);
-  
-    expect(res.body.blood_type).to.equal("AB+");
+    expect(res.body.blood_type).to.equal("O+");
     expect(res.body.eps).to.equal("Sura");
   });
   
@@ -56,10 +59,10 @@ tests {
     expect(res.body.surgical_history).to.equal("Apendicectomía");
   
     expect(res.body.vaccines_detail).to.be.not.empty;
-    expect(res.body.vaccines_detail[0]).to.include({name:"COVID-19 (Pfizer)",date:"2022-04-23T18:25:43.511Z"});
+    expect(res.body.vaccines_detail[0]).to.include({name:"COVID-19 (Pfizer)",applied_at:"2022-04-23T18:25:43.511Z"});
   
     expect(res.body.medications_detail).to.be.not.empty;
-    expect(res.body.medications_detail[0]).to.include({name:"Aspirina",dose:"5 mg",frecuency:"2 veces al día"});
+    expect(res.body.medications_detail[0]).to.include({name:"Aspirina",dose:"5 mg",frequency:"2 veces al día"});
   });
   
   test("Validar categorias válidas de tipo de sangre", function () {
@@ -80,7 +83,7 @@ tests {
     expect(res.body.medications_detail).to.be.not.empty;
     expect(res.body.medications_detail[0].name).to.have.lengthOf.at.most(50);
     expect(res.body.medications_detail[0].dose).to.have.lengthOf.at.most(100);
-    expect(res.body.medications_detail[0].frecuency).to.have.lengthOf.at.most(100);
+    expect(res.body.medications_detail[0].frequency).to.have.lengthOf.at.most(100);
   });
 }
 
@@ -104,9 +107,11 @@ docs {
   ```
   res.body {
   
-    "medical_record_id": bigint,
+    "id": string,
     
-    "member_id": bigint,
+    "tenant_id": string,
+    
+    "member_id": string,
   
     "blood_type": string,
   
@@ -124,13 +129,13 @@ docs {
     
     "vaccines_detail": [{
       "name": string,
-      "date": date
+      "applied_at": string
     }],
     
     "medications_detail": [{
       "name": string,
       "dose": string,
-      "frecuency": string
+      "frequency": string
     }],
     
     "created_at": date,
@@ -142,6 +147,6 @@ docs {
   
   **Responsable:** Camilo Franco Moya
   
-  **Última Actualización:** 2025-10-01
+  **Última Actualización:** 2025-10-08
   
 }

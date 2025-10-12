@@ -5,14 +5,17 @@ meta {
 }
 
 post {
-  url: {{baseurl}}api/v1/medical_record/create_record
+  url: {{baseurl}}api/v1/medical_record/create_record/21
   body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+}
+
 body:json {
   {
-    "member_id": 123,
     "blood_type": "U+", // este error no debería mostrarse al no estar autorizado
     "eps": "Sura",
     "allergies": "Piña",
@@ -27,7 +30,7 @@ body:json {
 
 tests {
   test("Validar petición fallida", function () {
-    expect(res.status).to.equal("403");
+    expect(res.status).to.equal(403);
   });
   
   test("Validar mensaje de error", function () {
@@ -43,7 +46,7 @@ settings {
 docs {
   **Nombre:** Registro no autenticado
   
-  **Endpoint:** /api/v1/medical_record/create_record
+  **Endpoint:** /api/v1/medical_record/create_record/{id}
   
   **HU relacionadas:** HU-INN-1.1
   
@@ -55,6 +58,6 @@ docs {
   
   **Responsable:** Camilo Franco Moya
   
-  **Última Actualización:** 2025-10-01
+  **Última Actualización:** 2025-10-08
   
 }
