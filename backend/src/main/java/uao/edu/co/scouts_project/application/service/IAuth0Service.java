@@ -5,6 +5,7 @@ import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
+import uao.edu.co.scouts_project.infrastructure.security.Role;
 
 import java.util.List;
 
@@ -16,7 +17,16 @@ import java.util.List;
 public interface IAuth0Service {
     CreatedUserDTO createUser(CreateUserCommandDTO cmd);
 
+    /**
+     * Asigna un rol usando el ID de Auth0 directamente.
+     */
     void assignRole(String userId, String roleId);
+
+    /**
+     * Asigna un rol usando el enum Role (más conveniente para desarrolladores).
+     * Internamente mapea el enum al ID de Auth0.
+     */
+    void assignRole(String userId, Role role);
 
     UserSummaryDTO getUserById(String userId);
 
@@ -26,7 +36,15 @@ public interface IAuth0Service {
 
     List<OrganizationSummaryDTO> listOrganizations();
 
+    /**
+     * Agrega un usuario a una organización específica en Auth0.
+     */
     void addUserToOrganization(String organizationId, String userId);
+
+    /**
+     * Agrega un usuario a la organización del usuario autenticado (del JWT).
+     */
+    void addUserToOwnOrganization(String userId);
 
     UserSummaryDTO getUserInOrganization(String organizationId, String userId);
 }

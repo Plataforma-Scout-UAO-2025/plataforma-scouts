@@ -32,7 +32,29 @@ public interface Auth0AdminPort {
 
     UserSummaryDTO getUserInOrganization(String organizationId, String userId);
 
+    /**
+     * Agrega un usuario a una organización específica en Auth0.
+     * 
+     * @param organizationId ID de la organización de Auth0
+     * @param userId ID del usuario en Auth0
+     */
     void addUserToOrganization(String organizationId, String userId);
 
+    /**
+     * Agrega un usuario a la organización del usuario autenticado actual (obtenida del JWT).
+     * Este método usa el org_id del token para determinar la organización.
+     * 
+     * @param userId ID del usuario en Auth0 a agregar
+     */
+    void addUserToOwnOrganization(String userId);
+
     void assignRole(String userId, String roleId);
+
+    /**
+     * Verifica si un usuario tiene roles asignados en Auth0.
+     * 
+     * @param userId ID del usuario en Auth0
+     * @return true si el usuario tiene al menos un rol asignado, false en caso contrario
+     */
+    boolean userHasRoles(String userId);
 }

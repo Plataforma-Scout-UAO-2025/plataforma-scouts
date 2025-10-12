@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
+import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
@@ -41,9 +42,11 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
     private static final Logger log = LoggerFactory.getLogger(Auth0AdminAdapter.class);
 
     private final Auth0ManagementClientProvider provider;
+    private final PermissionQueryPort permissionQueryPort;
 
-    public Auth0AdminAdapter(Auth0ManagementClientProvider provider) {
+    public Auth0AdminAdapter(Auth0ManagementClientProvider provider, PermissionQueryPort permissionQueryPort) {
         this.provider = provider;
+        this.permissionQueryPort = permissionQueryPort;
     }
 
     protected ManagementAPI api() throws Auth0Exception { // protected para facilitar pruebas si se hace subclass
@@ -53,13 +56,30 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
     @SuppressWarnings("deprecation") // setPassword está deprecado en SDK actual; mantener hasta migrar estrategia de creación.
     public CreatedUserDTO createUser(CreateUserCommandDTO cmd) {
         try {
-            User user = new User("Username-Password-Authentication");
+            // Obtener la conexión del usuario autenticado actual desde el JWT
+            String connection = permissionQueryPort.getCurrentUserConnection();
+            
+            if (connection == null || connection.isBlank()) {
+                log.error("No se pudo obtener la conexión del usuario autenticado. Verifica que el claim 'https://scouts-platform-backend/connections' esté presente en el JWT.");
+                throw new Auth0GatewayException("No se pudo determinar la conexión de Auth0 para crear el usuario");
+            }
+            
+            log.debug("Creando usuario con conexión: {}", connection);
+            
+            User user = new User(connection);
             user.setEmail(cmd.getEmail());
             user.setPassword(cmd.getPassword());
             user.setUsername(cmd.getUsername());
             user.setEmailVerified(false);
+            
+            // Marcar que este usuario fue creado por API (para que el Action no le asigne rol automático)
+            user.setAppMetadata(java.util.Map.of("created_by_api", true));
+            
             User created = api().users().create(user).execute();
             return new CreatedUserDTO(created.getId(), created.getEmail(), created.getUsername(), created.isEmailVerified());
+        } catch (Auth0GatewayException e) {
+            // Re-lanzar excepciones de gateway sin envolver
+            throw e;
         } catch (Auth0Exception e) {
             log.error("Error creando usuario en Auth0: {}", e.getMessage());
             throw new Auth0GatewayException("Fallo creando usuario", e);
@@ -97,6 +117,25 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         } catch (Auth0Exception e) {
             log.error("Error asignando rol {} a usuario {}: {}", roleId, userId, e.getMessage());
             throw new Auth0GatewayException("Fallo asignando rol", e);
+        }
+    }
+
+    @Override
+    public boolean userHasRoles(String userId) {
+        try {
+            PageFilter filter = new PageFilter().withPage(0, 1); // Solo necesitamos saber si hay al menos uno
+            RolesPage rolesPage = api().users().listRoles(userId, filter).execute();
+            return rolesPage.getItems() != null && !rolesPage.getItems().isEmpty();
+        } catch (APIException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn("Usuario no encontrado al verificar roles: {}", userId);
+                throw new ResourceNotFoundException("User not found: " + userId);
+            }
+            log.error("Error verificando roles de usuario {}: {}", userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo verificando roles de usuario", e);
+        } catch (Auth0Exception e) {
+            log.error("Error verificando roles de usuario {}: {}", userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo verificando roles de usuario", e);
         }
     }
 
@@ -161,6 +200,20 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
             log.error("Error agregando usuario {} a organización {}: {}", userId, organizationId, ex.getMessage());
             throw new Auth0GatewayException("Error agregando miembro a la organización", ex);
         }
+    }
+
+    public void addUserToOwnOrganization(String userId) {
+        // Obtener el org_id del usuario autenticado desde el JWT
+        String organizationId = permissionQueryPort.getCurrentUserOrgId();
+        
+        if (organizationId == null || organizationId.isBlank()) {
+            log.error("No se pudo obtener el org_id del usuario autenticado. Verifica que el claim 'org_id' esté presente en el JWT.");
+            throw new Auth0GatewayException("No se pudo determinar la organización del usuario autenticado");
+        }
+        
+        log.debug("Agregando usuario {} a la organización propia: {}", userId, organizationId);
+        
+        addUserToOrganization(organizationId, userId);
     }
 
     // Recorre paginado de miembros de la organización y busca el userId

@@ -12,10 +12,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
+import uao.edu.co.scouts_project.infrastructure.security.Role;
 
 import java.util.List;
 
@@ -202,5 +205,265 @@ class Auth0ControllerTest {
             .andExpect(status().isBadGateway())
             .andExpect(jsonPath("$.message").value("Fallo asignando rol"))
             .andExpect(jsonPath("$.detail").value("Connection timeout"));
+    }
+
+    // ========== 11. GET /users - Listar usuarios ==========
+    @Test
+    void listUsers_shouldReturn200_whenUsersExist() throws Exception {
+        // Arrange
+        List<UserSummaryDTO> mockUsers = List.of(
+            new UserSummaryDTO("auth0|user1", "user1@example.com", "user1"),
+            new UserSummaryDTO("auth0|user2", "user2@example.com", "user2")
+        );
+        when(auth0Service.listUsers()).thenReturn(mockUsers);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/auth0/users"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$[0].id").value("auth0|user1"))
+            .andExpect(jsonPath("$[1].id").value("auth0|user2"));
+    }
+
+    // ========== 12. GET /organizations - Listar organizaciones ==========
+    @Test
+    void listOrganizations_shouldReturn200_whenOrganizationsExist() throws Exception {
+        // Arrange
+        List<OrganizationSummaryDTO> mockOrgs = List.of(
+            new OrganizationSummaryDTO("org_123", "Organización Test 1", "Display Name 1"),
+            new OrganizationSummaryDTO("org_456", "Organización Test 2", "Display Name 2")
+        );
+        when(auth0Service.listOrganizations()).thenReturn(mockOrgs);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/auth0/organizations"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$[0].id").value("org_123"))
+            .andExpect(jsonPath("$[1].name").value("Organización Test 2"));
+    }
+
+    // ========== 13. GET /users/{userId} - Obtener usuario por ID exitoso ==========
+    @Test
+    void getUserById_shouldReturn200_whenUserExists() throws Exception {
+        // Arrange
+        UserSummaryDTO mockUser = new UserSummaryDTO("auth0|123", "test@example.com", "testuser");
+        when(auth0Service.getUserById(anyString())).thenReturn(mockUser);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/auth0/users/auth0|123"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value("auth0|123"))
+            .andExpect(jsonPath("$.email").value("test@example.com"));
+    }
+
+    // ========== 14. GET /users/{userId} - Usuario no encontrado ==========
+    @Test
+    void getUserById_shouldReturn404_whenUserDoesNotExist() throws Exception {
+        // Arrange
+        when(auth0Service.getUserById(anyString()))
+            .thenThrow(new ResourceNotFoundException("User not found: auth0|999"));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/auth0/users/auth0|999"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("User not found: auth0|999"));
+    }
+
+    // ========== 15. POST /users/{userId}/roles/by-name - Asignar rol por nombre exitoso ==========
+    @Test
+    void assignRoleByName_shouldReturn200_whenRoleIsAssignedSuccessfully() throws Exception {
+        // Arrange
+        org.mockito.Mockito.doNothing().when(auth0Service).assignRole(anyString(), any(Role.class));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/users/auth0|123/roles/by-name")
+                .param("roleName", Role.ADMIN_GLOBAL.name()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("Rol asignado correctamente"))
+            .andExpect(jsonPath("$.roleName").value(Role.ADMIN_GLOBAL.name()));
+    }
+
+    // ========== 16. POST /users/{userId}/roles/by-name - Rol inválido ==========
+    @Test
+    void assignRoleByName_shouldReturn400_whenRoleNameIsInvalid() throws Exception {
+        // Arrange
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("No enum constant Role.INVALID_ROLE"))
+            .when(auth0Service).assignRole(anyString(), any(Role.class));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/users/auth0|123/roles/by-name")
+                .param("roleName", "INVALID_ROLE"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").exists());
+    }
+
+    // ========== 17. POST /users/{userId}/roles/by-name - Rol no mapeado ==========
+    @Test
+    void assignRoleByName_shouldReturn404_whenRoleNotMapped() throws Exception {
+        // Arrange
+        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Role not mapped: " + Role.SCOUT.name()))
+            .when(auth0Service).assignRole(anyString(), any(Role.class));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/users/auth0|123/roles/by-name")
+                .param("roleName", Role.SCOUT.name()))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Role not mapped: " + Role.SCOUT.name()));
+    }
+
+    // ========== 18. POST /organizations/own/members - Agregar usuario a propia org exitoso ==========
+    @Test
+    void addUserToOwnOrganization_shouldReturn200_whenUserIsAddedSuccessfully() throws Exception {
+        // Arrange
+        org.mockito.Mockito.doNothing().when(auth0Service).addUserToOwnOrganization(anyString());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/organizations/own/members")
+                .param("userId", "auth0|123"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("Usuario agregado a tu organización exitosamente"));
+    }
+
+    // ========== 19. POST /organizations/own/members - Organización no configurada ==========
+    @Test
+    void addUserToOwnOrganization_shouldReturn400_whenOrgIdNotConfigured() throws Exception {
+        // Arrange: El servicio lanza IllegalArgumentException (no IllegalStateException)
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Organization ID not configured in security context"))
+            .when(auth0Service).addUserToOwnOrganization(anyString());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/organizations/own/members")
+                .param("userId", "auth0|123"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Organization ID not configured in security context"));
+    }
+
+    // ========== 20. POST /organizations/own/members - Usuario ya es miembro ==========
+    @Test
+    void addUserToOwnOrganization_shouldReturn409_whenUserAlreadyMember() throws Exception {
+        // Arrange
+        org.mockito.Mockito.doThrow(new UserAlreadyMemberException("User is already a member"))
+            .when(auth0Service).addUserToOwnOrganization(anyString());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/organizations/own/members")
+                .param("userId", "auth0|123"))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.message").value("El usuario ya pertenece a la organización"));
+    }
+
+    // ========== 21. POST /scouts - Crear Scout completo exitosamente ==========
+    @Test
+    void createScoutOnAuth0_shouldReturn200_whenScoutIsCreatedSuccessfully() throws Exception {
+        // Arrange
+        CreateUserCommandDTO command = new CreateUserCommandDTO(
+            "scout@example.com",
+            "ScoutPassword123!",
+            "nuevo_scout"
+        );
+        CreatedUserDTO mockUser = new CreatedUserDTO("auth0|scout123", "scout@example.com", "nuevo_scout", false);
+        
+        when(auth0Service.createUser(any(CreateUserCommandDTO.class))).thenReturn(mockUser);
+        org.mockito.Mockito.doNothing().when(auth0Service).addUserToOwnOrganization(anyString());
+        org.mockito.Mockito.doNothing().when(auth0Service).assignRole(anyString(), any(Role.class));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/scouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("Scout creado exitosamente"))
+            .andExpect(jsonPath("$.userId").value("auth0|scout123"))
+            .andExpect(jsonPath("$.email").value("scout@example.com"))
+            .andExpect(jsonPath("$.username").value("nuevo_scout"))
+            .andExpect(jsonPath("$.role").value("SCOUT"));
+    }
+
+    // ========== 22. POST /scouts - Validación de email inválido ==========
+    @Test
+    void createScoutOnAuth0_shouldReturn400_whenEmailIsInvalid() throws Exception {
+        // Arrange: Email inválido
+        CreateUserCommandDTO command = new CreateUserCommandDTO(
+            "email-invalido",  // No es un email válido
+            "Password123!",
+            "scout_test"
+        );
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/scouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").exists());
+    }
+
+    // ========== 23. POST /scouts - Usuario ya es miembro de la organización ==========
+    @Test
+    void createScoutOnAuth0_shouldReturn409_whenUserAlreadyMemberOfOrganization() throws Exception {
+        // Arrange
+        CreateUserCommandDTO command = new CreateUserCommandDTO(
+            "existing@example.com",
+            "Password123!",
+            "existing_scout"
+        );
+        CreatedUserDTO mockUser = new CreatedUserDTO("auth0|existing", "existing@example.com", "existing_scout", false);
+        
+        when(auth0Service.createUser(any(CreateUserCommandDTO.class))).thenReturn(mockUser);
+        org.mockito.Mockito.doThrow(new UserAlreadyMemberException("User already member"))
+            .when(auth0Service).addUserToOwnOrganization(anyString());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/scouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.message").value("El usuario ya pertenece a la organización"));
+    }
+
+    // ========== 24. POST /scouts - No autorizado para asignar rol SCOUT ==========
+    @Test
+    void createScoutOnAuth0_shouldReturn403_whenUnauthorizedToAssignScoutRole() throws Exception {
+        // Arrange
+        CreateUserCommandDTO command = new CreateUserCommandDTO(
+            "scout@example.com",
+            "Password123!",
+            "scout_test"
+        );
+        CreatedUserDTO mockUser = new CreatedUserDTO("auth0|scout456", "scout@example.com", "scout_test", false);
+        
+        when(auth0Service.createUser(any(CreateUserCommandDTO.class))).thenReturn(mockUser);
+        org.mockito.Mockito.doNothing().when(auth0Service).addUserToOwnOrganization(anyString());
+        org.mockito.Mockito.doThrow(new uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException(
+            "No tienes permiso para asignar el rol SCOUT"))
+            .when(auth0Service).assignRole(anyString(), any(Role.class));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/scouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value("No tienes permiso para asignar el rol SCOUT"));
+    }
+
+    // ========== 25. POST /scouts - Error de gateway al crear usuario ==========
+    @Test
+    void createScoutOnAuth0_shouldReturn502_whenAuth0GatewayExceptionOccurs() throws Exception {
+        // Arrange
+        CreateUserCommandDTO command = new CreateUserCommandDTO(
+            "scout@example.com",
+            "Password123!",
+            "scout_test"
+        );
+        
+        when(auth0Service.createUser(any(CreateUserCommandDTO.class)))
+            .thenThrow(new Auth0GatewayException("Auth0 API error"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth0/scouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+            .andExpect(status().isBadGateway())
+            .andExpect(jsonPath("$.message").value("Fallo creando Scout"));
     }
 }

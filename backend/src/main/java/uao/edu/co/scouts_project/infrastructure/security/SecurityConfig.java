@@ -17,164 +17,197 @@ import static uao.edu.co.scouts_project.infrastructure.security.Role.*;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final AuthoritiesMappingPort authoritiesMappingPort;
+        private final AuthoritiesMappingPort authoritiesMappingPort;
 
-    @Autowired
-    public SecurityConfig(AuthoritiesMappingPort authoritiesMappingPort) {
-        this.authoritiesMappingPort = authoritiesMappingPort;
-    }
+        @Autowired
+        public SecurityConfig(AuthoritiesMappingPort authoritiesMappingPort) {
+                this.authoritiesMappingPort = authoritiesMappingPort;
+        }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authorize -> authorize
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                return http
+                                .csrf(csrf -> csrf.disable())
+                                .authorizeHttpRequests(authorize -> authorize
 
-                        .requestMatchers("/api/v1/sec/roles").authenticated()
-                        .requestMatchers("/api/v1/sec/org_id").authenticated()
+                                                .requestMatchers("/api/v1/sec/roles").authenticated()
+                                                .requestMatchers("/api/v1/sec/org_id").authenticated()
 
-                        .requestMatchers("/api/v1/mock/scouts/list").hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
-                        .requestMatchers("/api/v1/mock/scouts/add/member").hasAnyRole(TESORERO.name())
-                        .requestMatchers("/api/v1/mock/scouts/member").hasAnyRole(DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/mock/scouts/list")
+                                                .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/mock/scouts/add/member")
+                                                .hasAnyRole(TESORERO.name())
+                                                .requestMatchers("/api/v1/mock/scouts/member")
+                                                .hasAnyRole(DEV_SUPPORT.name())
 
-                        // Organigrama
+                                                // Organigrama
 
-                        // Operaciones CRUD en tenants
+                                                // Operaciones CRUD en tenants
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
 
-                        // Operaciones CRUD en grupos
+                                                // Operaciones CRUD en grupos
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/groups/**")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/groups/**")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/groups/**")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
+                                                                DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/groups/**")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
+                                                                DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/groups/**")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
+                                                                DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/groups/**")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
+                                                                DEV_SUPPORT.name())
 
-                        // Operaciones de consulta en grupos
+                                                // Operaciones de consulta en grupos
 
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(), SCOUT.name())
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
+                                                                COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
+                                                                SCOUT.name())
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
+                                                                COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
+                                                                SCOUT.name())
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
+                                                                COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
+                                                                SCOUT.name())
 
-                        // Operaciones en almacenamiento de imagenes
+                                                // Operaciones en almacenamiento de imagenes
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/**")
-                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/storage/**")
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
+                                                                DEV_SUPPORT.name())
 
-                        // ==== Auth0 Management Endpoints ====
+                                                // ==== Auth0 Management Endpoints ====
 
-                        // ACUDIENTE: Solo puede CREAR (POST)
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
-                        .hasAnyAuthority("ACUDIENTE", "ADMIN_GRUPO", "ADMIN_GLOBAL")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users/*/roles")
-                        .hasAnyAuthority("ACUDIENTE", "ADMIN_GRUPO", "ADMIN_GLOBAL")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth0/organizations/*/members")
-                        .hasAnyAuthority("ACUDIENTE", "ADMIN_GRUPO", "ADMIN_GLOBAL")
+                                                // Crear Scout completo (usuario + organización + rol SCOUT)
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/auth0/scouts")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
 
-                        // SOLO ADMINS: Pueden CONSULTAR (GET)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/auth0/**")
-                        .hasAnyAuthority("ADMIN_GRUPO", "ADMIN_GLOBAL")
+                                                // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia organización
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users/*/roles")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
+                                                
+                                                // Agregar a organización específica: Solo ADMINS
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/v1/auth0/organizations/*/members")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
+                                                
+                                                // Agregar a organización propia (usa org_id del JWT): ACUDIENTE y ADMINS
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/v1/auth0/organizations/own/members")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
 
-                        // Cualquier otra operación en auth0: SOLO ADMINS
-                        .requestMatchers("/api/v1/auth0/**").hasAnyAuthority("ADMIN_GRUPO", "ADMIN_GLOBAL")
+                                                // // SOLO ADMINS: Pueden CONSULTAR (GET)
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/auth0/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                        //
-                        // Datos básicos de miembros
+                                                // // Cualquier otra operación en auth0: SOLO ADMINS
+                                                .requestMatchers("/api/v1/auth0/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                        //
-                        // Acudientes
+                                                // //
+                                                // // Datos básicos de miembros
 
-                        //
-                        // Datos médicos
+                                                //
+                                                // Acudientes
 
-                        //
-                        // Pagos
-                        .requestMatchers("/api/v1/finanzas/payments/**").permitAll() // Cambiar a
-                                                                                     // .hasAnyRole(TESORERO.name())
-                        .requestMatchers("/api/v1/finanzas/payments").permitAll()
+                                                //
+                                                // Datos médicos
 
-                        // Cuotas
-                        .requestMatchers("/api/v1/finanzas/fees/**").permitAll() // Cambiar a
-                                                                                 // .hasAnyRole(TESORERO.name())
-                        .requestMatchers("/api/v1/finanzas/fees").permitAll()
+                                                //
+                                                // Pagos
+                                                .requestMatchers("/api/v1/finanzas/payments/**").permitAll() // Cambiar
+                                                                                                             // a
+                                                                                                             // .hasAnyRole(TESORERO.name())
+                                                .requestMatchers("/api/v1/finanzas/payments").permitAll()
 
-                        //
-                        // Planes de adelanto
+                                                // Cuotas
+                                                .requestMatchers("/api/v1/finanzas/fees/**").permitAll() // Cambiar a
+                                                                                                         // .hasAnyRole(TESORERO.name())
+                                                .requestMatchers("/api/v1/finanzas/fees").permitAll()
 
-                        //
-                        .anyRequest().permitAll()
+                                                //
+                                                // Planes de adelanto
 
-                )
-                .cors(withDefaults())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .build();
-    }
+                                                //
+                                                .anyRequest().permitAll()
 
-    private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(authoritiesMappingPort::mapFromJwt);
-        return converter;
-    }
+                                )
+                                .cors(withDefaults())
+                                .oauth2ResourceServer(oauth2 -> oauth2
+                                                .jwt(jwt -> jwt.jwtAuthenticationConverter(
+                                                                jwtAuthenticationConverter())))
+                                .build();
+        }
 
-    /*
-     * @Bean
-     * 
-     * @Profile("production")
-     * public SecurityFilterChain productionFilterChain(HttpSecurity http) throws
-     * Exception {
-     * http
-     * .csrf(csrf -> csrf.disable())
-     * .cors(cors -> cors.configurationSource(productionCorsConfigurationSource()))
-     * .authorizeHttpRequests(authz -> authz
-     * .requestMatchers("/api/v1/qa/").denyAll() // No endpoints de QA en producción
-     * .requestMatchers("/swagger-ui/").denyAll() // No Swagger en producción
-     * .requestMatchers("/v3/api-docs/").denyAll()
-     * .requestMatchers("/actuator/health").permitAll() // Solo health check
-     * .anyRequest().authenticated()
-     * );
-     * 
-     * return http.build();
-     * }
-     * 
-     * @Bean
-     * 
-     * @Profile("production")
-     * public CorsConfigurationSource productionCorsConfigurationSource() {
-     * CorsConfiguration configuration = new CorsConfiguration();
-     * 
-     * // Solo dominios de producción específicos
-     * configuration.setAllowedOrigins(Arrays.asList(
-     * "https://scouts.uao.edu.co",
-     * "https://app.scouts.uao.edu.co"
-     * ));
-     * 
-     * configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT",
-     * "DELETE"));
-     * configuration.setAllowedHeaders(Arrays.asList("Authorization",
-     * "Content-Type"));
-     * configuration.setAllowCredentials(true);
-     * 
-     * UrlBasedCorsConfigurationSource source = new
-     * UrlBasedCorsConfigurationSource();
-     * source.registerCorsConfiguration("/api/", configuration);
-     * return source;
-     * }
-     */
+        private JwtAuthenticationConverter jwtAuthenticationConverter() {
+                JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+                converter.setJwtGrantedAuthoritiesConverter(authoritiesMappingPort::mapFromJwt);
+                return converter;
+        }
+
+        /*
+         * @Bean
+         * 
+         * @Profile("production")
+         * public SecurityFilterChain productionFilterChain(HttpSecurity http) throws
+         * Exception {
+         * http
+         * .csrf(csrf -> csrf.disable())
+         * .cors(cors -> cors.configurationSource(productionCorsConfigurationSource()))
+         * .authorizeHttpRequests(authz -> authz
+         * .requestMatchers("/api/v1/qa/").denyAll() // No endpoints de QA en producción
+         * .requestMatchers("/swagger-ui/").denyAll() // No Swagger en producción
+         * .requestMatchers("/v3/api-docs/").denyAll()
+         * .requestMatchers("/actuator/health").permitAll() // Solo health check
+         * .anyRequest().authenticated()
+         * );
+         * 
+         * return http.build();
+         * }
+         * 
+         * @Bean
+         * 
+         * @Profile("production")
+         * public CorsConfigurationSource productionCorsConfigurationSource() {
+         * CorsConfiguration configuration = new CorsConfiguration();
+         * 
+         * // Solo dominios de producción específicos
+         * configuration.setAllowedOrigins(Arrays.asList(
+         * "https://scouts.uao.edu.co",
+         * "https://app.scouts.uao.edu.co"
+         * ));
+         * 
+         * configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT",
+         * "DELETE"));
+         * configuration.setAllowedHeaders(Arrays.asList("Authorization",
+         * "Content-Type"));
+         * configuration.setAllowCredentials(true);
+         * 
+         * UrlBasedCorsConfigurationSource source = new
+         * UrlBasedCorsConfigurationSource();
+         * source.registerCorsConfiguration("/api/", configuration);
+         * return source;
+         * }
+         */
 
 }

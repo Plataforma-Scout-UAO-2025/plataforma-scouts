@@ -27,4 +27,9 @@ public class SecurityUtils {
         return permissionQueryPort.getCurrentUserOrgId();
     }
 
+    @GetMapping("/connection")
+    public String getAuthenticatedUserConnection() {
+        return permissionQueryPort.getCurrentUserConnection();
+    }
+
 }
