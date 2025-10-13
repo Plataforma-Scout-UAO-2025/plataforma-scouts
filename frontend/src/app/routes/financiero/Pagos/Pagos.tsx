@@ -4,6 +4,9 @@ import type { PaymentRecord } from "@/types/pago.type";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/api/axios";
+import ReporteModal from "../Reportes/components/ReporteModal";
+import type { FiltrosReporte } from "../Reportes/types/reporte.type";
+import { useNavigate } from "react-router-dom";
 
 // Datos mock para pagos
 // const mockPagos: PaymentRecord[] = [
@@ -128,6 +131,8 @@ import api from "@/api/axios";
 export default function Pagos() {
   const [pagos, setPagos] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPagos = async () => {
@@ -145,6 +150,22 @@ export default function Pagos() {
     fetchPagos();
   }, []);
 
+  const handleGenerarReporte = (filtros: FiltrosReporte) => {
+    // Crear URL con parámetros para navegar a reportes
+    const params = new URLSearchParams({
+      grupoId: filtros.grupoId,
+      fechaInicio: filtros.fechaInicio,
+      fechaFin: filtros.fechaFin
+    });
+    
+    // Navegar a la página de reportes con los parámetros
+    navigate(`/app/financiero/reportes?${params.toString()}`);
+  };
+
+  const handleAbrirModal = () => {
+    setModalAbierto(true);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -159,12 +180,18 @@ export default function Pagos() {
           </p>
         </div>
       </div>
-      <PagosTable pagos={pagos} />
+      <PagosTable pagos={pagos} onGenerarReporte={handleAbrirModal} />
       {loading && (
         <div className="flex items-center justify-center">
           <Loader2 className="w-4 h-4 animate-spin" />
         </div>
       )}
+
+      <ReporteModal
+        open={modalAbierto}
+        onOpenChange={setModalAbierto}
+        onGenerarReporte={handleGenerarReporte}
+      />
     </div>
   );
 }

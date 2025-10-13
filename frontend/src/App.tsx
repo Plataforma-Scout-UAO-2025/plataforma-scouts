@@ -22,6 +22,7 @@ import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/compo
 import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
+import Reportes from "./app/routes/financiero/Reportes/Reportes";
 
 function App() {
   useAuth0ApiWrapper();
@@ -57,6 +58,7 @@ function App() {
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Cuotas /></ProtectedRoute>} />
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
+            <Route path="financiero/reportes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Reportes /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
             {/*
