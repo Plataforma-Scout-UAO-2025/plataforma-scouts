@@ -85,8 +85,8 @@ public class SecurityConfig {
 
                         //
                         // Pagos
-                        .requestMatchers("/api/v1/finanzas/payments/status/guardian").hasAnyRole(ACUDIENTE.name())
-                        .requestMatchers("/api/v1/finanzas/payments/**").hasAnyRole(ADMIN_GLOBAL.name(), TESORERO.name()) 
+                        .requestMatchers("/api/v1/finanzas/payments/status/guardian").permitAll()
+                        .requestMatchers("/api/v1/finanzas/payments/**").permitAll() 
 
 
 
