@@ -30,7 +30,11 @@ public interface GuardianRepository extends JpaRepository<Member, Long> {
 
     @Modifying
     @Query("UPDATE Member m SET m.guardianId = NULL WHERE m.guardianId = :guardianId")
-    void deleteGuardianIdFromMember(@Param("guardianId") Long guardianId);
+    void removeGuardianIdFromMembers(@Param("guardianId") Long guardianId);
+
+    @Modifying
+    @Query("DELETE FROM Member m WHERE m.memberId = :guardianId")
+    void deleteGuardianById(@Param("guardianId") Long guardianId);
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.identification = :identification AND m.role = 'ACUDIENTE' AND m.status = 'APPROVED' AND m.isActive = true")
     boolean existsByValidGuardianIdentification(@Param("identification") String identification);
