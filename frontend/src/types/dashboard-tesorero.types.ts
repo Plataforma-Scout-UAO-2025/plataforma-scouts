@@ -20,7 +20,7 @@ export interface DashboardFinanciero {
   }[];
   ultimos_pagos: InstallmentPayment[];
   miembros_mora: MiembroMora[];
-  distribucion_pago: {
+  distribucion_pagos: {
     porcentaje_pagado: number;
     porcentaje_pendiente: number;
     porcentaje_vencido: number;
