@@ -5,6 +5,7 @@ import AdminGrupoView from "./components/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
 
+
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
 

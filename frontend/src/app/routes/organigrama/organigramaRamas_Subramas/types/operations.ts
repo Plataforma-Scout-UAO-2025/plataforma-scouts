@@ -12,7 +12,7 @@ export interface GalleryAddOperation {
 
 export interface GalleryRemoveOperation {
   op: "remove";
-  targetUuid: string;
+  targetUuid: string | null;
 }
 
 export interface GalleryUpdatePayload {
