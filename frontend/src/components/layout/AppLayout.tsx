@@ -28,6 +28,7 @@ import {
   DollarSign,
   CalendarDays,
   Pencil,
+  Network,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
