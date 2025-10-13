@@ -19,6 +19,7 @@ export default function InterestsForm({
           value={datos.hobbies}
           onChange={handleChange}
           className="w-full"
+          placeholder="Lectura, videojuegos, pintura..."
         />
       </div>
       <div className="col-span-full w-full">
@@ -29,6 +30,7 @@ export default function InterestsForm({
           value={datos.sports} 
           onChange={handleChange}
           className="w-full"
+          placeholder="Fútbol, natación, ciclismo..."
         />
       </div>
       <div className="col-span-full w-full">
@@ -39,6 +41,7 @@ export default function InterestsForm({
           value={datos.instruments}
           onChange={handleChange}
           className="w-full"
+          placeholder="Guitarra, piano, flauta..."
         />
       </div>
     </>
