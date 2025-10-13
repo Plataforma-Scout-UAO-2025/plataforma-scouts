@@ -28,18 +28,7 @@ min_machines_running = 1
 
 # Variables de entorno no sensibles
 [env]
-    SERVER_PORT = "8080"
-    APP_PROFILE = "production"
-    SHOW_SQL = "false"
-    HIBERNATE_DDL_AUTO = "validate"
-    LIQUIBASE_ENABLED = "false"
-    OKTA_OAUTH2_ISSUER = "https://dev-peshzy4g14jvfyku.us.auth0.com/"
-    OKTA_OAUTH2_AUDIENCE = "https://scouts-platform-backend/"
-    AUTH0_CLIENT_ID="OiWaUylWieF26UdxNdISP7LtZiIwANR8"
-    AUTH0_DOMAIN = "dev-peshzy4g14jvfyku.us.auth0.com"
-    AUTH0_AUDIENCE = "https://dev-peshzy4g14jvfyku.us.auth0.com/api/v2/"
-    DB_URL = "jdbc:postgresql://aws-1-us-east-2.pooler.supabase.com:5432/postgres"
-    DB_USER = "api_user.mirhzylkikwpydtwelvj"
+    SPRING_DATASOURCE_PASSWORD = "u52HpYJfyWTSheL5tgHnb9ySDcqFga"
 
 [build]
     dockerfile = "Dockerfile"

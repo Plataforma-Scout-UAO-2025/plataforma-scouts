@@ -27,7 +27,7 @@ COPY --from=builder /app/target/*.jar /app/app.jar
 
 # Variables opcionales (ajústelas en Fly: [env] / fly secrets)
 ENV JAVA_OPTS="" \
-    SPRING_PROFILES_ACTIVE=${APP_PROFILE:-production}
+    SPRING_PROFILES_ACTIVE=${APP_PROFILE:production}
 
 EXPOSE 8080
 
