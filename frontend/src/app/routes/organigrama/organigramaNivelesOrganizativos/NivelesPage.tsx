@@ -1,18 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import ExportMenu from "./components/ExportMenu";
 import LevelAccordion from "./components/LevelAccordion";
 import { useNiveles } from "./hooks/useNiveles";
 import { useNavigate } from "react-router-dom";
+import { getMembers } from "@/api/membersApi";
 
 // 🔹 Modales importados
 import CreateNivelModal from "./components/CreateNivelModal";
@@ -23,15 +17,11 @@ import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import SuccessModal from "./components/SuccessModal";
 
 import type { Nivel, Cargo } from "./types/niveles.types";
+import type { Member } from "@/types/member.type";
 
 export default function NivelesPage() {
   const currentYear = new Date().getFullYear();
-  const years = useMemo(
-    () => [currentYear + 1, currentYear, currentYear - 1, 2025, 2024],
-    [currentYear]
-  );
-
-  const { anio, setAnio, data, loading, addNivel, updateNivel, removeNivel } =
+  const { anio, data, loading, addNivel, updateNivel, removeNivel } =
     useNiveles(currentYear);
 
   // ===== ESTADOS =====
@@ -56,6 +46,30 @@ export default function NivelesPage() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const navigate = useNavigate();
+
+  // ===== MIEMBROS DESDE BACKEND =====
+  const [members, setMembers] = useState<Member[]>([]);
+  const [membersLoading, setMembersLoading] = useState<boolean>(true);
+  const [membersError, setMembersError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setMembersLoading(true);
+        const list = await getMembers();
+        if (mounted) setMembers(list || []);
+      } catch (e) {
+        console.warn("No se pudieron cargar los miembros", e);
+        if (mounted) setMembersError("No se pudieron cargar los miembros");
+      } finally {
+        if (mounted) setMembersLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // ===== HANDLERS DE NIVELES =====
 
@@ -149,15 +163,7 @@ export default function NivelesPage() {
     setShowSuccess(true);
   };
 
-  const handleToggleVisibleCargo = (cargo: Cargo, nivel: Nivel) => {
-    const actualizado = {
-      ...nivel,
-      cargos: nivel.cargos.map((c) =>
-        c.id === cargo.id ? { ...c, visible: !c.visible } : c
-      ),
-    };
-    updateNivel(actualizado);
-  };
+  // Nota: la visibilidad del cargo ahora no se alterna desde aquí; el ícono de ojo abre el modal de información.
 
   // ===== RENDER =====
 
@@ -175,19 +181,6 @@ export default function NivelesPage() {
 
       {/* CONTROLES SUPERIORES */}
       <div className="flex flex-wrap items-center gap-3 mb-8">
-        <Select value={String(anio)} onValueChange={(v) => setAnio(Number(v))}>
-          <SelectTrigger className="w-48 bg-white border-border text-foreground font-medium">
-            <SelectValue placeholder="Seleccionar año" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((y, index) => (
-              <SelectItem key={`${y}-${index}`} value={String(y)}>
-                {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <Button
           onClick={() => navigate("/app/organigrama")}
           variant="outline"
@@ -215,6 +208,18 @@ export default function NivelesPage() {
         </Card>
       ) : (
         <div className="space-y-5">
+          {/* Estado de carga/errores de miembros */}
+          {membersLoading && (
+            <Card className="p-3 text-sm text-accent-foreground bg-card border border-border">
+              Cargando miembros desde el servidor…
+            </Card>
+          )}
+          {membersError && (
+            <Card className="p-3 text-sm text-destructive bg-card border border-border">
+              {membersError}
+            </Card>
+          )}
+
           {data.niveles.length === 0 && (
             <Card className="p-6 text-accent-foreground text-center bg-card border border-border">
               Aún no hay niveles para {anio}. Crea el primero con el botón
@@ -247,9 +252,6 @@ export default function NivelesPage() {
                 handleEditCargo(cargo);
               }}
               onDeleteCargo={(cargo) => handleDeleteCargo(cargo, nivel)}
-              onToggleVisibleCargo={(cargo) =>
-                handleToggleVisibleCargo(cargo, nivel)
-              }
             />
           ))}
         </div>
@@ -277,6 +279,7 @@ export default function NivelesPage() {
         open={openCreateCargo}
         onClose={() => setOpenCreateCargo(false)}
         onSave={handleCreateCargo}
+        members={members}
       />
 
       {/* Editar Cargo */}
@@ -285,6 +288,7 @@ export default function NivelesPage() {
         cargo={cargoToEdit}
         onClose={() => setOpenEditCargo(false)}
         onSave={handleSaveEditCargo}
+        members={members}
       />
 
       {/* Confirmar Eliminación */}

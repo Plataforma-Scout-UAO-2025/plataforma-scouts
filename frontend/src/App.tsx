@@ -22,6 +22,7 @@ import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/compo
 import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
+import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 import { RawRole } from './roles/roles';
 import OrgAuthGuard from './app/routes/organigrama/OrgAuthGuard';
 
@@ -85,7 +86,16 @@ function App() {
                 </OrgAuthGuard>
               }
             />
-            <Route path="organigrama/resumen" element={<div>Vista resumen (en desarrollo)</div>} />
+            <Route
+              path="organigrama/resumen"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <OrgChartSummary />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
 
             {/* ===================== FINANCIERO ===================== */}
             <Route path="financiero/cuotas" element={<Cuotas />} />

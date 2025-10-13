@@ -12,7 +12,6 @@ interface Props {
   onAddCargo: (nivelId: string) => void;
   onEditCargo?: (cargo: Cargo) => void;
   onDeleteCargo?: (cargo: Cargo) => void;
-  onToggleVisibleCargo?: (cargo: Cargo) => void;
   /** Opcional: iniciar abierto o cerrado (por defecto: true) */
   defaultOpen?: boolean;
 }
@@ -24,7 +23,6 @@ export default function LevelAccordion({
   onAddCargo,
   onEditCargo,
   onDeleteCargo,
-  onToggleVisibleCargo,
   defaultOpen = true,
 }: Props) {
   const [open, setOpen] = useState<boolean>(defaultOpen);
@@ -123,7 +121,6 @@ export default function LevelAccordion({
                 cargo={cargo}
                 onEdit={() => onEditCargo?.(cargo)}
                 onDelete={() => onDeleteCargo?.(cargo)}
-                onToggleVisible={() => onToggleVisibleCargo?.(cargo)}
               />
             ))}
           </div>

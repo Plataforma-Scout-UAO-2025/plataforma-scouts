@@ -2,25 +2,47 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Member } from "@/types/member.type";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSave: (nombre: string, titular: string, descripcion?: string) => void;
+  members?: Member[];
 }
 
-export default function CreateCargoModal({ open, onClose, onSave }: Props) {
+export default function CreateCargoModal({ open, onClose, onSave, members = [] }: Props) {
   const [nombre, setNombre] = useState("");
-  const [titular, setTitular] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  const memberOptions = useMemo(() => {
+    return (members || [])
+      .filter((m) => m.member_id && (m.first_name || m.last_name))
+      .map((m) => ({
+        id: String(m.member_id),
+        name: `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim(),
+      }));
+  }, [members]);
 
   const handleSave = () => {
-    if (!nombre.trim() || !titular.trim()) return;
-    onSave(nombre, titular, descripcion);
+    if (!nombre.trim()) return;
+    if (!selectedMemberId) return;
+    const selected = memberOptions.find((m) => m.id === selectedMemberId);
+    if (!selected) return;
+    const titularValue = selected.name;
+    onSave(nombre, titularValue, descripcion);
     setNombre("");
-    setTitular("");
     setDescripcion("");
+    setSelectedMemberId(null);
   };
 
   return (
@@ -44,15 +66,31 @@ export default function CreateCargoModal({ open, onClose, onSave }: Props) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1 text-foreground">
-              Persona Asignada *
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">
+              Persona Asignada
             </label>
-            <Input
-              placeholder="Ej: Luis Fernández"
-              value={titular}
-              onChange={(e) => setTitular(e.target.value)}
-            />
+            {memberOptions.length > 0 ? (
+              <Select
+                value={selectedMemberId ?? undefined}
+                onValueChange={(v) => setSelectedMemberId(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un miembro" />
+                </SelectTrigger>
+                <SelectContent>
+                  {memberOptions.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No hay miembros disponibles para asignar.
+              </div>
+            )}
           </div>
 
           <div>
