@@ -63,6 +63,8 @@ postman_collection.json
 *.iml
 *.ipr
 
+# Application.properties
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
