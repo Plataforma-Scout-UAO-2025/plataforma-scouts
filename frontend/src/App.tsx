@@ -7,22 +7,11 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Home from "./app/routes/Home";
 import Dashboard from "./app/routes/dashboard/Dashboard";
+import Miembros from "./app/routes/admin-grupal/Miembros/Miembros";
 import Cuotas from "./app/routes/financiero/Cuotas/Cuotas";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
 import Grupos from "./app/routes/grupos/Grupos";
-
-// Pages - Admin Grupal
-import TeamMembers from "./app/routes/admin-grupal/Miembros/Miembros";
-
-// Pages - Scout
-import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
-import ScoutDashboard from "./app/routes/scout/dashboard/Dashboard";
-
-// Pages - Guardians/Acudientes
-import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
-import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
-import WelcomeAddMember from "./app/routes/guardians/members/components/views/WelcomeAddMember";
 
 import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
 import Pagos from "./app/routes/financiero/Pagos/Pagos";
@@ -33,174 +22,95 @@ import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/compo
 import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
+import { RawRole } from './roles/roles';
+import OrgAuthGuard from './app/routes/organigrama/OrgAuthGuard';
+
+// Miembros
+import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 
 function App() {
   useAuth0ApiWrapper();
 
   return (
     <BrowserRouter>
-      
       <div className="h-screen w-screen">
         <Routes>
           {/* 🔹 Login & Registro */}
           <Route path="/" element={<Home />} />
-          
-          {/* ============================================
-              RUTAS DE INSCRIPCIÓN Y SCOUT (Sin auth requerida aún)
-          ============================================ */}
-          <Route path="/inscripcion" element={<ScoutEnrollment />} />
-          <Route path="/scout/dashboard" element={<ScoutDashboard />} />
-          
-          {/* Redirecciones para compatibilidad con rutas antiguas de guardians */}
-          <Route path="/guardians" element={<Navigate to="/app/acudiente" replace />} />
-          <Route path="/guardians/members" element={<Navigate to="/app/acudiente/miembros" replace />} />
-          <Route path="/guardians/profile" element={<Navigate to="/app/acudiente/perfil" replace />} />
-          <Route path="/acudientes" element={<Navigate to="/app/acudiente" replace />} />
-          <Route path="/acudientes/miembros" element={<Navigate to="/app/acudiente/miembros" replace />} />
-          <Route path="/acudientes/perfil" element={<Navigate to="/app/acudiente/perfil" replace />} />
-          
-          {/* ============================================
-              RUTAS PROTEGIDAS DE LA APLICACIÓN
-              AppLayout sin withAuthenticationRequired porque cada ruta tiene su ProtectedRoute
-          ============================================ */}
+
+          {/* 🔹 Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
-            
+
             {/* ===================== ORGANIGRAMA ===================== */}
             <Route path="organigrama" element={<OrganigramaHome />} />
-            <Route path="organigrama/ramas-y-subramas" element={<Organigrama />} />
-            <Route path="organigrama/rama/:id" element={<RamaDetail />} />
-            <Route path="organigrama/subrama/:id" element={<SubramaDetail />} />
-            <Route path="organigrama/niveles-organizativos" element={<NivelesPage />} />
+            {/* Rutas CRUD del organigrama: protegidas según roles del backend */}
+            <Route
+              path="organigrama/ramas-y-subramas"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <Organigrama />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
+            <Route
+              path="organigrama/rama/:id"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <RamaDetail />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
+            <Route
+              path="organigrama/subrama/:id"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <SubramaDetail />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
+            <Route
+              path="organigrama/niveles-organizativos"
+              element={
+                <OrgAuthGuard>
+                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
+                    <NivelesPage />
+                  </ProtectedRoute>
+                </OrgAuthGuard>
+              }
+            />
             <Route path="organigrama/resumen" element={<div>Vista resumen (en desarrollo)</div>} />
-            
-            {/* ============================================
-                RUTAS PARA ADMIN DE GRUPO
-            ============================================ */}
-            <Route
-              path="dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Financiero */}
-            <Route
-              path="financiero/cuotas"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}>
-                  <Cuotas />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="financiero/cuotas/gestion"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}>
-                  <Gestion />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="financiero/pagos"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}>
-                  <Pagos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="financiero/estado-cuenta"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO"]}>
-                  <EstadoCuenta />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Gestión de miembros */}
-            <Route
-              path="miembros"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                  <TeamMembers />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* TODO: Solicitudes pendientes y rechazadas - revisar en develop */}
-            {/* <Route
-              path="solicitudes/pendientes"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                  <div>Solicitudes Pendientes</div>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="solicitudes/rechazadas"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}>
-                  <div>Solicitudes Rechazadas</div>
-                </ProtectedRoute>
-              }
-            /> */}
-            
-            {/* ============================================
-                RUTAS PARA ACUDIENTE
-            ============================================ */}
-            <Route
-              path="grupos"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <Grupos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="grupos/medical-info"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <MedicalInfo />
-                </ProtectedRoute>
-              }
-            />
-            {/* Dashboard del acudiente (vista principal con stats y acciones) */}
-            <Route
-              path="acudiente"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            {/* Tabla de miembros a cargo */}
-            <Route
-              path="acudiente/miembros"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <MembersInCharge />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="acudiente/bienvenida"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <WelcomeAddMember />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="acudiente/perfil"
-              element={
-                <ProtectedRoute allowedRoles={["ACUDIENTE"]}>
-                  <GuardianProfile />
-                </ProtectedRoute>
-              }
-            />
+
+            {/* ===================== FINANCIERO ===================== */}
+            <Route path="financiero/cuotas" element={<Cuotas />} />
+            <Route path="financiero/cuotas/gestion" element={<Gestion />} />
+
+            {/* ===================== GRUPOS ===================== */}
+            <Route path="grupos" element={<Grupos />} />
+            <Route path="grupos/medical-info" element={<MedicalInfo />} />
+
+            {/* Rutas para admin de grupo */}
+            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Cuotas /></ProtectedRoute>} />
+            <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
+            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
+            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST"]}><ScoutEnrollment /></ProtectedRoute>}/>
+            {/*
+            <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
+            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
+            */}
+
+            {/* Rutas para acudiente */}
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
+            <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
+            <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalInfo /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

@@ -23,14 +23,14 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
-@DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=none")
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SubgroupRepositoryTest {
 
     @Configuration
     @EnableJpaRepositories(basePackageClasses = SubgroupRepository.class)
-    @EntityScan(basePackageClasses = Subgroup.class)
+    @EntityScan(basePackages = "uao.edu.co.scouts_project")
     static class JpaSliceConfig { }
 
     @Autowired private SubgroupRepository subgroupRepository;

@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import uao.edu.co.scouts_project.guardian.model.Member;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
+import uao.edu.co.scouts_project.member.model.Member;
 
 @Repository
 public interface GuardianRepository extends JpaRepository<Member, Long> {

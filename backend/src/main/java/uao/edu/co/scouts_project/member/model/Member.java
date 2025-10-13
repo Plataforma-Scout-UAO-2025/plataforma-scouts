@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.guardian.model;
+package uao.edu.co.scouts_project.member.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,9 +27,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.guardian.shared.enums.Status;
-import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 
 @Builder
@@ -46,16 +45,15 @@ public class Member {
     @Column(name = "member_id")
     private Long memberId;
 
-    @NotNull
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
 
-    private Long guardianId;
+    private Integer guardianId;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subgroup_id")
     private Subgroup subgroup;
@@ -72,8 +70,7 @@ public class Member {
 
     @NotNull
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    private String role;
 
     @NotNull
     @Column(nullable = false)
@@ -110,6 +107,7 @@ public class Member {
 
     @Column(name = "acceptance_date")
     private LocalDate acceptanceDate;
+
 
     @Type(JsonType.class)
     @Column(name = "emergency_contacts", columnDefinition = "jsonb")

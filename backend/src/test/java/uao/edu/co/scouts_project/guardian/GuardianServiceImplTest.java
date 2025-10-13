@@ -33,13 +33,12 @@ import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.GuardianNotFoundException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.MemberAlreadyAssignedException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.MemberNotFoundException;
-import uao.edu.co.scouts_project.guardian.model.Member;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
 import uao.edu.co.scouts_project.guardian.service.GuardianServiceImpl;
-import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.guardian.shared.enums.Status;
-import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
+import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,7 +72,7 @@ class GuadianServiceImplTest {
                 .firstName("John")
                 .lastName("Doe")
                 .age(35)
-                .role(Role.ACUDIENTE)
+                .role("ACUDIENTE")
                 .identification("1234567890")
                 .documentType(DocumentType.CC)
                 .phone("3001234567")
@@ -92,7 +91,7 @@ class GuadianServiceImplTest {
                 .firstName("Jane")
                 .lastName("Smith")
                 .age(10)
-                .role(Role.SCOUT)
+                .role("SCOUT")
                 .identification("9876543210")
                 .documentType(DocumentType.TI)
                 .phone("3009876543")
@@ -117,7 +116,7 @@ class GuadianServiceImplTest {
                 .relationship("Father")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.now())
-                .rol(Role.ACUDIENTE)
+                .rol("ACUDIENTE")
                 .build();
 
         // Setup MemberCustom
@@ -361,7 +360,7 @@ class GuadianServiceImplTest {
         @DisplayName("Should remove guardian ID from member successfully")
         void shouldRemoveGuardianIdFromMember() {
             // Arrange
-            regularMember.setGuardianId(1L);
+            regularMember.setGuardianId(1);
             when(guardianRepository.existsById(1L)).thenReturn(true);
             when(guardianRepository.findById(2L)).thenReturn(Optional.of(regularMember));
             when(guardianRepository.save(any(Member.class))).thenReturn(regularMember);

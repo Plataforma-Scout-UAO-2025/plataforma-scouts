@@ -10,9 +10,9 @@ import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.*;
 import uao.edu.co.scouts_project.guardian.mapper.GuardianMapper;
 import uao.edu.co.scouts_project.guardian.mapper.SubgroupMapper;
-import uao.edu.co.scouts_project.guardian.model.Member;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
+import uao.edu.co.scouts_project.member.model.Member;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -108,7 +108,7 @@ public class GuardianServiceImpl implements GuardianService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("Miembro con ID " + memberId + " no encontrado"));
 
-        member.setGuardianId(guardianToAdd.getMemberId());
+        member.setGuardianId(guardianToAdd.getMemberId().intValue());
         memberRepository.save(member);
     }
 

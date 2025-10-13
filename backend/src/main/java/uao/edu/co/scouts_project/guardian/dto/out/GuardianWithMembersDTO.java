@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
-import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.guardian.shared.enums.Status;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 
 
 /**

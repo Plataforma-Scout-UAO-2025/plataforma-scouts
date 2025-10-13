@@ -8,19 +8,17 @@ interface TenantParams {
 // Hook para obtener tenantSlug y groupSlug
 export const useTenantParams = (): TenantParams => {
   return useMemo(() => {
-    // Intentar obtener de variables de entorno primero
     const tenantFromEnv = import.meta.env.VITE_TENANT_SLUG;
     const groupFromEnv = import.meta.env.VITE_GROUP_SLUG;
     
-    // Si existen en el environment, usar esos valores
     if (tenantFromEnv && groupFromEnv) {
       return {
         tenantSlug: tenantFromEnv,
         groupSlug: groupFromEnv
       };
     }
-    
-    // Valores por defecto más comunes - CAMBIAR ESTOS POR VALORES REALES
+
+    // Valores hardcodeados como fallback
     return {
       tenantSlug: 'staging-centinelas-113',
       groupSlug: 'grupo-scout-centinelas-113'     

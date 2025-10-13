@@ -9,8 +9,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import uao.edu.co.scouts_project.guardian.model.Member.EmergencyContact;
-import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.model.Member;
 
 @Getter
 @Setter
@@ -24,7 +24,7 @@ public class MemberCustom {
     private String lastName;
     private String identification;
     private DocumentType documentType;
-    private List<EmergencyContact> emergencyContacts;
+    private List<Member.EmergencyContact> emergencyContacts;
     private Integer age;
     private String gender;
     private String phone;

@@ -9,7 +9,6 @@ interface ImageDisplayProps {
 export const ImageDisplay: React.FC<ImageDisplayProps> = ({ rama }) => {
   const { getImageUrl, getGalleryUrls } = useImageStorage();
 
-  // Obtener URL del icono - priorizar iconObjectId, luego iconUrl, luego legacy props
   const getIconUrl = (): string | null => {
   const iconObjectId = rama.iconObjectId ?? rama.iconoObjectId;
   const iconUrlDirect = rama.iconUrl ?? rama.icono;
@@ -22,12 +21,10 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ rama }) => {
 
   const iconUrl = getIconUrl();
 
-  // Obtener URLs de la galería - prefer new galleryObjectIds, fallback a legacy sectionGalleryObjectIds
-  const galleryIds: string[] = (rama.galleryObjectIds && rama.galleryObjectIds.length > 0)
-    ? rama.galleryObjectIds
-  : rama.sectionGalleryObjectIds || [];
-
-  const galleryUrls = getGalleryUrls(galleryIds);
+  const galleryFromRama = (rama as unknown as Record<string, unknown>)['gallery'] as unknown[] | undefined;
+  const galleryUrls: string[] = Array.isArray(galleryFromRama) && galleryFromRama.length > 0
+    ? (galleryFromRama as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean)
+    : getGalleryUrls((rama.galleryObjectIds && rama.galleryObjectIds.length > 0) ? rama.galleryObjectIds : (rama.sectionGalleryObjectIds || []));
 
   const displayName = rama.name ?? rama.nombre ?? 'Rama';
 

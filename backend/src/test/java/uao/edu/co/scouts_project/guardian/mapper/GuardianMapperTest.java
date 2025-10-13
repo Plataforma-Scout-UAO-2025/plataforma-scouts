@@ -19,12 +19,12 @@ import org.junit.jupiter.api.Test;
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
-import uao.edu.co.scouts_project.guardian.model.Member;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
-import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.guardian.shared.enums.Status;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
+import uao.edu.co.scouts_project.member.model.Member;
 
 public class GuardianMapperTest {
 
@@ -59,7 +59,7 @@ public class GuardianMapperTest {
                 .relationship("Father")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.of(2023, 1, 15))
-                .rol(Role.ACUDIENTE)
+                .rol("ACUDIENTE")
                 .build();
 
         // Setup Member with full data
@@ -70,7 +70,7 @@ public class GuardianMapperTest {
                 .firstName("John")
                 .lastName("Doe")
                 .age(35)
-                .role(Role.ACUDIENTE)
+                .role("ACUDIENTE")
                 .identification("1234567890")
                 .documentType(DocumentType.CC)
                 .email("john.doe@example.com")
@@ -99,7 +99,7 @@ public class GuardianMapperTest {
                 .firstName("Jane")
                 .lastName("Smith")
                 .age(10)
-                .role(Role.SCOUT)
+                .role("SCOUT")
                 .identification("9876543210")
                 .documentType(DocumentType.TI)
                 .gender("FEMALE")
@@ -181,7 +181,7 @@ public class GuardianMapperTest {
                     .relationship("Father")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
-                    .rol(Role.ACUDIENTE)
+                    .rol("ACUDIENTE")
                     .build();
 
             // Act
@@ -342,7 +342,7 @@ public class GuardianMapperTest {
         @DisplayName("Should handle different roles")
         void shouldHandleDifferentRoles() {
             // Arrange
-            guardianMember.setRole(Role.SCOUTER);
+            guardianMember.setRole("SCOUTER");
 
             // Act
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
@@ -410,7 +410,7 @@ public class GuardianMapperTest {
         @DisplayName("Should handle different role types")
         void shouldHandleDifferentRoleTypes() {
             // Arrange
-            memberWithRole.setRole(Role.ADMIN_GLOBAL);
+            memberWithRole.setRole("ADMIN_GLOBAL");
 
             // Act
             MemberDTO result = GuardianMapper.toMemberDTO(memberWithRole);
@@ -540,7 +540,7 @@ public class GuardianMapperTest {
                     .relationship("Guardian")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
-                    .rol(Role.ACUDIENTE)
+                    .rol("ACUDIENTE")
                     .build();
 
             // Act

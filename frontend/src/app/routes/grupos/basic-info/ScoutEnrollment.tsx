@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,16 +17,24 @@ import {
 import type {
   PersonalData,
   SchoolData,
-  CreateMemberRequest,
-  CreateMemberWithSchoolRequest,
   ChangeEvent,
   EmergencyContactField,
-} from "./types/enrollment.type";
-import { createMember, createMemberWithSchool } from "@/api/membersApi";
-import { transformarDatos } from "./utils/enrollment.utils";
+} from "@/types/enrollment.type";
+import type { Member } from "@/types/member.type";
+import type { GroupResponseDTO, TenantDTO } from "@/types/group.type";
+import { transformData } from "./utils/enrollment.utils";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useMember } from "@/hooks/useMember";
+import { createMemberAction } from "@/store/members/membersActions";
+import { getAllTenants, getGroupsByTenant } from "@/api/organigramaApi";
 
 function ScoutEnrollment() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading } = useMember();
+  const [groups, setGroups] = useState<GroupResponseDTO[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+  
   const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     firstname: "",
     lastname: "",
@@ -44,6 +52,7 @@ function ScoutEnrollment() {
     sports: "",
     instruments: "",
     group: "",
+    tenantId: "",
     emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
 
@@ -59,11 +68,47 @@ function ScoutEnrollment() {
   const [incluirDatosEscolares, setIncluirDatosEscolares] =
     useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+
+  // Cargar grupos
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setLoadingGroups(true);
+
+        const tenants = await getAllTenants<TenantDTO>();
+        
+        const allGroupsPromises = tenants.map((tenant) =>
+          getGroupsByTenant<GroupResponseDTO>(tenant.slug)
+        );
+        const allGroupsArrays = await Promise.all(allGroupsPromises);
+        
+        setGroups(allGroupsArrays.flat());
+      } catch (error) {
+        console.error("Error al cargar los grupos:", error);
+        alert("Error al cargar la lista de grupos. Por favor, recarga la página.");
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+
+    fetchGroups();
+  }, []);
 
   const handlePersonalChange = (e: ChangeEvent): void => {
     const { name, value } = e.target;
-    setDatosPersonales((prev) => ({ ...prev, [name]: value }));
+    
+    // Se guarda el tenantId
+    if (name === "group") {
+      const selectedGroup = groups.find(g => g.name === value);
+      
+      setDatosPersonales((prev) => ({ 
+        ...prev, 
+        [name]: value,
+        tenantId: selectedGroup?.tenant_id || ""
+      }));
+    } else {
+      setDatosPersonales((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSchoolChange = (e: ChangeEvent): void => {
@@ -123,23 +168,26 @@ function ScoutEnrollment() {
       return;
     }
 
-    setLoading(true);
+    await enviarDatos();
+  };
+
+  const enviarDatos = async (): Promise<void> => {
     try {
-      const memberData: CreateMemberRequest = transformarDatos(datosPersonales);
+      const memberData: Member = transformData(datosPersonales);
 
       if (
         incluirDatosEscolares &&
         (datosEscolares.institution || datosEscolares.course)
       ) {
-        // Crear miembro con datos escolares en una sola petición
-        const requestData: CreateMemberWithSchoolRequest = {
+        // Crear miembro con datos escolares
+        const requestData = {
           member: memberData,
           school: datosEscolares,
         };
-        await createMemberWithSchool(requestData);
+        await dispatch(createMemberAction(requestData.member)).unwrap();
       } else {
         // Crear solo el miembro
-        await createMember(memberData);
+        await dispatch(createMemberAction(memberData)).unwrap();
       }
 
       setShowModal(true);
@@ -148,8 +196,6 @@ function ScoutEnrollment() {
         "Error al enviar la solicitud: " +
           (error instanceof Error ? error.message : "Error desconocido")
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -159,8 +205,7 @@ function ScoutEnrollment() {
     if (incluir) {
       setPagina(3);
     } else {
-      // Si no incluye, envía directamente
-      handleSubmit(new Event("submit") as unknown as React.FormEvent);
+      enviarDatos();
     }
   };
 
@@ -328,11 +373,22 @@ function ScoutEnrollment() {
           onChange={handlePersonalChange}
           className="w-full border border-input rounded-md h-10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           required
+          disabled={loadingGroups}
         >
-          <option value="">Selecciona un grupo...</option>
-          <option value="Centinelas 113">Centinelas 113</option>
-          <option value="803 Chiminigagua">803 Chiminigagua</option>
+          <option value="">
+            {loadingGroups ? "Cargando grupos..." : "Selecciona un grupo..."}
+          </option>
+          {groups.map((group, groupId) => (
+            <option key={groupId} value={group.name}>
+              {group.name}
+            </option>
+          ))}
         </select>
+        {!loadingGroups && groups.length === 0 && (
+          <p className="text-sm text-red-600 mt-1">
+            No se encontraron grupos disponibles
+          </p>
+        )}
       </div>
 
       {/* Contactos de emergencia */}
@@ -531,7 +587,7 @@ function ScoutEnrollment() {
   const progreso = (pagina / totalPaginas) * 100;
 
   return (
-    <div className="min-h-screen w-screen bg-background px-4 md:px-20 py-10">
+    <div className="min-h-screen bg-background px-4 md:px-20 py-10">
       <h1 className="text-2xl font-bold text-primary mb-8">
         Inscríbete al grupo scout
       </h1>
@@ -605,7 +661,7 @@ function ScoutEnrollment() {
           <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-8 h-8 text-green-600"
+                className="w-8 h-8 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

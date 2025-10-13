@@ -1,6 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getMember, getMembers, updateMember } from "../../api/membersApi";
+import {
+  getMember,
+  getMembers,
+  updateMember,
+  createMember,
+} from "@/api/membersApi";
 import { validateClient } from "../../lib/zodUtils";
 import { updateMemberSchema } from "@/models/models/memberSchema";
 import type { Member } from "@/models/types/memberTypes";
@@ -65,3 +70,24 @@ export const updateMemberAction = createAsyncThunk<
     }
   }
 );
+
+// Crear un nuevo miembro
+export const createMemberAction = createAsyncThunk<
+  { message: string; newMember?: Member },
+  Member,
+  { rejectValue: { error: string } }
+>("member/create", async (memberData: Member, { rejectWithValue }) => {
+  try {
+    const response = await createMember(memberData);
+
+    return {
+      message: "Miembro creado exitosamente",
+      newMember: response,
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage = errorData?.error || "Error al crear el miembro";
+    return rejectWithValue({ error: errorMessage });
+  }
+});

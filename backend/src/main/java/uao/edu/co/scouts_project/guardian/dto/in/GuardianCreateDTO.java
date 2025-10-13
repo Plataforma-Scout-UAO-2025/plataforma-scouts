@@ -6,8 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
-import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.guardian.shared.enums.Status;
+
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 
 import java.time.LocalDate;
@@ -17,6 +16,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 
 
 @Getter
@@ -28,7 +29,7 @@ import jakarta.validation.constraints.Size;
 public class GuardianCreateDTO {
     private String userId;
     private SubgroupDTO subgroup;
-    private Role rol;
+    private String rol;
     private String tenantId;
     private String subgroupId;
     @NotBlank(message = "First name is required")

@@ -1,11 +1,7 @@
-import type {
-  PersonalData,
-  CreateMemberRequest,
-  EmergencyContact,
-} from "../types/enrollment.type";
-import { GROUP_TO_SUBGROUP_ID } from "../types/enrollment.type";
+import type { PersonalData } from "@/types/enrollment.type";
+import type { EmergencyContact, Member } from "@/types/member.type";
 
-export const calcularEdad = (fecha: string): number => {
+export const calculateAge = (fecha: string): number => {
   if (!fecha) return 0;
   const hoy = new Date();
   const nacimiento = new Date(fecha);
@@ -15,22 +11,19 @@ export const calcularEdad = (fecha: string): number => {
   return edad;
 };
 
-export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
-  const edad = calcularEdad(data.birth_date);
+export const transformData = (data: PersonalData): Member => {
+  const edad = calculateAge(data.birth_date);
 
-  const emergencyPhone: Record<string, EmergencyContact> = {};
-  data.emergency_contacts.forEach((contact, index) => {
-    if (contact.name && contact.phone) {
-      emergencyPhone[`contact${index + 1}`] = {
-        name: contact.name,
-        relationship: contact.relationship,
-        phone: contact.phone,
-      };
-    }
-  });
+  const emergency_contacts: EmergencyContact[] = data.emergency_contacts
+    .filter((contact) => contact.name && contact.phone)
+    .map((contact) => ({
+      name: contact.name,
+      relationship: contact.relationship,
+      phone: contact.phone,
+    }));
 
   return {
-    subgroup_id: GROUP_TO_SUBGROUP_ID[data.group] || 1,
+    tenant_id: data.tenantId,
     first_name: data.firstname,
     last_name: data.lastname,
     age: edad,
@@ -38,6 +31,7 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     document_type: data.document_type,
     email: data.email,
     gender: data.gender,
+    role: "scout",
     birth_date: new Date(data.birth_date),
     address: data.address,
     phone: data.phone,
@@ -46,7 +40,8 @@ export const transformarDatos = (data: PersonalData): CreateMemberRequest => {
     hobbies: data.hobbies,
     sports: data.sports,
     instruments: data.instruments,
+    is_active: true,
     status: "PENDING",
-    emergency_contacts: emergencyPhone,
+    emergency_contacts,
   };
 };
