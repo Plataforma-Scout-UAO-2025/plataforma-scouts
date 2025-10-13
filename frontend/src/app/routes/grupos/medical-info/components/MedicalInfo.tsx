@@ -120,7 +120,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
       };
 
       const response = await api.post(
-        `http://localhost:8080/api/medical_record/create_record/${selectedMemberId}`,
+        `http://localhost:8080/api/v1/medical_record/create_record/${selectedMemberId}`,
         payload,
         {
           headers: {
@@ -185,7 +185,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
       };
 
       const response = await api.put(
-        `http://localhost:8080/api/medical_record/update_record/${memberId}`,
+        `http://localhost:8080/api/v1/medical_record/update_record/${memberId}`,
         payload,
         {
           headers: {

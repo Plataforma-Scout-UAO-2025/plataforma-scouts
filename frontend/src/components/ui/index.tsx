@@ -2,7 +2,6 @@ export { Button } from "./button"
 export { Input } from "./input"
 export { Label } from "./label"
 export { Checkbox } from "./checkbox"
-export { default as BackButton } from "./back-button"
 export { Badge } from "./badge"
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card"
 export {

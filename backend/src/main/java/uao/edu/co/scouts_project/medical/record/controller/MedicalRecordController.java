@@ -18,7 +18,7 @@ import uao.edu.co.scouts_project.medical.record.service.IMedicalRecordService;
 
 @Tag(name = "Medical - Record", description = "Gestión ficha médica 1:1 por tenant_id y member_id")
 @RestController
-@RequestMapping(path = "/api/medical_record", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(path = "/api/v1/medical_record", produces = MediaType.APPLICATION_JSON_VALUE)
 public class MedicalRecordController {
 
     private final IMedicalRecordService service;

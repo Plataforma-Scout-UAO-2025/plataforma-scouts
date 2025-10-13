@@ -150,7 +150,7 @@ public class SecurityConfig {
 
                                                 //
                                                 // Datos médicos
-                                                .requestMatchers("/api/medical_record/**").permitAll()
+                                                .requestMatchers("/api/v1/medical_record/**").permitAll()
 
                                                 //
                                                 // Pagos

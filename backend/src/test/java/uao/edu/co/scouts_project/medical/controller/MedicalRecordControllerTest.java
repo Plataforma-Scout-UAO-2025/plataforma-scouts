@@ -72,7 +72,7 @@ class MedicalRecordControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/medical_record/create_record/456")
+        mockMvc.perform(post("/api/v1/medical_record/create_record/456")
                         .header("X-Tenant-Id", "tenant-123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
@@ -85,7 +85,7 @@ class MedicalRecordControllerTest {
     void testGet() throws Exception {
         when(service.obtenerPorMember(anyString(), anyLong())).thenReturn(dtoStub());
 
-        mockMvc.perform(get("/api/medical_record/list_record/456")
+        mockMvc.perform(get("/api/v1/medical_record/list_record/456")
                         .header("X-Tenant-Id", "tenant-123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("900001"));
@@ -111,7 +111,7 @@ class MedicalRecordControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/medical_record/update_record/456")
+        mockMvc.perform(put("/api/v1/medical_record/update_record/456")
                         .header("X-Tenant-Id", "tenant-123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
@@ -125,7 +125,7 @@ class MedicalRecordControllerTest {
         when(service.listarPorTenant(anyString(), any()))
                 .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(dtoStub())));
 
-        mockMvc.perform(get("/api/medical_record/list_by_tenant")
+        mockMvc.perform(get("/api/v1/medical_record/list_by_tenant")
                         .header("X-Tenant-Id", "tenant-123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value("900001"));
