@@ -2,8 +2,9 @@ package uao.edu.co.scouts_project.guardian.dto.in;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
 import uao.edu.co.scouts_project.guardian.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.guardian.shared.enums.Status;
@@ -18,17 +19,8 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 
-/**
- * Represents a DTO of inputs for Guardian with associated Members.
- *
- * <p>
- * This class only deals with serving inputs validate types and then map to an entity for persistence
- * 
- * Writings of type save and update (when only updating guardian info)
- * </p>
- *
- */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -39,16 +31,16 @@ public class GuardianCreateDTO {
     private Role rol;
     private String tenantId;
     private String subgroupId;
-    @NotBlank
+    @NotBlank(message = "First name is required")
     private String firstName;
-    @NotBlank
+    @NotBlank(message = "Last name is required")
     private String lastName;
-    @Positive
+    @Positive(message = "Age must be positive")
     private Integer age;
-    @Size(max = 10)
+    @Size(max = 10, message = "Identification must not exceed 10 characters")
     private String identification;
     private DocumentType documentType;
-    @Size(max = 10)
+    @Size(max = 10, message = "Phone must not exceed 10 characters")
     private String phone;
     private String relationship;
     private Boolean isActive;
