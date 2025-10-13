@@ -159,4 +159,38 @@ public class Auth0PermissionAdapter implements PermissionQueryPort {
         return "";
     }
 
+    @Override
+    public String getCurrentUserConnection() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                return "";
+            }
+            // Intento 1
+            Object principal = auth.getPrincipal();
+            if (principal instanceof Jwt jwt) {
+                String val = jwt.getClaimAsString("https://scouts-platform-backend/connections");
+                return val == null ? "" : val.trim();
+            }
+
+            // Intento 2
+            if (auth instanceof JwtAuthenticationToken jat) {
+                Jwt jwt = jat.getToken();
+                if (jwt != null) {
+                    String val = jwt.getClaimAsString("https://scouts-platform-backend/connections");
+                    return val == null ? "" : val.trim();
+                }
+            }
+
+            // Intento 3
+            if (principal instanceof java.util.Map<?,?> map) {
+                Object val = map.get("https://scouts-platform-backend/connections");
+                return val == null ? "" : String.valueOf(val).trim();
+            }
+        } catch (Exception e) {
+            log.error("No fue posible extraer connection del JWT actual: {}", e.getMessage());
+        }
+        return "";
+    }
+
 }

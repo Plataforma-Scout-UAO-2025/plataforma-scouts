@@ -6,6 +6,7 @@ import AcudienteView from "./components/AcudienteView";
 import ScoutView from "./components/ScoutView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
 
+
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
 

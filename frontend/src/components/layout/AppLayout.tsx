@@ -72,6 +72,12 @@ const adminGlobalItems: MenuItem[] = [
     icon: <LineChart />,
     href: "/app/dashboard-global",
   },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
 ];
 
 const adminGrupalItems: MenuItem[] = [
