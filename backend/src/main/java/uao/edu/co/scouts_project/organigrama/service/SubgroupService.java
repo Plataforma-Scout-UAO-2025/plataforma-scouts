@@ -44,15 +44,16 @@ public class SubgroupService {
     }
 
     @Transactional(readOnly = true)
-    public List<SubgroupResponseDTO> getSubgroupsBySection(String tenantSlug, String groupSlug, Long sectionId) {
+    public List<SubgroupResponseDTO> getSubgroupsBySection(String tenantId, String groupSlug, Long sectionId) {
         // Validar jerarquía y obtener entidades necesarias de una vez
-        Tenant tenant = tenantRepository.findBySlug(tenantSlug).orElseThrow(() -> new RuntimeException("Tenant not found"));
-        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug).orElseThrow(() -> new RuntimeException("Group not found"));
+        verifyTenantExists(tenantId);
+        Group group = groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
         validateSection(group.getGroupId(), sectionId); // Validar que la sección pertenece al grupo
-        
+
         // 1. Obtener todos los subgrupos en una consulta
         List<Subgroup> subgroups = subgroupRepository.findByTenantIdAndGroupIdAndSectionId(
-            tenant.getTenantId(), group.getGroupId(), sectionId);
+            tenantId, group.getGroupId(), sectionId);
 
         // 2. Recolectar TODOS los UUIDs de TODAS las imágenes (fotos principales y galerías)
         // TODO: GALERÍA DE FOTOS - Lógica de galería temporalmente deshabilitada
@@ -89,23 +90,24 @@ public class SubgroupService {
     }
 
     @Transactional(readOnly = true)
-    public SubgroupResponseDTO getSubgroupById(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
-        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+    public SubgroupResponseDTO getSubgroupById(String tenantId, String groupSlug, Long sectionId, Long subgroupId) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantId, groupSlug, sectionId, subgroupId);
         return toResponseDTO(subgroup);
     }
 
-    public SubgroupResponseDTO createSubgroup(String tenantSlug, String groupSlug, Long sectionId, SubgroupDTO dto) {
+    public SubgroupResponseDTO createSubgroup(String tenantId, String groupSlug, Long sectionId, SubgroupDTO dto) {
         // La validación ahora es más eficiente
-        Tenant tenant = tenantRepository.findBySlug(tenantSlug).orElseThrow(() -> new RuntimeException("Tenant not found"));
-        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug).orElseThrow(() -> new RuntimeException("Group not found"));
+        verifyTenantExists(tenantId);
+        Group group = groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
         validateSection(group.getGroupId(), sectionId);
 
         if (subgroupRepository.existsBySectionIdAndName(sectionId, dto.name())) {
             throw new RuntimeException("Subgroup name already exists in this section: " + dto.name());
         }
 
-        Subgroup subgroup = new Subgroup();
-        subgroup.setTenantId(tenant.getTenantId());
+    Subgroup subgroup = new Subgroup();
+    subgroup.setTenantId(tenantId);
         subgroup.setGroupId(group.getGroupId());
         subgroup.setSectionId(sectionId);
         subgroup.setName(dto.name());
@@ -127,8 +129,8 @@ public class SubgroupService {
         return toResponseDTO(saved);
     }
 
-    public SubgroupResponseDTO updateSubgroup(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId, SubgroupDTO dto) {
-        Subgroup existing = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+    public SubgroupResponseDTO updateSubgroup(String tenantId, String groupSlug, Long sectionId, Long subgroupId, SubgroupDTO dto) {
+    Subgroup existing = findSubgroupOrThrow(tenantId, groupSlug, sectionId, subgroupId);
 
         if (dto.name() != null && !dto.name().equals(existing.getName())) {
             if (subgroupRepository.existsBySectionIdAndName(sectionId, dto.name())) {
@@ -167,8 +169,8 @@ public class SubgroupService {
         return toResponseDTO(updated);
     }
 
-    public void deleteSubgroup(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
-        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+    public void deleteSubgroup(String tenantId, String groupSlug, Long sectionId, Long subgroupId) {
+    Subgroup subgroup = findSubgroupOrThrow(tenantId, groupSlug, sectionId, subgroupId);
         
         safeDeleteFromStorage(subgroup.getPhotoPrincipal());
         // TODO: GALERÍA DE FOTOS - Eliminación de galería temporalmente deshabilitada
@@ -181,8 +183,8 @@ public class SubgroupService {
     
     // TODO: GALERÍA DE FOTOS - Método temporalmente deshabilitado
     /*@Transactional
-    public void deleteGalleryImageById(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId, UUID objectId) {
-        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+    public void deleteGalleryImageById(String tenantId, String groupSlug, Long sectionId, Long subgroupId, UUID objectId) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantId, groupSlug, sectionId, subgroupId);
         
         UUID[] galleryIds = subgroup.getGalleryObjectIds();
         if (galleryIds == null || galleryIds.length == 0) return;
@@ -197,8 +199,8 @@ public class SubgroupService {
     }*/
 
     @Transactional
-    public void deletePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
-        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+    public void deletePhotoPrincipal(String tenantId, String groupSlug, Long sectionId, Long subgroupId) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantId, groupSlug, sectionId, subgroupId);
         
         UUID photoPrincipalIdToDelete = subgroup.getPhotoPrincipal();
         if (photoPrincipalIdToDelete != null) {
@@ -209,8 +211,8 @@ public class SubgroupService {
     }
     
     @Transactional
-    public void updatePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId, UUID photoObjectId) {
-        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+    public void updatePhotoPrincipal(String tenantId, String groupSlug, Long sectionId, Long subgroupId, UUID photoObjectId) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantId, groupSlug, sectionId, subgroupId);
         
         // Eliminar foto anterior si existe y es diferente
         if (subgroup.getPhotoPrincipal() != null && !subgroup.getPhotoPrincipal().equals(photoObjectId)) {
@@ -237,9 +239,9 @@ public class SubgroupService {
     
     // TODO: GALERÍA DE FOTOS - Método temporalmente deshabilitado
     /*@Transactional
-    public void patchGallery(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId,
-                            List<uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest.PatchOperation> operations) {
-        Subgroup subgroup = findSubgroupOrThrow(tenantSlug, groupSlug, sectionId, subgroupId);
+    public void patchGallery(String tenantId, String groupSlug, Long sectionId, Long subgroupId,
+            List<uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest.PatchOperation> operations) {
+        Subgroup subgroup = findSubgroupOrThrow(tenantId, groupSlug, sectionId, subgroupId);
         
         UUID[] currentGallery = subgroup.getGalleryObjectIds();
         if (currentGallery == null) {
@@ -310,8 +312,8 @@ public class SubgroupService {
         subgroupRepository.save(subgroup);
     }*/
     
-    private Subgroup findSubgroupOrThrow(String tenantSlug, String groupSlug, Long sectionId, Long subgroupId) {
-        validateHierarchy(tenantSlug, groupSlug, sectionId);
+    private Subgroup findSubgroupOrThrow(String tenantId, String groupSlug, Long sectionId, Long subgroupId) {
+        validateHierarchy(tenantId, groupSlug, sectionId);
         Subgroup subgroup = subgroupRepository.findById(subgroupId)
                 .orElseThrow(() -> new RuntimeException("Subgroup not found with id: " + subgroupId));
         if (!subgroup.getSectionId().equals(sectionId)) {
@@ -320,10 +322,17 @@ public class SubgroupService {
         return subgroup;
     }
 
-    private void validateHierarchy(String tenantSlug, String groupSlug, Long sectionId) {
-        Tenant tenant = tenantRepository.findBySlug(tenantSlug).orElseThrow(() -> new RuntimeException("Tenant not found"));
-        Group group = groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug).orElseThrow(() -> new RuntimeException("Group not found"));
+    private void validateHierarchy(String tenantId, String groupSlug, Long sectionId) {
+        verifyTenantExists(tenantId);
+        Group group = groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
         validateSection(group.getGroupId(), sectionId);
+    }
+
+    private void verifyTenantExists(String tenantId) {
+        if (!tenantRepository.existsById(tenantId)) {
+            throw new RuntimeException("Tenant not found");
+        }
     }
 
     private void validateSection(Long groupId, Long sectionId) {
