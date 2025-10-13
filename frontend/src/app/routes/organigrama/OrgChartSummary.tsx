@@ -8,7 +8,7 @@ import { useNiveles } from "./organigramaNivelesOrganizativos/hooks/useNiveles";
 import type { OrganigramaNiveles } from "./organigramaNivelesOrganizativos/types/niveles.types";
 import { exportOrgChartCombinedPDF, exportLevelsCSV, exportBranchesCSV } from "./utils/exportOrgChartCombined.ts";
 
-type BranchLite = { id: string | number; name: string };
+type BranchLite = { id: string | number; name: string; description?: string; minAge?: number; maxAge?: number; status?: string };
 type SubgroupLite = { id: string | number; name?: string; status?: string; leader?: string };
 
 export default function OrgChartSummary() {
@@ -33,8 +33,12 @@ export default function OrgChartSummary() {
         const normalizeSection = (s: any): BranchLite | null => {
           const id = s?.id ?? s?.sectionId ?? s?.section_id ?? null;
           const name = s?.name ?? s?.nombre ?? "";
+          const description = s?.description ?? s?.descripcion ?? undefined;
+          const minAge = typeof s?.minAge === 'number' ? s.minAge : (typeof s?.edadMin === 'number' ? s.edadMin : undefined);
+          const maxAge = typeof s?.maxAge === 'number' ? s.maxAge : (typeof s?.edadMax === 'number' ? s.edadMax : undefined);
+          const status = s?.status ?? s?.estado ?? undefined;
           if (id == null || String(id).trim() === "") return null;
-          return { id, name };
+          return { id, name, description, minAge, maxAge, status };
         };
         const normalizeSubgroup = (sg: any): SubgroupLite => {
           return {
