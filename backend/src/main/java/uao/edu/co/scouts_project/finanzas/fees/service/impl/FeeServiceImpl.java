@@ -1,15 +1,17 @@
 package uao.edu.co.scouts_project.finanzas.fees.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -40,9 +42,10 @@ import uao.edu.co.scouts_project.finanzas.fees.repository.IMemberReadRepository;
 import uao.edu.co.scouts_project.finanzas.fees.repository.projection.IdNameProjection;
 import uao.edu.co.scouts_project.finanzas.fees.service.IFeeService;
 
+@Slf4j                                 
 @Service
-@RequiredArgsConstructor
-@Transactional
+@RequiredArgsConstructor               
+@Transactional                         
 public class FeeServiceImpl implements IFeeService {
 
   private final IConceptRepository conceptRepo;
@@ -55,11 +58,22 @@ public class FeeServiceImpl implements IFeeService {
   // ---------------------------------------------------------------------
   // CREATE (con generación de installments) - usando associated_to
   // ---------------------------------------------------------------------
+
+  /**
+   * Crea una nueva cuota (FeePlan) y genera los Installments según el scope definido.
+   * - Valida fechas y tipo de alcance (scope).
+   * - Realiza un upsert del Concepto según su nombre y tenant.
+   * - Normaliza el campo JSON `associated_to` para cumplir las restricciones de la base de datos.
+   * - Construye el calendario de pagos según la periodicidad indicada.
+   * - Crea las cuentas necesarias y los installments correspondientes.
+   * - Devuelve un CuotaDto; si el scope es SCOUT, incluye información del miembro asociado.
+   */
+
   @Override
-  public CuotaDto create(CreateCuotaDto dto) {
+  public CuotaDto create(@NonNull CreateCuotaDto dto) {
     final String tenantId = dto.tenant_id();
 
-    // -------- Validaciones básicas --------
+    // Validacion de consistencia temporal.
     if (dto.end_date().isBefore(dto.start_date())) {
       throw new IllegalArgumentException("end_date must be >= start_date");
     }
@@ -67,27 +81,22 @@ public class FeeServiceImpl implements IFeeService {
         !dto.end_date().equals(dto.start_date())) {
       throw new IllegalArgumentException("For SINGLE periodicity, end_date must equal start_date");
     }
-
-    // Validación de associated_to según scope
-    if (dto.scope() == FeeScope.ALL) {
-      if (dto.associated_to() != null && !dto.associated_to().isNull()) {
-        throw new IllegalArgumentException("associated_to must be null when scope=ALL");
-      }
-    } else {
-      // SCOUT | SECTION | SUBGROUP
-      if (dto.associated_to() == null || dto.associated_to().isNull()
-          || !dto.associated_to().hasNonNull("id")) {
-        throw new IllegalArgumentException("associated_to.id is required for scope=" + dto.scope());
-      }
+    if (dto.amount() == null || dto.amount().compareTo(BigDecimal.ZERO) <= 0) {
+    throw new IllegalArgumentException("amount must be greater than zero");
     }
+    
 
-    // -------- Concept (upsert por nombre) --------
+    // Validacion del 'associated_to' según el scope.
+    validateAssociatedTo(dto);
+
+    // Upsert de Concept por nombre (scope por tenant).
     Concept concept = conceptRepo.findByNameIgnoreCase(dto.name())
         .orElseGet(() -> {
-          Concept c = new Concept();
-          c.setName(dto.name());
-          c.setDescription(dto.description());
-          c.setTenantId(tenantId);
+          var c = Concept.builder()
+              .name(dto.name())
+              .description(dto.description())
+              .tenantId(tenantId)
+              .build();
           return conceptRepo.save(c);
         });
     if (concept.getTenantId() == null) {
@@ -95,175 +104,103 @@ public class FeeServiceImpl implements IFeeService {
       concept = conceptRepo.save(concept);
     }
 
-    // -------- FeePlan base --------
-    FeePlan fp = new FeePlan();
-    fp.setConcept(concept);
-    fp.setAmount(dto.amount());
-    fp.setPeriodicity(dto.periodicity() != null ? dto.periodicity().name() : null);
-    fp.setScope(dto.scope() != null ? dto.scope().name() : null);
-    fp.setStartDate(dto.start_date());
-    fp.setEndDate(dto.end_date());
-    fp.setTenantId(tenantId);
+    //FeePlan con builder.
+    FeePlan fp = FeePlan.builder()
+        .concept(concept)
+        .amount(dto.amount())
+        .periodicity(dto.periodicity() != null ? dto.periodicity().name() : null)
+        .scope(dto.scope() != null ? dto.scope().name() : null)
+        .startDate(dto.start_date())
+        .endDate(dto.end_date())
+        .tenantId(tenantId)
+        .build();
 
-    JsonNode associatedTo = dto.associated_to(); // puede ser null en scope=ALL
+    final JsonNode associatedTo = dto.associated_to(); // puede ser null en scope=ALL
 
-    // === EXTRAER assocId (para targets) ===
-    String assocId = (associatedTo != null && !associatedTo.isNull() && associatedTo.hasNonNull("id"))
+    // Extraer assocId si viene (para buscar targets).
+    final String assocId = (associatedTo != null && !associatedTo.isNull() && associatedTo.hasNonNull("id"))
         ? associatedTo.get("id").asText()
         : null;
 
-    // -------- Resolución de targets según scope --------
     List<MemberView> targets = switch (dto.scope()) {
-
       case ALL      -> memberRepo.findScoutsByTenant(tenantId);
-
-      case SCOUT    -> {
-        Long scoutId = null;
-        try {
-          scoutId = Long.valueOf(assocId);
-        } catch (NumberFormatException e) {
-          throw new IllegalArgumentException("associated_to.id must be a valid Long for scope=SCOUT");
-        }
-        yield memberRepo.findScoutById(tenantId, scoutId);
-      }
-
-      case SECTION  -> {
-        Long sectionId = null;
-        try {
-          sectionId = Long.valueOf(assocId);
-        } catch (NumberFormatException e) {
-          throw new IllegalArgumentException("associated_to.id must be a valid Long for scope=SECTION");
-        }
-        yield memberRepo.findScoutsBySection(tenantId, sectionId);
-      }
-      case SUBGROUP -> {
-        Long subgroupId = null;
-        try {
-          subgroupId = Long.valueOf(assocId);
-        } catch (NumberFormatException e) {
-          throw new IllegalArgumentException("associated_to.id must be a valid Long for scope=SUBGROUP");
-        }
-        yield memberRepo.findScoutsBySubgroup(tenantId, subgroupId);
-      }
+      case SCOUT    -> memberRepo.findScoutById(tenantId, parseAssocId(assocId, "SCOUT"));
+      case SECTION  -> memberRepo.findScoutsBySection(tenantId, parseAssocId(assocId, "SECTION"));
+      case SUBGROUP -> memberRepo.findScoutsBySubgroup(tenantId, parseAssocId(assocId, "SUBGROUP"));
     };
 
     if (dto.scope() != FeeScope.ALL && (targets == null || targets.isEmpty())) {
       throw new IllegalArgumentException("No targets found for the provided associated_to.id / scope.");
     }
 
-    // === NORMALIZACIÓN para cumplir el CHECK de BD ===
-    if (dto.scope() == FeeScope.ALL) {
-      // Guardar como NULL de SQL (no 'null'::jsonb)
-      fp.setAssociatedTo(null);
-    } else {
-      // Debe ser objeto con id y name no vacíos
-      if (associatedTo == null || associatedTo.isNull() || !associatedTo.isObject()) {
-        throw new IllegalArgumentException("associated_to must be a JSON object when scope=" + dto.scope());
-      }
-      ObjectNode obj = (ObjectNode) associatedTo;
-
-      String idVal = obj.hasNonNull("id") ? obj.get("id").asText() : null;
-      String nameVal = obj.hasNonNull("name") ? obj.get("name").asText() : null;
-
-      if (idVal == null || idVal.isBlank()) {
-        throw new IllegalArgumentException("associated_to.id is required and non-empty");
-      }
-
-      // Si falta name, lo intentamos enriquecer con el primer target
-      if (nameVal == null || nameVal.isBlank()) {
-        String resolvedName = null;
-        MemberView t = targets.get(0);
-        switch (dto.scope()) {
-          case SCOUT -> {
-            String first = t.getFirstName() != null ? t.getFirstName() : "";
-            String last  = t.getLastName()  != null ? t.getLastName()  : "";
-            String full  = (first + " " + last).trim();
-            resolvedName = full.isEmpty() ? null : full;
-          }
-          case SECTION -> {
-            try {
-              var m = t.getClass().getMethod("getSectionName");
-              Object val = m.invoke(t);
-              resolvedName = (val != null) ? String.valueOf(val) : null;
-            } catch (Exception ignore) {}
-          }
-          case SUBGROUP -> {
-            try {
-              var m = t.getClass().getMethod("getSubgroupName");
-              Object val = m.invoke(t);
-              resolvedName = (val != null) ? String.valueOf(val) : null;
-            } catch (Exception ignore) {}
-          }
-          case ALL -> { /* no entra aquí */ }
-        }
-        if (resolvedName == null || resolvedName.isBlank()) {
-          throw new IllegalArgumentException("associated_to.name is required and non-empty for scope=" + dto.scope());
-        }
-        obj.put("name", resolvedName);
-      }
-
-      fp.setAssociatedTo(obj); // jsonb válido
-    }
+    //normalizacion de associated_to cumpliendo el CHECK (null o json object con id/name).
+    normalizeAssociatedTo(dto, fp, associatedTo, targets);
 
     feePlanRepo.save(fp);
+    log.info("Created FeePlan id={} tenant={} scope={} targets={}",
+        fp.getFeePlanId(), tenantId, dto.scope(), dto.scope() == FeeScope.ALL ? "ALL" : targets.size());
 
-    // -------- Calendario por periodicidad --------
+    //Calendario por periodicidad.
     List<LocalDate> schedule = buildSchedule(dto.periodicity(), dto.start_date(), dto.end_date());
 
-    // -------- Crear installments (amount = valor por cuota) --------
+    // Creacion de installments para cada target y cada fecha del calendario.
     for (MemberView m : targets) {
       Account acc = accountRepo.findByMemberIdAndActiveTrue(m.getMemberId())
-          .orElseGet(() -> {
-            Account a = new Account();
-            a.setMemberId(m.getMemberId());
-            a.setActive(true);
-            a.setTenantId(tenantId);
-            return accountRepo.save(a);
-          });
+          .orElseGet(() -> accountRepo.save(
+              Account.builder()
+                  .memberId(m.getMemberId())
+                  .tenantId(tenantId)
+                  .active(true)
+                  .build()
+          ));
 
       List<Installment> toCreate = new ArrayList<>();
       for (LocalDate due : schedule) {
-        Installment inst = new Installment(
-            acc.getAccountId(),
-            concept.getConceptId(),
-            due,
-            dto.amount()
-        );
-        inst.setTenantId(tenantId); // propaga tenant al installment
-        inst.setBalance(dto.amount());
-        inst.setStatus("PENDING");
-        inst.setPayments(JsonNodeFactory.instance.arrayNode()); // <-- NO NULL
+        Installment inst = Installment.builder()
+            .accountId(acc.getAccountId())
+            .conceptId(concept.getConceptId())
+            .dueDate(due)
+            .amount(dto.amount())
+            .tenantId(tenantId)
+            .balance(dto.amount())
+            .status("PENDING")
+            .payments(JsonNodeFactory.instance.arrayNode()) // nunca null
+            .build();
+
         toCreate.add(inst);
       }
       installmentRepo.saveAll(toCreate);
     }
 
-    // -------- DTO de salida (miembro solo si SCOUT) --------
-    MemberPaymentDto member = null;
-    if (dto.scope() == FeeScope.SCOUT && !targets.isEmpty()) {
-      member = mapper.toMemberDto(targets.get(0));
-    }
+    //DTO de salida. Si el scope es SCOUT, incluyo el primer miembro target.
+    MemberPaymentDto member = (dto.scope() == FeeScope.SCOUT && !targets.isEmpty())
+        ? mapper.toMemberDto(targets.get(0))
+        : null;
+
     return mapper.toCuotaDto(fp, member);
   }
-
 
   // ---------------------------------------------------------------------
   // GET Listados de Cuotas y miembros separados.
   // ---------------------------------------------------------------------
 
+  /**
+   * Devuelve todos los FeePlans cuyo Concept pertenece al tenant indicado.
+   */
   @Override
   @Transactional(readOnly = true)
-  public List<CuotaDto> listFeesByTenant(String tenantId) {
-    // FeePlans cuyo Concept pertenece al tenant
+  public List<CuotaDto> listFeesByTenant(@NonNull String tenantId) {
     return feePlanRepo.findByConcept_TenantId(tenantId).stream()
-        .map(mapper::toCuotaDto) // mapea associatedTo directamente
+        .map(mapper::toCuotaDto)
         .toList();
   }
 
+  /**
+   * Miembros con jerarquía (subgrupo/sección) del tenant.
+   */
   @Override
   @Transactional(readOnly = true)
-  public List<MemberPaymentDto> listMembersByTenant(String tenantId) {
-    // Sólo miembros con jerarquía (subgrupo/ sección).
+  public List<MemberPaymentDto> listMembersByTenant(@NonNull String tenantId) {
     return memberRepo.findHierarchyByTenant(tenantId).stream()
         .map(mapper::toMemberDto)
         .toList();
@@ -273,92 +210,121 @@ public class FeeServiceImpl implements IFeeService {
   // GET Listados de Subgrupos y Ramas por tenant.
   // ---------------------------------------------------------------------
 
+  /**
+   * Obtiene la lista de subgrupos (id, name) distintos registrados para un tenant.
+   */
   @Override
   @Transactional(readOnly = true)
-  public List<IdNameDto> listSubgroupsByTenant(String tenantId) {
+  public List<IdNameDto> listSubgroupsByTenant(@NonNull String tenantId) {
     List<IdNameProjection> rows = memberRepo.findDistinctSubgroupsByTenant(tenantId);
     return rows.stream()
         .map(r -> new IdNameDto(r.getId(), r.getName()))
-        .collect(Collectors.toList());
+        .toList();
   }
 
+  /**
+   * Obtiene la lista de ramas (id, name) distintas registradas para un tenant.
+   */
   @Override
   @Transactional(readOnly = true)
-  public List<IdNameDto> listSectionsByTenant(String tenantId) {
+  public List<IdNameDto> listSectionsByTenant(@NonNull String tenantId) {
     List<IdNameProjection> rows = memberRepo.findDistinctSectionsByTenant(tenantId);
     return rows.stream()
         .map(r -> new IdNameDto(r.getId(), r.getName()))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   // ---------------------------------------------------------------------
-  // PATCH
+  // PATCH (actualizo monto y propago a installments)
   // ---------------------------------------------------------------------
+
+  /**
+   * Actualiza parcialmente un FeePlan:
+   * - Modifica el nombre y la descripción del Concept si se envían nuevos valores.
+   * - Si cambia el monto, lo actualiza y propaga el nuevo valor a todos los Installments asociados.
+   * - No modifica el scope, la periodicidad ni las fechas.
+   */
   @Override
-  public CuotaDto patch(Long feePlanId, CuotaDto patch, String tenantId) {
-      FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
-          .orElseThrow(() -> new NoSuchElementException("FeePlan not found for tenant " + tenantId));
+  public CuotaDto patch(@NonNull Long feePlanId, @NonNull CuotaDto patch, @NonNull String tenantId) {
+    FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
+        .orElseThrow(() -> new NoSuchElementException("FeePlan not found for tenant " + tenantId));
 
+    Concept c = fp.getConcept();
 
-      Concept c = fp.getConcept();
+    // Concepto: nombre y descripción
+    if (patch.name() != null && !patch.name().isBlank()) {
+      c.setName(patch.name());
+    }
+    if (patch.description() != null && !patch.description().isBlank()) {
+      c.setDescription(patch.description());
+    }
+    conceptRepo.save(c);
 
-      // Concepto: nombre y descripción
-      if (patch.name() != null && !patch.name().isBlank()) {
-          c.setName(patch.name());
+    // Monto
+    if (patch.amount() != null) {
+      fp.setAmount(patch.amount());
+      feePlanRepo.save(fp);
+
+      // Actualizo TODOS los installments vinculados a este concepto
+      List<Installment> installments = installmentRepo.findByConceptId(c.getConceptId());
+      for (Installment inst : installments) {
+        inst.setAmount(patch.amount());
       }
-      if (patch.description() != null && !patch.description().isBlank()) {
-          c.setDescription(patch.description());
-      }
-      conceptRepo.save(c);
+      installmentRepo.saveAll(installments);
+      log.info("Patched FeePlan id={} amount={}, updated {} installments", fp.getFeePlanId(), patch.amount(), installments.size());
+    }
 
-      // Monto
-      if (patch.amount() != null) {
-          fp.setAmount(patch.amount());
-          feePlanRepo.save(fp);
-
-          // Actualizar TODOS los installments vinculados a este concepto
-          List<Installment> installments = installmentRepo.findByConceptId(c.getConceptId());
-
-          for (Installment inst : installments) {
-              inst.setAmount(patch.amount());
-          }
-          installmentRepo.saveAll(installments);
-      }
-
-      // Otros campos (scope, periodicity, fechas) no se modifican en patch
-
-      return mapper.toCuotaDto(fp, (MemberPaymentDto) null);
+    return mapper.toCuotaDto(fp, (MemberPaymentDto) null);
   }
+
   // ---------------------------------------------------------------------
   // DELETE
   // ---------------------------------------------------------------------
-  @Override
-  public void deleteFeePlan(Long feePlanId, String tenantId) {
-      // 1) Validar pertenencia al tenant
-      FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
-          .orElseThrow(() -> new NoSuchElementException("FeePlan not found for this tenant"));
 
-      Concept concept = fp.getConcept();
+  /**
+   * Elimina un FeePlan y realiza las operaciones relacionadas:
+   * - Borra los installments vacíos (sin pagos) mediante una query dedicada.
+   * - Elimina el FeePlan principal.
+   * - Si ya no existen installments para su Concept, elimina también el Concept asociado.
+   */
+  @Transactional
+  public void deleteFeePlan(@NonNull Long feePlanId, @NonNull String tenantId) {
+    FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
+        .orElseThrow(() -> new NoSuchElementException("FeePlan not found for this tenant"));
 
-      // 2) Borrar installments ligados al concept
-      List<Installment> related = installmentRepo.findByConceptId(concept.getConceptId());
-      if (!related.isEmpty()) {
-          installmentRepo.deleteAll(related);
-      }
+    Concept concept = fp.getConcept();
 
-      // 3) Borrar el fee plan
-      feePlanRepo.delete(fp);
+    // Borra únicamente installments vacíos (payments = []) vinculados al concepto
+    installmentRepo.deleteEmptyPaymentsByConcept(concept.getConceptId());
 
-      // 4) Si el concepto ya no está asociado a ningún fee plan, eliminarlo
-      boolean stillUsed = feePlanRepo.existsByConcept(concept);
-      if (!stillUsed) {
-          conceptRepo.delete(concept);
-      }
+    // Elimina el fee plan y fuerza el flush para respetar el orden (evita violar la FK)
+    feePlanRepo.delete(fp);
+    feePlanRepo.flush(); // <--- IMPORTANTE
+
+    // Comprueba que no queden más fee plans referenciando el mismo concepto
+    long feePlansLeft = feePlanRepo.countByConcept_ConceptId(concept.getConceptId());
+
+    // Cuenta los installments restantes del concepto (por seguridad)
+    long installmentsLeft = installmentRepo.countAllByConcept(concept.getConceptId());
+
+    if (feePlansLeft == 0 && installmentsLeft == 0) {
+      conceptRepo.delete(concept);
+      log.info("Deleted Concept id={} (no fee plans or installments remain)", concept.getConceptId());
+    } else {
+      log.info("Kept Concept id={} (feePlansLeft={}, installmentsLeft={})",
+          concept.getConceptId(), feePlansLeft, installmentsLeft);
+    }
   }
+
 
   // ---------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------
+
+  /**
+   * Genera una lista de fechas de vencimiento según la periodicidad indicada.
+   * Incluye la fecha inicial y continúa agregando intervalos hasta la fecha final.
+   */
   private List<LocalDate> buildSchedule(Periodicity per, LocalDate start, LocalDate end) {
     List<LocalDate> dates = new ArrayList<>();
     switch (per) {
@@ -377,5 +343,99 @@ public class FeeServiceImpl implements IFeeService {
       }
     }
     return dates;
+  }
+
+  /**
+   * Valida el campo `associated_to` según el alcance (scope) del FeePlan.
+   * - Si el scope es ALL, el valor debe ser null.
+   * - En otros casos, debe contener un objeto JSON con la propiedad `id` válida.
+   */
+  private void validateAssociatedTo(CreateCuotaDto dto) {
+    if (dto.scope() == FeeScope.ALL) {
+      if (dto.associated_to() != null && !dto.associated_to().isNull()) {
+        throw new IllegalArgumentException("associated_to must be null when scope=ALL");
+      }
+    } else {
+      JsonNode at = dto.associated_to();
+      if (at == null || at.isNull() || !at.hasNonNull("id")) {
+        throw new IllegalArgumentException("associated_to.id is required for scope=" + dto.scope());
+      }
+    }
+  }
+
+  /**
+   * Convierte el identificador `associated_to.id` a tipo Long.
+   * Lanza una excepción si el valor no es numérico o no es válido.
+   */
+  private Long parseAssocId(String assocId, String scopeName) {
+    try {
+      return Long.valueOf(assocId);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("associated_to.id must be a valid Long for scope=" + scopeName);
+    }
+  }
+
+  /**
+   * Normaliza el campo JSON `associated_to` antes de guardar el FeePlan:
+   * - Para scope=ALL, lo deja en null (valor SQL).
+   * - Para otros scopes, se asegura de que contenga un objeto con `id` y `name`.
+   *   Si `name` está vacío, intenta resolverlo a partir de los miembros objetivo.
+   */
+  private void normalizeAssociatedTo(CreateCuotaDto dto, FeePlan fp, JsonNode associatedTo, List<MemberView> targets) {
+    if (dto.scope() == FeeScope.ALL) {
+      fp.setAssociatedTo(null);
+      return;
+    }
+    if (associatedTo == null || associatedTo.isNull() || !associatedTo.isObject()) {
+      throw new IllegalArgumentException("associated_to must be a JSON object when scope=" + dto.scope());
+    }
+    var obj = (ObjectNode) associatedTo;
+    String idVal = obj.hasNonNull("id") ? obj.get("id").asText() : null;
+    String nameVal = obj.hasNonNull("name") ? obj.get("name").asText() : null;
+
+    if (idVal == null || idVal.isBlank()) {
+      throw new IllegalArgumentException("associated_to.id is required and non-empty");
+    }
+    if (nameVal == null || nameVal.isBlank()) {
+      String resolved = resolveAssociatedName(dto.scope(), targets);
+      if (resolved == null || resolved.isBlank()) {
+        throw new IllegalArgumentException("associated_to.name is required and non-empty for scope=" + dto.scope());
+      }
+      obj.put("name", resolved);
+    }
+    fp.setAssociatedTo(obj);
+  }
+
+  /**
+   * Obtiene el nombre asociado según el scope (SCOUT, SECTION o SUBGROUP),
+   * tomando como referencia el primer miembro objetivo.
+   * En caso de no tener el valor directamente, intenta obtenerlo por reflexión.
+   */
+  private String resolveAssociatedName(FeeScope scope, List<MemberView> targets) {
+    if (targets == null || targets.isEmpty()) return null;
+    MemberView t = targets.get(0);
+    return switch (scope) {
+      case SCOUT -> ((t.getFirstName() == null ? "" : t.getFirstName())
+                   + " "
+                   + (t.getLastName() == null ? "" : t.getLastName())).trim();
+      case SECTION -> tryReadName(t, "getSectionName");
+      case SUBGROUP -> tryReadName(t, "getSubgroupName");
+      case ALL -> null;
+    };
+  }
+
+  /**
+   * Método auxiliar temporal que usa reflexión para obtener nombres
+   * de sección o subgrupo cuando la proyección no los incluye directamente.
+   */
+  private String tryReadName(Object obj, String method) {
+    try {
+      var m = obj.getClass().getMethod(method);
+      Object val = m.invoke(obj);
+      return val != null ? String.valueOf(val) : null;
+    } catch (Exception e) {
+      log.debug("Could not read {} via reflection: {}", method, e.getMessage());
+      return null;
+    }
   }
 }

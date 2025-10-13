@@ -202,15 +202,15 @@
 						<exclude>**/ScoutsProjectApplication.class</exclude>
 						
 						<!-- Configuration Classes -->
-						<exclude>*/config/*</exclude>
+						<exclude>**/config/**</exclude>
 						<exclude>**/infrastructure/security/SecurityConfig.class</exclude>
 						
 						<!-- Enums -->
-						<exclude>*/enums/*</exclude>
-						<exclude>*/shared/enums/*</exclude>
+						<exclude>**/enums/**</exclude>
+						<exclude>**/shared/enums/**</exclude>
 						
 						<!-- Ports/Interfaces (no implementation logic) -->
-						<exclude>*/domain/port/*</exclude>
+						<exclude>**/domain/port/**</exclude>
 						
 						<!-- Test/Mock Controllers (development only) -->
 						<exclude>**/web/controller/MockTestAuthzController.class</exclude>

@@ -24,6 +24,7 @@ import {
 import type { CreatePaymentDto } from "@/types/pago.type";
 import api from "@/api/axios";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 
 interface CreatePagoFormProps {
   setOpen: (open: boolean) => void;
@@ -32,6 +33,9 @@ interface CreatePagoFormProps {
 }
 
 export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoFormProps) {
+
+  const tenantId = useTenant();
+
   const form = useForm<CreatePagoFormValues>({
     resolver: zodResolver(CreatePagoFormSchema),
     defaultValues: {
@@ -56,8 +60,10 @@ export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoF
       ...values,
     }
 
+
+
     try {
-      const response = await api.post(`/finanzas/payments/${"org_6B3k4dao2Wf6eGxa"}/installments/${pago.installment_id}/payments`, data);
+      const response = await api.post(`/finanzas/payments/${tenantId}/installments/${pago.installment_id}/payments`, data);
       if(response.status === 201) {
         toast.success("Pago creado correctamente");
         setOpen(false);

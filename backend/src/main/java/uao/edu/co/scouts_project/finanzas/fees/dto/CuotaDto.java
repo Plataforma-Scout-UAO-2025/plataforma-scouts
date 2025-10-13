@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * DTO de cuota/fee a exponer por API.
- * - 'member' puede ser null (cuando scope != SCOUT).
- * - periodicity/scope como String para desacoplar de enums del modelo.
  */
 public record CuotaDto(
     Long fee_id,
