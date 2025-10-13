@@ -42,7 +42,7 @@ export default function MedicalRecordsView() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const { tenantId } = useTenant();
+    const tenantId = useTenant();
 
     // Busca esta función y reemplázala:
     const fetchMedicalRecords = useCallback(async () => {

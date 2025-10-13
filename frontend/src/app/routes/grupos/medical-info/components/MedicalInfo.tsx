@@ -18,7 +18,7 @@ interface MedicalWizardFormProps {
 }
 
 export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initialData }: MedicalWizardFormProps) {
-  const { tenantId } = useTenant();
+  const tenantId = useTenant();
 
   const [formData, setFormData] = useState<MedicalFormData>({
     member_id: memberId || 0, // Valor por defecto 0 para creación
