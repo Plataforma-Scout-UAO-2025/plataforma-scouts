@@ -126,6 +126,9 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
     return rama;
   } catch (error) {
     console.error('❌ [RamaService] Error obteniendo rama por ID:', error);
+    const e = error as { response?: { data?: unknown }; config?: { url?: string } };
+    if (e.config?.url) console.error('❌ [RamaService] request url:', e.config.url);
+    if (e.response?.data) console.error('❌ [RamaService] response.data:', e.response.data);
     return null;
   }
 };

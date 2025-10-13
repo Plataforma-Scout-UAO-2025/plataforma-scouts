@@ -45,6 +45,13 @@ public class SecurityConfig {
                                                 // Operaciones CRUD en tenants
 
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
+
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
                                                 .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
                                                 .hasAnyRole(ADMIN_GLOBAL.name(), DEV_SUPPORT.name())
@@ -97,20 +104,22 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
 
-                                                // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia organización
+                                                // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia
+                                                // organización
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users/*/roles")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
-                                                
+
                                                 // Agregar a organización específica: Solo ADMINS
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/auth0/organizations/*/members")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
-                                                
-                                                // Agregar a organización propia (usa org_id del JWT): ACUDIENTE y ADMINS
+
+                                                // Agregar a organización propia (usa org_id del JWT): ACUDIENTE y
+                                                // ADMINS
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/auth0/organizations/own/members")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
@@ -119,6 +128,28 @@ public class SecurityConfig {
                                                 // // SOLO ADMINS: Pueden CONSULTAR (GET)
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/auth0/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
+                                                //
+                                                // Datos básicos de miembros
+                                                .requestMatchers("/api/v1/members/create_member")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name())
+                                                .requestMatchers("/api/v1/members/create_member_with_school")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/list_members")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/list_members_by_subgroup")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/list_members_by_status")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/list_subGroup_by_memberId")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/list_schoolData_by_memberId")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/update_member_status/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/update_member_by_id/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/assign_subgroup/")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
 
                                                 // // Cualquier otra operación en auth0: SOLO ADMINS
                                                 .requestMatchers("/api/v1/auth0/**")
