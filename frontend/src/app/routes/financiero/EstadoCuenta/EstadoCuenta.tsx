@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/select";
 import type { EstadoCuenta, CuotasEstado } from "@/types/estado-cuenta.type";
 import ResumenEstadoCuenta from "./components/ResumenEstadoCuenta";
-import { mockTesoreroData, mockAcudienteData } from "./constants/mockData";
 import EstadoCuentaTable from "./components/EstadoCuentaTable";
 import { useRoleContext } from "@/hooks/useRoleContext";
 import { RawRole } from "@/roles/roles";
-// import api from "@/api/axios";
+import api from "@/api/axios";
+import { useTenant } from "@/hooks/useTenant";
 
 export default function EstadoCuenta() {
   const { currentUserRole } = useRoleContext();
@@ -22,42 +22,33 @@ export default function EstadoCuenta() {
   const [loading, setLoading] = useState(true);
 
   const isTesorero = currentUserRole === RawRole.TESORERO;
+  const isAcudiente = currentUserRole === RawRole.ACUDIENTE;
+  const isAdminGrupo = currentUserRole === RawRole.ADMIN_GRUPO;
+  const isTesoreroOrAdmin = isTesorero || isAdminGrupo;
+  // Obtener el tenantId
+  const tenantId = useTenant();
 
   // Cargar datos al montar el componente
   useEffect(() => {
     const fetchEstadoCuenta = async () => {
       setLoading(true);
 
-      try {
-        // BACKEND: Cuando el backend esté disponible, descomentar esto
-        /*
-        const orgId = "org_6B3k4dao2Wf6eGxa";
-        let endpoint = `/finanzas/payments/account-status/${orgId}`;
+      try {   
+        let endpoint = `/finanzas/payments/status/${tenantId}`;
         
-        if (!isTesorero) {
-          // Para acudiente, agregar el ID (quemado a 1 por ahora)
-          endpoint += "/1";
+        if (!isTesoreroOrAdmin) {
+          // Para acudiente, agregar el ID (quemado a 83 por ahora)
+          endpoint += "/83";
         }
 
         const response = await api.get<EstadoCuenta>(endpoint);
         setEstadoCuentaData(response.data);
         
         // Si es acudiente y hay members, seleccionar el primero automáticamente
-        if (!isTesorero && response.data.members && response.data.members.length > 0) {
+        if (isAcudiente && response.data?.members && response.data.members.length > 0) {
           setSelectedMemberId(response.data.members[0].member_id);
         }
-        */
-
-        // MOCK: Simular llamada a API
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        const mockData = isTesorero ? mockTesoreroData : mockAcudienteData;
-        setEstadoCuentaData(mockData);
-
-        // Si es acudiente y hay members, seleccionar el primero automáticamente
-        if (!isTesorero && mockData.members && mockData.members.length > 0) {
-          setSelectedMemberId(mockData.members[0].member_id);
-        }
+      
       } catch (error) {
         console.error("Error al cargar estado de cuenta:", error);
         setEstadoCuentaData(null);
@@ -67,39 +58,43 @@ export default function EstadoCuenta() {
     };
 
     fetchEstadoCuenta();
-  }, [isTesorero]);
+  }, [isTesoreroOrAdmin, isAcudiente, tenantId]);
 
   // Filtrar cuotas por miembro seleccionado (solo para acudiente)
   const cuotasFiltradas = useMemo<CuotasEstado[]>(() => {
     if (!estadoCuentaData) return [];
     
-    // Si es tesorero, mostrar todas las cuotas
-    if (isTesorero) {
-      return estadoCuentaData.cuotas;
+    const firstData = estadoCuentaData;
+    
+    // Si es tesorero o admin de grupo, mostrar todas las cuotas
+    if (isTesoreroOrAdmin) {
+      return firstData.cuotas;
     }
 
     // Si es acudiente, filtrar por miembro seleccionado
     if (!selectedMemberId) return [];
 
-    const memberSelected = estadoCuentaData.members?.find(
+    const memberSelected = firstData.members?.find(
       (m) => m.member_id === selectedMemberId
     );
 
     if (!memberSelected) return [];
 
-    return estadoCuentaData.cuotas.filter(
+    return firstData.cuotas.filter(
       (cuota) => cuota.member_name === memberSelected.member_name
     );
-  }, [estadoCuentaData, selectedMemberId, isTesorero]);
+  }, [estadoCuentaData, selectedMemberId, isTesoreroOrAdmin]);
 
   // Miembro seleccionado (solo para acudiente)
   const memberSeleccionado = useMemo(() => {
-    if (isTesorero || !estadoCuentaData?.members) return null;
-    return estadoCuentaData.members.find((m) => m.member_id === selectedMemberId);
-  }, [estadoCuentaData, selectedMemberId, isTesorero]);
+    if (isTesoreroOrAdmin || !estadoCuentaData) return null;
+    const firstData = estadoCuentaData;
+    if (!firstData.members) return null;
+    return firstData.members.find((m) => m.member_id === selectedMemberId);
+  }, [estadoCuentaData, selectedMemberId, isTesoreroOrAdmin]);
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="p-0 mx-0">
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
@@ -107,26 +102,28 @@ export default function EstadoCuenta() {
             Estado de Cuenta
           </h1>
           <p className="text-muted-foreground text-sm">
-            {isTesorero
+            {isTesoreroOrAdmin
               ? "Vista global del estado financiero del grupo, incluyendo cuotas pendientes y pagos realizados por todos los integrantes."
-              : "Consulta el estado financiero de tus hijos, incluyendo cuotas pendientes, pagos realizados y el historial completo de transacciones."}
+              : "Consulta el estado financiero de tus personas a cargo, incluyendo cuotas pendientes, pagos realizados y el historial completo de transacciones."}
           </p>
         </div>
 
         {/* Selector de Hijo (solo para acudiente) */}
-        {!isTesorero && estadoCuentaData?.members && (
+        {!isTesoreroOrAdmin && estadoCuentaData && estadoCuentaData.members && (
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium text-gray-700">
-              Seleccionar hijo:
+              Seleccionar persona a cargo:
             </label>
             <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
               <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Selecciona un hijo" />
+                <SelectValue placeholder="Selecciona una persona a cargo" />
               </SelectTrigger>
               <SelectContent>
                 {estadoCuentaData.members.map((member) => (
                   <SelectItem key={member.member_id} value={member.member_id}>
-                    {member.member_name} - {member.section.name} ({member.age} años)
+                    {member.member_name} - {member.section.name} {
+                      member.age ? `(${member.age} años)` : ""
+                    }
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -145,7 +142,11 @@ export default function EstadoCuenta() {
           <div className="space-y-8">
             {/* Resumen */}
             <ResumenEstadoCuenta
-              kpis={estadoCuentaData.kpis}
+              kpis={{
+                total_pendiente: estadoCuentaData.kpis.total_pendiente,
+                total_pagado: estadoCuentaData.kpis.total_pagado,
+                cuotas_vencidas: estadoCuentaData.kpis.cuotas_vencidas,
+              }}
               member={memberSeleccionado}
             />
 

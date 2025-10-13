@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast, type ExternalToast } from "sonner";
 import api from "@/api/axios";
@@ -58,7 +59,7 @@ export default function CreateCuotaForm({
   isEditMode = false,
   onRefresh,
 }: CreateCuotaFormProps) {
-  const { tenantId } = useTenant();
+  const tenantId = useTenant();
   const navigate = useNavigate();
 
   const [showAssociatedToField, setShowAssociatedToField] = useState(false);
@@ -331,7 +332,7 @@ export default function CreateCuotaForm({
                         disabled={isEditMode}
                       >
                         {field.value ? (
-                          format(field.value, "PPP")
+                          format(field.value, "PPP", { locale: es })
                         ) : (
                           <span>Selecciona una fecha</span>
                         )}
@@ -375,7 +376,7 @@ export default function CreateCuotaForm({
                           disabled={isEditMode}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "PPP", { locale: es })
                           ) : (
                             <span>Selecciona una fecha</span>
                           )}

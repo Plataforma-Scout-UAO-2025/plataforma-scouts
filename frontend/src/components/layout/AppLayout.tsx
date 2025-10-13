@@ -20,14 +20,15 @@ import { Separator } from "@/components/ui/separator";
 import {
   LineChart,
   Boxes,
-  Settings,
   HelpCircle,
   LogOut,
   Users,
   Award,
   ChevronRight,
-  Network,
+  DollarSign,
+  CalendarDays,
   Pencil,
+  Network,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -94,61 +95,21 @@ const adminGrupalItems: MenuItem[] = [
     href: "/app/inscripcion",
   },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
-  {
-    id: "solicitudes",
-    label: "Solicitudes",
-    icon: <Boxes />,
-    href: "/app/solicitudes",
-  },
-  {
-    id: "insignias",
-    label: "Insignias",
-    icon: <Award />,
-    href: "/app/insignias",
-  },
-  {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
-  },
-  {
-    id: "financiero",
-    label: "Financiero",
-    icon: <Settings />,
-    href: "/app/financiero/cuotas",
-  },
-];
+  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
+  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
+]
 
 const tesoreroItems: MenuItem[] = [
-  {
-    id: "inicio",
-    label: "Inicio",
-    icon: <LineChart />,
-    href: "/app/dashboard",
-  },
-  {
-    id: "financiero",
-    label: "Financiero",
-    icon: <Settings />,
-    href: "/app/financiero/cuotas",
-  },
-];
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
+]
 
 const acudienteItems: MenuItem[] = [
-  {
-    id: "inicio",
-    label: "Inicio",
-    icon: <LineChart />,
-    href: "/app/dashboard",
-  },
-  {
-    id: "financiero",
-    label: "Financiero",
-    icon: <Settings />,
-    href: "/app/financiero/estado-cuenta",
-  },
-];
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/estado-cuenta" },
+]
 
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },

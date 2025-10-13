@@ -120,39 +120,34 @@ public class PaymentsController {
 
     @Operation(
         summary = "Estado de cuenta (Tesorería)",
-        description = "Caso 2 (tesorero): retorna arreglo con un objeto global que incluye KPIs del mes, listado de cuotas y `members = null`."
+        description = "Caso 2 (tesorero): retorna un objeto global con KPIs del mes, listado de cuotas y `members = null`."
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK",
-            content = @Content(array = @ArraySchema(schema = @Schema(implementation = EstadoCuentaDto.class)))),
-        @ApiResponse(responseCode = "500", description = "Error interno")
-    })
+    @ApiResponse(responseCode = "200", description = "OK",
+        content = @Content(schema = @Schema(implementation = EstadoCuentaDto.class)))
     @GetMapping("/status/{tenantId}")
-    public ResponseEntity<List<EstadoCuentaDto>> getAccountStatusForTenant(
+    public ResponseEntity<EstadoCuentaDto> getAccountStatusForTenant(
             @Parameter(name = "tenantId", in = ParameterIn.PATH, example = "org_6B3k4dao2Wf6eGxa")
             @PathVariable String tenantId
     ) {
-        var out = service.listAccountStatusForTenant(tenantId);
-        return ResponseEntity.ok(out);
+        var list = service.listAccountStatusForTenant(tenantId); // siempre 1 elemento
+        return ResponseEntity.ok(list.get(0));
     }
 
     @Operation(
         summary = "Estado de cuenta (Acudiente)",
-        description = "Caso 1 (acudiente): retorna arreglo con un objeto global que incluye KPIs del mes, listado de cuotas y `members[]` con los hijos asociados al `guardianId`."
+        description = "Caso 1 (acudiente): retorna un objeto global con KPIs del mes, listado de cuotas y `members[]` de los hijos asociados."
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK",
-            content = @Content(array = @ArraySchema(schema = @Schema(implementation = EstadoCuentaDto.class)))),
-        @ApiResponse(responseCode = "500", description = "Error interno")
-    })
+    @ApiResponse(responseCode = "200", description = "OK",
+        content = @Content(schema = @Schema(implementation = EstadoCuentaDto.class)))
     @GetMapping("/status/{tenantId}/{guardianId}")
-    public ResponseEntity<List<EstadoCuentaDto>> getAccountStatusForGuardian(
+    public ResponseEntity<EstadoCuentaDto> getAccountStatusForGuardian(
             @Parameter(name = "tenantId", in = ParameterIn.PATH, example = "org_6B3k4dao2Wf6eGxa")
             @PathVariable String tenantId,
             @Parameter(name = "guardianId", in = ParameterIn.PATH, example = "83")
             @PathVariable Long guardianId
     ) {
-        var out = service.listAccountStatusForGuardian(tenantId, guardianId);
-        return ResponseEntity.ok(out);
+        var list = service.listAccountStatusForGuardian(tenantId, guardianId); // siempre 1 elemento
+        return ResponseEntity.ok(list.get(0));
     }
+
 }
