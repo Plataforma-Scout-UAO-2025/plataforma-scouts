@@ -16,21 +16,6 @@ export default function Dashboard() {
     return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;
   }
 
-
-  useEffect(() => {
-    const printToken = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        console.log("Access Token:", token);
-      } catch (err) {
-        console.error("Error obteniendo el token:", err);
-      }
-    };
-
-    printToken();
-  }, []);
-
-
   // Solo se renderiza Y ejecuta el componente correspondiente al rol del usuario
   switch (currentUserRole) {
     case RawRole.ADMIN_GLOBAL:
