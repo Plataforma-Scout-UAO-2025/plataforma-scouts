@@ -4,13 +4,10 @@ import AdminGlobalView from "./components/AdminGlobalView";
 import AdminGrupoView from "./components/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
-import { useEffect } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 
 
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
 
   if (status === "loading" || status === "idle") {
     return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;
