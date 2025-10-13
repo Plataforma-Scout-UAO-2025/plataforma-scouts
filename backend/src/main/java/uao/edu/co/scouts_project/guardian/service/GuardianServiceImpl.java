@@ -137,7 +137,8 @@ public class GuardianServiceImpl implements GuardianService {
             throw new GuardianNotFoundException("Not found");
         }
 
-        memberRepository.deleteGuardianIdFromMember(guardianId);
+        memberRepository.removeGuardianIdFromMembers(guardianId);
+        memberRepository.deleteGuardianById(guardianId);
     }
 
     private void updateGuardianFields(Member existingGuardian, GuardianCreateDTO dto) {
