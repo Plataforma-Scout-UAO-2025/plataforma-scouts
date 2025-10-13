@@ -407,13 +407,15 @@ class GuadianServiceImplTest {
         void shouldDeleteGuardian() {
             // Arrange
             when(guardianRepository.existsById(1L)).thenReturn(true);
-            doNothing().when(guardianRepository).deleteGuardianIdFromMember(1L);
+            doNothing().when(guardianRepository).removeGuardianIdFromMembers(1L);
+            doNothing().when(guardianRepository).deleteGuardianById(1L);
 
             // Act & Assert
             assertDoesNotThrow(() -> guardianService.deleteGuardianById(1L));
 
             verify(guardianRepository, times(1)).existsById(1L);
-            verify(guardianRepository, times(1)).deleteGuardianIdFromMember(1L);
+            verify(guardianRepository, times(1)).removeGuardianIdFromMembers(1L);
+            verify(guardianRepository, times(1)).deleteGuardianById(1L);
         }
 
         @Test
@@ -426,7 +428,8 @@ class GuadianServiceImplTest {
             assertThrows(GuardianNotFoundException.class,
                     () -> guardianService.deleteGuardianById(999L));
             verify(guardianRepository, times(1)).existsById(999L);
-            verify(guardianRepository, never()).deleteGuardianIdFromMember(anyLong());
+            verify(guardianRepository, never()).removeGuardianIdFromMembers(anyLong());
+            verify(guardianRepository, never()).deleteGuardianById(anyLong());
         }
     }
 }
