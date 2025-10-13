@@ -27,6 +27,7 @@ import {
   Award,
   ChevronRight,
   Network,
+  Pencil,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -71,6 +72,12 @@ const adminGlobalItems: MenuItem[] = [
     icon: <LineChart />,
     href: "/app/dashboard-global",
   },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
 ];
 
 const adminGrupalItems: MenuItem[] = [
@@ -79,6 +86,12 @@ const adminGrupalItems: MenuItem[] = [
     label: "Inicio",
     icon: <LineChart />,
     href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
   },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
   {
@@ -128,12 +141,6 @@ const acudienteItems: MenuItem[] = [
     label: "Inicio",
     icon: <LineChart />,
     href: "/app/dashboard",
-  },
-  {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
   },
   {
     id: "financiero",

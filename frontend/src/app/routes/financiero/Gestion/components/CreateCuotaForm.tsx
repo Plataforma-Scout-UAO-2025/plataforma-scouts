@@ -461,8 +461,8 @@ export default function CreateCuotaForm({
                 // En modo creación, mostrar select
                 const handleValueChange = (value: string) => {
                   if (scopeValue === "SCOUT") {
-                    const member = members.find(m => m.member_id.toString() === value);
-                    if (member) {
+                    const member = members.find(m => m.member_id?.toString() === value);
+                    if (member && member.member_id) {
                       field.onChange({ id: member.member_id.toString(), name: `${member.first_name} ${member.last_name}` });
                     }
                   } else if (scopeValue === "SUBGROUP") {
@@ -501,10 +501,12 @@ export default function CreateCuotaForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {scopeValue === "SCOUT" && members.map((member) => (
+                        {scopeValue === "SCOUT" && members
+                          .filter(member => member.member_id !== undefined)
+                          .map((member) => (
                           <SelectItem
                             key={member.member_id}
-                            value={member.member_id.toString()}
+                            value={member.member_id!.toString()}
                           >
                             {member.member_id} - {member.first_name} {member.last_name}
                           </SelectItem>

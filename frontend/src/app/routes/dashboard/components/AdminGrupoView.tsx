@@ -33,7 +33,7 @@ const AdminGrupoView = () => {
 
     // Scouts activos
     const scoutsActivos = members.filter(
-      (m) => m.isActive && m.status === "active"
+      (m) => m.is_active && m.status === "active"
     ).length;
 
     // Total de ramas únicas

@@ -12,6 +12,9 @@ import uao.edu.co.scouts_project.infrastructure.cache.PermissionCacheMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.util.HashSet;
 import java.util.List;
@@ -120,6 +123,74 @@ public class Auth0PermissionAdapter implements PermissionQueryPort {
             log.error("Fallo inesperado consultando Auth0 para {}: {}", userId, e.getMessage());
         }
         return List.of();
+    }
+
+    @Override
+    public String getCurrentUserOrgId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                return "";
+            }
+            // Intento 1
+            Object principal = auth.getPrincipal();
+            if (principal instanceof Jwt jwt) {
+                String val = jwt.getClaimAsString("org_id");
+                return val == null ? "" : val.trim();
+            }
+
+            // Intento 2
+            if (auth instanceof JwtAuthenticationToken jat) {
+                Jwt jwt = jat.getToken();
+                if (jwt != null) {
+                    String val = jwt.getClaimAsString("org_id");
+                    return val == null ? "" : val.trim();
+                }
+            }
+
+            // Intento 3
+            if (principal instanceof java.util.Map<?,?> map) {
+                Object val = map.get("org_id");
+                return val == null ? "" : String.valueOf(val).trim();
+            }
+        } catch (Exception e) {
+            log.error("No fue posible extraer org_id del JWT actual: {}", e.getMessage());
+        }
+        return "";
+    }
+
+    @Override
+    public String getCurrentUserConnection() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                return "";
+            }
+            // Intento 1
+            Object principal = auth.getPrincipal();
+            if (principal instanceof Jwt jwt) {
+                String val = jwt.getClaimAsString("https://scouts-platform-backend/connections");
+                return val == null ? "" : val.trim();
+            }
+
+            // Intento 2
+            if (auth instanceof JwtAuthenticationToken jat) {
+                Jwt jwt = jat.getToken();
+                if (jwt != null) {
+                    String val = jwt.getClaimAsString("https://scouts-platform-backend/connections");
+                    return val == null ? "" : val.trim();
+                }
+            }
+
+            // Intento 3
+            if (principal instanceof java.util.Map<?,?> map) {
+                Object val = map.get("https://scouts-platform-backend/connections");
+                return val == null ? "" : String.valueOf(val).trim();
+            }
+        } catch (Exception e) {
+            log.error("No fue posible extraer connection del JWT actual: {}", e.getMessage());
+        }
+        return "";
     }
 
 }

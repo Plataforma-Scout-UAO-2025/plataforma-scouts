@@ -10,4 +10,8 @@ import java.util.Set;
 public interface PermissionQueryPort {
     Set<String> getUserPermissions(String userId);
     List<String> getCurrentUserRoles();
+    // Nuevo método: retorna el claim org_id del usuario autenticado actual (JWT)
+    String getCurrentUserOrgId();
+    // Nuevo método: retorna el claim connection del usuario autenticado actual (JWT)
+    String getCurrentUserConnection();
 }

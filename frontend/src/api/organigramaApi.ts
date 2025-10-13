@@ -22,6 +22,28 @@ const resolveSlugs = (tenantSlug?: string, groupSlug?: string): SlugPair => {
   return { tenant, group };
 };
 
+export const getAllTenants = async <T = unknown>() => {
+  const { data } = await api.get<T[]>("/tenants");
+  return data;
+};
+
+export const getTenantBySlug = async <T = unknown>(tenantSlug: string) => {
+  const { data } = await api.get<T>(`/tenants/${encodeURIComponent(tenantSlug)}`);
+  return data;
+};
+
+export const getGroupsByTenant = async <T = unknown>(tenantSlug: string) => {
+  const { data } = await api.get<T[]>(`/tenants/${encodeURIComponent(tenantSlug)}/groups`);
+  return data;
+};
+
+export const getGroupBySlug = async <T = unknown>(tenantSlug: string, groupSlug: string) => {
+  const { data } = await api.get<T>(
+    `/tenants/${encodeURIComponent(tenantSlug)}/groups/${encodeURIComponent(groupSlug)}`
+  );
+  return data;
+};
+
 export const sectionsPath = (tenantSlug?: string, groupSlug?: string) => {
   const { tenant, group } = resolveSlugs(tenantSlug, groupSlug);
   return `/tenants/${encodeURIComponent(tenant)}/groups/${encodeURIComponent(group)}/sections`;
