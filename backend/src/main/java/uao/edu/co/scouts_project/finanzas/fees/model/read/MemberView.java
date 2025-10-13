@@ -1,11 +1,16 @@
 package uao.edu.co.scouts_project.finanzas.fees.model.read;
+import lombok.AccessLevel;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
 
 @Entity
 @Table(name = "member")
 @Immutable
+@Getter                          // genera todos los getters
+@NoArgsConstructor(access = AccessLevel.PROTECTED)  // ctor protegido requerido por JPA
 public class MemberView {
 
   @Id
@@ -25,16 +30,5 @@ public class MemberView {
   private Long subgroup;
 
   @Column(name = "tenant_id", nullable = false, columnDefinition = "text")
-  private String tenantId;  
-
-  // JPA necesita ctor por defecto (al menos protected)
-  protected MemberView() {}
-
-  // getters
-  public Long getMemberId() { return memberId; }
-  public String getFirstName() { return firstName; }
-  public String getLastName() { return lastName; }
-  public Integer getAge() { return age; }
-  public Long getSubgroup() { return subgroup; }
-  public String getTenantId() { return tenantId; }
+  private String tenantId;
 }

@@ -28,7 +28,7 @@ export default function PersonalDataForm({
           name="firstname"
           value={datos.firstname}
           onChange={handleChange}
-          className="w-full"       
+          className="w-full"
           required
         />
       </div>
