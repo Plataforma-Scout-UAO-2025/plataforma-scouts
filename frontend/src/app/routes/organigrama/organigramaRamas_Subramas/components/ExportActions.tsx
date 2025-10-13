@@ -10,28 +10,23 @@ interface ExportActionsProps {
   /** Año seleccionado para filtrado */
   selectedYear?: string;
   /** Configuración para obtener datos del backend */
-  tenantSlug?: string;
+  tenantId?: string;
   groupSlug?: string;
   /** Estilos adicionales */
   className?: string;
 }
 
-export function ExportActions({ 
-  ramas, 
-  selectedYear, 
-  tenantSlug, 
+export function ExportActions({
+  ramas,
+  tenantId,
   groupSlug,
-  className = "" 
+  className = ""
 }: ExportActionsProps) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const { exportPDF, exportExcel } = useOrganigramaExport(
-    ramas, 
-    selectedYear, 
-    { tenantSlug, groupSlug }
-  );
+  const { exportPDF, exportExcel } = useOrganigramaExport(ramas, { tenantId, groupSlug });
 
   const handleExportPDF = async () => {
     try {
@@ -96,8 +91,7 @@ export function ExportActions({
 
         <div className="text-xs text-gray-500 self-center ml-2">
           {ramas.length} rama{ramas.length !== 1 ? 's' : ''}
-          {selectedYear && ` (${selectedYear})`}
-          {tenantSlug && groupSlug && (
+          {tenantId && groupSlug && (
             <span className="block text-green-600">
               📡 Datos del backend
             </span>

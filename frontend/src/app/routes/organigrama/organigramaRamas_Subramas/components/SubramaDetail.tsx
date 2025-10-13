@@ -15,7 +15,8 @@ import FotoModal from "../components/FotoModal";
 export default function SubramaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tenantSlug, groupSlug } = useTenantParams();
+  const { tenantId, groupSlug, isLoading: tenantLoading } = useTenantParams();
+  const tenantContext = tenantId && groupSlug ? { tenantId, groupSlug } : null;
   const [subrama, setSubrama] = useState<Subrama | null>(null);
   const [loading, setLoading] = useState(true);
   const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
@@ -75,6 +76,9 @@ export default function SubramaDetail() {
   // Referencias para inputs de archivos
   const mainImageInputRef = useRef<HTMLInputElement>(null);
   // const galleryInputRef = useRef<HTMLInputElement>(null); // galería deshabilitada
+  const hasTenantContext = Boolean(tenantContext);
+  const resolvedTenantId = tenantId ?? '';
+  const resolvedGroupSlug = groupSlug ?? '';
 
   const handleMainImageClick = () => {
     mainImageInputRef.current?.click();
@@ -123,8 +127,8 @@ export default function SubramaDetail() {
   const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
   const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.updateSubramaMainImage(
-          tenantSlug,
-          groupSlug,
+          resolvedTenantId,
+          resolvedGroupSlug,
           String(sectionId),
           String(subgroupId),
           file,
@@ -159,9 +163,9 @@ export default function SubramaDetail() {
   await fetchSubrama();
   // Obtener la subrama actualizada directamente para obtener la URL definitiva
   try {
-    const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-    const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
-    const updated = await organigramaService.getSubramaById(tenantSlug, groupSlug, String(sectionId), String(subgroupId));
+  const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+  const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
+  const updated = await organigramaService.getSubramaById(resolvedTenantId, resolvedGroupSlug, String(sectionId), String(subgroupId));
     if (updated && updated.imagenPrincipal) {
       // Actualizar visualmente con cache-bust igual que RamaDetail
       setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
@@ -225,8 +229,8 @@ export default function SubramaDetail() {
         const sectionIdForUpload = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
         const subgroupIdForUpload = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.uploadSubramaGalleryImages(
-          tenantSlug,
-          groupSlug,
+          resolvedTenantId,
+          resolvedGroupSlug,
           String(sectionIdForUpload),
           String(subgroupIdForUpload),
           files
@@ -292,15 +296,15 @@ export default function SubramaDetail() {
           });
         }, 250);
 
-  const sectionId2 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-  const subgroupId2 = subrama.subgroup_id ?? subrama.id ?? '';
-  await organigramaService.updateSubramaMainImage(
-    tenantSlug,
-    groupSlug,
-    String(sectionId2),
-    String(subgroupId2),
-    file,
-    (fileName, percent) => {
+        const sectionId2 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+        const subgroupId2 = subrama.subgroup_id ?? subrama.id ?? '';
+        await organigramaService.updateSubramaMainImage(
+          resolvedTenantId,
+          resolvedGroupSlug,
+          String(sectionId2),
+          String(subgroupId2),
+          file,
+          (fileName, percent) => {
             uploadProgressReceivedRef.current = true;
             if (uploadIntervalRef.current) {
               clearInterval(uploadIntervalRef.current);
@@ -329,8 +333,8 @@ export default function SubramaDetail() {
           const sectionId3 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
           const subgroupId3 = subrama.subgroup_id ?? subrama.id ?? '';
           const updated = await organigramaService.getSubramaById(
-            tenantSlug,
-            groupSlug,
+            resolvedTenantId,
+            resolvedGroupSlug,
             String(sectionId3),
             String(subgroupId3)
           );
@@ -381,8 +385,8 @@ export default function SubramaDetail() {
   const sectionIdReplace = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
   const subgroupIdReplace = subrama.subgroup_id ?? subrama.id ?? '';
       await organigramaService.replaceSubramaGalleryImage(
-        tenantSlug,
-        groupSlug,
+        resolvedTenantId,
+        resolvedGroupSlug,
         String(sectionIdReplace),
         String(subgroupIdReplace),
         cleanUuid,
@@ -450,14 +454,14 @@ export default function SubramaDetail() {
   const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
   const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
         await organigramaService.removeSubramaMainImage(
-          tenantSlug,
-          groupSlug,
+          resolvedTenantId,
+          resolvedGroupSlug,
           String(sectionIdDel),
           String(subgroupIdDel)
         );
         // Tras intentar remove (patch), hacer re-check para confirmar
         try {
-          const refreshed = await organigramaService.getSubramaById(tenantSlug, groupSlug, String(sectionIdDel), String(subgroupIdDel));
+          const refreshed = await organigramaService.getSubramaById(resolvedTenantId, resolvedGroupSlug, String(sectionIdDel), String(subgroupIdDel));
           const mainStill = refreshed?.imagenPrincipal ?? refreshed?.mainImageUrl ?? null;
           if (mainStill) {
             console.warn('[SubramaDetail] La imagen principal sigue presente tras remove; la eliminación física pudo fallar o no aplicarse');
@@ -480,8 +484,8 @@ export default function SubramaDetail() {
         if (!cleanUuid) {
           console.warn('[SubramaDetail] No se pudo extraer UUID de la foto seleccionada, usando fallback remove (PATCH)');
           await organigramaService.removeSubramaGalleryImage(
-            tenantSlug,
-            groupSlug,
+            resolvedTenantId,
+            resolvedGroupSlug,
             String(sectionIdDel),
             String(subgroupIdDel),
             ''
@@ -490,8 +494,8 @@ export default function SubramaDetail() {
         } else {
           try {
             const result = await organigramaService.deleteGalleryImageById(
-              tenantSlug,
-              groupSlug,
+              resolvedTenantId,
+              resolvedGroupSlug,
               String(sectionIdDel),
               cleanUuid,
               true // deleteFromStorage = true
@@ -543,10 +547,19 @@ export default function SubramaDetail() {
 
   const fetchSubrama = useCallback(async () => {
     try {
-      if (id) {
-        console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
+      if (!id) {
+        console.error("❌ [SubramaDetail] ID de subrama no proporcionado");
+        return;
+      }
+
+      if (!hasTenantContext) {
+        console.warn('[SubramaDetail] Tenant o grupo no disponibles aún; omitiendo fetch');
+        return;
+      }
+
+      console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantId: resolvedTenantId, groupSlug: resolvedGroupSlug });
         
-  const ramas = await organigramaService.getRamasWithSubramas(tenantSlug, groupSlug);
+      const ramas = await organigramaService.getRamasWithSubramas(resolvedTenantId, resolvedGroupSlug);
         
         let subramaEncontrada: Subrama | null = null;
         
@@ -602,19 +615,40 @@ export default function SubramaDetail() {
         } else {
           console.warn("⚠️ [SubramaDetail] No se encontró la subrama con ID:", id);
         }
-      } else {
-        console.error("❌ [SubramaDetail] ID de subrama no proporcionado");
-      }
     } catch (error) {
       console.error("❌ [SubramaDetail] Error cargando subrama:", error);
     } finally {
       setLoading(false);
     }
-  }, [id, tenantSlug, groupSlug]);
+  }, [id, hasTenantContext, resolvedTenantId, resolvedGroupSlug]);
 
   useEffect(() => {
     fetchSubrama();
-  }, [id, tenantSlug, groupSlug, fetchSubrama]);
+  }, [fetchSubrama]);
+
+  if (!hasTenantContext) {
+    if (tenantLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Cargando contexto del tenant...</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">No fue posible determinar el tenant o grupo actual.</p>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Regresar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -632,7 +666,7 @@ export default function SubramaDetail() {
       <div className="text-center mt-6 space-y-4">
         <p className="text-foreground">No se encontró la subrama con id: {id}</p>
         <p className="text-muted-foreground">
-          Tenant: {tenantSlug} | Group: {groupSlug}
+          Tenant: {resolvedTenantId} | Group: {resolvedGroupSlug}
         </p>
         <Button
           onClick={() => navigate('/app/organigrama')}

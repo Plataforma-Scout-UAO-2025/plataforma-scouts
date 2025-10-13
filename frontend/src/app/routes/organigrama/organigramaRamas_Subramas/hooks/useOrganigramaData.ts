@@ -3,63 +3,50 @@ import type { Branch as Rama } from '../types/frontend';
 import * as organigramaService from '../services';
 import { useApiError } from '../hooks/useApiError';
 
-export function useOrganigramaData(tenantSlug?: string, groupSlug?: string) {
+export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
   const [ramas, setRamas] = useState<Rama[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<string>('');
 
   const isLoadingRamasRef = useRef(false);
-  const isLoadingYearsRef = useRef(false);
 
   const { handleError } = useApiError();
 
-  const loadAvailableYears = useCallback(async () => {
-    if (!tenantSlug || !groupSlug || isLoadingYearsRef.current) return;
-    try {
-      isLoadingYearsRef.current = true;
-      const years = await organigramaService.getAvailableYears(tenantSlug, groupSlug);
-      setAvailableYears(years);
-      if (!selectedYear && years.length > 0) setSelectedYear(years[0].toString());
-    } catch (err) {
-      handleError(err);
-      setAvailableYears([new Date().getFullYear()]);
-    } finally {
-      isLoadingYearsRef.current = false;
-    }
-  }, [tenantSlug, groupSlug, handleError, selectedYear]);
-
   const loadRamas = useCallback(async () => {
-    if (!tenantSlug || !groupSlug || isLoadingRamasRef.current) return;
+    console.log('[useOrganigramaData] loadRamas invoked', { tenantId, groupSlug });
+    if (isLoadingRamasRef.current) return;
+    if (!tenantId || !groupSlug) {
+      setIsLoading(false);
+      setRamas([]);
+      console.log('[useOrganigramaData] skipping loadRamas - missing tenant/group');
+      return;
+    }
     try {
       isLoadingRamasRef.current = true;
       setIsLoading(true);
-      const yearFilter = selectedYear ? parseInt(selectedYear) : undefined;
-  
-  const data = await organigramaService.getRamasWithSubramas(tenantSlug, groupSlug, yearFilter);
+
+      const data = await organigramaService.getRamasWithSubramas(tenantId, groupSlug);
       setRamas(data);
+      console.log('[useOrganigramaData] ramas loaded', { count: data.length });
     } catch (err) {
       handleError(err);
     } finally {
       setIsLoading(false);
       isLoadingRamasRef.current = false;
     }
-  }, [tenantSlug, groupSlug, selectedYear, handleError]);
+  }, [tenantId, groupSlug, handleError]);
 
   useEffect(() => {
-    if (tenantSlug && groupSlug) loadAvailableYears();
-  }, [tenantSlug, groupSlug, loadAvailableYears]);
-
-  useEffect(() => {
-    if (tenantSlug && groupSlug) loadRamas();
-  }, [tenantSlug, groupSlug, selectedYear, loadRamas]);
+    if (tenantId && groupSlug) {
+      loadRamas();
+    } else {
+      setIsLoading(false);
+      setRamas([]);
+    }
+  }, [tenantId, groupSlug, loadRamas]);
 
   return {
     ramas,
     isLoading,
-    availableYears,
-    selectedYear,
-    setSelectedYear,
     loadRamas,
   };
 }

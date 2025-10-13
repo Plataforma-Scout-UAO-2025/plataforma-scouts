@@ -3,29 +3,21 @@ import { exportarOrganigramaPDF, exportarOrganigramaCSV } from '../utils/exporta
 import type { Branch as Rama } from '../types/frontend';
 import { getRamasWithSubramas } from '../services';
 
-type Opts = { tenantSlug?: string; groupSlug?: string };
+type Opts = { tenantId?: string; groupSlug?: string };
 
-export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?: Opts) {
+export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
   const exportPDF = useCallback(async () => {
     console.log('🔄 [useOrganigramaExport] Iniciando exportación PDF');
     
     let data = ramas;
     
     
-    if (opts?.tenantSlug && opts?.groupSlug) {
+    if (opts?.tenantId && opts?.groupSlug) {
       console.log('📡 [useOrganigramaExport] Obteniendo datos frescos del backend para PDF...');
-      console.log('📡 [useOrganigramaExport] Parámetros:', { 
-        tenantSlug: opts.tenantSlug, 
-        groupSlug: opts.groupSlug, 
-        year: selectedYear 
-      });
-      
+      console.log('📡 [useOrganigramaExport] Parámetros:', { tenantId: opts.tenantId, groupSlug: opts.groupSlug });
+
       try {
-        const fetched = await getRamasWithSubramas(
-          opts.tenantSlug, 
-          opts.groupSlug, 
-          selectedYear ? parseInt(selectedYear) : undefined
-        );
+        const fetched = await getRamasWithSubramas(opts.tenantId!, opts.groupSlug!);
         
         if (fetched && fetched.length > 0) {
           console.log('✅ [useOrganigramaExport] Datos del backend obtenidos exitosamente para PDF:', fetched.length, 'ramas');
@@ -44,33 +36,24 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
         
       }
     } else {
-      console.warn('⚠️ [useOrganigramaExport] No se proporcionaron tenantSlug/groupSlug, usando datos locales para PDF');
+      console.warn('⚠️ [useOrganigramaExport] No se proporcionaron tenantId/groupSlug, usando datos locales para PDF');
     }
-    
-    const anio = selectedYear ? parseInt(selectedYear) : undefined;
-    console.log('📄 [useOrganigramaExport] Generando PDF con', data.length, 'ramas, año:', anio);
-    exportarOrganigramaPDF(data, { anio, colorHex: '#1A4134' });
-  }, [ramas, selectedYear, opts]);
+
+    console.log('📄 [useOrganigramaExport] Generando PDF con', data.length, 'ramas');
+    exportarOrganigramaPDF(data, { colorHex: '#1A4134' });
+  }, [ramas, opts]);
 
   const exportExcel = useCallback(async () => {
     console.log('🔄 [useOrganigramaExport] Iniciando exportación CSV');
     
     let data = ramas;
     
-    if (opts?.tenantSlug && opts?.groupSlug) {
+    if (opts?.tenantId && opts?.groupSlug) {
       console.log('📡 [useOrganigramaExport] Obteniendo datos frescos del backend para CSV...');
-      console.log('📡 [useOrganigramaExport] Parámetros:', { 
-        tenantSlug: opts.tenantSlug, 
-        groupSlug: opts.groupSlug, 
-        year: selectedYear 
-      });
-      
+      console.log('📡 [useOrganigramaExport] Parámetros:', { tenantId: opts.tenantId, groupSlug: opts.groupSlug });
+
       try {
-        const fetched = await getRamasWithSubramas(
-          opts.tenantSlug, 
-          opts.groupSlug, 
-          selectedYear ? parseInt(selectedYear) : undefined
-        );
+        const fetched = await getRamasWithSubramas(opts.tenantId!, opts.groupSlug!);
         
         if (fetched && fetched.length > 0) {
           console.log('✅ [useOrganigramaExport] Datos del backend obtenidos exitosamente para CSV:', fetched.length, 'ramas');
@@ -89,19 +72,18 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
         }
       }
     } else {
-      console.warn('⚠️ [useOrganigramaExport] No se proporcionaron tenantSlug/groupSlug, usando datos locales para CSV');
+      console.warn('⚠️ [useOrganigramaExport] No se proporcionaron tenantId/groupSlug, usando datos locales para CSV');
     }
     
     console.log('📊 [useOrganigramaExport] Generando CSV con', data.length, 'ramas');
     exportarOrganigramaCSV(data);
-  }, [ramas, selectedYear, opts]);
+  }, [ramas, opts]);
 
   return {
     exportPDF,
     exportExcel,
-    hasBackendConfig: Boolean(opts?.tenantSlug && opts?.groupSlug),
-    selectedYear,
-    localRamasCount: ramas.length
+    hasBackendConfig: Boolean(opts?.tenantId && opts?.groupSlug),
+    localRamasCount: ramas.length,
   };
 }
 

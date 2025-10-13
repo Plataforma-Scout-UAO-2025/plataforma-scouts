@@ -6,20 +6,15 @@ type SlugPair = {
 };
 
 const resolveSlugs = (tenantSlug?: string, groupSlug?: string): SlugPair => {
-  const envTenant = import.meta.env.VITE_TENANT_SLUG;
-  const envGroup = import.meta.env.VITE_GROUP_SLUG;
-  const tenant = tenantSlug ?? envTenant;
-  const group = groupSlug ?? envGroup;
-
-  if (!tenant || tenant === "tu-tenant-aqui") {
-    throw new Error("VITE_TENANT_SLUG no está configurado. Revisa tu archivo .env.local");
+  if (!tenantSlug || tenantSlug.trim().length === 0) {
+    throw new Error('Se requiere tenantSlug para construir la ruta del organigrama.');
   }
 
-  if (!group || group === "tu-grupo-scout-aqui") {
-    throw new Error("VITE_GROUP_SLUG no está configurado. Revisa tu archivo .env.local");
+  if (!groupSlug || groupSlug.trim().length === 0) {
+    throw new Error('Se requiere groupSlug para construir la ruta del organigrama.');
   }
 
-  return { tenant, group };
+  return { tenant: tenantSlug, group: groupSlug };
 };
 
 export const getAllTenants = async <T = unknown>() => {
