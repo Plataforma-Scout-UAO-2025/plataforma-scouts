@@ -47,11 +47,30 @@ Crear o configurar los siguientes usuarios en Auth0 con sus roles correspondient
    - Sin rol asignado
 
 ### Variables de entorno
-En Bruno, configurar en el environment `Local`:
-- `baseurl`: URL base del backend (ej: `http://localhost:8080/`)
-- `tenantId`: ID del tenant para pruebas (si aplica)
-- `groupId`: ID de grupo para pruebas de ADMIN_GRUPO
-- `memberId`: ID de miembro para pruebas de SCOUT
+En Bruno, configurar en el environment `Local` (backend/bruno/environments/Local.bru):
+
+**Variables públicas:**
+- `baseurl`: URL base del backend
+  - Ejemplo: `http://localhost:8080/`
+  - Ya configurada por defecto
+
+**Variables secretas (vars:secret):**
+- `tenantId`: ID del tenant/organización para pruebas
+  - Se usa en headers `X-Tenant-Id` 
+  - Requerido para: tests de SCOUT y algunos de ADMIN_GRUPO
+  - Obtenerlo desde: Auth0 Organizations o base de datos
+  
+- `memberId`: ID de un miembro existente para pruebas
+  - Se usa en: `SCOUT-AccessToMemberFunctions.bru`
+  - Requerido para: test de acceso a funciones de miembros
+  - Obtenerlo desde: `/api/v1/members/list_members`
+
+**Cómo configurar las variables secretas:**
+1. Abre Bruno UI
+2. Ve a Environments → Local
+3. En la sección "Secret Variables", agrega:
+   - `tenantId` = [tu-tenant-id]
+   - `memberId` = [id-de-miembro-existente]
 
 ### Endpoints validados
 Los tests utilizan los siguientes endpoints existentes del backend:
