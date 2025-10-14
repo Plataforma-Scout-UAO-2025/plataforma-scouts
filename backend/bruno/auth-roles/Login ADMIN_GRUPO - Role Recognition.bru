@@ -1,0 +1,53 @@
+meta {
+  name: Login ADMIN_GRUPO - Role Recognition
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseurl}}api/v1/auth/me
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Validar que el rol ADMIN_GRUPO está presente", function () {
+    expect(res.body.roles).to.include("ADMIN_GRUPO");
+  });
+  
+  test("Validar que se devuelve información del usuario", function () {
+    expect(res.body).to.have.property("id");
+    expect(res.body).to.have.property("email");
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Login ADMIN_GRUPO - Reconocimiento de rol
+  
+  **Endpoint:** /api/v1/auth/me
+  
+  **HU relacionadas:** HU-ING-1.2
+  
+  **Criterio de aceptación:** El sistema debe reconocer el rol del usuario en el momento del inicio de sesión.
+  
+  **Descripción:** Dado que estoy en la pantalla de login, cuando ingreso credenciales válidas de un usuario con rol ADMIN_GRUPO y hago clic en "Iniciar sesión", entonces el sistema debe autenticarme y extraer mi rol desde el token o desde el backend.
+  
+  **Respuesta esperada:** Debe autenticarme correctamente, el backend debe reconocer y devolver el rol `ADMIN_GRUPO` y la interfaz debe habilitar las funciones de administración de grupo.
+  
+  **Responsable:** QA Team
+  
+  **Última Actualización:** 2025-10-14
+  
+}

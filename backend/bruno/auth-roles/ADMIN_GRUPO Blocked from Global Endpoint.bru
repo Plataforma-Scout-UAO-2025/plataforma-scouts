@@ -1,0 +1,48 @@
+meta {
+  name: ADMIN_GRUPO Blocked from Global Endpoint
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseurl}}api/v1/admin/global
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición bloqueada", function () {
+    expect(res.status).to.equal(403);
+  });
+  
+  test("Validar mensaje de acceso denegado", function () {
+    expect(res.body.message).to.include("Acceso denegado");
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** ADMIN_GRUPO intenta acceder a endpoint global
+  
+  **Endpoint:** /api/v1/admin/global
+  
+  **HU relacionadas:** HU-ING-1.2
+  
+  **Criterio de aceptación:** Si un usuario intenta acceder a funciones fuera de su rol, el sistema debe bloquear la acción y mostrar "Acceso denegado".
+  
+  **Descripción:** Dado que estoy autenticado como ADMIN_GRUPO, cuando intento acceder a funcionalidades globales, entonces el backend debe comprobar permisos y bloquear la acción si no estoy autorizado.
+  
+  **Respuesta esperada:** La acción debe ser bloqueada por el servidor y el cliente debe recibir/mostrar el mensaje "Acceso denegado"; no debe producirse la operación solicitada.
+  
+  **Responsable:** QA Team
+  
+  **Última Actualización:** 2025-10-14
+  
+}

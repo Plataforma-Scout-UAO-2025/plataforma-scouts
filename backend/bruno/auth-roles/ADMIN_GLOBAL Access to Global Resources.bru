@@ -1,0 +1,48 @@
+meta {
+  name: ADMIN_GLOBAL Access to Global Resources
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseurl}}api/v1/admin/global
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Validar acceso permitido", function () {
+    expect(res.body).to.exist;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** ADMIN_GLOBAL accede a recursos globales
+  
+  **Endpoint:** /api/v1/admin/global
+  
+  **HU relacionadas:** HU-ING-1.2
+  
+  **Criterio de aceptación:** Cada rol debe tener acceso únicamente a las funcionalidades definidas en la lógica de negocio.
+  
+  **Descripción:** Dado que estoy autenticado como ADMIN_GLOBAL, cuando navego a funciones administrativas globales, entonces el backend debe verificar mi rol y permitirme realizar las operaciones administrativas autorizadas.
+  
+  **Respuesta esperada:** Debe permitirse el acceso a las funciones administrativas correspondientes, las llamadas a endpoints protegidos deben devolver éxito y la UI debe mostrar las opciones administrativas habilitadas.
+  
+  **Responsable:** QA Team
+  
+  **Última Actualización:** 2025-10-14
+  
+}

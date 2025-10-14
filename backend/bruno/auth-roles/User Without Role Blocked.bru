@@ -1,0 +1,51 @@
+meta {
+  name: User Without Role Blocked
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseurl}}api/v1/auth/me
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición bloqueada", function () {
+    expect(res.status).to.equal(403);
+  });
+  
+  test("Validar mensaje de acceso denegado", function () {
+    const message = res.body.message || res.body.error;
+    expect(message).to.satisfy(function(msg) {
+      return msg.includes("Acceso denegado") || msg.includes("No tiene rol asignado");
+    });
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Usuario sin rol bloqueado
+  
+  **Endpoint:** /api/v1/auth/me
+  
+  **HU relacionadas:** HU-ING-1.2
+  
+  **Criterio de aceptación:** Si el usuario no cuenta con un rol definido en el sistema, no se le permitirá el acceso al sistema.
+  
+  **Descripción:** Dado que estoy en la pantalla de login, cuando ingreso credenciales válidas de un usuario que no tiene ningún rol definido en el sistema y hago clic en "Iniciar sesión", entonces el sistema debe verificar la ausencia de rol y aplicar la política de acceso.
+  
+  **Respuesta esperada:** No se debe permitir el acceso a la aplicación; el sistema debe mostrar un mensaje explicativo como "Acceso denegado" o "No tiene rol asignado" y evitar redirigir al dashboard.
+  
+  **Responsable:** QA Team
+  
+  **Última Actualización:** 2025-10-14
+  
+}

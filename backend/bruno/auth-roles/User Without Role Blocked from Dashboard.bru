@@ -1,0 +1,51 @@
+meta {
+  name: User Without Role Blocked from Dashboard
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseurl}}dashboard
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición bloqueada o redirigida", function () {
+    expect(res.status).to.be.oneOf([403, 401, 302]);
+  });
+  
+  test("Validar mensaje de acceso denegado si aplica", function () {
+    if (res.status === 403) {
+      const message = res.body.message || res.body.error;
+      expect(message).to.include("Acceso denegado");
+    }
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Usuario sin rol intenta navegar al dashboard
+  
+  **Endpoint:** /dashboard
+  
+  **HU relacionadas:** HU-ING-1.2
+  
+  **Criterio de aceptación:** Si el usuario no cuenta con un rol definido en el sistema, no se le permitirá el acceso al sistema.
+  
+  **Descripción:** Dado que he obtenido (en pruebas) un token para un usuario sin rol, cuando intento navegar al dashboard o realizar una petición protegida, entonces el backend debe bloquear el acceso.
+  
+  **Respuesta esperada:** 403 o redirección a página de error con "Acceso denegado".
+  
+  **Responsable:** QA Team
+  
+  **Última Actualización:** 2025-10-14
+  
+}

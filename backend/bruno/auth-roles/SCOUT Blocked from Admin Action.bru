@@ -1,0 +1,54 @@
+meta {
+  name: SCOUT Blocked from Admin Action
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseurl}}api/v1/admin/global/resource
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Test Resource"
+  }
+}
+
+tests {
+  test("Validar petición bloqueada", function () {
+    expect(res.status).to.equal(403);
+  });
+  
+  test("Validar mensaje de acceso denegado", function () {
+    expect(res.body.message).to.include("Acceso denegado");
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** SCOUT intenta crear recurso administrativo
+  
+  **Endpoint:** /api/v1/admin/global/resource
+  
+  **HU relacionadas:** HU-ING-1.2
+  
+  **Criterio de aceptación:** Si un usuario intenta acceder a funciones fuera de su rol, el sistema debe bloquear la acción y mostrar "Acceso denegado".
+  
+  **Descripción:** Dado que estoy autenticado como SCOUT, cuando intento ejecutar una acción administrativa, entonces el backend debe bloquearla.
+  
+  **Respuesta esperada:** Respuesta 403 con mensaje "Acceso denegado" y operación no realizada.
+  
+  **Responsable:** QA Team
+  
+  **Última Actualización:** 2025-10-14
+  
+}
