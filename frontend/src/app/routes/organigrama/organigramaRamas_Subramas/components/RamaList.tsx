@@ -98,7 +98,7 @@ export default function RamaList({
 
   const handleNavigateRama = () => {
     if (!ramaId) {
-      console.warn('⚠️ [RamaList] Intento de navegar a una rama sin ID válido');
+      console.warn(' [RamaList] Intento de navegar a una rama sin ID válido');
       return;
     }
     navigate(`/app/organigrama/rama/${ramaId}`);
@@ -106,7 +106,7 @@ export default function RamaList({
 
   const handleCreateSubrama = () => {
     if (!ramaId) {
-      console.warn('⚠️ [RamaList] No se puede crear subrama porque la rama no tiene ID');
+      console.warn(' [RamaList] No se puede crear subrama porque la rama no tiene ID');
       return;
     }
     onCreateSubrama(ramaId);
@@ -186,7 +186,7 @@ export default function RamaList({
 
                       const handleNavigateSubrama = () => {
                         if (!subgroupId) {
-                          console.warn('⚠️ [RamaList] Intento de navegar a una subrama sin ID válido');
+                          console.warn(' [RamaList] Intento de navegar a una subrama sin ID válido');
                           return;
                         }
                         navigate(`/app/organigrama/subrama/${subgroupId}`);

@@ -5,7 +5,6 @@ import type {
   GalleryUpdatePayload,
 } from '../types/operations';
 
-// Helpers para construir operaciones y payloads de galería
 export const createAddOp = (newValue: string): GalleryAddOperation => ({ op: 'add', newValue });
 
 export const createReplaceOp = (targetUuid: string, newValue: string): GalleryReplaceOperation => ({
@@ -20,15 +19,12 @@ export const createPayload = (operations: (GalleryAddOperation | GalleryReplaceO
   operations,
 });
 
-// Serializa el payload a snake_case para enviar al backend (ObjectMapper usa SNAKE_CASE)
 
 const opToSnake = (op: GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation) => {
-  // Map fields camelCase -> snake_case (newValue -> new_value, targetUuid -> target_uuid)
   const base: Record<string, unknown> = { op: op.op };
-  // Preserve explicit targetUuid even if null (backend may expect key with null)
   if ('targetUuid' in op) base['target_uuid'] = (op as unknown as { targetUuid?: unknown }).targetUuid;
   if ('newValue' in op && (op as unknown as { newValue?: unknown }).newValue !== undefined) base['new_value'] = (op as unknown as { newValue?: unknown }).newValue;
-  if ('value' in op && (op as unknown as { value?: unknown }).value !== undefined) base['new_value'] = (op as unknown as { value?: unknown }).value; // fallback if any
+  if ('value' in op && (op as unknown as { value?: unknown }).value !== undefined) base['new_value'] = (op as unknown as { value?: unknown }).value; 
   return base;
 };
 
@@ -44,9 +40,7 @@ export const createRemovePayload = (targetUuid: string | null) => createPayload(
 
 export const createAddsPayloadFromArray = (objectIds: string[]) => createPayload(objectIds.map((id) => createAddOp(id)));
 
-// ===============================================================
-// 🔄 Retry utilities para operaciones de galería (según instructions.md)
-// ===============================================================
+//  Retry utilities para operaciones de galería (según instructions.md)
 
 export interface RetryOptions {
   attempts?: number;
@@ -64,9 +58,7 @@ const getHttpStatus = (error: unknown): number | undefined => {
   }
 };
 
-/**
- * Ejecuta una función con retry y backoff exponencial según las instrucciones
- */
+
 export async function retry<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {}
@@ -76,11 +68,10 @@ export async function retry<T>(
     baseDelay = 500,
     maxDelay = 2000,
     shouldRetry = (error) => {
-      // No reintentar si la imagen ya no está en la galería (404)
       const status = getHttpStatus(error);
       if (status === 404) return false;
       if (typeof status === 'number') return status === 429 || (status >= 500 && status < 600);
-      return true; // Reintentar otros errores de red por defecto
+      return true;
     }
   } = options;
 
@@ -92,17 +83,14 @@ export async function retry<T>(
     } catch (error: unknown) {
       lastError = error;
       
-      // No reintentar si es el último intento o si no debemos reintentar este error
       if (attempt === attempts - 1 || !shouldRetry(error)) {
         throw error;
       }
 
-      // Calcular delay con backoff exponencial
       const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
       
-      console.warn(`⚠️ [GalleryRetry] Attempt ${attempt + 1}/${attempts} failed, retrying in ${delay}ms:`, error);
+      console.warn(` [GalleryRetry] Attempt ${attempt + 1}/${attempts} failed, retrying in ${delay}ms:`, error);
       
-      // Esperar antes del siguiente intento
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -110,9 +98,6 @@ export async function retry<T>(
   throw lastError;
 }
 
-/**
- * Wrapper específico para operaciones de galería con retry según las instrucciones
- */
 export async function retryGalleryOperation<T>(
   fn: () => Promise<T>,
   operationName: string = 'Gallery operation'
@@ -124,22 +109,19 @@ export async function retryGalleryOperation<T>(
     shouldRetry: (error) => {
       console.warn(`⚠️ [${operationName}] Operation failed:`, error);
       
-      // No reintentar si la imagen ya no está en la galería (404)
       const status = getHttpStatus(error);
       if (status === 404) {
-        console.info(`ℹ️ [${operationName}] Not retrying 404 - resource may have been deleted by another operation`);
+        console.info(` [${operationName}] Not retrying 404 - resource may have been deleted by another operation`);
         return false;
       }
 
-      // Reintentar solo en errores temporales
       if (typeof status === 'number') {
         const shouldRetryStatus = status === 429 || (status >= 500 && status < 600);
-        console.info(`ℹ️ [${operationName}] Status ${status}, will retry: ${shouldRetryStatus}`);
+        console.info(` [${operationName}] Status ${status}, will retry: ${shouldRetryStatus}`);
         return shouldRetryStatus;
       }
 
-      // Reintentar errores de red
-      console.info(`ℹ️ [${operationName}] Network error, will retry`);
+      console.info(` [${operationName}] Network error, will retry`);
       return true;
     }
   });

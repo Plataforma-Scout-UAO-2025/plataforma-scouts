@@ -19,7 +19,7 @@ export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string,
   const normalizedRamaId = typeof ramaId === 'string' ? ramaId.trim() : String(ramaId ?? '').trim();
 
   if (!normalizedRamaId) {
-    console.warn('⚠️ [SubramaService] Rama sin ID válido, se omite la consulta de subramas.');
+    console.warn(' [SubramaService] Rama sin ID válido, se omite la consulta de subramas.');
     return [];
   }
 
@@ -31,7 +31,7 @@ export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string,
   const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
   return subramas;
   } catch (error) {
-    console.error('❌ [SubramaService] Error obteniendo subramas:', error);
+    console.error(' [SubramaService] Error obteniendo subramas:', error);
     throw error;
   }
 };
@@ -46,7 +46,7 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     return subrama;
   } catch (error) {
-    console.error('❌ [SubramaService] Error obteniendo subrama por ID:', error);
+    console.error(' [SubramaService] Error obteniendo subrama por ID:', error);
     return null;
   }
 };
@@ -64,9 +64,9 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     return subrama;
     } catch (error: unknown) {
-    console.error('❌ [SubramaService] Error creando subrama:', error);
+    console.error(' [SubramaService] Error creando subrama:', error);
     if ((error as MaybeAxiosError)?.response?.data) {
-      console.error('❌ [SubramaService] Respuesta del backend:', (error as MaybeAxiosError).response?.data);
+      console.error(' [SubramaService] Respuesta del backend:', (error as MaybeAxiosError).response?.data);
     }
     throw error;
   }
@@ -90,9 +90,9 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     return subrama;
   } catch (error: unknown) {
-    console.error('❌ [SubramaService] Error actualizando subrama:', error);
+    console.error(' [SubramaService] Error actualizando subrama:', error);
     if ((error as MaybeAxiosError)?.response?.data) {
-      console.error('❌ [SubramaService] Respuesta del backend (update):', (error as MaybeAxiosError).response?.data);
+      console.error(' [SubramaService] Respuesta del backend (update):', (error as MaybeAxiosError).response?.data);
     }
     throw error;
   }
@@ -107,11 +107,11 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
       await api.delete(endpoint);
       return true;
     } catch (error: unknown) {
-      console.error('❌ [SubramaService] Error eliminando subrama (attempt ' + attempt + '):', error);
+      console.error(' [SubramaService] Error eliminando subrama (attempt ' + attempt + '):', error);
       try {
         const maybe = error as MaybeAxiosError;
         if (maybe.response && maybe.response.data) {
-          console.error('❌ [SubramaService] Respuesta del backend (delete):', maybe.response.data);
+          console.error(' [SubramaService] Respuesta del backend (delete):', maybe.response.data);
         }
       } catch (e) {
       }

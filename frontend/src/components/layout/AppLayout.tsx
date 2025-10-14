@@ -45,7 +45,6 @@ import FullScreenError from "@/components/common/FullScreenError";
 import { RawRole } from "@/roles/roles";
 import { setAuth0TokenProvider } from "@/api/axios";
 import { useEffect } from "react";
-import Organigrama from "@/app/routes/organigrama/organigramaRamas_Subramas";
 
 type SubMenuItem = {
   id: string;

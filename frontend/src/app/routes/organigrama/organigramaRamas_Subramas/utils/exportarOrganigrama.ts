@@ -51,7 +51,6 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
       for (const s of subgroups) {
         const nombreSubramaFull = (s.name ?? s.nombre ?? '').toString();
 
-        // Integrantes: múltiples formatos posibles (array o string)
         let integrantes = '';
         const sUnknown = s as unknown as Record<string, unknown>;
         if (sUnknown.members && Array.isArray(sUnknown.members)) {
@@ -117,8 +116,7 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
     console.log(' [ExportPDF] Generando tabla con autoTable...');
     const pageW = doc.internal.pageSize.getWidth();
     const availableW = pageW - x * 2;
-    // Pesos actualizados (sin TipoSubrama)
-    const updatedWeights = [12, 12, 32, 28, 11]; // Rama, Descripción, NombreSubrama, Integrantes, JefeRama
+    const updatedWeights = [12, 12, 32, 28, 11]; 
     const totalW = updatedWeights.reduce((a, b) => a + b, 0);
     const colW = updatedWeights.map((w) => Math.floor((w / totalW) * availableW));
     const finalColumnStyles: Record<string, { cellWidth: number }> = {};

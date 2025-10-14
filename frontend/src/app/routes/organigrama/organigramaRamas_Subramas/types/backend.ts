@@ -1,6 +1,4 @@
-// Backend response / request types (Stage 3)
 
-/** BackendBranch (BackendRama) */
 export interface BackendBranch {
   sectionId?: string | number;
   section_id?: string;
@@ -25,8 +23,6 @@ export interface BackendBranch {
   minAge?: number;
   maxAge?: number;
 }
-
-/** BackendSubgroup (BackendSubrama) */
 export interface BackendSubgroup {
   subgroup_id?: string;
   subgroupId?: string;

@@ -9,16 +9,14 @@ import {
   retryGalleryOperation,
 } from '../utils/galleryPayload';
 
-// Helper para obtener una rama directamente (devuelve la respuesta axios)
+// Helper para obtener una rama directamente
 const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
   const endpoint = sectionPath(id, tenantSlug, groupSlug);
   const response = await api.get<Record<string, unknown> | undefined>(endpoint);
   return response.data;
 };
 
-// ===============================================================
-// 🧩 Función auxiliar: extraer UUID válido desde string o URL
-// ===============================================================
+//  Función auxiliar: extraer UUID válido desde string o URL
 const extractUuidFromString = (value: string | null | undefined): string | null => {
   console.info('🔎 [GalleryService] extractUuidFromString called with:', String(value)?.slice?.(0, 120));
   if (!value) return null;
@@ -26,9 +24,7 @@ const extractUuidFromString = (value: string | null | undefined): string | null 
   return match ? match[0] : null;
 };
 
-// ===============================================================
-// 🔍 Obtener UUIDs actuales de la galería
-// ===============================================================
+// Obtener UUIDs actuales de la galería
 export const getGalleryImageUuids = async (
   tenantSlug: string,
   groupSlug: string,
@@ -51,12 +47,10 @@ export const getGalleryImageUuids = async (
           const uuid = extractUuidFromString(id) || extractUuidFromString(String(rec['url'] ?? ''));
           if (uuid) ids.push(uuid);
         } catch {
-          // ignore malformed item
         }
       }
     }
 
-    // 2) galleryObjectIds or sectionGalleryObjectIds (accept snake_case too)
     const maybeIds = (maybe?.['galleryObjectIds'] as string[] | undefined)
       ?? (maybe?.['gallery_object_ids'] as string[] | undefined)
       ?? (maybe?.['sectionGalleryObjectIds'] as string[] | undefined)
@@ -73,7 +67,6 @@ export const getGalleryImageUuids = async (
       }
     }
 
-    // 3) galleryObjectUrls (legacy) - accept snake_case key too
     const galleryUrls = (maybe?.['galleryObjectUrls'] as string[] | undefined)
       ?? (maybe?.['gallery_object_urls'] as string[] | undefined)
       ?? [];
@@ -87,14 +80,12 @@ export const getGalleryImageUuids = async (
     const unique = Array.from(new Set(ids));
     return unique.length > 0 ? unique : [];
   } catch (error) {
-    console.error('❌ [GalleryService] Error obteniendo UUIDs de galería:', error);
+    console.error(' [GalleryService] Error obteniendo UUIDs de galería:', error);
     return [];
   }
 };
 
-// ===============================================================
-// � Resolver item de galería (id + url) a partir de URL o UUID
-// ===============================================================
+// Resolver item de galería (id + url) a partir de URL o UUID
 export const resolveGalleryItem = async (
   tenantSlug: string,
   groupSlug: string,
@@ -133,14 +124,12 @@ export const resolveGalleryItem = async (
     if (!id) return null;
     return { id, url };
   } catch (error) {
-    console.error('❌ [GalleryService] Error resolviendo item de galería:', error);
+    console.error(' [GalleryService] Error resolviendo item de galería:', error);
     return null;
   }
 };
 
-// ===============================================================
-// �🖼️ Agregar nueva imagen a galería
-// ===============================================================
+//  Agregar nueva imagen a galería
 export const addGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -150,40 +139,34 @@ export const addGalleryImage = async (
 ): Promise<string> => {
   try {
     console.info('🆕 [GalleryService] addGalleryImage called:', { tenantSlug, groupSlug, sectionId, filename: file?.name });
-    // 1️⃣ Subir archivo a Supabase
     const formData = new FormData();
     formData.append('file', file);
 
     const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, { signal });
 
-    // 2️⃣ Validar UUID del nuevo objeto
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
-    // 3️⃣ Enviar PATCH para agregar imagen
     const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = createAddPayload(newUuid);
     await api.patch(patchEndpoint, createPayloadForBackend(addPayload.operations));
 
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
-    console.error('❌ [GalleryService] Error agregando imagen a galería:', error);
+    console.error(' [GalleryService] Error agregando imagen a galería:', error);
     throw error;
   }
 };
 
-// Helper para reemplazar la lista completa de la sección vía PUT (force remove)
 export const replaceGalleryList = async (
   tenantSlug: string,
   groupSlug: string,
   sectionId: string,
   keepGalleryUuids: string[]
 ): Promise<Record<string, unknown> | null> => {
-  // Reemplazar lista completa de galería (PUT) para sección: info de operación
   console.info('⚠️ [GalleryService] replaceGalleryList called (force replace):', { tenantSlug, groupSlug, sectionId, keep: keepGalleryUuids?.length });
   const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
   try {
-    // Obtener la rama actual para reutilizar nombre y otros campos requeridos
     const response = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
     const backendRec = response?.data as Record<string, unknown> | undefined;
     const name = String(backendRec?.['name'] ?? backendRec?.['nombre'] ?? '');
@@ -199,16 +182,13 @@ export const replaceGalleryList = async (
       galleryObjectIds: keepGalleryUuids
     };
 
-  // payload preparado para PUT reemplazo de galería
   const result = await api.put<Record<string, unknown>>(endpoint, payload);
-  // PUT reemplazo de galería completado
     return result.data ?? null;
   } catch (error) {
-    console.error('❌ [GalleryService] Error al reemplazar lista de galería via PUT:', error);
+    console.error(' [GalleryService] Error al reemplazar lista de galería via PUT:', error);
     throw error;
   }
 };
-// ===============================================================
 export const replaceGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -217,43 +197,34 @@ export const replaceGalleryImage = async (
   newFile: File
   , signal?: AbortSignal
 ): Promise<string> => {
-  // Reemplazando imagen en galería: parámetros iniciales (sectionId, targetImageUuid, newFileName, newFileSize)
 
   try {
     console.info('🔁 [GalleryService] replaceGalleryImage called:', { tenantSlug, groupSlug, sectionId, targetImageUuid, filename: newFile?.name });
-    // 1️⃣ Extraer y validar UUID de la imagen objetivo
     const validTargetUuid = extractUuidFromString(targetImageUuid);
     if (!validTargetUuid) {
-      console.error('❌ [GalleryService] UUID inválido detectado. Abortando PATCH.');
+      console.error(' [GalleryService] UUID inválido detectado. Abortando PATCH.');
       throw new Error('Invalid UUID format detected');
     }
 
-    // 2️⃣ Subir el nuevo archivo
-    // Subiendo nueva imagen
     const formData = new FormData();
     formData.append('file', newFile);
 
     const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, { signal });
-    // Nueva imagen subida
 
-    // 3️⃣ Validar UUID del nuevo archivo
     const newUuid = extractUuidFromString(uploadResponse.objectId);
-    if (!newUuid) throw new Error('Upload did not return a valid UUID');    // 5️⃣ Crear payload y enviar PATCH
+    if (!newUuid) throw new Error('Upload did not return a valid UUID');
     const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
   const replacePayload = createReplacePayload(validTargetUuid, newUuid);
   await api.patch(patchEndpoint, createPayloadForBackend(replacePayload.operations));
-  // Imagen reemplazada correctamente
 
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
-    console.error('❌ [GalleryService] Error reemplazando imagen en galería:', error);
+    console.error(' [GalleryService] Error reemplazando imagen en galería:', error);
     throw error;
   }
 };
 
-// ===============================================================
-// 🗑️ Eliminar imagen de galería
-// ===============================================================
+//  Eliminar imagen de galería
 export const removeGalleryImage = async (
   tenantSlug: string,
   groupSlug: string,
@@ -265,29 +236,27 @@ export const removeGalleryImage = async (
   return retryGalleryOperation(async () => {
     const validTargetUuid = extractUuidFromString(targetImageUuid);
     if (!validTargetUuid) {
-      console.error('❌ [GalleryService] UUID inválido detectado. Abortando eliminación.');
+      console.error(' [GalleryService] UUID inválido detectado. Abortando eliminación.');
       throw new Error('Invalid UUID format detected');
     }
 
-    // Check-before-delete: verificar que la imagen existe en la galería antes de intentar eliminarla
     console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de PATCH remove...');
     const currentUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
     if (!currentUuids.includes(validTargetUuid)) {
       console.warn('⚠️ [GalleryService] UUID no encontrado en galería. La imagen ya fue removida por otra operación:', { validTargetUuid, currentUuids });
-      return; // No error - la imagen ya no está en la galería
+      return; 
     }
 
     const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const removePayload = createRemovePayload(validTargetUuid);
     
-    console.info('📤 [GalleryService] Enviando PATCH remove al endpoint:', { patchEndpoint, payload: removePayload });
+    console.info(' [GalleryService] Enviando PATCH remove al endpoint:', { patchEndpoint, payload: removePayload });
     await api.patch(patchEndpoint, createPayloadForBackend(removePayload.operations));
 
-    console.info('✅ [GalleryService] Imagen removida de galería correctamente (PATCH)');
+    console.info(' [GalleryService] Imagen removida de galería correctamente (PATCH)');
   }, 'RemoveGalleryImage-PATCH');
-};// ===============================================================
-// 🗑️ Eliminar imagen de galería usando endpoint DELETE por objectId
-// ===============================================================
+};
+//  Eliminar imagen de galería usando endpoint DELETE por objectId
 export const deleteGalleryImageById = async (
   tenantSlug: string,
   groupSlug: string,
@@ -304,58 +273,53 @@ export const deleteGalleryImageById = async (
   try {
     const validTargetUuid = extractUuidFromString(targetImageUuidOrUrl);
     if (!validTargetUuid) {
-      console.error('❌ [GalleryService] UUID inválido detectado. Abortando eliminación via DELETE.');
+      console.error(' [GalleryService] UUID inválido detectado. Abortando eliminación via DELETE.');
       throw new Error('Invalid UUID format detected');
     }
 
-    // Pre-check mejorado: asegurarse que el UUID objetivo pertenece actualmente a la galería
     console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de DELETE...');
     const currentUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
     if (!currentUuids.includes(validTargetUuid)) {
-      console.warn('⚠️ [GalleryService] UUID objetivo no pertenece a la galería local (primer check). Intentando re-fetch antes de abortar.', { validTargetUuid, currentUuids });
+      console.warn(' [GalleryService] UUID objetivo no pertenece a la galería local (primer check). Intentando re-fetch antes de abortar.', { validTargetUuid, currentUuids });
       // Re-check inmediato para cubrir condiciones de carrera donde otra operación ya haya quitado la referencia
       const recheckUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
       if (!recheckUuids.includes(validTargetUuid)) {
-        console.warn('⚠️ [GalleryService] Tras re-fetch la imagen no figura en la galería; abortando operación sin error:', { validTargetUuid, recheckUuids });
-        // Devolver null indica que no fue necesario eliminar porque la referencia ya no existe
+        console.warn(' [GalleryService] Tras re-fetch la imagen no figura en la galería; abortando operación sin error:', { validTargetUuid, recheckUuids });
         return null;
       }
       // Si tras el re-check ahora sí está presente, continuamos con la eliminación
-      console.info('ℹ️ [GalleryService] Re-check detectó la UUID en la galería; procediendo con DELETE:', { validTargetUuid });
+      console.info(' [GalleryService] Re-check detectó la UUID en la galería; procediendo con DELETE:', { validTargetUuid });
     }
 
     const endpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
-    console.info('📤 [GalleryService] Enviando DELETE al endpoint:', { endpoint });
+    console.info(' [GalleryService] Enviando DELETE al endpoint:', { endpoint });
 
-    // Usar retry para la operación DELETE principal
     const result = await retryGalleryOperation(async () => {
       return await api.delete<Record<string, unknown>>(endpoint);
     }, `DeleteGalleryImageById-${deleteFromStorage ? 'WithStorage' : 'NoStorage'}`);
 
-    console.info('✅ [GalleryService] Eliminación via DELETE completada, servidor devolvió datos');
+    console.info(' [GalleryService] Eliminación via DELETE completada, servidor devolvió datos');
     return result.data ?? null;
     
   } catch (error) {
-    console.error('❌ [GalleryService] Error eliminando imagen de galería via DELETE:', error);
+    console.error(' [GalleryService] Error eliminando imagen de galería via DELETE:', error);
 
-    // Si DELETE falla, re-fetch de la sección para confirmar estado (idempotencia).
     try {
       const recheckUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
       const validTargetUuid = extractUuidFromString(targetImageUuidOrUrl);
       if (!validTargetUuid) {
-        console.error('❌ [GalleryService] UUID objetivo inválido al reintentar:', targetImageUuidOrUrl);
+        console.error(' [GalleryService] UUID objetivo inválido al reintentar:', targetImageUuidOrUrl);
         throw error;
       }
 
       if (!recheckUuids.includes(validTargetUuid)) {
-        console.warn('⚠️ [GalleryService] Tras re-fetch la imagen ya no figura en la galería; abortando operación sin error:', validTargetUuid);
+        console.warn(' [GalleryService] Tras re-fetch la imagen ya no figura en la galería; abortando operación sin error:', validTargetUuid);
         return null;
       }
 
-      // La UUID sigue presente: no podemos resolverlo aquí, relanzamos el error
       throw error;
     } catch (recheckErr) {
-      console.error('❌ [GalleryService] Error durante re-fetch tras DELETE fallido:', recheckErr);
+      console.error(' [GalleryService] Error durante re-fetch tras DELETE fallido:', recheckErr);
       throw error;
     }
   }

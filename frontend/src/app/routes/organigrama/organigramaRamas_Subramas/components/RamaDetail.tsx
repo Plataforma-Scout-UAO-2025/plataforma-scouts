@@ -117,7 +117,6 @@ export default function RamaDetail() {
   const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
   const [galeriaObjetivoId, setGaleriaObjetivoId] = useState<string | null>(null);
 
-  // Abrir modal según tipo de imagen
   const openIconModal = () => {
     if (!rama) return;
     const url = getIconUrl(rama);
@@ -147,7 +146,6 @@ export default function RamaDetail() {
     setFotoModalOpen(true);
   };
 
-  // Reemplazar o eliminar foto desde modal
   const handleReplaceFoto = async (file: File) => {
     if (!rama || !fotoTipo) return;
     try {
@@ -327,7 +325,7 @@ export default function RamaDetail() {
     if (iconUrl && !iconUrl.startsWith('data:') && iconUrl.includes('http')) return iconUrl as string;
     if (iconUrl && iconUrl.startsWith('data:')) return iconUrl as string;
     if (iconUrl) return iconUrl as string;
-    console.log('⚠️ [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
+    console.log(' [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
     return '';
   };
 
@@ -496,21 +494,17 @@ export default function RamaDetail() {
     const preview = URL.createObjectURL(file);
     const previousIcon = getIconUrl(rama) || null;
     try {
-      // Mostrar preview local inmediato
   setIconPreview(preview);
       setUploading(true);
   setUploadCompleteAnnounced(false);
       setCurrentUploadingFile(file.name);
       setUploadPercent(0);
 
-      // Subir archivo usando el nuevo sistema y recibir progreso
     if (!tenantId || !groupSlug) {
       toast.error('Tenant o grupo no disponibles.');
       return;
     }
 
-  // Use the URL returned by uploadSectionIcon to update UI immediately and
-  // force a cache-bust token so the browser reloads the new image.
   const updatedIconUrl = await organigramaService.uploadSectionIcon(
     tenantId,
     groupSlug,
@@ -527,15 +521,12 @@ export default function RamaDetail() {
     }
   );
 
-  // If backend returned a usable URL, update preview and force refresh.
   if (updatedIconUrl) {
-    // If backend returned an object URL or full http url, use it.
     setIconPreview(updatedIconUrl);
     setImageRefreshToken(Date.now());
     setUploadPercent(100);
     toast.success('Ícono actualizado correctamente');
   } else {
-    // Fallback: wait briefly and reload rama to pick up changes
     await new Promise(resolve => setTimeout(resolve, 1000));
     const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
     if (updatedRama) {
@@ -543,7 +534,7 @@ export default function RamaDetail() {
       setUploadPercent(100);
       toast.success('Ícono actualizado correctamente');
     } else {
-      console.warn('⚠️ [RamaDetail] No se pudo recargar la rama');
+      console.warn(' [RamaDetail] No se pudo recargar la rama');
       toast.error('Error recargando los datos de la rama');
     }
       }
@@ -575,7 +566,6 @@ export default function RamaDetail() {
       setCurrentUploadingFile(file.name);
       setUploadPercent(0);
 
-      // Subir archivo usando la función específica para imagen principal (con progreso)
     if (!tenantId || !groupSlug) {
       toast.error('Tenant o grupo no disponibles.');
       return;
@@ -597,22 +587,17 @@ export default function RamaDetail() {
         }
       );
 
-      // Recargar la rama para obtener la imagen actualizada
   const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
         if (updatedRama) {
         setRama(updatedRama);
-        // Actualizar también el estado local de imagen principal
         const mainImageUrl = getMainImageUrl(updatedRama);
         setImagenPrincipal(`${mainImageUrl}?v=${Date.now()}`);
-        // marcar 100% visualmente cuando el backend confirma
         setUploadPercent(100);
-        // imagen principal actualizada correctamente
         toast.success('Imagen principal actualizada correctamente');
       }
       setImageRefreshToken(Date.now());
     } catch (err) {
       console.error(' [RamaDetail] Error subiendo imagen principal:', err);
-      // revertir preview si falla
       setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
     } finally {
@@ -628,41 +613,32 @@ export default function RamaDetail() {
     if (files.length === 0 || !rama) return;
 
     try {
-      // subiendo galería: cantidad de archivos
   setUploading(true);
   setUploadCompleteAnnounced(false);
   setUploadPercent(0);
   setCurrentUploadingFile(null);
 
-      // crear previews locales y agregarlas temporalmente
       const previews = files.map(f => URL.createObjectURL(f));
       setGalleryLocalPreviews(prev => [...prev, ...previews]);
       setGaleriaFotos(prev => [...prev, ...previews]);
 
-      // Subir las imágenes usando las acciones del hook (uno a uno)
       const sectionId = String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id);
       for (const f of files) {
         await addGalleryImage(sectionId, f);
       }
 
-    // Refrescar todos los datos de la rama para obtener la galería actualizada
     await fetchRama();
       
-  // galería actualizada correctamente
-  // marcar 100% visualmente cuando el backend confirma
   setUploadPercent(100);
   toast.success('Galería actualizada correctamente');
-      // Forzar refresh visual de imágenes (cache-busting)
       setImageRefreshToken(Date.now());
 
-      // revocar previews locales
       for (const p of previews) {
   try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview', _err); }
       }
       setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
       console.error(' [RamaDetail] Error subiendo galería:', err);
-      // remover previews locales en caso de fallo
       const addedPreviews = galleryLocalPreviews.slice(-files.length);
       setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
       for (const p of addedPreviews) {
@@ -677,7 +653,6 @@ export default function RamaDetail() {
       setUploadPercent(0);
     }
   };
-
   useEffect(() => {
     if (!tenantId || !groupSlug) return;
     void fetchRama();
@@ -735,7 +710,6 @@ export default function RamaDetail() {
                     e.currentTarget.style.display = 'none';
                   }}
                   onLoad={() => {
-                    // icono cargado correctamente
                   }}
                 />
               ) : (

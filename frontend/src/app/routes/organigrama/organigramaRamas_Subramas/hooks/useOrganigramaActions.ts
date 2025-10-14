@@ -38,9 +38,6 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     try {
       if (showSuccess) showSuccess(msg);
     } catch (e) {
-      // Si la función externa falla, registramos para diagnóstico pero no rompemos la UI
-      // Esto evita el bloque vacío que ESLint marca como error
-      // eslint-disable-next-line no-console
       console.warn('[useOrganigramaActions] showSuccess hook threw:', e);
     }
   }, [showSuccess]);
@@ -134,7 +131,6 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     }
   }, [tenantId, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
-  // Acciones de galería para Secciones (Ramas)
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
 
   const addGalleryImage = useCallback(async (sectionId: string, file: File) => {
