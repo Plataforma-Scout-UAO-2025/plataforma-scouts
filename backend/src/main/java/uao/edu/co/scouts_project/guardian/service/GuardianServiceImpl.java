@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.GuardianCreateResponse;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.*;
@@ -77,13 +78,13 @@ public class GuardianServiceImpl implements GuardianService {
 
     @Override
     @Transactional
-    public void saveGuardian(GuardianCreateDTO guardianCreateDTO) {
+    public GuardianCreateResponse saveGuardian(GuardianCreateDTO guardianCreateDTO) {
         if (memberRepository.existsByValidGuardianIdentification(guardianCreateDTO.getIdentification())) {
             throw new MemberAlreadyAssignedException("Guardian with identification already exists");
         }
 
-        Member newGuardian = GuardianMapper.toEntity(guardianCreateDTO);
-        memberRepository.save(newGuardian);
+        Member saved = memberRepository.save(GuardianMapper.toEntity(guardianCreateDTO));
+        return new GuardianCreateResponse(saved.getMemberId());
     }
 
     @Override
