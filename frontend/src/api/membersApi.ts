@@ -35,3 +35,21 @@ export const updateMember = async (id: string, updates: Partial<Member>) => {
   const response = await api.put(`/members/update_member_by_id/${id}`, updates);
   return response.data;
 };
+
+// Obtener miembros por subrama
+export const getMembersBySubgroup = async (
+  branchId: string | number | bigint
+) => {
+  const response = await api.get<Member[]>("/members/list_members_by_subgroup", {
+    params: { branchId },
+  });
+  return response.data;
+};
+
+// Obtener subrama por memberId
+export const getSubgroupByMemberId = async (memberId: string | number | bigint) => {
+  const response = await api.get("/members/list_subGroup_by_memberId", {
+    params: { memberId },
+  });
+  return response.data;
+};

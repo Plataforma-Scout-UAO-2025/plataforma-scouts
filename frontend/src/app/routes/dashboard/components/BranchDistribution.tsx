@@ -6,10 +6,10 @@ interface BranchDistributionProps {
 }
 
 const BranchDistribution = ({ members }: BranchDistributionProps) => {
-  // Calcular scouts por rama
+  const isScout = (role: string | undefined) => role?.toUpperCase() === "SCOUT";
   const scoutsPorRama: Record<string, number> = {};
-  
-  members.forEach((m) => {
+
+  members.filter(m => isScout(m.role)).forEach((m) => {
     if (m.branch && m.branch.length > 0) {
       m.branch.forEach((rama) => {
         const nombre = rama.name || "Sin rama";
@@ -27,7 +27,7 @@ const BranchDistribution = ({ members }: BranchDistributionProps) => {
 
   // Calcular porcentajes
   const total = members.length || 1;
-  
+
   return (
     <div className="border rounded-xl shadow-sm p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -39,7 +39,7 @@ const BranchDistribution = ({ members }: BranchDistributionProps) => {
           </p>
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {ramasOrdenadas.length === 0 ? (
           <p className="text-accent-foreground text-center py-4">
@@ -48,7 +48,7 @@ const BranchDistribution = ({ members }: BranchDistributionProps) => {
         ) : (
           ramasOrdenadas.map(([rama, cantidad]) => {
             const porcentaje = Math.round((cantidad / total) * 100);
-            
+
             return (
               <div key={rama} className="space-y-2">
                 <div className="flex justify-between items-center">

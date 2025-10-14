@@ -7,14 +7,14 @@ import {
   Button,
   Input,
 } from "@/components/ui/index";
-import { cities, branches } from "@/lib/mockObjects";
-import { ChevronDown, ChevronUp, BrushCleaning, Plus } from "lucide-react";
+import { branches } from "@/lib/mockObjects";
+import { ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
 
 interface MembersFilterProps {
   searchFilter: string;
   setSearchFilter: (value: string) => void;
-  cityFilter: string;
-  setCityFilter: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
   branchFilter: string;
   setBranchFilter: (value: string) => void;
 }
@@ -22,8 +22,8 @@ interface MembersFilterProps {
 const MembersFilter = ({
   searchFilter,
   setSearchFilter,
-  cityFilter,
-  setCityFilter,
+  statusFilter,
+  setStatusFilter,
   branchFilter,
   setBranchFilter,
 }: MembersFilterProps) => {
@@ -41,23 +41,23 @@ const MembersFilter = ({
         />
         <DropdownMenu onOpenChange={setIsActive}>
           <DropdownMenuTrigger className="w-3/5 py-1 px-2 text-sm border border-primary rounded-md justify-between flex items-center">
-            {cityFilter || "Seleccionar Ciudad..."}{" "}
+            {statusFilter || "Seleccionar Estado..."}{" "}
             {isActive ? <ChevronUp /> : <ChevronDown />}
           </DropdownMenuTrigger>
           <DropdownMenuContent className="py-1 px-2 text-sm border border-primary bg-background rounded-md">
             <DropdownMenuItem
               className="cursor-pointer"
-              onSelect={() => setCityFilter("")}
+              onSelect={() => setStatusFilter("")}
             >
-              Todas las ciudades
+              Todos los estados
             </DropdownMenuItem>
-            {cities.map((city) => (
+            {["Aprobado", "Rechazado", "Pendiente"].map((status) => (
               <DropdownMenuItem
-                key={city}
+                key={status}
                 className="cursor-pointer"
-                onSelect={() => setCityFilter(city)}
+                onSelect={() => setStatusFilter(status)}
               >
-                {city}
+                {status}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -85,22 +85,18 @@ const MembersFilter = ({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+      <div className="flex gap-4 justify-end">
         <Button
           variant="primary"
-          className="w-1/6 flex h-auto px-3"
+          className="flex h-auto px-3"
           onClick={() => {
             setSearchFilter("");
-            setCityFilter("");
+            setStatusFilter("");
             setBranchFilter("");
           }}
         >
           <BrushCleaning /> Limpiar
-        </Button>
-      </div>
-      <div className="flex gap-4 justify-end">
-        <Button variant="primary">
-          <Plus />
-          Crear Nuevo Integrante
         </Button>
       </div>
     </>

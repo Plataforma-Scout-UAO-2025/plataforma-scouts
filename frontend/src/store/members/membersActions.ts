@@ -5,7 +5,9 @@ import {
   getMembers,
   updateMember,
   createMember,
-  createMemberWithSchool
+  createMemberWithSchool,
+  getMembersBySubgroup,
+  getSubgroupByMemberId
 } from "@/api/membersApi";
 import { validateClient } from "../../lib/zodUtils";
 import { updateMemberSchema } from "@/schemas/memberSchema";
@@ -72,6 +74,39 @@ export const updateMemberAction = createAsyncThunk<
     }
   }
 );
+
+export const fetchMembersBySubgroupAction = createAsyncThunk<
+  Member[],
+  string | number,
+  { rejectValue: string | string[] }
+>("members/fetchBySubgroup", async (subgroupId, { rejectWithValue }) => {
+  try {
+    const members = await getMembersBySubgroup(subgroupId);
+    return members;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage = errorData?.error || "Error al obtener los miembros por subrama";
+    return rejectWithValue(errorMessage);
+  }
+});
+
+export const fetchSubgroupByMemberIdAction = createAsyncThunk<
+  { subgroupId: number; sectionId: number; name: string },
+  number,
+  { rejectValue: string | string[] }
+>("members/fetchSubgroupByMemberId", async (memberId, { rejectWithValue }) => {
+  try {
+    const subgroup = await getSubgroupByMemberId(memberId);
+    return subgroup;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage =
+      errorData?.error || "Error al obtener la subrama por ID de miembro";
+    return rejectWithValue(errorMessage);
+  }
+});
 
 // Crear un nuevo miembro
 export const createMemberAction = createAsyncThunk<

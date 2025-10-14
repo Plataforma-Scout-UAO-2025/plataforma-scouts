@@ -4,7 +4,9 @@ import {
   fetchMembersAction,
   updateMemberAction,
   createMemberAction,
-  createMemberWithSchoolDataAction
+  createMemberWithSchoolDataAction,
+  fetchMembersBySubgroupAction,
+  fetchSubgroupByMemberIdAction
 } from "./membersActions";
 import type { Member } from "@/types/member.type";
 
@@ -73,6 +75,33 @@ const membersSlice = createSlice({
       state.loading = false;
       state.error = action.payload?.error as string;
     });
+
+    builder.addCase(fetchMembersBySubgroupAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchMembersBySubgroupAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.members = action.payload as Member[];
+    });
+    builder.addCase(fetchMembersBySubgroupAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    builder.addCase(fetchSubgroupByMemberIdAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchSubgroupByMemberIdAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.member = action.payload as Member;
+    });
+    builder.addCase(fetchSubgroupByMemberIdAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
     builder.addCase(createMemberAction.pending, (state) => {
       state.loading = true;
       state.error = null;

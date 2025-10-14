@@ -26,7 +26,6 @@ import {
   Award,
   ChevronRight,
   DollarSign,
-  CalendarDays,
   Pencil,
   Network,
   BriefcaseMedical,
@@ -89,24 +88,47 @@ const adminGrupalItems: MenuItem[] = [
     icon: <LineChart />,
     href: "/app/dashboard",
   },
-  {
-    id: "inscripcion",
-    label: "Inscripcion",
-    icon: <Pencil />,
-    href: "/app/inscripcion",
-  },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
-  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
-  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
-  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
-  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
-  { id: "medico", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
-]
+  {
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: <Boxes />,
+    href: "/app/solicitudes",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/cuotas",
+  },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
+  },
+];
 
 const tesoreroItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
-]
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/cuotas",
+  },
+];
 
 const acudienteItems: MenuItem[] = [
   {

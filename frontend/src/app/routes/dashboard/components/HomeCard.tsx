@@ -56,14 +56,14 @@ const HomeCard = ({ stats }: HomeCardProps) => {
               </p>
               <item.icon className="text-primary flex-shrink-0 w-12 h-12" />
             </div>
-            <p className="text-md md:text-xl text-primary mb-2">
-              {item.value}
+            <div className="text-md md:text-xl text-primary mb-2">
+              <p className="font-bold">{item.value}</p>
               {item.label2 && (
                 <p className="text-sm md:text-base text-accent-foreground font-normal">
                   {item.label2}
                 </p>
               )}
-            </p>
+            </div>
           </div>
         </div>
       ))}
