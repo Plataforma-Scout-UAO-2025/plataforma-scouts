@@ -19,16 +19,12 @@ min_machines_running = 1
     path = "/api/v1/test/health"
     interval = "10s"
     timeout = "2s"
-    grace_period = "10s"
+    grace_period = "60s"
 
 [[vm]]
     memory = '1gb'
     cpu_kind = 'shared'
     cpus = 1
-
-# Variables de entorno no sensibles
-[env]
-    SPRING_DATASOURCE_PASSWORD = "u52HpYJfyWTSheL5tgHnb9ySDcqFga"
 
 [build]
     dockerfile = "Dockerfile"
