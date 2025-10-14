@@ -509,35 +509,43 @@ export default function RamaDetail() {
       return;
     }
 
-  await organigramaService.uploadSectionIcon(
+  // Use the URL returned by uploadSectionIcon to update UI immediately and
+  // force a cache-bust token so the browser reloads the new image.
+  const updatedIconUrl = await organigramaService.uploadSectionIcon(
     tenantId,
     groupSlug,
-  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
-        file,
-        (fileName: string, percent: number) => {
-          setCurrentUploadingFile(fileName);
-          const display = percent >= 100 ? 99 : Math.floor(percent);
-          setUploadPercent(display);
-          if (percent >= 100 && !uploadCompleteAnnounced) {
-            setUploadCompleteAnnounced(true);
-            toast('Subida completada. Procesando en servidor...');
-          }
-        }
-      );
+    String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
+    file,
+    (fileName: string, percent: number) => {
+      setCurrentUploadingFile(fileName);
+      const display = percent >= 100 ? 99 : Math.floor(percent);
+      setUploadPercent(display);
+      if (percent >= 100 && !uploadCompleteAnnounced) {
+        setUploadCompleteAnnounced(true);
+        toast('Subida completada. Procesando en servidor...');
+      }
+    }
+  );
 
-      // Pequeño delay para que el backend procese la asociación
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Recargar la rama para obtener la imagen actualizada
-  const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
-      if (updatedRama) {
-        setRama(updatedRama);
-        // marcar 100% visualmente cuando el backend confirma
-        setUploadPercent(100);
-        toast.success('Ícono actualizado correctamente');
-      } else {
-        console.warn('⚠️ [RamaDetail] No se pudo recargar la rama');
-        toast.error('Error recargando los datos de la rama');
+  // If backend returned a usable URL, update preview and force refresh.
+  if (updatedIconUrl) {
+    // If backend returned an object URL or full http url, use it.
+    setIconPreview(updatedIconUrl);
+    setImageRefreshToken(Date.now());
+    setUploadPercent(100);
+    toast.success('Ícono actualizado correctamente');
+  } else {
+    // Fallback: wait briefly and reload rama to pick up changes
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
+    if (updatedRama) {
+      setRama(updatedRama);
+      setUploadPercent(100);
+      toast.success('Ícono actualizado correctamente');
+    } else {
+      console.warn('⚠️ [RamaDetail] No se pudo recargar la rama');
+      toast.error('Error recargando los datos de la rama');
+    }
       }
       // Forzar refresh visual de imágenes (cache-busting)
       setImageRefreshToken(Date.now());

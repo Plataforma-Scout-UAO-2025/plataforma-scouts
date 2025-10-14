@@ -6,255 +6,355 @@ import type {
   CreateSubgroupData as CreateSubramaData,
   UpdateSubgroupData as UpdateSubramaData,
 } from '../types/frontend';
+import type { SectionDTO, SubgroupDTO } from '../types/api';
 import type {
   CreateBranchBackendData as CreateRamaBackendData,
   UpdateBranchBackendData as UpdateRamaBackendData,
   CreateSubgroupBackendData as CreateSubramaBackendData,
   UpdateSubgroupBackendData as UpdateSubramaBackendData,
-  BackendBranch as BackendRama,
-  BackendSubgroup as BackendSubrama,
 } from '../types/backend';
 
-export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
-  
-  const rawId = (backendRama as unknown as Record<string, unknown>).section_id ?? (backendRama as unknown as Record<string, unknown>).sectionId ?? (backendRama as unknown as Record<string, unknown>).id ?? (backendRama as unknown as Record<string, unknown>).ID;
+type AnyRecord = Record<string, unknown>;
 
-  const generateConsistentId = () => {
-    const rec = backendRama as unknown as Record<string, unknown>;
-    const uniqueString = `${String(rec['name'] ?? '')}-${String(rec['tenant_id'] ?? rec['tenantId'] ?? '')}-${String(rec['group_id'] ?? rec['groupId'] ?? '')}`;
-    let hash = 0;
-    for (let i = 0; i < uniqueString.length; i++) {
-      const char = uniqueString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
+type GalleryItem = {
+  id: string;
+  url: string;
+};
+
+const toRecord = (value: unknown): AnyRecord =>
+  value && typeof value === 'object' ? (value as AnyRecord) : {};
+
+const pickIdentifier = (record: AnyRecord, keys: string[]): string | undefined => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) return trimmed;
     }
-    return Math.abs(hash).toString();
-  };
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+  }
+  return undefined;
+};
 
-  const hasBackendId = rawId !== undefined && rawId !== null && rawId !== '';
-  const sectionId = hasBackendId ? String(rawId) : generateConsistentId();
+const pickString = (record: AnyRecord, keys: string[]): string | undefined => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) return trimmed;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+  }
+  return undefined;
+};
 
-  const iconUrl = String((backendRama as unknown as Record<string, unknown>).icon_object_url ?? (backendRama as unknown as Record<string, unknown>).iconObjectUrl ?? '');
-  const photoPrincipalUrl = String((backendRama as unknown as Record<string, unknown>).photo_principal_url ?? (backendRama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
-  const rawGallery = (backendRama as unknown as Record<string, unknown>)['gallery'] as unknown[] | undefined;
-  const galleryUrls = ((backendRama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendRama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
-  const galleryArray = Array.isArray(rawGallery) ? (rawGallery as Array<Record<string, unknown>>) : undefined;
+const pickNumber = (record: AnyRecord, keys: string[]): number | undefined => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+  }
+  return undefined;
+};
 
+const pickBoolean = (record: AnyRecord, keys: string[]): boolean | undefined => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'boolean') return value;
+  }
+  return undefined;
+};
+
+const pickStringArray = (record: AnyRecord, keys: string[]): string[] | undefined => {
+  for (const key of keys) {
+    const value = record[key];
+    if (!Array.isArray(value)) continue;
+
+    const normalized = value
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          const trimmed = entry.trim();
+          return trimmed.length > 0 ? trimmed : undefined;
+        }
+        if (typeof entry === 'number' && Number.isFinite(entry)) {
+          return String(entry);
+        }
+        return undefined;
+      })
+      .filter((item): item is string => item !== undefined);
+
+    return normalized;
+  }
+  return undefined;
+};
+
+const ensureIdentifier = (record: AnyRecord, keys: string[], entity: string): string => {
+  const identifier = pickIdentifier(record, keys);
+  if (!identifier) {
+    throw new Error(`${entity} sin identificador valido en la respuesta del backend.`);
+  }
+  return identifier;
+};
+
+const toBoolean = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (['active', 'activa', 'true', '1', 'enabled'].includes(normalized)) return true;
+    if (['inactive', 'inactiva', 'false', '0', 'disabled'].includes(normalized)) return false;
+    return undefined;
+  }
+  if (typeof value === 'number') {
+    if (Number.isNaN(value)) return undefined;
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+  return undefined;
+};
+
+const resolveIsActiveFlag = (record: AnyRecord): boolean | undefined => {
+  const candidates = [record.isActive, record.is_active, record.status, record.estado];
+  for (const candidate of candidates) {
+    const normalized = toBoolean(candidate);
+    if (normalized !== undefined) return normalized;
+  }
+  return undefined;
+};
+
+const extractPhotoPrincipal = (record: AnyRecord): string | null | undefined => {
+  if ('photoPrincipal' in record) {
+    const value = record.photoPrincipal;
+    if (value === null) return null;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    }
+  }
+
+  const candidateKeys = [
+    'photoPrincipalObjectId',
+    'photo_principal_object_id',
+    'mainImageObjectId',
+    'imagenPrincipalObjectId',
+  ];
+
+  for (const key of candidateKeys) {
+    const candidate = record[key];
+    if (candidate === null) return null;
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed.length > 0) return trimmed;
+    }
+  }
+
+  return undefined;
+};
+
+const extractGallery = (record: AnyRecord): GalleryItem[] | undefined => {
+  const raw = record.gallery;
+  if (!Array.isArray(raw)) return undefined;
+
+  const items = raw
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return undefined;
+      const entryRecord = entry as AnyRecord;
+      const id = pickString(entryRecord, ['id', 'objectId', 'object_id']);
+      const url = pickString(entryRecord, ['url']);
+      if (!id || !url) return undefined;
+      return { id, url } satisfies GalleryItem;
+    })
+    .filter((item): item is GalleryItem => item !== undefined);
+
+  return items.length > 0 ? items : undefined;
+};
+
+const safeIsoDate = (value: string | undefined): string => {
+  if (!value) return new Date().toISOString();
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
+const deriveYear = (isoDate: string): number => {
+  const parsed = new Date(isoDate);
+  const year = parsed.getUTCFullYear();
+  return Number.isNaN(year) ? new Date().getUTCFullYear() : year;
+};
+
+export const mapBackendRamaToFrontend = (backendRama: SectionDTO): Rama => {
+  const record = toRecord(backendRama);
+
+  const sectionId = ensureIdentifier(record, ['sectionId', 'section_id'], 'Section');
+  const name = pickString(record, ['name', 'sectionName']) ?? '';
+  const description = pickString(record, ['description', 'sectionDescription']);
+  const iconUrl = pickString(record, ['iconObjectUrl', 'icon_object_url']);
+  const iconObjectId = pickString(record, ['iconObjectId', 'icon_object_id']);
+  const mainImageUrl = pickString(record, ['photoPrincipalUrl', 'photo_principal_url']);
+  const mainImageObjectId = pickString(record, ['photoPrincipalObjectId', 'photo_principal_object_id']);
+  const minAge = pickNumber(record, ['minAge', 'min_age']) ?? 0;
+  const maxAge = pickNumber(record, ['maxAge', 'max_age']) ?? 0;
+  const createdAt = safeIsoDate(pickString(record, ['createdAt', 'created_at']));
+  const gallery = extractGallery(record);
+  const galleryObjectIds =
+    pickStringArray(record, ['galleryObjectIds', 'gallery_object_ids', 'sectionGalleryObjectIds']) ??
+    gallery?.map((item) => item.id) ??
+    [];
+  const galleryObjectUrls = pickStringArray(record, ['galleryObjectUrls', 'gallery_object_urls']);
 
   const mappedRama: Rama = {
-  id: sectionId,
-  sectionId: sectionId,
-
-    name: backendRama.name || '',
-    description: backendRama.description || undefined,
-
-  iconUrl: iconUrl || undefined,
-    iconObjectId: backendRama.iconObjectId,
-    mainImageUrl: photoPrincipalUrl || undefined,
-    mainImageObjectId: backendRama.photoPrincipalObjectId,
-
-    minAge: ((): number => {
-      if (typeof backendRama.minAge === 'number') return backendRama.minAge;
-      const desc = backendRama.description as string | undefined;
-      if (desc) {
-        const m = desc.match(/(\d{1,2})\s*(?:-|a|to)\s*(\d{1,2})/i);
-        if (m) return parseInt(m[1], 10);
-      }
-      return 0;
-    })(),
-    maxAge: ((): number => {
-      if (typeof backendRama.maxAge === 'number') return backendRama.maxAge;
-      const desc = backendRama.description as string | undefined;
-      if (desc) {
-        const m = desc.match(/(\d{1,2})\s*(?:-|a|to)\s*(\d{1,2})/i);
-        if (m) return parseInt(m[2], 10);
-      }
-      return 0;
-    })(),
-    year: new Date().getFullYear(),
-
+    id: sectionId,
+    sectionId,
+    name,
+    description,
+    iconUrl,
+    iconObjectId,
+    mainImageUrl,
+    mainImageObjectId,
+    minAge,
+    maxAge,
+    year: deriveYear(createdAt),
     status: 'active',
-    createdAt: backendRama.createdAt ? backendRama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-
-  galleryObjectIds: galleryArray ? galleryArray.map(g => String(g['id'] ?? g['objectId'] ?? '')).filter(Boolean) : galleryUrls,
-  gallery: galleryArray ? galleryArray.map((g) => { const rec = g as unknown as Record<string, unknown>; return { id: String(rec['id'] ?? rec['objectId'] ?? ''), url: String(rec['url'] ?? '') }; }) : undefined,
-
-    // subgroups loaded separately
+    createdAt,
+    galleryObjectIds,
+    gallery,
     subgroups: [],
-
-    // Spanish compatibility aliases (temporary) - attached below to avoid excess property errors
   };
 
-  // Attach Spanish aliases to mappedRama to keep incremental consumers working
-  const _mappedRamaAny = mappedRama as unknown as Record<string, unknown>;
-  _mappedRamaAny.nombre = mappedRama.name;
-  _mappedRamaAny.descripcion = mappedRama.description;
-  // Use bracket notation for non-ASCII alias
-  _mappedRamaAny['año'] = mappedRama.year;
-  _mappedRamaAny.icono = mappedRama.iconUrl;
-  _mappedRamaAny.iconoObjectId = mappedRama.iconObjectId;
-  _mappedRamaAny.imagenPrincipal = mappedRama.mainImageUrl;
-  _mappedRamaAny.imagenPrincipalObjectId = mappedRama.mainImageObjectId;
-  _mappedRamaAny.sectionGalleryObjectIds = mappedRama.galleryObjectIds ?? [];
-  _mappedRamaAny.gallery = mappedRama.gallery ?? [];
-  _mappedRamaAny.galleryObjectUrls = mappedRama.galleryObjectIds ?? [];
-  _mappedRamaAny.subramas = mappedRama.subgroups ?? [];
-  _mappedRamaAny.section_id = mappedRama.sectionId;
-  _mappedRamaAny.ramaId = mappedRama.sectionId;
-  
-  // Rama mapeada final disponible en mappedRama
-  
+  // Maintain legacy aliases until the UI completes the migration.
+  const ramaRecord = mappedRama as unknown as AnyRecord;
+  ramaRecord.section_id = sectionId;
+  ramaRecord.nombre = mappedRama.name;
+  ramaRecord.descripcion = mappedRama.description;
+  ramaRecord.icono = mappedRama.iconUrl;
+  ramaRecord.iconoObjectId = mappedRama.iconObjectId;
+  ramaRecord.imagenPrincipal = mappedRama.mainImageUrl;
+  ramaRecord.imagenPrincipalObjectId = mappedRama.mainImageObjectId;
+  ramaRecord.sectionGalleryObjectIds = mappedRama.galleryObjectIds;
+  ramaRecord.gallery = mappedRama.gallery ?? [];
+  ramaRecord.galleryObjectUrls = galleryObjectUrls ?? [];
+  ramaRecord.subramas = mappedRama.subgroups;
+  ramaRecord.ramaId = mappedRama.sectionId;
+  ramaRecord['año'] = mappedRama.year;
+
   return mappedRama;
 };
 
-// Mapear datos del backend a formato frontend para Subramas
-export const mapBackendSubramaToFrontend = (backendSubrama: BackendSubrama): Subrama => {
-  // Input del backend para SUBRAMA disponible en backendSubrama (detalle suprimido en logs)
-  
-  // Intentar extraer el ID canonical que provee el backend desde varios nombres posibles
-  const rawId = backendSubrama.subgroup_id ?? backendSubrama.subgroupId ?? backendSubrama.id ?? backendSubrama.ID ?? backendSubrama.subgroupIdLegacy;
+export const mapBackendSubramaToFrontend = (backendSubrama: SubgroupDTO): Subrama => {
+  const record = toRecord(backendSubrama);
 
-  // Generar ID consistente basado en datos del backend si no hay ID real
-  const generateConsistentId = () => {
-    // Usar campos únicos del backend para generar ID consistente
-    const uniqueString = `${backendSubrama.subgroupName || ''}-${backendSubrama.section_id || ''}-${backendSubrama.subgroupDescription || ''}`;
-    // Crear hash simple consistente
-    let hash = 0;
-    for (let i = 0; i < uniqueString.length; i++) {
-      const char = uniqueString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convertir a 32 bits
-    }
-    return Math.abs(hash).toString(); // Solo el número
-  };
-
-  const hasBackendId = rawId !== undefined && rawId !== null && rawId !== '';
-  const extractedId = hasBackendId ? String(rawId) : undefined;
-  const consistentId = hasBackendId ? String(rawId) : generateConsistentId();
-
-  // Normalizar nombre intentanto varias posibles claves que el backend pueda usar
-  const nameFromBackend =
-    backendSubrama.subgroupName ||
-    backendSubrama.subgroup_name ||
-    backendSubrama.name ||
-    backendSubrama.nombre ||
-    '';
-
-  // 🔍 CRÍTICO: Extraer URLs de imágenes (soportar snake_case y camelCase como en mapBackendRamaToFrontend)
-  const iconUrl = String((backendSubrama as unknown as Record<string, unknown>).icon_object_url ?? (backendSubrama as unknown as Record<string, unknown>).iconObjectUrl ?? '');
-  const photoPrincipalUrl = String((backendSubrama as unknown as Record<string, unknown>).photo_principal_url ?? (backendSubrama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
-  const rawGallerySub = (backendSubrama as unknown as Record<string, unknown>)['gallery'] as unknown[] | undefined;
-  const galleryUrls = ((backendSubrama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendSubrama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
-  const galleryArraySub = Array.isArray(rawGallerySub) ? (rawGallerySub as Array<Record<string, unknown>>) : undefined;
-
-  // URLs extraídas para subrama: iconUrl, photoPrincipalUrl, galleryUrls
+  const subgroupId = ensureIdentifier(record, ['subgroupId', 'subgroup_id', 'id'], 'Subgroup');
+  const sectionId = ensureIdentifier(record, ['sectionId', 'section_id'], 'Section para Subgroup');
+  const name = pickString(record, ['name', 'subgroupName', 'subgroup_name']) ?? '';
+  const description = pickString(record, ['description', 'subgroupDescription', 'subgroup_description']);
+  const iconUrl = pickString(record, ['iconObjectUrl', 'icon_object_url']);
+  const iconObjectId = pickString(record, ['iconObjectId', 'icon_object_id']);
+  const mainImageUrl = pickString(record, ['photoPrincipalUrl', 'photo_principal_url']);
+  const mainImageObjectId = pickString(record, ['photoPrincipalObjectId', 'photo_principal_object_id']);
+  const leader = pickString(record, ['leader', 'leaderName', 'leader_name']);
+  const createdAt = safeIsoDate(pickString(record, ['createdAt', 'created_at']));
+  const memberCount = pickNumber(record, ['memberCount', 'members']) ?? 0;
+  const gallery = extractGallery(record);
+  const galleryObjectIds =
+    pickStringArray(record, ['galleryObjectIds', 'gallery_object_ids', 'subgroupGalleryObjectIds']) ??
+    gallery?.map((item) => item.id) ??
+    [];
+  const galleryObjectUrls = pickStringArray(record, ['galleryObjectUrls', 'gallery_object_urls']);
+  const isActive = pickBoolean(record, ['isActive', 'is_active']);
 
   const mappedSubrama: Subrama = {
-    id: extractedId ?? consistentId,
-    subgroupName: nameFromBackend,
-    name: nameFromBackend,
-    description: backendSubrama.subgroupDescription || backendSubrama.subgroup_description || backendSubrama.description,
-
-  iconUrl: iconUrl || undefined,
-    iconObjectId: backendSubrama.iconObjectId,
-    mainImageUrl: photoPrincipalUrl || undefined,
-    mainImageObjectId: backendSubrama.photoPrincipalObjectId,
-
-    branchId: backendSubrama.section_id || backendSubrama.sectionId || '',
-    leader: backendSubrama.leader || backendSubrama.leaderName || undefined,
-
-    status: (backendSubrama.isActive === false || backendSubrama.status === 'inactive') ? 'inactive' : 'active',
-    createdAt: backendSubrama.createdAt ? backendSubrama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-
-    memberCount: backendSubrama.memberCount || backendSubrama.members || 0,
-    galleryObjectIds: galleryArraySub ? galleryArraySub.map(g => String(g['id'] ?? g['objectId'] ?? '')).filter(Boolean) : galleryUrls
+    id: subgroupId,
+    subgroupName: name,
+    name,
+    description,
+    iconUrl,
+    iconObjectId,
+    mainImageUrl,
+    mainImageObjectId,
+    branchId: sectionId,
+    leader,
+    status: isActive === false ? 'inactive' : 'active',
+    createdAt,
+    memberCount,
+    galleryObjectIds,
+    gallery,
   };
 
-  // Spanish compatibility aliases for Subrama
-  const _mappedSubramaAny = mappedSubrama as unknown as Record<string, unknown>;
-  _mappedSubramaAny.nombre = mappedSubrama.name;
-  _mappedSubramaAny.descripcion = mappedSubrama.description;
-  _mappedSubramaAny.imagenPrincipal = mappedSubrama.mainImageUrl;
-  _mappedSubramaAny.subgroupGalleryObjectIds = mappedSubrama.galleryObjectIds ?? [];
-  _mappedSubramaAny.section_id = backendSubrama.section_id ?? backendSubrama.sectionId ?? '';
-  _mappedSubramaAny.subgroup_id = mappedSubrama.id;
-  _mappedSubramaAny.ramaId = backendSubrama.section_id ?? backendSubrama.sectionId ?? '';
-
-  // Subrama mapeada final disponible en mappedSubrama
+  // Maintain legacy aliases until the UI completes the migration.
+  const subramaRecord = mappedSubrama as unknown as AnyRecord;
+  subramaRecord.section_id = mappedSubrama.branchId;
+  subramaRecord.subgroup_id = mappedSubrama.id;
+  subramaRecord.nombre = mappedSubrama.name;
+  subramaRecord.descripcion = mappedSubrama.description;
+  subramaRecord.icono = mappedSubrama.iconUrl;
+  subramaRecord.iconoObjectId = mappedSubrama.iconObjectId;
+  subramaRecord.imagenPrincipal = mappedSubrama.mainImageUrl;
+  subramaRecord.subgroupGalleryObjectIds = mappedSubrama.galleryObjectIds ?? [];
+  subramaRecord.gallery = mappedSubrama.gallery ?? [];
+  subramaRecord.galleryObjectUrls = galleryObjectUrls ?? [];
+  subramaRecord.ramaId = mappedSubrama.branchId;
 
   return mappedSubrama;
 };
 
-// Mapear datos del frontend al formato que espera el backend para crear Ramas
-export const mapFrontendCreateRamaToBackend = (frontendData: CreateRamaData): CreateRamaBackendData => {
-  // Accept either Spanish (nombre) or English (name) frontend payloads
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  const name = (maybe.name ?? maybe.nombre) as string | undefined;
-  const description = (maybe.description ?? maybe.descripcion) as string | undefined;
-  return {
-    name: name ?? '',
-    description,
-    iconObjectId: null,
-    galleryObjectIds: []
-  };
-};
+export const mapFrontendCreateRamaToBackend = (
+  frontendData: CreateRamaData,
+): CreateRamaBackendData => ({
+  name: frontendData.name,
+  description: frontendData.description,
+  iconObjectId: null,
+  galleryObjectIds: [],
+});
 
-// Mapear datos del frontend al formato que espera el backend para actualizar Ramas
-export const mapFrontendUpdateRamaToBackend = (frontendData: UpdateRamaData): UpdateRamaBackendData => {
+export const mapFrontendUpdateRamaToBackend = (
+  frontendData: UpdateRamaData,
+): UpdateRamaBackendData => {
   const backendData: UpdateRamaBackendData = {};
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  if (maybe.name !== undefined) backendData.name = maybe.name as unknown as string;
-  if (maybe.nombre !== undefined) backendData.name = maybe.nombre as unknown as string;
-  if (maybe.description !== undefined) backendData.description = maybe.description as unknown as string;
-  if (maybe.descripcion !== undefined) backendData.description = maybe.descripcion as unknown as string;
 
-  backendData.iconObjectId = null;
-  backendData.galleryObjectIds = [];
+  if (frontendData.name !== undefined) backendData.name = frontendData.name;
+  if (frontendData.description !== undefined) backendData.description = frontendData.description;
+  if (frontendData.iconFile !== undefined) backendData.iconObjectId = null;
+  if (frontendData.galleryFiles !== undefined) backendData.galleryObjectIds = [];
 
   return backendData;
 };
 
-// Mapear datos del frontend al formato que espera el backend para crear Subramas
-export const mapFrontendCreateSubramaToBackend = (frontendData: CreateSubramaData): CreateSubramaBackendData => {
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  const base: Record<string, unknown> = {
-    name: ((maybe.name ?? maybe.nombre) as string | undefined) ?? '',
-    description: (maybe.description ?? maybe.descripcion) as string | undefined,
+export const mapFrontendCreateSubramaToBackend = (
+  frontendData: CreateSubramaData,
+): CreateSubramaBackendData => {
+  const record = frontendData as unknown as AnyRecord;
+  const backendData: CreateSubramaBackendData = {
+    name: frontendData.name,
   };
 
-  // Conditionally include gallery ids if provided
-  if (maybe.galleryObjectIds !== undefined) base.galleryObjectIds = maybe.galleryObjectIds as string[];
+  if (frontendData.description !== undefined) backendData.description = frontendData.description;
 
-  // Backend appears to expect snake_case 'is_active' — include both forms only if the frontend provided state
-  // Map frontend active flags to backend camelCase 'isActive' (server expects camelCase)
-  if (maybe.isActive !== undefined) {
-    base.isActive = Boolean(maybe.isActive);
-  } else if (maybe.estado !== undefined) {
-    const isAct = String(maybe.estado) === 'activa';
-    base.isActive = isAct;
-  }
+  const photoPrincipal = extractPhotoPrincipal(record);
+  if (photoPrincipal !== undefined) backendData.photoPrincipal = photoPrincipal;
 
-  return base as unknown as CreateSubramaBackendData;
-};
-
-// Mapear datos del frontend al formato que espera el backend para actualizar Subramas
-export const mapFrontendUpdateSubramaToBackend = (frontendData: UpdateSubramaData): UpdateSubramaBackendData => {
-  const backendData: UpdateSubramaBackendData = {} as UpdateSubramaBackendData;
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  if (maybe.name !== undefined) backendData.name = maybe.name as unknown as string;
-  if (maybe.nombre !== undefined) backendData.name = maybe.nombre as unknown as string;
-  if (maybe.description !== undefined) backendData.description = maybe.description as unknown as string;
-  if (maybe.descripcion !== undefined) backendData.description = maybe.descripcion as unknown as string;
-  if (maybe.galleryObjectIds !== undefined) backendData.galleryObjectIds = maybe.galleryObjectIds as string[];
-  if (maybe.isActive !== undefined) {
-    backendData.isActive = Boolean(maybe.isActive);
-  } else if (maybe.estado !== undefined) {
-    const v = (maybe.estado as unknown as string) === 'activa';
-    backendData.isActive = v;
-  } else if (maybe.status !== undefined) {
-    const v = (maybe.status as unknown as string) === 'active';
-    backendData.isActive = v;
-  }
+  const isActive = resolveIsActiveFlag(record);
+  backendData.isActive = isActive ?? true;
 
   return backendData;
 };
+
+export const mapFrontendUpdateSubramaToBackend = (
+  frontendData: UpdateSubramaData,
+): UpdateSubramaBackendData => {
+  const backendData: UpdateSubramaBackendData = {};
+
+  const record = frontendData as unknown as AnyRecord;
+
+  if (frontendData.name !== undefined) backendData.name = frontendData.name;
+  if (frontendData.description !== undefined) backendData.description = frontendData.description;
+  const isActive = resolveIsActiveFlag(record);
+  if (isActive !== undefined) backendData.isActive = isActive;
+
+  const photoPrincipal = extractPhotoPrincipal(record);
+  if (photoPrincipal !== undefined) backendData.photoPrincipal = photoPrincipal;
+
+  return backendData;
+};
+

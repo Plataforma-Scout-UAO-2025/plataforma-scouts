@@ -2,21 +2,52 @@ import type {
   Branch as Rama, 
   CreateBranchData as CreateRamaData, 
   UpdateBranchData as UpdateRamaData, 
+  Subgroup as Subrama,
 } from '../types/frontend';
-import type { BackendBranch as BackendRama } from '../types/backend';
 
 import api from '@/api/axios';
-import { sectionsPath, sectionPath } from '@/api/organigramaApi';
+import { sectionsPath, sectionPath, getSectionWithSubgroups } from '@/api/organigramaApi';
 import { 
   mapBackendRamaToFrontend, 
   mapFrontendCreateRamaToBackend, 
-  mapFrontendUpdateRamaToBackend
+  mapFrontendUpdateRamaToBackend,
+  mapBackendSubramaToFrontend,
 } from '../utils/mappers';
 import { getSubramasByRamaId } from './subrama.service';
 import { uploadSectionIcon, uploadGalleryImages } from './image-upload-core.service';
+import type { SectionDTO, SectionWithSubgroupsDTO, SubgroupDTO } from '../types/api';
 
 // Obtener ramas con sus subramas usando el flujo estándar probado
 type GetRamasOpts = { año?: number; signal?: AbortSignal } | number | undefined;
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+
+const pickId = (source: Record<string, unknown>, keys: string[]): string | undefined => {
+  for (const key of keys) {
+    const candidate = source[key];
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed.length > 0) return trimmed;
+    }
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return String(candidate);
+    }
+  }
+  return undefined;
+};
+
+const resolveSectionId = (section: SectionDTO | undefined): string | undefined => {
+  if (!section) return undefined;
+  const record = toRecord(section);
+  return pickId(record, ['sectionId', 'section_id', 'id', 'ID']);
+};
+
+const resolveSubgroupSectionId = (subgroup: SubgroupDTO | undefined): string | undefined => {
+  if (!subgroup) return undefined;
+  const record = toRecord(subgroup);
+  return pickId(record, ['sectionId', 'section_id']);
+};
 
 export const getRamasWithSubramas = async (
   tenantSlug: string,
@@ -56,44 +87,96 @@ export const getRamas = async (
       signal = (añoOrOpts as any).signal;
     }
 
-    const response = await api.get<BackendRama[]>(endpoint, signal ? { signal } : undefined);
+    const response = await api.get<SectionDTO[]>(endpoint, signal ? { signal } : undefined);
     const backendRamas = response.data;
-    
-    // Detalle backend: número de ramas = backendRamas.length
-    // (Información completa de la primera rama disponible en backendRamas[0] si se necesita en diagnóstico)
-    
-    // Transformar datos del backend al formato frontend
+
     const ramas = backendRamas.map(mapBackendRamaToFrontend);
-    
-  // Hidratar cada rama con sus subramas
+
+    const resolveRamaId = (rama: Rama): string => {
+      const idCandidates = [
+        rama.sectionId,
+        (rama as unknown as Record<string, unknown>)['section_id'],
+        rama.id,
+        (rama as unknown as Record<string, unknown>)['ramaId'],
+      ];
+      return (
+        idCandidates
+          .map((candidate) => (typeof candidate === 'string' ? candidate.trim() : candidate !== undefined && candidate !== null ? String(candidate) : ''))
+          .find((candidate) => candidate.length > 0) ?? ''
+      );
+    };
+
     const ramasConSubramas = await Promise.all(
       ramas.map(async (rama) => {
-        const idCandidates = [
-          rama.sectionId,
-          (rama as unknown as Record<string, unknown>)['section_id'],
-          rama.id,
-          (rama as unknown as Record<string, unknown>)['ramaId'],
-        ];
-        const normalizedId = idCandidates
-          .map((candidate) => (typeof candidate === 'string' ? candidate.trim() : candidate !== undefined && candidate !== null ? String(candidate) : ''))
-          .find((candidate) => candidate.length > 0) ?? '';
+        const normalizedId = resolveRamaId(rama);
 
         if (!normalizedId) {
           console.warn('⚠️ [RamaService] Rama sin ID válido, se omite la carga de subramas.', {
             nombre: rama.nombre ?? rama.name,
           });
-          return { ...rama, subramas: [], subgroups: [] };
+          const ramaSinId: Rama = { ...rama, subgroups: [], subramas: [] };
+          const ramaSinIdAny = ramaSinId as unknown as Record<string, unknown>;
+          ramaSinIdAny.subramas = [];
+          ramaSinIdAny.section_id = undefined;
+          return ramaSinId;
         }
 
+        const attachAliases = (target: Rama, subgroups: Subrama[]) => {
+          const anyTarget = target as unknown as Record<string, unknown>;
+          anyTarget.subramas = subgroups;
+          anyTarget.section_id = target.sectionId ?? normalizedId;
+          anyTarget.galleryObjectUrls = target.galleryObjectIds ?? [];
+          anyTarget.sectionGalleryObjectIds = target.galleryObjectIds ?? [];
+        };
+
         try {
-          const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, normalizedId);
-          // Populate both canonical and legacy-compatible fields so consumers using
-          // (rama.subgroups ?? rama.subramas) won't pick an empty array from the
-          // pre-initialized `subgroups: []` and miss the hydrated subramas.
-          return { ...rama, id: normalizedId, sectionId: normalizedId, subramas, subgroups: subramas };
+          const sectionWithSubgroups = await getSectionWithSubgroups<SectionWithSubgroupsDTO>(normalizedId, tenantSlug, groupSlug, signal);
+          const canonicalSection: SectionDTO | undefined = sectionWithSubgroups?.section;
+          const canonicalRama = canonicalSection
+            ? mapBackendRamaToFrontend(canonicalSection)
+            : rama;
+
+          const canonicalSectionId = resolveSectionId(canonicalSection) ?? normalizedId;
+          const mappedSubgrupos = (sectionWithSubgroups?.subgroups ?? []).map((subgroup: SubgroupDTO) =>
+            mapBackendSubramaToFrontend({
+              ...subgroup,
+              sectionId: resolveSubgroupSectionId(subgroup) ?? canonicalSectionId,
+            } as SubgroupDTO)
+          );
+
+          const hydratedRama: Rama = {
+            ...rama,
+            ...canonicalRama,
+            id: String(normalizedId),
+            sectionId: String(normalizedId),
+            subgroups: mappedSubgrupos,
+          };
+
+          attachAliases(hydratedRama, mappedSubgrupos);
+          return hydratedRama;
         } catch (error) {
-          console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre ?? rama.name}:`, error);
-          return { ...rama, id: normalizedId, sectionId: normalizedId, subramas: [], subgroups: [] };
+          console.warn(`⚠️ [RamaService] No se pudieron cargar subgrupos via with-subgroups para ${rama.nombre ?? rama.name}. Se usa fallback.`, error);
+          try {
+            const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, normalizedId);
+            const fallbackRama: Rama = {
+              ...rama,
+              id: String(normalizedId),
+              sectionId: String(normalizedId),
+              subgroups: subramas,
+            };
+            attachAliases(fallbackRama, subramas);
+            return fallbackRama;
+          } catch (subramaError) {
+            console.warn(`⚠️ [RamaService] Fallback también falló para ${rama.nombre ?? rama.name}:`, subramaError);
+            const emptyRama: Rama = {
+              ...rama,
+              id: String(normalizedId),
+              sectionId: String(normalizedId),
+              subgroups: [],
+            };
+            attachAliases(emptyRama, []);
+            return emptyRama;
+          }
         }
       })
     );
@@ -122,19 +205,49 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
   // Obteniendo rama por ID: id
   
   try {
-  const endpoint = sectionPath(id, tenantSlug, groupSlug);
-  const response = await api.get<BackendRama>(endpoint);
-    const backendRama = response.data;
-    
-    const rama = mapBackendRamaToFrontend(backendRama);
-    
-    // 🔄 Hidratar rama con sus subramas
+    const normalizedId = String(id);
+
+    try {
+      const sectionWithSubgroups = await getSectionWithSubgroups<SectionWithSubgroupsDTO>(normalizedId, tenantSlug, groupSlug);
+      const canonicalSection: SectionDTO | undefined = sectionWithSubgroups?.section;
+
+      if (canonicalSection) {
+        const canonicalRama = mapBackendRamaToFrontend(canonicalSection);
+        const canonicalSectionId = resolveSectionId(canonicalSection) ?? normalizedId;
+        const mappedSubgrupos = (sectionWithSubgroups?.subgroups ?? []).map((subgroup: SubgroupDTO) =>
+          mapBackendSubramaToFrontend({
+            ...subgroup,
+            sectionId: resolveSubgroupSectionId(subgroup) ?? canonicalSectionId,
+          } as SubgroupDTO)
+        );
+
+        canonicalRama.id = String(canonicalSectionId);
+        canonicalRama.sectionId = String(canonicalSectionId);
+        canonicalRama.subgroups = mappedSubgrupos;
+
+        const canonicalRamaAny = canonicalRama as unknown as Record<string, unknown>;
+        canonicalRamaAny.subramas = mappedSubgrupos;
+        canonicalRamaAny.section_id = canonicalRama.sectionId;
+        canonicalRamaAny.galleryObjectUrls = canonicalRama.galleryObjectIds ?? [];
+        canonicalRamaAny.sectionGalleryObjectIds = canonicalRama.galleryObjectIds ?? [];
+
+        return canonicalRama;
+      }
+    } catch (withSubgroupsError) {
+      console.warn(`⚠️ [RamaService] with-subgroups no disponible para rama ${id}, se usa endpoint estándar.`, withSubgroupsError);
+    }
+
+    const endpoint = sectionPath(id, tenantSlug, groupSlug);
+  const response = await api.get<SectionDTO>(endpoint);
+  const backendRama = response.data;
+  const rama = mapBackendRamaToFrontend(backendRama);
+    rama.id = rama.id || normalizedId;
+    rama.sectionId = rama.sectionId ?? normalizedId;
+
     try {
       const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
-      // Ensure both fields are populated so components that check the canonical
-      // `subgroups` property don't mistakenly use the pre-initialized empty array.
-  rama.subramas = subramas;
-  rama.subgroups = subramas;
+      rama.subramas = subramas;
+      rama.subgroups = subramas;
     } catch (subramaError) {
       console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, subramaError);
       rama.subramas = [];
@@ -162,11 +275,10 @@ export const createRama = async (tenantSlug: string, groupSlug: string, data: Cr
   // Enviando al backend: backendData
     
     // Crear la rama
-    const response = await api.post<BackendRama>(endpoint, backendData);
+  const response = await api.post<SectionDTO>(endpoint, backendData);
     const backendRama = response.data;
     
-    // Extraer el ID de la sección creada (puede venir como sectionId o section_id)
-    const sectionId = String(backendRama.sectionId || backendRama.section_id || backendRama.id || '');
+    const sectionId = resolveSectionId(backendRama) ?? '';
   // Rama creada con ID: sectionId
     
     // Si hay archivos de imagen, subirlos después de crear la rama
@@ -210,8 +322,8 @@ export const updateRama = async (tenantSlug: string, groupSlug: string, data: Up
   const backendData = mapFrontendUpdateRamaToBackend(data);
     
     // Actualizar la rama
-    const response = await api.put<BackendRama>(endpoint, backendData);
-    const backendRama = response.data;
+  const response = await api.put<SectionDTO>(endpoint, backendData);
+  const backendRama = response.data;
     
     // Si hay archivos de imagen nuevos, subirlos
     if (data.iconFile) {
@@ -253,7 +365,7 @@ export const getAvailableYears = async (tenantSlug: string, groupSlug: string): 
     // OPTIMIZACIÓN: Solo obtenemos las ramas SIN subramas para calcular años
     // Esto evita el bucle infinito y mejora el rendimiento
   const endpoint = sectionsPath(tenantSlug, groupSlug);
-  const response = await api.get<BackendRama[]>(endpoint);
+  const response = await api.get<SectionDTO[]>(endpoint);
     const backendRamas = response.data;
     
     // Extraer años directamente de los datos del backend sin mapear subramas

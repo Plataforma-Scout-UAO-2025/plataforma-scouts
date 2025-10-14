@@ -47,6 +47,9 @@ export const sectionsPath = (tenantSlug: string, groupSlug: string) => {
 export const sectionPath = (sectionId: string | number, tenantSlug: string, groupSlug: string) =>
   `${sectionsPath(tenantSlug, groupSlug)}/${encodeURIComponent(String(sectionId))}`;
 
+export const sectionWithSubgroupsPath = (sectionId: string | number, tenantSlug: string, groupSlug: string) =>
+  `${sectionPath(sectionId, tenantSlug, groupSlug)}/with-subgroups`;
+
 export const subgroupsPath = (sectionId: string | number, tenantSlug: string, groupSlug: string) =>
   `${sectionPath(sectionId, tenantSlug, groupSlug)}/subgroups`;
 
@@ -64,6 +67,12 @@ export const getSections = async <T = unknown>(tenantSlug: string, groupSlug: st
 
 export const getSection = async <T = unknown>(sectionId: string | number, tenantSlug: string, groupSlug: string) => {
   const { data } = await api.get<T>(sectionPath(sectionId, tenantSlug, groupSlug));
+  return data;
+};
+
+export const getSectionWithSubgroups = async <T = unknown>(sectionId: string | number, tenantSlug: string, groupSlug: string, signal?: AbortSignal) => {
+  const config = signal ? { signal } : undefined;
+  const { data } = await api.get<T>(sectionWithSubgroupsPath(sectionId, tenantSlug, groupSlug), config);
   return data;
 };
 

@@ -3,7 +3,6 @@ import type {
   CreateSubgroupData as CreateSubramaData, 
   UpdateSubgroupData as UpdateSubramaData, 
 } from '../types/frontend';
-import type { BackendSubgroup as BackendSubrama } from '../types/backend';
 
 import api from "@/api/axios";
 import { subgroupsPath, subgroupPath } from '@/api/organigramaApi';
@@ -12,6 +11,7 @@ import {
   mapFrontendCreateSubramaToBackend,
   mapFrontendUpdateSubramaToBackend
 } from '../utils/mappers';
+import type { SubgroupDTO } from '../types/api';
 
 type MaybeAxiosError = { response?: { data?: unknown } };
 
@@ -25,7 +25,7 @@ export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string,
 
   try {
   const endpoint = subgroupsPath(normalizedRamaId, tenantSlug, groupSlug);
-  const response = await api.get<BackendSubrama[]>(endpoint);
+  const response = await api.get<SubgroupDTO[]>(endpoint);
     const backendSubramas = response.data;
 
   const subramas = backendSubramas.map(mapBackendSubramaToFrontend);
@@ -40,7 +40,7 @@ export const getSubramaById = async (tenantSlug: string, groupSlug: string, sect
   
   try {
   const endpoint = subgroupPath(sectionId, id, tenantSlug, groupSlug);
-  const response = await api.get<BackendSubrama>(endpoint);
+  const response = await api.get<SubgroupDTO>(endpoint);
     const backendSubrama = response.data;
 
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
@@ -58,8 +58,8 @@ export const createSubrama = async (tenantSlug: string, groupSlug: string, secti
     
     const backendData = mapFrontendCreateSubramaToBackend(data);
     
-    const response = await api.post<BackendSubrama>(endpoint, backendData);
-    const backendSubrama = response.data;
+  const response = await api.post<SubgroupDTO>(endpoint, backendData);
+  const backendSubrama = response.data;
 
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     return subrama;
@@ -84,8 +84,8 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
   const endpoint = subgroupPath(sectionId, data.id, tenantSlug, groupSlug);
     
     const backendData = mapFrontendUpdateSubramaToBackend(data);
-    const response = await api.put<BackendSubrama>(endpoint, backendData);
-    const backendSubrama = response.data;
+  const response = await api.put<SubgroupDTO>(endpoint, backendData);
+  const backendSubrama = response.data;
 
     const subrama = mapBackendSubramaToFrontend(backendSubrama);
     return subrama;

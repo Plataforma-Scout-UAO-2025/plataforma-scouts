@@ -234,7 +234,20 @@ export const removeSectionIcon = async (
   groupSlug: string,
   sectionId: string
 ): Promise<void> => {
-  console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...");
+  // Añadir trazas y un guard para evitar eliminaciones accidentales y poder
+  // diagnosticar quién invoca esta función si aparece inesperadamente en logs.
+  console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...", { tenantSlug, groupSlug, sectionId });
+  // Imprimir stack trace para identificar la llamada que provocó la eliminación
+  // (útil temporalmente para depuración en entorno de desarrollo).
+  try { console.trace('Stack trace removeSectionIcon'); } catch { /* ignore if console.trace no disponible */ }
+
+  // Safety guard: si sectionId es inválido, abortamos la operación para evitar
+  // enviar un PATCH que ponga `object_id: null` por accidente.
+  if (!sectionId) {
+    console.warn('🔒 [ImageUploadService] removeSectionIcon llamado con sectionId vacío — abortando.');
+    return;
+  }
+
   const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
 
     // Prefer snake_case null payload for icon removal

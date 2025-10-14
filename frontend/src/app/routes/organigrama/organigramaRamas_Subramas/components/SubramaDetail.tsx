@@ -128,7 +128,7 @@ export default function SubramaDetail() {
 
   const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
   const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
-        await organigramaService.updateSubramaMainImage(
+        const updatedUrl = await organigramaService.updateSubramaMainImage(
           resolvedTenantId,
           resolvedGroupSlug,
           String(sectionId),
@@ -162,29 +162,18 @@ export default function SubramaDetail() {
 
   // Refrescar datos de la subrama para asegurar sincronización
   console.log('🔄 [SubramaDetail] Refrescando datos de la subrama...');
-  await fetchSubrama();
-  // Obtener la subrama actualizada directamente para obtener la URL definitiva
-  try {
-  const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-  const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
-  const updated = await organigramaService.getSubramaById(resolvedTenantId, resolvedGroupSlug, String(sectionId), String(subgroupId));
-    if (updated && updated.imagenPrincipal) {
-      // Actualizar visualmente con cache-bust igual que RamaDetail
-      setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
-      setUploadPercent(100);
-      toast.success('Imagen principal actualizada correctamente');
-      console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
-    } else {
-      // marcar 100% y refrescar token aunque no tengamos URL directa
-      setUploadPercent(100);
-      setImageRefreshToken(Date.now());
-      console.log('✅ [SubramaDetail] Imagen principal actualizada (sin URL devuelta)');
-    }
-  } catch (err) {
-    console.warn('⚠️ [SubramaDetail] No se pudo obtener subrama actualizada tras upload:', err);
+  if (updatedUrl) {
+    setImagenPrincipal(updatedUrl);
+    setImageRefreshToken(Date.now());
+    setUploadPercent(100);
+    toast.success('Imagen principal actualizada correctamente');
+    console.log('✅ [SubramaDetail] Imagen principal actualizada y persistida');
+  } else {
     setUploadPercent(100);
     setImageRefreshToken(Date.now());
+    console.log('✅ [SubramaDetail] Imagen principal actualizada (sin URL devuelta)');
   }
+  await fetchSubrama();
       } catch (error) {
         console.error('❌ [SubramaDetail] Error subiendo imagen principal:', error);
     const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
@@ -300,7 +289,7 @@ export default function SubramaDetail() {
 
         const sectionId2 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
         const subgroupId2 = subrama.subgroup_id ?? subrama.id ?? '';
-        await organigramaService.updateSubramaMainImage(
+        const updatedUrl = await organigramaService.updateSubramaMainImage(
           resolvedTenantId,
           resolvedGroupSlug,
           String(sectionId2),
@@ -330,29 +319,17 @@ export default function SubramaDetail() {
           throw new Error('UploadCanceled');
         }
 
-        await fetchSubrama();
-        try {
-          const sectionId3 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-          const subgroupId3 = subrama.subgroup_id ?? subrama.id ?? '';
-          const updated = await organigramaService.getSubramaById(
-            resolvedTenantId,
-            resolvedGroupSlug,
-            String(sectionId3),
-            String(subgroupId3)
-          );
-          if (updated && updated.imagenPrincipal) {
-            setImagenPrincipal(`${updated.imagenPrincipal}?v=${Date.now()}`);
-            setUploadPercent(100);
-            toast.success('Imagen principal actualizada correctamente');
-          } else {
-            setUploadPercent(100);
-            setImageRefreshToken(Date.now());
-          }
-        } catch (err) {
-          console.warn('⚠️ [SubramaDetail] No se pudo obtener subrama actualizada tras replace:', err);
+        if (updatedUrl) {
+          setImagenPrincipal(updatedUrl);
+          setImageRefreshToken(Date.now());
+          setUploadPercent(100);
+          toast.success('Imagen principal actualizada correctamente');
+        } else {
           setUploadPercent(100);
           setImageRefreshToken(Date.now());
+          console.log('✅ [SubramaDetail] Imagen principal actualizada (sin URL devuelta)');
         }
+        await fetchSubrama();
 
         setFotoModalOpen(false);
       } catch (error) {
@@ -580,26 +557,24 @@ export default function SubramaDetail() {
           // 📸 Cargar imágenes existentes (PRIORIZAR URLs directas del backend)
           console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre);
           console.log("🔍 [SubramaDetail] subrama.imagenPrincipal:", subramaEncontrada.imagenPrincipal);
-          
-          // PRIORIDAD 1: URL directa del backend (campo optimizado)
-          if (subramaEncontrada.imagenPrincipal && !subramaEncontrada.imagenPrincipal.startsWith('data:') && subramaEncontrada.imagenPrincipal.includes('http')) {
-            setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-            console.log("✅ [SubramaDetail] Usando URL directa del backend para imagen principal:", subramaEncontrada.imagenPrincipal);
-          }
-          // PRIORIDAD 2: URL de datos (data:image/...)
-          else if (subramaEncontrada.imagenPrincipal && subramaEncontrada.imagenPrincipal.startsWith('data:')) {
-            setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-            console.log("✅ [SubramaDetail] Usando data URL para imagen principal");
-          }
-          // PRIORIDAD 3: Cualquier URL en campo imagenPrincipal
-          else if (subramaEncontrada.imagenPrincipal) {
-            setImagenPrincipal(subramaEncontrada.imagenPrincipal);
-            console.log("✅ [SubramaDetail] Usando campo imagenPrincipal como URL:", subramaEncontrada.imagenPrincipal);
-          }
-          else {
+
+          const backendMainImage = (subramaEncontrada as { mainImageUrl?: string }).mainImageUrl;
+          const resolvedMainImage = backendMainImage ?? subramaEncontrada.imagenPrincipal ?? '';
+
+          if (resolvedMainImage) {
+            if (!resolvedMainImage.startsWith('data:') && resolvedMainImage.includes('http')) {
+              console.log("✅ [SubramaDetail] Usando URL directa del backend para imagen principal:", resolvedMainImage);
+            } else if (resolvedMainImage.startsWith('data:')) {
+              console.log("✅ [SubramaDetail] Usando data URL para imagen principal");
+            } else {
+              console.log("✅ [SubramaDetail] Usando campo imagenPrincipal como URL:", resolvedMainImage);
+            }
+            setImagenPrincipal(resolvedMainImage);
+            setImageRefreshToken(Date.now());
+          } else {
             console.log("ℹ️ [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.nombre);
-            // Forzar estado vacío para que la UI deje de renderizar cualquier imagen previa
             setImagenPrincipal('');
+            setImageRefreshToken(Date.now());
           }
 
           // Cargar galería desde backend (preferir gallery[].url)
