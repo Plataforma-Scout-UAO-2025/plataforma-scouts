@@ -20,20 +20,16 @@ function download(filename: string, content: string, type = "text/csv;charset=ut
 }
 
 export function exportBranchesCSV(branches: SimpleBranches) {
-  // Encabezados igual que la vista Ramas/Subramas
   const header = [
     "Rama",
     "Descripción",
-    "TipoSubrama",
     "NombreSubrama",
-    "Estado",
     "Integrantes",
     "JefeRama",
   ];
   const rows: string[][] = [];
 
   branches.forEach(({ section, subgroups }) => {
-    // Derivar Jefe de Rama a partir de líderes únicos de subramas (si no hay campo específico)
     const uniqueLeaders = Array.from(
       new Set((subgroups || []).map((sg) => sg.leader).filter(Boolean) as string[])
     );
@@ -43,36 +39,24 @@ export function exportBranchesCSV(branches: SimpleBranches) {
       : (typeof section.minAge === 'number' && typeof section.maxAge === 'number' && section.minAge > 0 && section.maxAge > 0
           ? `${section.minAge}-${section.maxAge} años`
           : '—');
-    const estadoRama = section.status === 'active' ? 'activa' : section.status === 'inactive' ? 'inactiva' : (section.status || '—');
 
     if (!subgroups || subgroups.length === 0) {
       rows.push([
         section.name,
         desc,
-        "",
         "— (Sin subramas)",
-        estadoRama,
-        "",
         jefeRama || "",
       ]);
     } else {
       subgroups.forEach((sg) => {
         const nameFull = sg.name || "Subrama";
-        // Inferir tipo de subrama desde el nombre (antes de ':' o primera palabra)
-        let tipo = "";
-        if (nameFull.includes(":")) tipo = nameFull.split(":")[0].trim();
-        else if (nameFull.includes(" ")) tipo = nameFull.split(" ")[0].trim();
 
-        const estado = sg.status === "active" ? "activa" : sg.status === "inactive" ? "inactiva" : sg.status || estadoRama;
-        // Integrantes: no disponible en este modelo; si en el futuro llega como array/string, se puede mapear aquí
         const integrantes = "";
 
         rows.push([
           section.name,
           desc,
-          tipo,
           nameFull,
-          estado,
           integrantes,
           jefeRama || "",
         ]);
@@ -127,7 +111,6 @@ export function exportOrgChartCombinedPDF(
   doc.setTextColor(0, 0, 0);
   doc.text(`Generado: ${new Date().toLocaleString('es-CO')}`, x, y + 16);
 
-  // Branches/Subgroups section (encabezados iguales a la vista Ramas/Subramas)
   y += 36;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
@@ -143,33 +126,23 @@ export function exportOrgChartCombinedPDF(
       : (typeof section.minAge === 'number' && typeof section.maxAge === 'number' && section.minAge > 0 && section.maxAge > 0
           ? `${section.minAge}-${section.maxAge} años`
           : '—');
-    const estadoRama = section.status === 'active' ? 'activa' : section.status === 'inactive' ? 'inactiva' : (section.status || '—');
-
     if (!subgroups || subgroups.length === 0) {
       branchesBody.push([
         section.name,
         desc,
-        "",
-        "— (Sin subramas)",
-        estadoRama,
-        "",
+        '— (Sin subramas)',
+        '',
         jefeRama || "",
       ]);
     } else {
       subgroups.forEach((sg) => {
         const nameFull = sg.name || "Subrama";
-        let tipo = "";
-        if (nameFull.includes(":")) tipo = nameFull.split(":")[0].trim();
-        else if (nameFull.includes(" ")) tipo = nameFull.split(" ")[0].trim();
-        const estado = sg.status === "active" ? "activa" : sg.status === "inactive" ? "inactiva" : sg.status || estadoRama;
         const integrantes = "";
 
         branchesBody.push([
           section.name,
           desc,
-          tipo,
           nameFull,
-          estado,
           integrantes,
           jefeRama || "",
         ]);
@@ -179,14 +152,20 @@ export function exportOrgChartCombinedPDF(
 
   autoTable(doc, {
     startY: y + 10,
-    head: [["Rama", "Descripción", "TipoSubrama", "NombreSubrama", "Estado", "Integrantes", "JefeRama"]],
+    head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
     body: branchesBody,
     margin: { left: x, right: x },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
+    columnStyles: {
+      0: { cellWidth: 200 }, // Rama
+      1: { cellWidth: 230 }, // Descripción 
+      2: { cellWidth: 200 }, // NombreSubrama
+      3: { cellWidth: 200 }, // Integrantes
+      4: { cellWidth: 200 }, // JefeRama
+    },
   });
 
-  // Position after first table
   const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
   if (anyDoc.lastAutoTable?.finalY) {
     y = anyDoc.lastAutoTable.finalY + 30;

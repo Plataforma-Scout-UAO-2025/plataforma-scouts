@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { getSections, getSubgroups } from "@/api/organigramaApi";
 import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
+import { getRamasWithSubramas } from "./organigramaRamas_Subramas/services/rama.service";
 import { useNavigate } from "react-router-dom";
 import { useNiveles } from "./organigramaNivelesOrganizativos/hooks/useNiveles";
 import type { OrganigramaNiveles } from "./organigramaNivelesOrganizativos/types/niveles.types";
@@ -14,68 +14,50 @@ type SubgroupLite = { id: string | number; name?: string; status?: string; leade
 
 export default function OrgChartSummary() {
   const currentYear = new Date().getFullYear();
-  // Levels (use existing hook; we keep currentYear initial but hide year selector)
   const { anio, data: nivelesData, loading: nivelesLoading } = useNiveles(currentYear);
   const navigate = useNavigate();
 
-  // Branches/Subgroups
   const [branches, setBranches] = useState<Array<{ section: BranchLite; subgroups: SubgroupLite[] }>>([]);
   const [branchesLoading, setBranchesLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const { tenantId, groupSlug } = useTenantParams();
-
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setBranchesLoading(true);
         setError(null);
-        // Traer secciones crudas y normalizarlas para soportar distintos nombres de campos
         if (!tenantId || !groupSlug) {
-          // Si faltan parámetros, no intentamos cargar secciones
           if (mounted) setBranches([]);
           return;
         }
 
-        const sectionsRaw = await getSections<any>(tenantId, groupSlug);
-        const normalizeSection = (s: any): BranchLite | null => {
-          const id = s?.id ?? s?.sectionId ?? s?.section_id ?? null;
-          const name = s?.name ?? s?.nombre ?? "";
-          const description = s?.description ?? s?.descripcion ?? undefined;
-          const minAge = typeof s?.minAge === 'number' ? s.minAge : (typeof s?.edadMin === 'number' ? s.edadMin : undefined);
-          const maxAge = typeof s?.maxAge === 'number' ? s.maxAge : (typeof s?.edadMax === 'number' ? s.edadMax : undefined);
-          const status = s?.status ?? s?.estado ?? undefined;
-          if (id == null || String(id).trim() === "") return null;
-          return { id, name, description, minAge, maxAge, status };
-        };
-        const normalizeSubgroup = (sg: any): SubgroupLite => {
-          return {
-            id: sg?.id ?? sg?.subgroup_id ?? sg?.subgroupId ?? crypto.randomUUID(),
-            name: sg?.name ?? sg?.subgroupName ?? sg?.nombre ?? sg?.descripcion ?? "",
-            status: sg?.status ?? sg?.estado ?? undefined,
-            leader: sg?.leader ?? sg?.líder ?? sg?.jefe ?? undefined,
+        const ramas = await getRamasWithSubramas(String(tenantId), groupSlug);
+
+        const result = (ramas || []).map((r: any) => {
+          const section: BranchLite = {
+            id: r.sectionId ?? r.id ?? '',
+            name: r.name ?? r.nombre ?? '',
+            description: r.description ?? r.descripcion ?? undefined,
+            minAge: typeof r.minAge === 'number' ? r.minAge : (typeof r.edadMin === 'number' ? r.edadMin : undefined),
+            maxAge: typeof r.maxAge === 'number' ? r.maxAge : (typeof r.edadMax === 'number' ? r.edadMax : undefined),
+            status: r.status ?? undefined,
           };
-        };
 
-        const normalizedSections: BranchLite[] = (sectionsRaw || [])
-          .map(normalizeSection)
-          .filter((s: BranchLite | null): s is BranchLite => !!s);
+          const subsRaw = r.subgroups ?? r.subramas ?? [];
+          const subgroups: SubgroupLite[] = Array.isArray(subsRaw)
+            ? subsRaw.map((sg: any) => ({
+                id: sg.subgroupId ?? sg.id ?? sg.subgroup_id ?? crypto.randomUUID(),
+                name: sg.name ?? sg.nombre ?? '',
+                status: sg.isActive === undefined ? (sg.status ?? undefined) : (sg.isActive ? 'active' : 'inactive'),
+                leader: sg.leader ?? sg.jefe ?? undefined,
+              }))
+            : [];
 
-        const result: Array<{ section: BranchLite; subgroups: SubgroupLite[] }> = [];
+          return { section, subgroups };
+        });
 
-        for (const sec of normalizedSections) {
-          try {
-            // Intentar pedir subramas al backend; si falla, caer a []
-            const subsRaw = await getSubgroups<any>(sec.id, tenantId, groupSlug);
-            const subs = Array.isArray(subsRaw)
-              ? subsRaw.map(normalizeSubgroup)
-              : [];
-            result.push({ section: sec, subgroups: subs });
-          } catch {
-            result.push({ section: sec, subgroups: [] });
-          }
-        }
         if (mounted) setBranches(result);
       } catch (e: any) {
         if (mounted) setError(e?.message || "No se pudo cargar ramas y subramas.");
@@ -86,7 +68,7 @@ export default function OrgChartSummary() {
     return () => {
       mounted = false;
     };
-  }, [anio]);
+  }, [anio, tenantId, groupSlug]);
 
   const onExportPDF = () => {
     exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, { year: anio });
