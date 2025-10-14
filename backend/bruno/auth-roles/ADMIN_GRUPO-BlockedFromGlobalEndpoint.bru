@@ -1,24 +1,17 @@
 meta {
-  name: SCOUT Blocked from Admin Action
+  name: ADMIN_GRUPO-BlockedFromGlobalEndpoint
   type: http
-  seq: 8
+  seq: 7
 }
 
-post {
-  url: {{baseurl}}api/v1/tenants
-  body: json
+get {
+  url: {{baseurl}}api/v1/auth0/roles
+  body: none
   auth: inherit
 }
 
 headers {
   Content-Type: application/json
-}
-
-body:json {
-  {
-    "tenantSlug": "unauthorized-tenant",
-    "name": "Unauthorized Tenant"
-  }
 }
 
 tests {
@@ -36,17 +29,17 @@ settings {
 }
 
 docs {
-  **Nombre:** SCOUT intenta crear recurso administrativo
+  **Nombre:** ADMIN_GRUPO intenta acceder a endpoint global
   
-  **Endpoint:** /api/v1/tenants (POST)
+  **Endpoint:** /api/v1/auth0/roles
   
   **HU relacionadas:** HU-ING-1.2
   
   **Criterio de aceptación:** Si un usuario intenta acceder a funciones fuera de su rol, el sistema debe bloquear la acción y mostrar "Acceso denegado".
   
-  **Descripción:** Dado que estoy autenticado como SCOUT, cuando intento ejecutar una acción administrativa (crear tenant), entonces el backend debe bloquearla.
+  **Descripción:** Dado que estoy autenticado como ADMIN_GRUPO, cuando intento acceder a funcionalidades de gestión global de Auth0 (roles), entonces el backend debe comprobar permisos y bloquear la acción si no estoy autorizado.
   
-  **Respuesta esperada:** Respuesta 403 con mensaje "Acceso denegado" y operación no realizada.
+  **Respuesta esperada:** La acción debe ser bloqueada por el servidor y el cliente debe recibir/mostrar el mensaje "Acceso denegado"; no debe producirse la operación solicitada.
   
   **Responsable:** QA Team
   
