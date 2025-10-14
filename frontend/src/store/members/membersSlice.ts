@@ -4,6 +4,7 @@ import {
   fetchMembersAction,
   updateMemberAction,
   createMemberAction,
+  createMemberWithSchoolDataAction
 } from "./membersActions";
 import type { Member } from "@/types/member.type";
 
@@ -85,6 +86,22 @@ const membersSlice = createSlice({
       }
     });
     builder.addCase(createMemberAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
+    builder.addCase(createMemberWithSchoolDataAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createMemberWithSchoolDataAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message;
+      if (action.payload.newMember) {
+        state.members.push(action.payload.newMember);
+      }
+    });
+    builder.addCase(createMemberWithSchoolDataAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload?.error as string;
     });

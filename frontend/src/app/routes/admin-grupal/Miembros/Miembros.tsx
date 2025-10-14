@@ -31,8 +31,8 @@ const TeamMembers = () => {
     const filtered = members.filter((member: Member) => {
       const matchesSearch =
         searchFilter === "" ||
-        member.first_name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        member.last_name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        member.firstName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        member.lastName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
         member.identification
           ?.toLowerCase()
           .includes(searchFilter.toLowerCase());

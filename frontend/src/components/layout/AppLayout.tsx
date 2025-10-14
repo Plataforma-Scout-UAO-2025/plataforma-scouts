@@ -109,9 +109,58 @@ const tesoreroItems: MenuItem[] = [
 ]
 
 const acudienteItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/estado-cuenta" },
-]
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/estado-cuenta",
+  },
+];
+
+const ScoutItems: MenuItem[] = [
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/cuotas",
+  },
+];
 
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
@@ -137,6 +186,8 @@ function AppLayoutContent() {
         return acudienteItems;
       case RawRole.TESORERO:
         return tesoreroItems;
+      case RawRole.SCOUT:
+        return ScoutItems;
       case RawRole.ADMIN_GRUPO:
       case RawRole.COMITE_ADMIN:
       default:
