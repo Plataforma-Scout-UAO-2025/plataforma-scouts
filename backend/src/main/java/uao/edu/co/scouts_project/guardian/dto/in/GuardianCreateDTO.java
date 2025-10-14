@@ -6,8 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
-
-import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 
 import java.time.LocalDate;
 
@@ -16,8 +16,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.member.shared.enums.Status;
 
 
 @Getter
@@ -42,6 +40,7 @@ public class GuardianCreateDTO {
     private String identification;
     private DocumentType documentType;
     @Size(max = 10, message = "Phone must not exceed 10 characters")
+@Size(max = 10, message = "Phone must not exceed 10 characters")
     private String phone;
     private String relationship;
     private Boolean isActive;
