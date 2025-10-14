@@ -21,7 +21,7 @@ import uao.edu.co.scouts_project.guardian.service.GuardianService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/guardian")
+@RequestMapping("/api/v1/guardian")
 public class GuardianController {
     private final GuardianService guardianService;
 

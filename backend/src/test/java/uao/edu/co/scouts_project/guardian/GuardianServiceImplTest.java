@@ -332,6 +332,8 @@ class GuadianServiceImplTest {
         @DisplayName("Should throw GuardianNotFoundException when guardian not found")
         void shouldThrowExceptionWhenGuardianNotFound() {
             // Arrange
+            // Ensure the member lookup (memberId = 2L) is stubbed so Mockito strict stubbing doesn't flag argument mismatch
+            when(guardianRepository.findById(2L)).thenReturn(Optional.of(regularMember));
             when(guardianRepository.findById(999L)).thenReturn(Optional.empty());
 
             // Act & Assert
@@ -343,7 +345,7 @@ class GuadianServiceImplTest {
         @DisplayName("Should throw MemberNotFoundException when member not found")
         void shouldThrowExceptionWhenMemberNotFound() {
             // Arrange
-            when(guardianRepository.findById(1L)).thenReturn(Optional.of(guardianMember));
+            // Only stub the member lookup to be empty - the guardian lookup won't be invoked because the member is missing
             when(guardianRepository.findById(999L)).thenReturn(Optional.empty());
 
             // Act & Assert

@@ -22,7 +22,7 @@ public interface GuardianRepository extends JpaRepository<Member, Long> {
             "FROM Member m WHERE m.guardianId = :guardianId")
     List<MemberCustom> findMembersInChargeOf(@Param("guardianId") Long guardianId);
 
-    @Query("SELECT m FROM Member m WHERE m.memberId = :id AND m.role = 'ACUDIENTE' AND m.status = 'APPROVED' AND m.isActive = true")
+    @Query("SELECT m FROM Member m WHERE m.memberId = :id AND m.role = 'ACUDIENTE'")
     Optional<Member> findValidGuardianById(@Param("id") Long id);
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.memberId = :id AND m.role = 'ACUDIENTE'")
@@ -36,7 +36,7 @@ public interface GuardianRepository extends JpaRepository<Member, Long> {
     @Query("DELETE FROM Member m WHERE m.memberId = :guardianId")
     void deleteGuardianById(@Param("guardianId") Long guardianId);
 
-    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.identification = :identification AND m.role = 'ACUDIENTE' AND m.status = 'APPROVED' AND m.isActive = true")
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.identification = :identification AND m.role = 'ACUDIENTE'")
     boolean existsByValidGuardianIdentification(@Param("identification") String identification);
 
 }

@@ -102,11 +102,11 @@ public class GuardianServiceImpl implements GuardianService {
     @Transactional
     public void addMemberToGuardian(Long guardianId, Long memberId) {
 
-        Member guardianToAdd = memberRepository.findById(guardianId)
-                .orElseThrow(() -> new GuardianNotFoundException("Guardian con ID " + guardianId + " no encontrado"));
-
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("Miembro con ID " + memberId + " no encontrado"));
+
+        Member guardianToAdd = memberRepository.findById(guardianId)
+                .orElseThrow(() -> new GuardianNotFoundException("Guardian con ID " + guardianId + " no encontrado"));
 
         member.setGuardianId(guardianToAdd.getMemberId().intValue());
         memberRepository.save(member);

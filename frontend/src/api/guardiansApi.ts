@@ -3,11 +3,11 @@ import type { Guardian, CreateGuardianDTO, UpdateGuardianDTO } from "./guardian.
 
 /**
  * API Service para Guardianes (Acudientes)
- * 
- * Endpoints del backend:
- * - POST /api/members/guardian/create
- * - GET /api/members/guardian/{id}
- * - PUT /api/members/guardian/{id}
+ *
+ * Endpoints del backend (axios baseURL already includes /api/v1):
+ * - POST /api/v1/guardian
+ * - GET /api/v1/guardian/{id}
+ * - PUT /api/v1/guardian/{id}
  */
 
 /**
@@ -16,8 +16,8 @@ import type { Guardian, CreateGuardianDTO, UpdateGuardianDTO } from "./guardian.
  * @returns Guardian creado con información completa
  */
 export const createGuardian = async (data: CreateGuardianDTO): Promise<Guardian> => {
-  const response = await api.post<Guardian>("/members/guardian/create", data);
-  return response.data;
+  const response = await api.post<Guardian>("/guardian", data);
+  return response.data as Guardian;
 };
 
 /**
@@ -26,8 +26,8 @@ export const createGuardian = async (data: CreateGuardianDTO): Promise<Guardian>
  * @returns Guardian con información completa incluyendo miembros a cargo
  */
 export const getGuardianById = async (id: string): Promise<Guardian> => {
-  const response = await api.get<Guardian>(`/members/guardian/${id}`);
-  return response.data;
+  const response = await api.get<Guardian>(`/guardian/${id}`);
+  return response.data as Guardian;
 };
 
 /**
@@ -40,6 +40,6 @@ export const updateGuardian = async (
   id: string,
   data: UpdateGuardianDTO
 ): Promise<Guardian> => {
-  const response = await api.put<Guardian>(`/members/guardian/${id}`, data);
-  return response.data;
+  const response = await api.put<Guardian>(`/guardian/${id}`, data);
+  return response.data as Guardian;
 };

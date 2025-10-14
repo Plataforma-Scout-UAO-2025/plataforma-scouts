@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseurl}}guardian
+  url: {{baseurl}}api/v1/guardian
   body: json
   auth: inherit
 }
@@ -22,9 +22,11 @@ body:json {
     "first_name": "Geronimo",
     "last_name": "Cruz Ramirez",
     "age": 41,
-    "identification": "78166588",
+    "identification": "7815658185",
     "document_type": "CC",
-    "phone": "3001234567"
+    "phone": "3001234567",
+    "is_active": true,
+    "status":"APPROVED"
   }
 }
 

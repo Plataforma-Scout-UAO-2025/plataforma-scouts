@@ -5,14 +5,14 @@ meta {
 }
 
 post {
-  url: {{baseurl}}guardian/:guardianId/members/:memberId
-  body: json
+  url: {{baseurl}}api/v1/guardian/:guardianId/members/:memberId
+  body: none
   auth: inherit
 }
 
 params:path {
   memberId: 251
-  guardianId: 291
+  guardianId: 305
 }
 
 headers {

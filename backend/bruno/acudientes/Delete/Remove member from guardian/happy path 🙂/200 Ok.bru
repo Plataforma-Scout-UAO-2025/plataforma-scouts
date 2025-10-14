@@ -5,13 +5,13 @@ meta {
 }
 
 delete {
-  url: {{baseurl}}guardian/:guardianId/members/:memberId
+  url: {{baseurl}}api/v1/guardian/:guardianId/members/:memberId
   body: json
   auth: inherit
 }
 
 params:path {
-  guardianId: 291
+  guardianId: 305
   memberId: 251
 }
 
