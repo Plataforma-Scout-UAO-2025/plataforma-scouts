@@ -43,7 +43,6 @@ function App() {
             <Route index element={<Dashboard />} />
 
             {/* ===================== ORGANIGRAMA ===================== */}
-            {/* Las rutas de organigrama solo accesibles para ADMIN_GLOBAL, ADMIN_GRUPO, SCOUTER y DEV_SUPPORT */}
             <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrganigramaHome /></ProtectedRoute>} />
             <Route path="organigrama/ramas-y-subramas" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><Organigrama /></ProtectedRoute>} />
             <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><RamaDetail /></ProtectedRoute>} />
