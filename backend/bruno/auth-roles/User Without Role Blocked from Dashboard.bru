@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseurl}}dashboard
+  url: {{baseurl}}api/v1/tenants
   body: none
   auth: inherit
 }
@@ -34,13 +34,13 @@ settings {
 docs {
   **Nombre:** Usuario sin rol intenta navegar al dashboard
   
-  **Endpoint:** /dashboard
+  **Endpoint:** /api/v1/tenants
   
   **HU relacionadas:** HU-ING-1.2
   
   **Criterio de aceptación:** Si el usuario no cuenta con un rol definido en el sistema, no se le permitirá el acceso al sistema.
   
-  **Descripción:** Dado que he obtenido (en pruebas) un token para un usuario sin rol, cuando intento navegar al dashboard o realizar una petición protegida, entonces el backend debe bloquear el acceso.
+  **Descripción:** Dado que he obtenido (en pruebas) un token para un usuario sin rol, cuando intento realizar una petición protegida (listar tenants), entonces el backend debe bloquear el acceso.
   
   **Respuesta esperada:** 403 o redirección a página de error con "Acceso denegado".
   

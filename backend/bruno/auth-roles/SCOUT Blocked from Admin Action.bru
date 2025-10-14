@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseurl}}api/v1/admin/global/resource
+  url: {{baseurl}}api/v1/tenants
   body: json
   auth: inherit
 }
@@ -16,7 +16,8 @@ headers {
 
 body:json {
   {
-    "name": "Test Resource"
+    "tenantSlug": "unauthorized-tenant",
+    "name": "Unauthorized Tenant"
   }
 }
 
@@ -37,13 +38,13 @@ settings {
 docs {
   **Nombre:** SCOUT intenta crear recurso administrativo
   
-  **Endpoint:** /api/v1/admin/global/resource
+  **Endpoint:** /api/v1/tenants (POST)
   
   **HU relacionadas:** HU-ING-1.2
   
   **Criterio de aceptación:** Si un usuario intenta acceder a funciones fuera de su rol, el sistema debe bloquear la acción y mostrar "Acceso denegado".
   
-  **Descripción:** Dado que estoy autenticado como SCOUT, cuando intento ejecutar una acción administrativa, entonces el backend debe bloquearla.
+  **Descripción:** Dado que estoy autenticado como SCOUT, cuando intento ejecutar una acción administrativa (crear tenant), entonces el backend debe bloquearla.
   
   **Respuesta esperada:** Respuesta 403 con mensaje "Acceso denegado" y operación no realizada.
   

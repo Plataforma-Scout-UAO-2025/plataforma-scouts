@@ -4,10 +4,17 @@ meta {
   seq: 5
 }
 
-get {
-  url: {{baseurl}}api/v1/group/{{groupId}}/settings
-  body: none
+post {
+  url: {{baseurl}}api/v1/tenants
+  body: json
   auth: inherit
+}
+
+body:json {
+  {
+    "tenantSlug": "test-tenant-{{$randomInt}}",
+    "name": "Test Tenant"
+  }
 }
 
 headers {
@@ -31,7 +38,7 @@ settings {
 docs {
   **Nombre:** ADMIN_GRUPO accede a configuración de su grupo
   
-  **Endpoint:** /api/v1/group/{groupId}/settings
+  **Endpoint:** /api/v1/tenants (POST)
   
   **HU relacionadas:** HU-ING-1.2
   
@@ -39,7 +46,7 @@ docs {
   
   **Descripción:** Dado que estoy autenticado como ADMIN_GRUPO, cuando accedo a las áreas de configuración de mi grupo, entonces el sistema debe permitir las acciones propias del administrador de grupo y denegar las que sean de ámbito global.
   
-  **Respuesta esperada:** Debe permitir acciones de administración del grupo (200 OK) y denegar endpoints globales (403) si aplica.
+  **Respuesta esperada:** Debe permitir acciones de administración del grupo como crear tenants (200 OK).
   
   **Responsable:** QA Team
   

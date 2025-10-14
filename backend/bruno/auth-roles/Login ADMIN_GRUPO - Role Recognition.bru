@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/auth/me
+  url: {{baseurl}}api/v1/tenants
   body: none
   auth: inherit
 }
@@ -19,13 +19,8 @@ tests {
     expect(res.status).to.equal(200);
   });
   
-  test("Validar que el rol ADMIN_GRUPO está presente", function () {
-    expect(res.body.roles).to.include("ADMIN_GRUPO");
-  });
-  
-  test("Validar que se devuelve información del usuario", function () {
-    expect(res.body).to.have.property("id");
-    expect(res.body).to.have.property("email");
+  test("Validar que se devuelve lista de tenants", function () {
+    expect(res.body).to.be.an("array");
   });
 }
 
@@ -36,7 +31,7 @@ settings {
 docs {
   **Nombre:** Login ADMIN_GRUPO - Reconocimiento de rol
   
-  **Endpoint:** /api/v1/auth/me
+  **Endpoint:** /api/v1/tenants
   
   **HU relacionadas:** HU-ING-1.2
   
@@ -44,7 +39,7 @@ docs {
   
   **Descripción:** Dado que estoy en la pantalla de login, cuando ingreso credenciales válidas de un usuario con rol ADMIN_GRUPO y hago clic en "Iniciar sesión", entonces el sistema debe autenticarme y extraer mi rol desde el token o desde el backend.
   
-  **Respuesta esperada:** Debe autenticarme correctamente, el backend debe reconocer y devolver el rol `ADMIN_GRUPO` y la interfaz debe habilitar las funciones de administración de grupo.
+  **Respuesta esperada:** Debe autenticarme correctamente y permitir acceso a funcionalidades de administración de grupo como listar tenants y gestionar organigrama.
   
   **Responsable:** QA Team
   

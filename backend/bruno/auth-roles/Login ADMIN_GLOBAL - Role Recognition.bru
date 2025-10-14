@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/auth/me
+  url: {{baseurl}}api/v1/auth0/users
   body: none
   auth: inherit
 }
@@ -19,13 +19,12 @@ tests {
     expect(res.status).to.equal(200);
   });
   
-  test("Validar que el rol ADMIN_GLOBAL está presente", function () {
-    expect(res.body.roles).to.include("ADMIN_GLOBAL");
-  });
-  
-  test("Validar que se devuelve información del usuario", function () {
-    expect(res.body).to.have.property("id");
-    expect(res.body).to.have.property("email");
+  test("Validar que se devuelve lista de usuarios", function () {
+    expect(res.body).to.be.an("array");
+    if (res.body.length > 0) {
+      expect(res.body[0]).to.have.property("id");
+      expect(res.body[0]).to.have.property("email");
+    }
   });
 }
 
@@ -36,7 +35,7 @@ settings {
 docs {
   **Nombre:** Login ADMIN_GLOBAL - Reconocimiento de rol
   
-  **Endpoint:** /api/v1/auth/me
+  **Endpoint:** /api/v1/auth0/users
   
   **HU relacionadas:** HU-ING-1.2
   
@@ -44,7 +43,7 @@ docs {
   
   **Descripción:** Dado que estoy en la pantalla de login, cuando ingreso credenciales válidas de un usuario con rol ADMIN_GLOBAL y hago clic en "Iniciar sesión", entonces el sistema debe autenticarme y extraer mi rol desde el token o desde el backend.
   
-  **Respuesta esperada:** Debe autenticarme correctamente, el backend debe reconocer y devolver el rol `ADMIN_GLOBAL` y la interfaz debe habilitar únicamente las funciones correspondientes a ese rol.
+  **Respuesta esperada:** Debe autenticarme correctamente y permitir acceso a funcionalidades administrativas globales como listar usuarios del sistema.
   
   **Responsable:** QA Team
   

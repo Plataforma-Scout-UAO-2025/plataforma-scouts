@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/admin/global
+  url: {{baseurl}}api/v1/auth0/roles
   body: none
   auth: inherit
 }
@@ -31,13 +31,13 @@ settings {
 docs {
   **Nombre:** ADMIN_GRUPO intenta acceder a endpoint global
   
-  **Endpoint:** /api/v1/admin/global
+  **Endpoint:** /api/v1/auth0/roles
   
   **HU relacionadas:** HU-ING-1.2
   
   **Criterio de aceptación:** Si un usuario intenta acceder a funciones fuera de su rol, el sistema debe bloquear la acción y mostrar "Acceso denegado".
   
-  **Descripción:** Dado que estoy autenticado como ADMIN_GRUPO, cuando intento acceder a funcionalidades globales, entonces el backend debe comprobar permisos y bloquear la acción si no estoy autorizado.
+  **Descripción:** Dado que estoy autenticado como ADMIN_GRUPO, cuando intento acceder a funcionalidades de gestión global de Auth0 (roles), entonces el backend debe comprobar permisos y bloquear la acción si no estoy autorizado.
   
   **Respuesta esperada:** La acción debe ser bloqueada por el servidor y el cliente debe recibir/mostrar el mensaje "Acceso denegado"; no debe producirse la operación solicitada.
   

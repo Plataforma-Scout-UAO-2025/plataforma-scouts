@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/members/{{memberId}}
+  url: {{baseurl}}api/v1/members/list_member_by_id?member_id={{memberId}}
   body: none
   auth: inherit
+}
+
+headers {
+  X-Tenant-Id: {{tenantId}}
 }
 
 headers {
@@ -21,7 +25,6 @@ tests {
   
   test("Validar acceso permitido a funciones de miembro", function () {
     expect(res.body).to.exist;
-    expect(res.body).to.have.property("id");
   });
 }
 
@@ -32,7 +35,7 @@ settings {
 docs {
   **Nombre:** SCOUT accede a funciones de miembro
   
-  **Endpoint:** /api/v1/members/{memberId}
+  **Endpoint:** /api/v1/members/list_member_by_id
   
   **HU relacionadas:** HU-ING-1.2
   

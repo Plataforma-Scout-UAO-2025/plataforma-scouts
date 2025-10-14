@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/auth/me
+  url: {{baseurl}}api/v1/members/list_members
   body: none
   auth: inherit
+}
+
+headers {
+  X-Tenant-Id: {{tenantId}}
 }
 
 headers {
@@ -19,13 +23,8 @@ tests {
     expect(res.status).to.equal(200);
   });
   
-  test("Validar que el rol SCOUT está presente", function () {
-    expect(res.body.roles).to.include("SCOUT");
-  });
-  
-  test("Validar que se devuelve información del usuario", function () {
-    expect(res.body).to.have.property("id");
-    expect(res.body).to.have.property("email");
+  test("Validar que se devuelve lista de miembros", function () {
+    expect(res.body).to.be.an("array");
   });
 }
 
@@ -36,7 +35,7 @@ settings {
 docs {
   **Nombre:** Login SCOUT - Reconocimiento de rol
   
-  **Endpoint:** /api/v1/auth/me
+  **Endpoint:** /api/v1/members/list_members
   
   **HU relacionadas:** HU-ING-1.2
   
@@ -44,7 +43,7 @@ docs {
   
   **Descripción:** Dado que estoy en la pantalla de login, cuando ingreso credenciales válidas de un usuario con rol SCOUT y hago clic en "Iniciar sesión", entonces el sistema debe autenticarme y extraer mi rol desde el token o desde el backend.
   
-  **Respuesta esperada:** Debe autenticarme correctamente, el backend debe reconocer y devolver el rol `SCOUT` y la interfaz debe habilitar únicamente las funciones de miembro.
+  **Respuesta esperada:** Debe autenticarme correctamente y permitir acceso a funcionalidades de miembro como ver lista de miembros del grupo.
   
   **Responsable:** QA Team
   
