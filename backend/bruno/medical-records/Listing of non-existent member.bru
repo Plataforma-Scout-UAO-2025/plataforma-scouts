@@ -1,0 +1,47 @@
+meta {
+  name: Listing of non-existent member
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseurl}}api/v1/medical_record/list_record/999
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
+tests {
+  test("Validar petición fallida", function () {
+    expect(res.status).to.equal(404);
+  });
+  
+  test("Validar mensaje de error", function () {
+    expect(res.body.message).to.equal("ERROR: usuario no encontrado.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Listado de miembro no existente
+  
+  **Endpoint:** /api/v1/medical_record/list_record/{id}
+  
+  **HU relacionadas:** HU-INN-2.1 HU-INN-2.2
+  
+  **Descripción:** Comprobar que el endpoint de listado de registros medicos recibe y responde correctamente a una petición de un miembro no existente.
+  
+  **Respuesta esperada:** Retorna el código 404 (not found) y un mensaje de error.
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-01
+}

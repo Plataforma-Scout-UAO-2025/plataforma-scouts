@@ -149,8 +149,10 @@ public class SecurityConfig {
                         //
                         // Acudientes
 
+
                         //
                         // Datos médicos
+                        .requestMatchers("/api/v1/medical_record/**").permitAll()
 
                         //
                         // Pagos
