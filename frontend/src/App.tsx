@@ -28,6 +28,10 @@ import OrgAuthGuard from './app/routes/organigrama/OrgAuthGuard';
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 
+// Guardians (Acudientes)
+import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
+import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
+
 function App() {
   useAuth0ApiWrapper();
 
@@ -101,7 +105,7 @@ function App() {
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST"]}><ScoutEnrollment /></ProtectedRoute>}/>
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "ACUDIENTE"]}><ScoutEnrollment /></ProtectedRoute>}/>
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
@@ -111,6 +115,10 @@ function App() {
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
             <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalInfo /></ProtectedRoute>} />
+
+            {/* ===================== ACUDIENTES ===================== */}
+            <Route path="acudientes/perfil" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><GuardianProfile /></ProtectedRoute>} />
+            <Route path="acudientes/miembros" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MembersInCharge /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

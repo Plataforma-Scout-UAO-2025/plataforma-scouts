@@ -28,6 +28,8 @@ import {
   ChevronRight,
   Network,
   Pencil,
+  UserCircle,
+  UsersRound,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -141,6 +143,18 @@ const acudienteItems: MenuItem[] = [
     label: "Inicio",
     icon: <LineChart />,
     href: "/app/dashboard",
+  },
+  {
+    id: "perfil",
+    label: "Mi Perfil",
+    icon: <UserCircle />,
+    href: "/app/acudientes/perfil",
+  },
+  {
+    id: "miembros-cargo",
+    label: "Miembros a Cargo",
+    icon: <UsersRound />,
+    href: "/app/acudientes/miembros",
   },
   {
     id: "financiero",

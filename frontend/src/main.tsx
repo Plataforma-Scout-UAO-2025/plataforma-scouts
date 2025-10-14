@@ -1,9 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Auth0Provider } from "@auth0/auth0-react";
+import { Provider } from "react-redux";
 import "./styles/global.css";
 import App from "./App.tsx";
 import { RoleProvider } from "@/context/RoleProvider";
+import { store } from "@/store/store";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -15,9 +17,11 @@ createRoot(document.getElementById("root")!).render(
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
       }}
     >
-      <RoleProvider>
-        <App />
-      </RoleProvider>
+      <Provider store={store}>
+        <RoleProvider>
+          <App />
+        </RoleProvider>
+      </Provider>
     </Auth0Provider>
   </StrictMode>
 );

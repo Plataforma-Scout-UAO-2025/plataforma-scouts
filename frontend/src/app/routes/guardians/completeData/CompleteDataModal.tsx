@@ -10,7 +10,7 @@ import {
 import { CompleteDataForm } from "./components/CompleteDataForm";
 import type { CompleteDataFormData } from "./schemas/CompleteData.schema";
 import { useCompleteData } from "./hooks/useCompleteData";
-import { guardianService } from "@/services/guardianService";
+import { guardianService } from "../services/guardianService";
 import { toast } from "sonner";
 
 export const CompleteDataModal = () => {
