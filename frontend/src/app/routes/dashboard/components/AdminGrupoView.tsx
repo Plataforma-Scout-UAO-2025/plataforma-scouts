@@ -33,7 +33,7 @@ const AdminGrupoView = () => {
 
     // Scouts activos
     const scoutsActivos = members.filter(
-      (m) => m.is_active && m.status === "active"
+      (m) => m.isActive && m.status === "active"
     ).length;
 
     // Total de ramas únicas
@@ -51,8 +51,8 @@ const AdminGrupoView = () => {
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
     const nuevosEsteMes = members.filter((m) => {
-      if (!m.created_at) return false;
-      const fecha = new Date(m.created_at);
+      if (!m.createdAt) return false;
+      const fecha = new Date(m.createdAt);
       return fecha >= inicioMes;
     }).length;
 

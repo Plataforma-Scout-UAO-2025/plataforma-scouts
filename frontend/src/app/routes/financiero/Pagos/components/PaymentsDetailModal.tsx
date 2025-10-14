@@ -6,15 +6,17 @@ import PaymentsDetailTable from './PaymentsDetailTable';
 import type { InstallmentPayment } from '@/types/pago.type';
 import type { PaymentRecord } from '@/types/pago.type';
 import api from '@/api/axios';
+import { useTenant } from '@/hooks/useTenant';
 
 export default function PaymentsDetailModal({member}: {member: PaymentRecord}) {
   const [open, setOpen] = useState(false);
   const [installment, setInstallment] = useState<InstallmentPayment[]>([]);
+  const tenantId = useTenant();
 
   const fetchInstallment = useCallback(async () => {
-    const response = await api.get(`/finanzas/payments/installments/${"org_6B3k4dao2Wf6eGxa/"}${member.member_id}`);
+    const response = await api.get(`/finanzas/payments/installments/${tenantId}/${member.member_id}`);
     setInstallment(response.data);
-  }, [member.member_id]);
+  }, [member.member_id, tenantId]);
 
   useEffect(() => {
     if (open) {
@@ -31,7 +33,7 @@ export default function PaymentsDetailModal({member}: {member: PaymentRecord}) {
       </DialogTrigger>
       <DialogContent className='w-[95vw] max-w-none overflow-hidden'>
         <DialogHeader>
-          <DialogTitle>Detalles del pago de {member.first_name + " " + member.last_name}</DialogTitle>
+          <DialogTitle>Detalles de los pagos de {member.first_name + " " + member.last_name}</DialogTitle>
         </DialogHeader>
         <div className="overflow-x-auto">
           <PaymentsDetailTable installment={installment} member_id={member.member_id} onRefresh={fetchInstallment} />

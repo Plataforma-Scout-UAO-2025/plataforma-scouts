@@ -3,7 +3,9 @@ import { RawRole } from "@/roles/roles";
 import AdminGlobalView from "./components/AdminGlobalView";
 import AdminGrupoView from "./components/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
+import ScoutView from "./components/ScoutView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
+
 
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
@@ -22,6 +24,9 @@ export default function Dashboard() {
 
     case RawRole.ACUDIENTE:
       return <AcudienteView />;
+    
+    case RawRole.SCOUT:
+      return <ScoutView />;
 
     default:
       // Dashboard genérico para otros roles

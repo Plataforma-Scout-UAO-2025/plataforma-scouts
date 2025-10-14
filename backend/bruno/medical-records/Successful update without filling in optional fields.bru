@@ -1,0 +1,62 @@
+meta {
+  name: Successful update without filling in optional fields
+  type: http
+  seq: 21
+}
+
+put {
+  url: {{baseurl}}api/v1/medical_record/update_record/21
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
+body:json {
+  {
+    "blood_type": "O+", // valor a actualizar
+    "eps": "Sura",
+    "allergies": "",
+    "chronic_diseases": "",
+    "physical_restrictions": "",
+    "surgical_history": "",
+    "vaccines_detail": [],
+    "medications_detail": []
+  }
+  
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Validar mensaje de exito", function () {
+    expect(res.body.message).to.equal("Actualización realizada con exito.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Actualizado exitoso sin campos opcionales
+  
+  **Endpoint:** /api/v1/medical_record/update_record
+  
+  **HU relacionadas:** HU-INN-2.1
+  
+  **Descripción:** Comprobar que el endpoint de actualizado de registros medicos recibe y responde correctamente a una petición con solo los campos obligatorios, con valores válidos y con la sesión iniciada.
+  
+  **Respuesta esperada:** Retorna el código 200 y un body con un mensaje de exito.
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-01
+  
+}

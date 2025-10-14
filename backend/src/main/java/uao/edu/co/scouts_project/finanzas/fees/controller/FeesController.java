@@ -79,7 +79,7 @@ public class FeesController {
     return ResponseEntity.ok(feeService.patch(feePlanId, patchDto, tenantId));
   }
 
-  @Operation(summary = "Eliminar FeePlan/Concept/installment a partir del fee_plan_id, se eliminan todas las entidades relacionadas a el fee_plan, usar con cuidado.")
+  @Operation(summary = "Borrado logico FeePlan/Concept/installment a partir del fee_plan_id, no se eliminan los installments ya pagos.")
   @DeleteMapping("/{tenantId}/{feePlanId}")
   public ResponseEntity<Void> delete(
     @PathVariable String tenantId,

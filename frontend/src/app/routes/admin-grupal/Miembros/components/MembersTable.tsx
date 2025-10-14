@@ -36,17 +36,17 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
-              <TableRow key={member.member_id}>
-                <TableCell className="pl-4 font-medium">{member.user_id}</TableCell>
-                <TableCell>{member.first_name}</TableCell>
-                <TableCell>{member.last_name}</TableCell>
+              <TableRow key={member.memberId}>
+                <TableCell className="pl-4 font-medium">{member.userId}</TableCell>
+                <TableCell>{member.firstName}</TableCell>
+                <TableCell>{member.lastName}</TableCell>
                 <TableCell>{member.identification}</TableCell>
                 <TableCell>
                   {member.branch && member.branch.length > 0
                     ? member.branch.map((rama) => rama.name).join(", ")
                     : "Sin rama"}
                 </TableCell>
-                <TableCell>{member.created_at}</TableCell>
+                <TableCell>{member.createdAt}</TableCell>
                 <TableCell>{member.status}</TableCell>
                 <TableCell>{member.address}</TableCell>
                 <TableCell className="text-right">

@@ -1,17 +1,12 @@
 import { Card } from "@/components/ui/card";
-import {
-  CreditCard,
-  AlertTriangle,
-  CheckCircle,
-  User,
-} from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle, User } from "lucide-react";
 import type { Member } from "@/types/estado-cuenta.type";
 
 interface ResumenEstadoCuentaProps {
   kpis: {
-    totalPendiente: number;
-    totalPagado: number;
-    cuotasVencidas: number;
+    total_pendiente: number;
+    total_pagado: number;
+    cuotas_vencidas: number;
   };
   member?: Member | null;
 }
@@ -37,13 +32,20 @@ export default function ResumenEstadoCuenta({
               <User className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-primary">{member.member_name}</h2>
+              <h2 className="text-2xl font-bold text-primary">
+                {member.member_name}
+              </h2>
               <div className="flex items-center gap-4 text-muted-foreground">
                 <span>Sección: {member.section.name}</span>
                 <span>•</span>
                 <span>Subgrupo: {member.subgroup.name}</span>
-                <span>•</span>
-                <span>Edad: {member.age} años</span>
+
+                {member.age ? (
+                  <>
+                    <span>•</span>
+                    <span>Edad: {member.age} años</span>
+                  </>
+                ) : null}
               </div>
             </div>
           </div>
@@ -57,10 +59,10 @@ export default function ResumenEstadoCuenta({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Total Pendiente
+                Total Pendiente este mes
               </p>
               <p className="text-2xl font-bold text-red-600">
-                {formatMonto(kpis.totalPendiente)}
+                {formatMonto(kpis.total_pendiente)}
               </p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -77,7 +79,7 @@ export default function ResumenEstadoCuenta({
                 Total Pagado
               </p>
               <p className="text-2xl font-bold text-green-600">
-                {formatMonto(kpis.totalPagado)}
+                {formatMonto(kpis.total_pagado)}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -94,7 +96,7 @@ export default function ResumenEstadoCuenta({
                 Cuotas Vencidas
               </p>
               <p className="text-2xl font-bold text-orange-600">
-                {kpis.cuotasVencidas}
+                {kpis.cuotas_vencidas}
               </p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
@@ -105,16 +107,17 @@ export default function ResumenEstadoCuenta({
       </div>
 
       {/* Alertas */}
-      {kpis.cuotasVencidas > 0 && (
+      {kpis.cuotas_vencidas > 0 && (
         <Card className="p-4 border-orange-200 bg-orange-50">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-orange-600" />
             <div>
               <p className="font-medium text-orange-800">
-                {member ? "Tienes" : "Hay"} {kpis.cuotasVencidas} cuota(s) vencida(s)
+                {member ? "Tienes" : "Hay"} {kpis.cuotas_vencidas} cuota(s)
+                vencida(s)
               </p>
               <p className="text-sm text-orange-600">
-                {member 
+                {member
                   ? "Te recomendamos ponerte al día lo antes posible para evitar inconvenientes."
                   : "Se recomienda gestionar los pagos atrasados lo antes posible."}
               </p>
