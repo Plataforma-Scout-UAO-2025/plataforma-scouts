@@ -10,7 +10,7 @@ import Dashboard from "./app/routes/dashboard/Dashboard";
 import Miembros from "./app/routes/admin-grupal/Miembros/Miembros";
 import Financiero from "./app/routes/financiero/Financiero";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
-import MedicalInfo from "./app/routes/grupos/medical-info/MedicalInfo";
+import MedicalRecordsView from "./app/routes/grupos/components/MedicalRecordView";
 import Grupos from "./app/routes/grupos/Grupos";
 
 import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
@@ -89,7 +89,6 @@ function App() {
 
             {/* ===================== GRUPOS ===================== */}
             <Route path="grupos" element={<Grupos />} />
-            <Route path="grupos/medical-info" element={<MedicalInfo />} />
 
             {/* Rutas para admin de grupo */}
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Financiero /></ProtectedRoute>} />
@@ -104,9 +103,9 @@ function App() {
             */}
 
             {/* Rutas para acudiente */}
-            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO","ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
-            <Route path="grupos" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
-            <Route path="grupos/medical-info" element={<ProtectedRoute allowedRoles={["ACUDIENTE"]}><MedicalInfo /></ProtectedRoute>} />
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
+            <Route path="grupos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
+            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><MedicalRecordsView /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

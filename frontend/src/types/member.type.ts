@@ -13,7 +13,7 @@ export interface Member {
   tenant_id?: string;
   guardian_id?: number;
   relationship?: string;
-  role?: "admin_group" | "admin_global" | "scout";
+  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
   status?: string;
   is_active?: boolean;
   identification?: string;

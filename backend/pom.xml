@@ -161,8 +161,8 @@
 			<artifactId>mvc-auth-commons</artifactId>
 			<version>1.9.1</version>
 		</dependency>
-		
-	</dependencies>
+
+    </dependencies>
 
 
 	<build>
