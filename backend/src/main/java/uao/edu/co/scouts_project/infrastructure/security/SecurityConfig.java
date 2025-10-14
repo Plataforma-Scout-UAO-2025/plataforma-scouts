@@ -146,7 +146,20 @@ public class SecurityConfig {
                                                 // // Datos básicos de miembros
 
                                                 //
-                                                // Acudientes
+                                                // Acudientes (Guardians)
+
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                                DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                                DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                                DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                                DEV_SUPPORT.name())
 
                                                 //
                                                 // Datos médicos
