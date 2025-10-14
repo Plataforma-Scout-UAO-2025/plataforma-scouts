@@ -45,6 +45,7 @@ import FullScreenError from "@/components/common/FullScreenError";
 import { RawRole } from "@/roles/roles";
 import { setAuth0TokenProvider } from "@/api/axios";
 import { useEffect } from "react";
+import Organigrama from "@/app/routes/organigrama/organigramaRamas_Subramas";
 
 type SubMenuItem = {
   id: string;
@@ -98,6 +99,7 @@ const adminGrupalItems: MenuItem[] = [
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
   { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
   { id: "medico", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
