@@ -1,4 +1,22 @@
 meta {
   name: auth-roles
-  type: folder
+  seq: 10
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  HU-ING-1.2: Autenticación diferenciada por roles
+  
+  Este folder contiene las pruebas E2E para validar que el sistema reconoce
+  correctamente los roles de usuario y aplica restricciones de acceso según
+  los permisos asignados.
+  
+  Criterios de aceptación:
+  1. Reconocimiento de rol en inicio de sesión
+  2. Acceso limitado por rol
+  3. Bloqueo con mensaje "Acceso denegado"
+  4. Usuario sin rol no accede al sistema
 }
