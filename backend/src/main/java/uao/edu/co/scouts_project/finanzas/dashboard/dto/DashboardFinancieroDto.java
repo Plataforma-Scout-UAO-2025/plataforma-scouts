@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uao.edu.co.scouts_project.finanzas.dashboard.repository.projection.RecentPaymentProjection;
+import uao.edu.co.scouts_project.finanzas.dashboard.repository.projection.TopDebtorProjection;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,7 +19,7 @@ public class DashboardFinancieroDto {
     private KpisDto kpis;
     private List<PorcentajeCumplimientoDto> porcentaje_cumplimiento;
     private List<RecentPaymentProjection> ultimos_pagos;
-    private List<MiembroMoraDto> miembros_mora;
+    private List<TopDebtorProjection> miembros_mora;
     private DistribucionPagosDto distribucion_pagos;
 
     @Data

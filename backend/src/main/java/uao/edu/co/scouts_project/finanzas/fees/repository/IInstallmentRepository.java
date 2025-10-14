@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import uao.edu.co.scouts_project.finanzas.dashboard.dto.MiembroMoraDto;
 import uao.edu.co.scouts_project.finanzas.dashboard.repository.projection.InstallmentStatusCount;
 import uao.edu.co.scouts_project.finanzas.dashboard.repository.projection.SubgroupCompliance;
+import uao.edu.co.scouts_project.finanzas.dashboard.repository.projection.TopDebtorProjection;
 import uao.edu.co.scouts_project.finanzas.fees.model.Installment;
 
 public interface IInstallmentRepository extends JpaRepository<Installment, Long> {
@@ -122,7 +122,7 @@ public interface IInstallmentRepository extends JpaRepository<Installment, Long>
             """,
         nativeQuery = true
     )
-    List<MiembroMoraDto> findTopDebtorsByTenant(@Param("tenantId") String tenantId);
+    List<TopDebtorProjection> findTopDebtorsByTenant(@Param("tenantId") String tenantId);
 
     @Query("""
     select i.status as status, count(i) as cnt
