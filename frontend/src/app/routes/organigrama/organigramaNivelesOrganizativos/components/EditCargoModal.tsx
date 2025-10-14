@@ -28,11 +28,13 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
 
   const memberOptions = useMemo(() => {
     return (members || [])
-      .filter((m) => m.member_id && (m.first_name || m.last_name))
-      .map((m) => ({
-        id: String(m.member_id),
-        name: `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim(),
-      }));
+      .map((m) => {
+        const memberId = m.memberId ?? (m as any).member_id;
+        const firstName = m.firstName ?? (m as any).first_name ?? "";
+        const lastName = m.lastName ?? (m as any).last_name ?? "";
+        return memberId ? { id: String(memberId), name: `${firstName} ${lastName}`.trim() } : null;
+      })
+      .filter((x): x is { id: string; name: string } => x !== null);
   }, [members]);
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Subgroup as Subrama } from "../types/frontend";
 import * as organigramaService from "../services";
+import api from '@/api/axios';
 import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
 import FotoModal from "../components/FotoModal";
@@ -37,6 +38,10 @@ export default function SubramaDetail() {
   const uploadProgressReceivedRef = useRef<boolean>(false);
   const uploadAnimateRef = useRef<number | null>(null);
   const previousImagenPrincipalRef = useRef<string | null>(null);
+  // Miembros (lista por subgrupo)
+  const [members, setMembers] = useState<Array<{ member_id?: number; first_name?: string; last_name?: string; memberId?: number; firstName?: string; lastName?: string }>>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
 
   const animatePercentTo = (target: number) => {
     if (uploadAnimateRef.current) {
@@ -517,6 +522,37 @@ export default function SubramaDetail() {
     fetchSubrama();
   }, [fetchSubrama]);
 
+  // Cargar miembros del subgrupo cuando la subrama este cargada (llamada local a api)
+  const fetchMembers = useCallback(async (subgrp: Subrama | null) => {
+    if (!subgrp) return;
+    const subgroupId = (subgrp as any).subgroup_id ?? (subgrp as any).id ?? (subgrp as any).subgroupId;
+    if (!subgroupId) return;
+    try {
+      setMembersLoading(true);
+      setMembersError(null);
+      const resp = await api.get('/members/list_members_by_subgroup', { params: { id: String(subgroupId) } });
+      const data = resp?.data ?? [];
+      const normalized = (data || []).map((m: any) => ({
+        member_id: m.member_id ?? m.memberId ?? m.id,
+        first_name: m.first_name ?? m.firstName,
+        last_name: m.last_name ?? m.lastName,
+        memberId: m.memberId ?? m.member_id ?? m.id,
+        firstName: m.firstName ?? m.first_name,
+        lastName: m.lastName ?? m.last_name,
+      }));
+      setMembers(normalized);
+    } catch (err) {
+      console.error('[SubramaDetail] Error cargando miembros por subgrupo', err);
+      setMembersError('No se pudieron cargar los integrantes');
+    } finally {
+      setMembersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (subrama) fetchMembers(subrama);
+  }, [subrama, fetchMembers]);
+
   if (!hasTenantContext) {
     if (isFetching) {
       return (
@@ -668,18 +704,28 @@ export default function SubramaDetail() {
         <h2 className="text-lg font-semibold text-primary">
           Integrantes
         </h2>
-        <div className="flex flex-wrap gap-2">
-          {/*  Mock temporal */}
-          {["Roberto Restrepo", "Carlos Camargo", "Ana Aguillón", "Mario Mora"].map(
-            (name, idx) => (
-              <Badge
-                key={idx}
-                variant="outline"
-                className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
-              >
-                {name}
-              </Badge>
-            )
+        <div className="flex flex-col gap-2">
+          {membersLoading ? (
+            <div className="text-sm text-muted-foreground">Cargando integrantes...</div>
+          ) : membersError ? (
+            <div className="text-sm text-destructive">{membersError}</div>
+          ) : members && members.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {members.map((m, idx) => {
+                const display = (m.firstName || m.first_name || '') + (m.lastName || m.last_name ? ` ${m.lastName || m.last_name}` : '');
+                return (
+                  <Badge
+                    key={String(m.memberId ?? m.member_id ?? idx)}
+                    variant="outline"
+                    className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
+                  >
+                    {display || `Miembro ${m.member_id ?? m.memberId ?? idx}`}
+                  </Badge>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">No hay integrantes registrados en esta subrama.</div>
           )}
         </div>
       </Card>
