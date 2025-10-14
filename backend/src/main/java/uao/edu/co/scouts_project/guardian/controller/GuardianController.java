@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.GuardianCreateResponse;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.service.GuardianService;
@@ -48,9 +49,10 @@ public class GuardianController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createGuardian(@RequestBody @Valid GuardianCreateDTO guardianCreateDTO) {
-        guardianService.saveGuardian(guardianCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<GuardianCreateResponse> createGuardian(
+            @RequestBody @Valid GuardianCreateDTO guardianCreateDTO) {
+        GuardianCreateResponse response = guardianService.saveGuardian(guardianCreateDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
