@@ -22,7 +22,6 @@ import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
-import uao.edu.co.scouts_project.infrastructure.security.Role;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 import uao.edu.co.scouts_project.member.model.Member;
 
@@ -161,7 +160,7 @@ public class GuardianMapperTest {
             assertEquals("Father", result.getRelationship());
             assertEquals(Status.APPROVED, result.getStatus());
             assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertEquals(Role.ACUDIENTE, result.getRole());
+            assertEquals("ACUDIENTE", result.getRole()); // String, not enum
         }
 
         @Test
@@ -188,7 +187,7 @@ public class GuardianMapperTest {
             Member result = GuardianMapper.toEntity(dtoWithRole);
 
             // Assert
-            assertEquals(Role.ACUDIENTE, result.getRole(), "Should use role from rol field");
+            assertEquals("ACUDIENTE", result.getRole(), "Should use role from rol field"); // String, not enum
         }
 
         @Test
@@ -324,7 +323,7 @@ public class GuardianMapperTest {
             assertEquals(Status.APPROVED, result.getStatus());
             assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
             assertNotNull(result.getRol());
-            assertEquals(Role.ACUDIENTE, result.getRol());
+            assertEquals("ACUDIENTE", result.getRol()); // String, not enum
         }
 
         @Test
@@ -335,7 +334,7 @@ public class GuardianMapperTest {
 
             // Assert
             assertNotNull(result.getRol());
-            assertEquals(Role.ACUDIENTE, result.getRol());
+            assertEquals("ACUDIENTE", result.getRol()); // String, not enum
         }
 
         @Test
@@ -348,7 +347,7 @@ public class GuardianMapperTest {
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertEquals(Role.SCOUTER, result.getRol());
+            assertEquals("SCOUTER", result.getRol()); // String, not enum
         }
 
         @Test

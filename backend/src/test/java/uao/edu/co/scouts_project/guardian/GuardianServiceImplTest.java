@@ -72,7 +72,7 @@ class GuadianServiceImplTest {
                 .firstName("John")
                 .lastName("Doe")
                 .age(35)
-                .role("ACUDIENTE")
+                .role("ACUDIENTE") // String, not enum
                 .identification("1234567890")
                 .documentType(DocumentType.CC)
                 .phone("3001234567")
@@ -91,7 +91,7 @@ class GuadianServiceImplTest {
                 .firstName("Jane")
                 .lastName("Smith")
                 .age(10)
-                .role("SCOUT")
+                .role("SCOUT") // String, not enum
                 .identification("9876543210")
                 .documentType(DocumentType.TI)
                 .phone("3009876543")
@@ -116,7 +116,7 @@ class GuadianServiceImplTest {
                 .relationship("Father")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.now())
-                .rol("ACUDIENTE")
+                .rol("ACUDIENTE") // String, not enum
                 .build();
 
         // Setup MemberCustom
@@ -237,15 +237,19 @@ class GuadianServiceImplTest {
     class SaveGuardianTests {
 
         @Test
-        @DisplayName("Should save new guardian successfully")
+        @DisplayName("Should save new guardian successfully and return response with ID")
         void shouldSaveNewGuardian() {
             // Arrange
             when(guardianRepository.existsByValidGuardianIdentification("1234567890")).thenReturn(false);
             when(guardianRepository.save(any(Member.class))).thenReturn(guardianMember);
 
-            // Act & Assert
-            assertDoesNotThrow(() -> guardianService.saveGuardian(guardianCreateDTO));
+            // Act
+            var response = guardianService.saveGuardian(guardianCreateDTO);
 
+            // Assert
+            assertNotNull(response);
+            assertNotNull(response.id());
+            assertEquals(1L, response.id());
             verify(guardianRepository, times(1)).existsByValidGuardianIdentification("1234567890");
             verify(guardianRepository, times(1)).save(any(Member.class));
         }
@@ -332,7 +336,8 @@ class GuadianServiceImplTest {
         @DisplayName("Should throw GuardianNotFoundException when guardian not found")
         void shouldThrowExceptionWhenGuardianNotFound() {
             // Arrange
-            // Ensure the member lookup (memberId = 2L) is stubbed so Mockito strict stubbing doesn't flag argument mismatch
+            // Ensure the member lookup (memberId = 2L) is stubbed so Mockito strict
+            // stubbing doesn't flag argument mismatch
             when(guardianRepository.findById(2L)).thenReturn(Optional.of(regularMember));
             when(guardianRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -345,7 +350,8 @@ class GuadianServiceImplTest {
         @DisplayName("Should throw MemberNotFoundException when member not found")
         void shouldThrowExceptionWhenMemberNotFound() {
             // Arrange
-            // Only stub the member lookup to be empty - the guardian lookup won't be invoked because the member is missing
+            // Only stub the member lookup to be empty - the guardian lookup won't be
+            // invoked because the member is missing
             when(guardianRepository.findById(999L)).thenReturn(Optional.empty());
 
             // Act & Assert
