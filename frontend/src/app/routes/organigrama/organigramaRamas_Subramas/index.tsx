@@ -55,8 +55,6 @@ export default function Organigrama() {
     isLoading: dataLoading,
   } = useOrganigramaData(tenantId, groupSlug);
 
-  // (debug logs removed)
-
   const { error, handleError, clearError } = useApiError();
 
   useEffect(() => {

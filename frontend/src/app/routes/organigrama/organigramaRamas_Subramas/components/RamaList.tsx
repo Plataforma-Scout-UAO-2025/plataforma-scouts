@@ -145,7 +145,6 @@ export default function RamaList({
                 <Button size="sm" variant="outline" onClick={() => onEditRama(rama)} className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary">
                   <Edit2 className="h-4 w-4" />
                 </Button>
-                {/* Botón de eliminar rama removido (ramos fijos según requerimiento del stakeholder) */}
               </div>
             </div>
 

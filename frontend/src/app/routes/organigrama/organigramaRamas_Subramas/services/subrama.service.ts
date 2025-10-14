@@ -15,7 +15,6 @@ import {
 
 type MaybeAxiosError = { response?: { data?: unknown } };
 
-// CRUD para Subramas (SUBGROUPS)
 export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, ramaId: string): Promise<Subrama[]> => {
   const normalizedRamaId = typeof ramaId === 'string' ? ramaId.trim() : String(ramaId ?? '').trim();
 
@@ -100,14 +99,35 @@ export const updateSubrama = async (tenantSlug: string, groupSlug: string, data:
 };
 
 export const deleteSubrama = async (tenantSlug: string, groupSlug: string, sectionId: string, id: string): Promise<boolean> => {
-  
-  try {
-    const endpoint = subgroupPath(sectionId, id, tenantSlug, groupSlug);
-  await api.delete(endpoint);
-    
-    return true;
-  } catch (error: unknown) {
-    console.error('❌ [SubramaService] Error eliminando subrama:', error);
-    return false;
+  const maxRetries = 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const endpoint = subgroupPath(sectionId, id, tenantSlug, groupSlug);
+      console.debug('[SubramaService] DELETE endpoint:', endpoint, { attempt });
+      await api.delete(endpoint);
+      return true;
+    } catch (error: unknown) {
+      console.error('❌ [SubramaService] Error eliminando subrama (attempt ' + attempt + '):', error);
+      try {
+        const maybe = error as MaybeAxiosError;
+        if (maybe.response && maybe.response.data) {
+          console.error('❌ [SubramaService] Respuesta del backend (delete):', maybe.response.data);
+        }
+      } catch (e) {
+      }
+
+      const status = (error as MaybeAxiosError)?.response && (error as MaybeAxiosError).response?.data ? ((error as any).response.status as number | undefined) : undefined;
+      const isServerError = status === 500 || (error as any)?.status === 500 || (error as any)?.code === 'ERR_BAD_RESPONSE';
+
+      if (attempt < maxRetries && isServerError) {
+        const delayMs = 300 * (attempt + 1);
+        console.debug(`[SubramaService] Retry delete in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise((res) => setTimeout(res, delayMs));
+        continue;
+      }
+
+      throw error;
+    }
   }
+  return false;
 };

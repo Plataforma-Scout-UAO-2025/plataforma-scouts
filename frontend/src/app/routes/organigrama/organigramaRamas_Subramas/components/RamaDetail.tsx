@@ -19,7 +19,8 @@ import FotoModal from "../components/FotoModal";
 export default function RamaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tenantId, groupSlug, isLoading: tenantLoading } = useTenantParams();
+  // usar isFetching para representar cualquier carga de tenant/group
+  const { tenantId, groupSlug, isFetching } = useTenantParams();
   const [rama, setRama] = useState<Rama | null>(null);
   const [loading, setLoading] = useState(true);
   const [imagenPrincipal, setImagenPrincipal] = useState<string>("https://placehold.co/800x300");
@@ -38,9 +39,9 @@ export default function RamaDetail() {
   const mainImageObjectUrlRef = useRef<string | null>(null);
   const galleryObjectUrlsRef = useRef<string[]>([]);
   const fetchRama = useCallback(async () => {
-    setLoading(true);
     try {
       if (!id || !tenantId || !groupSlug) return;
+      setLoading(true);
       const data = await organigramaService.getRamaById(tenantId, groupSlug, String(id));
       if (data) {
         setRama(data as Rama);
@@ -75,7 +76,7 @@ export default function RamaDetail() {
   setGaleriaFotos(galleryUrls);
       }
     } catch (err) {
-      console.error('❌ [RamaDetail] Error cargando rama:', err);
+      console.error('[RamaDetail] Error cargando rama:', err);
     } finally {
       setLoading(false);
     }
@@ -198,7 +199,7 @@ export default function RamaDetail() {
               setGaleriaObjetivoId(resolved.id);
             }
           } catch (_err) {
-            console.error('❌ [RamaDetail] Error resolviendo id para reemplazo de galería:', _err);
+            console.error('[RamaDetail] Error resolviendo id para reemplazo de galería:', _err);
           }
         }
 
@@ -209,7 +210,7 @@ export default function RamaDetail() {
           return;
         }
         if (!targetId) {
-          console.warn('⚠️ [RamaDetail] Usando UUID extraído de la URL como fallback para reemplazo:', targetIdOrUuid);
+          console.warn(' [RamaDetail] Usando UUID extraído de la URL como fallback para reemplazo:', targetIdOrUuid);
         }
   await replaceGalleryImage(sectionId, targetIdOrUuid, file);
       }
@@ -277,7 +278,7 @@ export default function RamaDetail() {
               setGaleriaObjetivoId(resolved.id);
             }
           } catch (_err) {
-            console.error('❌ [RamaDetail] Error resolviendo id para eliminación de galería:', _err);
+            console.error('[RamaDetail] Error resolviendo id para eliminación de galería:', _err);
           }
         }
 
@@ -298,7 +299,7 @@ export default function RamaDetail() {
             toast.success('Imagen eliminada físicamente del servidor.');
           }
         } catch (deleteErr) {
-          console.warn('❌ [RamaDetail] DELETE físico falló, intentando fallback con PATCH remove:', deleteErr);
+          console.warn(' [RamaDetail] DELETE físico falló, intentando fallback con PATCH remove:', deleteErr);
           // Fallback: usar PATCH remove si DELETE falla
           await removeGalleryImage(sectionId, finalTarget, false);
           toast.warning('Imagen desvinculada de la galería. La eliminación física pudo fallar.');
@@ -541,7 +542,7 @@ export default function RamaDetail() {
       // Forzar refresh visual de imágenes (cache-busting)
       setImageRefreshToken(Date.now());
     } catch (err) {
-      console.error('❌ [RamaDetail] Error subiendo ícono:', err);
+      console.error(' [RamaDetail] Error subiendo ícono:', err);
       // Revertir preview en caso de error
       setIconPreview(previousIcon);
       toast.error('Error subiendo el ícono');
@@ -602,7 +603,7 @@ export default function RamaDetail() {
       }
       setImageRefreshToken(Date.now());
     } catch (err) {
-      console.error('❌ [RamaDetail] Error subiendo imagen principal:', err);
+      console.error(' [RamaDetail] Error subiendo imagen principal:', err);
       // revertir preview si falla
       setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
@@ -652,7 +653,7 @@ export default function RamaDetail() {
       }
       setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
-      console.error('❌ [RamaDetail] Error subiendo galería:', err);
+      console.error(' [RamaDetail] Error subiendo galería:', err);
       // remover previews locales en caso de fallo
       const addedPreviews = galleryLocalPreviews.slice(-files.length);
       setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
@@ -675,7 +676,7 @@ export default function RamaDetail() {
   }, [tenantId, groupSlug, fetchRama]);
 
 
-  if (tenantLoading) {
+  if (isFetching) {
     return <p className="text-center mt-6 text-muted-foreground">Cargando contexto del tenant...</p>;
   }
 
@@ -722,7 +723,7 @@ export default function RamaDetail() {
                   alt={`Ícono de ${rama?.name ?? rama?.nombre}`} 
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    console.error('❌ Error cargando icono de rama:', getIconUrl(rama));
+                    console.error(' Error cargando icono de rama:', getIconUrl(rama));
                     e.currentTarget.style.display = 'none';
                   }}
                   onLoad={() => {

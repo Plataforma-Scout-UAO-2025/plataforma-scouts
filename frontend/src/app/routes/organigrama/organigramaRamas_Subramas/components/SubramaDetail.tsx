@@ -15,7 +15,9 @@ import FotoModal from "../components/FotoModal";
 export default function SubramaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tenantId, groupSlug, isLoading: tenantLoading } = useTenantParams();
+  // obtener flags claros desde el hook: isFetching indica cualquier carga
+  // pendiente (tenant o group). hasMissingParams indica si falta tenant o group.
+  const { tenantId, groupSlug, isFetching } = useTenantParams();
   const tenantContext = tenantId && groupSlug ? { tenantId, groupSlug } : null;
   const [subrama, setSubrama] = useState<Subrama | null>(null);
   const [loading, setLoading] = useState(true);
@@ -627,7 +629,8 @@ export default function SubramaDetail() {
   }, [fetchSubrama]);
 
   if (!hasTenantContext) {
-    if (tenantLoading) {
+    // Mostrar spinner mientras se está resolviendo tenant o grupo
+    if (isFetching) {
       return (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">

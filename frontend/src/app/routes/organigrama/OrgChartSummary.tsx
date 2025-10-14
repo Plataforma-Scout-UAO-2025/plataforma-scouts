@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { getSections, getSubgroups } from "@/api/organigramaApi";
+import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
 import { useNavigate } from "react-router-dom";
 import { useNiveles } from "./organigramaNivelesOrganizativos/hooks/useNiveles";
 import type { OrganigramaNiveles } from "./organigramaNivelesOrganizativos/types/niveles.types";
@@ -22,6 +23,8 @@ export default function OrgChartSummary() {
   const [branchesLoading, setBranchesLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { tenantId, groupSlug } = useTenantParams();
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -29,7 +32,13 @@ export default function OrgChartSummary() {
         setBranchesLoading(true);
         setError(null);
         // Traer secciones crudas y normalizarlas para soportar distintos nombres de campos
-        const sectionsRaw = await getSections<any>();
+        if (!tenantId || !groupSlug) {
+          // Si faltan parámetros, no intentamos cargar secciones
+          if (mounted) setBranches([]);
+          return;
+        }
+
+        const sectionsRaw = await getSections<any>(tenantId, groupSlug);
         const normalizeSection = (s: any): BranchLite | null => {
           const id = s?.id ?? s?.sectionId ?? s?.section_id ?? null;
           const name = s?.name ?? s?.nombre ?? "";
@@ -58,7 +67,7 @@ export default function OrgChartSummary() {
         for (const sec of normalizedSections) {
           try {
             // Intentar pedir subramas al backend; si falla, caer a []
-            const subsRaw = await getSubgroups<any>(sec.id);
+            const subsRaw = await getSubgroups<any>(sec.id, tenantId, groupSlug);
             const subs = Array.isArray(subsRaw)
               ? subsRaw.map(normalizeSubgroup)
               : [];

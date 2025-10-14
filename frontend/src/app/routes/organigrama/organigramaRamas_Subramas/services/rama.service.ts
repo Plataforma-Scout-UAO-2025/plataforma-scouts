@@ -16,14 +16,19 @@ import { getSubramasByRamaId } from './subrama.service';
 import { uploadSectionIcon, uploadGalleryImages } from './image-upload-core.service';
 
 // Obtener ramas con sus subramas usando el flujo estándar probado
-export const getRamasWithSubramas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
-  // Obtener ramas con subramas usando flujo estándar
-  
+type GetRamasOpts = { año?: number; signal?: AbortSignal } | number | undefined;
+
+export const getRamasWithSubramas = async (
+  tenantSlug: string,
+  groupSlug: string,
+  añoOrOpts?: GetRamasOpts
+): Promise<Rama[]> => {
   // Por ahora, usar siempre el flujo estándar que sabemos que funciona
-  // En el futuro se puede intentar el endpoint optimizado cuando esté disponible
+  // normalize params: support calling as (tenant, group, año) or (tenant, group, { año, signal })
   try {
-  // Usando flujo estándar (getRamas + hidratar subramas)
-    return await getRamas(tenantSlug, groupSlug, año);
+    let opts: GetRamasOpts = añoOrOpts;
+    if (typeof añoOrOpts === 'number') opts = { año: añoOrOpts };
+    return await getRamas(tenantSlug, groupSlug, opts);
   } catch (error) {
     console.error('❌ [RamaService] Error en flujo estándar:', error);
     throw error;
@@ -31,14 +36,27 @@ export const getRamasWithSubramas = async (tenantSlug: string, groupSlug: string
 };
 
 // CRUD para Ramas (SECTIONS)
-export const getRamas = async (tenantSlug: string, groupSlug: string, año?: number): Promise<Rama[]> => {
+export const getRamas = async (
+  tenantSlug: string,
+  groupSlug: string,
+  añoOrOpts?: GetRamasOpts
+): Promise<Rama[]> => {
   // Obteniendo ramas del backend real
-  
+
   try {
-  const endpoint = sectionsPath(tenantSlug, groupSlug);
-  // Request endpoint: endpoint
-    
-  const response = await api.get<BackendRama[]>(endpoint);
+    const endpoint = sectionsPath(tenantSlug, groupSlug);
+    // Request endpoint: endpoint
+
+    // normalize options
+    let año: number | undefined = undefined;
+    let signal: AbortSignal | undefined = undefined;
+    if (typeof añoOrOpts === 'number') año = añoOrOpts;
+    else if (typeof añoOrOpts === 'object' && añoOrOpts !== null) {
+      año = (añoOrOpts as any).año;
+      signal = (añoOrOpts as any).signal;
+    }
+
+    const response = await api.get<BackendRama[]>(endpoint, signal ? { signal } : undefined);
     const backendRamas = response.data;
     
     // Detalle backend: número de ramas = backendRamas.length

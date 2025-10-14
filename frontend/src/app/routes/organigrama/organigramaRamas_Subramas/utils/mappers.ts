@@ -15,14 +15,10 @@ import type {
   BackendSubgroup as BackendSubrama,
 } from '../types/backend';
 
-// Mapear datos del backend a formato frontend para Ramas
 export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
-  // Input del backend disponible en backendRama (detalle suprimido en logs)
   
-  // Intentar extraer el ID canonical que provee el backend desde varios nombres posibles
   const rawId = (backendRama as unknown as Record<string, unknown>).section_id ?? (backendRama as unknown as Record<string, unknown>).sectionId ?? (backendRama as unknown as Record<string, unknown>).id ?? (backendRama as unknown as Record<string, unknown>).ID;
 
-  // Generar ID consistente basado en datos del backend si no hay ID real
   const generateConsistentId = () => {
     const rec = backendRama as unknown as Record<string, unknown>;
     const uniqueString = `${String(rec['name'] ?? '')}-${String(rec['tenant_id'] ?? rec['tenantId'] ?? '')}-${String(rec['group_id'] ?? rec['groupId'] ?? '')}`;
@@ -38,35 +34,25 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
   const hasBackendId = rawId !== undefined && rawId !== null && rawId !== '';
   const sectionId = hasBackendId ? String(rawId) : generateConsistentId();
 
-  // Extraer URLs soportando diferentes convenciones (snake_case y camelCase)
   const iconUrl = String((backendRama as unknown as Record<string, unknown>).icon_object_url ?? (backendRama as unknown as Record<string, unknown>).iconObjectUrl ?? '');
   const photoPrincipalUrl = String((backendRama as unknown as Record<string, unknown>).photo_principal_url ?? (backendRama as unknown as Record<string, unknown>).photoPrincipalUrl ?? '');
-  // Prefer canonical backend.gallery (array of {id, url}). Fallback to legacy arrays if absent.
   const rawGallery = (backendRama as unknown as Record<string, unknown>)['gallery'] as unknown[] | undefined;
   const galleryUrls = ((backendRama as unknown as Record<string, unknown>).gallery_object_urls ?? (backendRama as unknown as Record<string, unknown>).galleryObjectUrls ?? []) as string[];
   const galleryArray = Array.isArray(rawGallery) ? (rawGallery as Array<Record<string, unknown>>) : undefined;
 
-  // URLs extraídas: iconUrl, photoPrincipalUrl, galleryUrls
 
   const mappedRama: Rama = {
-    // canonical ids
   id: sectionId,
   sectionId: sectionId,
 
-    // standard english fields
     name: backendRama.name || '',
     description: backendRama.description || undefined,
 
-    // image urls
   iconUrl: iconUrl || undefined,
     iconObjectId: backendRama.iconObjectId,
     mainImageUrl: photoPrincipalUrl || undefined,
     mainImageObjectId: backendRama.photoPrincipalObjectId,
 
-    // ages and year
-    // Intentar extraer min/max de campos explícitos; si no existen intentar parsear la descripción
-    // Ej: "Edades de 7 a 11 años" -> minAge=7, maxAge=11
-    // Por compatibilidad con el resto del código, mantenemos número (fallback 0 si no hay dato)
     minAge: ((): number => {
       if (typeof backendRama.minAge === 'number') return backendRama.minAge;
       const desc = backendRama.description as string | undefined;
@@ -90,7 +76,6 @@ export const mapBackendRamaToFrontend = (backendRama: BackendRama): Rama => {
     status: 'active',
     createdAt: backendRama.createdAt ? backendRama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
 
-    // gallery: prefer canonical array, expose ids as galleryObjectIds
   galleryObjectIds: galleryArray ? galleryArray.map(g => String(g['id'] ?? g['objectId'] ?? '')).filter(Boolean) : galleryUrls,
   gallery: galleryArray ? galleryArray.map((g) => { const rec = g as unknown as Record<string, unknown>; return { id: String(rec['id'] ?? rec['objectId'] ?? ''), url: String(rec['url'] ?? '') }; }) : undefined,
 
@@ -241,11 +226,12 @@ export const mapFrontendCreateSubramaToBackend = (frontendData: CreateSubramaDat
   if (maybe.galleryObjectIds !== undefined) base.galleryObjectIds = maybe.galleryObjectIds as string[];
 
   // Backend appears to expect snake_case 'is_active' — include both forms only if the frontend provided state
+  // Map frontend active flags to backend camelCase 'isActive' (server expects camelCase)
   if (maybe.isActive !== undefined) {
-    base.is_active = Boolean(maybe.isActive);
+    base.isActive = Boolean(maybe.isActive);
   } else if (maybe.estado !== undefined) {
     const isAct = String(maybe.estado) === 'activa';
-    base.is_active = isAct;
+    base.isActive = isAct;
   }
 
   return base as unknown as CreateSubramaBackendData;
@@ -261,13 +247,13 @@ export const mapFrontendUpdateSubramaToBackend = (frontendData: UpdateSubramaDat
   if (maybe.descripcion !== undefined) backendData.description = maybe.descripcion as unknown as string;
   if (maybe.galleryObjectIds !== undefined) backendData.galleryObjectIds = maybe.galleryObjectIds as string[];
   if (maybe.isActive !== undefined) {
-    backendData.is_active = Boolean(maybe.isActive);
+    backendData.isActive = Boolean(maybe.isActive);
   } else if (maybe.estado !== undefined) {
     const v = (maybe.estado as unknown as string) === 'activa';
-    backendData.is_active = v;
+    backendData.isActive = v;
   } else if (maybe.status !== undefined) {
     const v = (maybe.status as unknown as string) === 'active';
-    backendData.is_active = v;
+    backendData.isActive = v;
   }
 
   return backendData;
