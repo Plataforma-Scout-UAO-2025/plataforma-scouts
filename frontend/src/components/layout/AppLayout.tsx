@@ -29,6 +29,7 @@ import {
   CalendarDays,
   Pencil,
   Network,
+  BriefcaseMedical,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -99,6 +100,7 @@ const adminGrupalItems: MenuItem[] = [
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
+  { id: "medico", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
 ]
 
 const tesoreroItems: MenuItem[] = [
