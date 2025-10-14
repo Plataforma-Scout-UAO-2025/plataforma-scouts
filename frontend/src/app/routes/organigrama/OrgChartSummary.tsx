@@ -35,32 +35,65 @@ export default function OrgChartSummary() {
 
         const ramas = await getRamasWithSubramas(String(tenantId), groupSlug);
 
-        const result = (ramas || []).map((r: any) => {
+        const result = (ramas || []).map((r) => {
+          const rec = r as unknown as Record<string, unknown>;
           const section: BranchLite = {
-            id: r.sectionId ?? r.id ?? '',
-            name: r.name ?? r.nombre ?? '',
-            description: r.description ?? r.descripcion ?? undefined,
-            minAge: typeof r.minAge === 'number' ? r.minAge : (typeof r.edadMin === 'number' ? r.edadMin : undefined),
-            maxAge: typeof r.maxAge === 'number' ? r.maxAge : (typeof r.edadMax === 'number' ? r.edadMax : undefined),
-            status: r.status ?? undefined,
+            id: (rec['sectionId'] ?? rec['id'] ?? '') as string | number,
+            name: String(rec['name'] ?? rec['nombre'] ?? ''),
+            description:
+              typeof r['description'] === 'string'
+                ? String(r['description'])
+                : typeof r['descripcion'] === 'string'
+                ? String(r['descripcion'])
+                : undefined,
+            minAge:
+              typeof rec['minAge'] === 'number'
+                ? (rec['minAge'] as number)
+                : typeof rec['edadMin'] === 'number'
+                ? (rec['edadMin'] as number)
+                : undefined,
+            maxAge:
+              typeof rec['maxAge'] === 'number'
+                ? (rec['maxAge'] as number)
+                : typeof rec['edadMax'] === 'number'
+                ? (rec['edadMax'] as number)
+                : undefined,
+            status: typeof r['status'] === 'string' ? String(r['status']) : undefined,
           };
 
-          const subsRaw = r.subgroups ?? r.subramas ?? [];
+          const subsRaw = (rec['subgroups'] ?? rec['subramas'] ?? []) as unknown;
           const subgroups: SubgroupLite[] = Array.isArray(subsRaw)
-            ? subsRaw.map((sg: any) => ({
-                id: sg.subgroupId ?? sg.id ?? sg.subgroup_id ?? crypto.randomUUID(),
-                name: sg.name ?? sg.nombre ?? '',
-                status: sg.isActive === undefined ? (sg.status ?? undefined) : (sg.isActive ? 'active' : 'inactive'),
-                leader: sg.leader ?? sg.jefe ?? undefined,
-              }))
+            ? (subsRaw as unknown[]).map((sg) => {
+                const sgRec = sg as Record<string, unknown>;
+                const rawId = sgRec['subgroupId'] ?? sgRec['id'] ?? sgRec['subgroup_id'] ?? crypto.randomUUID();
+                return {
+                  id: rawId as string | number,
+                  name: String(sgRec['name'] ?? sgRec['nombre'] ?? ''),
+                  status:
+                    typeof sgRec['isActive'] === 'boolean'
+                      ? sgRec['isActive']
+                        ? 'active'
+                        : 'inactive'
+                      : typeof sgRec['status'] === 'string'
+                      ? String(sgRec['status'])
+                      : undefined,
+                  leader:
+                    typeof sgRec['leader'] === 'string'
+                      ? String(sgRec['leader'])
+                      : typeof sgRec['jefe'] === 'string'
+                      ? String(sgRec['jefe'])
+                      : undefined,
+                };
+              })
             : [];
 
           return { section, subgroups };
         });
 
         if (mounted) setBranches(result);
-      } catch (e: any) {
-        if (mounted) setError(e?.message || "No se pudo cargar ramas y subramas.");
+      } catch (e) {
+        const err = e as { message?: string } | undefined;
+        if (mounted) setError(err?.message || "No se pudo cargar ramas y subramas.");
       } finally {
         if (mounted) setBranchesLoading(false);
       }

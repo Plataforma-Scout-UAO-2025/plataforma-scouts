@@ -46,7 +46,8 @@ export const getGalleryImageUuids = async (
           const id = String(rec['id'] ?? rec['objectId'] ?? '');
           const uuid = extractUuidFromString(id) || extractUuidFromString(String(rec['url'] ?? ''));
           if (uuid) ids.push(uuid);
-        } catch {
+        } catch (errItem) {
+          console.debug('getGalleryImageUuids: skipping gallery entry due to parse error', errItem);
         }
       }
     }

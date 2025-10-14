@@ -29,9 +29,10 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
   const memberOptions = useMemo(() => {
     return (members || [])
       .map((m) => {
-        const memberId = m.memberId ?? (m as any).member_id;
-        const firstName = m.firstName ?? (m as any).first_name ?? "";
-        const lastName = m.lastName ?? (m as any).last_name ?? "";
+        const rec = m as unknown as Record<string, unknown>;
+        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
+        const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
+        const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");
         return memberId ? { id: String(memberId), name: `${firstName} ${lastName}`.trim() } : null;
       })
       .filter((x): x is { id: string; name: string } => x !== null);

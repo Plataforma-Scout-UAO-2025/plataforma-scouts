@@ -23,17 +23,39 @@ export function resetSeed() {
   try {
     // Import lazy para evitar ciclos en tiempo de módulo
     // usar la función clearAll exportada desde storage
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const storage = require("./niveles.storage") as typeof import("./niveles.storage");
-    if (storage && typeof storage.clearAll === "function") storage.clearAll();
+    try {
+      // dynamic import para evitar el require
+      // (se hace de forma async vía then para mantener API sync-like)
+      import("./niveles.storage")
+        .then((storage) => {
+          const maybeClear = (storage as unknown as Record<string, unknown>)['clearAll'];
+          if (typeof maybeClear === 'function') {
+            try {
+              (maybeClear as (...args: unknown[]) => unknown)();
+            } catch (errClear) {
+              console.debug('resetSeed: clearAll failed', errClear);
+            }
+          }
+        })
+  .catch(() => {
+          // fallback trying global
+          try {
+            const maybeGlobal = (globalThis as unknown as Record<string, unknown> | undefined) ?? undefined;
+            const globalClear = maybeGlobal && maybeGlobal['clearAll'];
+            if (typeof globalClear === 'function') {
+              try { (globalClear as (...args: unknown[]) => unknown)(); } catch (errClear) { console.debug('resetSeed: global clearAll failed', errClear); }
+            }
+          } catch (_errFallback) {
+            console.debug('resetSeed: dynamic import and fallback both failed', _errFallback);
+          }
+        });
+    } catch (err) {
+      // handled by dynamic import fallback above; log for visibility
+      console.debug('resetSeed: unexpected error in resetSeed', err);
+    }
   } catch (err) {
     // Si require falla, intentamos llamar a la función directamente (caso tests/ESM)
-    try {
-      // @ts-ignore
-      clearAll();
-    } catch (e) {
-      console.error("No se pudo limpiar el storage al resetSeed:", e);
-    }
+    console.debug('resetSeed: outer require catch (ignored) -', err);
   }
 
   ensureSeed();

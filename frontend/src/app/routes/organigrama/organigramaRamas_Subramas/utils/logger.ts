@@ -4,7 +4,8 @@ export const logger = {
       if (process.env.NODE_ENV !== 'production') {
         console.debug('[organigrama]', ...args);
       }
-    } catch (_) {
+    } catch (_err) {
+      console.debug('logger.debug failed', _err);
     }
   },
   info: (...args: unknown[]) => {
@@ -12,19 +13,22 @@ export const logger = {
       if (process.env.NODE_ENV !== 'production') {
         console.info('[organigrama]', ...args);
       }
-    } catch (_) {
+    } catch (_err) {
+      console.debug('logger.info failed', _err);
     }
   },
   warn: (...args: unknown[]) => {
     try {
       console.warn('[organigrama]', ...args);
-    } catch (_) {
+    } catch (_err) {
+      console.debug('logger.warn failed', _err);
     }
   },
   error: (...args: unknown[]) => {
     try {
       console.error('[organigrama]', ...args);
-    } catch (_) {
+    } catch (_err) {
+      console.debug('logger.error failed', _err);
     }
   },
 };

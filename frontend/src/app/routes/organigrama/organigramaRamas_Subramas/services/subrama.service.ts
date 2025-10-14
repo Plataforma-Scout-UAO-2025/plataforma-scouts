@@ -13,7 +13,7 @@ import {
 } from '../utils/mappers';
 import type { SubgroupDTO } from '../types/api';
 
-type MaybeAxiosError = { response?: { data?: unknown } };
+type MaybeAxiosError = { response?: { data?: unknown; status?: number }; status?: number; code?: string };
 
 export const getSubramasByRamaId = async (tenantSlug: string, groupSlug: string, ramaId: string): Promise<Subrama[]> => {
   const normalizedRamaId = typeof ramaId === 'string' ? ramaId.trim() : String(ramaId ?? '').trim();
@@ -113,11 +113,14 @@ export const deleteSubrama = async (tenantSlug: string, groupSlug: string, secti
         if (maybe.response && maybe.response.data) {
           console.error(' [SubramaService] Respuesta del backend (delete):', maybe.response.data);
         }
-      } catch (e) {
+      } catch (errLogging) {
+        // Log the secondary error to avoid unused-variable lint issues
+        console.debug(' [SubramaService] Secondary logging error:', errLogging);
       }
 
-      const status = (error as MaybeAxiosError)?.response && (error as MaybeAxiosError).response?.data ? ((error as any).response.status as number | undefined) : undefined;
-      const isServerError = status === 500 || (error as any)?.status === 500 || (error as any)?.code === 'ERR_BAD_RESPONSE';
+      const maybe = error as MaybeAxiosError;
+      const status = maybe?.response?.status ?? maybe?.status;
+      const isServerError = status === 500 || maybe?.code === 'ERR_BAD_RESPONSE';
 
       if (attempt < maxRetries && isServerError) {
         const delayMs = 300 * (attempt + 1);

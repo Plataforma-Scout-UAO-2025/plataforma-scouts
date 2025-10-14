@@ -76,8 +76,9 @@ export const getRamas = async (
     let signal: AbortSignal | undefined = undefined;
     if (typeof añoOrOpts === 'number') año = añoOrOpts;
     else if (typeof añoOrOpts === 'object' && añoOrOpts !== null) {
-      año = (añoOrOpts as any).año;
-      signal = (añoOrOpts as any).signal;
+      const opts = añoOrOpts as { año?: number; signal?: AbortSignal };
+      año = opts.año;
+      signal = opts.signal;
     }
 
     const response = await api.get<SectionDTO[]>(endpoint, signal ? { signal } : undefined);
@@ -268,6 +269,7 @@ export const createRama = async (tenantSlug: string, groupSlug: string, data: Cr
     if (data.iconFile && sectionId) {
   await uploadSectionIcon(tenantSlug, groupSlug, sectionId, data.iconFile);
     } else {
+      // no icon to upload
     }
     
     if (data.galleryFiles && data.galleryFiles.length > 0 && sectionId) {

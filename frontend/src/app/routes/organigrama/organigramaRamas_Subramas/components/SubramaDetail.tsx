@@ -166,8 +166,8 @@ export default function SubramaDetail() {
           toast.error('Error subiendo la imagen principal');
           setImagenPrincipal('');
         }
-      } finally {
-          try {  } catch { /* ignore */ }
+        } finally {
+          try { /* no-op cleanup */ } catch (errCleanup) { console.debug('cleanup error', errCleanup); }
           if (uploadIntervalRef.current) {
             clearInterval(uploadIntervalRef.current);
             uploadIntervalRef.current = null;
@@ -525,21 +525,28 @@ export default function SubramaDetail() {
   // Cargar miembros del subgrupo cuando la subrama este cargada (llamada local a api)
   const fetchMembers = useCallback(async (subgrp: Subrama | null) => {
     if (!subgrp) return;
-    const subgroupId = (subgrp as any).subgroup_id ?? (subgrp as any).id ?? (subgrp as any).subgroupId;
+    const subgroupRec = subgrp as unknown as Record<string, unknown>;
+    const subgroupId = subgroupRec['subgroup_id'] ?? subgroupRec['id'] ?? subgroupRec['subgroupId'];
     if (!subgroupId) return;
     try {
       setMembersLoading(true);
       setMembersError(null);
       const resp = await api.get('/members/list_members_by_subgroup', { params: { id: String(subgroupId) } });
       const data = resp?.data ?? [];
-      const normalized = (data || []).map((m: any) => ({
-        member_id: m.member_id ?? m.memberId ?? m.id,
-        first_name: m.first_name ?? m.firstName,
-        last_name: m.last_name ?? m.lastName,
-        memberId: m.memberId ?? m.member_id ?? m.id,
-        firstName: m.firstName ?? m.first_name,
-        lastName: m.lastName ?? m.last_name,
-      }));
+      const normalized = (data || []).map((m: unknown) => {
+        const rec = m as unknown as Record<string, unknown>;
+        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
+        const firstName = rec['firstName'] ?? rec['first_name'];
+        const lastName = rec['lastName'] ?? rec['last_name'];
+        return {
+          member_id: memberId,
+          first_name: firstName,
+          last_name: lastName,
+          memberId: memberId,
+          firstName: firstName,
+          lastName: lastName,
+        };
+      });
       setMembers(normalized);
     } catch (err) {
       console.error('[SubramaDetail] Error cargando miembros por subgrupo', err);

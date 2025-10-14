@@ -46,7 +46,7 @@ export const useTenantParams = (): TenantParams => {
     const run = async () => {
       try {
   setTenantLoading(true);
-        const extracted = await resolveTenantFromToken(getAccessTokenSilently as any);
+        const extracted = await resolveTenantFromToken(getAccessTokenSilently as unknown as () => Promise<string>);
         if (isMounted && extracted && extracted !== tenantId) {
           setTenantId(extracted);
           setError(undefined);
@@ -85,7 +85,8 @@ export const useTenantParams = (): TenantParams => {
           setError('No se encontró ningún grupo asociado al tenant.');
         }
       } catch (err) {
-        if ((err as any)?.name === 'CanceledError' || (err as any)?.name === 'AbortError') {
+        const e = err as { name?: string } | undefined;
+        if (e?.name === 'CanceledError' || e?.name === 'AbortError') {
           logger.debug('fetch aborted for tenant', tenantId);
         } else {
           logger.error('Error obteniendo grupos para el tenant', err);

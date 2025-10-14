@@ -49,8 +49,8 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
         isLoadingRamasRef.current = true;
         setIsFetching(true);
 
-        let attempt = 0;
-        let lastError: any = null;
+  let attempt = 0;
+  let lastError: unknown = null;
         while (attempt < 2) {
           try {
             const data = await organigramaService.getRamasWithSubramas(
@@ -63,8 +63,9 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
             setIsLoaded(true);
             setIsFetching(false);
             return;
-          } catch (err: any) {
-            if (err?.name === 'AbortError') throw err;
+          } catch (err: unknown) {
+            const castErr = err as { name?: string } | undefined;
+            if (castErr?.name === 'AbortError') throw err;
             lastError = err;
             attempt += 1;
             if (attempt < 2) {
@@ -74,7 +75,8 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
         }
         handleError(lastError);
       } catch (err) {
-        if ((err as any)?.name !== 'AbortError') {
+        const castErr = err as { name?: string } | undefined;
+        if (castErr?.name !== 'AbortError') {
           handleError(err);
         }
       } finally {
