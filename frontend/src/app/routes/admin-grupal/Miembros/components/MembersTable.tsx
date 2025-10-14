@@ -9,12 +9,18 @@ import {
 } from "@/components/ui/index";
 import { Pencil, Trash, User, Medal } from "lucide-react";
 import type { Member } from "@/types/member.type";
+import { formatDate } from "@/lib/utils";
 
 interface MembersTableProps {
   filteredMembers: Member[];
 }
 
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
+  const statusLabels: Record<string, string> = {
+    PENDING: "Pendiente",
+    APPROVED: "Aceptado",
+    REJECTED: "Rechazado",
+  };
   return (
     <div>
       <Table className="text-sm">
@@ -36,18 +42,18 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
-              <TableRow key={member.memberId}>
-                <TableCell className="pl-4 font-medium">{member.userId}</TableCell>
-                <TableCell>{member.firstName}</TableCell>
-                <TableCell>{member.lastName}</TableCell>
+              <TableRow key={member.member_id}>
+                <TableCell className="pl-4 font-medium">{member.member_id}</TableCell>
+                <TableCell>{member.first_name}</TableCell>
+                <TableCell>{member.last_name}</TableCell>
                 <TableCell>{member.identification}</TableCell>
                 <TableCell>
                   {member.branch && member.branch.length > 0
                     ? member.branch.map((rama) => rama.name).join(", ")
                     : "Sin rama"}
                 </TableCell>
-                <TableCell>{member.createdAt}</TableCell>
-                <TableCell>{member.status}</TableCell>
+                <TableCell>{formatDate(member.created_at)}</TableCell>
+                <TableCell>{statusLabels[member.status ?? "Aprobado"]}</TableCell>
                 <TableCell>{member.address}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="iconbutton" size="icon">

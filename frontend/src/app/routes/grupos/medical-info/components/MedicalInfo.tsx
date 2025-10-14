@@ -75,7 +75,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
       const scoutMembers = response.data.filter((member: Member) => 
       member.role === 'SCOUT' && 
       member.status === 'APPROVED' && 
-      member.isActive !== false
+      member.is_active !== false
     );
     
     setMembers(scoutMembers);
@@ -459,8 +459,8 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                       </SelectTrigger>
                       <SelectContent>
                         {members.map(member => (
-                          <SelectItem key={member.memberId} value={member.memberId?.toString() || ""}>
-                            {member.firstName} {member.lastName} - ID {member.identification} ({member.role})
+                          <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
+                            {member.first_name} {member.last_name} - ID {member.identification} ({member.role})
                           </SelectItem>
                         ))}
                       </SelectContent>

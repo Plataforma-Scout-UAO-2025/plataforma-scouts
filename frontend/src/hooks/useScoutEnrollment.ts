@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useMember } from "@/hooks/useMember";
 import {
   createMemberAction,
   createMemberWithSchoolDataAction,
 } from "@/store/members/membersActions";
-import { getAllTenants, getGroupsByTenant } from "@/api/organigramaApi";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
+import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
 
 import type {
   ChangeEvent,
@@ -15,7 +15,6 @@ import type {
   SchoolData,
 } from "@/types/enrollment.type";
 import type { Member } from "@/types/member.type";
-import type { GroupResponseDTO, TenantDTO } from "@/types/group.type";
 
 type UseScoutEnrollmentReturn = {
 
@@ -23,8 +22,6 @@ type UseScoutEnrollmentReturn = {
   setDatosPersonales: React.Dispatch<React.SetStateAction<PersonalData>>;
   datosEscolares: SchoolData;
   setDatosEscolares: React.Dispatch<React.SetStateAction<SchoolData>>;
-  groups: GroupResponseDTO[];
-  loadingGroups: boolean;
 
   pagina: number;
   setPagina: React.Dispatch<React.SetStateAction<number>>;
@@ -46,9 +43,7 @@ type UseScoutEnrollmentReturn = {
 export function useScoutEnrollment(): UseScoutEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
-
-  const [groups, setGroups] = useState<GroupResponseDTO[]>([]);
-  const [loadingGroups, setLoadingGroups] = useState(true);
+  const { orgId, isLoading: loadingAuth } = useAuth0ApiWrapper();
 
   const [pagina, setPagina] = useState(1);
   const [showSchoolDialog, setShowSchoolDialog] = useState(false);
@@ -71,10 +66,15 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     hobbies: "",
     sports: "",
     instruments: "",
-    group: "",
     tenantId: "",
     emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
+
+  useEffect(() => {
+    if (orgId) {
+      setDatosPersonales(prev => ({ ...prev, tenantId: orgId }));
+    }
+  }, [orgId]);
 
   const [datosEscolares, setDatosEscolares] = useState<SchoolData>({
     institution: "",
@@ -83,47 +83,11 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     shift: "",
   });
 
-  const mounted = useRef(true);
-  useEffect(() => {
-    mounted.current = true;
-    const fetchGroups = async () => {
-      try {
-        setLoadingGroups(true);
-        const tenants = await getAllTenants<TenantDTO>();
-        const promises = tenants.map((t) =>
-          getGroupsByTenant<GroupResponseDTO>(t.slug)
-        );
-        const arrays = await Promise.all(promises);
-        if (!mounted.current) return;
-        setGroups(arrays.flat());
-      } catch {
-        alert("Error al cargar los grupos. Recarga la página.");
-      } finally {
-        if (mounted.current) setLoadingGroups(false);
-      }
-    };
-    fetchGroups();
-    return () => {
-      mounted.current = false;
-    };
+  const handlePersonalChange = useCallback((e: ChangeEvent) => {
+    const { name, value } = e.target;
+    setDatosPersonales((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const handlePersonalChange = useCallback(
-    (e: ChangeEvent) => {
-      const { name, value } = e.target;
-      if (name === "group") {
-        const selected = groups.find((g) => g.name === value);
-        setDatosPersonales((prev) => ({
-          ...prev,
-          [name]: value,
-          tenantId: selected?.tenant_id || "",
-        }));
-      } else {
-        setDatosPersonales((prev) => ({ ...prev, [name]: value }));
-      }
-    },
-    [groups]
-  );
 
   const handleSchoolChange = useCallback((e: ChangeEvent) => {
     const { name, value } = e.target;
@@ -132,16 +96,20 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
   const enviarDatos = useCallback(async () => {
     try {
-      const memberData: Member = transformData(datosPersonales);
+      const tenant = orgId ?? datosPersonales.tenantId ?? "";
+      if (!tenant) {
+        alert("No se pudo determinar el tenant del usuario (org_id).");
+        return;
+      }
+
+      const memberData: Member = transformData({
+        ...datosPersonales,
+        tenantId: tenant,
+      });
 
       if (incluirDatosEscolares) {
-        const requestData: CreateMemberWithSchoolRequest = {
-          member: memberData,
-          school: datosEscolares,
-        };
-        await dispatch(
-          createMemberWithSchoolDataAction({ memberData: requestData })
-        ).unwrap();
+        const requestData: CreateMemberWithSchoolRequest = { member: memberData, school: datosEscolares };
+        await dispatch(createMemberWithSchoolDataAction({ memberData: requestData })).unwrap();
       } else {
         await dispatch(createMemberAction(memberData)).unwrap();
       }
@@ -150,7 +118,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
       console.error("Error al enviar la solicitud:", error);
       alert("Error al enviar la solicitud.");
     }
-  }, [datosPersonales, incluirDatosEscolares, datosEscolares, dispatch]);
+  }, [datosPersonales, incluirDatosEscolares, datosEscolares, orgId, dispatch]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -172,7 +140,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
       await enviarDatos();
     },
-    [pagina, datosPersonales.email, datosPersonales.confirm_email, enviarDatos]
+    [loadingAuth, orgId, pagina, datosPersonales.email, datosPersonales.confirm_email, enviarDatos]
   );
 
   const handleSchoolDialogResponse = useCallback(
@@ -196,8 +164,6 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     setDatosPersonales,
     datosEscolares,
     setDatosEscolares,
-    groups,
-    loadingGroups,
 
     pagina,
     setPagina,

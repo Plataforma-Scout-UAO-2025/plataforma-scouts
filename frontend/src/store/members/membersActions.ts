@@ -3,7 +3,9 @@ import { AxiosError } from "axios";
 import {
   getMember,
   getMembers,
+  getMembersByStatus,
   updateMember,
+  updateMemberStatus,
   createMember,
   createMemberWithSchool
 } from "@/api/membersApi";
@@ -41,6 +43,49 @@ export const fetchMembersAction = createAsyncThunk(
       const errorData = axiosError.response?.data as { error: string };
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Obtener miembros por estado
+export const fetchMembersByStatusAction = createAsyncThunk<
+  Member[],
+  "PENDING" | "APPROVED" | "REJECTED",
+  { rejectValue: string }
+>(
+  "members/fetchByStatus",
+  async (status: "PENDING" | "APPROVED" | "REJECTED", { rejectWithValue }) => {
+    try {
+      const members = await getMembersByStatus(status);
+      return members;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al obtener los miembros";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Actualizar estado de un miembro
+export const updateMemberStatusAction = createAsyncThunk<
+  { message: string },
+  { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
+  { rejectValue: { error: string } }
+>(
+  "member/updateStatus",
+  async (
+    { id, status }: { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await updateMemberStatus(id, status);
+      return response;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al actualizar el estado del miembro";
+      return rejectWithValue({ error: errorMessage });
     }
   }
 );

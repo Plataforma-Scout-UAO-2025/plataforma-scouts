@@ -30,6 +30,27 @@ export const getMembers = async () => {
   return response.data;
 };
 
+// Obtener miembros por estado
+export const getMembersByStatus = async (
+  status: "PENDING" | "APPROVED" | "REJECTED",
+) => {
+  const response = await api.get<Member[]>("/members/list_members_by_status", {
+    params: { status },
+  });
+  return response.data;
+};
+
+// Actualizar estado de un miembro
+export const updateMemberStatus = async (
+  id: string | number,
+  status: "PENDING" | "APPROVED" | "REJECTED",
+) => {
+  const response = await api.put(`/members/update_member_status/${id}`, null, {
+    params: { status },
+  });
+  return response.data;
+};
+
 // Actualizar perfil de usuario
 export const updateMember = async (id: string, updates: Partial<Member>) => {
   const response = await api.put(`/members/update_member_by_id/${id}`, updates);

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/index";
 import { cities, branches } from "@/lib/mockObjects";
 import { ChevronDown, ChevronUp, BrushCleaning, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface MembersFilterProps {
   searchFilter: string;
@@ -28,6 +29,7 @@ const MembersFilter = ({
   setBranchFilter,
 }: MembersFilterProps) => {
   const [isActive, setIsActive] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -98,7 +100,7 @@ const MembersFilter = ({
         </Button>
       </div>
       <div className="flex gap-4 justify-end">
-        <Button variant="primary">
+        <Button variant="primary" onClick={() => {navigate("/app/inscripcion")}}>
           <Plus />
           Crear Nuevo Integrante
         </Button>

@@ -6,7 +6,7 @@ import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
 import type { Member } from "@/types/member.type";
 import { useMember } from "@/hooks/useMember";
-import { fetchMembersAction } from "@/store/members/membersActions";
+import { fetchMembersByStatusAction } from "@/store/members/membersActions";
 import { clearNotification } from "@/store/members/membersSlice";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 
@@ -15,13 +15,15 @@ const TeamMembers = () => {
   const [cityFilter, setCityFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const dispatch = useAppDispatch();
   const { members, error, message } = useMember();
 
   // Cargar datos iniciales
   useEffect(() => {
-    dispatch(fetchMembersAction());
+    dispatch(fetchMembersByStatusAction("APPROVED"));
   }, [dispatch]);
 
   // Aplicar filtros y mapear a formato de tabla
@@ -31,8 +33,8 @@ const TeamMembers = () => {
     const filtered = members.filter((member: Member) => {
       const matchesSearch =
         searchFilter === "" ||
-        member.firstName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        member.lastName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        member.first_name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        member.last_name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
         member.identification
           ?.toLowerCase()
           .includes(searchFilter.toLowerCase());
@@ -55,6 +57,18 @@ const TeamMembers = () => {
       ...member,
     }));
   }, [members, searchFilter, cityFilter, branchFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchFilter, cityFilter, branchFilter]);
+
+  // Cálculos de paginación
+  const totalItems = filteredMembers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const startIdx = (safePage - 1) * pageSize;
+  const endIdx = Math.min(startIdx + pageSize, totalItems);
+  const pagedMembers = filteredMembers.slice(startIdx, endIdx);
 
   // Limpiar mensajes después de mostrarlos
   useEffect(() => {
@@ -90,18 +104,30 @@ const TeamMembers = () => {
 
       {/* Tabla de miembros */}
       <section className="mt-6">
-        <MembersTable filteredMembers={filteredMembers} />
+        <MembersTable filteredMembers={pagedMembers} />
         <section className="flex justify-between items-center mt-4">
           <div className="flex justify-start mt-3 gap-2">
             <Button variant="primary" onClick={() => {navigate("/solicitudes")}}>Solicitudes</Button>
             <p className="text-sm text-text self-center ml-4">
-              Mostrando {filteredMembers.length} de {members?.length || 0} miembros
+              Mostrando {totalItems === 0 ? 0 : startIdx + 1}–{endIdx} de {totalItems} miembros
             </p>
           </div>
 
           <div className="flex justify-end mt-3 gap-2">
-            <Button variant="outline">Anterior</Button>
-            <Button variant="outline">Siguiente</Button>
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+            >
+              Siguiente
+            </Button>
           </div>
         </section>
       </section>
