@@ -3,20 +3,19 @@ export type Cargo = {
   nombre: string;
   titular?: string;
   visible: boolean;
-  descripcion?: string;  // Descripción opcional para dar más contexto al cargo.
-  inicio?: number;      // Fecha de inicio del cargo (formato ISO).
-  fin?: number;         // Fecha de fin del cargo (formato ISO).
+  descripcion?: string; // ✅ agregado
 };
 
 export type Nivel = {
   id: string;
   nombre: string;
   visible: boolean;
-  descripcion?: string;  // Descripción opcional para dar más contexto al nivel.
-  cargos: Cargo[];  // Lista de cargos asociados a este nivel.
+  descripcion?: string; // ✅ agregado
+  cargos: Cargo[];
 };
 
 export type OrganigramaNiveles = {
-  anio: number;  // Año de referencia para los niveles organizativos.
-  niveles: Nivel[];  // Lista de niveles dentro del organigrama.
+  anio: number;
+  niveles: Nivel[];
 };
+

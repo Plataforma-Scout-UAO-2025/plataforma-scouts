@@ -64,30 +64,29 @@ class TenantServiceTest {
     }
 
     @Test
-    @DisplayName("getTenantById: retorna DTO si existe")
-    void getTenantById_ok() {
+    @DisplayName("getTenantBySlug: retorna DTO si existe")
+    void getTenantBySlug_ok() {
         Tenant t = newTenantEntity("region-valle", "active");
-        when(tenantRepository.findById(t.getTenantId())).thenReturn(Optional.of(t));
+        when(tenantRepository.findBySlug("region-valle")).thenReturn(Optional.of(t));
 
-        TenantDTO dto = tenantService.getTenantById(t.getTenantId());
+        TenantDTO dto = tenantService.getTenantBySlug("region-valle");
 
         assertThat(dto.slug()).isEqualTo("region-valle");
         assertThat(dto.status()).isEqualTo("active");
-        verify(tenantRepository).findById(t.getTenantId());
+        verify(tenantRepository).findBySlug("region-valle");
         verifyNoMoreInteractions(tenantRepository);
     }
 
     @Test
-    @DisplayName("getTenantById: lanza IllegalArgumentException si no existe")
-    void getTenantById_notFound() {
-        String missingTenantId = "t-nope";
-        when(tenantRepository.findById(missingTenantId)).thenReturn(Optional.empty());
+    @DisplayName("getTenantBySlug: lanza IllegalArgumentException si no existe")
+    void getTenantBySlug_notFound() {
+        when(tenantRepository.findBySlug("nope")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> tenantService.getTenantById(missingTenantId))
+        assertThatThrownBy(() -> tenantService.getTenantBySlug("nope"))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("not found");
 
-        verify(tenantRepository).findById(missingTenantId);
+        verify(tenantRepository).findBySlug("nope");
         verifyNoMoreInteractions(tenantRepository);
     }
 
@@ -154,18 +153,18 @@ class TenantServiceTest {
     @DisplayName("updateTenant: actualiza si existe")
     void updateTenant_ok() {
         Tenant existing = newTenantEntity("slug-x", "inactive");
-        when(tenantRepository.findById(existing.getTenantId())).thenReturn(Optional.of(existing));
+        when(tenantRepository.findBySlug("slug-x")).thenReturn(Optional.of(existing));
 
         Tenant afterSave = newTenantEntity("slug-x", "active");
         when(tenantRepository.save(any(Tenant.class))).thenReturn(afterSave);
 
         TenantDTO patch = new TenantDTO(null, "slug-x", "active", null, null);
 
-        TenantDTO out = tenantService.updateTenant(existing.getTenantId(), patch);
+        TenantDTO out = tenantService.updateTenant("slug-x", patch);
 
         assertThat(out.slug()).isEqualTo("slug-x");
         assertThat(out.status()).isEqualTo("active");
-        verify(tenantRepository).findById(existing.getTenantId());
+        verify(tenantRepository).findBySlug("slug-x");
         verify(tenantRepository).save(any(Tenant.class));
         verifyNoMoreInteractions(tenantRepository);
     }
@@ -173,15 +172,15 @@ class TenantServiceTest {
     @Test
     @DisplayName("updateTenant: lanza IllegalArgumentException si no existe")
     void updateTenant_notFound() {
-        when(tenantRepository.findById("t-missing")).thenReturn(Optional.empty());
+        when(tenantRepository.findBySlug("missing")).thenReturn(Optional.empty());
 
         TenantDTO patch = new TenantDTO(null, "missing", "active", null, null);
 
-        assertThatThrownBy(() -> tenantService.updateTenant("t-missing", patch))
+        assertThatThrownBy(() -> tenantService.updateTenant("missing", patch))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("not found");
 
-        verify(tenantRepository).findById("t-missing");
+        verify(tenantRepository).findBySlug("missing");
         verifyNoMoreInteractions(tenantRepository);
     }
 
@@ -189,13 +188,13 @@ class TenantServiceTest {
     @DisplayName("updateTenant: conserva estado cuando el DTO no envía cambios")
     void updateTenant_keepStatusIfNull() {
         Tenant existing = newTenantEntity("slug-keep", "inactive");
-        when(tenantRepository.findById(existing.getTenantId())).thenReturn(Optional.of(existing));
+        when(tenantRepository.findBySlug("slug-keep")).thenReturn(Optional.of(existing));
 
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         TenantDTO patch = new TenantDTO(null, "slug-keep", null, null, null);
 
-        TenantDTO out = tenantService.updateTenant(existing.getTenantId(), patch);
+        TenantDTO out = tenantService.updateTenant("slug-keep", patch);
 
         ArgumentCaptor<Tenant> captor = ArgumentCaptor.forClass(Tenant.class);
         verify(tenantRepository).save(captor.capture());
@@ -204,7 +203,7 @@ class TenantServiceTest {
         assertThat(savedEntity.getStatus()).isEqualTo("inactive");
 
         assertThat(out.status()).isEqualTo("inactive");
-        verify(tenantRepository).findById(existing.getTenantId());
+        verify(tenantRepository).findBySlug("slug-keep");
         verifyNoMoreInteractions(tenantRepository);
     }
 
@@ -215,11 +214,11 @@ class TenantServiceTest {
         @DisplayName("elimina si existe")
         void delete_ok() {
             Tenant t = newTenantEntity("slug-del", "active");
-            when(tenantRepository.findById(t.getTenantId())).thenReturn(Optional.of(t));
+            when(tenantRepository.findBySlug("slug-del")).thenReturn(Optional.of(t));
 
-            tenantService.deleteTenant(t.getTenantId());
+            tenantService.deleteTenant("slug-del");
 
-            verify(tenantRepository).findById(t.getTenantId());
+            verify(tenantRepository).findBySlug("slug-del");
             verify(tenantRepository).delete(t);
             verifyNoMoreInteractions(tenantRepository);
         }
@@ -227,13 +226,13 @@ class TenantServiceTest {
         @Test
         @DisplayName("lanza IllegalArgumentException si no existe")
         void delete_notFound() {
-            when(tenantRepository.findById("t-nope")).thenReturn(Optional.empty());
+            when(tenantRepository.findBySlug("nope")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> tenantService.deleteTenant("t-nope"))
+            assertThatThrownBy(() -> tenantService.deleteTenant("nope"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not found");
 
-            verify(tenantRepository).findById("t-nope");
+            verify(tenantRepository).findBySlug("nope");
             verifyNoMoreInteractions(tenantRepository);
         }
     }

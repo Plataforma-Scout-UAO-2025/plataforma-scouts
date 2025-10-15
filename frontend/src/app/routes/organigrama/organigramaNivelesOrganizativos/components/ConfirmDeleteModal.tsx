@@ -14,34 +14,19 @@ export default function ConfirmDeleteModal({ open, type, name, onClose, onConfir
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md rounded-xl bg-card p-6 border border-border shadow-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-primary text-2xl font-extrabold">
+          <DialogTitle className="text-emerald-900 text-2xl font-bold">
             Confirmar Eliminación de {label}
           </DialogTitle>
         </DialogHeader>
-
-        <p className="text-accent-foreground mb-6 text-sm">
-          ¿Estás seguro de que quieres eliminar el {label.toLowerCase()} <b>{name}</b>? <br />
-          <span className="text-muted-foreground">
-            Esta acción es permanente y no se puede deshacer.
-          </span>
+        <p className="text-gray-700 mb-4">
+          ¿Estás seguro de que quieres eliminar el {label.toLowerCase()} <b>{name}</b>?<br />
+          Esta acción es permanente y no se puede deshacer.
         </p>
-
-        <div className="flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="border border-secondary text-secondary hover:bg-accent hover:text-secondary-foreground"
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={onConfirm}
-            className="bg-primary text-white hover:bg-primary-hover"
-          >
-            Eliminar
-          </Button>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button variant="destructive" onClick={onConfirm}>Eliminar</Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -17,7 +17,7 @@ interface ConfirmDeleteModalProps {
   onConfirm: () => Promise<void>;
   title: string;
   message: string;
-  onSuccess?: () => void;
+  onSuccess?: () => void; // Callback para refrescar datos
 }
 
 export default function ConfirmDeleteModal({
@@ -39,6 +39,7 @@ export default function ConfirmDeleteModal({
       await onConfirm();
       onClose();
       
+      // Llamar callback de éxito para refrescar datos
       if (onSuccess) {
         onSuccess();
       }

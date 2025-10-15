@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @Tag(name = "Sections", description = "Operaciones CRUD para la gestión de secciones/ramas scouts (Manada, Tropa, Comunidad, Clan)")
 @RestController
-@RequestMapping("/api/v1/tenants/{tenantId}/groups/{groupSlug}/sections")
+@RequestMapping("/api/v1/tenants/{tenantSlug}/groups/{groupSlug}/sections")
 public class SectionController {
 
     private final SectionService sectionService;
@@ -37,11 +37,11 @@ public class SectionController {
     })
     @GetMapping
     public List<SectionResponseDTO> getSectionsByGroup(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug) {
-    return sectionService.getSectionsByGroup(tenantId, groupSlug);
+        return sectionService.getSectionsByGroup(tenantSlug, groupSlug);
     }
 
     @Operation(
@@ -54,14 +54,14 @@ public class SectionController {
     })
     @GetMapping("/{sectionId}/with-subgroups")
     public Map<String, Object> getSectionWithSubgroups(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId
     ) {
-    return sectionService.getSectionWithSubgroups(tenantId, groupSlug, sectionId);
+        return sectionService.getSectionWithSubgroups(tenantSlug, groupSlug, sectionId);
     }
 
     @Operation(summary = "Obtener sección por ID", description = "Retorna una sección específica por su ID dentro de un grupo")
@@ -71,13 +71,13 @@ public class SectionController {
     })
     @GetMapping("/{sectionId}")
     public SectionResponseDTO getSectionById(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId) {
-    return sectionService.getSectionById(tenantId, groupSlug, sectionId);
+        return sectionService.getSectionById(tenantSlug, groupSlug, sectionId);
     }
 
     @Operation(summary = "Crear nueva sección", description = "Crea nueva sección/rama scout (Manada, Tropa, Comunidad, Clan) dentro de un grupo")
@@ -89,15 +89,15 @@ public class SectionController {
     })
     @PostMapping
     public ResponseEntity<SectionResponseDTO> createSection(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "Datos de la sección a crear")
         @Valid @RequestBody SectionDTO dto) {
-        SectionResponseDTO created = sectionService.createSection(tenantId, groupSlug, dto);
+        SectionResponseDTO created = sectionService.createSection(tenantSlug, groupSlug, dto);
         return ResponseEntity
-            .created(URI.create("/api/v1/tenants/" + tenantId + "/groups/" + groupSlug + "/sections/" + created.sectionId()))
+            .created(URI.create("/api/v1/tenants/" + tenantSlug + "/groups/" + groupSlug + "/sections/" + created.sectionId()))
             .body(created);
     }
 
@@ -109,15 +109,15 @@ public class SectionController {
     })
     @PutMapping("/{sectionId}")
     public SectionResponseDTO updateSection(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
         @Parameter(description = "Datos actualizados de la sección")
         @Valid @RequestBody SectionDTO dto) {
-    return sectionService.updateSection(tenantId, groupSlug, sectionId, dto);
+        return sectionService.updateSection(tenantSlug, groupSlug, sectionId, dto);
     }
 
     @Operation(summary = "Eliminar sección", description = "Elimina una sección del sistema, incluyendo todas sus imágenes asociadas.")
@@ -127,13 +127,13 @@ public class SectionController {
     })
     @DeleteMapping("/{sectionId}")
     public ResponseEntity<Void> deleteSection(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId) {
-    sectionService.deleteSection(tenantId, groupSlug, sectionId);
+        sectionService.deleteSection(tenantSlug, groupSlug, sectionId);
         return ResponseEntity.noContent().build();
     }
 
@@ -146,13 +146,13 @@ public class SectionController {
     })
     @DeleteMapping("/{sectionId}/icon")
     public ResponseEntity<Void> deleteIconImage(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId) {
-    sectionService.deleteIconImage(tenantId, groupSlug, sectionId);
+        sectionService.deleteIconImage(tenantSlug, groupSlug, sectionId);
         return ResponseEntity.noContent().build();
     }
 
@@ -164,8 +164,8 @@ public class SectionController {
     })
     @DeleteMapping("/{sectionId}/gallery/{objectId}")
     public ResponseEntity<SectionResponseDTO> deleteGalleryImageById(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
@@ -176,7 +176,7 @@ public class SectionController {
         @RequestParam(name = "deleteFromStorage", defaultValue = "false") boolean deleteFromStorage) {
 
         SectionResponseDTO updated = sectionService.deleteGalleryImageById(
-            tenantId, groupSlug, sectionId, objectId, deleteFromStorage
+            tenantSlug, groupSlug, sectionId, objectId, deleteFromStorage
         );
         return ResponseEntity.ok(updated);
     }
@@ -191,15 +191,15 @@ public class SectionController {
     })
     @PatchMapping("/{sectionId}/icon")
     public ResponseEntity<Void> updateIcon(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
         @Parameter(description = "UUID del nuevo ícono en Supabase Storage")
         @Valid @RequestBody UpdateImageRequest request) {
-    sectionService.updateIcon(tenantId, groupSlug, sectionId, request.objectId());
+        sectionService.updateIcon(tenantSlug, groupSlug, sectionId, request.objectId());
         return ResponseEntity.noContent().build();
     }
 
@@ -211,15 +211,15 @@ public class SectionController {
     })
     @PatchMapping("/{sectionId}/photo-principal")
     public ResponseEntity<Void> updatePhotoPrincipal(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
         @Parameter(description = "UUID de la nueva foto principal en Supabase Storage")
         @Valid @RequestBody UpdateImageRequest request) {
-    sectionService.updatePhotoPrincipal(tenantId, groupSlug, sectionId, request.objectId());
+        sectionService.updatePhotoPrincipal(tenantSlug, groupSlug, sectionId, request.objectId());
         return ResponseEntity.noContent().build();
     }
 
@@ -236,8 +236,8 @@ public class SectionController {
     })
     @PatchMapping("/{sectionId}/gallery")
     public ResponseEntity<SectionResponseDTO> patchGallery(
-        @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-        @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
@@ -246,7 +246,7 @@ public class SectionController {
         @Valid @RequestBody GalleryPatchRequest request) {
 
         SectionResponseDTO updated = sectionService.patchGalleryAndReturn(
-            tenantId, groupSlug, sectionId, request.operations()
+            tenantSlug, groupSlug, sectionId, request.operations()
         );
         return ResponseEntity.ok(updated);
     }

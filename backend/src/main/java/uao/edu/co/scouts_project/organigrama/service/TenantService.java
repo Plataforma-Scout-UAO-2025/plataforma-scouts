@@ -27,9 +27,9 @@ public class TenantService {
     }
     
     @Transactional(readOnly = true)
-    public TenantDTO getTenantById(String tenantId) {
-        Tenant tenant = tenantRepository.findById(tenantId)
-            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with id: " + tenantId));
+    public TenantDTO getTenantBySlug(String slug) {
+        Tenant tenant = tenantRepository.findBySlug(slug)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with slug: " + slug));
         return toDTO(tenant);
     }
     
@@ -49,9 +49,9 @@ public class TenantService {
     }
     
     @Transactional
-    public TenantDTO updateTenant(String tenantId, TenantDTO dto) {
-        Tenant tenant = tenantRepository.findById(tenantId)
-            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with id: " + tenantId));
+    public TenantDTO updateTenant(String slug, TenantDTO dto) {
+        Tenant tenant = tenantRepository.findBySlug(slug)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with slug: " + slug));
         
         if (dto.status() != null) {
             tenant.setStatus(dto.status());
@@ -62,9 +62,9 @@ public class TenantService {
     }
     
     @Transactional
-    public void deleteTenant(String tenantId) {
-        Tenant tenant = tenantRepository.findById(tenantId)
-            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with id: " + tenantId));
+    public void deleteTenant(String slug) {
+        Tenant tenant = tenantRepository.findBySlug(slug)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with slug: " + slug));
         tenantRepository.delete(tenant);
     }
     

@@ -18,6 +18,7 @@ import uao.edu.co.scouts_project.organigrama.dto.SectionResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.model.Group;
 import uao.edu.co.scouts_project.organigrama.model.Section;
+import uao.edu.co.scouts_project.organigrama.model.Tenant;
 import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
@@ -37,9 +38,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SectionServiceTest {
 
-        private static final String TENANT_ID = "tenant1";
-        private static final String GROUP_SLUG = "group-slug";
-
     @Mock
     private SectionRepository sectionRepository;
 
@@ -58,6 +56,7 @@ class SectionServiceTest {
     @InjectMocks
     private SectionService sectionService;
 
+    private Tenant tenant;
     private Group group;
     private Section section;
     private UUID iconId;
@@ -67,19 +66,21 @@ class SectionServiceTest {
     @BeforeEach
     void setUp() {
         // Configurar datos de prueba
-        lenient().when(tenantRepository.existsById(TENANT_ID)).thenReturn(true);
+        tenant = new Tenant();
+        tenant.setTenantId("tenant1");
+        tenant.setSlug("tenant-slug");
 
         group = new Group();
         group.setGroupId(1L);
-        group.setTenantId(TENANT_ID);
-        group.setSlug(GROUP_SLUG);
+        group.setTenantId("tenant1");
+        group.setSlug("group-slug");
         group.setName("Test Group");
 
         iconId = UUID.randomUUID();
         photoId = UUID.randomUUID();
         galleryIds = new UUID[]{UUID.randomUUID(), UUID.randomUUID()};
 
-        section = new Section(TENANT_ID, 1L, "Manada");
+        section = new Section("tenant1", 1L, "Manada");
         section.setSectionId(1L);
         section.setDescription("Test Description");
         section.setIconObjectId(iconId);
@@ -93,12 +94,13 @@ class SectionServiceTest {
     @DisplayName("Debe obtener secciones por grupo")
     void testGetSectionsByGroup() {
         // Arrange
-        Section section2 = new Section(TENANT_ID, 1L, "Tropa");
+        Section section2 = new Section("tenant1", 1L, "Tropa");
         section2.setSectionId(2L);
         List<Section> sections = Arrays.asList(section, section2);
 
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupId(TENANT_ID, 1L)).thenReturn(sections);
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupId("tenant1", 1L)).thenReturn(sections);
         
         Map<UUID, String> urlMap = new HashMap<>();
         urlMap.put(iconId, "http://icon-url");
@@ -109,7 +111,7 @@ class SectionServiceTest {
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(urlMap);
 
         // Act
-        List<SectionResponseDTO> result = sectionService.getSectionsByGroup(TENANT_ID, GROUP_SLUG);
+        List<SectionResponseDTO> result = sectionService.getSectionsByGroup("tenant-slug", "group-slug");
 
         // Assert
         assertThat(result).hasSize(2);
@@ -117,15 +119,16 @@ class SectionServiceTest {
         assertThat(result.get(0).iconObjectUrl()).isEqualTo("http://icon-url");
         assertThat(result.get(0).photoPrincipalUrl()).isEqualTo("http://photo-url");
         assertThat(result.get(0).gallery()).hasSize(2);
-        verify(sectionRepository).findByTenantIdAndGroupId(TENANT_ID, 1L);
+        verify(sectionRepository).findByTenantIdAndGroupId("tenant1", 1L);
     }
 
     @Test
     @DisplayName("Debe obtener sección por ID")
     void testGetSectionById() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         
         Map<UUID, String> urlMap = new HashMap<>();
@@ -134,7 +137,7 @@ class SectionServiceTest {
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(urlMap);
 
         // Act
-        SectionResponseDTO result = sectionService.getSectionById(TENANT_ID, GROUP_SLUG, 1L);
+        SectionResponseDTO result = sectionService.getSectionById("tenant-slug", "group-slug", 1L);
 
         // Assert
         assertThat(result.sectionId()).isEqualTo(1L);
@@ -147,12 +150,13 @@ class SectionServiceTest {
     @DisplayName("Debe lanzar excepción cuando no encuentra sección por ID")
     void testGetSectionById_NotFound() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 999L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 999L))
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> sectionService.getSectionById(TENANT_ID, GROUP_SLUG, 999L))
+        assertThatThrownBy(() -> sectionService.getSectionById("tenant-slug", "group-slug", 999L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Section not found with id: 999");
     }
@@ -162,35 +166,37 @@ class SectionServiceTest {
     void testGetSectionWithSubgroups() {
         // Arrange
         List<SubgroupResponseDTO> subgroups = Arrays.asList(
-            new SubgroupResponseDTO(1L, TENANT_ID, 1L, 1L, "Subgrupo 1", "Desc 1", null, null, null, null),
-            new SubgroupResponseDTO(2L, TENANT_ID, 1L, 1L, "Subgrupo 2", "Desc 2", null, null, null, null)
+            new SubgroupResponseDTO(1L, "tenant1", 1L, 1L, "Subgrupo 1", "Desc 1", null, null, null, null),
+            new SubgroupResponseDTO(2L, "tenant1", 1L, 1L, "Subgrupo 2", "Desc 2", null, null, null, null)
         );
 
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
-        when(subgroupService.getSubgroupsBySection(TENANT_ID, GROUP_SLUG, 1L))
+        when(subgroupService.getSubgroupsBySection("tenant-slug", "group-slug", 1L))
                 .thenReturn(subgroups);
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
-        Map<String, Object> result = sectionService.getSectionWithSubgroups(TENANT_ID, GROUP_SLUG, 1L);
+        Map<String, Object> result = sectionService.getSectionWithSubgroups("tenant-slug", "group-slug", 1L);
 
         // Assert
         assertThat(result).containsKeys("section", "subgroups");
         assertThat(result.get("section")).isInstanceOf(SectionResponseDTO.class);
         assertThat((List<?>) result.get("subgroups")).hasSize(2);
-        verify(subgroupService).getSubgroupsBySection(TENANT_ID, GROUP_SLUG, 1L);
+        verify(subgroupService).getSubgroupsBySection("tenant-slug", "group-slug", 1L);
     }
 
     @Test
     @DisplayName("Debe crear nueva sección")
     void testCreateSection() {
         // Arrange
-        SectionDTO dto = new SectionDTO(null, TENANT_ID, 1L, "Nueva Sección", 
+        SectionDTO dto = new SectionDTO(null, "tenant1", 1L, "Nueva Sección", 
                 "Nueva descripción", iconId, photoId, galleryIds, null, null);
 
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
         when(sectionRepository.existsByGroupIdAndName(1L, "Nueva Sección")).thenReturn(false);
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> {
             Section saved = invocation.getArgument(0);
@@ -202,7 +208,7 @@ class SectionServiceTest {
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
-        SectionResponseDTO result = sectionService.createSection(TENANT_ID, GROUP_SLUG, dto);
+        SectionResponseDTO result = sectionService.createSection("tenant-slug", "group-slug", dto);
 
         // Assert
         assertThat(result.sectionId()).isEqualTo(10L);
@@ -213,7 +219,7 @@ class SectionServiceTest {
         verify(sectionRepository).save(sectionCaptor.capture());
         Section savedSection = sectionCaptor.getValue();
         assertThat(savedSection.getName()).isEqualTo("Nueva Sección");
-        assertThat(savedSection.getTenantId()).isEqualTo(TENANT_ID);
+        assertThat(savedSection.getTenantId()).isEqualTo("tenant1");
         assertThat(savedSection.getGroupId()).isEqualTo(1L);
     }
 
@@ -221,14 +227,15 @@ class SectionServiceTest {
     @DisplayName("Debe lanzar excepción cuando el nombre de sección ya existe")
     void testCreateSection_DuplicateName() {
         // Arrange
-        SectionDTO dto = new SectionDTO(null, TENANT_ID, 1L, "Manada", 
+        SectionDTO dto = new SectionDTO(null, "tenant1", 1L, "Manada", 
                 "Descripción", null, null, null, null, null);
 
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
         when(sectionRepository.existsByGroupIdAndName(1L, "Manada")).thenReturn(true);
 
         // Act & Assert
-        assertThatThrownBy(() -> sectionService.createSection(TENANT_ID, GROUP_SLUG, dto))
+        assertThatThrownBy(() -> sectionService.createSection("tenant-slug", "group-slug", dto))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Section with name 'Manada' already exists");
     }
@@ -239,17 +246,18 @@ class SectionServiceTest {
         // Arrange
         UUID newIconId = UUID.randomUUID();
         UUID newPhotoId = UUID.randomUUID();
-        SectionDTO dto = new SectionDTO(1L, TENANT_ID, 1L, "Manada Actualizada", 
+        SectionDTO dto = new SectionDTO(1L, "tenant1", 1L, "Manada Actualizada", 
                 "Descripción actualizada", newIconId, newPhotoId, null, null, null);
 
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
-        SectionResponseDTO result = sectionService.updateSection(TENANT_ID, GROUP_SLUG, 1L, dto);
+        SectionResponseDTO result = sectionService.updateSection("tenant-slug", "group-slug", 1L, dto);
 
         // Assert
         assertThat(result.name()).isEqualTo("Manada Actualizada");
@@ -265,12 +273,13 @@ class SectionServiceTest {
     @DisplayName("Debe eliminar sección y sus archivos asociados")
     void testDeleteSection() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act
-        sectionService.deleteSection(TENANT_ID, GROUP_SLUG, 1L);
+        sectionService.deleteSection("tenant-slug", "group-slug", 1L);
 
         // Assert
         verify(storageService).deleteFileByObjectId(iconId);
@@ -285,12 +294,13 @@ class SectionServiceTest {
     @DisplayName("Debe eliminar imagen del ícono")
     void testDeleteIconImage() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act
-        sectionService.deleteIconImage(TENANT_ID, GROUP_SLUG, 1L);
+        sectionService.deleteIconImage("tenant-slug", "group-slug", 1L);
 
         // Assert
         verify(storageService).deleteFileByObjectId(iconId);
@@ -303,12 +313,13 @@ class SectionServiceTest {
         void testDeleteIconImage_noIcon() {
                 // Arrange
                 section.setIconObjectId(null);
-                when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-                when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+                when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+                when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+                when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                                 .thenReturn(Optional.of(section));
 
                 // Act
-                sectionService.deleteIconImage(TENANT_ID, GROUP_SLUG, 1L);
+                sectionService.deleteIconImage("tenant-slug", "group-slug", 1L);
 
                 // Assert
                 verify(storageService, never()).deleteFileByObjectId(any());
@@ -320,12 +331,13 @@ class SectionServiceTest {
     void testUpdateIcon() {
         // Arrange
         UUID newIconId = UUID.randomUUID();
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act
-        sectionService.updateIcon(TENANT_ID, GROUP_SLUG, 1L, newIconId);
+        sectionService.updateIcon("tenant-slug", "group-slug", 1L, newIconId);
 
         // Assert
         verify(storageService).deleteFileByObjectId(iconId);
@@ -337,12 +349,13 @@ class SectionServiceTest {
         @DisplayName("Debe conservar ícono cuando se envía el mismo UUID")
         void testUpdateIcon_sameUuid() {
                 // Arrange
-                when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-                when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+                when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+                when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+                when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                                 .thenReturn(Optional.of(section));
 
                 // Act
-                sectionService.updateIcon(TENANT_ID, GROUP_SLUG, 1L, iconId);
+                sectionService.updateIcon("tenant-slug", "group-slug", 1L, iconId);
 
                 // Assert
                 verify(storageService, never()).deleteFileByObjectId(any());
@@ -354,12 +367,13 @@ class SectionServiceTest {
     void testUpdatePhotoPrincipal() {
         // Arrange
         UUID newPhotoId = UUID.randomUUID();
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act
-        sectionService.updatePhotoPrincipal(TENANT_ID, GROUP_SLUG, 1L, newPhotoId);
+        sectionService.updatePhotoPrincipal("tenant-slug", "group-slug", 1L, newPhotoId);
 
         // Assert
         verify(storageService).deleteFileByObjectId(photoId);
@@ -371,12 +385,13 @@ class SectionServiceTest {
     @DisplayName("Debe conservar foto principal cuando se envía el mismo UUID")
     void testUpdatePhotoPrincipal_sameUuid() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act
-        sectionService.updatePhotoPrincipal(TENANT_ID, GROUP_SLUG, 1L, photoId);
+        sectionService.updatePhotoPrincipal("tenant-slug", "group-slug", 1L, photoId);
 
         // Assert
         verify(storageService, never()).deleteFileByObjectId(any());
@@ -387,13 +402,14 @@ class SectionServiceTest {
     @DisplayName("Debe eliminar foto principal y persistir null")
     void testDeletePhotoPrincipal_whenPresent() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        sectionService.deletePhotoPrincipal(TENANT_ID, GROUP_SLUG, 1L);
+        sectionService.deletePhotoPrincipal("tenant-slug", "group-slug", 1L);
 
         // Assert
         verify(storageService).deleteFileByObjectId(photoId);
@@ -406,12 +422,13 @@ class SectionServiceTest {
     void testDeletePhotoPrincipal_whenEmpty() {
         // Arrange
         section.setPhotoPrincipal(null);
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act
-        sectionService.deletePhotoPrincipal(TENANT_ID, GROUP_SLUG, 1L);
+        sectionService.deletePhotoPrincipal("tenant-slug", "group-slug", 1L);
 
         // Assert
         verify(storageService, never()).deleteFileByObjectId(any());
@@ -423,15 +440,16 @@ class SectionServiceTest {
     void testDeleteGalleryImageById() {
         // Arrange
         UUID imageToDelete = galleryIds[0];
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         SectionResponseDTO result = sectionService.deleteGalleryImageById(
-                TENANT_ID, GROUP_SLUG, 1L, imageToDelete, true);
+                "tenant-slug", "group-slug", 1L, imageToDelete, true);
 
         // Assert
         assertThat(result).isNotNull();
@@ -446,15 +464,16 @@ class SectionServiceTest {
     void testDeleteGalleryImageById_skipStorageDeletion() {
         // Arrange
         UUID imageToDelete = galleryIds[0];
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         SectionResponseDTO result = sectionService.deleteGalleryImageById(
-                TENANT_ID, GROUP_SLUG, 1L, imageToDelete, false);
+                "tenant-slug", "group-slug", 1L, imageToDelete, false);
 
         // Assert
         assertThat(result).isNotNull();
@@ -468,13 +487,14 @@ class SectionServiceTest {
     void testDeleteGalleryImageById_emptyGallery() {
         // Arrange
         section.setGalleryObjectIds(new UUID[0]);
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act & Assert
         assertThatThrownBy(() -> sectionService.deleteGalleryImageById(
-                TENANT_ID, GROUP_SLUG, 1L, UUID.randomUUID(), true))
+                "tenant-slug", "group-slug", 1L, UUID.randomUUID(), true))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Gallery is empty");
 
@@ -486,15 +506,16 @@ class SectionServiceTest {
     @DisplayName("Debe lanzar excepción si el UUID no está en la galería")
     void testDeleteGalleryImageById_notFound() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         UUID unknown = UUID.randomUUID();
 
         // Act & Assert
         assertThatThrownBy(() -> sectionService.deleteGalleryImageById(
-                TENANT_ID, GROUP_SLUG, 1L, unknown, true))
+                "tenant-slug", "group-slug", 1L, unknown, true))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Imagen no encontrada");
 
@@ -515,15 +536,16 @@ class SectionServiceTest {
                 new GalleryPatchRequest.PatchOperation("replace", replaceTarget, replaceWith)
         );
 
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(sectionRepository.save(any(Section.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any())).thenReturn(Collections.emptyMap());
 
         // Act
         SectionResponseDTO result = sectionService.patchGalleryAndReturn(
-                TENANT_ID, GROUP_SLUG, 1L, operations);
+                "tenant-slug", "group-slug", 1L, operations);
 
         // Assert
         assertThat(result).isNotNull();
@@ -538,22 +560,23 @@ class SectionServiceTest {
     @DisplayName("Debe lanzar excepción cuando tenant no existe")
     void testGetSectionById_TenantNotFound() {
         // Arrange
-        when(tenantRepository.existsById("invalid-tenant")).thenReturn(false);
+        when(tenantRepository.findBySlug("invalid-tenant")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> sectionService.getSectionById("invalid-tenant", GROUP_SLUG, 1L))
+        assertThatThrownBy(() -> sectionService.getSectionById("invalid-tenant", "group-slug", 1L))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Tenant not found with id: invalid-tenant");
+                .hasMessageContaining("Tenant not found with slug: invalid-tenant");
     }
 
     @Test
     @DisplayName("Debe lanzar excepción cuando grupo no existe")
     void testGetSectionById_GroupNotFound() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, "invalid-group")).thenReturn(Optional.empty());
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "invalid-group")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> sectionService.getSectionById(TENANT_ID, "invalid-group", 1L))
+        assertThatThrownBy(() -> sectionService.getSectionById("tenant-slug", "invalid-group", 1L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Group not found with slug: invalid-group");
     }
@@ -562,14 +585,15 @@ class SectionServiceTest {
     @DisplayName("Debe manejar errores del servicio de almacenamiento gracefully")
     void testGetSectionById_StorageServiceError() {
         // Arrange
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any()))
                 .thenThrow(new RuntimeException("Storage service error"));
 
         // Act
-        SectionResponseDTO result = sectionService.getSectionById(TENANT_ID, GROUP_SLUG, 1L);
+        SectionResponseDTO result = sectionService.getSectionById("tenant-slug", "group-slug", 1L);
 
         // Assert
         assertThat(result).isNotNull();
@@ -587,13 +611,14 @@ class SectionServiceTest {
                 new GalleryPatchRequest.PatchOperation("invalid", null, null)
         );
 
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         // Act & Assert
         assertThatThrownBy(() -> sectionService.patchGalleryAndReturn(
-                TENANT_ID, GROUP_SLUG, 1L, invalidOps))
+                "tenant-slug", "group-slug", 1L, invalidOps))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Operación no soportada: invalid");
     }
@@ -601,13 +626,14 @@ class SectionServiceTest {
     @Test
     @DisplayName("Debe continuar cuando Supabase alcanza MaxClientsInSessionMode")
     void testGetSectionsByGroup_RateLimitFallback() {
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupId(TENANT_ID, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupId("tenant1", 1L))
                 .thenReturn(Collections.singletonList(section));
         when(storageService.getPublicUrlsFromObjectIds(ArgumentMatchers.<Set<UUID>>any()))
                 .thenThrow(new RuntimeException("maxclientsinsessionmode: max clients reached"));
 
-        List<SectionResponseDTO> result = sectionService.getSectionsByGroup(TENANT_ID, GROUP_SLUG);
+        List<SectionResponseDTO> result = sectionService.getSectionsByGroup("tenant-slug", "group-slug");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).iconObjectUrl()).isNull();
@@ -617,14 +643,15 @@ class SectionServiceTest {
     @Test
     @DisplayName("Debe capturar errores de permisos al eliminar archivos en Supabase")
     void testDeleteSection_PermissionError() {
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
-        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId(TENANT_ID, 1L, 1L))
+        when(tenantRepository.findBySlug("tenant-slug")).thenReturn(Optional.of(tenant));
+        when(groupRepository.findByTenantIdAndSlug("tenant1", "group-slug")).thenReturn(Optional.of(group));
+        when(sectionRepository.findByTenantIdAndGroupIdAndSectionId("tenant1", 1L, 1L))
                 .thenReturn(Optional.of(section));
 
         doThrow(new RuntimeException("403 access denied"))
                 .when(storageService).deleteFileByObjectId(any(UUID.class));
 
-        assertThatCode(() -> sectionService.deleteSection(TENANT_ID, GROUP_SLUG, 1L))
+        assertThatCode(() -> sectionService.deleteSection("tenant-slug", "group-slug", 1L))
                 .doesNotThrowAnyException();
 
         verify(sectionRepository).delete(section);

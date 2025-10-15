@@ -54,11 +54,15 @@ export {
   removeSubramaMainImage
 } from './subrama-image.service';
 
+// Constantes y configuraciones
+// NOTE: `PATCH_ENDPOINTS` has been deprecated in favor of builders in `src/api/organigramaApi.ts`
+// Los consumers deben usar builders como `sectionPath`/`subgroupPath`.
 
-
+// ============================================================================
 // UTILIDADES Y HELPERS
+// ============================================================================
 
-//  Función robusta para extraer UUIDs de URLs de Supabase
+// ✅ Función robusta para extraer UUIDs de URLs de Supabase
 export const extractObjectIdFromUrl = (url: string): string | null => {
   if (!url) return null;
   // Buscar cualquier UUID válido (36 caracteres)

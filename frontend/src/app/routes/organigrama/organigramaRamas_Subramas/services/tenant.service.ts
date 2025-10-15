@@ -1,5 +1,6 @@
 import api from "@/api/axios";
 
+// Interface para tenant info
 interface TenantInfo {
   slug: string;
   name: string;
@@ -19,10 +20,10 @@ export const getAvailableTenants = async (): Promise<TenantInfo[]> => {
   const response = await api.get<TenantInfo[]>('/tenants');
   const tenants = response.data;
     
-  console.log(' [TenantService] Tenants obtenidos:', tenants);
+  console.log('✅ [TenantService] Tenants obtenidos:', tenants);
   return tenants;
   } catch (error) {
-    console.warn(' [TenantService] No se pudieron obtener tenants:', error);
+    console.warn('⚠️ [TenantService] No se pudieron obtener tenants:', error);
     
     return [
       {
