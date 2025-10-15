@@ -7,7 +7,7 @@ import MedicalRecordsTable from './MedicalRecordTable';
 import type { MedicalFormData } from '../../../../types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
-//import type { Member } from '@/types/member.type';
+import type { Member } from '@/types/member.type';
 
 // Interface para la respuesta de la API
 interface ApiMedicalRecord {
@@ -33,14 +33,6 @@ interface ApiMedicalRecord {
 
 interface ApiResponse {
     content: ApiMedicalRecord[];
-}
-
-interface Member { // temporal debido a un fallo con la interfaz real
-  member_id?: number;
-  first_name?: string;
-  last_name?: string;
-  status?: string;
-  is_active?: boolean;
 }
 
 export default function MedicalRecordsView() {
