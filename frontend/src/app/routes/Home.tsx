@@ -1,138 +1,392 @@
-import LoginButton from "@/components/auth/LoginButton"
-import { Card, CardContent } from "@/components/ui/card"
-import { Shield, Mountain, Target, Users } from "lucide-react"
+import {
+  FaShieldAlt,
+  FaBullseye,
+  FaMountain,
+  FaUsers,
+  FaArrowRight,
+  FaBinoculars,
+  FaShip,
+} from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import LoginButton from "@/components/auth/LoginButton";
+import home from "@/assets/Home.png";
+import cachorros from "@/assets/cachorros.jpg";
+import lobatos from "@/assets/lobatos.jpeg";
+import webelos from "@/assets/webelos.jpg";
+import scout from "@/assets/scout.jpg";
 
-export default function Home() {
+const values = [
+  {
+    icon: <FaShieldAlt size={32} className="text-green-600" />,
+    title: "Integridad",
+    desc: "Desarrollamos el carácter y los valores fundamentales que forman líderes íntegros para el futuro.",
+  },
+  {
+    icon: <FaShip size={32} className="text-blue-600" />,
+    title: "Aventura",
+    desc: "Exploramos la naturaleza y vivimos experiencias únicas que fortalecen el espíritu aventurero.",
+  },
+  {
+    icon: <FaMountain size={32} className="text-yellow-600" />,
+    title: "Desafío",
+    desc: "Fomentamos el compromiso y la Superamos obstáculos y desarrollamos habilidades que nos preparan para cualquier reto de la vida.",
+  },
+  {
+    icon: <FaUsers size={32} className="text-purple-600" />,
+    title: "Hermandad",
+    desc: "Construimos amistades duraderas y aprendemos el valor del trabajo en equipo y la solidaridad.",
+  },
+];
+
+const mision = [
+  {
+    icon: <FaBullseye size={32} className="text-red-600" />,
+    title: "Misión",
+    desc: "Promover el desarrollo personal y colectivo a través de experiencias de aprendizaje, aventura y servicio, fomentando los valores de integridad, compromiso y hermandad. Nuestro propósito es preparar a cada miembro para enfrentar los retos de la vida con liderazgo, solidaridad y respeto hacia los demás y la naturaleza.",
+  },
+  {
+    icon: <FaBinoculars size={32} className="text-pink-800" />,
+    title: "Visión",
+    desc: "Ser una comunidad scout reconocida por formar líderes íntegros, solidarios y comprometidos con la sociedad y el medio ambiente, inspirando a las nuevas generaciones a vivir con valentía, servicio y espíritu aventurero.",
+  },
+];
+
+const grupos = [
+  {
+    section: "Sección Menor",
+    image: cachorros,
+    title: "Cachorros",
+    desc: "Primeros pasos en el mundo scout a través de juegos, cuentos y actividades divertidas.",
+  },
+  {
+    section: "Sección Menor",
+    image: lobatos,
+    title: "Lobatos",
+    desc: "Desarrollo de habilidades básicas y aventuras al aire libre en un ambiente seguro y divertido.",
+  },
+  {
+    section: "Sección Intermedia",
+    image: webelos,
+    title: "Webelos",
+    desc: "Exploración y aventuras más desafiantes, desarrollando independencia y liderazgo.",
+  },
+  {
+    section: "Sección Mayor",
+    image: scout,
+    title: "Scout",
+    desc: "Preparación para la vida adulta a través de proyectos de servicio comunitario y liderazgo.",
+  },
+];
+
+export default function LandingPage() {
+  const [activeSection, setActiveSection] = useState("inicio");
+  const { loginWithRedirect, isAuthenticated } = useAuth0();
+  const navigate = useNavigate();
+
+  // Si el usuario ya está autenticado, redirigir a /app
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/app");
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Para el efecto en el botón del navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ["inicio", "about", "grupos", "contact"];
+      let current = "inicio";
+      let minDistance = Infinity;
+
+      for (const sec of sections) {
+        const el = document.getElementById(sec);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const distance = Math.abs(rect.top - 80);
+          if (distance < minDistance && rect.bottom > 100) {
+            minDistance = distance;
+            current = sec;
+          }
+        }
+      }
+      setActiveSection(current);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navBtnClass = (section: string) => {
+    const base = "rounded-md px-7 py-1 font-regular transition-colors";
+
+    if (activeSection === section) {
+      return `${base} bg-gradient-to-r from-[#23614C] to-[#1A4134] text-white shadow`;
+    }
+
+    return `${base} bg-[#1A4134] text-[rgba(255,250,243,1)] 
+      hover:bg-gradient-to-r hover:from-[#23614C] hover:to-[#1A4134]
+      active:bg-gradient-to-r active:from-[#23614C] border-[#1A4134]`;
+  };
+
   return (
-    <div className="min-h-screen bg-background flex-col">
-      <header className="bg-primary py-4">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <img src="/logo.jpg"
-            alt="Logo"
-            className="h-10 w-auto" />
+    <div className="font-sans bg-white min-h-screen">
+      {/* Navbar fija */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 shadow-sm bg-[rgba(26,65,52,1)]">
+        <div className="flex items-center gap-1">
+          <img
+            src="/logo.jpg"
+            alt="Logo ASRP"
+            className="h-10 w-12 object-cover rounded-full"
+          />
+          <span className="font-bold text-xl text-[#FFFAF3]">ASRP</span>
+        </div>
 
-          <div>
-            <LoginButton organization="org_6B3k4dao2Wf6eGxa"
-              className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
-              Grupo Centinelas 113
-            </LoginButton>
-            <LoginButton organization="org_povsjufF3TEP1DZ7"
-              className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
-              Grupo Chiminigagua 803
-            </LoginButton>
+        <div className="flex gap-8">
+          <a href="#inicio" className={navBtnClass("inicio")}>
+            Inicio
+          </a>
+          <a href="#about" className={navBtnClass("about")}>
+            Nosotros
+          </a>
+          <a href="#grupos" className={navBtnClass("grupos")}>
+            Grupo
+          </a>
+          <a href="#contact" className={navBtnClass("contact")}>
+            Contacto
+          </a>
+        </div>
+
+        {/* PASO 3: Botones con las funciones de Auth0 */}
+        <div>
+          <LoginButton
+            organization="org_6B3k4dao2Wf6eGxa"
+            className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
+          >
+            Grupo Chiminigagua 803
+          </LoginButton>
+          <LoginButton
+            organization="org_povsjufF3TEP1DZ7"
+            className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
+          >
+            Grupo Centinelas 113
+          </LoginButton>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section
+        id="inicio"
+        className="pt-28 flex flex-col md:flex-row items-center justify-between px-8 py-16 bg-[#F0F3F2]"
+      >
+        <div className="md:w-1/2">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#282828] mb-8">
+            Asociación scouts región pacifico
+          </h1>
+          <p className="text-lg text-gray-700 mb-8">
+            Forma parte de nuestra gran familia scout. Aquí encontrarás un
+            espacio para crecer, aprender y vivir aventuras que marcan la
+            diferencia. A través de valores, servicio y amistad, ayudamos a
+            construir líderes para el presente y el futuro.
+          </p>
+          <div className="flex gap-4 mb-8">
+            {/* PASO 4: Botón "Únete" redirige a Sign Up */}
+            <div>
+              <LoginButton
+                organization="org_6B3k4dao2Wf6eGxa"
+                className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
+              >
+                Grupo Chiminigagua 803
+              </LoginButton>
+              <LoginButton
+                organization="org_povsjufF3TEP1DZ7"
+                className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
+              >
+                Grupo Centinelas 113
+              </LoginButton>
+            </div>
+            <a
+              href="#about"
+              className="border border-[#916E5A] text-[#916E5A] px-6 py-3 rounded-[8px] font-semibold
+                        hover:bg-[#ebebeb] hover:scale-95 hover:shadow-inner 
+                        transition-transform duration-200"
+            >
+              Conoce más
+            </a>
+          </div>
+        </div>
+        <div className="md:w-1/2 flex justify-center mt-10 md:mt-0">
+          <img src={home} alt="Scout" className="w-593.42 h-auto rounded-xl" />
+        </div>
+      </section>
+
+      {/* Quiénes somos */}
+      <section id="about" className="pt-8 scroll-mt-28 px-8 py-16 bg-[#FFFAF3]">
+        <div className="flex justify-center mb-3">
+          <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+            ¿Qué es ser Scout?
+          </span>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
+          Más que una aventura, un estilo de vida
+        </h2>
+        <div className="flex justify-center">
+          <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
+            Ser scout es formar parte de una comunidad que promueve el
+            desarrollo personal, el liderazgo y el servicio. Cada experiencia te
+            prepara para enfrentar los desafíos de la vida con valentía y
+            solidaridad.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {values.map((v) => (
+            <div
+              key={v.title}
+              className="bg-white rounded-xl p-6 flex flex-col items-center shadow-xl hover:shadow-2xl transition"
+            >
+              {v.icon}
+              <h3 className="mt-4 text-xl font-semibold text-gray-800">
+                {v.title}
+              </h3>
+              <p className="mt-2 text-gray-600 text-center">{v.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-16">
+          <div className="flex justify-center mb-3">
+            <span className="inline-block bg-[#f7f7f7] text-gray-700 mb-8 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+              ¿Cuál es nuestro propósito y nuestro sueño?
+            </span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-16 text-center">
+            Más que un propósito, un camino hacia el futuro
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-80 mx-40">
+            {mision.map((v) => (
+              <div
+                key={v.title}
+                className="bg-white rounded-xl p-6 flex flex-col items-center shadow-xl hover:shadow-2xl transition"
+              >
+                {v.icon}
+                <h3 className="mt-4 text-xl font-semibold text-gray-800">
+                  {v.title}
+                </h3>
+                <p className="mt-2 text-gray-600 text-center">{v.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Grupos */}
+      <section
+        id="grupos"
+        className="pt-8 scroll-mt-28 px-8 py-16 bg-[#F0F3F2]"
+      >
+        <div className="flex justify-center mb-3">
+          <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+            Nuestros Grupos
+          </span>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
+          Grupo Centinelas 113 y 803 chiminigagua
+        </h2>
+        <div className="flex justify-center">
+          <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
+            Desde los más pequeños hasta jóvenes adultos, tenemos grupos
+            diseñados específicamente para cada edad y nivel de desarrollo.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-200 mx-40">
+          {grupos.map((v) => (
+            <div
+              key={v.title}
+              className="bg-white rounded-xl shadow-xl hover:shadow-2xl transition overflow-hidden"
+            >
+              <img
+                src={v.image}
+                alt={v.title}
+                className="h-48 w-full object-cover"
+              />
+              <div className="p-6">
+                <span className="inline-block px-3 py-1 text-xs font-medium text-white bg-[#113227] rounded-full">
+                  {v.section}
+                </span>
+                <h3 className="mt-3 text-lg font-semibold text-gray-800">
+                  {v.title}
+                </h3>
+                <p className="mt-2 text-gray-600">{v.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Contacto */}
+      <section
+        id="contact"
+        className="pt-8 scroll-mt-28 px-8 py-16 bg-[#FFFAF3]"
+      >
+        <div className="flex justify-center mb-3">
+          <span className="inline-block bg-[#f7f7f7] text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+            ¡Únete hoy!
+          </span>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
+          ¿Listo para tu próxima aventura?
+        </h2>
+        <div className="flex justify-center">
+          <p className="text-lg text-gray-700 text-justify max-w-2xl mb-8">
+            Desde los más pequeños hasta jóvenes adultos, tenemos grupos
+            diseñados específicamente para cada edad y nivel de desarrollo.
+          </p>
+        </div>
+        <div className="flex flex-col md:flex-row gap-12 justify-center items-start max-w-4xl mx-auto">
+          {/* Bloque de formulario */}
+          <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full mb-8 md:mb-0">
+            <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">
+              Regístrate y forma parte de nuestra comunidad.
+            </h3>
+            <div className="mb-4 flex justify-center">
+              <div>
+                <LoginButton
+                  organization="org_6B3k4dao2Wf6eGxa"
+                  className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
+                >
+                  Grupo Chiminigagua 803
+                </LoginButton>
+                <LoginButton
+                  organization="org_povsjufF3TEP1DZ7"
+                  className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
+                >
+                  Grupo Centinelas 113
+                </LoginButton>
+              </div>
+            </div>
           </div>
 
-        </div>
-      </header>
-
-      <section className="bg-gray-50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-6">
-              <h1 className="text-5xl font-bold text-gray-900 leading-tight">¡Vive la experiencia Scout!</h1>
-              <p className="text-lg text-gray-600 leading-relaxed">
-                Forma parte de nuestra gran familia scout. Aquí encontrarás un espacio para crecer, aprender y vivir
-                aventuras que marcan la diferencia. A través de valores, servicio y amistad, ayudamos a construir
-                líderes para el presente y el futuro.
-              </p>
-            </div>
-            <div className="flex justify-center relative">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-80 h-80 bg-green-800 rounded-full opacity-20 absolute -top-4 -left-4"></div>
-                <div className="w-60 h-60 bg-amber-700 rounded-full opacity-30 absolute top-8 right-8"></div>
-                <div className="w-40 h-40 bg-green-600 rounded-full opacity-25 absolute -bottom-8 left-12"></div>
+          {/* Bloque de información de contacto */}
+          <div className="bg-white rounded-xl shadow-xl p-8 flex-1 w-full">
+            <h3 className="text-xl font-semibold text-[#113227] mb-6 text-center">
+              Información de contacto
+            </h3>
+            <div className="flex flex-col gap-4 text-gray-700">
+              <div>
+                <span className="font-bold">Teléfono:</span> +57 312 345 6789
               </div>
-              <div className="relative z-10 w-80 h-80 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                <img
-                  src="/Kids.png"
-                  alt="Tres jóvenes scouts en uniforme con sombreros y pañuelos sonriendo juntos"
-                  className="w-full h-full object-cover"
-                />
+              <div>
+                <span className="font-bold">Email:</span>{" "}
+                scouts.pacifico@email.com
+              </div>
+              <div>
+                <span className="font-bold">Ubicación:</span> Calle 123 #45-67,
+                Cali, Colombia
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      <main className="flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-12 py-12">
-          <section>
-            <div className="container mx-auto px-4">
-              <div className="max-w-4xl mx-auto text-center space-y-6">
-                <p className="text-lg text-gray-500">¿Qué es ser Scout?</p>
-                <h2 className="text-4xl font-bold text-gray-900">Más que una aventura, es un estilo de vida</h2>
-                <p className="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
-                  es una comunidad que reúne grupos scouts. Promovemos la formación integral de niños, niñas, jóvenes y
-                  adultos a través del escultismo, fomentando el respeto, la solidaridad, el liderazgo y el amor por la
-                  naturaleza.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <div className="container mx-auto px-4">
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-                <Card className="bg-white shadow-md border-0">
-                  <CardContent className="p-8 text-left space-y-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Shield className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Integridad</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Desarrollamos el carácter y los valores fundamentales que forman líderes íntegros para el futuro.
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white shadow-md border-0">
-                  <CardContent className="p-8 text-left space-y-4">
-                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <Mountain className="h-6 w-6 text-orange-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Aventura</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Exploramos la naturaleza y vivimos experiencias únicas que fortalecen el espíritu aventurero.
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white shadow-md border-0">
-                  <CardContent className="p-8 text-left space-y-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <Target className="h-6 w-6 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Desafío</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Superamos obstáculos y desarrollamos habilidades que nos preparan para cualquier reto de la vida.
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white shadow-md border-0">
-                  <CardContent className="p-8 text-left space-y-4">
-                    <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-                      <Users className="h-6 w-6 text-pink-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Hermandad</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Construimos amistades duraderas y aprendemos el valor del trabajo en equipo y la solidaridad.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-
-      <footer className="bg-primary py-6">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-white">© {new Date().getFullYear()}. Todos los derechos reservados.</p>
-          </div>
-        </div>
-      </footer>
     </div>
-  )
+  );
 }
