@@ -169,11 +169,11 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name())
 
                                                 .requestMatchers("/api/v1/finanzas/payments/**")
-                                                .hasAnyRole(TESORERO.name(), ADMIN_GLOBAL.name())
+                                                .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
 
                                                 // Cuotas
                                                 .requestMatchers("/api/v1/finanzas/fees/**")
-                                                .hasAnyRole(TESORERO.name(), ADMIN_GLOBAL.name())
+                                                .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
 
                                                 //
                                                 // Planes de adelanto
