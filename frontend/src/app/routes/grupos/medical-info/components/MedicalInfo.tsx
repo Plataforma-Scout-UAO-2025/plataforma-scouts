@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, X, Save } from 'lucide-react';
 import { medicalFormSchema } from '../schemas/CreateMedicalInfoForm.schema';
 import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail } from '../../../../../types/medical-form.type';
-//import type { Member } from '@/types/member.type';
+import type { Member } from '@/types/member.type';
 import { useTenant } from '@/hooks/useTenant';
 import api from '@/api/axios';
 import axios from 'axios';
@@ -15,16 +15,6 @@ interface MedicalWizardFormProps {
   onSubmit: (data: MedicalFormData) => void;
   onCancel?: () => void;
   initialData?: MedicalFormData;
-}
-
-interface Member { // temporal debido a un fallo con la interfaz real
-  member_id?: number;
-  first_name?: string;
-  last_name?: string;
-  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
-  status?: string;
-  is_active?: boolean;
-  identification?: string;
 }
 
 export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initialData }: MedicalWizardFormProps) {

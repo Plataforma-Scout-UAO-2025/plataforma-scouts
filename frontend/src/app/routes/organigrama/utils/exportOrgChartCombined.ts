@@ -166,8 +166,8 @@ export async function exportOrgChartCombinedPDF(
             const members = await getMembersBySubgroup(Number(subgroupId));
             if (members && members.length > 0) {
               integrantes = members.map((m: Member) => {
-                const firstName = m.firstName ?? '';
-                const lastName = m.lastName ?? '';
+                const firstName = m.first_name ?? '';
+                const lastName = m.last_name ?? '';
                 return `${firstName} ${lastName}`.trim();
               }).filter(Boolean).join(', ');
             }
