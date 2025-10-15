@@ -13,6 +13,7 @@ import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.organigrama.model.Group;
+import uao.edu.co.scouts_project.organigrama.model.Tenant;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class GroupServiceTest {
 
+    private static final String TENANT_SLUG = "tenant-demo";
     private static final String TENANT_ID   = "T1";
     private static final String SLUG        = "centinelas-113";
 
@@ -39,6 +41,7 @@ class GroupServiceTest {
     @InjectMocks
     private GroupService groupService;
 
+    private Tenant tenant;
     private Group entity;
 
     private GroupDTO newDto() {
@@ -70,7 +73,9 @@ class GroupServiceTest {
 
     @BeforeEach
     void init() {
-    when(tenantRepository.existsById(TENANT_ID)).thenReturn(true);
+        tenant = mock(Tenant.class);
+        when(tenant.getTenantId()).thenReturn(TENANT_ID);
+        when(tenantRepository.findBySlug(eq(TENANT_SLUG))).thenReturn(Optional.of(tenant));
 
         entity = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
         entity.setGroupId(1L);
@@ -91,7 +96,7 @@ class GroupServiceTest {
             return g;
         });
 
-    GroupResponseDTO out = groupService.createGroup(TENANT_ID, newDto());
+        GroupResponseDTO out = groupService.createGroup(TENANT_SLUG, newDto());
 
         assertThat(out).isNotNull();
         assertThat(out.groupId()).isEqualTo(1L);
@@ -107,7 +112,7 @@ class GroupServiceTest {
     void create_conflict_whenSlugExists() {
         when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(true);
 
-    assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, newDto()))
+        assertThatThrownBy(() -> groupService.createGroup(TENANT_SLUG, newDto()))
             .isInstanceOf(IllegalArgumentException.class);
 
         verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
@@ -121,7 +126,7 @@ class GroupServiceTest {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
             .thenReturn(Optional.of(entity));
 
-    GroupResponseDTO out = groupService.getGroupBySlug(TENANT_ID, SLUG);
+        GroupResponseDTO out = groupService.getGroupBySlug(TENANT_SLUG, SLUG);
 
         assertThat(out).isNotNull();
         assertThat(out.groupId()).isEqualTo(1L);
@@ -144,7 +149,7 @@ class GroupServiceTest {
         when(storageService.getPublicUrlsFromObjectIds(eq(Set.of(logoId, scarfId))))
             .thenReturn(Map.of(logoId, "logo-url", scarfId, "scarf-url"));
 
-    GroupResponseDTO out = groupService.getGroupBySlug(TENANT_ID, SLUG);
+        GroupResponseDTO out = groupService.getGroupBySlug(TENANT_SLUG, SLUG);
 
         assertThat(out.logoObjectUrl()).isEqualTo("logo-url");
         assertThat(out.scarfObjectUrl()).isEqualTo("scarf-url");
@@ -157,7 +162,7 @@ class GroupServiceTest {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
             .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> groupService.getGroupBySlug(TENANT_ID, SLUG))
+        assertThatThrownBy(() -> groupService.getGroupBySlug(TENANT_SLUG, SLUG))
             .isInstanceOf(IllegalArgumentException.class);
 
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
@@ -175,7 +180,7 @@ class GroupServiceTest {
         when(groupRepository.findByTenantId(eq(TENANT_ID)))
             .thenReturn(List.of(entity, e2));
 
-    List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_ID);
+        List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_SLUG);
 
         assertThat(out).hasSize(2);
         assertThat(out).extracting(GroupResponseDTO::slug)
@@ -211,7 +216,7 @@ class GroupServiceTest {
                 logo2, "logo2-url"
             ));
 
-    List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_ID);
+        List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_SLUG);
 
         assertThat(out).hasSize(2);
         GroupResponseDTO primary = out.stream().filter(dto -> dto.slug().equals(SLUG)).findFirst().orElseThrow();
@@ -258,7 +263,7 @@ class GroupServiceTest {
             null               // updatedAt
         );
 
-    GroupResponseDTO out = groupService.updateGroup(TENANT_ID, SLUG, patch);
+        GroupResponseDTO out = groupService.updateGroup(TENANT_SLUG, SLUG, patch);
 
         assertThat(out).isNotNull();
         assertThat(out.name()).isEqualTo("Grupo Actualizado");
@@ -308,7 +313,7 @@ class GroupServiceTest {
             null
         );
 
-    GroupResponseDTO out = groupService.updateGroup(TENANT_ID, SLUG, patch);
+        GroupResponseDTO out = groupService.updateGroup(TENANT_SLUG, SLUG, patch);
 
         assertThat(out.logoObjectUrl()).isNull();
         assertThat(out.scarfObjectUrl()).isNull();
@@ -351,7 +356,7 @@ class GroupServiceTest {
             null               // updatedAt
         );
 
-    assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, patch))
+        assertThatThrownBy(() -> groupService.updateGroup(TENANT_SLUG, SLUG, patch))
             .isInstanceOf(IllegalArgumentException.class);
 
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
@@ -371,7 +376,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(entity));
         doNothing().when(groupRepository).delete(any(Group.class));
 
-    groupService.deleteGroup(TENANT_ID, SLUG);
+        groupService.deleteGroup(TENANT_SLUG, SLUG);
 
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
         verify(groupRepository).delete(entity);
@@ -385,7 +390,7 @@ class GroupServiceTest {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
             .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> groupService.deleteGroup(TENANT_ID, SLUG))
+        assertThatThrownBy(() -> groupService.deleteGroup(TENANT_SLUG, SLUG))
             .isInstanceOf(IllegalArgumentException.class);
 
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
@@ -402,7 +407,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.deleteLogoImage(TENANT_ID, SLUG);
+        groupService.deleteLogoImage(TENANT_SLUG, SLUG);
 
         assertThat(entity.getLogoObjectId()).isNull();
         verify(storageService).deleteFileByObjectId(logoId);
@@ -417,7 +422,7 @@ class GroupServiceTest {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
             .thenReturn(Optional.of(entity));
 
-    groupService.deleteLogoImage(TENANT_ID, SLUG);
+        groupService.deleteLogoImage(TENANT_SLUG, SLUG);
 
         verify(storageService, never()).deleteFileByObjectId(any());
         verify(groupRepository, never()).save(any());
@@ -433,7 +438,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.deleteScarfImage(TENANT_ID, SLUG);
+        groupService.deleteScarfImage(TENANT_SLUG, SLUG);
 
         assertThat(entity.getScarfObjectId()).isNull();
         verify(storageService).deleteFileByObjectId(scarfId);
@@ -448,7 +453,7 @@ class GroupServiceTest {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
             .thenReturn(Optional.of(entity));
 
-    groupService.deleteScarfImage(TENANT_ID, SLUG);
+        groupService.deleteScarfImage(TENANT_SLUG, SLUG);
 
         verify(storageService, never()).deleteFileByObjectId(any());
         verify(groupRepository, never()).save(any());
@@ -465,7 +470,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateLogo(TENANT_ID, SLUG, newLogo);
+        groupService.updateLogo(TENANT_SLUG, SLUG, newLogo);
 
         assertThat(entity.getLogoObjectId()).isEqualTo(newLogo);
         verify(storageService).deleteFileByObjectId(oldLogo);
@@ -482,7 +487,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateLogo(TENANT_ID, SLUG, logo);
+        groupService.updateLogo(TENANT_SLUG, SLUG, logo);
 
         assertThat(entity.getLogoObjectId()).isEqualTo(logo);
         verify(storageService, never()).deleteFileByObjectId(any());
@@ -500,7 +505,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateScarf(TENANT_ID, SLUG, newScarf);
+        groupService.updateScarf(TENANT_SLUG, SLUG, newScarf);
 
         assertThat(entity.getScarfObjectId()).isEqualTo(newScarf);
         verify(storageService).deleteFileByObjectId(oldScarf);
@@ -517,7 +522,7 @@ class GroupServiceTest {
             .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateScarf(TENANT_ID, SLUG, scarf);
+        groupService.updateScarf(TENANT_SLUG, SLUG, scarf);
 
         assertThat(entity.getScarfObjectId()).isEqualTo(scarf);
         verify(storageService, never()).deleteFileByObjectId(any());

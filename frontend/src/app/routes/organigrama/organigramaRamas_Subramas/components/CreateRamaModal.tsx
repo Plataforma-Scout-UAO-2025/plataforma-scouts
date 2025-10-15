@@ -13,12 +13,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useApiError } from '../hooks/useApiError';
 import type { CreateBranchData } from '../types/frontend';
+// schema types are available but this component uses a legacy form shape during migration
 
 interface CreateRamaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Accept legacy payload shapes during migration
   onSubmit: (data: CreateBranchData) => Promise<void>;
-  onSuccess?: () => void; 
+  onSuccess?: () => void; // Callback para refrescar datos en la página principal
 }
 
 export default function CreateRamaModal({
@@ -56,10 +58,12 @@ export default function CreateRamaModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Limpiar errores previos
     clearError();
     
     setIsSubmitting(true);
     try {
+      // Mapear el formulario (campos en español) al nuevo tipo CreateBranchData
       const payload: CreateBranchData = {
         name: (formData.name ?? formData.nombre) ?? '',
         description: (formData.description ?? formData.descripcion) || undefined,
@@ -72,6 +76,7 @@ export default function CreateRamaModal({
       
       await onSubmit(payload);
       
+      // Reset form después del éxito
       setFormData({
         name: '',
         description: '',
@@ -83,6 +88,7 @@ export default function CreateRamaModal({
       setImagenUrl(null);
       onOpenChange(false);
       
+      // Llamar callback de éxito para refrescar datos
       if (onSuccess) {
         onSuccess();
       }
@@ -187,8 +193,10 @@ export default function CreateRamaModal({
                     
                     setIsUploading(true);
                     try {
+                      // Almacenar el archivo para enviarlo después en el submit
                       setSelectedFile(file);
                       
+                      // Crear una URL temporal para mostrar la preview
                       const previewUrl = URL.createObjectURL(file);
                       setImagenUrl(previewUrl);
                     } catch (err) {

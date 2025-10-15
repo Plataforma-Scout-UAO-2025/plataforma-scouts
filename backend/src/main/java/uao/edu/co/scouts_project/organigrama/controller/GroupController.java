@@ -18,7 +18,7 @@ import java.util.List;
 
 @Tag(name = "Groups", description = "Operaciones CRUD para la gestión de grupos scouts dentro de un tenant")
 @RestController
-@RequestMapping("/api/v1/tenants/{tenantId}/groups")
+@RequestMapping("/api/v1/tenants/{tenantSlug}/groups")
 public class GroupController {
     
     private final GroupService groupService;
@@ -28,29 +28,29 @@ public class GroupController {
     }
     
     @GetMapping
-    public List<GroupResponseDTO> getGroupsByTenant(@PathVariable String tenantId) {
-        return groupService.getGroupsByTenant(tenantId);
+    public List<GroupResponseDTO> getGroupsByTenant(@PathVariable String tenantSlug) {
+        return groupService.getGroupsByTenant(tenantSlug);
     }
     
     @GetMapping("/{groupSlug}")
-    public GroupResponseDTO getGroupBySlug(@PathVariable String tenantId, @PathVariable String groupSlug) {
-        return groupService.getGroupBySlug(tenantId, groupSlug);
+    public GroupResponseDTO getGroupBySlug(@PathVariable String tenantSlug, @PathVariable String groupSlug) {
+        return groupService.getGroupBySlug(tenantSlug, groupSlug);
     }
     
     @PostMapping
-    public ResponseEntity<GroupResponseDTO> createGroup(@PathVariable String tenantId, @Valid @RequestBody GroupDTO dto) {
-        GroupResponseDTO created = groupService.createGroup(tenantId, dto);
-        return ResponseEntity.created(URI.create("/api/v1/tenants/" + tenantId + "/groups/" + created.slug())).body(created);
+    public ResponseEntity<GroupResponseDTO> createGroup(@PathVariable String tenantSlug, @Valid @RequestBody GroupDTO dto) {
+        GroupResponseDTO created = groupService.createGroup(tenantSlug, dto);
+        return ResponseEntity.created(URI.create("/api/v1/tenants/" + tenantSlug + "/groups/" + created.slug())).body(created);
     }
     
     @PutMapping("/{groupSlug}")
-    public GroupResponseDTO updateGroup(@PathVariable String tenantId, @PathVariable String groupSlug, @Valid @RequestBody GroupDTO dto) {
-        return groupService.updateGroup(tenantId, groupSlug, dto);
+    public GroupResponseDTO updateGroup(@PathVariable String tenantSlug, @PathVariable String groupSlug, @Valid @RequestBody GroupDTO dto) {
+        return groupService.updateGroup(tenantSlug, groupSlug, dto);
     }
     
     @DeleteMapping("/{groupSlug}")
-    public ResponseEntity<Void> deleteGroup(@PathVariable String tenantId, @PathVariable String groupSlug) {
-        groupService.deleteGroup(tenantId, groupSlug);
+    public ResponseEntity<Void> deleteGroup(@PathVariable String tenantSlug, @PathVariable String groupSlug) {
+        groupService.deleteGroup(tenantSlug, groupSlug);
         return ResponseEntity.noContent().build();
     }
 
@@ -63,11 +63,11 @@ public class GroupController {
     })
     @DeleteMapping("/{groupSlug}/logo")
     public ResponseEntity<Void> deleteLogoImage(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug) {
-    groupService.deleteLogoImage(tenantId, groupSlug);
+        groupService.deleteLogoImage(tenantSlug, groupSlug);
         return ResponseEntity.noContent().build();
     }
 
@@ -78,11 +78,11 @@ public class GroupController {
     })
     @DeleteMapping("/{groupSlug}/scarf")
     public ResponseEntity<Void> deleteScarfImage(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug) {
-    groupService.deleteScarfImage(tenantId, groupSlug);
+        groupService.deleteScarfImage(tenantSlug, groupSlug);
         return ResponseEntity.noContent().build();
     }
     
@@ -96,13 +96,13 @@ public class GroupController {
     })
     @PatchMapping("/{groupSlug}/logo")
     public ResponseEntity<Void> updateLogo(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "UUID del nuevo logo en Supabase Storage")
         @Valid @RequestBody UpdateImageRequest request) {
-    groupService.updateLogo(tenantId, groupSlug, request.objectId());
+        groupService.updateLogo(tenantSlug, groupSlug, request.objectId());
         return ResponseEntity.noContent().build();
     }
     
@@ -114,13 +114,13 @@ public class GroupController {
     })
     @PatchMapping("/{groupSlug}/scarf")
     public ResponseEntity<Void> updateScarf(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "UUID del nuevo pañolón en Supabase Storage")
         @Valid @RequestBody UpdateImageRequest request) {
-    groupService.updateScarf(tenantId, groupSlug, request.objectId());
+        groupService.updateScarf(tenantSlug, groupSlug, request.objectId());
         return ResponseEntity.noContent().build();
     }
 }

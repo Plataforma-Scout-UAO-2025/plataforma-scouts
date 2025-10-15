@@ -4,14 +4,14 @@ import type { CreateBranchData, UpdateBranchData, CreateSubgroupData, UpdateSubg
 import type { CreateSubramaFormData, UpdateRamaFormData, UpdateSubramaFormData } from '@/schemas/rama.schema';
 
 type ActionsParams = {
-  tenantId?: string;
+  tenantSlug?: string;
   groupSlug?: string;
-  loadRamas: (opts?: { force?: boolean }) => Promise<void>;
+  loadRamas: () => Promise<void>;
   showSuccess?: (msg: string) => void;
   handleError: (err: unknown) => void;
 };
 
-export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSuccess, handleError }: ActionsParams) {
+export function useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, showSuccess, handleError }: ActionsParams) {
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const successTimeoutRef = useRef<number | null>(null);
@@ -38,6 +38,9 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     try {
       if (showSuccess) showSuccess(msg);
     } catch (e) {
+      // Si la función externa falla, registramos para diagnóstico pero no rompemos la UI
+      // Esto evita el bloque vacío que ESLint marca como error
+      // eslint-disable-next-line no-console
       console.warn('[useOrganigramaActions] showSuccess hook threw:', e);
     }
   }, [showSuccess]);
@@ -52,45 +55,45 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
 
   const createRama = useCallback(async (data: CreateBranchData) => {
     try {
-      if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
-    await organigramaService.createRama(tenantId, groupSlug, data);
-    await loadRamas({ force: true });
+      if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
+        await organigramaService.createRama(tenantSlug, groupSlug, data);
+      await loadRamas();
       showSuccessLocal('Rama creada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
     }
-  }, [tenantId, groupSlug, loadRamas, handleError, showSuccessLocal]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const updateRama = useCallback(async (data: UpdateBranchData | UpdateRamaFormData) => {
     try {
-      if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+      if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
   const frontendData: UpdateBranchData = (data as UpdateBranchData);
-        await organigramaService.updateRama(tenantId, groupSlug, frontendData);
-      await loadRamas({ force: true });
+        await organigramaService.updateRama(tenantSlug, groupSlug, frontendData);
+      await loadRamas();
       showSuccessLocal('Rama actualizada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
     }
-  }, [tenantId, groupSlug, loadRamas, handleError, showSuccessLocal]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const createSubrama = useCallback(async (data: CreateSubgroupData | CreateSubramaFormData) => {
     try {
-      if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+      if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
       const frontendData = data as CreateSubgroupData;
-        await organigramaService.createSubrama(tenantId, groupSlug, frontendData.branchId, frontendData);
-      await loadRamas({ force: true });
+        await organigramaService.createSubrama(tenantSlug, groupSlug, frontendData.branchId, frontendData);
+      await loadRamas();
       showSuccessLocal('Subrama creada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
     }
-  }, [tenantId, groupSlug, loadRamas, handleError, showSuccessLocal]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const updateSubrama = useCallback(async (data: UpdateSubgroupData | UpdateSubramaFormData) => {
     try {
-  if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+      if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
       const frontendData = data as UpdateSubgroupData;
         const servicePayload: UpdateSubgroupData = { ...frontendData };
         if (!servicePayload.branchId) {
@@ -98,47 +101,48 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
           const maybeRamaId = (fd['ramaId'] ?? fd['section_id'] ?? fd['branchId']) as string | number | undefined;
           if (maybeRamaId) servicePayload.branchId = String(maybeRamaId);
         }
-        await organigramaService.updateSubrama(tenantId, groupSlug, servicePayload);
-      await loadRamas({ force: true });
+        await organigramaService.updateSubrama(tenantSlug, groupSlug, servicePayload);
+      await loadRamas();
       showSuccessLocal('Subrama actualizada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
     }
-  }, [tenantId, groupSlug, loadRamas, handleError, showSuccessLocal]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const deleteRama = useCallback(async (id: string) => {
-    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     try {
-  await organigramaService.deleteRama(tenantId, groupSlug, id);
-  await loadRamas({ force: true });
+      await organigramaService.deleteRama(tenantSlug, groupSlug, id);
+      await loadRamas();
       showSuccessLocal('Rama eliminada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
     }
-  }, [tenantId, groupSlug, loadRamas, handleError, showSuccessLocal]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
   const deleteSubrama = useCallback(async (sectionId: string, id: string) => {
-    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     try {
-  await organigramaService.deleteSubrama(tenantId, groupSlug, sectionId, id);
-  await loadRamas({ force: true });
+      await organigramaService.deleteSubrama(tenantSlug, groupSlug, sectionId, id);
+      await loadRamas();
       showSuccessLocal('Subrama eliminada con éxito');
     } catch (err) {
       handleError(err);
       throw err;
     }
-  }, [tenantId, groupSlug, loadRamas, handleError, showSuccessLocal]);
+  }, [tenantSlug, groupSlug, loadRamas, handleError, showSuccessLocal]);
 
+  // Acciones de galería para Secciones (Ramas)
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
 
   const addGalleryImage = useCallback(async (sectionId: string, file: File) => {
-    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     setIsLoadingGallery(true);
     try {
-  await organigramaService.addGalleryImage(tenantId, groupSlug, sectionId, file);
-  await loadRamas({ force: true });
+      await organigramaService.addGalleryImage(tenantSlug, groupSlug, sectionId, file);
+      await loadRamas();
       showSuccessLocal('Imagen agregada a la galería');
     } catch (err) {
       handleError(err);
@@ -146,14 +150,14 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     } finally {
       setIsLoadingGallery(false);
     }
-  }, [tenantId, groupSlug, loadRamas, showSuccessLocal, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
 
   const replaceGalleryImage = useCallback(async (sectionId: string, targetUuid: string, newFile: File) => {
-    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     setIsLoadingGallery(true);
     try {
-  await organigramaService.replaceGalleryImage(tenantId, groupSlug, sectionId, targetUuid, newFile);
-  await loadRamas({ force: true });
+      await organigramaService.replaceGalleryImage(tenantSlug, groupSlug, sectionId, targetUuid, newFile);
+      await loadRamas();
       showSuccessLocal('Imagen de galería reemplazada');
     } catch (err) {
       handleError(err);
@@ -161,14 +165,14 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     } finally {
       setIsLoadingGallery(false);
     }
-  }, [tenantId, groupSlug, loadRamas, showSuccessLocal, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
 
   const removeGalleryImage = useCallback(async (sectionId: string, targetUuidOrUrl: string, deleteFromStorage = false) => {
-    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     setIsLoadingGallery(true);
     try {
-  const result = await organigramaService.deleteGalleryImageById(tenantId, groupSlug, sectionId, targetUuidOrUrl, deleteFromStorage);
-  await loadRamas({ force: true });
+      const result = await organigramaService.deleteGalleryImageById(tenantSlug, groupSlug, sectionId, targetUuidOrUrl, deleteFromStorage);
+      await loadRamas();
       
       if (deleteFromStorage) {
         if (result) {
@@ -185,14 +189,14 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     } finally {
       setIsLoadingGallery(false);
     }
-  }, [tenantId, groupSlug, loadRamas, showSuccessLocal, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
 
   const removeImageFromGalleryOnly = useCallback(async (sectionId: string, targetUuidOrUrl: string) => {
-    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    if (!tenantSlug || !groupSlug) throw new Error('Tenant o group no disponibles');
     setIsLoadingGallery(true);
     try {
-  await organigramaService.removeGalleryImage(tenantId, groupSlug, sectionId, targetUuidOrUrl);
-  await loadRamas({ force: true });
+      await organigramaService.removeGalleryImage(tenantSlug, groupSlug, sectionId, targetUuidOrUrl);
+      await loadRamas();
       showSuccessLocal('Imagen removida de la galería. El archivo permanece en el servidor y puede ser reagregado más tarde.');
     } catch (err) {
       handleError(err);
@@ -200,7 +204,7 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     } finally {
       setIsLoadingGallery(false);
     }
-  }, [tenantId, groupSlug, loadRamas, showSuccessLocal, handleError]);
+  }, [tenantSlug, groupSlug, loadRamas, showSuccessLocal, handleError]);
 
   return {
     createRama,

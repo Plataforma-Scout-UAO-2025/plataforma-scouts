@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.model.Group;
+import uao.edu.co.scouts_project.organigrama.model.Tenant;
 import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
@@ -35,10 +36,10 @@ public class GroupService {
     }
     
     @Transactional(readOnly = true)
-    public List<GroupResponseDTO> getGroupsByTenant(String tenantId) {
-        ensureTenantExists(tenantId);
+    public List<GroupResponseDTO> getGroupsByTenant(String tenantSlug) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
         // 1. Obtener todos los grupos en una sola consulta
-        List<Group> groups = groupRepository.findByTenantId(tenantId);
+        List<Group> groups = groupRepository.findByTenantId(tenant.getTenantId());
         
         // 2. Recolectar TODOS los UUIDs de TODAS las imágenes de TODOS los grupos
         Set<UUID> allImageIds = groups.stream()
@@ -56,21 +57,21 @@ public class GroupService {
     }
     
     @Transactional(readOnly = true)
-    public GroupResponseDTO getGroupBySlug(String tenantId, String groupSlug) {
-        ensureTenantExists(tenantId);
-        Group group = findGroupOrThrow(tenantId, groupSlug);
+    public GroupResponseDTO getGroupBySlug(String tenantSlug, String groupSlug) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
         return toResponseDTO(group); // La versión simple es suficiente para un solo objeto
     }
     
     @Transactional
-    public GroupResponseDTO createGroup(String tenantId, GroupDTO dto) {
-        ensureTenantExists(tenantId);
-
-        if (groupRepository.existsByTenantIdAndSlug(tenantId, dto.slug())) {
+    public GroupResponseDTO createGroup(String tenantSlug, GroupDTO dto) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        
+        if (groupRepository.existsByTenantIdAndSlug(tenant.getTenantId(), dto.slug())) {
             throw new IllegalArgumentException("Group with slug '" + dto.slug() + "' already exists in this tenant");
         }
         
-        Group group = new Group(tenantId, dto.slug(), dto.name());
+        Group group = new Group(tenant.getTenantId(), dto.slug(), dto.name());
         mapDtoToEntity(dto, group);
         
         Group saved = groupRepository.save(group);
@@ -78,9 +79,9 @@ public class GroupService {
     }
     
     @Transactional
-    public GroupResponseDTO updateGroup(String tenantId, String groupSlug, GroupDTO dto) {
-        ensureTenantExists(tenantId);
-        Group group = findGroupOrThrow(tenantId, groupSlug);
+    public GroupResponseDTO updateGroup(String tenantSlug, String groupSlug, GroupDTO dto) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
         
         if (dto.logoObjectId() != null && !Objects.equals(dto.logoObjectId(), group.getLogoObjectId())) {
             storageService.deleteFileByObjectId(group.getLogoObjectId());
@@ -95,9 +96,9 @@ public class GroupService {
     }
     
     @Transactional
-    public void deleteGroup(String tenantId, String groupSlug) {
-        ensureTenantExists(tenantId);
-        Group group = findGroupOrThrow(tenantId, groupSlug);
+    public void deleteGroup(String tenantSlug, String groupSlug) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
         
         storageService.deleteFileByObjectId(group.getLogoObjectId());
         storageService.deleteFileByObjectId(group.getScarfObjectId());
@@ -106,9 +107,9 @@ public class GroupService {
     }
     
     @Transactional
-    public void deleteLogoImage(String tenantId, String groupSlug) {
-        ensureTenantExists(tenantId);
-        Group group = findGroupOrThrow(tenantId, groupSlug);
+    public void deleteLogoImage(String tenantSlug, String groupSlug) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
         
         UUID logoIdToDelete = group.getLogoObjectId();
         if (logoIdToDelete != null) {
@@ -119,9 +120,9 @@ public class GroupService {
     }
 
     @Transactional
-    public void deleteScarfImage(String tenantId, String groupSlug) {
-        ensureTenantExists(tenantId);
-        Group group = findGroupOrThrow(tenantId, groupSlug);
+    public void deleteScarfImage(String tenantSlug, String groupSlug) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
         
         UUID scarfIdToDelete = group.getScarfObjectId();
         if (scarfIdToDelete != null) {
@@ -132,9 +133,9 @@ public class GroupService {
     }
     
     @Transactional
-    public void updateLogo(String tenantId, String groupSlug, UUID logoObjectId) {
-        ensureTenantExists(tenantId);
-        Group group = findGroupOrThrow(tenantId, groupSlug);
+    public void updateLogo(String tenantSlug, String groupSlug, UUID logoObjectId) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
         
         // Eliminar logo anterior si existe y es diferente
         if (group.getLogoObjectId() != null && !group.getLogoObjectId().equals(logoObjectId)) {
@@ -146,9 +147,9 @@ public class GroupService {
     }
     
     @Transactional
-    public void updateScarf(String tenantId, String groupSlug, UUID scarfObjectId) {
-        ensureTenantExists(tenantId);
-        Group group = findGroupOrThrow(tenantId, groupSlug);
+    public void updateScarf(String tenantSlug, String groupSlug, UUID scarfObjectId) {
+        Tenant tenant = getTenantBySlug(tenantSlug);
+        Group group = findGroupOrThrow(tenant.getTenantId(), groupSlug);
         
         // Eliminar pañolón anterior si existe y es diferente
         if (group.getScarfObjectId() != null && !group.getScarfObjectId().equals(scarfObjectId)) {
@@ -163,11 +164,10 @@ public class GroupService {
         return groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
             .orElseThrow(() -> new IllegalArgumentException("Group not found with slug: " + groupSlug));
     }
-
-    private void ensureTenantExists(String tenantId) {
-        if (!tenantRepository.existsById(tenantId)) {
-            throw new IllegalArgumentException("Tenant not found with id: " + tenantId);
-        }
+    
+    private Tenant getTenantBySlug(String tenantSlug) {
+        return tenantRepository.findBySlug(tenantSlug)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with slug: " + tenantSlug));
     }
     
     private void mapDtoToEntity(GroupDTO dto, Group group) {

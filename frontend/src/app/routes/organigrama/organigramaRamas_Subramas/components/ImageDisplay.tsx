@@ -39,11 +39,11 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ rama }) => {
             alt={`Icono de ${displayName}`}
             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
             onError={(e) => {
-              console.error(' Error cargando imagen:', iconUrl);
+              console.error('❌ Error cargando imagen:', iconUrl);
               e.currentTarget.style.display = 'none';
             }}
             onLoad={() => {
-              console.log(' Imagen cargada correctamente:', displayName);
+              console.log('✅ Imagen cargada correctamente:', displayName);
             }}
           />
         </div>

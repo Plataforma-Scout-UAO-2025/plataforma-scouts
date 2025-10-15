@@ -5,34 +5,43 @@ import { useOrganigramaExport } from '../hooks/useOrganigramaExport';
 import type { Branch as Rama } from '../types/frontend';
 
 interface ExportActionsProps {
+  /** Datos de ramas locales (fallback) */
   ramas: Rama[];
+  /** Año seleccionado para filtrado */
   selectedYear?: string;
-  tenantId?: string;
+  /** Configuración para obtener datos del backend */
+  tenantSlug?: string;
   groupSlug?: string;
+  /** Estilos adicionales */
   className?: string;
 }
 
-export function ExportActions({
-  ramas,
-  tenantId,
+export function ExportActions({ 
+  ramas, 
+  selectedYear, 
+  tenantSlug, 
   groupSlug,
-  className = ""
+  className = "" 
 }: ExportActionsProps) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const { exportPDF, exportExcel } = useOrganigramaExport(ramas, { tenantId, groupSlug });
+  const { exportPDF, exportExcel } = useOrganigramaExport(
+    ramas, 
+    selectedYear, 
+    { tenantSlug, groupSlug }
+  );
 
   const handleExportPDF = async () => {
     try {
       setIsExportingPDF(true);
       setLastError(null);
-      console.log(' [ExportActions] Iniciando exportación PDF...');
+      console.log('🔄 [ExportActions] Iniciando exportación PDF...');
       await exportPDF();
-      console.log(' [ExportActions] PDF exportado exitosamente');
+      console.log('✅ [ExportActions] PDF exportado exitosamente');
     } catch (error) {
-      console.error(' [ExportActions] Error al exportar PDF:', error);
+      console.error('❌ [ExportActions] Error al exportar PDF:', error);
       const errorMsg = (error as Error & { response?: { status?: number } })?.response?.status === 403 
         ? 'Error de autenticación. Verifica tus permisos.'
         : 'Error al exportar PDF. Revisa la consola para más detalles.';
@@ -46,11 +55,11 @@ export function ExportActions({
     try {
       setIsExportingCSV(true);
       setLastError(null);
-      console.log(' [ExportActions] Iniciando exportación CSV...');
+      console.log('🔄 [ExportActions] Iniciando exportación CSV...');
       await exportExcel();
-      console.log(' [ExportActions] CSV exportado exitosamente');
+      console.log('✅ [ExportActions] CSV exportado exitosamente');
     } catch (error) {
-      console.error(' [ExportActions] Error al exportar CSV:', error);
+      console.error('❌ [ExportActions] Error al exportar CSV:', error);
       const errorMsg = (error as Error & { response?: { status?: number } })?.response?.status === 403 
         ? 'Error de autenticación. Verifica tus permisos.'
         : 'Error al exportar CSV. Revisa la consola para más detalles.';
@@ -87,7 +96,8 @@ export function ExportActions({
 
         <div className="text-xs text-gray-500 self-center ml-2">
           {ramas.length} rama{ramas.length !== 1 ? 's' : ''}
-          {tenantId && groupSlug && (
+          {selectedYear && ` (${selectedYear})`}
+          {tenantSlug && groupSlug && (
             <span className="block text-green-600">
               📡 Datos del backend
             </span>
@@ -97,7 +107,7 @@ export function ExportActions({
 
       {lastError && (
         <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
-           {lastError}
+          ⚠️ {lastError}
         </div>
       )}
     </div>

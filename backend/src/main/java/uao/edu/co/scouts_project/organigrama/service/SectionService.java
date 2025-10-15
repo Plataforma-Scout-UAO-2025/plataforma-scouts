@@ -13,6 +13,7 @@ import static java.util.stream.Collectors.toList;
 import uao.edu.co.scouts_project.organigrama.dto.SubgroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.model.Group;
 import uao.edu.co.scouts_project.organigrama.model.Section;
+import uao.edu.co.scouts_project.organigrama.model.Tenant;
 import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
@@ -43,8 +44,8 @@ public class SectionService {
     }
 
     @Transactional(readOnly = true)
-    public List<SectionResponseDTO> getSectionsByGroup(String tenantId, String groupSlug) {
-    Group group = getGroup(tenantId, groupSlug);
+    public List<SectionResponseDTO> getSectionsByGroup(String tenantSlug, String groupSlug) {
+        Group group = getGroupBySlug(tenantSlug, groupSlug);
         // 1. Obtener todas las secciones en una consulta
         List<Section> sections = sectionRepository.findByTenantIdAndGroupId(group.getTenantId(), group.getGroupId());
 
@@ -73,15 +74,15 @@ public class SectionService {
     }
 
     @Transactional(readOnly = true)
-    public SectionResponseDTO getSectionById(String tenantId, String groupSlug, Long sectionId) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+    public SectionResponseDTO getSectionById(String tenantSlug, String groupSlug, Long sectionId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
         return toResponseDTO(section);
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> getSectionWithSubgroups(String tenantId, String groupSlug, Long sectionId) {
-        SectionResponseDTO section = getSectionById(tenantId, groupSlug, sectionId);
-        List<SubgroupResponseDTO> subgroups = subgroupService.getSubgroupsBySection(tenantId, groupSlug, sectionId);
+    public Map<String, Object> getSectionWithSubgroups(String tenantSlug, String groupSlug, Long sectionId) {
+        SectionResponseDTO section = getSectionById(tenantSlug, groupSlug, sectionId);
+        List<SubgroupResponseDTO> subgroups = subgroupService.getSubgroupsBySection(tenantSlug, groupSlug, sectionId);
         return Map.of(
                 "section", section,
                 "subgroups", subgroups
@@ -89,8 +90,8 @@ public class SectionService {
     }
 
     @Transactional
-    public SectionResponseDTO createSection(String tenantId, String groupSlug, SectionDTO dto) {
-    Group group = getGroup(tenantId, groupSlug);
+    public SectionResponseDTO createSection(String tenantSlug, String groupSlug, SectionDTO dto) {
+        Group group = getGroupBySlug(tenantSlug, groupSlug);
         if (sectionRepository.existsByGroupIdAndName(group.getGroupId(), dto.name())) {
             throw new IllegalArgumentException("Section with name '" + dto.name() + "' already exists in this group");
         }
@@ -101,8 +102,8 @@ public class SectionService {
     }
 
     @Transactional
-    public SectionResponseDTO updateSection(String tenantId, String groupSlug, Long sectionId, SectionDTO dto) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+    public SectionResponseDTO updateSection(String tenantSlug, String groupSlug, Long sectionId, SectionDTO dto) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         if (storageService != null) {
             if (dto.iconObjectId() != null && !Objects.equals(dto.iconObjectId(), section.getIconObjectId())) {
@@ -134,8 +135,8 @@ public class SectionService {
     }
 
     @Transactional
-    public void deleteSection(String tenantId, String groupSlug, Long sectionId) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+    public void deleteSection(String tenantSlug, String groupSlug, Long sectionId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         if (storageService != null) {
             safeDeleteFromStorage(section.getIconObjectId());
@@ -149,8 +150,8 @@ public class SectionService {
     }
 
     @Transactional
-    public void deleteIconImage(String tenantId, String groupSlug, Long sectionId) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+    public void deleteIconImage(String tenantSlug, String groupSlug, Long sectionId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         UUID iconIdToDelete = section.getIconObjectId();
         if (iconIdToDelete != null && storageService != null) {
@@ -161,8 +162,8 @@ public class SectionService {
     }
 
     @Transactional
-    public void deletePhotoPrincipal(String tenantId, String groupSlug, Long sectionId) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+    public void deletePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         UUID photoPrincipalIdToDelete = section.getPhotoPrincipal();
         if (photoPrincipalIdToDelete != null && storageService != null) {
@@ -177,17 +178,17 @@ public class SectionService {
      * Conserva el comportamiento de eliminar del storage.
      */
     @Transactional
-    public void deleteGalleryImageById(String tenantId, String groupSlug, Long sectionId, UUID objectId) {
-        deleteGalleryImageById(tenantId, groupSlug, sectionId, objectId, true);
+    public void deleteGalleryImageById(String tenantSlug, String groupSlug, Long sectionId, UUID objectId) {
+        deleteGalleryImageById(tenantSlug, groupSlug, sectionId, objectId, true);
     }
 
     /**
      * Nuevo método compatible que devuelve el recurso actualizado y permite controlar si se borra del storage.
      */
     @Transactional
-    public SectionResponseDTO deleteGalleryImageById(String tenantId, String groupSlug, Long sectionId,
+    public SectionResponseDTO deleteGalleryImageById(String tenantSlug, String groupSlug, Long sectionId,
                                                      UUID objectId, boolean deleteFromStorage) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         UUID[] galleryIds = section.getGalleryObjectIds();
         if (galleryIds == null || galleryIds.length == 0) {
@@ -218,8 +219,8 @@ public class SectionService {
     }
 
     @Transactional
-    public void updateIcon(String tenantId, String groupSlug, Long sectionId, UUID iconObjectId) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+    public void updateIcon(String tenantSlug, String groupSlug, Long sectionId, UUID iconObjectId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         // Eliminar ícono anterior si existe y es diferente
         if (section.getIconObjectId() != null && !section.getIconObjectId().equals(iconObjectId)) {
@@ -233,8 +234,8 @@ public class SectionService {
     }
 
     @Transactional
-    public void updatePhotoPrincipal(String tenantId, String groupSlug, Long sectionId, UUID photoObjectId) {
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+    public void updatePhotoPrincipal(String tenantSlug, String groupSlug, Long sectionId, UUID photoObjectId) {
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         // Eliminar foto anterior si existe y es diferente
         if (section.getPhotoPrincipal() != null && !section.getPhotoPrincipal().equals(photoObjectId)) {
@@ -251,10 +252,10 @@ public class SectionService {
      * Método existente mantenido (void). Ahora delega al método que devuelve DTO.
      */
     @Transactional
-    public void patchGallery(String tenantId, String groupSlug, Long sectionId,
+    public void patchGallery(String tenantSlug, String groupSlug, Long sectionId,
                              List<uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest.PatchOperation> operations) {
         // delega a la versión que retorna DTO; se ignora el resultado para compatibilidad
-        patchGalleryAndReturn(tenantId, groupSlug, sectionId, operations);
+        patchGalleryAndReturn(tenantSlug, groupSlug, sectionId, operations);
     }
 
     /**
@@ -262,10 +263,10 @@ public class SectionService {
      * Mantiene la lógica existente (delete en replace/remove) y evita parseos ambiguos (UUID tipado).
      */
     @Transactional
-    public SectionResponseDTO patchGalleryAndReturn(String tenantId, String groupSlug, Long sectionId,
+    public SectionResponseDTO patchGalleryAndReturn(String tenantSlug, String groupSlug, Long sectionId,
             List<uao.edu.co.scouts_project.organigrama.dto.GalleryPatchRequest.PatchOperation> operations) {
 
-        Section section = findSectionOrThrow(tenantId, groupSlug, sectionId);
+        Section section = findSectionOrThrow(tenantSlug, groupSlug, sectionId);
 
         UUID[] currentGallery = section.getGalleryObjectIds();
         if (currentGallery == null) {
@@ -338,22 +339,17 @@ public class SectionService {
         return toResponseDTO(saved, urlMap);
     }
 
-    private Section findSectionOrThrow(String tenantId, String groupSlug, Long sectionId) {
-        Group group = getGroup(tenantId, groupSlug);
+    private Section findSectionOrThrow(String tenantSlug, String groupSlug, Long sectionId) {
+        Group group = getGroupBySlug(tenantSlug, groupSlug);
         return sectionRepository.findByTenantIdAndGroupIdAndSectionId(group.getTenantId(), group.getGroupId(), sectionId)
                 .orElseThrow(() -> new IllegalArgumentException("Section not found with id: " + sectionId));
     }
 
-    private Group getGroup(String tenantId, String groupSlug) {
-        verifyTenantExists(tenantId);
-        return groupRepository.findByTenantIdAndSlug(tenantId, groupSlug)
+    private Group getGroupBySlug(String tenantSlug, String groupSlug) {
+        Tenant tenant = tenantRepository.findBySlug(tenantSlug)
+                .orElseThrow(() -> new IllegalArgumentException("Tenant not found with slug: " + tenantSlug));
+        return groupRepository.findByTenantIdAndSlug(tenant.getTenantId(), groupSlug)
                 .orElseThrow(() -> new IllegalArgumentException("Group not found with slug: " + groupSlug));
-    }
-
-    private void verifyTenantExists(String tenantId) {
-        if (!tenantRepository.existsById(tenantId)) {
-            throw new IllegalArgumentException("Tenant not found with id: " + tenantId);
-        }
     }
 
     private void mapDtoToEntity(SectionDTO dto, Section section) {
