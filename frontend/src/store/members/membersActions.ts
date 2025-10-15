@@ -71,7 +71,6 @@ export const fetchMembersWithBranchAction = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const members = await getMembersWithBranch();
-      console.log("members", members);
       return members;
     } catch (error: unknown) {
       const axiosError = error as AxiosError;

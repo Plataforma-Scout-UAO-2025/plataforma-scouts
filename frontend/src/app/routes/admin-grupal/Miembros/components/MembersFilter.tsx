@@ -29,10 +29,6 @@ const MembersFilter = ({
 }: MembersFilterProps) => {
   const [isActive, setIsActive] = useState(false);
   const { filteredMembers, extractSectionsFromMember } = useMembersManagement();
-
-  // Extraer nombres de ramas únicos desde los miembros para evitar duplicados
-  
-
   const branches = Array.from(
     new Set(filteredMembers.flatMap((m) => extractSectionsFromMember(m)))
   );

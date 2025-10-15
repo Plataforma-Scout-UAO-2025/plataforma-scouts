@@ -5,7 +5,7 @@ export interface Member {
   // (camelCase y snake_case)
   tenantId?: string;
   memberId?: number | 0;
-  sectionId?: number | 0;
+  sectionId?: number;
   sectionName?: string;
   firstName?: string;
   lastName?: string;
