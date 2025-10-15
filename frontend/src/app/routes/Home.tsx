@@ -14,11 +14,11 @@ export default function Home() {
           <div>
             <LoginButton organization="org_6B3k4dao2Wf6eGxa"
                          className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
-              Grupo Chiminigagua 803
+              Test Grupo 1
             </LoginButton>
             <LoginButton organization="org_povsjufF3TEP1DZ7"
                          className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
-              Grupo Centinelas 113
+              Test Grupo 2
             </LoginButton>
           </div>
 
