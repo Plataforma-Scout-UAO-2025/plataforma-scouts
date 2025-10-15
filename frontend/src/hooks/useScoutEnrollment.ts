@@ -17,7 +17,6 @@ import type {
 import type { Member } from "@/types/member.type";
 
 type UseScoutEnrollmentReturn = {
-
   datosPersonales: PersonalData;
   setDatosPersonales: React.Dispatch<React.SetStateAction<PersonalData>>;
   datosEscolares: SchoolData;
@@ -72,7 +71,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
   useEffect(() => {
     if (orgId) {
-      setDatosPersonales(prev => ({ ...prev, tenantId: orgId }));
+      setDatosPersonales((prev) => ({ ...prev, tenantId: orgId }));
     }
   }, [orgId]);
 
@@ -87,7 +86,6 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     const { name, value } = e.target;
     setDatosPersonales((prev) => ({ ...prev, [name]: value }));
   }, []);
-
 
   const handleSchoolChange = useCallback((e: ChangeEvent) => {
     const { name, value } = e.target;
@@ -108,8 +106,13 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
       });
 
       if (incluirDatosEscolares) {
-        const requestData: CreateMemberWithSchoolRequest = { member: memberData, school: datosEscolares };
-        await dispatch(createMemberWithSchoolDataAction({ memberData: requestData })).unwrap();
+        const requestData: CreateMemberWithSchoolRequest = {
+          member: memberData,
+          school: datosEscolares,
+        };
+        await dispatch(
+          createMemberWithSchoolDataAction({ memberData: requestData })
+        ).unwrap();
       } else {
         await dispatch(createMemberAction(memberData)).unwrap();
       }
@@ -140,7 +143,14 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
       await enviarDatos();
     },
-    [loadingAuth, orgId, pagina, datosPersonales.email, datosPersonales.confirm_email, enviarDatos]
+    [
+      loadingAuth,
+      orgId,
+      pagina,
+      datosPersonales.email,
+      datosPersonales.confirm_email,
+      enviarDatos,
+    ]
   );
 
   const handleSchoolDialogResponse = useCallback(
@@ -153,11 +163,15 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     [enviarDatos]
   );
 
-  const totalPaginas = useMemo(() => (incluirDatosEscolares ? 3 : 2), [
-    incluirDatosEscolares,
-  ]);
+  const totalPaginas = useMemo(
+    () => (incluirDatosEscolares ? 3 : 2),
+    [incluirDatosEscolares]
+  );
 
-  const progreso = useMemo(() => (pagina / totalPaginas) * 100, [pagina, totalPaginas]);
+  const progreso = useMemo(
+    () => (pagina / totalPaginas) * 100,
+    [pagina, totalPaginas]
+  );
 
   return {
     datosPersonales,

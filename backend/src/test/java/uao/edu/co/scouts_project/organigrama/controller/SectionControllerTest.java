@@ -44,8 +44,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class SectionControllerTest {
 
-    private static final String BASE = "/api/v1/tenants/{tenant}/groups/{group}/sections";
-    private static final String TENANT = "tenant-slug";
+    private static final String BASE = "/api/v1/tenants/{tenantId}/groups/{group}/sections";
+    private static final String TENANT_ID = "tenant-001";
     private static final String GROUP  = "group-slug";
     private static final long SECTION_ID = 1L;
 
@@ -64,7 +64,7 @@ class SectionControllerTest {
                 UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), "https://cdn.example/img-2.jpg")
         );
         return new SectionResponseDTO(
-            id, "tenant1", 11L, "Manada", "Descripción",
+            id, TENANT_ID, 11L, "Manada", "Descripción",
             "https://cdn.example/icon.png",
             "https://cdn.example/photo-principal.jpg",
             List.of("https://cdn.example/legacy-1.jpg","https://cdn.example/legacy-2.jpg"),
@@ -77,7 +77,7 @@ class SectionControllerTest {
     private SectionDTO sampleRequest() {
         return new SectionDTO(
             null,
-            TENANT,
+            TENANT_ID,
             11L,
             "Manada",
             "Descripción",
@@ -97,14 +97,14 @@ class SectionControllerTest {
     void listSections_returnsOkWithArray() throws Exception {
         var dto1 = sampleResponse(1L);
         var dto2 = sampleResponse(2L);
-        given(sectionService.getSectionsByGroup(eq(TENANT), eq(GROUP))).willReturn(List.of(dto1, dto2));
+        given(sectionService.getSectionsByGroup(eq(TENANT_ID), eq(GROUP))).willReturn(List.of(dto1, dto2));
 
-        mvc.perform(get(BASE, TENANT, GROUP))
+        mvc.perform(get(BASE, TENANT_ID, GROUP))
            .andExpect(status().isOk())
            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
            .andExpect(jsonPath("$", hasSize(2)))
            .andExpect(jsonPath("$[0].sectionId", is(1)))
-           .andExpect(jsonPath("$[0].tenantId", is("tenant1")))
+           .andExpect(jsonPath("$[0].tenantId", is(TENANT_ID)))
            .andExpect(jsonPath("$[0].groupId", is(11)))
            .andExpect(jsonPath("$[0].name", is("Manada")))
            .andExpect(jsonPath("$[0].description", is("Descripción")))
@@ -121,13 +121,13 @@ class SectionControllerTest {
     @DisplayName("GET by id → 200 OK con payload completo")
     void getSectionById_returnsOk() throws Exception {
         var dto = sampleResponse(SECTION_ID);
-        given(sectionService.getSectionById(eq(TENANT), eq(GROUP), eq(SECTION_ID))).willReturn(dto);
+        given(sectionService.getSectionById(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID))).willReturn(dto);
 
-        mvc.perform(get(BASE + "/{id}", TENANT, GROUP, SECTION_ID))
+        mvc.perform(get(BASE + "/{id}", TENANT_ID, GROUP, SECTION_ID))
            .andExpect(status().isOk())
            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
            .andExpect(jsonPath("$.sectionId", is(1)))
-           .andExpect(jsonPath("$.tenantId", is("tenant1")))
+           .andExpect(jsonPath("$.tenantId", is(TENANT_ID)))
            .andExpect(jsonPath("$.groupId", is(11)))
            .andExpect(jsonPath("$.name", is("Manada")))
            .andExpect(jsonPath("$.description", is("Descripción")))
@@ -147,9 +147,9 @@ class SectionControllerTest {
             "section", sampleResponse(SECTION_ID),
             "subgroups", List.of(Map.of("id", 101, "name", "Lobatos"))
         );
-        given(sectionService.getSectionWithSubgroups(eq(TENANT), eq(GROUP), eq(SECTION_ID))).willReturn(payload);
+        given(sectionService.getSectionWithSubgroups(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID))).willReturn(payload);
 
-        mvc.perform(get(BASE + "/{id}/with-subgroups", TENANT, GROUP, SECTION_ID))
+        mvc.perform(get(BASE + "/{id}/with-subgroups", TENANT_ID, GROUP, SECTION_ID))
            .andExpect(status().isOk())
            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
            .andExpect(jsonPath("$.section.sectionId", is(1)))
@@ -160,7 +160,7 @@ class SectionControllerTest {
     @Test
     @DisplayName("POST inválido (body vacío) → 400")
     void create_invalid_returns400() throws Exception {
-        mvc.perform(post(BASE, TENANT, GROUP)
+    mvc.perform(post(BASE, TENANT_ID, GROUP)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(Map.of())))
            .andExpect(status().isBadRequest());
@@ -171,23 +171,23 @@ class SectionControllerTest {
     void create_valid_returns201() throws Exception {
         var request = sampleRequest();
         var created = sampleResponse(SECTION_ID);
-    given(sectionService.createSection(eq(TENANT), eq(GROUP), any(SectionDTO.class))).willReturn(created);
+        given(sectionService.createSection(eq(TENANT_ID), eq(GROUP), any(SectionDTO.class))).willReturn(created);
 
-        mvc.perform(post(BASE, TENANT, GROUP)
+    mvc.perform(post(BASE, TENANT_ID, GROUP)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(request)))
            .andExpect(status().isCreated())
-           .andExpect(header().string("Location", "/api/v1/tenants/" + TENANT + "/groups/" + GROUP + "/sections/" + SECTION_ID))
+           .andExpect(header().string("Location", "/api/v1/tenants/" + TENANT_ID + "/groups/" + GROUP + "/sections/" + SECTION_ID))
            .andExpect(jsonPath("$.sectionId", is(1)))
            .andExpect(jsonPath("$.name", is("Manada")));
 
-    verify(sectionService).createSection(eq(TENANT), eq(GROUP), any(SectionDTO.class));
+    verify(sectionService).createSection(eq(TENANT_ID), eq(GROUP), any(SectionDTO.class));
     }
 
     @Test
     @DisplayName("PUT inválido (body vacío) → 400")
     void update_invalid_returns400() throws Exception {
-        mvc.perform(put(BASE + "/{id}", TENANT, GROUP, SECTION_ID)
+    mvc.perform(put(BASE + "/{id}", TENANT_ID, GROUP, SECTION_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(Map.of())))
            .andExpect(status().isBadRequest());
@@ -198,36 +198,36 @@ class SectionControllerTest {
     void update_valid_returns200() throws Exception {
         var request = sampleRequest();
         var updated = sampleResponse(SECTION_ID);
-    given(sectionService.updateSection(eq(TENANT), eq(GROUP), eq(SECTION_ID), any(SectionDTO.class))).willReturn(updated);
+        given(sectionService.updateSection(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), any(SectionDTO.class))).willReturn(updated);
 
-        mvc.perform(put(BASE + "/{id}", TENANT, GROUP, SECTION_ID)
+    mvc.perform(put(BASE + "/{id}", TENANT_ID, GROUP, SECTION_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(request)))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.sectionId", is(1)))
            .andExpect(jsonPath("$.name", is("Manada")));
 
-    verify(sectionService).updateSection(eq(TENANT), eq(GROUP), eq(SECTION_ID), any(SectionDTO.class));
+    verify(sectionService).updateSection(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), any(SectionDTO.class));
     }
 
     @Test
     @DisplayName("DELETE → 204 No Content")
     void delete_returns204() throws Exception {
-        doNothing().when(sectionService).deleteSection(eq(TENANT), eq(GROUP), eq(SECTION_ID));
+    doNothing().when(sectionService).deleteSection(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
 
-        mvc.perform(delete(BASE + "/{id}", TENANT, GROUP, SECTION_ID))
+    mvc.perform(delete(BASE + "/{id}", TENANT_ID, GROUP, SECTION_ID))
            .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("DELETE icon → 204 No Content")
     void deleteIcon_returns204() throws Exception {
-        doNothing().when(sectionService).deleteIconImage(eq(TENANT), eq(GROUP), eq(SECTION_ID));
+          doNothing().when(sectionService).deleteIconImage(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
 
-        mvc.perform(delete(BASE + "/{id}/icon", TENANT, GROUP, SECTION_ID))
+    mvc.perform(delete(BASE + "/{id}/icon", TENANT_ID, GROUP, SECTION_ID))
            .andExpect(status().isNoContent());
 
-        verify(sectionService).deleteIconImage(eq(TENANT), eq(GROUP), eq(SECTION_ID));
+    verify(sectionService).deleteIconImage(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
     }
 
     @Test
@@ -235,47 +235,47 @@ class SectionControllerTest {
     void deleteGallery_returns200() throws Exception {
         UUID objectId = UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
         var updated = sampleResponse(SECTION_ID);
-        given(sectionService.deleteGalleryImageById(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(objectId), eq(true))).willReturn(updated);
+    given(sectionService.deleteGalleryImageById(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(objectId), eq(true))).willReturn(updated);
 
-        mvc.perform(delete(BASE + "/{id}/gallery/{objectId}", TENANT, GROUP, SECTION_ID, objectId)
+    mvc.perform(delete(BASE + "/{id}/gallery/{objectId}", TENANT_ID, GROUP, SECTION_ID, objectId)
                 .param("deleteFromStorage", "true"))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.sectionId", is(1)))
            .andExpect(jsonPath("$.gallery", hasSize(2)));
 
-        verify(sectionService).deleteGalleryImageById(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(objectId), eq(true));
+    verify(sectionService).deleteGalleryImageById(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(objectId), eq(true));
     }
 
     @Test
     @DisplayName("PATCH icon → 204 No Content")
     void updateIcon_returns204() throws Exception {
         UUID objectId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-        doNothing().when(sectionService).updateIcon(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(objectId));
+    doNothing().when(sectionService).updateIcon(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(objectId));
 
         var request = new UpdateImageRequest(objectId);
 
-        mvc.perform(patch(BASE + "/{id}/icon", TENANT, GROUP, SECTION_ID)
+    mvc.perform(patch(BASE + "/{id}/icon", TENANT_ID, GROUP, SECTION_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(request)))
            .andExpect(status().isNoContent());
 
-        verify(sectionService).updateIcon(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(objectId));
+    verify(sectionService).updateIcon(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(objectId));
     }
 
     @Test
     @DisplayName("PATCH photo principal → 204 No Content")
     void updatePhotoPrincipal_returns204() throws Exception {
         UUID objectId = UUID.fromString("223e4567-e89b-12d3-a456-426614174000");
-        doNothing().when(sectionService).updatePhotoPrincipal(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(objectId));
+    doNothing().when(sectionService).updatePhotoPrincipal(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(objectId));
 
         var request = new UpdateImageRequest(objectId);
 
-        mvc.perform(patch(BASE + "/{id}/photo-principal", TENANT, GROUP, SECTION_ID)
+    mvc.perform(patch(BASE + "/{id}/photo-principal", TENANT_ID, GROUP, SECTION_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(request)))
            .andExpect(status().isNoContent());
 
-        verify(sectionService).updatePhotoPrincipal(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(objectId));
+    verify(sectionService).updatePhotoPrincipal(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(objectId));
     }
 
     @Test
@@ -288,15 +288,15 @@ class SectionControllerTest {
         ));
 
         var updated = sampleResponse(SECTION_ID);
-        given(sectionService.patchGalleryAndReturn(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(request.operations()))).willReturn(updated);
+    given(sectionService.patchGalleryAndReturn(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(request.operations()))).willReturn(updated);
 
-        mvc.perform(patch(BASE + "/{id}/gallery", TENANT, GROUP, SECTION_ID)
+    mvc.perform(patch(BASE + "/{id}/gallery", TENANT_ID, GROUP, SECTION_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(request)))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.sectionId", is(1)))
            .andExpect(jsonPath("$.gallery", hasSize(2)));
 
-        verify(sectionService).patchGalleryAndReturn(eq(TENANT), eq(GROUP), eq(SECTION_ID), eq(request.operations()));
+    verify(sectionService).patchGalleryAndReturn(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID), eq(request.operations()));
     }
 }
