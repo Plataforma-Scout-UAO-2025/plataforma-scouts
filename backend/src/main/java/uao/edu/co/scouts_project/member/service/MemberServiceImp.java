@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
 import uao.edu.co.scouts_project.member.MemberStatusException;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
@@ -40,9 +39,6 @@ public class MemberServiceImp implements IMemberService {
     @Autowired
     private SubgroupRepository subgroupRepository;
 
-    @Autowired
-    private PermissionQueryPort  permissionQueryPort;
-
     /**
      * Crea un nuevo miembro validando duplicados e información obligatoria.
      *
@@ -66,14 +62,7 @@ public class MemberServiceImp implements IMemberService {
                 miembro.setStatus(Status.PENDING);
             }
 
-            String tenant_id = permissionQueryPort.getCurrentUserOrgId();
-            if (tenant_id.isBlank()) {
-                log.error("No org_id found in JWT for user: {}", userId);
-                throw new IllegalStateException("User does not have an associated organization");
-            }
-
             miembro.setUserId(userId);
-            miembro.setTenantId(tenant_id);
 
             Member savedMember = memberRepository.save(miembro);
             log.info("Member created successfully with ID: {}", savedMember.getMemberId());
