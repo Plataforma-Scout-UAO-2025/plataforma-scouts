@@ -7,6 +7,7 @@ import ScoutView from "./components/ScoutView";
 import ComiteAdminView from "./components/ComiteAdminView";
 import ScouterView from "./components/ScouterView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
+import TesoreroView from "./components/TesoreroView";
 
 
 export default function Dashboard() {
@@ -29,12 +30,15 @@ export default function Dashboard() {
 
     case RawRole.SCOUT:
       return <ScoutView />;
-
+    
     case RawRole.COMITE_ADMIN:
       return <ComiteAdminView />;
 
     case RawRole.SCOUTER:
       return <ScouterView />;
+
+    case RawRole.TESORERO:
+      return <TesoreroView />;
 
     default:
       // Dashboard genérico para otros roles
