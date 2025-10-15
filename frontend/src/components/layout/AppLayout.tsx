@@ -121,6 +121,7 @@ const scouterItems: MenuItem[] = [
 const comiteItems: MenuItem[] = [
   { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
   { id: "grupos", label: "Grupos", icon: <Users />, href: "/app/grupos" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "inscripcion", label: "Inscripcion", icon: <Pencil />, href: "/app/inscripcion" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/estado-cuenta" },
   { id: "financiero-cuotas", label: "Cuotas", icon: <DollarSign />, href: "/app/financiero/cuotas" },
