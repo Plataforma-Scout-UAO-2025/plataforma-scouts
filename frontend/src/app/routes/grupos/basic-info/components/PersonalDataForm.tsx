@@ -2,21 +2,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import EmergencyContacts from "./EmergencyContacts";
 import type { PersonalData, ChangeEvent } from "@/types/enrollment.type";
-import type { GroupResponseDTO } from "@/types/group.type";
 
 interface Props {
   datos: PersonalData;
   handleChange: (e: ChangeEvent) => void;
-  groups: GroupResponseDTO[];
-  loadingGroups: boolean;
   setDatos: React.Dispatch<React.SetStateAction<PersonalData>>;
 }
 
 export default function PersonalDataForm({
   datos,
   handleChange,
-  groups,
-  loadingGroups,
   setDatos,
 }: Props) {
   return (
@@ -173,28 +168,6 @@ export default function PersonalDataForm({
           value={datos.height}
           onChange={handleChange}
           className="w-full"/>
-      </div>
-
-      <div className="col-span-full">
-        <Label htmlFor="group">Grupo scout *</Label>
-        <select
-          id="group"
-          name="group"
-          value={datos.group}
-          onChange={handleChange}
-          disabled={loadingGroups}
-          className="w-full border rounded-md h-10 px-3 py-2"
-          required
-        >
-          <option value="">
-            {loadingGroups ? "Cargando grupos..." : "Selecciona un grupo..."}
-          </option>
-          {groups.map((g, i) => (
-            <option key={i} value={g.name}>
-              {g.name}
-            </option>
-          ))}
-        </select>
       </div>
 
       <EmergencyContacts datos={datos} setDatos={setDatos} />

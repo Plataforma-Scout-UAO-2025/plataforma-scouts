@@ -5,6 +5,7 @@ import AdminGrupoView from "./components/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
 import ScoutView from "./components/ScoutView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
+import TesoreroView from "./components/TesoreroView";
 
 
 export default function Dashboard() {
@@ -24,9 +25,12 @@ export default function Dashboard() {
 
     case RawRole.ACUDIENTE:
       return <AcudienteView />;
-    
+
     case RawRole.SCOUT:
       return <ScoutView />;
+
+    case RawRole.TESORERO:
+      return <TesoreroView />;
 
     default:
       // Dashboard genérico para otros roles
