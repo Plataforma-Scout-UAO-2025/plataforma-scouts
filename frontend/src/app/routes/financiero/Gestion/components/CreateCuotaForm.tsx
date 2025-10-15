@@ -182,7 +182,7 @@ export default function CreateCuotaForm({
         };
 
         const response = await api.patch(
-          `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}/${cuotaId}`,
+          `finanzas/fees/${tenantId}/${cuotaId}`,
           dataToSendEdit
         );
 
@@ -204,7 +204,7 @@ export default function CreateCuotaForm({
       // Modo creación: crear nueva cuota
       try {
         const response = await api.post(
-          `${import.meta.env.VITE_BACKEND_URL}finanzas/fees`,
+          `finanzas/fees`,
           dataToSendCreate
         );
 
