@@ -56,9 +56,9 @@ export default function RejectModal({
 
       handleClose();
       onSuccess();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Error al rechazar solicitud:", e);
-      toast.error(e?.message || "Ocurrió un error al procesar el rechazo.");
+      toast.error("Ocurrió un error al procesar el rechazo.");
     } finally {
       setLoading(false);
     }

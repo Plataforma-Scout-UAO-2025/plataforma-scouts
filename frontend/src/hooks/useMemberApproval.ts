@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Member } from "@/types/member.type";
+import type { Member, UpdateMember } from "@/types/member.type";
 import { useAppDispatch } from "./useAppDispatch";
 import {
   updateMemberStatusAction,
@@ -7,8 +7,19 @@ import {
 } from "@/store/members/membersActions";
 import { toast } from "sonner";
 
+type AnyMember = Member | UpdateMember;
+
+function getMemberId(m?: AnyMember | null): number | undefined {
+  if (!m) return undefined;
+  const id =
+    (m as UpdateMember).memberId ??
+    (m as Member).member_id ??
+    (m as unknown as { id?: number }).id;
+  return typeof id === "string" ? Number(id) : id;
+}
+
 interface UseMemberApprovalArgs {
-  member: Member | null;
+  member: AnyMember | null;
   selectedSection: string;
   selectedSubgroup: string;
   onSuccess: () => void;
@@ -17,7 +28,6 @@ interface UseMemberApprovalArgs {
 
 export function useMemberApproval({
   member,
-  selectedSection,
   selectedSubgroup,
   onSuccess,
   onClose,
@@ -25,12 +35,13 @@ export function useMemberApproval({
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
 
-  const canAccept = Boolean(member && selectedSection);
+  const memberId = getMemberId(member);
+  const canAccept = Boolean(memberId); // ahora no exige sección
 
   const accept = async () => {
-    if (!member) return;
-    if (!selectedSection) {
-      toast.warning("Por favor, selecciona una rama antes de aceptar.");
+    if (!memberId) {
+      console.error("[useMemberApproval] memberId es undefined", member);
+      toast.error("No se pudo identificar el miembro (ID inválido).");
       return;
     }
 
@@ -39,34 +50,45 @@ export function useMemberApproval({
 
       await dispatch(
         updateMemberStatusAction({
-          id: member.member_id as string | number,
+          id: memberId,
           status: "APPROVED",
         })
       ).unwrap();
 
-      await dispatch(
-        updateMemberAction({
-          uid: String(member.member_id),
-          updates: {
-            section_id: Number(selectedSection),
-            subgroup_id: selectedSubgroup
-              ? Number(selectedSubgroup)
-              : undefined,
-          } as Partial<Member>,
-        })
-      ).unwrap();
+      const updates: Partial<UpdateMember> = {};
+      /*if (selectedSection) {
+        updates.sectionId = Number(selectedSection);
+      }*/
+      if (selectedSubgroup) {
+        updates.subgroupId = Number(selectedSubgroup);
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await dispatch(
+          updateMemberAction({
+            uid: String(memberId),
+            updates,
+          })
+        ).unwrap();
+      }
+
+      const firstName =
+        (member as UpdateMember).firstName ??
+        (member as Member).first_name ??
+        "";
+      const lastName =
+        (member as UpdateMember).lastName ?? (member as Member).last_name ?? "";
 
       toast.success(
-        `La solicitud de ${member.first_name} ${member.last_name} fue aprobada exitosamente.`
+        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`
       );
 
       onClose();
       onSuccess();
-    } catch (e: any) {
+    } catch (e) {
       console.error("Error al aceptar solicitud:", e);
       toast.error(
-        e?.message ||
-          "Ocurrió un error al procesar la solicitud. Intenta nuevamente."
+        "Ocurrió un error al procesar la solicitud. Intenta nuevamente."
       );
     } finally {
       setLoading(false);

@@ -7,11 +7,9 @@ import {
   updateMember,
   updateMemberStatus,
   createMember,
-  createMemberWithSchool
+  createMemberWithSchool,
 } from "@/api/membersApi";
-import { validateClient } from "../../lib/zodUtils";
-import { updateMemberSchema } from "@/schemas/memberSchema";
-import type { Member } from "@/types/member.type";
+import type { Member, UpdateMember } from "@/types/member.type";
 import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";
 
 // Obtener datos de un miembro desde Firestore
@@ -75,7 +73,10 @@ export const updateMemberStatusAction = createAsyncThunk<
 >(
   "member/updateStatus",
   async (
-    { id, status }: { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
+    {
+      id,
+      status,
+    }: { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
     { rejectWithValue }
   ) => {
     try {
@@ -84,7 +85,8 @@ export const updateMemberStatusAction = createAsyncThunk<
     } catch (error: unknown) {
       const axiosError = error as AxiosError;
       const errorData = axiosError.response?.data as { error: string };
-      const errorMessage = errorData?.error || "Error al actualizar el estado del miembro";
+      const errorMessage =
+        errorData?.error || "Error al actualizar el estado del miembro";
       return rejectWithValue({ error: errorMessage });
     }
   }
@@ -93,30 +95,19 @@ export const updateMemberStatusAction = createAsyncThunk<
 // Actualizar datos de un miembro en Firestore
 export const updateMemberAction = createAsyncThunk<
   { message: string },
-  { uid: string; updates: Partial<Member> },
+  { uid: string; updates: Partial<UpdateMember> },
   { rejectValue: { error: string } }
->(
-  "member/update",
-  async (
-    { uid, updates }: { uid: string; updates: Partial<Member> },
-    { rejectWithValue }
-  ) => {
-    const validation = validateClient(updateMemberSchema, updates);
-    if (!validation.success) {
-      return rejectWithValue({ error: validation.error ?? "Datos inválidos" });
-    }
-
-    try {
-      const response = await updateMember(uid, updates);
-      return response;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const errorData = axiosError.response?.data as { error: string };
-      const errorMessage = errorData?.error || "Error al actualizar el miembro";
-      return rejectWithValue({ error: errorMessage });
-    }
+>("member/update", async ({ uid, updates }, { rejectWithValue }) => {
+  try {
+    const response = await updateMember(uid, updates);
+    return response;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage = errorData?.error || "Error al actualizar el miembro";
+    return rejectWithValue({ error: errorMessage });
   }
-);
+});
 
 // Crear un nuevo miembro
 export const createMemberAction = createAsyncThunk<
@@ -144,19 +135,22 @@ export const createMemberWithSchoolDataAction = createAsyncThunk<
   { message: string; newMember?: Member },
   { memberData: CreateMemberWithSchoolRequest },
   { rejectValue: { error: string } }
->("member/createWithSchoolData", async ({ memberData}, { rejectWithValue }) => {
-  try {
-    const fullMemberData = { ...memberData };
-    const response = await createMemberWithSchool(fullMemberData);
-    return {
-      message: "Miembro creado exitosamente con datos escolares",
-      newMember: response,
-    };
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error: string };
-    const errorMessage =
-      errorData?.error || "Error al crear el miembro con datos escolares";
-    return rejectWithValue({ error: errorMessage });
+>(
+  "member/createWithSchoolData",
+  async ({ memberData }, { rejectWithValue }) => {
+    try {
+      const fullMemberData = { ...memberData };
+      const response = await createMemberWithSchool(fullMemberData);
+      return {
+        message: "Miembro creado exitosamente con datos escolares",
+        newMember: response,
+      };
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage =
+        errorData?.error || "Error al crear el miembro con datos escolares";
+      return rejectWithValue({ error: errorMessage });
+    }
   }
-});
+);

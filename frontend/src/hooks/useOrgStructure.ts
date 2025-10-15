@@ -1,7 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import type { Section } from "@/types/section.type";
-import type { Subgroup } from "@/types/subgroup.type";
-import api from "@/api/axios";
+import type { Section } from "@/types/section-simple.type";
+import type { Subgroup } from "@/types/subgroup-simple.type";
+import {
+  getGroupsByTenant,
+  getSections,
+  getSubgroups,
+} from "@/api/organigramaApi";
 
 export interface Group {
   groupId: number;
@@ -36,67 +40,93 @@ export function useOrgStructure({ orgId, open }: UseOrgStructureOptions) {
   }, []);
 
   useEffect(() => {
+    if (!orgId || !open) return;
+
+    const ac = new AbortController();
     const loadGroups = async () => {
-      if (!orgId || !open) return;
       setLoadingGroups(true);
       try {
-        const { data } = await api.get<Group[]>(`/tenants/${orgId}/groups`);
-        setGroups(data ?? []);
-        if (data?.length === 1) {
-          setSelectedGroupSlug(data[0].groupSlug);
+        const data = await getGroupsByTenant(orgId, ac.signal);
+
+        const mapped: Group[] = (data ?? []).map((g: any) => ({
+          groupId: (g.groupId ?? g.id) as number,
+          groupName: (g.groupName ?? g.name) as string,
+          groupSlug: (g.groupSlug ?? g.slug) as string,
+        }));
+
+        setGroups(mapped);
+
+        if (mapped.length === 1) {
+          setSelectedGroupSlug(mapped[0].groupSlug);
         }
       } catch (e) {
-        console.error("Error al cargar grupos:", e);
-        setGroups([]);
+        if (!(e instanceof DOMException && e.name === "AbortError")) {
+          console.error("Error al cargar grupos:", e);
+          setGroups([]);
+        }
       } finally {
         setLoadingGroups(false);
       }
     };
+
     loadGroups();
+    return () => ac.abort();
   }, [orgId, open]);
 
   useEffect(() => {
-    const fetchSections = async () => {
-      if (!orgId || !selectedGroupSlug || !open) {
-        setSections([]);
-        return;
-      }
+    if (!orgId || !selectedGroupSlug || !open) {
+      setSections([]);
+      return;
+    }
+
+    const ac = new AbortController();
+    const loadSections = async () => {
       setLoadingSections(true);
       try {
-        const { data } = await api.get<Section[]>(
-          `/tenants/${orgId}/groups/${selectedGroupSlug}/sections`
-        );
+        const data = await getSections(orgId, selectedGroupSlug);
         setSections(data ?? []);
       } catch (e) {
-        console.error("Error al cargar secciones:", e);
-        setSections([]);
+        if (!(e instanceof DOMException && e.name === "AbortError")) {
+          console.error("Error al cargar secciones:", e);
+          setSections([]);
+        }
       } finally {
         setLoadingSections(false);
       }
     };
-    fetchSections();
+
+    loadSections();
+    return () => ac.abort();
   }, [orgId, open, selectedGroupSlug]);
 
   useEffect(() => {
-    const fetchSubgroups = async () => {
-      if (!orgId || !selectedGroupSlug || !selectedSection) {
-        setSubgroups([]);
-        return;
-      }
+    if (!orgId || !selectedGroupSlug || !selectedSection) {
+      setSubgroups([]);
+      return;
+    }
+
+    const ac = new AbortController();
+    const loadSubgroups = async () => {
       setLoadingSubgroups(true);
       try {
-        const { data } = await api.get<Subgroup[]>(
-          `/tenants/${orgId}/groups/${selectedGroupSlug}/sections/${selectedSection}/subgroups`
+        const data = await getSubgroups(
+          Number(selectedSection),
+          orgId,
+          selectedGroupSlug
         );
         setSubgroups(data ?? []);
       } catch (e) {
-        console.error("Error al cargar subgrupos:", e);
-        setSubgroups([]);
+        if (!(e instanceof DOMException && e.name === "AbortError")) {
+          console.error("Error al cargar subgrupos:", e);
+          setSubgroups([]);
+        }
       } finally {
         setLoadingSubgroups(false);
       }
     };
-    fetchSubgroups();
+
+    loadSubgroups();
+    return () => ac.abort();
   }, [orgId, selectedGroupSlug, selectedSection]);
 
   return {
