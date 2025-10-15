@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.member.service;
 
+import uao.edu.co.scouts_project.member.dto.MemberWithSubgroupAndSectionDto;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 
@@ -81,5 +82,12 @@ public interface IMemberService {
      */
     Boolean assign_subGroup(Long memberId, Long subGroupId);
 
+    /**
+     * Obtiene todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.
+     * El tenantId se obtiene del JWT token del usuario autenticado (claim org_id).
+     *
+     * @return Lista de miembros con información completa de subgrupo y sección.
+     */
+    List<MemberWithSubgroupAndSectionDto> get_members_with_subgroup_and_section();
 
 }

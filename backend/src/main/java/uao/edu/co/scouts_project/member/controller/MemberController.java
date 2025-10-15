@@ -295,4 +295,36 @@ public class MemberController {
                     .body(Map.of("error", "No se pudo asignar el subgrupo. Verifique los datos o el estado del subgrupo."));
         }
     }
+
+    /**
+     * Lista todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.
+     * El tenantId se obtiene automáticamente del JWT token (claim org_id) del usuario autenticado.
+     * 
+     * @return Lista de miembros con información completa de subgrupo y sección, o lista vacía si no hay miembros
+     */
+    @GetMapping("/list_members_with_details")
+    public ResponseEntity<List<MemberWithSubgroupAndSectionDto>> listMembersWithDetails() {
+        
+        log.info("Listando miembros con detalles completos para el usuario autenticado");
+
+        try {
+            List<MemberWithSubgroupAndSectionDto> members = 
+                    memberservice.get_members_with_subgroup_and_section();
+
+            if (members.isEmpty()) {
+                log.info("No se encontraron miembros para el tenant del usuario autenticado");
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            log.info("Se encontraron {} miembros con detalles completos", members.size());
+            return ResponseEntity.ok(members);
+
+        } catch (IllegalStateException e) {
+            log.error("Error: No se pudo determinar la organizaci�n del usuario: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            log.error("Error inesperado al listar miembros con detalles: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
