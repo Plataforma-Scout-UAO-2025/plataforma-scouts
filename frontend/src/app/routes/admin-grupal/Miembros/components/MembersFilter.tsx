@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -7,16 +7,14 @@ import {
   Button,
   Input,
 } from "@/components/ui/index";
-import { branches } from "@/lib/mockObjects";
-import { ChevronDown, ChevronUp, BrushCleaning, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
+import { useMembersManagement } from "@/hooks/useMembersManagement";
+import { ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
 
 interface MembersFilterProps {
   searchFilter: string;
   setSearchFilter: (value: string) => void;
-  cityFilter: string;
-  setCityFilter: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
   branchFilter: string;
   setBranchFilter: (value: string) => void;
 }
@@ -24,20 +22,17 @@ interface MembersFilterProps {
 const MembersFilter = ({
   searchFilter,
   setSearchFilter,
-  cityFilter,
-  setCityFilter,
+  statusFilter,
+  setStatusFilter,
   branchFilter,
   setBranchFilter,
 }: MembersFilterProps) => {
   const [isActive, setIsActive] = useState(false);
-  const navigate = useNavigate();
-  const members = useTenantMembersByStatus({ status: "APPROVED" }).members;
-  const cities = useMemo(() => {
-    const uniqueCities = [
-      ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
-    ];
-    return uniqueCities.sort();
-  }, [members]);
+  const { filteredMembers, extractSectionsFromMember } = useMembersManagement();
+  const branches = Array.from(
+    new Set(filteredMembers.flatMap((m) => extractSectionsFromMember(m)))
+  );
+
   return (
     <>
       <div className="flex w-2/3 gap-4">
@@ -50,23 +45,23 @@ const MembersFilter = ({
         />
         <DropdownMenu onOpenChange={setIsActive}>
           <DropdownMenuTrigger className="w-3/5 py-1 px-2 text-sm border border-primary rounded-md justify-between flex items-center">
-            {cityFilter || "Seleccionar dirección..."}{" "}
+            {statusFilter || "Seleccionar Estado..."}{" "}
             {isActive ? <ChevronUp /> : <ChevronDown />}
           </DropdownMenuTrigger>
           <DropdownMenuContent className="py-1 px-2 text-sm border border-primary bg-background rounded-md">
             <DropdownMenuItem
               className="cursor-pointer"
-              onSelect={() => setCityFilter("")}
+              onSelect={() => setStatusFilter("")}
             >
-              Todas las direcciones
+              Todos los estados
             </DropdownMenuItem>
-            {cities.map((city) => (
+            {["Activo", "Inactivo"].map((status) => (
               <DropdownMenuItem
-                key={city}
+                key={status}
                 className="cursor-pointer"
-                onSelect={() => setCityFilter(city ?? "")}
+                onSelect={() => setStatusFilter(status)}
               >
-                {city}
+                {status}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -83,33 +78,29 @@ const MembersFilter = ({
             >
               Todas las ramas
             </DropdownMenuItem>
-            {branches.map((branch) => (
+            {branches.map((b) => (
               <DropdownMenuItem
-                key={branch}
+                key={b}
                 className="cursor-pointer"
-                onSelect={() => setBranchFilter(branch)}
+                onSelect={() => setBranchFilter(b)}
               >
-                {branch}
+                {b}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+      <div className="flex gap-4 justify-end">
         <Button
           variant="primary"
-          className="w-1/6 flex h-auto px-3"
+          className="flex h-auto px-3"
           onClick={() => {
             setSearchFilter("");
-            setCityFilter("");
+            setStatusFilter("");
             setBranchFilter("");
           }}
         >
           <BrushCleaning /> Limpiar
-        </Button>
-      </div>
-      <div className="flex gap-4 justify-end">
-        <Button variant="primary" onClick={() => {navigate("/app/inscripcion")}}>
-          <Plus />
-          Crear Nuevo Integrante
         </Button>
       </div>
     </>

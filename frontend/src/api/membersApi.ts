@@ -40,6 +40,12 @@ export const getMembersByStatus = async (
   return response.data;
 };
 
+// Obtener miembros por subrama
+export const getMembersWithBranch = async () => {
+  const response = await api.get<Member[]>("/members/list_members_with_details");
+  return response.data;
+};
+
 // Actualizar estado de un miembro
 export const updateMemberStatus = async (
   id: string | number,

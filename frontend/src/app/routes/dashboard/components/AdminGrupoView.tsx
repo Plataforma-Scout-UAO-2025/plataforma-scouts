@@ -1,23 +1,23 @@
 import { useEffect, useMemo } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
+import { fetchMembersAction } from "@/store/members/membersActions";
 import HomeCard from "./HomeCard";
 import BranchDistribution from "./BranchDistribution";
 import GeneralStats from "./GeneralStats";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { useMember } from "@/hooks/useMember";
-import { fetchMembersAction } from "@/store/members/membersActions";
+import { useMembersManagement } from "@/hooks/useMembersManagement";
 
 const AdminGrupoView = () => {
   const dispatch = useAppDispatch();
-  const { members, loading } = useMember();
+  const { user } = useAuth0();
+  const { filteredMembers, loading } = useMembersManagement();
 
-  // Cargar miembros al montar el componente
   useEffect(() => {
     dispatch(fetchMembersAction());
   }, [dispatch]);
 
-  // Calcular métricas derivadas de los datos de miembros
   const stats = useMemo(() => {
-    if (!members || members.length === 0) {
+    if (!filteredMembers || filteredMembers.length === 0) {
       return {
         totalScouts: 0,
         scoutsActivos: 0,
@@ -27,30 +27,30 @@ const AdminGrupoView = () => {
     }
 
     // Total de scouts (excluyendo admins)
-    const totalScouts = members.filter(
-      (m) => m.role === "scout" && m.status === "active"
+    const totalScouts = filteredMembers.filter(
+      (m) => m.role?.toUpperCase() === "SCOUT" && m.is_active !== false
     ).length;
 
     // Scouts activos
-    const scoutsActivos = members.filter(
-      (m) => m.is_active && m.status === "active"
+    const scoutsActivos = filteredMembers.filter(
+      (m) => m.role?.toUpperCase() === "SCOUT" && m.is_active
     ).length;
 
-    // Total de ramas únicas
-    const ramasSet = new Set<string>();
-    members.forEach((m) => {
-      if (m.branch && m.branch.length > 0) {
-        m.branch.forEach((rama) => {
-          if (rama.name) ramasSet.add(rama.name);
-        });
-      }
-    });
-    const totalRamas = ramasSet.size;
+    // Total de ramas únicos
+    const totalBranches = filteredMembers.length
+      ? Array.from(
+          new Set(
+            filteredMembers
+              .map((m) => m.subgroup?.name || m.subgroup?.name)
+              .filter((id) => id !== undefined && id !== null)
+          )
+        ).length
+      : 0;
 
     // Nuevos scouts este mes
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-    const nuevosEsteMes = members.filter((m) => {
+    const nuevosEsteMes = filteredMembers.filter((m) => {
       if (!m.created_at) return false;
       const fecha = new Date(m.created_at);
       return fecha >= inicioMes;
@@ -59,10 +59,10 @@ const AdminGrupoView = () => {
     return {
       totalScouts,
       scoutsActivos,
-      totalRamas,
+      totalRamas: totalBranches,
       nuevosEsteMes,
     };
-  }, [members]);
+  }, [filteredMembers]);
 
   if (loading) {
     return (
@@ -80,7 +80,7 @@ const AdminGrupoView = () => {
     <div className="mx-4">
       <header className="flex flex-col items-center mb-4 justify-center">
         <p className="text-5xl font-bold text-primary">
-          ¡Bienvenido, Jefe de grupo!
+          ¡Bienvenido, {user?.nickname}!
         </p>
         <p className="text-2xl font-bold text-text my-3">
           Gestiona tu grupo scout desde aquí
@@ -91,8 +91,8 @@ const AdminGrupoView = () => {
       </section>
       <section className="my-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <BranchDistribution members={members || []} />
-          <GeneralStats members={members || []} />
+          <BranchDistribution members={filteredMembers || []} />
+          <GeneralStats members={filteredMembers || []} />
         </div>
       </section>
     </div>
