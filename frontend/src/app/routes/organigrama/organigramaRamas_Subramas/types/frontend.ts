@@ -74,6 +74,7 @@ export interface Subgroup {
   galleryObjectIds?: string[];
   // legacy alias used in some backend variants
   subgroupGalleryObjectIds?: string[];
+  gallery?: Array<{ id: string; url: string }>;
 }
 
 // Frontend create/update payloads
