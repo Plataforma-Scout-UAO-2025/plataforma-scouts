@@ -1,9 +1,8 @@
-import api from "@/api/axios";
 import { uploadToStorage } from '@/api/upload';
 import { createPayloadForBackend } from '../utils/galleryPayload';
 import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 import { getRamaById } from '../services';
-import { sectionPath } from '@/api/organigramaApi';
+import { patchGallery } from '@/api/organigramaApi';
 
 interface UploadDiagnostic {
   fileInfo: {
@@ -27,35 +26,26 @@ interface UploadDiagnostic {
   };
 }
 
-/**
- * Realiza un diagnóstico completo del comportamiento de upload
- */
+
 export const diagnosticImageUpload = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
 ): Promise<UploadDiagnostic> => {
-  // Iniciando diagnóstico de upload
   
-  // Paso 1: Obtener estado inicial de la galería
-  const initialRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+  const initialRama = await getRamaById(tenantId, groupSlug, sectionId);
   const initialGallery = (initialRama as unknown as Record<string, unknown>)?.['gallery'] as unknown[] | undefined;
   const initialUrls = Array.isArray(initialGallery) ? (initialGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean) : [...(initialRama?.sectionGalleryObjectIds || [])];
   const initialImageCount = initialUrls.length;
   
-  // Estado inicial: imageCount, initialUrls
 
-  // Paso 2: Subir archivo individual
   const formData = new FormData();
   formData.append('file', file);
   
   const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData);
   
-  // Upload response available in uploadResponse
 
-  // Paso 3: Agregar a galería usando PATCH
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
   const addPayload = {
     operations: [{ 
       op: "add", 
@@ -66,22 +56,17 @@ export const diagnosticImageUpload = async (
   const addPayloadToSend = Array.isArray(addPayload.operations)
     ? createPayloadForBackend(addPayload.operations as unknown as (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[])
     : createPayloadForBackend([]);
-  await api.patch(patchEndpoint, addPayloadToSend);
-  // PATCH completado
+  await patchGallery(sectionId, addPayloadToSend, tenantId, groupSlug);
 
-  // Paso 4: Obtener estado final
-  const finalRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+  const finalRama = await getRamaById(tenantId, groupSlug, sectionId);
   const finalGallery = (finalRama as unknown as Record<string, unknown>)?.['gallery'] as unknown[] | undefined;
   const finalUrls = Array.isArray(finalGallery) ? (finalGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean) : [...(finalRama?.sectionGalleryObjectIds || [])];
   const finalImageCount = finalUrls.length;
   
-  // Paso 5: Analizar diferencias
   const newUrls = finalUrls.filter(url => !initialUrls.includes(url));
   const addedCount = finalImageCount - initialImageCount;
   
-  // Estado final: finalImageCount, addedCount, newUrls, finalUrls
 
-  // Análisis
   const isMultipleVariants = addedCount > 1;
   let possibleCause = '';
   let recommendation = '';
@@ -116,24 +101,19 @@ export const diagnosticImageUpload = async (
     }
   };
 
-  // Resultado completo disponible en `diagnostic`
   return diagnostic;
 };
 
-/**
- * Analiza las URLs devueltas por el backend para entender el patrón
- */
+
 export const analyzeImageUrls = (urls: string[]): {
   basePattern: string;
   variations: Array<{ url: string; possibleType: string; uuid: string }>;
   summary: string;
 } => {
   const variations = urls.map(url => {
-    // Extraer UUID de la URL
     const uuidMatch = url.match(/\/([a-f0-9-]{36})\.[a-zA-Z0-9]+$/);
     const uuid = uuidMatch ? uuidMatch[1] : 'unknown';
     
-    // Intentar detectar el tipo basado en la URL o patrón
     let possibleType = 'original';
     if (url.includes('thumb') || url.includes('thumbnail')) {
       possibleType = 'thumbnail';
@@ -164,23 +144,17 @@ export const analyzeImageUrls = (urls: string[]): {
   };
 };
 
-/**
- * Función helper para llamar desde la consola del navegador
- */
 (window as unknown as Record<string, unknown>).diagnosticImageUpload = diagnosticImageUpload;
 (window as unknown as Record<string, unknown>).analyzeImageUrls = analyzeImageUrls;
 
-/**
- * Envía varias variantes de payload al endpoint /gallery para detectar qué formato acepta el backend.
- * Exponer esta función en `window.tryGalleryPayloadVariants` para ejecutarla desde la consola del navegador.
- */
+
 export const tryGalleryPayloadVariants = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   objectId: string
 ) => {
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+  // handled by organigramaClient
 
   const variants = [
   { name: 'value (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as GalleryAddOperation]) },
@@ -193,12 +167,12 @@ export const tryGalleryPayloadVariants = async (
 
   for (const v of variants) {
     try {
-  const resp = await api.patch(patchEndpoint, v.payload);
-  results[v.name] = { success: true, status: (resp as unknown as { status?: number })?.status, data: (resp as unknown as { data?: unknown })?.data };
-      console.log(`✅ Variant ${v.name} succeeded:`, resp);
+      const resp = await patchGallery(sectionId, v.payload, tenantId, groupSlug);
+      results[v.name] = { success: true, status: undefined, data: resp };
+      console.log(` Variant ${v.name} succeeded:`, resp);
     } catch (err) {
       results[v.name] = { success: false, error: err };
-      console.warn(`❌ Variant ${v.name} failed:`, err);
+      console.warn(` Variant ${v.name} failed:`, err);
     }
   }
 
@@ -206,5 +180,3 @@ export const tryGalleryPayloadVariants = async (
 };
 
 (window as unknown as Record<string, unknown>).tryGalleryPayloadVariants = tryGalleryPayloadVariants;
-
-// Funciones de diagnóstico expuestas: diagnosticImageUpload, analyzeImageUrls

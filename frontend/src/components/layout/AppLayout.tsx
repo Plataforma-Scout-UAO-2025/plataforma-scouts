@@ -111,6 +111,7 @@ const adminGrupalItems: MenuItem[] = [
     ],
   },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
   { id: "medico", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
@@ -133,12 +134,6 @@ const acudienteItems: MenuItem[] = [
     label: "Inscripcion",
     icon: <Pencil />,
     href: "/app/inscripcion",
-  },
-  {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
   },
   {
     id: "financiero",
