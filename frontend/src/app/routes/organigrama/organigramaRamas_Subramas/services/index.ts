@@ -20,28 +20,25 @@ export {
   deleteSubrama
 } from './subrama.service';
 
-// Gestión de imágenes básicas
+// Gestión de imágenes (reexportadas desde la fachada central)
 export {
   diagnoseBatchImageUpload,
   uploadSectionIcon,
   uploadSectionMainImage,
   uploadGalleryImages,
-} from './image-upload.service';
-
-export {
   removeSectionIcon,
-  removeSectionMainImage
-} from './image-upload-core.service';
-
-// Gestión avanzada de galería de Ramas
-export {
+  removeSectionMainImage,
   addGalleryImage,
   getGalleryImageUuids,
   replaceGalleryImage,
   removeGalleryImage,
   deleteGalleryImageById,
-  resolveGalleryItem
-} from './gallery.service';
+  resolveGalleryItem,
+  replaceGalleryList,
+} from '../../services/imageFacade';
+
+// Nota: las funciones de galería se reexportan desde la fachada central (imageFacade)
+// El antiguo reexport desde './gallery.service' fue eliminado para evitar duplicados.
 
 // Gestión de imágenes de Subramas
 export {

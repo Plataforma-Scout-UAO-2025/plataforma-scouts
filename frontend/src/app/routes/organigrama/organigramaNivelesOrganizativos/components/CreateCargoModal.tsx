@@ -2,7 +2,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Member } from "@/types/member.type";
+import { deepCamelize } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -14,6 +23,19 @@ export default function CreateCargoModal({ open, onClose, onSave }: Props) {
   const [nombre, setNombre] = useState("");
   const [titular, setTitular] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  const memberOptions = useMemo(() => {
+    return (members || [])
+      .map((m) => {
+        const rec = deepCamelize(m) as unknown as Record<string, unknown>;
+        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
+        const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
+        const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");
+        return memberId ? { id: String(memberId), name: `${firstName} ${lastName}`.trim() } : null;
+      })
+      .filter((x): x is { id: string; name: string } => x !== null);
+  }, [members]);
 
   const handleSave = () => {
     if (!nombre.trim() || !titular.trim()) return;

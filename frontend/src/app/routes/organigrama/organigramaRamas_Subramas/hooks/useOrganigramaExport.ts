@@ -46,11 +46,10 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
     } else {
       console.warn('⚠️ [useOrganigramaExport] No se proporcionaron tenantSlug/groupSlug, usando datos locales para PDF');
     }
-    
-    const anio = selectedYear ? parseInt(selectedYear) : undefined;
-    console.log('📄 [useOrganigramaExport] Generando PDF con', data.length, 'ramas, año:', anio);
-    exportarOrganigramaPDF(data, { anio, colorHex: '#1A4134' });
-  }, [ramas, selectedYear, opts]);
+
+    console.log(' [useOrganigramaExport] Generando PDF con', data.length, 'ramas');
+    await exportarOrganigramaPDF(data, { colorHex: '#1A4134' });
+  }, [ramas, opts]);
 
   const exportExcel = useCallback(async () => {
     console.log('🔄 [useOrganigramaExport] Iniciando exportación CSV');
@@ -92,9 +91,9 @@ export function useOrganigramaExport(ramas: Rama[], selectedYear?: string, opts?
       console.warn('⚠️ [useOrganigramaExport] No se proporcionaron tenantSlug/groupSlug, usando datos locales para CSV');
     }
     
-    console.log('📊 [useOrganigramaExport] Generando CSV con', data.length, 'ramas');
-    exportarOrganigramaCSV(data);
-  }, [ramas, selectedYear, opts]);
+    console.log(' [useOrganigramaExport] Generando CSV con', data.length, 'ramas');
+    await exportarOrganigramaCSV(data);
+  }, [ramas, opts]);
 
   return {
     exportPDF,

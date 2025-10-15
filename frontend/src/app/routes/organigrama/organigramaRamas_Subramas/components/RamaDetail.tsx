@@ -7,13 +7,13 @@ import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
-import api from "@/api/axios";
-import { sectionPath } from '@/api/organigramaApi';
-import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
+import { getSection } from '@/api/organigramaApi';
+import { fixSupabaseUrl } from '@/lib/imageUtils';
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 import FotoModal from "../components/FotoModal";
+import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
 
 
 export default function RamaDetail() {
@@ -39,7 +39,15 @@ export default function RamaDetail() {
       if (!id) return;
       const data = await organigramaService.getRamaById(tenantSlug, groupSlug, String(id));
       if (data) {
-        setRama(data as Rama);
+        let ramaData = data as Rama;
+        // Si no hay iconObjectId, intentar obtenerlo de sessionStorage
+        if (!ramaData.iconObjectId) {
+          const storedIcon = sessionStorage.getItem(`icon_${ramaData.id}`);
+          if (storedIcon) {
+            ramaData = { ...ramaData, iconObjectId: storedIcon };
+          }
+        }
+        setRama(ramaData);
         setImagenPrincipal(getMainImageUrl(data as Rama));
         const rec = data as unknown as Record<string, unknown>;
         const galleryFromRec = (rec['gallery'] as unknown[] | undefined) ?? [];
@@ -49,9 +57,7 @@ export default function RamaDetail() {
         }
         if (galleryUrls.length === 0) {
           try {
-            const endpoint = sectionPath(id ?? '', tenantSlug, groupSlug);
-            const response = await api.get<Record<string, unknown>>(endpoint);
-            const backendRec = response.data as Record<string, unknown> | undefined;
+            const backendRec = await getSection(id ?? '', tenantId, groupSlug) as Record<string, unknown>;
             if (backendRec) {
               const fromBackendGallery = (backendRec['gallery'] as unknown[] | undefined) ?? [];
               if (Array.isArray(fromBackendGallery) && fromBackendGallery.length > 0) {
@@ -307,15 +313,11 @@ export default function RamaDetail() {
   const handleMainImageClick = () => mainImageInputRef.current?.click();
   const handleGalleryClick = () => galleryInputRef.current?.click();
 
- 
   const getIconUrl = (rama: Rama): string => {
-    const iconObjectId = rama.iconObjectId ?? rama.iconoObjectId;
     const iconUrl = rama.iconUrl ?? rama.icono;
-    if (iconObjectId) return iconObjectId as string;
-    if (iconUrl && !iconUrl.startsWith('data:') && iconUrl.includes('http')) return iconUrl as string;
-    if (iconUrl && iconUrl.startsWith('data:')) return iconUrl as string;
-    if (iconUrl) return iconUrl as string;
-    console.log('⚠️ [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
+    if (iconUrl && iconUrl.startsWith('http')) return fixSupabaseUrl(iconUrl);
+    if (iconUrl && iconUrl.startsWith('data:')) return iconUrl;
+    console.log(' [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
     return '';
   };
 
@@ -348,9 +350,13 @@ export default function RamaDetail() {
       setCurrentUploadingFile(file.name);
       setUploadPercent(0);
 
-      // Subir archivo usando el nuevo sistema y recibir progreso
-  await organigramaService.uploadSectionIcon(
-    tenantSlug,
+    if (!tenantId || !groupSlug) {
+      toast.error('Tenant o grupo no disponibles.');
+      return;
+    }
+
+  const uploadResult = await organigramaService.uploadSectionIcon(
+    tenantId,
     groupSlug,
   String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
         file,
@@ -365,20 +371,13 @@ export default function RamaDetail() {
         }
       );
 
-      // Pequeño delay para que el backend procese la asociación
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Recargar la rama para obtener la imagen actualizada
-      const updatedRama = await organigramaService.getRamaById(tenantSlug, groupSlug, rama.id);
-      if (updatedRama) {
-        setRama(updatedRama);
-        // marcar 100% visualmente cuando el backend confirma
-        setUploadPercent(100);
-        toast.success('Ícono actualizado correctamente');
-      } else {
-        console.warn('⚠️ [RamaDetail] No se pudo recargar la rama');
-        toast.error('Error recargando los datos de la rama');
-      }
+  // Actualizar el estado local con el nuevo iconObjectId
+  setRama({ ...rama, iconObjectId: uploadResult });
+  // Guardar en sessionStorage como respaldo
+  sessionStorage.setItem(`icon_${rama.id}`, uploadResult);
+  setImageRefreshToken(Date.now());
+  setUploadPercent(100);
+  toast.success('Ícono actualizado correctamente');
       // Forzar refresh visual de imágenes (cache-busting)
       setImageRefreshToken(Date.now());
     } catch (err) {

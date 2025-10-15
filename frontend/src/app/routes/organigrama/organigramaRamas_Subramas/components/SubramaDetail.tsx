@@ -7,9 +7,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Subgroup as Subrama } from "../types/frontend";
 import * as organigramaService from "../services";
+import { getMembersBySubgroup } from '@/api/organigramaApi';
 import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
 import FotoModal from "../components/FotoModal";
+import { deepCamelize } from "@/lib/utils";
 
 
 export default function SubramaDetail() {
@@ -546,21 +548,28 @@ export default function SubramaDetail() {
       if (id) {
         console.log("🔄 [SubramaDetail] Obteniendo subrama con ID:", id, { tenantSlug, groupSlug });
         
-  const ramas = await organigramaService.getRamasWithSubramas(tenantSlug, groupSlug);
+      const ramas = await organigramaService.getRamasWithSubramas(resolvedTenantId, resolvedGroupSlug);
+
+        // Datos ya vienen en camelCase del backend
+        const ramasNorm = ramas || [];
         
         let subramaEncontrada: Subrama | null = null;
-        
-        for (const rama of ramas) {
-          const subramaInRama = (rama.subgroups ?? rama.subramas ?? []).find((s: Subrama) => s.id === id);
+
+        for (const rama of ramasNorm) {
+          const subs = (rama.subgroups ?? rama.subramas ?? []) as unknown[];
+          const subramaInRama = subs.find((s: unknown) => {
+            const rec = s as Record<string, unknown>;
+            return String(rec['id'] ?? rec['subgroupId']) === String(id);
+          });
           if (subramaInRama) {
-            subramaEncontrada = subramaInRama;
+            subramaEncontrada = subramaInRama as Subrama;
             break;
           }
         }
-        
+
         if (subramaEncontrada) {
-          setSubrama(subramaEncontrada);
-          console.log("✅ [SubramaDetail] Subrama cargada:", subramaEncontrada);
+          setSubrama(subramaEncontrada as Subrama);
+          console.log(" [SubramaDetail] Subrama cargada:", subramaEncontrada);
 
           // 📸 Cargar imágenes existentes (PRIORIZAR URLs directas del backend)
           console.log("🔍 [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre);
@@ -614,7 +623,83 @@ export default function SubramaDetail() {
 
   useEffect(() => {
     fetchSubrama();
-  }, [id, tenantSlug, groupSlug, fetchSubrama]);
+  }, [fetchSubrama]);
+
+  // Cargar miembros del subgrupo cuando la subrama este cargada (llamada local a api)
+  const fetchMembers = useCallback(async (subgrp: Subrama | null) => {
+    if (!subgrp) return;
+    const subgroupRec = subgrp as unknown as Record<string, unknown>;
+    const subgroupId = subgroupRec['subgroupId'] ?? subgroupRec['id'];
+    if (!subgroupId) return;
+    try {
+      setMembersLoading(true);
+      setMembersError(null);
+      const data = await getMembersBySubgroup(Number(subgroupId));
+      const normalized = (data || []).map((m: unknown) => {
+        const rec = deepCamelize(m) as Record<string, unknown>;
+        const rawId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
+        let memberId: number | undefined;
+        if (typeof rawId === 'number') memberId = rawId;
+        else if (typeof rawId === 'string' && /^\d+$/.test(rawId.trim())) memberId = parseInt(rawId.trim(), 10);
+        else memberId = undefined;
+
+        const firstName = typeof rec['firstName'] === 'string'
+          ? rec['firstName']
+          : typeof rec['first_name'] === 'string'
+          ? rec['first_name']
+          : '';
+
+        const lastName = typeof rec['lastName'] === 'string'
+          ? rec['lastName']
+          : typeof rec['last_name'] === 'string'
+          ? rec['last_name']
+          : '';
+
+        return {
+          member_id: memberId,
+          first_name: firstName,
+          last_name: lastName,
+          memberId: memberId,
+          firstName: firstName,
+          lastName: lastName,
+        };
+      });
+      setMembers(normalized);
+    } catch (err) {
+      console.error('[SubramaDetail] Error cargando miembros por subgrupo', err);
+      setMembersError('No se pudieron cargar los integrantes');
+    } finally {
+      setMembersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (subrama) fetchMembers(subrama);
+  }, [subrama, fetchMembers]);
+
+  if (!hasTenantContext) {
+    if (isFetching) {
+      return (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Cargando contexto del tenant...</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">No fue posible determinar el tenant o grupo actual.</p>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Regresar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

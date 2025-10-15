@@ -4,6 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import type { Cargo } from "../types/niveles.types";
+import type { Member } from "@/types/member.type";
+import { deepCamelize } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Props {
   open: boolean;
@@ -16,6 +25,19 @@ export default function EditCargoModal({ open, cargo, onClose, onSave }: Props) 
   const [nombre, setNombre] = useState("");
   const [titular, setTitular] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  const memberOptions = useMemo(() => {
+    return (members || [])
+      .map((m) => {
+        const rec = deepCamelize(m) as unknown as Record<string, unknown>;
+        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
+        const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
+        const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");
+        return memberId ? { id: String(memberId), name: `${firstName} ${lastName}`.trim() } : null;
+      })
+      .filter((x): x is { id: string; name: string } => x !== null);
+  }, [members]);
 
   useEffect(() => {
     if (cargo) {

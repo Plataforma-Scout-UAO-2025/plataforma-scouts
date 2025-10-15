@@ -1,6 +1,5 @@
-import api from '@/api/axios';
 import { uploadToStorage } from '@/api/upload';
-import { sectionPath } from '@/api/organigramaApi';
+import { patchGallery, getSection, deleteIcon, setIcon, deletePhotoPrincipal, setPhotoPrincipal } from '@/api/organigramaApi';
 import { createAddPayload, createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
 import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 
@@ -15,7 +14,7 @@ interface UploadResponse {
 
 // Función de diagnóstico para verificar comportamiento del backend con imágenes
 export const diagnoseBatchImageUpload = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
@@ -30,21 +29,16 @@ export const diagnoseBatchImageUpload = async (
     
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
 
-    // Paso 2: Agregar a galería usando PATCH
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const addPayload = createAddPayload(uploadResponse.objectId);
     const addPayloadToSend = addPayload && typeof addPayload === 'object' && 'operations' in addPayload
       ? (Array.isArray((addPayload as unknown as PayloadWithOperations).operations)
           ? createPayloadForBackend((addPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
           : addPayload)
       : addPayload;
-    console.info('🔄 [ImageUploadCore] Enviando PATCH (gallery add):', { endpoint: patchEndpoint, payload: addPayloadToSend });
-    await api.patch(patchEndpoint, addPayloadToSend);
+    console.info(' [ImageUploadCore] Enviando PATCH (gallery add) via client:', { payload: addPayloadToSend });
+    await patchGallery(sectionId, addPayloadToSend as Record<string, unknown>, tenantId, groupSlug);
 
-    // Paso 3: Verificar resultado usando una llamada directa al API
-    const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
-  const backendRama = await api.get<Record<string, unknown> | undefined>(endpoint);
-  const backendRec = backendRama as unknown as Record<string, unknown> | undefined;
+    const backendRec = await getSection(sectionId, tenantId, groupSlug) as Record<string, unknown> | undefined;
   const gallery: string[] = (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
   const resultCount = gallery?.length || 0;
 
@@ -72,7 +66,7 @@ export const diagnoseBatchImageUpload = async (
 
 // Funciones de carga de archivos - Implementación de dos pasos según backend
 export const uploadSectionIcon = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
@@ -87,41 +81,12 @@ export const uploadSectionIcon = async (
     // Upload file to storage
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
     
-    // Paso 2: Usar endpoint PATCH específico para icono
-    // Associate icon via PATCH to section
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
+  // handled by organigramaClient
     
-    // Backend expects UpdateImageRequest (snake_case) for icon — do not send `operations` here
-    const attempts = [
-      { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
-    ];
-
-    let lastErr: unknown = null;
-    let patched = false;
-    for (const attempt of attempts) {
-      try {
-    const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-  ? (Array.isArray((attempt.payload as unknown as PayloadWithOperations).operations)
-  ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
-    : attempt.payload)
-  : attempt.payload;
-        console.info('🔄 [ImageUploadCore] Enviando PATCH (icon):', { endpoint: patchEndpoint, attempt: attempt.description, payload: payloadToSend });
-        await api.patch(patchEndpoint, payloadToSend as unknown);
-        console.log('✅ [ImageUploadService] Icono asociado correctamente con endpoint PATCH (primary)');
-        patched = true;
-        break;
-      } catch (primaryError: unknown) {
-        lastErr = primaryError;
-        console.error('❌ [ImageUploadService] Error en intento PATCH para icono:', primaryError);
-        console.error('❌ [ImageUploadService] Respuesta del backend:', (primaryError as MaybeAxiosError)?.response?.data ?? (primaryError as MaybeAxiosError)?.response ?? primaryError);
-        // continuar con siguiente intento
-      }
-    }
-
-    if (!patched) {
-      console.error('❌ Ningún formato de PATCH funcionó para icono. Último error:', lastErr);
-      throw lastErr;
-    }
+    const payload = { object_id: uploadResponse.objectId };
+    console.info(' [ImageUploadCore] Enviando PATCH (icon) via client:', { payload });
+    await setIcon(sectionId, payload, tenantId, groupSlug);
+    console.log(' [ImageUploadService] Icono asociado correctamente con endpoint PATCH (icon)');
     
   // Icon uploaded successfully; objectId available in uploadResponse.objectId
     
@@ -134,7 +99,7 @@ export const uploadSectionIcon = async (
 
 // Nueva función específica para imagen principal
 export const uploadSectionMainImage = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
@@ -148,20 +113,19 @@ export const uploadSectionMainImage = async (
     
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
     
-    // Associate main image via PATCH to section
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
+  // handled by organigramaClient
     
   // Primary payload will be attempted in snake_case first
 
     // Use simple snake_case payload only for main image
     try {
-      const primarySnake = { object_id: uploadResponse.objectId };
-      console.info('🔄 [ImageUploadCore] Enviando PATCH (main image primary snake):', { endpoint: patchEndpoint, payload: primarySnake });
-      await api.patch(patchEndpoint, primarySnake);
-      console.log('✅ [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH (primary)');
+      const primaryPayload = { objectId: uploadResponse.objectId };
+  console.info(' [ImageUploadCore] Enviando PATCH a photo-principal con objectId');
+  await setPhotoPrincipal(sectionId, primaryPayload, tenantId, groupSlug);
+      console.log(' [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH (photo-principal)');
     } catch (primaryError: unknown) {
-      console.error('❌ [ImageUploadService] Error en endpoint PATCH para imagen principal (primary):', primaryError);
-      console.error('❌ [ImageUploadService] Respuesta del backend (primary):', (primaryError as MaybeAxiosError)?.response?.data ?? (primaryError as MaybeAxiosError)?.response ?? primaryError);
+      console.error(' [ImageUploadService] Error en endpoint PATCH para imagen principal (photo-principal):', primaryError);
+      console.error(' [ImageUploadService] Respuesta del backend (photo-principal):', (primaryError as MaybeAxiosError)?.response?.data ?? (primaryError as MaybeAxiosError)?.response ?? primaryError);
       throw primaryError;
     }
     
@@ -176,7 +140,7 @@ export const uploadSectionMainImage = async (
 
 // Función básica para subir múltiples imágenes sin verificaciones adicionales
 export const uploadGalleryImages = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   files: File[]
@@ -197,8 +161,7 @@ export const uploadGalleryImages = async (
       urls.push(uploadResponse.url || uploadResponse.objectId);
     }
     
-    // Use PATCH to associate gallery images
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+  // handled by organigramaClient
     
     // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
     const galleryPayload = createAddsPayloadFromArray(objectIds);
@@ -211,13 +174,11 @@ export const uploadGalleryImages = async (
             ? createPayloadForBackend((galleryPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
             : galleryPayload)
         : galleryPayload;
-      await api.patch(patchEndpoint, galleryPayloadToSend);
-  // Gallery associated successfully; return uploaded URLs as fallback if backend doesn't return updated URLs
+      await patchGallery(sectionId, galleryPayloadToSend as Record<string, unknown>, tenantId, groupSlug);
   return urls;
     } catch (patchError) {
-      console.error('❌ [ImageUploadService] Error en endpoint PATCH para galería:', patchError);
-      console.error('❌ [ImageUploadService] Payload enviado:', JSON.stringify(galleryPayload, null, 2));
-      console.error('❌ [ImageUploadService] Endpoint usado:', patchEndpoint);
+      console.error(' [ImageUploadService] Error en endpoint PATCH para galería:', patchError);
+      console.error(' [ImageUploadService] Payload enviado:', JSON.stringify(galleryPayload, null, 2));
       throw patchError;
     }
   } catch (error) {
@@ -226,50 +187,19 @@ export const uploadGalleryImages = async (
   }
 };
 
-// ==========================================================
-// 🗑️ Eliminar ícono de sección (PATCH remove)
-// ==========================================================
+//  Eliminar ícono de sección (DELETE icon)
 export const removeSectionIcon = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string
 ): Promise<void> => {
   console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...");
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/icon`;
-
-    // Prefer snake_case null payload for icon removal
-    const attempts = [
-      { description: 'snake_case object_id null', payload: { object_id: null } },
-    ];
-
-  let lastErr: unknown = null;
-  let removed = false;
-  for (const attempt of attempts) {
-    console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
   try {
-    const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-  ? (Array.isArray((attempt.payload as unknown as PayloadWithOperations).operations)
-    ? createPayloadForBackend((attempt.payload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
-    : attempt.payload)
-  : attempt.payload;
-  const res = await api.patch(patchEndpoint, payloadToSend as unknown);
-  console.log(`✅ Ícono eliminado correctamente con formato: ${attempt.description}`, res?.data ?? res);
-      removed = true;
-      break;
-    } catch (e: unknown) {
-      lastErr = e;
-      const errorWithResponse = e as { response?: { data?: unknown } };
-      if (errorWithResponse?.response) {
-        console.error('❌ Respuesta del backend en intento de eliminación de icono:', errorWithResponse.response?.data);
-      } else {
-        console.error('❌ Error en intento de eliminación de icono (sin response):', e);
-      }
-    }
-  }
-
-  if (!removed) {
-    console.error('❌ Ningún formato funcionó para eliminar el ícono de la sección. Último error:', lastErr);
-    throw lastErr;
+    await deleteIcon(sectionId, tenantId, groupSlug);
+    console.log(" Ícono eliminado correctamente");
+  } catch (error: unknown) {
+    console.error(' Error eliminando ícono de sección:', error);
+    throw error;
   }
 };
 
@@ -277,45 +207,16 @@ export const removeSectionIcon = async (
 // 🗑️ Eliminar imagen principal de sección (PATCH remove)
 // ==========================================================
 export const removeSectionMainImage = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string
 ): Promise<void> => {
-  console.log("🗑️ [ImageUploadService] Eliminando imagen principal de sección...");
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/photo-principal`;
-
-  // Prefer snake_case null payload for main image removal
-  const attempts = [
-    { description: 'snake_case object_id null', payload: { object_id: null } },
-  ];
-
-  let lastErr: unknown = null;
-  let removed = false;
-  for (const attempt of attempts) {
-    console.log('📡 PATCH →', patchEndpoint, attempt.description, attempt.payload);
-    try {
-      const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-        ? (Array.isArray((attempt.payload as unknown as { operations?: unknown }).operations)
-            ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
-            : attempt.payload)
-        : attempt.payload;
-      const res = await api.patch(patchEndpoint, payloadToSend as unknown);
-      console.log(`✅ Imagen principal eliminada correctamente con formato: ${attempt.description}`, res?.data ?? res);
-      removed = true;
-      break;
-    } catch (e: unknown) {
-      lastErr = e;
-      const errorWithResponse = e as { response?: { data?: unknown } };
-      if (errorWithResponse?.response) {
-        console.error('❌ Respuesta del backend en intento de eliminación imagen principal:', errorWithResponse.response?.data);
-      } else {
-        console.error('❌ Error en intento de eliminación imagen principal (sin response):', e);
-      }
-    }
-  }
-
-  if (!removed) {
-    console.error('❌ Ningún formato funcionó para eliminar la imagen principal de la sección. Último error:', lastErr);
-    throw lastErr;
+  console.log(" [ImageUploadService] Eliminando imagen principal de sección...");
+  try {
+    await deletePhotoPrincipal(sectionId, tenantId, groupSlug);
+    console.log(" Imagen principal eliminada correctamente");
+  } catch (error: unknown) {
+    console.error(' Error eliminando imagen principal de sección:', error);
+    throw error;
   }
 };

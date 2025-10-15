@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Branch as Rama, Subgroup as Subrama } from "../types/frontend";
+import { getMembersBySubgroup } from "@/api/organigramaApi";
 
 type ExportPDFOpts = {
   anio?: number;
@@ -27,11 +28,8 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
 }
 
-/** Construye filas planas detalladas con las columnas solicitadas:
- * Rama, Descripción, TipoSubrama, NombreSubrama, Estado, Integrantes, JefeRama
- */
-function construirFilasDetalle(ramas: Rama[]): string[][] {
-  console.log('🔄 [ExportUtils] Construyendo filas detalladas para', ramas.length, 'ramas');
+
+async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
   const filas: string[][] = [];
 
   for (const r of ramas) {
@@ -76,58 +74,37 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
         
         const nombreSubramaFull = (s.name ?? s.nombre ?? '').toString();
 
-        // intentar extraer tipo si el nombre tiene formato "Tipo: Nombre" o como primera palabra
-        let tipoSubrama = '';
-        const tipoCandidates = [
-          (s as { tipo?: string }).tipo,
-          (s as { tipoSubrama?: string }).tipoSubrama,
-          (s as { type?: string }).type,
-          (s as { subtype?: string }).subtype,
-        ];
-        for (const c of tipoCandidates) {
-          if (c) {
-            tipoSubrama = String(c).trim();
-            break;
-          }
-        }
-
-        if (!tipoSubrama) {
-          if (nombreSubramaFull.includes(':')) {
-            tipoSubrama = nombreSubramaFull.split(':')[0].trim();
-          } else if (nombreSubramaFull.includes(' ')) {
-            // si no hay ':' tomar la primera palabra como tipo (Patrulla Panteras -> Patrulla)
-            tipoSubrama = nombreSubramaFull.split(' ')[0].trim();
-          }
-        }
-
-        // Estado: buscar múltiples propiedades posibles
-        const estado = (s.status === 'active' ? 'activa' : 
-                      (s.status === 'inactive' ? 'inactiva' : 
-                      ((s as { isActive?: boolean }).isActive === true ? 'activa' :
-                      ((s as { isActive?: boolean }).isActive === false ? 'inactiva' :
-                      ((s as { estado?: string }).estado ?? 'desconocido')))));
-
-        // Integrantes: múltiples formatos posibles (array o string)
+        // Obtener miembros de la subrama
         let integrantes = '';
-        const sUnknown = s as unknown as Record<string, unknown>;
-        if (sUnknown.members && Array.isArray(sUnknown.members)) {
-          integrantes = (sUnknown.members as string[]).join(', ');
-        } else if (sUnknown.integrantes && Array.isArray(sUnknown.integrantes)) {
-          integrantes = (sUnknown.integrantes as string[]).join(', ');
-        } else if (sUnknown.membersNames && Array.isArray(sUnknown.membersNames)) {
-          integrantes = (sUnknown.membersNames as string[]).join(', ');
-        } else if (typeof sUnknown.integrantes === 'string' && sUnknown.integrantes) {
-          integrantes = sUnknown.integrantes;
-        } else if (sUnknown.leader) {
-          integrantes = String(sUnknown.leader);
+        try {
+          const sUnknown = s as unknown as Record<string, unknown>;
+          const subgroupId = sUnknown['subgroupId'] ?? sUnknown['id'];
+          if (subgroupId) {
+            const members = await getMembersBySubgroup(Number(subgroupId));
+            if (members && members.length > 0) {
+              integrantes = members.map((m: any) => {
+                const firstName = m.firstName ?? m.first_name ?? '';
+                const lastName = m.lastName ?? m.last_name ?? '';
+                return `${firstName} ${lastName}`.trim();
+              }).filter(Boolean).join(', ');
+            }
+          }
+        } catch (error) {
+          console.warn(' [Export] Error obteniendo miembros para subrama:', s.name ?? s.nombre, error);
+          // Fallback: intentar usar datos existentes si están disponibles
+          const sUnknown = s as unknown as Record<string, unknown>;
+          if (sUnknown.members && Array.isArray(sUnknown.members)) {
+            integrantes = (sUnknown.members as string[]).join(', ');
+          } else if (sUnknown.integrantes && Array.isArray(sUnknown.integrantes)) {
+            integrantes = (sUnknown.integrantes as string[]).join(', ');
+          } else if (sUnknown.membersNames && Array.isArray(sUnknown.membersNames)) {
+            integrantes = (sUnknown.membersNames as string[]).join(', ');
+          } else if (typeof sUnknown.integrantes === 'string' && sUnknown.integrantes) {
+            integrantes = sUnknown.integrantes;
+          } else if (sUnknown.leader) {
+            integrantes = String(sUnknown.leader);
+          }
         }
-
-        console.log('📝 [ExportUtils] Datos procesados para subrama:', {
-          nombre: nombreSubramaFull,
-          tipo: tipoSubrama,
-          estado,
-          integrantes: integrantes.substring(0, 50) + (integrantes.length > 50 ? '...' : '')
-        });
 
         filas.push([
           ramaNombre,
@@ -164,10 +141,9 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
   return filas;
 }
 
-/** Exporta PDF manteniendo jerarquía Rama→Subrama */
-export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) => {
-  console.log('🔄 [ExportPDF] Iniciando exportación PDF con', ramas.length, 'ramas');
-  console.log('🔄 [ExportPDF] Opciones:', opts);
+export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts = {}) => {
+  console.log(' [ExportPDF] Iniciando exportación PDF con', ramas.length, 'ramas');
+  console.log(' [ExportPDF] Opciones:', opts);
   
   try {
     // Usar landscape para más ancho y ajustar margenes
@@ -190,9 +166,9 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
     doc.setTextColor(0, 0, 0);
     doc.text(`Generado: ${new Date().toLocaleString()}`, x, y + 16);
 
-    console.log('📊 [ExportPDF] Construyendo datos para la tabla...');
-    const body = construirFilasDetalle(ramas); // string[][] detalle
-    console.log('📊 [ExportPDF] Tabla tendrá', body.length, 'filas');
+    console.log(' [ExportPDF] Construyendo datos para la tabla...');
+    const body = await construirFilasDetalle(ramas);
+    console.log(' [ExportPDF] Tabla tendrá', body.length, 'filas');
 
     // Calcular anchos de columna para que quepan dentro del área imprimible
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -231,14 +207,13 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
   }
 };
 
-/** Exporta CSV con hojas separadas para Ramas y Subramas */
-export const exportarOrganigramaCSV = (ramas: Rama[]) => {
-  console.log('🔄 [ExportCSV] Iniciando exportación CSV con', ramas.length, 'ramas');
+export const exportarOrganigramaCSV = async (ramas: Rama[]) => {
+  console.log(' [ExportCSV] Iniciando exportación CSV con', ramas.length, 'ramas');
   
   try {
-    console.log('📊 [ExportCSV] Construyendo datos detallados...');
-    // Construir hoja detallada (una fila por subrama, o una fila por rama si no tiene subramas)
-    const detalleRows = construirFilasDetalle(ramas).map((cols) => ({
+    console.log(' [ExportCSV] Construyendo datos detallados...');
+    const filasDetalle = await construirFilasDetalle(ramas);
+    const detalleRows = filasDetalle.map((cols) => ({
       Rama: cols[0],
       Descripción: cols[1],
       TipoSubrama: cols[2],
