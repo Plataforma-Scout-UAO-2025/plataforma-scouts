@@ -99,9 +99,7 @@ export const useMembersManagement = ({
       const createdAt = (memberRec["created_at"] ??
         memberRec["createdAt"] ??
         null) as string | null;
-      const address = (memberRec["address"] ??
-        memberRec["address"] ??
-        "") as string;
+      const address = (memberRec["address"] ?? "") as string;
       const isActive = (memberRec["is_active"] ?? memberRec["isActive"]) as
         | boolean
         | undefined;
