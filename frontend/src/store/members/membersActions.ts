@@ -17,7 +17,7 @@ import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";
 // Obtener datos de un miembro desde Firestore
 export const fetchMemberAction = createAsyncThunk<
   Member,
-  string,
+  number,
   { rejectValue: string | string[] }
 >("member/fetch", async (id, { rejectWithValue }) => {
   try {
