@@ -16,7 +16,7 @@ export default function Gestion() {
   const fetchCuotas = useCallback(async () => {
     try {
       const response = await api.get(
-        `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}`
+        `finanzas/fees/${tenantId}`
       );
 
       if (response.status === 200) {
