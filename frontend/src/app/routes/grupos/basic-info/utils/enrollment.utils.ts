@@ -1,5 +1,5 @@
 import type { PersonalData } from "@/types/enrollment.type";
-import type { EmergencyContact, Member } from "@/types/member.type";
+import type { EmergencyContact, CreateMember } from "@/types/member.type";
 
 export const calculateAge = (fecha: string): number => {
   if (!fecha) return 0;
@@ -11,7 +11,7 @@ export const calculateAge = (fecha: string): number => {
   return edad;
 };
 
-export const transformData = (data: PersonalData): Member => {
+export const transformData = (data: PersonalData): CreateMember => {
   const edad = calculateAge(data.birth_date);
 
   const emergencyContacts: EmergencyContact[] = data.emergency_contacts

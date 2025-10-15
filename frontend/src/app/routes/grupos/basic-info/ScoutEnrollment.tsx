@@ -16,8 +16,6 @@ function ScoutEnrollment() {
     datosPersonales,
     setDatosPersonales,
     datosEscolares,
-    groups,
-    loadingGroups,
     pagina,
     setPagina,
     showSchoolDialog,
@@ -39,8 +37,6 @@ function ScoutEnrollment() {
         <PersonalDataForm
           datos={datosPersonales}
           handleChange={handlePersonalChange}
-          groups={groups}
-          loadingGroups={loadingGroups}
           setDatos={setDatosPersonales}
         />
       );
@@ -56,7 +52,7 @@ function ScoutEnrollment() {
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
       <h1 className="text-2xl font-bold text-primary mb-8">
-        Inscríbete al grupo scout
+        Inscripción al grupo scout
       </h1>
 
       <form
