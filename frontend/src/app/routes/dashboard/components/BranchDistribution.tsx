@@ -6,28 +6,64 @@ interface BranchDistributionProps {
 }
 
 const BranchDistribution = ({ members }: BranchDistributionProps) => {
-  // Calcular scouts por rama
-  const scoutsPorRama: Record<string, number> = {};
-  
-  members.forEach((m) => {
-    if (m.branch && m.branch.length > 0) {
-      m.branch.forEach((rama) => {
-        const nombre = rama.name || "Sin rama";
-        scoutsPorRama[nombre] = (scoutsPorRama[nombre] || 0) + 1;
+
+  // Contar scouts por rama
+  const countBySection: Record<string, number> = {};
+
+  members.forEach((member: Member) => {
+    const rec = member as unknown as Record<string, unknown>;
+
+    const branches = rec["branch"] as unknown;
+    if (Array.isArray(branches) && branches.length > 0) {
+      branches.forEach((b) => {
+        const br = b as Record<string, unknown> | string | undefined;
+        const name = (
+          typeof br === "string"
+            ? br
+            : (br && (br["name"] ?? br["nombre"])) ?? "Sin rama"
+        ) as string;
+        countBySection[name] = (countBySection[name] || 0) + 1;
       });
-    } else {
-      scoutsPorRama["Sin rama"] = (scoutsPorRama["Sin rama"] || 0) + 1;
+      return;
+    }
+
+    const subgroup = rec["subgroup"] as Record<string, unknown> | undefined;
+    if (subgroup) {
+      const section = subgroup["section"] as
+        | Record<string, unknown>
+        | undefined;
+      const sectionName = (section &&
+        (section["name"] ?? section["nombre"])) as string | undefined;
+      if (sectionName) {
+        countBySection[sectionName] = (countBySection[sectionName] || 0) + 1;
+        return;
+      }
+      const subgroupName = (subgroup["name"] ?? subgroup["nombre"]) as
+        | string
+        | undefined;
+      if (subgroupName) {
+        countBySection[subgroupName] = (countBySection[subgroupName] || 0) + 1;
+        return;
+      }
+    }
+
+    const sectionNameDirect = (rec["section_name"] ?? rec["sectionName"]) as
+      | string
+      | undefined;
+    if (sectionNameDirect) {
+      countBySection[sectionNameDirect] =
+        (countBySection[sectionNameDirect] || 0) + 1;
+      return;
     }
   });
-
   // Ordenar por cantidad descendente
-  const ramasOrdenadas = Object.entries(scoutsPorRama)
+  const ramasOrdenadas = Object.entries(countBySection)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 6); // Mostrar máximo 6 ramas
 
   // Calcular porcentajes
   const total = members.length || 1;
-  
+
   return (
     <div className="border rounded-xl shadow-sm p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -39,7 +75,7 @@ const BranchDistribution = ({ members }: BranchDistributionProps) => {
           </p>
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {ramasOrdenadas.length === 0 ? (
           <p className="text-accent-foreground text-center py-4">
@@ -48,7 +84,7 @@ const BranchDistribution = ({ members }: BranchDistributionProps) => {
         ) : (
           ramasOrdenadas.map(([rama, cantidad]) => {
             const porcentaje = Math.round((cantidad / total) * 100);
-            
+
             return (
               <div key={rama} className="space-y-2">
                 <div className="flex justify-between items-center">
