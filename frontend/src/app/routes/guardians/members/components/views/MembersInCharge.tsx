@@ -25,7 +25,7 @@ export default function MembersInCharge() {
   // 1. Crear endpoint: GET /api/v1/guardian/by-user-id/{userId}
   // 2. Incluir guardianId en el token JWT de Auth0
   // 3. Llamar a un endpoint que mapee userId -> guardianId
-  const guardianId = 1;
+  const guardianId = 309;
 
   useEffect(() => {
     const fetchMembers = async () => {

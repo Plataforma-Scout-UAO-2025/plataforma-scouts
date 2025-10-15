@@ -30,7 +30,6 @@ export interface PersonalData {
   hobbies: string;
   sports: string;
   instruments: string;
-  group: string;
   tenantId: string;
   emergency_contacts: EmergencyContact[];
 }

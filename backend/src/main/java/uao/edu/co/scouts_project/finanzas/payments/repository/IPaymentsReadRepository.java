@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+
+import uao.edu.co.scouts_project.finanzas.dashboard.repository.projection.RecentPaymentProjection;
 import uao.edu.co.scouts_project.finanzas.fees.model.Installment;
 import uao.edu.co.scouts_project.finanzas.payments.repository.projection.InstallmentWithConceptAndMemberRow;
 import uao.edu.co.scouts_project.finanzas.payments.repository.projection.InstallmentWithConceptRow;
@@ -218,55 +220,55 @@ public interface IPaymentsReadRepository extends JpaRepository<Installment, Long
 
   // ---- TODAS LAS CUOTAS DEL TENANT FILTRADAS POR ACUDIENTE ----
   // Ajusta guardian_member si tu relación se llama distinto
-@Query(value = """
-    SELECT i.installment_id,
-           i.due_date,
-           i.amount,
-           i.status,
-           c.name        AS concept_name,
-           c.description AS concept_desc,
-           p.payment_id,
-           p.paid_at,
-           p.method,
-           p.reference,
-           p.payer_member_id,
-           m.member_id,
-           m.first_name,
-           m.last_name,
-           m.subgroup_id,
-           sg.name       AS subgroup_name,
-           sg.section_id AS section_id,
-           sec.name      AS section_name
-    FROM installment i
-    JOIN account a
-      ON a.tenant_id = i.tenant_id AND a.account_id = i.account_id
-    JOIN member m
-      ON m.tenant_id = a.tenant_id AND m.member_id = a.member_id
-    JOIN concept c
-      ON c.tenant_id = i.tenant_id AND c.concept_id = i.concept_id
-    LEFT JOIN subgroup sg
-      ON sg.tenant_id = m.tenant_id AND sg.subgroup_id = m.subgroup_id
-    LEFT JOIN section sec
-      ON sec.tenant_id = sg.tenant_id AND sec.section_id = sg.section_id
-    LEFT JOIN LATERAL (
-      SELECT
-        e->>'payment_id'                          AS payment_id,
-        NULLIF(e->>'paid_at','')::date           AS paid_at,
-        e->>'method'                              AS method,
-        e->>'reference'                           AS reference,
-        NULLIF(e->>'payer_member_id','')::bigint  AS payer_member_id
-      FROM jsonb_array_elements(COALESCE(i.payments, '[]'::jsonb)) WITH ORDINALITY AS t(e, ord)
-      ORDER BY ord DESC
-      LIMIT 1
-    ) p ON TRUE
-    WHERE i.tenant_id = :tenantId
-      AND m.role = 'SCOUT'
-      AND m.guardian_id = :guardianId   -- <--- usa tu columna real
-    ORDER BY m.last_name, m.first_name, i.due_date DESC
-    """, nativeQuery = true)
-List<InstallmentWithConceptAndMemberRow>
-findAllInstallmentsForGuardian(@Param("tenantId") String tenantId,
-                               @Param("guardianId") Long guardianId);
+  @Query(value = """
+      SELECT i.installment_id,
+            i.due_date,
+            i.amount,
+            i.status,
+            c.name        AS concept_name,
+            c.description AS concept_desc,
+            p.payment_id,
+            p.paid_at,
+            p.method,
+            p.reference,
+            p.payer_member_id,
+            m.member_id,
+            m.first_name,
+            m.last_name,
+            m.subgroup_id,
+            sg.name       AS subgroup_name,
+            sg.section_id AS section_id,
+            sec.name      AS section_name
+      FROM installment i
+      JOIN account a
+        ON a.tenant_id = i.tenant_id AND a.account_id = i.account_id
+      JOIN member m
+        ON m.tenant_id = a.tenant_id AND m.member_id = a.member_id
+      JOIN concept c
+        ON c.tenant_id = i.tenant_id AND c.concept_id = i.concept_id
+      LEFT JOIN subgroup sg
+        ON sg.tenant_id = m.tenant_id AND sg.subgroup_id = m.subgroup_id
+      LEFT JOIN section sec
+        ON sec.tenant_id = sg.tenant_id AND sec.section_id = sg.section_id
+      LEFT JOIN LATERAL (
+        SELECT
+          e->>'payment_id'                          AS payment_id,
+          NULLIF(e->>'paid_at','')::date           AS paid_at,
+          e->>'method'                              AS method,
+          e->>'reference'                           AS reference,
+          NULLIF(e->>'payer_member_id','')::bigint  AS payer_member_id
+        FROM jsonb_array_elements(COALESCE(i.payments, '[]'::jsonb)) WITH ORDINALITY AS t(e, ord)
+        ORDER BY ord DESC
+        LIMIT 1
+      ) p ON TRUE
+      WHERE i.tenant_id = :tenantId
+        AND m.role = 'SCOUT'
+        AND m.guardian_id = :guardianId   -- <--- usa tu columna real
+      ORDER BY m.last_name, m.first_name, i.due_date DESC
+      """, nativeQuery = true)
+  List<InstallmentWithConceptAndMemberRow>
+  findAllInstallmentsForGuardian(@Param("tenantId") String tenantId,
+                                @Param("guardianId") Long guardianId);
 
 
   @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -280,23 +282,49 @@ findAllInstallmentsForGuardian(@Param("tenantId") String tenantId,
   """, nativeQuery = true)
   int markPaidWhereHasPayments(@org.springframework.data.repository.query.Param("tenantId") String tenantId);
 
-  @org.springframework.data.jpa.repository.Query(
-  value = """
-    SELECT EXISTS(
-      SELECT 1
-      FROM member m
-      WHERE m.tenant_id = :tenantId
-        AND m.member_id = :memberId
-    )
-  """,
-  nativeQuery = true
-)
-boolean memberExistsInTenant(
-    @org.springframework.data.repository.query.Param("tenantId") String tenantId,
-    @org.springframework.data.repository.query.Param("memberId") Long memberId
-);
+    @org.springframework.data.jpa.repository.Query(
+    value = """
+      SELECT EXISTS(
+        SELECT 1
+        FROM member m
+        WHERE m.tenant_id = :tenantId
+          AND m.member_id = :memberId
+      )
+    """,
+    nativeQuery = true
+  )
+
+  boolean memberExistsInTenant(
+      @org.springframework.data.repository.query.Param("tenantId") String tenantId,
+      @org.springframework.data.repository.query.Param("memberId") Long memberId
+  );
+
+  @Query(value = """
+    select
+      (p->>'payment_id')                    as paymentId,
+      i.installment_id                      as installmentId,
+      c.name                                as name,
+      c.description                         as description,
+      i.due_date                            as dueDate,
+      i.amount                              as amount,
+      i.status                              as status,
+      (p->>'paid_at')::timestamptz          as paidAt,
+      (p->>'method')                        as method,
+      (p->>'reference')                     as reference,
+      nullif(regexp_replace(p->>'payer_member_id','[^0-9]','','g'),'')::bigint as payerMemberId
+    from public.installment i
+    join public.concept   c on c.concept_id   = i.concept_id
+    join public.account   a on a.account_id   = i.account_id and a.tenant_id = i.tenant_id
+    cross join lateral jsonb_array_elements(i.payments) p
+    where i.tenant_id = :tenantId
+    order by (p->>'paid_at')::timestamptz desc nulls last, i.installment_id desc
+    limit 10
+  """, nativeQuery = true)
+  List<RecentPaymentProjection> findRecentPaymentsByTenant(@Param("tenantId") String tenantId);
+
 
 }
+
 
 
 

@@ -1,14 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/index";
 import BranchCount from "./components/BranchCount";
 import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
-import type { Member } from "@/types/member.type";
-import { useMember } from "@/hooks/useMember";
-import { fetchMembersAction } from "@/store/members/membersActions";
-import { clearNotification } from "@/store/members/membersSlice";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
 
 const TeamMembers = () => {
   const [searchFilter, setSearchFilter] = useState("");
@@ -16,67 +12,35 @@ const TeamMembers = () => {
   const [branchFilter, setBranchFilter] = useState("");
   const navigate = useNavigate();
 
-  const dispatch = useAppDispatch();
-  const { members, error, message } = useMember();
+  const {
+    members,
+    total,
+    page,
+    totalPages,
+    setPage,
+    loading,
+    error,
+  } = useTenantMembersByStatus({
+    status: "APPROVED",
+    pageSize: 10,
+    search: searchFilter,
+    city: cityFilter,
+    branch: branchFilter,
+  });
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    dispatch(fetchMembersAction());
-  }, [dispatch]);
-
-  // Aplicar filtros y mapear a formato de tabla
-  const filteredMembers = useMemo(() => {
-    if (!members || !members.length) return [];
-
-    const filtered = members.filter((member: Member) => {
-      const matchesSearch =
-        searchFilter === "" ||
-        member.firstName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        member.lastName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        member.identification
-          ?.toLowerCase()
-          .includes(searchFilter.toLowerCase());
-
-      const matchesCity =
-        cityFilter === "" ||
-        member.address?.toLowerCase().includes(cityFilter.toLowerCase());
-
-      const matchesBranch =
-        branchFilter === "" ||
-        member.branch?.some((branch) =>
-          branch.name.toLowerCase().includes(branchFilter.toLowerCase())
-        );
-
-      return matchesSearch && matchesCity && matchesBranch;
-    });
-
-    // Mapear a formato de tabla
-    return filtered.map((member: Member): Member => ({
-      ...member,
-    }));
-  }, [members, searchFilter, cityFilter, branchFilter]);
-
-  // Limpiar mensajes después de mostrarlos
-  useEffect(() => {
-    if (message || error) {
-      const timer = setTimeout(() => {
-        dispatch(clearNotification());
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [message, error, dispatch]);
+  const startIdx = total === 0 ? 0 : (page - 1) * 10 + 1;
+  const endIdx = Math.min(page * 10, total);
 
   return (
     <div className="mx-4">
       <header className="flex items-center mb-4 justify-between">
         <p className="text-5xl font-bold text-primary">Gestión de Miembros</p>
-        {/* <p className="text-2xl font-bold text-secondary">Centinelas 113</p> */}
       </header>
       <section className="my-2 flex gap-4">
         <BranchCount />
       </section>
 
-      {/* Filtros de búsqueda */}
+      {/* Filtros */}
       <section className="my-8 flex justify-between flex-col md:flex-row gap-4 md:gap-6">
         <MembersFilter
           searchFilter={searchFilter}
@@ -88,20 +52,38 @@ const TeamMembers = () => {
         />
       </section>
 
-      {/* Tabla de miembros */}
+      {/* Tabla */}
       <section className="mt-6">
-        <MembersTable filteredMembers={filteredMembers} />
+        {loading && <p>Cargando miembros…</p>}
+        {error && <p className="text-red-600">{error}</p>}
+        {!loading && !error && <MembersTable filteredMembers={members} />}
+
+        {/* Footer paginación */}
         <section className="flex justify-between items-center mt-4">
           <div className="flex justify-start mt-3 gap-2">
-            <Button variant="primary" onClick={() => {navigate("/solicitudes")}}>Solicitudes</Button>
+            <Button variant="primary" onClick={() => navigate("/solicitudes")}>
+              Solicitudes
+            </Button>
             <p className="text-sm text-text self-center ml-4">
-              Mostrando {filteredMembers.length} de {members?.length || 0} miembros
+              Mostrando {startIdx}–{endIdx} de {total} miembros
             </p>
           </div>
 
           <div className="flex justify-end mt-3 gap-2">
-            <Button variant="outline">Anterior</Button>
-            <Button variant="outline">Siguiente</Button>
+            <Button
+              variant="outline"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page <= 1 || loading}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page >= totalPages || loading}
+            >
+              Siguiente
+            </Button>
           </div>
         </section>
       </section>

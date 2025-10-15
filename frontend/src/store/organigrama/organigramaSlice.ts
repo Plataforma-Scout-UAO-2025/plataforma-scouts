@@ -63,7 +63,7 @@ const organigramaSlice = createSlice({
       state.loading = false;
       const payload = action.payload as MemberLike[];
       if (payload && payload.length > 0) {
-        const subgroupId = payload[0].subgroupId ?? payload[0].subgroup_id ?? null;
+        const subgroupId = payload[0].subgroup_id ?? payload[0].subgroup_id ?? null;
         if (subgroupId != null) {
           // Guardamos usando el ID numérico descubierto
           state.membersBySubgroup[subgroupId] = payload as Member[];

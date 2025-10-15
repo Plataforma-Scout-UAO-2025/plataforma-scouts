@@ -3,19 +3,19 @@ import { AxiosError } from "axios";
 import {
   getMember,
   getMembers,
+  getMembersByStatus,
   updateMember,
+  updateMemberStatus,
   createMember,
-  createMemberWithSchool
+  createMemberWithSchool,
 } from "@/api/membersApi";
-import { validateClient } from "../../lib/zodUtils";
-import { updateMemberSchema } from "@/schemas/memberSchema";
-import type { Member } from "@/types/member.type";
+import type { Member, UpdateMember } from "@/types/member.type";
 import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";
 
 // Obtener datos de un miembro desde Firestore
 export const fetchMemberAction = createAsyncThunk<
   Member,
-  string,
+  number,
   { rejectValue: string | string[] }
 >("member/fetch", async (id, { rejectWithValue }) => {
   try {
@@ -45,33 +45,69 @@ export const fetchMembersAction = createAsyncThunk(
   }
 );
 
-// Actualizar datos de un miembro en Firestore
-export const updateMemberAction = createAsyncThunk<
+// Obtener miembros por estado
+export const fetchMembersByStatusAction = createAsyncThunk<
+  Member[],
+  "PENDING" | "APPROVED" | "REJECTED",
+  { rejectValue: string }
+>(
+  "members/fetchByStatus",
+  async (status: "PENDING" | "APPROVED" | "REJECTED", { rejectWithValue }) => {
+    try {
+      const members = await getMembersByStatus(status);
+      return members;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al obtener los miembros";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Actualizar estado de un miembro
+export const updateMemberStatusAction = createAsyncThunk<
   { message: string },
-  { uid: string; updates: Partial<Member> },
+  { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
   { rejectValue: { error: string } }
 >(
-  "member/update",
+  "member/updateStatus",
   async (
-    { uid, updates }: { uid: string; updates: Partial<Member> },
+    {
+      id,
+      status,
+    }: { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
     { rejectWithValue }
   ) => {
-    const validation = validateClient(updateMemberSchema, updates);
-    if (!validation.success) {
-      return rejectWithValue({ error: validation.error ?? "Datos inválidos" });
-    }
-
     try {
-      const response = await updateMember(uid, updates);
+      const response = await updateMemberStatus(id, status);
       return response;
     } catch (error: unknown) {
       const axiosError = error as AxiosError;
       const errorData = axiosError.response?.data as { error: string };
-      const errorMessage = errorData?.error || "Error al actualizar el miembro";
+      const errorMessage =
+        errorData?.error || "Error al actualizar el estado del miembro";
       return rejectWithValue({ error: errorMessage });
     }
   }
 );
+
+// Actualizar datos de un miembro en Firestore
+export const updateMemberAction = createAsyncThunk<
+  { message: string },
+  { uid: string; updates: Partial<UpdateMember> },
+  { rejectValue: { error: string } }
+>("member/update", async ({ uid, updates }, { rejectWithValue }) => {
+  try {
+    const response = await updateMember(uid, updates);
+    return response;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage = errorData?.error || "Error al actualizar el miembro";
+    return rejectWithValue({ error: errorMessage });
+  }
+});
 
 // Crear un nuevo miembro
 export const createMemberAction = createAsyncThunk<
@@ -99,19 +135,22 @@ export const createMemberWithSchoolDataAction = createAsyncThunk<
   { message: string; newMember?: Member },
   { memberData: CreateMemberWithSchoolRequest },
   { rejectValue: { error: string } }
->("member/createWithSchoolData", async ({ memberData}, { rejectWithValue }) => {
-  try {
-    const fullMemberData = { ...memberData };
-    const response = await createMemberWithSchool(fullMemberData);
-    return {
-      message: "Miembro creado exitosamente con datos escolares",
-      newMember: response,
-    };
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error: string };
-    const errorMessage =
-      errorData?.error || "Error al crear el miembro con datos escolares";
-    return rejectWithValue({ error: errorMessage });
+>(
+  "member/createWithSchoolData",
+  async ({ memberData }, { rejectWithValue }) => {
+    try {
+      const fullMemberData = { ...memberData };
+      const response = await createMemberWithSchool(fullMemberData);
+      return {
+        message: "Miembro creado exitosamente con datos escolares",
+        newMember: response,
+      };
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage =
+        errorData?.error || "Error al crear el miembro con datos escolares";
+      return rejectWithValue({ error: errorMessage });
+    }
   }
-});
+);

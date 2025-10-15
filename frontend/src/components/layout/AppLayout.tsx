@@ -30,6 +30,7 @@ import {
   Pencil,
   Network,
   BriefcaseMedical,
+  BarChart3,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -89,14 +90,26 @@ const adminGrupalItems: MenuItem[] = [
     icon: <LineChart />,
     href: "/app/dashboard",
   },
-  {
-    id: "inscripcion",
-    label: "Inscripcion",
-    icon: <Pencil />,
-    href: "/app/inscripcion",
-  },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
-  { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
+  {
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: <Boxes />,
+    submenu: [
+      {
+        id: "solicitudes-pendientes",
+        label: "Pendientes",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes",
+      },
+      {
+        id: "solicitudes-rechazadas",
+        label: "Rechazadas",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes/rechazadas",
+      },
+    ],
+  },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
   { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
@@ -105,35 +118,29 @@ const adminGrupalItems: MenuItem[] = [
 ]
 
 const tesoreroItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
 ]
 
 const acudienteItems: MenuItem[] = [
-    {
-        id: "inicio",
-        label: "Inicio",
-        icon: <LineChart />,
-        href: "/app/dashboard",
-    },
-    {
-        id: "inscripcion",
-        label: "Inscripcion",
-        icon: <Pencil />,
-        href: "/app/inscripcion",
-    },
-    {
-        id: "organigrama",
-        label: "Organigrama",
-        icon: <Network />,
-        href: "/app/organigrama",
-    },
-    {
-        id: "financiero",
-        label: "Financiero",
-        icon: <DollarSign />,
-        href: "/app/financiero/estado-cuenta",
-    },
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/estado-cuenta",
+  },
 ];
 
 const ScoutItems: MenuItem[] = [
