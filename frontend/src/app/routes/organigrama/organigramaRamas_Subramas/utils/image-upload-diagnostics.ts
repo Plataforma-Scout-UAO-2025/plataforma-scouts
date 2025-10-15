@@ -180,4 +180,3 @@ export const tryGalleryPayloadVariants = async (
 };
 
 (window as unknown as Record<string, unknown>).tryGalleryPayloadVariants = tryGalleryPayloadVariants;
-

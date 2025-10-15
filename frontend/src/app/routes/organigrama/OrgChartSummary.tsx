@@ -104,9 +104,15 @@ export default function OrgChartSummary() {
   }, [anio, tenantId, groupSlug]);
 
   const [exportingBranches, setExportingBranches] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
 
-  const onExportPDF = () => {
-    exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, { year: anio });
+  const onExportPDF = async () => {
+    try {
+      setExportingPDF(true);
+      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, { year: anio });
+    } finally {
+      setExportingPDF(false);
+    }
   };
   const onExportCSVBranches = async () => {
     try {
@@ -123,8 +129,17 @@ export default function OrgChartSummary() {
       <header className="flex flex-wrap gap-3 items-center mb-6">
         <h1 className="text-3xl font-extrabold text-primary">Organigrama Completo</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Button onClick={onExportPDF} className="bg-primary text-white hover:bg-primary-hover">
-            <Download className="h-4 w-4 mr-2" /> PDF (Completo)
+          <Button onClick={onExportPDF} disabled={exportingPDF} className="bg-primary text-white hover:bg-primary-hover">
+            {exportingPDF ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Exportando...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" /> PDF (Completo)
+              </>
+            )}
           </Button>
           <Button variant="outline" onClick={onExportCSVBranches} disabled={exportingBranches} className="border-border">
             {exportingBranches ? (

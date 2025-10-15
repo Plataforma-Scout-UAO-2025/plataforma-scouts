@@ -141,12 +141,6 @@ const acudienteItems: MenuItem[] = [
     href: "/app/inscripcion",
   },
   {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
-  },
-  {
     id: "financiero",
     label: "Financiero",
     icon: <DollarSign />,

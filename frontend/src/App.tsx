@@ -23,7 +23,6 @@ import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/co
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
 import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
-// Org routes access restricted below via ProtectedRoute
 
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
@@ -56,10 +55,7 @@ function App() {
             {/* Rutas para admin de grupo */}
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO", "COMITE_ADMIN"]}><Financiero /></ProtectedRoute>} />
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
-            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO", "COMITE_ADMIN"]}><Pagos /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE", "SCOUTER", "COMITE_ADMIN"]}><ScoutEnrollment /></ProtectedRoute>}/>
-            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO", "COMITE_ADMIN"]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO", "SCOUTER", "COMITE_ADMIN"]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUTER"]}><Miembros /></ProtectedRoute>} />
             <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE", "SCOUTER", "COMITE_ADMIN"]}><ScoutEnrollment /></ProtectedRoute>}/>

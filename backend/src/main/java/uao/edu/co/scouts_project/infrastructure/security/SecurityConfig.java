@@ -149,8 +149,19 @@ public class SecurityConfig {
                                                 // Acudientes
 
                                                 //
-                                                // Datos médicos
-                                                .requestMatchers("/api/v1/medical_record/**").permitAll()
+                                                // ==== FICHAS MÉDICAS ====
+
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/medical_record/create_record/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_record/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(), SCOUT.name())
+
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/medical_record/update_record/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_by_tenant")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
 
                                                 //
                                                 // Pagos

@@ -776,7 +776,3 @@ export default function SubramaDetail() {
     </div>
   );
 }
-
-
-
-

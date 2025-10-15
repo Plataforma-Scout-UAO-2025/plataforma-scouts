@@ -117,4 +117,3 @@ export const useTenantParams = (): TenantParams => {
     error,
   }), [tenantId, groupSlug, isLoading, isFetching, hasMissingParams, error]);
 };
-

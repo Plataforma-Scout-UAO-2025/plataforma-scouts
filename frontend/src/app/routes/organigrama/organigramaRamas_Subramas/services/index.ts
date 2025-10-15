@@ -74,5 +74,3 @@ export const extractObjectIdsFromUrls = (urls: string[]): string[] => {
 export const clearAllStorageData = (): void => {
   console.warn('clearAllStorageData no está disponible en modo backend real');
 };
-
-

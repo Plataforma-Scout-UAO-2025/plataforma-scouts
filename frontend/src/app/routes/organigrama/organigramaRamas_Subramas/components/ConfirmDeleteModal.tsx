@@ -104,5 +104,3 @@ export default function ConfirmDeleteModal({
     </Dialog>
   );
 }
-
-

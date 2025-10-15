@@ -60,7 +60,7 @@ async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
           if (subgroupId) {
             const members = await getMembersBySubgroup(Number(subgroupId));
             if (members && members.length > 0) {
-              integrantes = members.map((m: any) => {
+              integrantes = members.map((m: Record<string, unknown>) => {
                 const firstName = m.firstName ?? m.first_name ?? '';
                 const lastName = m.lastName ?? m.last_name ?? '';
                 return `${firstName} ${lastName}`.trim();

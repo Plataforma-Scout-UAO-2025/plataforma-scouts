@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { OrganigramaNiveles } from "../organigramaNivelesOrganizativos/types/niveles.types";
 import { getMembersBySubgroup } from "@/api/organigramaApi";
+import type { Member } from "@/types/member.type";
 
 type BranchLite = { id: string | number; name: string; description?: string; minAge?: number; maxAge?: number; status?: string };
 type SubgroupLite = { id: string | number; name?: string; status?: string; leader?: string };
@@ -60,7 +61,7 @@ export async function exportBranchesCSV(branches: SimpleBranches) {
           if (subgroupId) {
             const members = await getMembersBySubgroup(Number(subgroupId));
             if (members && members.length > 0) {
-              integrantes = members.map((m: any) => {
+              integrantes = members.map((m: Record<string, unknown>) => {
                 const firstName = m.firstName ?? m.first_name ?? '';
                 const lastName = m.lastName ?? m.last_name ?? '';
                 return `${firstName} ${lastName}`.trim();
@@ -109,7 +110,7 @@ export function exportLevelsCSV(data: OrganigramaNiveles) {
   download(`organigrama_niveles_${data.anio}.csv`, csv);
 }
 
-export function exportOrgChartCombinedPDF(
+export async function exportOrgChartCombinedPDF(
   branches: SimpleBranches,
   levels: OrganigramaNiveles,
   opts?: { year?: number }
@@ -137,7 +138,7 @@ export function exportOrgChartCombinedPDF(
   doc.text("Ramas y Subramas", x, y);
 
   const branchesBody: string[][] = [];
-  branches.forEach(({ section, subgroups }) => {
+  for (const { section, subgroups } of branches) {
     const uniqueLeaders = Array.from(new Set((subgroups || []).map((s) => s.leader).filter(Boolean) as string[]));
     const jefeRama = uniqueLeaders.join(", ");
     const desc = (section.description && String(section.description).trim())
@@ -154,9 +155,27 @@ export function exportOrgChartCombinedPDF(
         jefeRama || "",
       ]);
     } else {
-      subgroups.forEach((sg) => {
+      for (const sg of subgroups) {
         const nameFull = sg.name || "Subrama";
-        const integrantes = "";
+
+        // Obtener miembros de la subrama
+        let integrantes = '';
+        try {
+          const subgroupId = sg.id;
+          if (subgroupId) {
+            const members = await getMembersBySubgroup(Number(subgroupId));
+            if (members && members.length > 0) {
+              integrantes = members.map((m: Member) => {
+                const firstName = m.firstName ?? '';
+                const lastName = m.lastName ?? '';
+                return `${firstName} ${lastName}`.trim();
+              }).filter(Boolean).join(', ');
+            }
+          }
+        } catch (error) {
+          console.warn(' [Export PDF OrgChart] Error obteniendo miembros para subrama:', sg.name ?? sg.id, error);
+          // Fallback vacío
+        }
 
         branchesBody.push([
           section.name,
@@ -165,9 +184,9 @@ export function exportOrgChartCombinedPDF(
           integrantes,
           jefeRama || "",
         ]);
-      });
+      }
     }
-  });
+  }
 
   autoTable(doc, {
     startY: y + 10,

@@ -24,7 +24,7 @@ import {
 
 import { GalleryItemSchema } from '../schemas/gallery.schema';
 import { GalleryItemsSchema } from '../schemas/gallery.schema';
-import type { GalleryItemZ } from '../schemas/gallery.schema';
+import type { GalleryItemZ } from '../schemas/gallery.schema';  
 import type { GalleryItemsZ } from '../schemas/gallery.schema';
 
 // Reexportar la API con nombres estables

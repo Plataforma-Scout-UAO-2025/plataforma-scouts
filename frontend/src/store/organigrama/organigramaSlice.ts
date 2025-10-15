@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchMembersBySubgroupAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
+import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { Member } from "@/types/member.type";
 
 // Algunos endpoints devuelven campos en snake_case (por ejemplo subgroup_id).
@@ -9,7 +10,7 @@ type MemberLike = Member & { subgroup_id?: number };
 
 interface OrganigramaState {
   sections: Section[];
-  currentSection?: { section: Section; subgroups: any } | null;
+  currentSection?: { section: Section; subgroups: Subgroup[] } | null;
   membersBySubgroup: Record<string, Member[]>;
   loading: boolean;
   error: string | null;
