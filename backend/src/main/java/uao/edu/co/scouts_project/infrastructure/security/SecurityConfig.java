@@ -165,15 +165,15 @@ public class SecurityConfig {
 
                                                 //
                                                 // Pagos
-                                                .requestMatchers("/api/v1/finanzas/payments/**").permitAll() // Cambiar
-                                                                                                             // a
-                                                                                                             // .hasAnyRole(TESORERO.name())
-                                                .requestMatchers("/api/v1/finanzas/payments").permitAll()
+                                                .requestMatchers(HttpMethod.GET,"/api/v1/finanzas/payments/status/*/*")
+                                                .hasAnyRole(ACUDIENTE.name())
+
+                                                .requestMatchers("/api/v1/finanzas/payments/**")
+                                                .hasAnyRole(TESORERO.name(), ADMIN_GLOBAL.name())
 
                                                 // Cuotas
-                                                .requestMatchers("/api/v1/finanzas/fees/**").permitAll() // Cambiar a
-                                                                                                         // .hasAnyRole(TESORERO.name())
-                                                .requestMatchers("/api/v1/finanzas/fees").permitAll()
+                                                .requestMatchers("/api/v1/finanzas/fees/**")
+                                                .hasAnyRole(TESORERO.name(), ADMIN_GLOBAL.name())
 
                                                 //
                                                 // Planes de adelanto
