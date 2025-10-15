@@ -175,8 +175,9 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/finanzas/fees/**")
                                                 .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
 
-                                                //
-                                                // Planes de adelanto
+                                                // Dashboard financiero
+                                                .requestMatchers("/api/v1/finanzas/dashboard/**")
+                                                .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
 
                                                 //
                                                 .anyRequest().permitAll()
