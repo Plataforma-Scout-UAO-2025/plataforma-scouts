@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,14 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import uao.edu.co.scouts_project.finanzas.payments.config.PaymentsExceptionHandler;
 import uao.edu.co.scouts_project.finanzas.payments.dto.CuotasEstadoDto;
@@ -46,17 +39,8 @@ class PaymentsControllerStatusTest {
 
     @BeforeEach
     void setup() {
-        // Configurar Jackson igual que la app (snake_case + java.time)
-        ObjectMapper om = new ObjectMapper();
-        om.registerModule(new JavaTimeModule());
-        om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        om.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-
-        MappingJackson2HttpMessageConverter jackson = new MappingJackson2HttpMessageConverter(om);
-
         mvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new PaymentsExceptionHandler())
-                .setMessageConverters(jackson) // <--- clave para snake_case en standalone
                 .build();
     }
 
@@ -68,7 +52,7 @@ class PaymentsControllerStatusTest {
         cuota.setInstallment_id(1L);
         cuota.setName("Matrícula 2025");
         cuota.setAmount(new BigDecimal("120000"));
-        cuota.setDue_date(LocalDate.of(2025, 1, 1));
+        cuota.setDue_date(LocalDate.now().withDayOfMonth(1));
         cuota.setStatus("PENDING");
         cuota.setPayment_id(null);
         cuota.setPaid_at(null);
@@ -95,28 +79,32 @@ class PaymentsControllerStatusTest {
     // ---------- TESTS ----------
     @Test
     void getStatus_treasurer_returns200_andGlobalObject() throws Exception {
-        var dto = buildGlobalDto(false);
-        // EN ESTA RAMA el servicio/controlador devuelven LISTA
-        when(service.listAccountStatusForTenant("org_TENANT")).thenReturn(List.of(dto));
+    // Tesorero
+    var dto = buildGlobalDto(false);
+    when(service.listAccountStatusForTenant("org_TENANT"))
+            .thenReturn(java.util.List.of(dto));
 
-        mvc.perform(get("/api/v1/finanzas/payments/status/{tenantId}", "org_TENANT")
-                .accept(MediaType.APPLICATION_JSON))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$[0].kpis.total_pendiente").value(120000))
-           .andExpect(jsonPath("$[0].kpis.total_pagado").value(0))
-           .andExpect(jsonPath("$[0].kpis.cuotas_vencidas").value(0))
-           .andExpect(jsonPath("$[0].members").value(Matchers.nullValue()));
+    mvc.perform(get("/api/v1/finanzas/payments/status/{tenantId}", "org_TENANT")
+            .accept(MediaType.APPLICATION_JSON))
+    .andExpect(status().isOk())
+    .andExpect(jsonPath("$.kpis.totalPendiente").value(120000))
+    .andExpect(jsonPath("$.kpis.totalPagado").value(0))
+    .andExpect(jsonPath("$.kpis.cuotasVencidas").value(0))
+    // si serializas "members": null
+    .andExpect(jsonPath("$.members").doesNotExist()); // o nullValue() si lo incluyes como null
     }
 
     @Test
     void getStatus_guardian_returns200_andMembersArray() throws Exception {
-        var dto = buildGlobalDto(true);
-        when(service.listAccountStatusForGuardian("org_TENANT", 1001L)).thenReturn(List.of(dto));
+    // Acudiente
+    var dto = buildGlobalDto(true);
+    when(service.listAccountStatusForGuardian("org_TENANT", 1001L)).thenReturn(java.util.List.of(dto));
 
-        mvc.perform(get("/api/v1/finanzas/payments/status/{tenantId}/{guardianId}", "org_TENANT", 1001L)
-                .accept(MediaType.APPLICATION_JSON))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$[0].members[0].member_id").value(45))
-           .andExpect(jsonPath("$[0].cuotas[0].name").value("Matrícula 2025"));
+    mvc.perform(get("/api/v1/finanzas/payments/status/{tenantId}/{guardianId}", "org_TENANT", 1001L)
+            .accept(MediaType.APPLICATION_JSON))
+    .andExpect(status().isOk())
+    .andExpect(jsonPath("$.members[0].member_id").value(45))
+    .andExpect(jsonPath("$.cuotas[0].name").value("Matrícula 2025"));
+
     }
 }

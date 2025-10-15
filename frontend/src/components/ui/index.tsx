@@ -2,6 +2,8 @@ export { Button } from "./button"
 export { Input } from "./input"
 export { Label } from "./label"
 export { Checkbox } from "./checkbox"
+export { Badge } from "./badge"
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card"
 export {
   Dialog,
   DialogTrigger,
@@ -15,6 +17,11 @@ export {
   DialogPortal,
 } from "./dialog"
 export { Calendar } from "./calendar"
+export {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./popover"
 export {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -60,16 +67,14 @@ export {
 export { Progress } from "./progress"
 export {
   Table,
-  TableHeader,
   TableBody,
+  TableCaption,
+  TableCell,
   TableFooter,
   TableHead,
+  TableHeader,
   TableRow,
-  TableCell,
-  TableCaption,
 } from "./table"
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "./card"
-export { Badge } from "./badge"
 export { Avatar, AvatarImage, AvatarFallback } from "./avatar"
 export { Textarea } from "./textarea"
 export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator, SelectScrollUpButton, SelectScrollDownButton } from "./select"
@@ -82,7 +87,6 @@ export {
   FormMessage,
   FormField,
 } from "./form"
-export { Popover, PopoverTrigger, PopoverContent } from "./popover"
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs"
 export { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from "./sheet"
 export { Skeleton } from "./skeleton"

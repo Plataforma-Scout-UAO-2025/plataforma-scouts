@@ -5,10 +5,12 @@ import {
   getMembers,
   updateMember,
   createMember,
+  createMemberWithSchool
 } from "@/api/membersApi";
-import { validateClient } from "../../lib/zodUtils";
-import { updateMemberSchema } from "@/models/models/memberSchema";
-import type { Member } from "@/models/types/memberTypes";
+import { validateClient } from "@/lib/zodUtils.ts";
+import { updateMemberSchema } from "@/schemas/memberSchema";
+import type { Member } from "@/types/member.type";
+import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";
 
 // Obtener datos de un miembro desde Firestore
 export const fetchMemberAction = createAsyncThunk<
@@ -88,6 +90,28 @@ export const createMemberAction = createAsyncThunk<
     const axiosError = error as AxiosError;
     const errorData = axiosError.response?.data as { error: string };
     const errorMessage = errorData?.error || "Error al crear el miembro";
+    return rejectWithValue({ error: errorMessage });
+  }
+});
+
+// Crear un miembro con datos escolares
+export const createMemberWithSchoolDataAction = createAsyncThunk<
+  { message: string; newMember?: Member },
+  { memberData: CreateMemberWithSchoolRequest },
+  { rejectValue: { error: string } }
+>("member/createWithSchoolData", async ({ memberData}, { rejectWithValue }) => {
+  try {
+    const fullMemberData = { ...memberData };
+    const response = await createMemberWithSchool(fullMemberData);
+    return {
+      message: "Miembro creado exitosamente con datos escolares",
+      newMember: response,
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage =
+      errorData?.error || "Error al crear el miembro con datos escolares";
     return rejectWithValue({ error: errorMessage });
   }
 });

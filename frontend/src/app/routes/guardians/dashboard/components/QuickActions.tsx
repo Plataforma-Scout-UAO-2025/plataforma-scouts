@@ -19,14 +19,14 @@ export default function QuickActions() {
       title: "Ver Miembros a Cargo",
       description: "Gestiona la información de tus miembros",
       icon: Users,
-      action: () => navigate('/app/acudientes/miembros'),
+      action: () => navigate('/app/guardians/members'),
       color: "bg-blue-500"
     },
     {
       title: "Mi Perfil",
       description: "Actualiza tu información personal",
       icon: Settings,
-      action: () => navigate('/app/acudientes/perfil'),
+      action: () => navigate('/app/guardians/profile'),
       color: "bg-green-500"
     }
   ];
