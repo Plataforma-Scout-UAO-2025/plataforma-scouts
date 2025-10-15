@@ -6,8 +6,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Section } from "@/types/section.type";
-import type { Subgroup } from "@/types/subgroup.type";
+import type { Section } from "@/types/section-simple.type";
+import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { Group } from "@/hooks/useOrgStructure";
 
 interface Props {

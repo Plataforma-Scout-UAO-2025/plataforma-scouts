@@ -13,6 +13,15 @@ export interface Group {
   groupSlug: string;
 }
 
+interface RawGroup {
+  groupId?: number;
+  id?: number;
+  groupName?: string;
+  name?: string;
+  groupSlug?: string;
+  slug?: string;
+}
+
 interface UseOrgStructureOptions {
   orgId: string;
   open: boolean;
@@ -47,11 +56,10 @@ export function useOrgStructure({ orgId, open }: UseOrgStructureOptions) {
       setLoadingGroups(true);
       try {
         const data = await getGroupsByTenant(orgId, ac.signal);
-
-        const mapped: Group[] = (data ?? []).map((g: any) => ({
-          groupId: (g.groupId ?? g.id) as number,
-          groupName: (g.groupName ?? g.name) as string,
-          groupSlug: (g.groupSlug ?? g.slug) as string,
+        const mapped: Group[] = (data ?? []).map((g: RawGroup) => ({
+          groupId: g.groupId ?? g.id ?? 0,
+          groupName: g.groupName ?? g.name ?? "Sin nombre",
+          groupSlug: g.groupSlug ?? g.slug ?? "",
         }));
 
         setGroups(mapped);
