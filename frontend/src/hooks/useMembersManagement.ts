@@ -10,16 +10,9 @@ interface UseMembersManagementProps {
   itemsPerPage?: number;
 }
 
-const mappingStatus = (status: string | undefined): string => {
-  if (!status) return "";
-  
-  const statusMap: Record<string, string> = {
-    "APPROVED": "Aprobado",
-    "REJECTED": "Rechazado",
-    "PENDING": "Pendiente",
-  };
-  
-  return statusMap[status.toUpperCase()] || status;
+const mappingStatus = (isActive: boolean | undefined): string => {
+  if (isActive === undefined || isActive === null) return "Inactivo";
+  return isActive ? "Activo" : "Inactivo";
 };
 
 export const useMembersManagement = ({ itemsPerPage = 10 }: UseMembersManagementProps = {}) => {
@@ -68,7 +61,7 @@ export const useMembersManagement = ({ itemsPerPage = 10 }: UseMembersManagement
 
       const matchesStatus =
         statusFilter === "" ||
-        mappingStatus(member.status)?.toLowerCase().includes(statusFilter.toLowerCase());
+        mappingStatus(member.is_active)?.toLowerCase().includes(statusFilter.toLowerCase());
 
       const matchesBranch =
         branchFilter === "" ||
@@ -83,7 +76,7 @@ export const useMembersManagement = ({ itemsPerPage = 10 }: UseMembersManagement
     return filtered.map(
       (member: Member): Member => ({
         ...member,
-        status: mappingStatus(member.status),
+        status: mappingStatus(member.is_active),
       })
     );
   }, [members, searchFilter, statusFilter, branchFilter, tenantId]);

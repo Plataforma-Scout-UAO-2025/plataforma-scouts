@@ -6,6 +6,8 @@ interface BranchDistributionProps {
 }
 
 const BranchDistribution = ({ members }: BranchDistributionProps) => {
+
+  console.log(members);
   const isScout = (role: string | undefined) => role?.toUpperCase() === "SCOUT";
   const scoutsPorRama: Record<string, number> = {};
 

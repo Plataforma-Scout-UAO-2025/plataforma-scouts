@@ -51,7 +51,7 @@ const MembersFilter = ({
             >
               Todos los estados
             </DropdownMenuItem>
-            {["Aprobado", "Rechazado", "Pendiente"].map((status) => (
+            {["Activo", "Inactivo"].map((status) => (
               <DropdownMenuItem
                 key={status}
                 className="cursor-pointer"
