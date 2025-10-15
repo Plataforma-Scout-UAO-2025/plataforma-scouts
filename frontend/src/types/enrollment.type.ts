@@ -19,6 +19,9 @@ export interface PersonalData {
   lastname: string;
   email: string;
   confirm_email: string;
+  username: string;
+  password: string;
+  confirm_password: string;
   document_type: DocumentType;
   identification: string;
   birth_date: string;
