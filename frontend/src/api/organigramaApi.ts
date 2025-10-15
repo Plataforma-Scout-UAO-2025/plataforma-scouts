@@ -192,7 +192,7 @@ export const deleteGalleryImageById = async (
 
 // Obtiene la lista de miembros pertenecientes a un subgrupo específico
 export const getMembersBySubgroup = async (subgroupId: number) => {
-  const response = await api.get(`/members/list_members_by_subgroup`, { params: { subgroupId } });
+  const response = await api.get(`/members/list_members_by_subgroup`, { params: { id: subgroupId } });
   return response.data;
 };
 

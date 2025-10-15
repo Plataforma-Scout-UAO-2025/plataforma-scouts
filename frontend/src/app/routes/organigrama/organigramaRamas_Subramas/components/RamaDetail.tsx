@@ -8,11 +8,12 @@ import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
 import { getSection } from '@/api/organigramaApi';
-import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
+import { fixSupabaseUrl } from '@/lib/imageUtils';
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 import FotoModal from "../components/FotoModal";
+import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
 
 
 export default function RamaDetail() {
@@ -43,7 +44,15 @@ export default function RamaDetail() {
       setLoading(true);
       const data = await organigramaService.getRamaById(tenantId, groupSlug, String(id));
       if (data) {
-        setRama(data as Rama);
+        let ramaData = data as Rama;
+        // Si no hay iconObjectId, intentar obtenerlo de sessionStorage
+        if (!ramaData.iconObjectId) {
+          const storedIcon = sessionStorage.getItem(`icon_${ramaData.id}`);
+          if (storedIcon) {
+            ramaData = { ...ramaData, iconObjectId: storedIcon };
+          }
+        }
+        setRama(ramaData);
         setImagenPrincipal(getMainImageUrl(data as Rama));
         const rec = data as unknown as Record<string, unknown>;
         const galleryFromRec = (rec['gallery'] as unknown[] | undefined) ?? [];
@@ -314,14 +323,10 @@ export default function RamaDetail() {
   const handleMainImageClick = () => mainImageInputRef.current?.click();
   const handleGalleryClick = () => galleryInputRef.current?.click();
 
- 
   const getIconUrl = (rama: Rama): string => {
-    const iconObjectId = rama.iconObjectId ?? rama.iconoObjectId;
     const iconUrl = rama.iconUrl ?? rama.icono;
-    if (iconObjectId) return iconObjectId as string;
-    if (iconUrl && !iconUrl.startsWith('data:') && iconUrl.includes('http')) return iconUrl as string;
-    if (iconUrl && iconUrl.startsWith('data:')) return iconUrl as string;
-    if (iconUrl) return iconUrl as string;
+    if (iconUrl && iconUrl.startsWith('http')) return fixSupabaseUrl(iconUrl);
+    if (iconUrl && iconUrl.startsWith('data:')) return iconUrl;
     console.log(' [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
     return '';
   };
@@ -502,7 +507,7 @@ export default function RamaDetail() {
       return;
     }
 
-  const updatedIconUrl = await organigramaService.uploadSectionIcon(
+  const uploadResult = await organigramaService.uploadSectionIcon(
     tenantId,
     groupSlug,
     String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
@@ -518,23 +523,13 @@ export default function RamaDetail() {
     }
   );
 
-  if (updatedIconUrl) {
-    setIconPreview(updatedIconUrl);
-    setImageRefreshToken(Date.now());
-    setUploadPercent(100);
-    toast.success('Ícono actualizado correctamente');
-  } else {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
-    if (updatedRama) {
-      setRama(updatedRama);
-      setUploadPercent(100);
-      toast.success('Ícono actualizado correctamente');
-    } else {
-      console.warn(' [RamaDetail] No se pudo recargar la rama');
-      toast.error('Error recargando los datos de la rama');
-    }
-      }
+  // Actualizar el estado local con el nuevo iconObjectId
+  setRama({ ...rama, iconObjectId: uploadResult });
+  // Guardar en sessionStorage como respaldo
+  sessionStorage.setItem(`icon_${rama.id}`, uploadResult);
+  setImageRefreshToken(Date.now());
+  setUploadPercent(100);
+  toast.success('Ícono actualizado correctamente');
       // Forzar refresh visual de imágenes (cache-busting)
       setImageRefreshToken(Date.now());
     } catch (err) {

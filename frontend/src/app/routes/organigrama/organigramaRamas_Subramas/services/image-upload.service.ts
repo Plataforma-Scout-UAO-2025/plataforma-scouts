@@ -1,5 +1,5 @@
 import { postFormData, uploadToStorage } from '@/api/upload';
-import { getSection, patchGallery, getSubgroup, patchSubgroupGallery, setIcon } from '@/api/organigramaApi';
+import { getSection, patchGallery, getSubgroup, patchSubgroupGallery, setIcon, setPhotoPrincipal } from '@/api/organigramaApi';
 import { createAddPayload, createReplacePayload, createAddsPayloadFromArray, createRemovePayload, createPayloadForBackend } from '../utils/galleryPayload';
 import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 type MaybeAxiosError = { response?: { data?: unknown } };
@@ -109,7 +109,7 @@ export const uploadSectionMainImage = async (
   // handled by organigramaClient
 
     const attemptsMain = [
-      { description: 'snake_case object_id', payload: { object_id: uploadResponse.objectId } },
+      { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
     ];
 
     let lastMainError: unknown = null;
@@ -121,8 +121,8 @@ export const uploadSectionMainImage = async (
               ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
               : attempt.payload)
           : attempt.payload;
-  console.info('🔄 [ImageUploadService] Enviando PATCH (main image) via client:', { attempt: attempt.description, payload: payloadToSend });
-  await patchGallery(sectionId, payloadToSend, tenantId, groupSlug);
+  console.info('🔄 [ImageUploadService] Enviando PATCH a photo-principal:', { attempt: attempt.description, payload: payloadToSend });
+  await setPhotoPrincipal(sectionId, payloadToSend, tenantId, groupSlug);
         mainPatched = true;
         break;
       } catch (patchError) {

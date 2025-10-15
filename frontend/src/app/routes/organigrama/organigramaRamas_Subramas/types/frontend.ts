@@ -2,37 +2,28 @@
 export interface Branch {
   id: string;
   sectionId?: string;
-  // Legacy / Spanish aliases (kept for compatibility during migration)
   section_id?: string | number;
   name: string;
-  // Spanish alias (used in exports)
   nombre?: string;
   description?: string;
-  // Spanish legacy alias for description (used in exports)
   descripcion?: string;
   iconUrl?: string;
-  // legacy alias for icon URL (used in components)
   icono?: string;
   iconObjectId?: string;
-  // legacy alias for icon object id (used in components)
   iconoObjectId?: string;
   mainImageUrl?: string;
-  // legacy alias for main image (used in components)
   imagenPrincipal?: string;
   mainImageObjectId?: string;
   minAge: number;
   maxAge: number;
   year: number;
   status: 'active' | 'inactive';
-  // Spanish alias for status (used in mappers)
   estado?: 'activa' | 'inactiva';
   createdAt: string;
   galleryObjectIds: string[];
   gallery?: Array<{ id: string; url: string }>;
-  // legacy alias for gallery object ids (used in diagnostics)
   sectionGalleryObjectIds?: string[];
   subgroups: Subgroup[];
-  // Spanish alias for subgroups (used in exports)
   subramas?: Subgroup[];
 }
 

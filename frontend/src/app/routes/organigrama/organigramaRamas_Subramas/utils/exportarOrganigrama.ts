@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Branch as Rama, Subgroup as Subrama } from "../types/frontend";
+import { getMembersBySubgroup } from "@/api/organigramaApi";
 
 type ExportPDFOpts = {
   anio?: number;
@@ -25,7 +26,7 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 
-function construirFilasDetalle(ramas: Rama[]): string[][] {
+async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
   const filas: string[][] = [];
 
   for (const r of ramas) {
@@ -51,18 +52,36 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
       for (const s of subgroups) {
         const nombreSubramaFull = (s.name ?? s.nombre ?? '').toString();
 
+        // Obtener miembros de la subrama
         let integrantes = '';
-        const sUnknown = s as unknown as Record<string, unknown>;
-        if (sUnknown.members && Array.isArray(sUnknown.members)) {
-          integrantes = (sUnknown.members as string[]).join(', ');
-        } else if (sUnknown.integrantes && Array.isArray(sUnknown.integrantes)) {
-          integrantes = (sUnknown.integrantes as string[]).join(', ');
-        } else if (sUnknown.membersNames && Array.isArray(sUnknown.membersNames)) {
-          integrantes = (sUnknown.membersNames as string[]).join(', ');
-        } else if (typeof sUnknown.integrantes === 'string' && sUnknown.integrantes) {
-          integrantes = sUnknown.integrantes;
-        } else if (sUnknown.leader) {
-          integrantes = String(sUnknown.leader);
+        try {
+          const sUnknown = s as unknown as Record<string, unknown>;
+          const subgroupId = sUnknown['subgroupId'] ?? sUnknown['id'];
+          if (subgroupId) {
+            const members = await getMembersBySubgroup(Number(subgroupId));
+            if (members && members.length > 0) {
+              integrantes = members.map((m: any) => {
+                const firstName = m.firstName ?? m.first_name ?? '';
+                const lastName = m.lastName ?? m.last_name ?? '';
+                return `${firstName} ${lastName}`.trim();
+              }).filter(Boolean).join(', ');
+            }
+          }
+        } catch (error) {
+          console.warn(' [Export] Error obteniendo miembros para subrama:', s.name ?? s.nombre, error);
+          // Fallback: intentar usar datos existentes si están disponibles
+          const sUnknown = s as unknown as Record<string, unknown>;
+          if (sUnknown.members && Array.isArray(sUnknown.members)) {
+            integrantes = (sUnknown.members as string[]).join(', ');
+          } else if (sUnknown.integrantes && Array.isArray(sUnknown.integrantes)) {
+            integrantes = (sUnknown.integrantes as string[]).join(', ');
+          } else if (sUnknown.membersNames && Array.isArray(sUnknown.membersNames)) {
+            integrantes = (sUnknown.membersNames as string[]).join(', ');
+          } else if (typeof sUnknown.integrantes === 'string' && sUnknown.integrantes) {
+            integrantes = sUnknown.integrantes;
+          } else if (sUnknown.leader) {
+            integrantes = String(sUnknown.leader);
+          }
         }
 
         filas.push([
@@ -87,7 +106,7 @@ function construirFilasDetalle(ramas: Rama[]): string[][] {
   return filas;
 }
 
-export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) => {
+export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts = {}) => {
   console.log(' [ExportPDF] Iniciando exportación PDF con', ramas.length, 'ramas');
   console.log(' [ExportPDF] Opciones:', opts);
   
@@ -110,7 +129,7 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
     doc.text(`Generado: ${new Date().toLocaleString()}`, x, y + 16);
 
     console.log(' [ExportPDF] Construyendo datos para la tabla...');
-    const body = construirFilasDetalle(ramas);
+    const body = await construirFilasDetalle(ramas);
     console.log(' [ExportPDF] Tabla tendrá', body.length, 'filas');
 
     console.log(' [ExportPDF] Generando tabla con autoTable...');
@@ -143,12 +162,13 @@ export const exportarOrganigramaPDF = (ramas: Rama[], opts: ExportPDFOpts = {}) 
   }
 };
 
-export const exportarOrganigramaCSV = (ramas: Rama[]) => {
+export const exportarOrganigramaCSV = async (ramas: Rama[]) => {
   console.log(' [ExportCSV] Iniciando exportación CSV con', ramas.length, 'ramas');
   
   try {
     console.log(' [ExportCSV] Construyendo datos detallados...');
-    const detalleRows = construirFilasDetalle(ramas).map((cols) => ({
+    const filasDetalle = await construirFilasDetalle(ramas);
+    const detalleRows = filasDetalle.map((cols) => ({
       Rama: cols[0],
       Descripción: cols[1],
       NombreSubrama: cols[2],

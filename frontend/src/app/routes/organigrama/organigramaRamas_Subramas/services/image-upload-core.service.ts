@@ -1,5 +1,5 @@
 import { uploadToStorage } from '@/api/upload';
-import { patchGallery, getSection, deleteIcon, setIcon, deletePhotoPrincipal } from '@/api/organigramaApi';
+import { patchGallery, getSection, deleteIcon, setIcon, deletePhotoPrincipal, setPhotoPrincipal } from '@/api/organigramaApi';
 import { createAddPayload, createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
 import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 
@@ -103,13 +103,13 @@ export const uploadSectionMainImage = async (
     
 
     try {
-      const primarySnake = { object_id: uploadResponse.objectId };
-  console.info(' [ImageUploadCore] Enviando PATCH (main image primary snake) via client');
-  await patchGallery(sectionId, primarySnake, tenantId, groupSlug);
-      console.log(' [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH (primary)');
+      const primaryPayload = { objectId: uploadResponse.objectId };
+  console.info(' [ImageUploadCore] Enviando PATCH a photo-principal con objectId');
+  await setPhotoPrincipal(sectionId, primaryPayload, tenantId, groupSlug);
+      console.log(' [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH (photo-principal)');
     } catch (primaryError: unknown) {
-      console.error(' [ImageUploadService] Error en endpoint PATCH para imagen principal (primary):', primaryError);
-      console.error(' [ImageUploadService] Respuesta del backend (primary):', (primaryError as MaybeAxiosError)?.response?.data ?? (primaryError as MaybeAxiosError)?.response ?? primaryError);
+      console.error(' [ImageUploadService] Error en endpoint PATCH para imagen principal (photo-principal):', primaryError);
+      console.error(' [ImageUploadService] Respuesta del backend (photo-principal):', (primaryError as MaybeAxiosError)?.response?.data ?? (primaryError as MaybeAxiosError)?.response ?? primaryError);
       throw primaryError;
     }
     

@@ -40,7 +40,7 @@ export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
     }
 
     console.log(' [useOrganigramaExport] Generando PDF con', data.length, 'ramas');
-    exportarOrganigramaPDF(data, { colorHex: '#1A4134' });
+    await exportarOrganigramaPDF(data, { colorHex: '#1A4134' });
   }, [ramas, opts]);
 
   const exportExcel = useCallback(async () => {
@@ -75,7 +75,7 @@ export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
     }
     
     console.log(' [useOrganigramaExport] Generando CSV con', data.length, 'ramas');
-    exportarOrganigramaCSV(data);
+    await exportarOrganigramaCSV(data);
   }, [ramas, opts]);
 
   return {
