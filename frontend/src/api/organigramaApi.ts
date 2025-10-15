@@ -3,17 +3,23 @@ import type { TenantDTO, GroupResponseDTO } from "@/types/group.type";
 import type { Section } from '@/types/section-simple.type';
 import type { Subgroup } from "@/types/subgroup-simple.type";
 
-const mapBackendSectionToSection = (backendSection: any): Section => ({
-  ...backendSection,
-  id: backendSection.sectionId || backendSection.section_id,
-  sectionId: backendSection.sectionId || backendSection.section_id,
-});
+const mapBackendSectionToSection = (backendSection: Record<string, unknown>): Section => {
+  const section = backendSection as unknown as Section;
+  return {
+    ...section,
+    id: backendSection.sectionId as number || backendSection.section_id as number,
+    sectionId: backendSection.sectionId as number | string || backendSection.section_id as number | string,
+  };
+};
 
-const mapBackendSubgroupToSubgroup = (backendSubgroup: any): Subgroup => ({
-  ...backendSubgroup,
-  id: backendSubgroup.subgroupId || backendSubgroup.subgroup_id, 
-  subgroupId: backendSubgroup.subgroupId || backendSubgroup.subgroup_id,
-});
+const mapBackendSubgroupToSubgroup = (backendSubgroup: Record<string, unknown>): Subgroup => {
+  const subgroup = backendSubgroup as unknown as Subgroup;
+  return {
+    ...subgroup,
+    id: backendSubgroup.subgroupId as number || backendSubgroup.subgroup_id as number,
+    subgroupId: backendSubgroup.subgroupId as number || backendSubgroup.subgroup_id as number,
+  };
+};
 
 // Tenants y grupos
 
