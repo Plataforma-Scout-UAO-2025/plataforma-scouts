@@ -1,6 +1,4 @@
-// Backend response / request types (Stage 3)
 
-/** BackendBranch (BackendRama) */
 export interface BackendBranch {
   sectionId?: string | number;
   section_id?: string;
@@ -25,8 +23,6 @@ export interface BackendBranch {
   minAge?: number;
   maxAge?: number;
 }
-
-/** BackendSubgroup (BackendSubrama) */
 export interface BackendSubgroup {
   subgroup_id?: string;
   subgroupId?: string;
@@ -75,18 +71,15 @@ export interface UpdateBranchBackendData {
 export interface CreateSubgroupBackendData {
   name: string;
   description?: string;
-  galleryObjectIds?: string[];
-  // Some backends expect snake_case field names for JSON. Keep both to be flexible.
+  photoPrincipal?: string | null;
   isActive?: boolean;
-  is_active?: boolean;
 }
 
 export interface UpdateSubgroupBackendData {
   name?: string;
   description?: string;
-  galleryObjectIds?: string[];
+  photoPrincipal?: string | null;
   isActive?: boolean;
-  is_active?: boolean;
 }
 
 export interface UpdateSubgroupMainImageData {
