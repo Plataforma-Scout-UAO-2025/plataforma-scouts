@@ -63,10 +63,14 @@ const organigramaSlice = createSlice({
       state.loading = false;
       const payload = action.payload as MemberLike[];
       if (payload && payload.length > 0) {
-        const subgroupId = payload[0].subgroup_id ?? payload[0].subgroup_id ?? null;
-        if (subgroupId != null) {
-          // Guardamos usando el ID numérico descubierto
-          state.membersBySubgroup[subgroupId] = payload as Member[];
+        // Try to determine subgroup id from multiple possible shapes
+        const first = payload[0] as unknown as Record<string, unknown>;
+        const rawId = (first['subgroup_id'] as number | string | undefined)
+          ?? (first['subgroupId'] as number | string | undefined)
+          ?? (first['subgroup'] as number | string | undefined);
+        const subgroupId = typeof rawId === 'string' ? rawId.trim() : rawId;
+        if (subgroupId !== undefined && subgroupId !== null && String(subgroupId).length > 0) {
+          state.membersBySubgroup[String(subgroupId)] = payload as Member[];
         }
       }
     });

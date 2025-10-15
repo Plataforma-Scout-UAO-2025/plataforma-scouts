@@ -52,15 +52,15 @@ function App() {
             <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrgChartSummary /></ProtectedRoute>} />
 
             {/* ===================== GRUPOS ===================== */}
-            <Route path="grupos" element={<Grupos />} />
+            {/* Mantener solo la ruta protegida más abajo */}
 
             {/* Rutas para admin de grupo */}
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO", "COMITE_ADMIN"]}><Financiero /></ProtectedRoute>} />
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
-            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
-            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO"]}><Dashboard /></ProtectedRoute>} />
-            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE"]}><ScoutEnrollment /></ProtectedRoute>}/>
+            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO", "COMITE_ADMIN"]}><Pagos /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO", "SCOUTER", "COMITE_ADMIN"]}><Dashboard /></ProtectedRoute>} />
+            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUTER"]}><Miembros /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "SCOUTER", "ACUDIENTE", "COMITE_ADMIN"]}><ScoutEnrollment /></ProtectedRoute>}/>
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
             <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Rejected /></ProtectedRoute>} />
             {/*
