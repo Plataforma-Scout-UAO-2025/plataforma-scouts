@@ -26,7 +26,7 @@ export default function Dashboard() {
 
     case RawRole.ACUDIENTE:
       return <AcudienteView />;
-    
+
     case RawRole.SCOUT:
       return <ScoutView />;
 
