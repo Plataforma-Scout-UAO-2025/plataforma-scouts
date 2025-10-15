@@ -20,13 +20,17 @@ import { Separator } from "@/components/ui/separator";
 import {
   LineChart,
   Boxes,
-  Settings,
   HelpCircle,
   LogOut,
   Users,
   Award,
   ChevronRight,
+  DollarSign,
+  CalendarDays,
+  Pencil,
   Network,
+  BriefcaseMedical,
+  BarChart3,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -71,6 +75,12 @@ const adminGlobalItems: MenuItem[] = [
     icon: <LineChart />,
     href: "/app/dashboard-global",
   },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
 ];
 
 const adminGrupalItems: MenuItem[] = [
@@ -85,42 +95,32 @@ const adminGrupalItems: MenuItem[] = [
     id: "solicitudes",
     label: "Solicitudes",
     icon: <Boxes />,
-    href: "/app/solicitudes",
+    submenu: [
+      {
+        id: "solicitudes-pendientes",
+        label: "Pendientes",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes",
+      },
+      {
+        id: "solicitudes-rechazadas",
+        label: "Rechazadas",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes/rechazadas",
+      },
+    ],
   },
-  {
-    id: "insignias",
-    label: "Insignias",
-    icon: <Award />,
-    href: "/app/insignias",
-  },
-  {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
-  },
-  {
-    id: "financiero",
-    label: "Financiero",
-    icon: <Settings />,
-    href: "/app/financiero/cuotas",
-  },
-];
+  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
+  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
+  { id: "medico", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
+]
 
 const tesoreroItems: MenuItem[] = [
-  {
-    id: "inicio",
-    label: "Inicio",
-    icon: <LineChart />,
-    href: "/app/dashboard",
-  },
-  {
-    id: "financiero",
-    label: "Financiero",
-    icon: <Settings />,
-    href: "/app/financiero/cuotas",
-  },
-];
+  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
+  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
+]
 
 const acudienteItems: MenuItem[] = [
   {
@@ -130,16 +130,43 @@ const acudienteItems: MenuItem[] = [
     href: "/app/dashboard",
   },
   {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
   },
   {
     id: "financiero",
     label: "Financiero",
-    icon: <Settings />,
+    icon: <DollarSign />,
     href: "/app/financiero/estado-cuenta",
+  },
+];
+
+const ScoutItems: MenuItem[] = [
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/cuotas",
   },
 ];
 
@@ -167,6 +194,8 @@ function AppLayoutContent() {
         return acudienteItems;
       case RawRole.TESORERO:
         return tesoreroItems;
+      case RawRole.SCOUT:
+        return ScoutItems;
       case RawRole.ADMIN_GRUPO:
       case RawRole.COMITE_ADMIN:
       default:

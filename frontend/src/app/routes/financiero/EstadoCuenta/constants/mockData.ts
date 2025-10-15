@@ -4,16 +4,16 @@ import type { EstadoCuenta } from "@/types/estado-cuenta.type";
 // Members viene null porque el tesorero ve todas las cuotas del grupo
 export const mockTesoreroData: EstadoCuenta = {
   kpis: {
-    totalPendiente: 850000,
-    totalPagado: 450000,
-    cuotasVencidas: 3, // Cuotas con status OVERDUE
+    total_pendiente: 850000,
+    total_pagado: 450000,
+    cuotas_vencidas: 3, // Cuotas con status OVERDUE
   },
   members: null, // Para tesorero no hay members
   cuotas: [
     {
       installment_id: "inst-001",
       name: "Cuota Mensual Enero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-01-31"),
       status: "PAID",
       paid_at: new Date("2024-01-15"),
@@ -25,7 +25,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-002",
       name: "Cuota Mensual Enero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-01-31"),
       status: "OVERDUE",
       paid_at: null,
@@ -37,7 +37,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-003",
       name: "Campamento de Verano",
-      ammount: 200000,
+      amount: 200000,
       due_date: new Date("2024-03-15"),
       status: "PENDING",
       paid_at: null,
@@ -49,7 +49,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-004",
       name: "Cuota Mensual Febrero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-02-28"),
       status: "PAID",
       paid_at: new Date("2024-02-10"),
@@ -61,7 +61,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-005",
       name: "Cuota Trimestral Q1 2024",
-      ammount: 150000,
+      amount: 150000,
       due_date: new Date("2024-03-31"),
       status: "PENDING",
       paid_at: null,
@@ -73,7 +73,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-006",
       name: "Cuota Mensual Diciembre 2023",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2023-12-31"),
       status: "OVERDUE",
       paid_at: null,
@@ -85,7 +85,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-007",
       name: "Inscripción Anual 2024",
-      ammount: 100000,
+      amount: 100000,
       due_date: new Date("2024-01-15"),
       status: "PAID",
       paid_at: new Date("2024-01-05"),
@@ -97,7 +97,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-008",
       name: "Cuota Mensual Noviembre 2023",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2023-11-30"),
       status: "OVERDUE",
       paid_at: null,
@@ -109,7 +109,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-009",
       name: "Material Didáctico",
-      ammount: 75000,
+      amount: 75000,
       due_date: new Date("2024-02-15"),
       status: "PAID",
       paid_at: new Date("2024-02-12"),
@@ -121,7 +121,7 @@ export const mockTesoreroData: EstadoCuenta = {
     {
       installment_id: "inst-010",
       name: "Cuota Mensual Febrero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-02-28"),
       status: "PENDING",
       paid_at: null,
@@ -137,9 +137,9 @@ export const mockTesoreroData: EstadoCuenta = {
 // Members viene lleno con la lista de hijos del acudiente
 export const mockAcudienteData: EstadoCuenta = {
   kpis: {
-    totalPendiente: 300000,
-    totalPagado: 200000,
-    cuotasVencidas: 1, // Cuotas con status OVERDUE
+    total_pendiente: 300000,
+    total_pagado: 200000,
+    cuotas_vencidas: 1, // Cuotas con status OVERDUE
   },
   members: [
     {
@@ -187,7 +187,7 @@ export const mockAcudienteData: EstadoCuenta = {
     {
       installment_id: "inst-101",
       name: "Cuota Mensual Enero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-01-31"),
       status: "PAID",
       paid_at: new Date("2024-01-15"),
@@ -199,7 +199,7 @@ export const mockAcudienteData: EstadoCuenta = {
     {
       installment_id: "inst-102",
       name: "Cuota Mensual Febrero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-02-28"),
       status: "PENDING",
       paid_at: null,
@@ -211,7 +211,7 @@ export const mockAcudienteData: EstadoCuenta = {
     {
       installment_id: "inst-103",
       name: "Campamento de Verano",
-      ammount: 200000,
+      amount: 200000,
       due_date: new Date("2024-03-15"),
       status: "PENDING",
       paid_at: null,
@@ -224,7 +224,7 @@ export const mockAcudienteData: EstadoCuenta = {
     {
       installment_id: "inst-201",
       name: "Cuota Mensual Enero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-01-31"),
       status: "PAID",
       paid_at: new Date("2024-01-20"),
@@ -236,7 +236,7 @@ export const mockAcudienteData: EstadoCuenta = {
     {
       installment_id: "inst-202",
       name: "Cuota Mensual Febrero 2024",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2024-02-28"),
       status: "PAID",
       paid_at: new Date("2024-02-18"),
@@ -249,7 +249,7 @@ export const mockAcudienteData: EstadoCuenta = {
     {
       installment_id: "inst-301",
       name: "Cuota Mensual Diciembre 2023",
-      ammount: 50000,
+      amount: 50000,
       due_date: new Date("2023-12-31"),
       status: "OVERDUE",
       paid_at: null,

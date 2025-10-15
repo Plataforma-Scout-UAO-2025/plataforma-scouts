@@ -9,12 +9,18 @@ import {
 } from "@/components/ui/index";
 import { Pencil, Trash, User, Medal } from "lucide-react";
 import type { Member } from "@/types/member.type";
+import { formatDate } from "@/lib/utils";
 
 interface MembersTableProps {
   filteredMembers: Member[];
 }
 
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
+  const statusLabels: Record<string, string> = {
+    PENDING: "Pendiente",
+    APPROVED: "Aceptado",
+    REJECTED: "Rechazado",
+  };
   return (
     <div>
       <Table className="text-sm">
@@ -36,18 +42,26 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
-              <TableRow key={member.user_id}>
-                <TableCell className="pl-4 font-medium">{member.user_id}</TableCell>
+              <TableRow key={member.member_id}>
+                <TableCell className="pl-4 font-medium">
+                  {member.member_id}
+                </TableCell>
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
                 <TableCell>{member.identification}</TableCell>
                 <TableCell>
-                  {member.branch && member.branch.length > 0
-                    ? member.branch.map((rama) => rama.name).join(", ")
+                  {member.subgroup_name
+                    ? member.subgroup_name
+                    : member.subgroup_id
+                    ? `Subgrupo ${member.subgroup_id}`
                     : "Sin rama"}
                 </TableCell>
-                <TableCell>{member.created_at}</TableCell>
-                <TableCell>{member.status}</TableCell>
+                <TableCell>{formatDate(member.created_at)}</TableCell>
+                <TableCell>
+                  <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
+                    {statusLabels[member.status ?? "Aceptado"]}
+                  </span>
+                </TableCell>
                 <TableCell>{member.address}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="iconbutton" size="icon">

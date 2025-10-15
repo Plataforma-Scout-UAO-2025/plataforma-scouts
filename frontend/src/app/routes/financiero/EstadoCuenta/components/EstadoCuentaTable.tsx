@@ -68,9 +68,13 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("name")}</div>
-    ),
+    cell: ({ row }) => {
+      const dueDateValue = row.getValue("due_date") as string | Date;
+      const dueDateMonth = new Date(dueDateValue);
+      const dueDateMonthName = dueDateMonth.toLocaleDateString("es-CO", { month: "long" }).charAt(0).toUpperCase() + dueDateMonth.toLocaleDateString("es-CO", { month: "long" }).slice(1);
+
+      return <div className="">{row.getValue("name")} ({dueDateMonthName})</div>
+    },
   },
   {
     accessorKey: "member_name",
@@ -88,7 +92,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
     cell: ({ row }) => <div>{row.getValue("member_name")}</div>,
   },
   {
-    accessorKey: "ammount",
+    accessorKey: "amount",
     header: ({ column }) => {
       return (
         <Button
@@ -101,7 +105,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
       );
     },
     cell: ({ row }) => {
-      const monto = row.getValue("ammount") as number;
+      const monto = row.getValue("amount") as number;
       const formatted = new Intl.NumberFormat("es-CO", {
         style: "currency",
         currency: "COP",
@@ -123,7 +127,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
       );
     },
     cell: ({ row }) => {
-      const fecha = row.getValue("due_date") as Date;
+      const fecha = row.getValue("due_date") as string | Date;
       return <div>{new Date(fecha).toLocaleDateString("es-CO")}</div>;
     },
   },
@@ -148,7 +152,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
       const fecha = row.getValue("paid_at") as Date | null;
       return (
         <div>
-          {fecha ? new Date(fecha).toLocaleDateString("es-CO") : "N/A"}
+          {fecha ? new Date(fecha).toLocaleDateString("es-CO") : "-"}
         </div>
       );
     },
@@ -158,7 +162,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
     header: "Método",
     cell: ({ row }) => {
       const method = row.getValue("method") as string | null;
-      return <div>{method || "N/A"}</div>;
+      return <div>{method || "-"}</div>;
     },
   },
   {
@@ -166,7 +170,7 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
     header: "Referencia",
     cell: ({ row }) => {
       const reference = row.getValue("reference") as string | null;
-      return <div className="max-w-[150px] truncate">{reference || "N/A"}</div>;
+      return <div className="max-w-[150px] truncate">{reference || "-"}</div>;
     },
   },
 ];

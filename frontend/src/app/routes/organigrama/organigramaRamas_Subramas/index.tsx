@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import RamaList from './components/RamaList';
@@ -47,16 +47,21 @@ export default function Organigrama() {
   const [subramaSeleccionada, setSubramaSeleccionada] = useState<Subrama | null>(null);
 
   const navigate = useNavigate();
-  const { tenantSlug, groupSlug } = useTenantParams();
+  const { tenantId, groupSlug, isLoading: tenantLoading, isFetching, hasMissingParams, error: tenantError } = useTenantParams();
 
   const {
     ramas,
-    isLoading,
-    selectedYear,
     loadRamas,
-  } = useOrganigramaData(tenantSlug, groupSlug);
+    isLoading: dataLoading,
+  } = useOrganigramaData(tenantId, groupSlug);
 
   const { error, handleError, clearError } = useApiError();
+
+  useEffect(() => {
+    if (tenantError) {
+      handleError(new Error(tenantError));
+    }
+  }, [tenantError, handleError]);
 
   const {
     updateRama,
@@ -67,9 +72,9 @@ export default function Organigrama() {
     successOpen,
     successMessage,
     closeSuccess,
-  } = useOrganigramaActions({ tenantSlug, groupSlug, loadRamas, handleError });
+  } = useOrganigramaActions({ tenantId, groupSlug, loadRamas, handleError });
 
-  const { exportPDF, exportExcel } = useOrganigramaExport(ramas, selectedYear, { tenantSlug, groupSlug });
+  const { exportPDF, exportExcel } = useOrganigramaExport(ramas, { tenantId, groupSlug });
 
   // ====== RAMAS ======
   const handleEditRama = (rama: Rama) => {
@@ -124,7 +129,7 @@ export default function Organigrama() {
   const onConfirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      if (!tenantSlug || !groupSlug) {
+      if (!tenantId || !groupSlug) {
         handleError(new Error('Tenant o group no disponibles para eliminar.'));
         setConfirmDeleteOpen(false);
         return;
@@ -188,8 +193,13 @@ export default function Organigrama() {
       </div>
 
       {/* Lista de ramas */}
-      {isLoading ? (
+      {/* Mostrar loader si el tenant/group o los datos están cargando y aún no hay ramas */}
+      {( (isFetching || tenantLoading || dataLoading) && (!ramas || ramas.length === 0) ) ? (
         <OrganigramaLoader />
+      ) : hasMissingParams && !isFetching && (!ramas || ramas.length === 0) ? (
+        <div className="text-center py-12">
+          <p className="text-sm text-muted-foreground">No se pudo determinar el tenant o el grupo. Comprueba tu sesión o contacta al administrador.</p>
+        </div>
       ) : (
         <RamaList
           ramas={ramas}
