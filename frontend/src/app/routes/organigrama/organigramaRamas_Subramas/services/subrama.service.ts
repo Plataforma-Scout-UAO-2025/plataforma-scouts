@@ -3,7 +3,6 @@ import type {
   CreateSubgroupData as CreateSubramaData, 
   UpdateSubgroupData as UpdateSubramaData, 
 } from '../types/frontend';
-import type { BackendSubgroup as BackendSubrama } from '../types/backend';
 
 import { getSubgroups, createSubgroup, updateSubgroup, deleteSubgroup } from '@/api/organigramaApi';
 import { 
@@ -13,13 +12,13 @@ import {
 } from '../utils/mappers';
 import type { Subgroup as SubgroupDTO } from '@/types/subgroup-simple.type';
 
-type MaybeAxiosError = { response?: { data?: unknown } };
+type MaybeAxiosError = { response?: { data?: unknown; status?: number }; status?: number; code?: string };
 
 export const getSubramasByRamaId = async (tenantId: string, groupSlug: string, ramaId: string): Promise<Subrama[]> => {
   const normalizedRamaId = typeof ramaId === 'string' ? ramaId.trim() : String(ramaId ?? '').trim();
 
   if (!normalizedRamaId) {
-    console.warn('⚠️ [SubramaService] Rama sin ID válido, se omite la consulta de subramas.');
+    console.warn(' [SubramaService] Rama sin ID válido, se omite la consulta de subramas.');
     return [];
   }
 
@@ -28,7 +27,7 @@ export const getSubramasByRamaId = async (tenantId: string, groupSlug: string, r
     const subramas = (Array.isArray(backendSubramas) ? backendSubramas : []).map(mapBackendSubramaToFrontend);
     return subramas;
   } catch (error) {
-    console.error('❌ [SubramaService] Error obteniendo subramas:', error);
+    console.error(' [SubramaService] Error obteniendo subramas:', error);
     throw error;
   }
 };
@@ -64,7 +63,7 @@ export const getSubramaById = async (tenantId: string, groupSlug: string, sectio
     if (!found) return null;
     return mapBackendSubramaToFrontend(found);
   } catch (error) {
-    console.error('❌ [SubramaService] Error obteniendo subrama por ID:', error);
+    console.error(' [SubramaService] Error obteniendo subrama por ID:', error);
     return null;
   }
 };

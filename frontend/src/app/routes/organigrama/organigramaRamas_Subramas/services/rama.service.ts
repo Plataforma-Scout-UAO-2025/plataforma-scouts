@@ -2,8 +2,8 @@ import type {
   Branch as Rama, 
   CreateBranchData as CreateRamaData, 
   UpdateBranchData as UpdateRamaData, 
+  Subgroup as Subrama,
 } from '../types/frontend';
-import type { BackendBranch as BackendRama } from '../types/backend';
 
 import type { Section } from '@/types/section-simple.type';
 import type { Subgroup } from '@/types/subgroup-simple.type';
@@ -11,7 +11,8 @@ import { getSections, getSection, getSectionWithSubgroups, createSection, update
 import { 
   mapBackendRamaToFrontend, 
   mapFrontendCreateRamaToBackend, 
-  mapFrontendUpdateRamaToBackend
+  mapFrontendUpdateRamaToBackend,
+  mapBackendSubramaToFrontend,
 } from '../utils/mappers';
 import { getSubramasByRamaId } from './subrama.service';
 import { uploadSectionIcon, uploadGalleryImages } from '../../services/imageFacade';
@@ -59,7 +60,7 @@ export const getRamasWithSubramas = async (
     if (typeof añoOrOpts === 'number') opts = { año: añoOrOpts };
     return await getRamas(tenantId, groupSlug, opts);
   } catch (error) {
-    console.error('❌ [RamaService] Error en flujo estándar:', error);
+    console.error(' [RamaService] Error en flujo estándar:', error);
     throw error;
   }
 };
@@ -94,10 +95,16 @@ export const getRamas = async (
       return (
         idCandidates
           .map((candidate) => (typeof candidate === 'string' ? candidate.trim() : candidate !== undefined && candidate !== null ? String(candidate) : ''))
-          .find((candidate) => candidate.length > 0) ?? '';
+          .find((candidate) => candidate.length > 0) ?? ''
+      );
+    };
+
+    const ramasConSubramas = await Promise.all(
+      ramas.map(async (rama) => {
+        const normalizedId = resolveRamaId(rama);
 
         if (!normalizedId) {
-          console.warn('⚠️ [RamaService] Rama sin ID válido, se omite la carga de subramas.', {
+          console.warn(' [RamaService] Rama sin ID válido, se omite la carga de subramas.', {
             nombre: rama.nombre ?? rama.name,
           });
           const ramaSinId: Rama = { ...rama, subgroups: [], subramas: [] };
@@ -178,7 +185,7 @@ export const getRamas = async (
     console.error(' [RamaService] Error obteniendo ramas:', error);
     const errorWithResponse = error as { response?: { data?: unknown } };
     if (errorWithResponse?.response) {
-      console.error('❌ [RamaService] response.data:', errorWithResponse.response?.data);
+      console.error(' [RamaService] response.data:', errorWithResponse.response?.data);
     }
     throw error;
   }
@@ -229,17 +236,17 @@ export const getRamaById = async (tenantId: string, groupSlug: string, id: strin
       rama.subramas = subramas;
       rama.subgroups = subramas;
     } catch (subramaError) {
-      console.warn(`⚠️ [RamaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, subramaError);
+      console.warn(` [RamaService] No se pudieron cargar subramas para rama ${rama.nombre}:`, subramaError);
       rama.subramas = [];
       rama.subgroups = [];
     }
     
     return rama;
   } catch (error) {
-    console.error('❌ [RamaService] Error obteniendo rama por ID:', error);
+    console.error(' [RamaService] Error obteniendo rama por ID:', error);
     const e = error as { response?: { data?: unknown }; config?: { url?: string } };
-    if (e.config?.url) console.error('❌ [RamaService] request url:', e.config.url);
-    if (e.response?.data) console.error('❌ [RamaService] response.data:', e.response.data);
+    if (e.config?.url) console.error(' [RamaService] request url:', e.config.url);
+    if (e.response?.data) console.error(' [RamaService] response.data:', e.response.data);
     return null;
   }
 };
@@ -255,22 +262,18 @@ export const createRama = async (tenantId: string, groupSlug: string, data: Crea
     
   const backendRama = await createSection(payload, tenantId, groupSlug) as SectionDTO;
     
-    // Extraer el ID de la sección creada (puede venir como sectionId o section_id)
-    const sectionId = String(backendRama.sectionId || backendRama.section_id || backendRama.id || '');
-  // Rama creada con ID: sectionId
+    const sectionId = resolveSectionId(backendRama) ?? '';
     
-    // Si hay archivos de imagen, subirlos después de crear la rama
     if (data.iconFile && sectionId) {
   await uploadSectionIcon(tenantId, groupSlug, sectionId, data.iconFile);
     } else {
-      // No hay icono para subir o sectionId inválido
+      // no icon to upload
     }
     
     if (data.galleryFiles && data.galleryFiles.length > 0 && sectionId) {
   await uploadGalleryImages(tenantId, groupSlug, sectionId, data.galleryFiles);
     }
     
-    // Obtener los datos actualizados de la rama después de subir las imágenes
     if (sectionId && (data.iconFile || (data.galleryFiles && data.galleryFiles.length > 0))) {
       const updatedRama = await getRamaById(tenantId, groupSlug, sectionId);
       if (updatedRama) {
@@ -279,10 +282,9 @@ export const createRama = async (tenantId: string, groupSlug: string, data: Crea
     }
     
   const rama = mapBackendRamaToFrontend(backendRama);
-  // Rama creada: rama.nombre
     return rama;
   } catch (error) {
-    console.error('❌ [RamaService] Error creando rama:', error);
+    console.error(' [RamaService] Error creando rama:', error);
     throw error;
   }
 };
@@ -294,7 +296,6 @@ export const updateRama = async (tenantId: string, groupSlug: string, data: Upda
     
   const backendRama = await updateSection(data.id, backendData, tenantId, groupSlug) as SectionDTO;
     
-    // Si hay archivos de imagen nuevos, subirlos
     if (data.iconFile) {
       await uploadSectionIcon(tenantId, groupSlug, data.id, data.iconFile);
     }
@@ -306,7 +307,7 @@ export const updateRama = async (tenantId: string, groupSlug: string, data: Upda
   const rama = mapBackendRamaToFrontend(backendRama);
     return rama;
   } catch (error) {
-    console.error('❌ [RamaService] Error actualizando rama:', error);
+    console.error(' [RamaService] Error actualizando rama:', error);
     throw error;
   }
 };
@@ -317,7 +318,7 @@ export const deleteRama = async (tenantId: string, groupSlug: string, id: string
     await deleteSection(id, tenantId, groupSlug);
     return true;
   } catch (error) {
-    console.error('❌ [RamaService] Error eliminando rama:', error);
+    console.error(' [RamaService] Error eliminando rama:', error);
     return false;
   }
 };
@@ -333,13 +334,12 @@ export const getAvailableYears = async (tenantId: string, groupSlug: string): Pr
     }).filter((y: number | undefined) => y !== undefined && y !== null))] as number[];
     const sortedYears = years.sort((a: number, b: number) => b - a);
     
-  // Años disponibles (optimizado): sortedYears
     return sortedYears;
   } catch (error: unknown) {
-    console.error('❌ [RamaService] Error obteniendo años:', error);
+    console.error(' [RamaService] Error obteniendo años:', error);
     const errorWithResponse = error as { response?: { data?: unknown } };
     if (errorWithResponse?.response) {
-      console.error('❌ [RamaService] response.data (años):', errorWithResponse.response?.data);
+      console.error(' [RamaService] response.data (años):', errorWithResponse.response?.data);
     }
     return [];
   }

@@ -16,7 +16,6 @@ export const useApiError = () => {
   });
 
   const handleError = useCallback((error: unknown) => {
-    // Si se pasa null o undefined, limpiamos el error (operación exitosa)
     if (!error) {
       setError({ hasError: false, message: '', type: 'error' });
       return;

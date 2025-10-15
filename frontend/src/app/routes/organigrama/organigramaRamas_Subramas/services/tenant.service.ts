@@ -1,6 +1,5 @@
 import { getAllTenants, getGroupsByTenant } from '@/api/organigramaApi';
 
-// Interface para tenant info
 interface TenantInfo {
   slug: string;
   name: string;

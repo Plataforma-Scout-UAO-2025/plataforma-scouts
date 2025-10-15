@@ -13,8 +13,6 @@ import type {
   UpdateBranchBackendData as UpdateRamaBackendData,
   CreateSubgroupBackendData as CreateSubramaBackendData,
   UpdateSubgroupBackendData as UpdateSubramaBackendData,
-  BackendBranch as BackendRama,
-  BackendSubgroup as BackendSubrama,
 } from '../types/backend';
 
 type AnyRecord = Record<string, unknown>;
@@ -144,52 +142,21 @@ export const mapBackendRamaToFrontend = (backendRama: SectionDTO): Rama => {
   const galleryObjectIds = gallery?.map((item) => item.id) ?? [];
 
   const mappedRama: Rama = {
-    // canonical ids
-  id: sectionId,
-  sectionId: sectionId,
-
-    // standard english fields
-    name: backendRama.name || '',
-    description: backendRama.description || undefined,
-
-    // image urls
-  iconUrl: iconUrl || undefined,
-    iconObjectId: backendRama.iconObjectId,
-    mainImageUrl: photoPrincipalUrl || undefined,
-    mainImageObjectId: backendRama.photoPrincipalObjectId,
-
-    // ages and year
-    // Intentar extraer min/max de campos explícitos; si no existen intentar parsear la descripción
-    // Ej: "Edades de 7 a 11 años" -> minAge=7, maxAge=11
-    // Por compatibilidad con el resto del código, mantenemos número (fallback 0 si no hay dato)
-    minAge: ((): number => {
-      if (typeof backendRama.minAge === 'number') return backendRama.minAge;
-      const desc = backendRama.description as string | undefined;
-      if (desc) {
-        const m = desc.match(/(\d{1,2})\s*(?:-|a|to)\s*(\d{1,2})/i);
-        if (m) return parseInt(m[1], 10);
-      }
-      return 0;
-    })(),
-    maxAge: ((): number => {
-      if (typeof backendRama.maxAge === 'number') return backendRama.maxAge;
-      const desc = backendRama.description as string | undefined;
-      if (desc) {
-        const m = desc.match(/(\d{1,2})\s*(?:-|a|to)\s*(\d{1,2})/i);
-        if (m) return parseInt(m[2], 10);
-      }
-      return 0;
-    })(),
-    year: new Date().getFullYear(),
-
+    id: sectionId,
+    sectionId,
+    name,
+    description,
+    iconUrl,
+    iconObjectId,
+    mainImageUrl,
+    mainImageObjectId,
+    minAge,
+    maxAge,
+    year: deriveYear(createdAt),
     status: 'active',
-    createdAt: backendRama.createdAt ? backendRama.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-
-    // gallery: prefer canonical array, expose ids as galleryObjectIds
-  galleryObjectIds: galleryArray ? galleryArray.map(g => String(g['id'] ?? g['objectId'] ?? '')).filter(Boolean) : galleryUrls,
-  gallery: galleryArray ? galleryArray.map((g) => { const rec = g as unknown as Record<string, unknown>; return { id: String(rec['id'] ?? rec['objectId'] ?? ''), url: String(rec['url'] ?? '') }; }) : undefined,
-
-    // subgroups loaded separately
+    createdAt,
+    galleryObjectIds,
+    gallery,
     subgroups: [],
   };
 
@@ -235,75 +202,61 @@ export const mapBackendSubramaToFrontend = (backendSubrama: SubgroupDTO): Subram
   return mappedSubrama;
 };
 
-// Mapear datos del frontend al formato que espera el backend para crear Ramas
-export const mapFrontendCreateRamaToBackend = (frontendData: CreateRamaData): CreateRamaBackendData => {
-  // Accept either Spanish (nombre) or English (name) frontend payloads
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  const name = (maybe.name ?? maybe.nombre) as string | undefined;
-  const description = (maybe.description ?? maybe.descripcion) as string | undefined;
-  return {
-    name: name ?? '',
-    description,
-    iconObjectId: null,
-    galleryObjectIds: []
-  };
-};
+export const mapFrontendCreateRamaToBackend = (
+  frontendData: CreateRamaData,
+): CreateRamaBackendData => ({
+  name: frontendData.name,
+  description: frontendData.description,
+  iconObjectId: null,
+  galleryObjectIds: [],
+});
 
-// Mapear datos del frontend al formato que espera el backend para actualizar Ramas
-export const mapFrontendUpdateRamaToBackend = (frontendData: UpdateRamaData): UpdateRamaBackendData => {
+export const mapFrontendUpdateRamaToBackend = (
+  frontendData: UpdateRamaData,
+): UpdateRamaBackendData => {
   const backendData: UpdateRamaBackendData = {};
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  if (maybe.name !== undefined) backendData.name = maybe.name as unknown as string;
-  if (maybe.nombre !== undefined) backendData.name = maybe.nombre as unknown as string;
-  if (maybe.description !== undefined) backendData.description = maybe.description as unknown as string;
-  if (maybe.descripcion !== undefined) backendData.description = maybe.descripcion as unknown as string;
 
-  backendData.iconObjectId = null;
-  backendData.galleryObjectIds = [];
+  if (frontendData.name !== undefined) backendData.name = frontendData.name;
+  if (frontendData.description !== undefined) backendData.description = frontendData.description;
+  if (frontendData.iconFile !== undefined) backendData.iconObjectId = null;
+  if (frontendData.galleryFiles !== undefined) backendData.galleryObjectIds = [];
 
   return backendData;
 };
 
-// Mapear datos del frontend al formato que espera el backend para crear Subramas
-export const mapFrontendCreateSubramaToBackend = (frontendData: CreateSubramaData): CreateSubramaBackendData => {
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  const base: Record<string, unknown> = {
-    name: ((maybe.name ?? maybe.nombre) as string | undefined) ?? '',
-    description: (maybe.description ?? maybe.descripcion) as string | undefined,
+export const mapFrontendCreateSubramaToBackend = (
+  frontendData: CreateSubramaData,
+): CreateSubramaBackendData => {
+  const record = frontendData as unknown as AnyRecord;
+  const backendData: CreateSubramaBackendData = {
+    name: frontendData.name,
   };
 
-  // Conditionally include gallery ids if provided
-  if (maybe.galleryObjectIds !== undefined) base.galleryObjectIds = maybe.galleryObjectIds as string[];
+  if (frontendData.description !== undefined) backendData.description = frontendData.description;
 
-  // Backend appears to expect snake_case 'is_active' — include both forms only if the frontend provided state
-  if (maybe.isActive !== undefined) {
-    base.is_active = Boolean(maybe.isActive);
-  } else if (maybe.estado !== undefined) {
-    const isAct = String(maybe.estado) === 'activa';
-    base.is_active = isAct;
-  }
+  const photoPrincipal = extractPhotoPrincipal(record);
+  if (photoPrincipal !== undefined) backendData.photoPrincipal = photoPrincipal;
 
-  return base as unknown as CreateSubramaBackendData;
+  const isActive = resolveIsActiveFlag(record);
+  backendData.isActive = isActive ?? true;
+
+  return backendData;
 };
 
-// Mapear datos del frontend al formato que espera el backend para actualizar Subramas
-export const mapFrontendUpdateSubramaToBackend = (frontendData: UpdateSubramaData): UpdateSubramaBackendData => {
-  const backendData: UpdateSubramaBackendData = {} as UpdateSubramaBackendData;
-  const maybe = frontendData as unknown as Record<string, unknown>;
-  if (maybe.name !== undefined) backendData.name = maybe.name as unknown as string;
-  if (maybe.nombre !== undefined) backendData.name = maybe.nombre as unknown as string;
-  if (maybe.description !== undefined) backendData.description = maybe.description as unknown as string;
-  if (maybe.descripcion !== undefined) backendData.description = maybe.descripcion as unknown as string;
-  if (maybe.galleryObjectIds !== undefined) backendData.galleryObjectIds = maybe.galleryObjectIds as string[];
-  if (maybe.isActive !== undefined) {
-    backendData.is_active = Boolean(maybe.isActive);
-  } else if (maybe.estado !== undefined) {
-    const v = (maybe.estado as unknown as string) === 'activa';
-    backendData.is_active = v;
-  } else if (maybe.status !== undefined) {
-    const v = (maybe.status as unknown as string) === 'active';
-    backendData.is_active = v;
-  }
+export const mapFrontendUpdateSubramaToBackend = (
+  frontendData: UpdateSubramaData,
+): UpdateSubramaBackendData => {
+  const backendData: UpdateSubramaBackendData = {};
+
+  const record = frontendData as unknown as AnyRecord;
+
+  if (frontendData.name !== undefined) backendData.name = frontendData.name;
+  if (frontendData.description !== undefined) backendData.description = frontendData.description;
+  const isActive = resolveIsActiveFlag(record);
+  if (isActive !== undefined) backendData.isActive = isActive;
+
+  const photoPrincipal = extractPhotoPrincipal(record);
+  if (photoPrincipal !== undefined) backendData.photoPrincipal = photoPrincipal;
 
   return backendData;
 };

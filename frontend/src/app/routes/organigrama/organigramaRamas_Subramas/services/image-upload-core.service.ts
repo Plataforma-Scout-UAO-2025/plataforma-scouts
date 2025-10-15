@@ -6,24 +6,20 @@ import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperati
 type MaybeAxiosError = { response?: { data?: unknown } };
 type PayloadWithOperations = { operations?: unknown };
 
-// Tipo para la respuesta del upload de archivos
 interface UploadResponse {
   objectId: string;
   url?: string;
 }
 
-// Función de diagnóstico para verificar comportamiento del backend con imágenes
 export const diagnoseBatchImageUpload = async (
   tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
 ): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
-  // Diagnostic: starting batch image upload analysis
-  // File info: name, size, type available in `file`
+  
 
   try {
-    // Paso 1: Subir archivo individual
     const formData = new FormData();
     formData.append('file', file);
     
@@ -52,33 +48,27 @@ export const diagnoseBatchImageUpload = async (
       }
     };
 
-  // Diagnostic result available in `result`
     return result;
 
   } catch (error) {
-    console.error('❌ [DIAGNÓSTICO] Error:', error);
+    console.error(' [DIAGNÓSTICO] Error:', error);
     throw error;
   }
 };
 
-// Función helper para hacer el diagnóstico accesible desde la consola del navegador
 (globalThis as unknown as Record<string, unknown>).diagnosticImageUpload = diagnoseBatchImageUpload;
 
-// Funciones de carga de archivos - Implementación de dos pasos según backend
 export const uploadSectionIcon = async (
   tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
 ): Promise<string> => {
-  // Uploading section icon — parameters available in arguments
   
   try {
-    // Paso 1: Subir archivo al sistema de archivos
     const formData = new FormData();
     formData.append('file', file);
     
-    // Upload file to storage
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
     
   // handled by organigramaClient
@@ -88,26 +78,22 @@ export const uploadSectionIcon = async (
     await setIcon(sectionId, payload, tenantId, groupSlug);
     console.log(' [ImageUploadService] Icono asociado correctamente con endpoint PATCH (icon)');
     
-  // Icon uploaded successfully; objectId available in uploadResponse.objectId
     
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error subiendo icono:', error);
+    console.error(' [ImageUploadService] Error subiendo icono:', error);
     throw error;
   }
 };
 
-// Nueva función específica para imagen principal
 export const uploadSectionMainImage = async (
   tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
 ): Promise<string> => {
-  // Uploading main section image
   
   try {
-    // Paso 1: Subir archivo al sistema de archivos
     const formData = new FormData();
     formData.append('file', file);
     
@@ -115,9 +101,7 @@ export const uploadSectionMainImage = async (
     
   // handled by organigramaClient
     
-  // Primary payload will be attempted in snake_case first
 
-    // Use simple snake_case payload only for main image
     try {
       const primaryPayload = { objectId: uploadResponse.objectId };
   console.info(' [ImageUploadCore] Enviando PATCH a photo-principal con objectId');
@@ -129,29 +113,25 @@ export const uploadSectionMainImage = async (
       throw primaryError;
     }
     
-  // Main image uploaded successfully; objectId available in uploadResponse.objectId
     
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error subiendo imagen principal:', error);
+    console.error(' [ImageUploadService] Error subiendo imagen principal:', error);
     throw error;
   }
 };
 
-// Función básica para subir múltiples imágenes sin verificaciones adicionales
 export const uploadGalleryImages = async (
   tenantId: string,
   groupSlug: string,
   sectionId: string,
   files: File[]
 ): Promise<string[]> => {
-  // Uploading gallery images
   
   try {
     const objectIds: string[] = [];
     const urls: string[] = [];
     
-    // Paso 1: Subir cada archivo individualmente
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
@@ -163,10 +143,8 @@ export const uploadGalleryImages = async (
     
   // handled by organigramaClient
     
-    // Usar el formato de operaciones para AGREGAR imágenes según la guía del backend
     const galleryPayload = createAddsPayloadFromArray(objectIds);
     
-    // PATCH payload prepared in galleryPayload
     
     try {
       const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
@@ -182,7 +160,7 @@ export const uploadGalleryImages = async (
       throw patchError;
     }
   } catch (error) {
-    console.error('❌ [ImageUploadService] Error subiendo galería:', error);
+    console.error(' [ImageUploadService] Error subiendo galería:', error);
     throw error;
   }
 };
@@ -203,9 +181,7 @@ export const removeSectionIcon = async (
   }
 };
 
-// ==========================================================
-// 🗑️ Eliminar imagen principal de sección (PATCH remove)
-// ==========================================================
+//  Eliminar imagen principal de sección (PATCH remove)
 export const removeSectionMainImage = async (
   tenantId: string,
   groupSlug: string,
