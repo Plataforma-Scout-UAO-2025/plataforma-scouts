@@ -7,7 +7,7 @@ export default function Home() {
     <div className="min-h-screen bg-background flex-col">
       <header className="bg-primary py-4">
         <div className="container mx-auto px-4 flex items-center justify-between">
-          <img src="/logo.jpg"
+          <img src="/logo.png"
                alt="Logo"
                className="h-10 w-auto"/>
 
