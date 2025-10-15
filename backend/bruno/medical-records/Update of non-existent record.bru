@@ -1,0 +1,62 @@
+meta {
+  name: Update of non-existent record
+  type: http
+  seq: 28
+}
+
+put {
+  url: {{baseurl}}api/v1/medical_record/update_record/999
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
+body:json {
+  {
+    "blood_type": "O+", // valor a actualizar
+    "eps": "Sura",
+    "allergies": "Piña",
+    "chronic_diseases": "Diabetes",
+    "physical_restrictions": "Requiere una silla de ruedas",
+    "surgical_history": "Apendicectomía",
+    "vaccines_detail": [],
+    "medications_detail": []
+  }
+  
+}
+
+tests {
+  test("Validar petición fallida", function () {
+    expect(res.status).to.equal(404);
+  });
+  
+  test("Validar mensaje de error", function () {
+    expect(res.body.message).to.equal("ERROR: usuario no encontrado.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Actualizado con registro no existente
+  
+  **Endpoint:** /api/v1/medical_record/update_record
+  
+  **HU relacionadas:** HU-INN-2.1
+  
+  **Descripción:** Comprobar que el endpoint de actualizado de registros medicos recibe y responde correctamente a una petición de un usuario con un registro no creado.
+  
+  **Respuesta esperada:** Retorna el código 404 (not found) y un mensaje de error.
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-01
+  
+}

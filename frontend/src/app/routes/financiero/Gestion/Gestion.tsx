@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 export default function Gestion() {
   const [cuotas, setCuotas] = useState<Cuota[]>([]);
   const [loading, setLoading] = useState(true);
-  const { tenantId } = useTenant();
+  const tenantId = useTenant();
   const navigate = useNavigate();
 
   const fetchCuotas = useCallback(async () => {

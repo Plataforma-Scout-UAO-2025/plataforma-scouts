@@ -116,7 +116,7 @@ export default function PagosTable({
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <Input
-            placeholder="Buscar en toda la tabla..."
+            placeholder="Buscar por nombre o ID..."
             value={globalFilter ?? ""}
             onChange={(event) => setGlobalFilter(event.target.value)}
             className="max-w-sm"

@@ -8,7 +8,7 @@ import uao.edu.co.scouts_project.organigrama.model.Tenant;
 import java.util.Optional;
 
 @Repository
-public interface TenantRepository extends JpaRepository<Tenant, Long> {
+public interface TenantRepository extends JpaRepository<Tenant, String> {
     Optional<Tenant> findBySlug(String slug);
     boolean existsBySlug(String slug);
 }

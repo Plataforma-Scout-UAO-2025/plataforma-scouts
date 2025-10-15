@@ -23,7 +23,7 @@ interface DeleteCuotaModalProps {
 }
 
 export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalProps) {
-  const { tenantId } = useTenant();
+  const tenantId = useTenant();
   const navigate = useNavigate();
 
   const handleDelete = async () => {

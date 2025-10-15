@@ -1,7 +1,16 @@
-export { Button } from "./button"
-export { Input } from "./input"
-export { Label } from "./label"
-export { Checkbox } from "./checkbox"
+export { Button } from "./button";
+export { Input } from "./input";
+export { Label } from "./label";
+export { Checkbox } from "./checkbox";
+export { Badge } from "./badge";
+export {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./card";
 export {
   Dialog,
   DialogTrigger,
@@ -13,8 +22,9 @@ export {
   DialogClose,
   DialogOverlay,
   DialogPortal,
-} from "./dialog"
-export { Calendar } from "./calendar"
+} from "./dialog";
+export { Calendar } from "./calendar";
+export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -31,7 +41,7 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
-} from "./dropdown-menu"
+} from "./dropdown-menu";
 export {
   AlertDialog,
   AlertDialogPortal,
@@ -44,23 +54,28 @@ export {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
-} from "./alert-dialog"
-export { Separator } from "./separator"
+} from "./alert-dialog";
+export { Separator } from "./separator";
 export {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from "./accordion"
+} from "./accordion";
 export {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
-} from "./collapsible"
-export { Progress } from "./progress"
-export { Table,
+} from "./collapsible";
+export { Progress } from "./progress";
+export {
+  Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow, } from "./table"
+  TableRow,
+} from "./table";
+
+export { Textarea } from "./textarea";

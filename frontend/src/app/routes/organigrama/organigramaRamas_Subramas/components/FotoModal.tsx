@@ -35,22 +35,19 @@ export default function FotoModal({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // crear preview inmediato usando object URL para mayor rendimiento
     try {
       const obj = URL.createObjectURL(file);
-      // revocar previo si existía
       if (createdObjectUrlRef.current) {
         try { URL.revokeObjectURL(createdObjectUrlRef.current); } catch { /* ignore */ }
       }
       createdObjectUrlRef.current = obj;
       setPreview(obj);
-      // delegar subida al padre; no await aquí para que el modal no bloquee la UI
       setIsProcessing(true);
       void onReplace(file).finally(() => {
         setIsProcessing(false);
       });
     } catch (err) {
-      console.error("❌ Error creando preview de foto:", err);
+      console.error(" Error creando preview de foto:", err);
     }
   };
 
@@ -61,18 +58,16 @@ export default function FotoModal({
       setPreview(null);
       onClose();
     } catch (err) {
-      console.error("❌ Error eliminando foto:", err);
+      console.error(" Error eliminando foto:", err);
     } finally {
       setIsProcessing(false);
     }
   };
 
   useEffect(() => {
-    // si imageUrl cambia desde el padre y no es blob, actualizar preview
     if (imageUrl && !imageUrl.startsWith('blob:')) {
       setPreview(imageUrl);
     }
-    // cuando se cierre el modal, revocar cualquier object URL creado
     return () => {
       if (createdObjectUrlRef.current) {
         try { URL.revokeObjectURL(createdObjectUrlRef.current); } catch { /* ignore */ }

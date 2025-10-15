@@ -1,12 +1,4 @@
-// ============================================================================
-// ÍNDICE PRINCIPAL DE SERVICIOS DE ORGANIGRAMA - REFACTORIZADO
-// ============================================================================
-// Este archivo sirve como punto de entrada único para todos los servicios
-// del módulo de organigrama refactorizado
 
-// ============================================================================
-// SERVICIOS PRINCIPALES REFACTORIZADOS
-// ============================================================================
 
 // CRUD para Ramas
 export {
@@ -28,28 +20,25 @@ export {
   deleteSubrama
 } from './subrama.service';
 
-// Gestión de imágenes básicas
+// Gestión de imágenes (reexportadas desde la fachada central)
 export {
   diagnoseBatchImageUpload,
   uploadSectionIcon,
   uploadSectionMainImage,
   uploadGalleryImages,
-} from './image-upload.service';
-
-export {
   removeSectionIcon,
-  removeSectionMainImage
-} from './image-upload-core.service';
-
-// Gestión avanzada de galería de Ramas
-export {
+  removeSectionMainImage,
   addGalleryImage,
   getGalleryImageUuids,
   replaceGalleryImage,
   removeGalleryImage,
   deleteGalleryImageById,
-  resolveGalleryItem
-} from './gallery.service';
+  resolveGalleryItem,
+  replaceGalleryList,
+} from '../../services/imageFacade';
+
+// Nota: las funciones de galería se reexportan desde la fachada central (imageFacade)
+// El antiguo reexport desde './gallery.service' fue eliminado para evitar duplicados.
 
 // Gestión de imágenes de Subramas
 export {
@@ -62,15 +51,11 @@ export {
   removeSubramaMainImage
 } from './subrama-image.service';
 
-// Constantes y configuraciones
-// NOTE: `PATCH_ENDPOINTS` has been deprecated in favor of builders in `src/api/organigramaApi.ts`
-// Los consumers deben usar builders como `sectionPath`/`subgroupPath`.
 
-// ============================================================================
+
 // UTILIDADES Y HELPERS
-// ============================================================================
 
-// ✅ Función robusta para extraer UUIDs de URLs de Supabase
+//  Función robusta para extraer UUIDs de URLs de Supabase
 export const extractObjectIdFromUrl = (url: string): string | null => {
   if (!url) return null;
   // Buscar cualquier UUID válido (36 caracteres)
@@ -89,9 +74,3 @@ export const extractObjectIdsFromUrls = (urls: string[]): string[] => {
 export const clearAllStorageData = (): void => {
   console.warn('clearAllStorageData no está disponible en modo backend real');
 };
-
-
-// ============================================================================
-// INFORMACIÓN DE LA REFACTORIZACIÓN
-// ============================================================================
-// Servicios refactorizados cargados — ver exports en este archivo.
