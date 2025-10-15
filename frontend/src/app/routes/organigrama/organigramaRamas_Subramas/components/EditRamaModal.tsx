@@ -19,8 +19,9 @@ interface EditRamaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   rama: Rama | null;
+  // onSubmit expects UpdateBranchData
   onSubmit: (data: UpdateBranchData) => Promise<void>;
-  onSuccess?: () => void; 
+  onSuccess?: () => void; // Callback para refrescar datos
 }
 
 export default function EditRamaModal({
@@ -43,6 +44,7 @@ export default function EditRamaModal({
     statusAlias: string;
     iconoFile?: File;
     galleryFiles?: File[];
+    // preview URL (legacy alias kept for local state only)
     icono?: string;
   }>;
 
@@ -57,6 +59,7 @@ export default function EditRamaModal({
 
   useEffect(() => {
     if (rama) {
+      // Leer aliases legacy desde el objeto rama de forma segura
       const legacy = rama as unknown as Record<string, unknown>;
       const legacyEdadMinima = legacy['edadMinima'] as number | undefined;
       const legacyEdadMaxima = legacy['edadMaxima'] as number | undefined;
@@ -82,6 +85,7 @@ export default function EditRamaModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Limpiar errores previos
     clearError();
     
     setIsSubmitting(true);
@@ -100,11 +104,12 @@ export default function EditRamaModal({
       await onSubmit(payload);
       onOpenChange(false);
       
+      // Llamar callback de éxito para refrescar datos
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error(' Error al editar rama:', error);
+      console.error('❌ Error al editar rama:', error);
       handleError(error);
     } finally {
       setIsSubmitting(false);

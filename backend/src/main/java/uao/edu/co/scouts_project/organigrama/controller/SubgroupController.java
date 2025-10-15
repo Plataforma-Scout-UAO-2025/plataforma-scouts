@@ -21,7 +21,7 @@ import java.util.List;
 
 @Tag(name = "Subgroups", description = "Operaciones CRUD para la gestión de subgrupos scouts (Seisenes, Patrullas, Equipos, Tribus)")
 @RestController
-@RequestMapping("/api/v1/tenants/{tenantId}/groups/{groupSlug}/sections/{sectionId}/subgroups")
+@RequestMapping("/api/v1/tenants/{tenantSlug}/groups/{groupSlug}/sections/{sectionId}/subgroups")
 public class SubgroupController {
     
     private final SubgroupService subgroupService;
@@ -37,13 +37,13 @@ public class SubgroupController {
     })
     @GetMapping
     public List<SubgroupResponseDTO> getSubgroupsBySection(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId) {
-    return subgroupService.getSubgroupsBySection(tenantId, groupSlug, sectionId);
+        return subgroupService.getSubgroupsBySection(tenantSlug, groupSlug, sectionId);
     }
     
     @Operation(summary = "Obtener subgrupo por ID", description = "Retorna un subgrupo específico por su ID dentro de una sección")
@@ -53,15 +53,15 @@ public class SubgroupController {
     })
     @GetMapping("/{subgroupId}")
     public SubgroupResponseDTO getSubgroupById(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
         @Parameter(description = "ID único del subgrupo", example = "1")
         @PathVariable Long subgroupId) {
-    return subgroupService.getSubgroupById(tenantId, groupSlug, sectionId, subgroupId);
+        return subgroupService.getSubgroupById(tenantSlug, groupSlug, sectionId, subgroupId);
     }
     
     @Operation(summary = "Crear nuevo subgrupo", description = "Crea un nuevo subgrupo scout (Seisen, Patrulla, Equipo, Tribu) dentro de una sección")
@@ -73,16 +73,16 @@ public class SubgroupController {
     })
     @PostMapping
     public ResponseEntity<SubgroupResponseDTO> createSubgroup(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
         @Parameter(description = "Datos del subgrupo a crear")
         @Valid @RequestBody SubgroupDTO dto) {
-    SubgroupResponseDTO created = subgroupService.createSubgroup(tenantId, groupSlug, sectionId, dto);
-    String location = "/api/v1/tenants/" + tenantId + "/groups/" + groupSlug +
+        SubgroupResponseDTO created = subgroupService.createSubgroup(tenantSlug, groupSlug, sectionId, dto);
+        String location = "/api/v1/tenants/" + tenantSlug + "/groups/" + groupSlug +
                          "/sections/" + sectionId + "/subgroups/" + created.subgroupId();
         return ResponseEntity.created(URI.create(location)).body(created);
     }
@@ -95,8 +95,8 @@ public class SubgroupController {
     })
     @PutMapping("/{subgroupId}")
     public SubgroupResponseDTO updateSubgroup(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
@@ -105,7 +105,7 @@ public class SubgroupController {
         @PathVariable Long subgroupId,
         @Parameter(description = "Datos actualizados del subgrupo")
         @Valid @RequestBody SubgroupDTO dto) {
-    return subgroupService.updateSubgroup(tenantId, groupSlug, sectionId, subgroupId, dto);
+        return subgroupService.updateSubgroup(tenantSlug, groupSlug, sectionId, subgroupId, dto);
     }
     
     @Operation(summary = "Eliminar subgrupo", description = "Elimina un subgrupo del sistema, incluyendo todas sus imágenes asociadas.")
@@ -115,15 +115,15 @@ public class SubgroupController {
     })
     @DeleteMapping("/{subgroupId}")
     public ResponseEntity<Void> deleteSubgroup(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
         @PathVariable Long sectionId,
         @Parameter(description = "ID único del subgrupo", example = "1")
         @PathVariable Long subgroupId) {
-    subgroupService.deleteSubgroup(tenantId, groupSlug, sectionId, subgroupId);
+        subgroupService.deleteSubgroup(tenantSlug, groupSlug, sectionId, subgroupId);
         return ResponseEntity.noContent().build();
     }
 
@@ -163,8 +163,8 @@ public class SubgroupController {
     })
     @PatchMapping("/{subgroupId}/photo-principal")
     public ResponseEntity<Void> updatePhotoPrincipal(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Identificador único del grupo", example = "grupo-803")
         @PathVariable String groupSlug,
         @Parameter(description = "ID único de la sección", example = "1")
@@ -173,7 +173,7 @@ public class SubgroupController {
         @PathVariable Long subgroupId,
         @Parameter(description = "UUID de la nueva foto principal en Supabase Storage")
         @Valid @RequestBody UpdateImageRequest request) {
-    subgroupService.updatePhotoPrincipal(tenantId, groupSlug, sectionId, subgroupId, request.objectId());
+        subgroupService.updatePhotoPrincipal(tenantSlug, groupSlug, sectionId, subgroupId, request.objectId());
         return ResponseEntity.noContent().build();
     }
     

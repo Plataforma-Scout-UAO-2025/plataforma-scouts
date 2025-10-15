@@ -47,7 +47,7 @@ export default function FotoModal({
         setIsProcessing(false);
       });
     } catch (err) {
-      console.error(" Error creando preview de foto:", err);
+      console.error("❌ Error creando preview de foto:", err);
     }
   };
 
@@ -58,7 +58,7 @@ export default function FotoModal({
       setPreview(null);
       onClose();
     } catch (err) {
-      console.error(" Error eliminando foto:", err);
+      console.error("❌ Error eliminando foto:", err);
     } finally {
       setIsProcessing(false);
     }

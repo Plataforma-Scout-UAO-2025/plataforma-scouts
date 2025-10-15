@@ -33,16 +33,16 @@ public class TenantController {
         return tenantService.getAllTenants();
     }
     
-    @Operation(summary = "Obtener tenant por tenant_id", description = "Retorna un tenant específico por su identificador interno tenant_id")
+    @Operation(summary = "Obtener tenant por slug", description = "Retorna un tenant específico por su identificador slug")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Tenant encontrado exitosamente"),
         @ApiResponse(responseCode = "404", description = "Tenant no encontrado")
     })
-    @GetMapping("/{tenantId}")
-    public TenantDTO getTenantById(
-        @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-        @PathVariable String tenantId) {
-        return tenantService.getTenantById(tenantId);
+    @GetMapping("/{tenantSlug}")
+    public TenantDTO getTenantBySlug(
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug) {
+        return tenantService.getTenantBySlug(tenantSlug);
     }
     
     @Operation(summary = "Crear nuevo tenant", description = "Crea un nuevo tenant/organización en el sistema")
@@ -56,8 +56,7 @@ public class TenantController {
         @Parameter(description = "Datos del tenant a crear")
         @Valid @RequestBody TenantDTO dto) {
         TenantDTO created = tenantService.createTenant(dto);
-    String locationId = created.tenantId() != null ? created.tenantId() : created.slug();
-    return ResponseEntity.created(URI.create("/api/v1/tenants/" + locationId)).body(created);
+        return ResponseEntity.created(URI.create("/api/v1/tenants/" + created.slug())).body(created);
     }
     
     @Operation(summary = "Actualizar tenant", description = "Actualiza los datos de un tenant existente")
@@ -66,13 +65,13 @@ public class TenantController {
         @ApiResponse(responseCode = "404", description = "Tenant no encontrado"),
         @ApiResponse(responseCode = "400", description = "Datos inválidos proporcionados")
     })
-    @PutMapping("/{tenantId}")
+    @PutMapping("/{tenantSlug}")
     public TenantDTO updateTenant(
-        @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-        @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug,
         @Parameter(description = "Datos actualizados del tenant")
         @Valid @RequestBody TenantDTO dto) {
-        return tenantService.updateTenant(tenantId, dto);
+        return tenantService.updateTenant(tenantSlug, dto);
     }
     
     @Operation(summary = "Eliminar tenant", description = "Elimina un tenant del sistema")
@@ -80,11 +79,11 @@ public class TenantController {
         @ApiResponse(responseCode = "204", description = "Tenant eliminado exitosamente"),
         @ApiResponse(responseCode = "404", description = "Tenant no encontrado")
     })
-    @DeleteMapping("/{tenantId}")
+    @DeleteMapping("/{tenantSlug}")
     public ResponseEntity<Void> deleteTenant(
-        @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-        @PathVariable String tenantId) {
-        tenantService.deleteTenant(tenantId);
+        @Parameter(description = "Identificador único del tenant", example = "region-valle")
+        @PathVariable String tenantSlug) {
+        tenantService.deleteTenant(tenantSlug);
         return ResponseEntity.noContent().build();
     }
 }
