@@ -12,6 +12,8 @@ import Financiero from "./app/routes/financiero/Financiero";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalRecordsView from "./app/routes/grupos/components/MedicalRecordView";
 import Grupos from "./app/routes/grupos/Grupos";
+import Requests from "./app/routes/admin-grupal/Solicitudes/pendientes/Requests";
+import Rejected from "./app/routes/admin-grupal/Solicitudes/rechazadas/Rejected";
 
 import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
 import Pagos from "./app/routes/financiero/Pagos/Pagos";
@@ -22,8 +24,7 @@ import RamaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/compo
 import SubramaDetail from "@/app/routes/organigrama/organigramaRamas_Subramas/components/SubramaDetail";
 import NivelesPage from "@/app/routes/organigrama/organigramaNivelesOrganizativos/NivelesPage";
 import OrganigramaHome from "./app/routes/organigrama/OrganigramaHome";
-import { RawRole } from './roles/roles';
-import OrgAuthGuard from './app/routes/organigrama/OrgAuthGuard';
+import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
@@ -43,49 +44,12 @@ function App() {
             <Route index element={<Dashboard />} />
 
             {/* ===================== ORGANIGRAMA ===================== */}
-            <Route path="organigrama" element={<OrganigramaHome />} />
-            {/* Rutas CRUD del organigrama: protegidas según roles del backend */}
-            <Route
-              path="organigrama/ramas-y-subramas"
-              element={
-                <OrgAuthGuard>
-                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
-                    <Organigrama />
-                  </ProtectedRoute>
-                </OrgAuthGuard>
-              }
-            />
-            <Route
-              path="organigrama/rama/:id"
-              element={
-                <OrgAuthGuard>
-                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
-                    <RamaDetail />
-                  </ProtectedRoute>
-                </OrgAuthGuard>
-              }
-            />
-            <Route
-              path="organigrama/subrama/:id"
-              element={
-                <OrgAuthGuard>
-                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
-                    <SubramaDetail />
-                  </ProtectedRoute>
-                </OrgAuthGuard>
-              }
-            />
-            <Route
-              path="organigrama/niveles-organizativos"
-              element={
-                <OrgAuthGuard>
-                  <ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}>
-                    <NivelesPage />
-                  </ProtectedRoute>
-                </OrgAuthGuard>
-              }
-            />
-            <Route path="organigrama/resumen" element={<div>Vista resumen (en desarrollo)</div>} />
+            <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrganigramaHome /></ProtectedRoute>} />
+            <Route path="organigrama/ramas-y-subramas" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><Organigrama /></ProtectedRoute>} />
+            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><RamaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><SubramaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/niveles-organizativos" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><NivelesPage /></ProtectedRoute>} />
+            <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrgChartSummary /></ProtectedRoute>} />
 
             {/* ===================== GRUPOS ===================== */}
             <Route path="grupos" element={<Grupos />} />
@@ -97,6 +61,8 @@ function App() {
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO"]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
             <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE"]}><ScoutEnrollment /></ProtectedRoute>}/>
+            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
+            <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Rejected /></ProtectedRoute>} />
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />

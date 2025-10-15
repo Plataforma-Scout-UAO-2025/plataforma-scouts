@@ -15,7 +15,6 @@ export const compressImage = (
     }
 
     img.onload = () => {
-      // Calcular nuevas dimensiones manteniendo proporción
       let { width, height } = img;
       
       if (width > maxWidth) {
@@ -28,17 +27,14 @@ export const compressImage = (
         height = maxHeight;
       }
 
-      // Configurar canvas
       canvas.width = width;
       canvas.height = height;
 
-      // Dibujar imagen redimensionada
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Convertir a data URL comprimido
       const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
       
-      console.log(`🗜️ [ImageCompression] Imagen comprimida: ${file.size} → ${compressedDataUrl.length} bytes (${((1 - compressedDataUrl.length/file.size) * 100).toFixed(1)}% reducción)`);
+      console.log(` [ImageCompression] Imagen comprimida: ${file.size} → ${compressedDataUrl.length} bytes (${((1 - compressedDataUrl.length/file.size) * 100).toFixed(1)}% reducción)`);
       
       resolve(compressedDataUrl);
     };
@@ -48,12 +44,8 @@ export const compressImage = (
   });
 };
 
-/**
- * Limpia localStorage de imágenes antiguas si está lleno
- */
+
 export const cleanupOldImages = (): void => {
-  // La gestión de almacenamiento y limpieza se delega al backend (Supabase).
-  // Evitar cualquier uso de localStorage para imágenes en el navegador.
-  // Esta función queda como no-op informativa.
-  console.log('🧹 [ImageCompression] Limpieza de imágenes deshabilitada en cliente; usar backend para gestión de objetos.');
+  
+  console.log(' [ImageCompression] Limpieza de imágenes deshabilitada en cliente; usar backend para gestión de objetos.');
 };

@@ -28,5 +28,3 @@ export default function SuccessModal({ open, message, onClose }: SuccessModalPro
     </Dialog>
   );
 }
-
-

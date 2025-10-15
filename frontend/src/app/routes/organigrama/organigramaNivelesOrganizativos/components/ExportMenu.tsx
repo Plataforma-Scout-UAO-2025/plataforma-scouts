@@ -1,11 +1,18 @@
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import type { OrganigramaNiveles } from "../types/niveles.types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-/** Genera el PDF visual con niveles y cargos */
+/* ============================================================
+   📄 Exportación a PDF
+   ============================================================ */
 function exportPDF(data: OrganigramaNiveles) {
   const doc = new jsPDF();
   const title = `Organigrama de Niveles - ${data.anio}`;
@@ -23,62 +30,79 @@ function exportPDF(data: OrganigramaNiveles) {
 
   data.niveles.forEach((nivel) => {
     if (nivel.cargos.length === 0) {
-      tableData.push([nivel.nombre, "-", "-", nivel.visible ? "Sí" : "No", "-", data.anio]);
+      tableData.push([
+        nivel.nombre,
+        "—",
+        "—",
+        "—", // Periodo (Año)
+        nivel.descripcion || "—", // Descripción
+      ]);
     } else {
       nivel.cargos.forEach((cargo) => {
+        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
         tableData.push([
           nivel.nombre,
           cargo.nombre,
-          cargo.titular || "-",
-          nivel.visible ? "Sí" : "No",
-          cargo.visible ? "Sí" : "No",
-          data.anio,
+          cargo.titular || "—",
+          periodo, // Periodo (Año)
+          cargo.descripcion || "—", // Descripción
         ]);
       });
     }
   });
 
   autoTable(doc, {
-    head: [["Nivel", "Cargo", "Titular", "Visible (Nivel)", "Visible (Cargo)", "Año"]],
+    head: [
+      ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"], // Columnas requeridas
+    ],
     body: tableData,
     startY: 35,
     theme: "striped",
-    headStyles: { fillColor: [26, 65, 52] },
-    styles: { fontSize: 9 },
+    styles: {
+      fontSize: 9,
+      textColor: [0, 0, 0],
+      halign: "left",
+    },
+    headStyles: {
+      fillColor: [26, 65, 52], // 🎨 --primary (#1a4134)
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+    },
+    alternateRowStyles: { fillColor: [237, 237, 237] }, // 🎨 --accent (#EDEDED)
   });
 
   doc.save(`organigrama_niveles_${data.anio}.pdf`);
 }
 
-/** Genera CSV para Excel con formato correcto */
+
+/* ============================================================
+   📊 Exportación a CSV
+   ============================================================ */
 function exportCSV(data: OrganigramaNiveles) {
-  const header = ["Nivel", "Cargo", "Titular", "Visible (Nivel)", "Visible (Cargo)", "Año"];
+  const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
   const rows: string[][] = [];
 
   data.niveles.forEach((nivel) => {
     if (nivel.cargos.length === 0) {
-      rows.push([nivel.nombre, "—", "—", nivel.visible ? "Sí" : "No", "—", String(data.anio)]);
+      rows.push([nivel.nombre, "—", "—", String(data.anio), nivel.descripcion || "—"]);
     } else {
       nivel.cargos.forEach((cargo) => {
+        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
         rows.push([
           nivel.nombre,
           cargo.nombre,
           cargo.titular || "—",
-          nivel.visible ? "Sí" : "No",
-          cargo.visible ? "Sí" : "No",
-          String(data.anio),
+          periodo, // Periodo (Año)
+          cargo.descripcion || "—", // Descripción
         ]);
       });
     }
   });
 
-  // Convertir a texto CSV con punto y coma (;) y comillas
+  // Convertir a CSV con punto y coma (;) y BOM UTF-8
   const csvContent =
-    [header, ...rows]
-      .map((row) => row.map((v) => `"${v}"`).join(";"))
-      .join("\r\n");
+    [header, ...rows].map((row) => row.map((v) => `"${v}"`).join(";")).join("\r\n");
 
-  // Agregar BOM UTF-8 para compatibilidad con Excel
   const blob = new Blob(["\uFEFF" + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
@@ -91,20 +115,36 @@ function exportCSV(data: OrganigramaNiveles) {
   URL.revokeObjectURL(url);
 }
 
+
+/* ============================================================
+   📦 Componente ExportMenu
+   ============================================================ */
 export default function ExportMenu({ data }: { data: OrganigramaNiveles }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="bg-emerald-900 hover:bg-emerald-800">
-          <Download className="mr-2 h-4 w-4" /> Exportar organigrama
+        <Button className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-lg px-4 py-2 flex items-center">
+          <Download className="mr-2 h-4 w-4 text-primary-foreground" />
+          Exportar organigrama
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuItem onClick={() => exportPDF(data)}>
+
+      <DropdownMenuContent
+        align="end"
+        className="w-64 border border-border bg-card text-foreground shadow-md rounded-lg"
+      >
+        <DropdownMenuItem
+          onClick={() => exportPDF(data)}
+          className="hover:bg-accent hover:text-primary transition-colors"
+        >
           Exportar organigrama en PDF
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportCSV(data)}>
-          Exportar organigrama en Excel (CSV)
+
+        <DropdownMenuItem
+          onClick={() => exportCSV(data)}
+          className="hover:bg-accent hover:text-primary transition-colors"
+        >
+          Exportar organigrama en CSV
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

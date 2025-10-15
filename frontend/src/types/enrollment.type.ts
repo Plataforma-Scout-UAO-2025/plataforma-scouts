@@ -19,6 +19,9 @@ export interface PersonalData {
   lastname: string;
   email: string;
   confirm_email: string;
+  username: string;
+  password: string;
+  confirm_password: string;
   document_type: DocumentType;
   identification: string;
   birth_date: string;
@@ -30,7 +33,6 @@ export interface PersonalData {
   hobbies: string;
   sports: string;
   instruments: string;
-  group: string;
   tenantId: string;
   emergency_contacts: EmergencyContact[];
 }
