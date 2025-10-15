@@ -7,6 +7,7 @@ import {
 } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
+import { createScout } from "@/api/auth0";
 
 import type {
   ChangeEvent,
@@ -42,7 +43,7 @@ type UseScoutEnrollmentReturn = {
 export function useScoutEnrollment(): UseScoutEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
-  const { orgId, isLoading: loadingAuth } = useAuth0ApiWrapper();
+  const { orgId } = useAuth0ApiWrapper();
 
   const [pagina, setPagina] = useState(1);
   const [showSchoolDialog, setShowSchoolDialog] = useState(false);
@@ -54,6 +55,9 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     lastname: "",
     email: "",
     confirm_email: "",
+    username: "",
+    password: "",
+    confirm_password: "",
     document_type: "",
     identification: "",
     birth_date: "",
@@ -94,6 +98,30 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
   const enviarDatos = useCallback(async () => {
     try {
+      // Before creating member in backend, create user in Auth0 using dedicated endpoint
+      if (!datosPersonales.username || !datosPersonales.password) {
+        alert(
+          "username y password son obligatorios para crear la cuenta de Auth0",
+        );
+        return;
+      }
+
+      // Create user in Auth0 (this endpoint will also add to organization and assign role SCOUT)
+      try {
+        await createScout({
+          email: datosPersonales.email,
+          password: datosPersonales.password,
+          username: datosPersonales.username,
+        });
+      } catch (err) {
+        console.error("Error creando usuario en Auth0:", err);
+        alert(
+          "No se pudo crear el usuario en Auth0. " +
+            (err instanceof Error ? err.message : ""),
+        );
+        return;
+      }
+
       const tenant = orgId ?? datosPersonales.tenantId ?? "";
       if (!tenant) {
         alert("No se pudo determinar el tenant del usuario (org_id).");
@@ -111,7 +139,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           school: datosEscolares,
         };
         await dispatch(
-          createMemberWithSchoolDataAction({ memberData: requestData })
+          createMemberWithSchoolDataAction({ memberData: requestData }),
         ).unwrap();
       } else {
         await dispatch(createMemberAction(memberData)).unwrap();
@@ -132,6 +160,14 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           alert("Los correos electrónicos no coinciden");
           return;
         }
+        if (!datosPersonales.username || !datosPersonales.password) {
+          alert("Nombre de usuario y contraseña son obligatorios");
+          return;
+        }
+        if (datosPersonales.password !== datosPersonales.confirm_password) {
+          alert("Las contraseñas no coinciden");
+          return;
+        }
         setPagina(2);
         return;
       }
@@ -144,13 +180,14 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
       await enviarDatos();
     },
     [
-      loadingAuth,
-      orgId,
       pagina,
       datosPersonales.email,
+      datosPersonales.username,
+      datosPersonales.password,
+      datosPersonales.confirm_password,
       datosPersonales.confirm_email,
       enviarDatos,
-    ]
+    ],
   );
 
   const handleSchoolDialogResponse = useCallback(
@@ -160,17 +197,17 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
       if (incluir) setPagina(3);
       else void enviarDatos();
     },
-    [enviarDatos]
+    [enviarDatos],
   );
 
   const totalPaginas = useMemo(
     () => (incluirDatosEscolares ? 3 : 2),
-    [incluirDatosEscolares]
+    [incluirDatosEscolares],
   );
 
   const progreso = useMemo(
     () => (pagina / totalPaginas) * 100,
-    [pagina, totalPaginas]
+    [pagina, totalPaginas],
   );
 
   return {

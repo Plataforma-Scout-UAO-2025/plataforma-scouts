@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/index";
 import BranchCount from "./components/BranchCount";
 import MembersFilter from "./components/MembersFilter";
@@ -6,8 +5,6 @@ import MembersTable from "./components/MembersTable";
 import { useMembersManagement } from "@/hooks/useMembersManagement";
 
 const Miembros = () => {
-  const navigate = useNavigate();
-
   const {
     searchFilter,
     setSearchFilter,
@@ -52,14 +49,6 @@ const Miembros = () => {
         <MembersTable filteredMembers={paginatedMembers} />
         <section className="flex justify-between items-center mt-4">
           <div className="flex justify-start mt-3 gap-2">
-            <Button
-              variant="primary"
-              onClick={() => {
-                navigate("/solicitudes");
-              }}
-            >
-              Solicitudes
-            </Button>
             <p className="text-sm text-text self-center ml-4">
               Mostrando {startIndex + 1}-
               {Math.min(endIndex, filteredMembers.length)} de{" "}
