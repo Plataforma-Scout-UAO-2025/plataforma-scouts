@@ -12,6 +12,8 @@ import Financiero from "./app/routes/financiero/Financiero";
 import Gestion from "./app/routes/financiero/Gestion/Gestion";
 import MedicalRecordsView from "./app/routes/grupos/components/MedicalRecordView";
 import Grupos from "./app/routes/grupos/Grupos";
+import Requests from "./app/routes/admin-grupal/Solicitudes/pendientes/Requests";
+import Rejected from "./app/routes/admin-grupal/Solicitudes/rechazadas/Rejected";
 
 import EstadoCuenta from "./app/routes/financiero/EstadoCuenta/EstadoCuenta";
 import Pagos from "./app/routes/financiero/Pagos/Pagos";
@@ -97,6 +99,8 @@ function App() {
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO"]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
             <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE"]}><ScoutEnrollment /></ProtectedRoute>}/>
+            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
+            <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Rejected /></ProtectedRoute>} />
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />

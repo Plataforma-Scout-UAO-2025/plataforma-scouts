@@ -53,7 +53,11 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                     : "Sin rama"}
                 </TableCell>
                 <TableCell>{formatDate(member.created_at)}</TableCell>
-                <TableCell>{statusLabels[member.status ?? "Aprobado"]}</TableCell>
+                <TableCell>
+                  <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
+                    {statusLabels[member.status ?? "Aceptado"]}
+                  </span>
+                </TableCell>
                 <TableCell>{member.address}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="iconbutton" size="icon">
