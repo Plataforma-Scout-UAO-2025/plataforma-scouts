@@ -27,6 +27,9 @@ import {
   ChevronRight,
   DollarSign,
   CalendarDays,
+  Pencil,
+  Network,
+  BriefcaseMedical,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -71,6 +74,12 @@ const adminGlobalItems: MenuItem[] = [
     icon: <LineChart />,
     href: "/app/dashboard-global",
   },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
 ];
 
 const adminGrupalItems: MenuItem[] = [
@@ -80,11 +89,19 @@ const adminGrupalItems: MenuItem[] = [
     icon: <LineChart />,
     href: "/app/dashboard",
   },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
   { id: "solicitudes", label: "Solicitudes", icon: <Boxes />, href: "/app/solicitudes" },
   { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
+  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
   { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
   { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
+  { id: "medico", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
 ]
 
 const tesoreroItems: MenuItem[] = [
@@ -93,9 +110,52 @@ const tesoreroItems: MenuItem[] = [
 ]
 
 const acudienteItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app" },
-  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/estado-cuenta" },
-]
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/estado-cuenta",
+  },
+];
+
+const ScoutItems: MenuItem[] = [
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "inscripcion",
+    label: "Inscripcion",
+    icon: <Pencil />,
+    href: "/app/inscripcion",
+  },
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/cuotas",
+  },
+];
 
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
@@ -121,6 +181,8 @@ function AppLayoutContent() {
         return acudienteItems;
       case RawRole.TESORERO:
         return tesoreroItems;
+      case RawRole.SCOUT:
+        return ScoutItems;
       case RawRole.ADMIN_GRUPO:
       case RawRole.COMITE_ADMIN:
       default:

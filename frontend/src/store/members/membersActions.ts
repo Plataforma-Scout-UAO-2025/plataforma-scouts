@@ -1,9 +1,16 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getMember, getMembers, updateMember } from "../../api/membersApi";
+import {
+  getMember,
+  getMembers,
+  updateMember,
+  createMember,
+  createMemberWithSchool
+} from "@/api/membersApi";
 import { validateClient } from "../../lib/zodUtils";
 import { updateMemberSchema } from "@/schemas/memberSchema";
 import type { Member } from "@/types/member.type";
+import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";
 
 // Obtener datos de un miembro desde Firestore
 export const fetchMemberAction = createAsyncThunk<
@@ -65,3 +72,46 @@ export const updateMemberAction = createAsyncThunk<
     }
   }
 );
+
+// Crear un nuevo miembro
+export const createMemberAction = createAsyncThunk<
+  { message: string; newMember?: Member },
+  Member,
+  { rejectValue: { error: string } }
+>("member/create", async (memberData: Member, { rejectWithValue }) => {
+  try {
+    const response = await createMember(memberData);
+
+    return {
+      message: "Miembro creado exitosamente",
+      newMember: response,
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage = errorData?.error || "Error al crear el miembro";
+    return rejectWithValue({ error: errorMessage });
+  }
+});
+
+// Crear un miembro con datos escolares
+export const createMemberWithSchoolDataAction = createAsyncThunk<
+  { message: string; newMember?: Member },
+  { memberData: CreateMemberWithSchoolRequest },
+  { rejectValue: { error: string } }
+>("member/createWithSchoolData", async ({ memberData}, { rejectWithValue }) => {
+  try {
+    const fullMemberData = { ...memberData };
+    const response = await createMemberWithSchool(fullMemberData);
+    return {
+      message: "Miembro creado exitosamente con datos escolares",
+      newMember: response,
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage =
+      errorData?.error || "Error al crear el miembro con datos escolares";
+    return rejectWithValue({ error: errorMessage });
+  }
+});

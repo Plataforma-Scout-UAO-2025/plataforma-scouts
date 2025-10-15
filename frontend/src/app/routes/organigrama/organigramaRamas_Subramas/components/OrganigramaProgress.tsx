@@ -5,9 +5,7 @@ interface Props {
   className?: string;
 }
 
-// Componente ligero de progreso para el módulo organigrama.
-// No modifica el componente compartido `Progress` — realiza configuraicones locales
-// (colores, texto) dentro del propio módulo para permitir reuso por otros equipos.
+
 export default function OrganigramaProgress({ percent, className }: Props) {
   return (
     <div className={`w-full max-w-full ${className || ''}`}>

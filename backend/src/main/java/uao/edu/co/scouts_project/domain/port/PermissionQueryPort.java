@@ -12,4 +12,6 @@ public interface PermissionQueryPort {
     List<String> getCurrentUserRoles();
     // Nuevo método: retorna el claim org_id del usuario autenticado actual (JWT)
     String getCurrentUserOrgId();
+    // Nuevo método: retorna el claim connection del usuario autenticado actual (JWT)
+    String getCurrentUserConnection();
 }
