@@ -3,7 +3,6 @@ import {
   FaBullseye,
   FaMountain,
   FaUsers,
-  FaArrowRight,
   FaBinoculars,
   FaShip,
 } from "react-icons/fa";
@@ -82,7 +81,7 @@ const grupos = [
 
 export default function LandingPage() {
   const [activeSection, setActiveSection] = useState("inicio");
-  const { loginWithRedirect, isAuthenticated } = useAuth0();
+  const { isAuthenticated } = useAuth0();
   const navigate = useNavigate();
 
   // Si el usuario ya está autenticado, redirigir a /app
