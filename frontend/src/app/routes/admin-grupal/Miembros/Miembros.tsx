@@ -12,21 +12,14 @@ const TeamMembers = () => {
   const [branchFilter, setBranchFilter] = useState("");
   const navigate = useNavigate();
 
-  const {
-    members,
-    total,
-    page,
-    totalPages,
-    setPage,
-    loading,
-    error,
-  } = useTenantMembersByStatus({
-    status: "APPROVED",
-    pageSize: 10,
-    search: searchFilter,
-    city: cityFilter,
-    branch: branchFilter,
-  });
+  const { members, total, page, totalPages, setPage, loading, error } =
+    useTenantMembersByStatus({
+      status: "APPROVED",
+      pageSize: 10,
+      search: searchFilter,
+      city: cityFilter,
+      branch: branchFilter,
+    });
 
   const startIdx = total === 0 ? 0 : (page - 1) * 10 + 1;
   const endIdx = Math.min(page * 10, total);
@@ -61,7 +54,10 @@ const TeamMembers = () => {
         {/* Footer paginación */}
         <section className="flex justify-between items-center mt-4">
           <div className="flex justify-start mt-3 gap-2">
-            <Button variant="primary" onClick={() => navigate("/solicitudes")}>
+            <Button
+              variant="primary"
+              onClick={() => navigate("/app/solicitudes")}
+            >
               Solicitudes
             </Button>
             <p className="text-sm text-text self-center ml-4">
