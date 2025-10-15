@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { X, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -7,9 +7,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useApiError } from "../hooks/useApiError";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useApiError } from '../hooks/useApiError';
 
 interface ConfirmDeleteModalProps {
   open: boolean;
@@ -17,7 +17,7 @@ interface ConfirmDeleteModalProps {
   onConfirm: () => Promise<void>;
   title: string;
   message: string;
-  onSuccess?: () => void; // Callback para refrescar datos
+  onSuccess?: () => void;
 }
 
 export default function ConfirmDeleteModal({
@@ -34,17 +34,16 @@ export default function ConfirmDeleteModal({
   const handleConfirm = async () => {
     clearError();
     setIsDeleting(true);
-
+    
     try {
       await onConfirm();
       onClose();
-
-      // Llamar callback de éxito para refrescar datos
+      
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error("Error al eliminar:", error);
+      console.error('Error al eliminar:', error);
       handleError(error);
     } finally {
       setIsDeleting(false);
@@ -54,9 +53,7 @@ export default function ConfirmDeleteModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md w-full">
         <DialogHeader className="flex items-center justify-between pb-4">
-          <DialogTitle className="text-xl font-bold text-primary">
-            {title}
-          </DialogTitle>
+          <DialogTitle className="text-xl font-bold text-primary">{title}</DialogTitle>
           <DialogClose asChild>
             <Button size="icon" variant="ghost" className="h-6 w-6 p-0">
               <X className="h-4 w-4 text-muted-foreground" />
@@ -99,7 +96,7 @@ export default function ConfirmDeleteModal({
                 Eliminando...
               </>
             ) : (
-              "Eliminar"
+              'Eliminar'
             )}
           </Button>
         </div>

@@ -7,7 +7,7 @@ import {
   createMember,
   createMemberWithSchool
 } from "@/api/membersApi";
-import { validateClient } from "@/lib/zodUtils.ts";
+import { validateClient } from "../../lib/zodUtils";
 import { updateMemberSchema } from "@/schemas/memberSchema";
 import type { Member } from "@/types/member.type";
 import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";

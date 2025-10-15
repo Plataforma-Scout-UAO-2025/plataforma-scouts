@@ -75,14 +75,14 @@ class TenantControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/tenants/{slug} -> 200 y objeto JSON")
+        @DisplayName("GET /api/v1/tenants/{tenantId} -> 200 y objeto JSON")
     void getTenant_ok() throws Exception {
-        TenantDTO dto = new TenantDTO("t-xyz", "region-valle", "active",
+                TenantDTO dto = new TenantDTO("tenant-001", "region-valle", "active",
                 Instant.parse("2025-01-01T00:00:00Z"), Instant.parse("2025-01-02T00:00:00Z"));
 
-        when(tenantService.getTenantBySlug("region-valle")).thenReturn(dto);
+                when(tenantService.getTenantById("tenant-001")).thenReturn(dto);
 
-        mockMvc.perform(get("/api/v1/tenants/{tenantSlug}", "region-valle")
+                mockMvc.perform(get("/api/v1/tenants/{tenantId}", "tenant-001")
                 .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -114,22 +114,22 @@ class TenantControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(incoming)))
             .andExpect(status().isCreated())
-            .andExpect(header().string("Location", containsString("/api/v1/tenants/nuevo-slug")))
+            .andExpect(header().string("Location", containsString("/api/v1/tenants/t-nuevo-slug")))
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.slug", is("nuevo-slug")))
             .andExpect(jsonPath("$.tenantId", is("t-nuevo-slug")));
     }
 
     @Test
-    @DisplayName("PUT /api/v1/tenants/{slug} -> 200 y objeto JSON actualizado")
+        @DisplayName("PUT /api/v1/tenants/{tenantId} -> 200 y objeto JSON actualizado")
     void updateTenant_ok() throws Exception {
-        var patch   = new TenantDTO(null, "region-valle", "inactive", null, null);
-        var updated = new TenantDTO("t-123", "region-valle", "inactive",
+                var patch   = new TenantDTO(null, "region-valle", "inactive", null, null);
+                var updated = new TenantDTO("tenant-123", "region-valle", "inactive",
                 Instant.parse("2025-01-01T00:00:00Z"), Instant.parse("2025-04-01T00:00:00Z"));
 
-        when(tenantService.updateTenant(eq("region-valle"), any(TenantDTO.class))).thenReturn(updated);
+                when(tenantService.updateTenant(eq("tenant-123"), any(TenantDTO.class))).thenReturn(updated);
 
-        mockMvc.perform(put("/api/v1/tenants/{tenantSlug}", "region-valle")
+                mockMvc.perform(put("/api/v1/tenants/{tenantId}", "tenant-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(patch)))
             .andExpect(status().isOk())
@@ -138,11 +138,11 @@ class TenantControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/v1/tenants/{slug} -> 204")
+        @DisplayName("DELETE /api/v1/tenants/{tenantId} -> 204")
     void deleteTenant_noContent() throws Exception {
-        doNothing().when(tenantService).deleteTenant("region-valle");
+                doNothing().when(tenantService).deleteTenant("tenant-xyz");
 
-        mockMvc.perform(delete("/api/v1/tenants/{tenantSlug}", "region-valle"))
+                mockMvc.perform(delete("/api/v1/tenants/{tenantId}", "tenant-xyz"))
             .andExpect(status().isNoContent());
     }
 }

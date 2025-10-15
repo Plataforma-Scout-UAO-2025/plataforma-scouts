@@ -89,9 +89,9 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     const fetchGroups = async () => {
       try {
         setLoadingGroups(true);
-        const tenants = await getAllTenants<TenantDTO>();
-        const promises = tenants.map((t) =>
-          getGroupsByTenant<GroupResponseDTO>(t.slug)
+        const tenants = await getAllTenants();
+        const promises = tenants.map((t: TenantDTO) =>
+          getGroupsByTenant(t.slug)
         );
         const arrays = await Promise.all(promises);
         if (!mounted.current) return;
