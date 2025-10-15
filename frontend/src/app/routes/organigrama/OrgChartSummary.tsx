@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
 import { getRamasWithSubramas } from "./organigramaRamas_Subramas/services/rama.service";
 import { useNavigate } from "react-router-dom";
@@ -103,10 +103,19 @@ export default function OrgChartSummary() {
     };
   }, [anio, tenantId, groupSlug]);
 
+  const [exportingBranches, setExportingBranches] = useState(false);
+
   const onExportPDF = () => {
     exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, { year: anio });
   };
-  const onExportCSVBranches = () => exportBranchesCSV(branches);
+  const onExportCSVBranches = async () => {
+    try {
+      setExportingBranches(true);
+      await exportBranchesCSV(branches);
+    } finally {
+      setExportingBranches(false);
+    }
+  };
   const onExportCSVLevels = () => exportLevelsCSV(nivelesData as OrganigramaNiveles);
 
   return (
@@ -117,8 +126,15 @@ export default function OrgChartSummary() {
           <Button onClick={onExportPDF} className="bg-primary text-white hover:bg-primary-hover">
             <Download className="h-4 w-4 mr-2" /> PDF (Completo)
           </Button>
-          <Button variant="outline" onClick={onExportCSVBranches} className="border-border">
-            CSV Ramas/Subramas
+          <Button variant="outline" onClick={onExportCSVBranches} disabled={exportingBranches} className="border-border">
+            {exportingBranches ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Exportando...
+              </>
+            ) : (
+              "CSV Ramas/Subramas"
+            )}
           </Button>
           <Button variant="outline" onClick={onExportCSVLevels} className="border-border">
             CSV Niveles

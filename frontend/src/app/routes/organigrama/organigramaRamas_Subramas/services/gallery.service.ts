@@ -1,6 +1,5 @@
-import api from '@/api/axios';
 import { uploadToStorage } from '@/api/upload';
-import { sectionPath } from '@/api/organigramaApi';
+import { getSection, patchGallery, updateSection, deleteGalleryImageById as deleteGalleryImageByIdApi } from '@/api/organigramaApi';
 import {
   createAddPayload,
   createReplacePayload,
@@ -10,10 +9,15 @@ import {
 } from '../utils/galleryPayload';
 
 // Helper para obtener una rama directamente
-const getRamaByIdDirect = async (tenantSlug: string, groupSlug: string, id: string) => {
-  const endpoint = sectionPath(id, tenantSlug, groupSlug);
-  const response = await api.get<Record<string, unknown> | undefined>(endpoint);
-  return response.data;
+const getRamaByIdDirect = async (tenantId: string, groupSlug: string, id: string) => {
+  // use raw wrapper to get backend payload without normalization
+  try {
+    const data = await getSection(id, tenantId, groupSlug) as Record<string, unknown>;
+    return data;
+  } catch {
+    // If the client fails, surface the error (no direct api fallback here).
+    return undefined;
+  }
 };
 
 //  Función auxiliar: extraer UUID válido desde string o URL
@@ -26,13 +30,13 @@ const extractUuidFromString = (value: string | null | undefined): string | null 
 
 // Obtener UUIDs actuales de la galería
 export const getGalleryImageUuids = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string
 ): Promise<string[]> => {
   try {
-    console.info('🔎 [GalleryService] getGalleryImageUuids called for:', { tenantSlug, groupSlug, sectionId });
-    const rama = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+    console.info('🔎 [GalleryService] getGalleryImageUuids called for:', { tenantId, groupSlug, sectionId });
+    const rama = await getRamaByIdDirect(tenantId, groupSlug, sectionId);
     const maybe = rama as unknown as Record<string, unknown> | undefined;
 
     const ids: string[] = [];
@@ -88,14 +92,14 @@ export const getGalleryImageUuids = async (
 
 // Resolver item de galería (id + url) a partir de URL o UUID
 export const resolveGalleryItem = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   targetUuidOrUrl: string
 ): Promise<{ id: string; url: string } | null> => {
   try {
-    console.info('🔎 [GalleryService] resolveGalleryItem called for:', { tenantSlug, groupSlug, sectionId, target: String(targetUuidOrUrl)?.slice?.(0,120) });
-    const backend = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
+    console.info('🔎 [GalleryService] resolveGalleryItem called for:', { tenantId, groupSlug, sectionId, target: String(targetUuidOrUrl)?.slice?.(0,120) });
+    const backend = await getRamaByIdDirect(tenantId, groupSlug, sectionId);
     const rec = backend as unknown as Record<string, unknown> | undefined;
     const galleryArr = (rec?.['gallery'] as unknown[] | undefined) ?? [];
     const targetUuid = extractUuidFromString(targetUuidOrUrl);
@@ -132,14 +136,13 @@ export const resolveGalleryItem = async (
 
 //  Agregar nueva imagen a galería
 export const addGalleryImage = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
   , signal?: AbortSignal
 ): Promise<string> => {
-  try {
-    console.info('🆕 [GalleryService] addGalleryImage called:', { tenantSlug, groupSlug, sectionId, filename: file?.name });
+    console.info('🆕 [GalleryService] addGalleryImage called:', { tenantId, groupSlug, sectionId, filename: file?.name });
     const formData = new FormData();
     formData.append('file', file);
 
@@ -148,28 +151,21 @@ export const addGalleryImage = async (
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
-    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+    // prefer client wrapper
     const addPayload = createAddPayload(newUuid);
-    await api.patch(patchEndpoint, createPayloadForBackend(addPayload.operations));
+    await patchGallery(sectionId, createPayloadForBackend(addPayload.operations), tenantId, groupSlug);
 
     return uploadResponse.url || uploadResponse.objectId;
-  } catch (error) {
-    console.error(' [GalleryService] Error agregando imagen a galería:', error);
-    throw error;
-  }
 };
 
 export const replaceGalleryList = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   keepGalleryUuids: string[]
 ): Promise<Record<string, unknown> | null> => {
-  console.info('⚠️ [GalleryService] replaceGalleryList called (force replace):', { tenantSlug, groupSlug, sectionId, keep: keepGalleryUuids?.length });
-  const endpoint = sectionPath(sectionId, tenantSlug, groupSlug);
-  try {
-    const response = await getRamaByIdDirect(tenantSlug, groupSlug, sectionId);
-    const backendRec = response?.data as Record<string, unknown> | undefined;
+  console.info('⚠️ [GalleryService] replaceGalleryList called (force replace):', { tenantId, groupSlug, sectionId, keep: keepGalleryUuids?.length });
+    const backendRec = await getRamaByIdDirect(tenantId, groupSlug, sectionId) as Record<string, unknown> | undefined;
     const name = String(backendRec?.['name'] ?? backendRec?.['nombre'] ?? '');
     const description = backendRec?.['description'] ?? backendRec?.['descripcion'] ?? null;
     const iconObjectId = backendRec?.['iconObjectId'] ?? backendRec?.['iconoObjectId'] ?? null;
@@ -183,24 +179,19 @@ export const replaceGalleryList = async (
       galleryObjectIds: keepGalleryUuids
     };
 
-  const result = await api.put<Record<string, unknown>>(endpoint, payload);
-    return result.data ?? null;
-  } catch (error) {
-    console.error(' [GalleryService] Error al reemplazar lista de galería via PUT:', error);
-    throw error;
-  }
+    // Use central client raw update to send backend-shaped payload
+    const result = await updateSection(sectionId, payload, tenantId, groupSlug) as Record<string, unknown>;
+    return (result as Record<string, unknown>) ?? null;
 };
 export const replaceGalleryImage = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   targetImageUuid: string,
   newFile: File
   , signal?: AbortSignal
 ): Promise<string> => {
-
-  try {
-    console.info('🔁 [GalleryService] replaceGalleryImage called:', { tenantSlug, groupSlug, sectionId, targetImageUuid, filename: newFile?.name });
+  console.info('🔁 [GalleryService] replaceGalleryImage called:', { tenantId, groupSlug, sectionId, targetImageUuid, filename: newFile?.name });
     const validTargetUuid = extractUuidFromString(targetImageUuid);
     if (!validTargetUuid) {
       console.error(' [GalleryService] UUID inválido detectado. Abortando PATCH.');
@@ -214,20 +205,14 @@ export const replaceGalleryImage = async (
 
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
-    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
-  const replacePayload = createReplacePayload(validTargetUuid, newUuid);
-  await api.patch(patchEndpoint, createPayloadForBackend(replacePayload.operations));
+    await patchGallery(sectionId, createPayloadForBackend(createReplacePayload(validTargetUuid, newUuid).operations), tenantId, groupSlug);
 
     return uploadResponse.url || uploadResponse.objectId;
-  } catch (error) {
-    console.error(' [GalleryService] Error reemplazando imagen en galería:', error);
-    throw error;
-  }
 };
 
 //  Eliminar imagen de galería
 export const removeGalleryImage = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   targetImageUuid: string
@@ -242,24 +227,21 @@ export const removeGalleryImage = async (
     }
 
     console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de PATCH remove...');
-    const currentUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
+    const currentUuids = await getGalleryImageUuids(tenantId, groupSlug, sectionId);
     if (!currentUuids.includes(validTargetUuid)) {
       console.warn('⚠️ [GalleryService] UUID no encontrado en galería. La imagen ya fue removida por otra operación:', { validTargetUuid, currentUuids });
       return; 
     }
 
-    const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
     const removePayload = createRemovePayload(validTargetUuid);
-    
-    console.info(' [GalleryService] Enviando PATCH remove al endpoint:', { patchEndpoint, payload: removePayload });
-    await api.patch(patchEndpoint, createPayloadForBackend(removePayload.operations));
+    await patchGallery(sectionId, createPayloadForBackend(removePayload.operations), tenantId, groupSlug);
 
     console.info(' [GalleryService] Imagen removida de galería correctamente (PATCH)');
   }, 'RemoveGalleryImage-PATCH');
 };
 //  Eliminar imagen de galería usando endpoint DELETE por objectId
 export const deleteGalleryImageById = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   targetImageUuidOrUrl: string,
@@ -279,11 +261,11 @@ export const deleteGalleryImageById = async (
     }
 
     console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de DELETE...');
-    const currentUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
+    const currentUuids = await getGalleryImageUuids(tenantId, groupSlug, sectionId);
     if (!currentUuids.includes(validTargetUuid)) {
       console.warn(' [GalleryService] UUID objetivo no pertenece a la galería local (primer check). Intentando re-fetch antes de abortar.', { validTargetUuid, currentUuids });
       // Re-check inmediato para cubrir condiciones de carrera donde otra operación ya haya quitado la referencia
-      const recheckUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
+      const recheckUuids = await getGalleryImageUuids(tenantId, groupSlug, sectionId);
       if (!recheckUuids.includes(validTargetUuid)) {
         console.warn(' [GalleryService] Tras re-fetch la imagen no figura en la galería; abortando operación sin error:', { validTargetUuid, recheckUuids });
         return null;
@@ -292,29 +274,24 @@ export const deleteGalleryImageById = async (
       console.info(' [GalleryService] Re-check detectó la UUID en la galería; procediendo con DELETE:', { validTargetUuid });
     }
 
-    const endpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery/${validTargetUuid}?deleteFromStorage=${deleteFromStorage ? 'true' : 'false'}`;
-    console.info(' [GalleryService] Enviando DELETE al endpoint:', { endpoint });
-
-    const result = await retryGalleryOperation(async () => {
-      return await api.delete<Record<string, unknown>>(endpoint);
-    }, `DeleteGalleryImageById-${deleteFromStorage ? 'WithStorage' : 'NoStorage'}`);
-
+    console.info(' [GalleryService] Enviando DELETE al endpoint via client');
+    const result = await deleteGalleryImageByIdApi(sectionId, validTargetUuid, tenantId, groupSlug, deleteFromStorage);
     console.info(' [GalleryService] Eliminación via DELETE completada, servidor devolvió datos');
-    return result.data ?? null;
+    return result;
     
   } catch (error) {
     console.error(' [GalleryService] Error eliminando imagen de galería via DELETE:', error);
 
     try {
-      const recheckUuids = await getGalleryImageUuids(tenantSlug, groupSlug, sectionId);
+      const recheckUuids = await getGalleryImageUuids(tenantId, groupSlug, sectionId);
       const validTargetUuid = extractUuidFromString(targetImageUuidOrUrl);
       if (!validTargetUuid) {
-        console.error(' [GalleryService] UUID objetivo inválido al reintentar:', targetImageUuidOrUrl);
+        console.error(' [GalleryService] UUID objetivo inv\u00e1lido al reintentar:', targetImageUuidOrUrl);
         throw error;
       }
 
       if (!recheckUuids.includes(validTargetUuid)) {
-        console.warn(' [GalleryService] Tras re-fetch la imagen ya no figura en la galería; abortando operación sin error:', validTargetUuid);
+        console.warn(' [GalleryService] Tras re-fetch la imagen ya no figura en la galer\u00eda; abortando operaci\u00f3n sin error:', validTargetUuid);
         return null;
       }
 

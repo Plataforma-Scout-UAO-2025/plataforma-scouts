@@ -7,10 +7,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Subgroup as Subrama } from "../types/frontend";
 import * as organigramaService from "../services";
-import api from '@/api/axios';
+import { getMembersBySubgroup } from '@/api/organigramaApi';
 import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
 import FotoModal from "../components/FotoModal";
+import { deepCamelize } from "@/lib/utils";
 
 
 export default function SubramaDetail() {
@@ -460,19 +461,26 @@ export default function SubramaDetail() {
       console.log(" [SubramaDetail] Obteniendo subrama con ID:", id, { tenantId: resolvedTenantId, groupSlug: resolvedGroupSlug });
         
       const ramas = await organigramaService.getRamasWithSubramas(resolvedTenantId, resolvedGroupSlug);
+
+        // Datos ya vienen en camelCase del backend
+        const ramasNorm = ramas || [];
         
         let subramaEncontrada: Subrama | null = null;
-        
-        for (const rama of ramas) {
-          const subramaInRama = (rama.subgroups ?? rama.subramas ?? []).find((s: Subrama) => s.id === id);
+
+        for (const rama of ramasNorm) {
+          const subs = (rama.subgroups ?? rama.subramas ?? []) as unknown[];
+          const subramaInRama = subs.find((s: unknown) => {
+            const rec = s as Record<string, unknown>;
+            return String(rec['id'] ?? rec['subgroupId']) === String(id);
+          });
           if (subramaInRama) {
-            subramaEncontrada = subramaInRama;
+            subramaEncontrada = subramaInRama as Subrama;
             break;
           }
         }
-        
+
         if (subramaEncontrada) {
-          setSubrama(subramaEncontrada);
+          setSubrama(subramaEncontrada as Subrama);
           console.log(" [SubramaDetail] Subrama cargada:", subramaEncontrada);
 
           console.log(" [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre);
@@ -526,18 +534,32 @@ export default function SubramaDetail() {
   const fetchMembers = useCallback(async (subgrp: Subrama | null) => {
     if (!subgrp) return;
     const subgroupRec = subgrp as unknown as Record<string, unknown>;
-    const subgroupId = subgroupRec['subgroup_id'] ?? subgroupRec['id'] ?? subgroupRec['subgroupId'];
+    const subgroupId = subgroupRec['subgroupId'] ?? subgroupRec['id'];
     if (!subgroupId) return;
     try {
       setMembersLoading(true);
       setMembersError(null);
-      const resp = await api.get('/members/list_members_by_subgroup', { params: { id: String(subgroupId) } });
-      const data = resp?.data ?? [];
+      const data = await getMembersBySubgroup(Number(subgroupId));
       const normalized = (data || []).map((m: unknown) => {
-        const rec = m as unknown as Record<string, unknown>;
-        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
-        const firstName = rec['firstName'] ?? rec['first_name'];
-        const lastName = rec['lastName'] ?? rec['last_name'];
+        const rec = deepCamelize(m) as Record<string, unknown>;
+        const rawId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
+        let memberId: number | undefined;
+        if (typeof rawId === 'number') memberId = rawId;
+        else if (typeof rawId === 'string' && /^\d+$/.test(rawId.trim())) memberId = parseInt(rawId.trim(), 10);
+        else memberId = undefined;
+
+        const firstName = typeof rec['firstName'] === 'string'
+          ? rec['firstName']
+          : typeof rec['first_name'] === 'string'
+          ? rec['first_name']
+          : '';
+
+        const lastName = typeof rec['lastName'] === 'string'
+          ? rec['lastName']
+          : typeof rec['last_name'] === 'string'
+          ? rec['last_name']
+          : '';
+
         return {
           member_id: memberId,
           first_name: firstName,

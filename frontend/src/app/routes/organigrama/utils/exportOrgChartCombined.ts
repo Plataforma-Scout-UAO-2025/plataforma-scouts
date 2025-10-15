@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { OrganigramaNiveles } from "../organigramaNivelesOrganizativos/types/niveles.types";
+import { getMembersBySubgroup } from "@/api/organigramaApi";
 
 type BranchLite = { id: string | number; name: string; description?: string; minAge?: number; maxAge?: number; status?: string };
 type SubgroupLite = { id: string | number; name?: string; status?: string; leader?: string };
@@ -19,7 +20,7 @@ function download(filename: string, content: string, type = "text/csv;charset=ut
   URL.revokeObjectURL(url);
 }
 
-export function exportBranchesCSV(branches: SimpleBranches) {
+export async function exportBranchesCSV(branches: SimpleBranches) {
   const header = [
     "Rama",
     "Descripción",
@@ -29,7 +30,7 @@ export function exportBranchesCSV(branches: SimpleBranches) {
   ];
   const rows: string[][] = [];
 
-  branches.forEach(({ section, subgroups }) => {
+  for (const { section, subgroups } of branches) {
     const uniqueLeaders = Array.from(
       new Set((subgroups || []).map((sg) => sg.leader).filter(Boolean) as string[])
     );
@@ -45,13 +46,31 @@ export function exportBranchesCSV(branches: SimpleBranches) {
         section.name,
         desc,
         "— (Sin subramas)",
+        "",
         jefeRama || "",
       ]);
     } else {
-      subgroups.forEach((sg) => {
+      for (const sg of subgroups) {
         const nameFull = sg.name || "Subrama";
 
-        const integrantes = "";
+        // Obtener miembros de la subrama
+        let integrantes = '';
+        try {
+          const subgroupId = sg.id;
+          if (subgroupId) {
+            const members = await getMembersBySubgroup(Number(subgroupId));
+            if (members && members.length > 0) {
+              integrantes = members.map((m: any) => {
+                const firstName = m.firstName ?? m.first_name ?? '';
+                const lastName = m.lastName ?? m.last_name ?? '';
+                return `${firstName} ${lastName}`.trim();
+              }).filter(Boolean).join(', ');
+            }
+          }
+        } catch (error) {
+          console.warn(' [Export CSV OrgChart] Error obteniendo miembros para subrama:', sg.name ?? sg.id, error);
+          // Fallback vacío
+        }
 
         rows.push([
           section.name,
@@ -60,9 +79,9 @@ export function exportBranchesCSV(branches: SimpleBranches) {
           integrantes,
           jefeRama || "",
         ]);
-      });
+      }
     }
-  });
+  }
 
   const csv = [header, ...rows]
     .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))

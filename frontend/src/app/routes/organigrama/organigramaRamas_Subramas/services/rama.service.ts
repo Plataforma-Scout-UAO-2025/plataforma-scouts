@@ -5,8 +5,9 @@ import type {
   Subgroup as Subrama,
 } from '../types/frontend';
 
-import api from '@/api/axios';
-import { sectionsPath, sectionPath, getSectionWithSubgroups } from '@/api/organigramaApi';
+import type { Section } from '@/types/section-simple.type';
+import type { Subgroup } from '@/types/subgroup-simple.type';
+import { getSections, getSection, getSectionWithSubgroups, createSection, updateSection, deleteSection } from '@/api/organigramaApi';
 import { 
   mapBackendRamaToFrontend, 
   mapFrontendCreateRamaToBackend, 
@@ -14,8 +15,9 @@ import {
   mapBackendSubramaToFrontend,
 } from '../utils/mappers';
 import { getSubramasByRamaId } from './subrama.service';
-import { uploadSectionIcon, uploadGalleryImages } from './image-upload-core.service';
-import type { SectionDTO, SectionWithSubgroupsDTO, SubgroupDTO } from '../types/api';
+import { uploadSectionIcon, uploadGalleryImages } from '../../services/imageFacade';
+import type { Section as SectionDTO } from '@/types/section-simple.type';
+import type { Subgroup as SubgroupDTO } from '@/types/subgroup-simple.type';
 
 type GetRamasOpts = { año?: number; signal?: AbortSignal } | number | undefined;
 
@@ -49,14 +51,14 @@ const resolveSubgroupSectionId = (subgroup: SubgroupDTO | undefined): string | u
 };
 
 export const getRamasWithSubramas = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   añoOrOpts?: GetRamasOpts
 ): Promise<Rama[]> => {
   try {
     let opts: GetRamasOpts = añoOrOpts;
     if (typeof añoOrOpts === 'number') opts = { año: añoOrOpts };
-    return await getRamas(tenantSlug, groupSlug, opts);
+    return await getRamas(tenantId, groupSlug, opts);
   } catch (error) {
     console.error(' [RamaService] Error en flujo estándar:', error);
     throw error;
@@ -64,13 +66,13 @@ export const getRamasWithSubramas = async (
 };
 
 export const getRamas = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   añoOrOpts?: GetRamasOpts
 ): Promise<Rama[]> => {
 
   try {
-    const endpoint = sectionsPath(tenantSlug, groupSlug);
+  const backendRamas = await getSections(tenantId, groupSlug) as SectionDTO[];
 
     let año: number | undefined = undefined;
     let signal: AbortSignal | undefined = undefined;
@@ -81,10 +83,7 @@ export const getRamas = async (
       signal = opts.signal;
     }
 
-    const response = await api.get<SectionDTO[]>(endpoint, signal ? { signal } : undefined);
-    const backendRamas = response.data;
-
-    const ramas = backendRamas.map(mapBackendRamaToFrontend);
+  const ramas = (Array.isArray(backendRamas) ? backendRamas : []).map(mapBackendRamaToFrontend);
 
     const resolveRamaId = (rama: Rama): string => {
       const idCandidates = [
@@ -124,7 +123,7 @@ export const getRamas = async (
         };
 
         try {
-          const sectionWithSubgroups = await getSectionWithSubgroups<SectionWithSubgroupsDTO>(normalizedId, tenantSlug, groupSlug, signal);
+          const sectionWithSubgroups = await getSectionWithSubgroups(normalizedId, tenantId, groupSlug, signal) as { section: Section; subgroups: Subgroup[] };
           const canonicalSection: SectionDTO | undefined = sectionWithSubgroups?.section;
           const canonicalRama = canonicalSection
             ? mapBackendRamaToFrontend(canonicalSection)
@@ -151,7 +150,7 @@ export const getRamas = async (
         } catch (error) {
           console.warn(` [RamaService] No se pudieron cargar subgrupos via with-subgroups para ${rama.nombre ?? rama.name}. Se usa fallback.`, error);
           try {
-            const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, normalizedId);
+            const subramas = await getSubramasByRamaId(tenantId, groupSlug, normalizedId);
             const fallbackRama: Rama = {
               ...rama,
               id: String(normalizedId),
@@ -175,14 +174,14 @@ export const getRamas = async (
       })
     );
     
-    const ramasFiltradas = año ? ramasConSubramas.filter((rama: Rama) => {
+  const ramasFiltradas = año ? ramasConSubramas.filter((rama: Rama) => {
       const legacy = rama as unknown as Record<string, unknown>;
       const year = rama.year ?? (legacy['año'] as number | undefined);
       return year === año;
     }) : ramasConSubramas;
     
-    return ramasFiltradas;
-    } catch (error: unknown) {
+  return ramasFiltradas;
+  } catch (error: unknown) {
     console.error(' [RamaService] Error obteniendo ramas:', error);
     const errorWithResponse = error as { response?: { data?: unknown } };
     if (errorWithResponse?.response) {
@@ -192,13 +191,13 @@ export const getRamas = async (
   }
 };
 
-export const getRamaById = async (tenantSlug: string, groupSlug: string, id: string): Promise<Rama | null> => {
+export const getRamaById = async (tenantId: string, groupSlug: string, id: string): Promise<Rama | null> => {
   
   try {
     const normalizedId = String(id);
 
     try {
-      const sectionWithSubgroups = await getSectionWithSubgroups<SectionWithSubgroupsDTO>(normalizedId, tenantSlug, groupSlug);
+      const sectionWithSubgroups = await getSectionWithSubgroups(normalizedId, tenantId, groupSlug) as { section: Section; subgroups: Subgroup[] };
       const canonicalSection: SectionDTO | undefined = sectionWithSubgroups?.section;
 
       if (canonicalSection) {
@@ -227,15 +226,13 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
       console.warn(` [RamaService] with-subgroups no disponible para rama ${id}, se usa endpoint estándar.`, withSubgroupsError);
     }
 
-    const endpoint = sectionPath(id, tenantSlug, groupSlug);
-  const response = await api.get<SectionDTO>(endpoint);
-  const backendRama = response.data;
-  const rama = mapBackendRamaToFrontend(backendRama);
+    const backendRama = await getSection(id, tenantId, groupSlug) as SectionDTO;
+    const rama = mapBackendRamaToFrontend(backendRama as SectionDTO);
     rama.id = rama.id || normalizedId;
     rama.sectionId = rama.sectionId ?? normalizedId;
 
     try {
-      const subramas = await getSubramasByRamaId(tenantSlug, groupSlug, rama.id);
+  const subramas = await getSubramasByRamaId(tenantId, groupSlug, rama.id);
       rama.subramas = subramas;
       rama.subgroups = subramas;
     } catch (subramaError) {
@@ -254,30 +251,31 @@ export const getRamaById = async (tenantSlug: string, groupSlug: string, id: str
   }
 };
 
-export const createRama = async (tenantSlug: string, groupSlug: string, data: CreateRamaData): Promise<Rama> => {
+export const createRama = async (tenantId: string, groupSlug: string, data: CreateRamaData): Promise<Rama> => {
   
   try {
-  const endpoint = sectionsPath(tenantSlug, groupSlug);
+  const backendData = mapFrontendCreateRamaToBackend(data);
+  const payload = {
+    ...backendData,
+    tenantId,
+  };
     
-    const backendData = mapFrontendCreateRamaToBackend(data);
-    
-  const response = await api.post<SectionDTO>(endpoint, backendData);
-    const backendRama = response.data;
+  const backendRama = await createSection(payload, tenantId, groupSlug) as SectionDTO;
     
     const sectionId = resolveSectionId(backendRama) ?? '';
     
     if (data.iconFile && sectionId) {
-  await uploadSectionIcon(tenantSlug, groupSlug, sectionId, data.iconFile);
+  await uploadSectionIcon(tenantId, groupSlug, sectionId, data.iconFile);
     } else {
       // no icon to upload
     }
     
     if (data.galleryFiles && data.galleryFiles.length > 0 && sectionId) {
-  await uploadGalleryImages(tenantSlug, groupSlug, sectionId, data.galleryFiles);
+  await uploadGalleryImages(tenantId, groupSlug, sectionId, data.galleryFiles);
     }
     
     if (sectionId && (data.iconFile || (data.galleryFiles && data.galleryFiles.length > 0))) {
-      const updatedRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+      const updatedRama = await getRamaById(tenantId, groupSlug, sectionId);
       if (updatedRama) {
         return updatedRama;
       }
@@ -291,22 +289,19 @@ export const createRama = async (tenantSlug: string, groupSlug: string, data: Cr
   }
 };
 
-export const updateRama = async (tenantSlug: string, groupSlug: string, data: UpdateRamaData): Promise<Rama | null> => {
+export const updateRama = async (tenantId: string, groupSlug: string, data: UpdateRamaData): Promise<Rama | null> => {
   
   try {
-  const endpoint = sectionPath(data.id, tenantSlug, groupSlug);
-    
   const backendData = mapFrontendUpdateRamaToBackend(data);
     
-  const response = await api.put<SectionDTO>(endpoint, backendData);
-  const backendRama = response.data;
+  const backendRama = await updateSection(data.id, backendData, tenantId, groupSlug) as SectionDTO;
     
     if (data.iconFile) {
-      await uploadSectionIcon(tenantSlug, groupSlug, data.id, data.iconFile);
+      await uploadSectionIcon(tenantId, groupSlug, data.id, data.iconFile);
     }
     
     if (data.galleryFiles && data.galleryFiles.length > 0) {
-      await uploadGalleryImages(tenantSlug, groupSlug, data.id, data.galleryFiles);
+      await uploadGalleryImages(tenantId, groupSlug, data.id, data.galleryFiles);
     }
     
   const rama = mapBackendRamaToFrontend(backendRama);
@@ -317,12 +312,10 @@ export const updateRama = async (tenantSlug: string, groupSlug: string, data: Up
   }
 };
 
-export const deleteRama = async (tenantSlug: string, groupSlug: string, id: string): Promise<boolean> => {
+export const deleteRama = async (tenantId: string, groupSlug: string, id: string): Promise<boolean> => {
   
   try {
-  const endpoint = sectionPath(id, tenantSlug, groupSlug);
-  await api.delete(endpoint);
-    
+    await deleteSection(id, tenantId, groupSlug);
     return true;
   } catch (error) {
     console.error(' [RamaService] Error eliminando rama:', error);
@@ -330,14 +323,11 @@ export const deleteRama = async (tenantSlug: string, groupSlug: string, id: stri
   }
 };
 
-export const getAvailableYears = async (tenantSlug: string, groupSlug: string): Promise<number[]> => {
+export const getAvailableYears = async (tenantId: string, groupSlug: string): Promise<number[]> => {
   
   try {
-  const endpoint = sectionsPath(tenantSlug, groupSlug);
-  const response = await api.get<SectionDTO[]>(endpoint);
-    const backendRamas = response.data;
-    
-    const ramasSimples = backendRamas.map(mapBackendRamaToFrontend);
+  const backendRamas = await getSections(tenantId, groupSlug) as SectionDTO[];
+    const ramasSimples = (Array.isArray(backendRamas) ? backendRamas : []).map(mapBackendRamaToFrontend);
     const years = [...new Set(ramasSimples.map((r: Rama) => {
       const legacy = r as unknown as Record<string, unknown>;
       return r.year ?? (legacy['año'] as number | undefined);
