@@ -70,22 +70,22 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     try {
       setIsLoadingMembers(true);
       const response = await api.get('/members/list_members');
-      
+
       // Filtrar solo miembros aprobados y activos
       const scoutMembers = response.data.filter((member: Member) => 
       member.role === 'SCOUT' && 
       member.status === 'APPROVED' && 
-      member.isActive !== false
-    );
-    
-    setMembers(scoutMembers);
-  } catch (error) {
-    console.error('Error cargando miembros:', error);
-    toast.error('Error al cargar la lista de miembros');
-  } finally {
-    setIsLoadingMembers(false);
-  }
-};
+      member.is_active !== false
+      );
+
+      setMembers(scoutMembers);
+    } catch (error) {
+      console.error('Error cargando miembros:', error);
+      toast.error('Error al cargar la lista de miembros');
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  };
 
   // Función para crear nuevo registro médico
   const createMedicalRecord = async (data: MedicalFormData) => {
@@ -459,8 +459,8 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                       </SelectTrigger>
                       <SelectContent>
                         {members.map(member => (
-                          <SelectItem key={member.memberId} value={member.memberId?.toString() || ""}>
-                            {member.firstName} {member.lastName} - ID {member.identification} ({member.role})
+                          <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
+                            {member.first_name} {member.last_name} - ID {member.identification} ({member.role})
                           </SelectItem>
                         ))}
                       </SelectContent>

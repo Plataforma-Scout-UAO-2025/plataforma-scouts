@@ -7,18 +7,18 @@ export default function Home() {
     <div className="min-h-screen bg-background flex-col">
       <header className="bg-primary py-4">
         <div className="container mx-auto px-4 flex items-center justify-between">
-          <img src="/logo.png"
-               alt="Logo"
-               className="h-10 w-auto"/>
+          <img src="/logo.jpg"
+            alt="Logo"
+            className="h-10 w-auto" />
 
           <div>
             <LoginButton organization="org_6B3k4dao2Wf6eGxa"
-                         className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
-              Grupo Chiminigagua 803
+              className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
+              Grupo Centinelas 113
             </LoginButton>
             <LoginButton organization="org_povsjufF3TEP1DZ7"
-                         className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
-              Grupo Centinelas 113
+              className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent">
+              Grupo Chiminigagua 803
             </LoginButton>
           </div>
 
@@ -57,72 +57,72 @@ export default function Home() {
       <main className="flex-1 overflow-y-auto">
         <div className="flex flex-col gap-12 py-12">
           <section>
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <p className="text-lg text-gray-500">¿Qué es ser Scout?</p>
-            <h2 className="text-4xl font-bold text-gray-900">Más que una aventura, es un estilo de vida</h2>
-            <p className="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
-              es una comunidad que reúne grupos scouts. Promovemos la formación integral de niños, niñas, jóvenes y
-              adultos a través del escultismo, fomentando el respeto, la solidaridad, el liderazgo y el amor por la
-              naturaleza.
-            </p>
-          </div>
-        </div>
-        </section>
-
-        <section>
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-              <Card className="bg-white shadow-md border-0">
-                <CardContent className="p-8 text-left space-y-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Shield className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Integridad</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Desarrollamos el carácter y los valores fundamentales que forman líderes íntegros para el futuro.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white shadow-md border-0">
-                <CardContent className="p-8 text-left space-y-4">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Mountain className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Aventura</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Exploramos la naturaleza y vivimos experiencias únicas que fortalecen el espíritu aventurero.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white shadow-md border-0">
-                <CardContent className="p-8 text-left space-y-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Target className="h-6 w-6 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Desafío</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Superamos obstáculos y desarrollamos habilidades que nos preparan para cualquier reto de la vida.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white shadow-md border-0">
-                <CardContent className="p-8 text-left space-y-4">
-                  <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-                    <Users className="h-6 w-6 text-pink-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Hermandad</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Construimos amistades duraderas y aprendemos el valor del trabajo en equipo y la solidaridad.
-                  </p>
-                </CardContent>
-              </Card>
+            <div className="container mx-auto px-4">
+              <div className="max-w-4xl mx-auto text-center space-y-6">
+                <p className="text-lg text-gray-500">¿Qué es ser Scout?</p>
+                <h2 className="text-4xl font-bold text-gray-900">Más que una aventura, es un estilo de vida</h2>
+                <p className="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
+                  es una comunidad que reúne grupos scouts. Promovemos la formación integral de niños, niñas, jóvenes y
+                  adultos a través del escultismo, fomentando el respeto, la solidaridad, el liderazgo y el amor por la
+                  naturaleza.
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <section>
+            <div className="container mx-auto px-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+                <Card className="bg-white shadow-md border-0">
+                  <CardContent className="p-8 text-left space-y-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Shield className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Integridad</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      Desarrollamos el carácter y los valores fundamentales que forman líderes íntegros para el futuro.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white shadow-md border-0">
+                  <CardContent className="p-8 text-left space-y-4">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Mountain className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Aventura</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      Exploramos la naturaleza y vivimos experiencias únicas que fortalecen el espíritu aventurero.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white shadow-md border-0">
+                  <CardContent className="p-8 text-left space-y-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Target className="h-6 w-6 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Desafío</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      Superamos obstáculos y desarrollamos habilidades que nos preparan para cualquier reto de la vida.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white shadow-md border-0">
+                  <CardContent className="p-8 text-left space-y-4">
+                    <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
+                      <Users className="h-6 w-6 text-pink-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Hermandad</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      Construimos amistades duraderas y aprendemos el valor del trabajo en equipo y la solidaridad.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
 

@@ -9,14 +9,42 @@ interface BranchCountProps {
 const BranchCount = ({ filteredMembers, totalMembers }: BranchCountProps) => {
   const branchCounts = useMemo(() => {
     const total = totalMembers;
-
-    // Contar miembros por rama/sección
     const countBySection: Record<string, number> = {};
 
     filteredMembers.forEach((member: Member) => {
-      if (member.section_name) {
-        countBySection[member.section_name] =
-          (countBySection[member.section_name] || 0) + 1;
+      const rec = member as unknown as Record<string, unknown>;
+
+      const branches = rec["branch"] as unknown;
+      if (Array.isArray(branches) && branches.length > 0) {
+        branches.forEach((b) => {
+          const br = b as Record<string, unknown> | string | undefined;
+          const name = (typeof br === "string"
+            ? br
+            : (br && (br["name"] ?? br["nombre"])) ?? "Sin rama") as string;
+          countBySection[name] = (countBySection[name] || 0) + 1;
+        });
+        return;
+      }
+
+      const subgroup = rec["subgroup"] as Record<string, unknown> | undefined;
+      if (subgroup) {
+        const section = subgroup["section"] as Record<string, unknown> | undefined;
+        const sectionName = (section && (section["name"] ?? section["nombre"])) as string | undefined;
+        if (sectionName) {
+          countBySection[sectionName] = (countBySection[sectionName] || 0) + 1;
+          return;
+        }
+        const subgroupName = (subgroup["name"] ?? subgroup["nombre"]) as string | undefined;
+        if (subgroupName) {
+          countBySection[subgroupName] = (countBySection[subgroupName] || 0) + 1;
+          return;
+        }
+      }
+
+      const sectionNameDirect = (rec["section_name"] ?? rec["sectionName"]) as string | undefined;
+      if (sectionNameDirect) {
+        countBySection[sectionNameDirect] = (countBySection[sectionNameDirect] || 0) + 1;
+        return;
       }
     });
 

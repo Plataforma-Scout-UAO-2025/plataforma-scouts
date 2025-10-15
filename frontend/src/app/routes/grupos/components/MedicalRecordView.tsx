@@ -66,8 +66,8 @@ export default function MedicalRecordsView() {
             const membersMap = new Map();
 
             membersResponse.data.forEach((member: Member) => {
-                if (member.status === 'APPROVED' && member.isActive !== false) {
-                    membersMap.set(member.memberId, `${member.firstName} ${member.lastName}`);
+                if (member.status === 'APPROVED' && member.is_active !== false) {
+                    membersMap.set(member.member_id, `${member.first_name} ${member.last_name}`);
                 }
             });
 

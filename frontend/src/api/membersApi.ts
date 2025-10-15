@@ -1,5 +1,5 @@
 import api from "./axios";
-import type { Member } from "@/types/member.type";
+import type { Member, UpdateMember } from "@/types/member.type";
 import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";
 
 // Crear un nuevo miembro
@@ -30,26 +30,38 @@ export const getMembers = async () => {
   return response.data;
 };
 
-// Actualizar perfil de usuario
-export const updateMember = async (id: string, updates: Partial<Member>) => {
-  const response = await api.put(`/members/update_member_by_id/${id}`, updates);
+// Obtener miembros por estado
+export const getMembersByStatus = async (
+  status: "PENDING" | "APPROVED" | "REJECTED"
+) => {
+  const response = await api.get<Member[]>("/members/list_members_by_status", {
+    params: { status },
+  });
   return response.data;
 };
 
 // Obtener miembros por subrama
-export const getMembersBySubgroup = async (
-  branchId: string | number | bigint
+export const getMembersWithBranch = async () => {
+  const response = await api.get<Member[]>("/members/list_members_with_details");
+  return response.data;
+};
+
+// Actualizar estado de un miembro
+export const updateMemberStatus = async (
+  id: string | number,
+  status: "PENDING" | "APPROVED" | "REJECTED"
 ) => {
-  const response = await api.get<Member[]>("/members/list_members_by_subgroup", {
-    params: { branchId },
+  const response = await api.put(`/members/update_member_status/${id}`, null, {
+    params: { status },
   });
   return response.data;
 };
 
-// Obtener subrama por memberId
-export const getSubgroupByMemberId = async (memberId: string | number | bigint) => {
-  const response = await api.get("/members/list_subGroup_by_memberId", {
-    params: { memberId },
-  });
+// Actualizar perfil de usuario
+export const updateMember = async (
+  id: string,
+  updates: Partial<UpdateMember>
+) => {
+  const response = await api.put(`/members/update_member_by_id/${id}`, updates);
   return response.data;
 };

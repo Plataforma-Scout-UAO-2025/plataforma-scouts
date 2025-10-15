@@ -5,8 +5,9 @@ import {
   updateMemberAction,
   createMemberAction,
   createMemberWithSchoolDataAction,
-  fetchMembersBySubgroupAction,
-  fetchSubgroupByMemberIdAction
+  fetchMembersWithBranchAction,
+  fetchMembersByStatusAction,
+  updateMemberStatusAction,
 } from "./membersActions";
 import type { Member } from "@/types/member.type";
 
@@ -76,28 +77,15 @@ const membersSlice = createSlice({
       state.error = action.payload?.error as string;
     });
 
-    builder.addCase(fetchMembersBySubgroupAction.pending, (state) => {
+    builder.addCase(fetchMembersWithBranchAction.pending, (state) => {
       state.loading = true;
       state.error = null;
     });
-    builder.addCase(fetchMembersBySubgroupAction.fulfilled, (state, action) => {
+    builder.addCase(fetchMembersWithBranchAction.fulfilled, (state, action) => {
       state.loading = false;
       state.members = action.payload as Member[];
     });
-    builder.addCase(fetchMembersBySubgroupAction.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload as string;
-    });
-
-    builder.addCase(fetchSubgroupByMemberIdAction.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchSubgroupByMemberIdAction.fulfilled, (state, action) => {
-      state.loading = false;
-      state.member = action.payload as Member;
-    });
-    builder.addCase(fetchSubgroupByMemberIdAction.rejected, (state, action) => {
+    builder.addCase(fetchMembersWithBranchAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });
@@ -131,6 +119,31 @@ const membersSlice = createSlice({
       }
     });
     builder.addCase(createMemberWithSchoolDataAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
+    builder.addCase(fetchMembersByStatusAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchMembersByStatusAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.members = action.payload as Member[];
+    });
+    builder.addCase(fetchMembersByStatusAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+    builder.addCase(updateMemberStatusAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(updateMemberStatusAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(updateMemberStatusAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload?.error as string;
     });

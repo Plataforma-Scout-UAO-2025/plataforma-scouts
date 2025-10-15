@@ -28,7 +28,7 @@ const AdminGrupoView = () => {
 
     // Total de scouts (excluyendo admins)
     const totalScouts = filteredMembers.filter(
-      (m) => m.role?.toUpperCase() === "SCOUT"
+      (m) => m.role?.toUpperCase() === "SCOUT" && m.is_active !== false
     ).length;
 
     // Scouts activos
@@ -36,16 +36,16 @@ const AdminGrupoView = () => {
       (m) => m.role?.toUpperCase() === "SCOUT" && m.is_active
     ).length;
 
-    // Total de ramas únicas
-    const ramasSet = new Set<string>();
-    filteredMembers.forEach((m) => {
-      if (m.branch && m.branch.length > 0) {
-        m.branch.forEach((rama) => {
-          if (rama.name) ramasSet.add(rama.name);
-        });
-      }
-    });
-    const totalRamas = ramasSet.size;
+    // Total de ramas únicos
+    const totalBranches = filteredMembers.length
+      ? Array.from(
+          new Set(
+            filteredMembers
+              .map((m) => m.subgroup?.name || m.subgroup?.name)
+              .filter((id) => id !== undefined && id !== null)
+          )
+        ).length
+      : 0;
 
     // Nuevos scouts este mes
     const ahora = new Date();
@@ -59,7 +59,7 @@ const AdminGrupoView = () => {
     return {
       totalScouts,
       scoutsActivos,
-      totalRamas,
+      totalRamas: totalBranches,
       nuevosEsteMes,
     };
   }, [filteredMembers]);

@@ -7,7 +7,7 @@ import {
   Button,
   Input,
 } from "@/components/ui/index";
-import { branches } from "@/lib/mockObjects";
+import { useMembersManagement } from "@/hooks/useMembersManagement";
 import { ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
 
 interface MembersFilterProps {
@@ -28,6 +28,14 @@ const MembersFilter = ({
   setBranchFilter,
 }: MembersFilterProps) => {
   const [isActive, setIsActive] = useState(false);
+  const { filteredMembers, extractSectionsFromMember } = useMembersManagement();
+
+  // Extraer nombres de ramas únicos desde los miembros para evitar duplicados
+  
+
+  const branches = Array.from(
+    new Set(filteredMembers.flatMap((m) => extractSectionsFromMember(m)))
+  );
 
   return (
     <>
@@ -74,13 +82,13 @@ const MembersFilter = ({
             >
               Todas las ramas
             </DropdownMenuItem>
-            {branches.map((branch) => (
+            {branches.map((b) => (
               <DropdownMenuItem
-                key={branch}
+                key={b}
                 className="cursor-pointer"
-                onSelect={() => setBranchFilter(branch)}
+                onSelect={() => setBranchFilter(b)}
               >
-                {branch}
+                {b}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

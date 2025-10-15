@@ -75,9 +75,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                   {member.identification || "N/A"}
                 </TableCell>
                 <TableCell className="w-28 truncate">
-                  {member.branch && member.branch.length > 0
-                    ? member.branch.map((rama) => rama.name).join(", ")
-                    : "Sin rama"}
+                  {member.subgroup?.section?.name || "Sin rama"}
                 </TableCell>
                 <TableCell className="w-28 truncate">
                   {formatDate(member.created_at)}

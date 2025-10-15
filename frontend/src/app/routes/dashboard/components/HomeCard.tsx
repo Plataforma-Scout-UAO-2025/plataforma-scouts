@@ -1,7 +1,6 @@
 import {
   Award,
   Calendar,
-  CircleDollarSign,
   Users,
 } from "lucide-react";
 
@@ -33,13 +32,13 @@ const HomeCard = ({ stats }: HomeCardProps) => {
       label: "Nuevos Miembros",
       label2: "este mes",
       value: stats.nuevosEsteMes.toString(),
-    },
+    }/*,
     {
       icon: CircleDollarSign,
       label: "Ingresos Mensuales",
       label2: "próximamente",
       value: "$0",
-    },
+    },*/
   ];
 
   return (
@@ -47,7 +46,7 @@ const HomeCard = ({ stats }: HomeCardProps) => {
       {cards.map((item, index) => (
         <div
           key={index}
-          className={`border rounded-xl shadow-sm p-3 flex items-center w-1/4`}
+          className={`border rounded-xl shadow-sm p-3 flex items-center w-1/3`}
         >
           <div className="p-4 w-full">
             <div className="pb-4 flex justify-between">
