@@ -23,6 +23,33 @@ target/
 # Env files
 .env
 .env.local
+<<<<<<< HEAD
+=======
+.env.production
+.env.development
+.env.qa
+
+# Database credentials
+application-*.properties
+!application.properties
+!**/application-test.properties
+
+# Supabase credentials
+supabase/.temp
+supabase/.branches
+supabase/config.toml
+
+# Security files
+*.key
+*.p12
+*.pem
+keystore.*
+
+# QA Testing files (use Swagger instead)
+qa-testing.*
+test-upload.html
+postman_collection.json
+>>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
 
 
 ### STS ###
@@ -55,5 +82,8 @@ build/
 plataforma-scouts.code-workspace
 
 ### supabase
+<<<<<<< HEAD
 supabase/seeds/
+=======
+>>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
 supabase/.temp/

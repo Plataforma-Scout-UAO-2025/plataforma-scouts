@@ -1,0 +1,102 @@
+meta {
+  name: 8) CreatePago - Sin campo method
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/227/payments
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+      "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+      "installment_id": 227,
+      "payer_member_id": 32,
+      "paid_at": "2025-10-23",
+      "reference": "asdas",
+      "amount": 15000
+    }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422, 400]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 8) CreatePago - Sin campo method');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 8: Crear Pago - Sin Campo method
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de pagos cuando falta el campo method, validando que sea un campo requerido.
+  
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/payments/org_6B3k4dao2Wf6eGxa/installments/300/payments
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "payment_id": "0aa9698a-92c0-4fa7-955c-043690822ae6",
+    "installment_id": 300,
+    "payer_member_id": 61,
+    "paid_at": "2025-10-23",
+    // ❌ Falta el campo "method"
+    "reference": "asdas",
+    "amount": 15000
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity` o `400 Bad Request`
+  - **Body:** Mensaje de error indicando que el campo es requerido
+  
+  ```json
+  {
+    "message": "El campo method es requerido"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.2** - Gestión de Pagos
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-07
+}

@@ -1,0 +1,122 @@
+meta {
+  name: 20) CreateCuota - Tenant ID válido copy
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "name": "Cuota mensual scout",
+    "description": "Validación formato fecha",
+    "amount": 50000,
+    "periodicity": "QUARTER",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2026-06-01",
+    "associated_to": {
+      "id": 42,
+      "name": "Natalia López"
+    }
+  }
+  
+  
+  
+  García
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([200, 201]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Has id or payload on success', () => {
+    if ([200,201].includes(res.status)) {
+      expect(res.body).to.have.any.keys('id','data','cuota','fee_id');
+    }
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 15) CreateCuota - Tenant ID válido');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 15: Crear Cuota - Tenant ID Válido
+  
+  ## 🎯 Objetivo
+  Validar que el sistema acepta correctamente el campo `tenant_id` con un valor válido, permitiendo la creación multi-tenant.
+  
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": 1,  // ✅ ID de tenant válido
+    "name": "Cuota Tenant OK",
+    "description": "Validación tenant_id",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-01-30"
+  }
+  ```
+  
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `200 OK` o `201 Created`
+  - **Body:** Objeto JSON con el recurso creado
+  
+  ```json
+  {
+    "id": "uuid-generado",
+    "tenant_id": 1,
+    "name": "Cuota Tenant OK",
+    "description": "Validación tenant_id",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-01-30"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

@@ -1,0 +1,85 @@
+meta {
+  name: 21) DeleteCuota - Eliminación exitosa
+  type: http
+  seq: 26
+}
+
+delete {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/fees/org_6B3k4dao2Wf6eGxa/23
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([204, 200]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Has id or payload on success', () => {
+    if ([200,201].includes(res.status)) {
+      expect(res.body).to.have.any.keys('id','data','cuota');
+    }
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 21) DeleteCuota - Eliminación exitosa');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 21: Eliminar Cuota - Eliminación Exitosa
+  
+  ## 🎯 Objetivo
+  Validar que el sistema permite eliminar correctamente una cuota existente.
+  
+  ## 📍 Endpoint
+  ```
+  DELETE {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas/{{idCuota}}
+  ```
+  
+  ## 📦 Request Body
+  N/A (método DELETE no requiere body)
+  
+  ## ✅ Respuesta Esperada
+  - **Status Code:** `204 No Content` o `200 OK`
+  - **Body:** Vacío o mensaje de confirmación
+  
+  ```json
+  {}
+  ```
+  O con confirmación:
+  ```json
+  {
+    "message": "Cuota eliminada exitosamente"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

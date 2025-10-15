@@ -10,13 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { Pencil } from "lucide-react";
 import CreateCuotaForm from "./CreateCuotaForm";
-import type { Cuota } from "../types/cuota.type";
+import type { Cuota } from "@/types/cuota.type";
 
 interface EditCuotaModalProps {
   cuota: Cuota;
+  onRefresh?: () => void;
 }
 
-export default function EditCuotaModal({ cuota }: EditCuotaModalProps) {
+export default function EditCuotaModal({ cuota, onRefresh }: EditCuotaModalProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -34,18 +35,21 @@ export default function EditCuotaModal({ cuota }: EditCuotaModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <CreateCuotaForm 
+        <CreateCuotaForm
           open={open}
           setOpen={setOpen}
-          cuotaId={cuota.id}
+          cuotaId={cuota.fee_id}
+          isEditMode={true}
+          onRefresh={onRefresh}
           defaultValues={{
-            nombre: cuota.nombre,
-            monto: cuota.monto,
-            periodicidad: cuota.periodicidad as "Mensual" | "Trimestral" | "Semestral" | "Anual",
-            tipoCuota: cuota.tipoCuota as "Ordinaria" | "Extraordinaria",
-            fechaLimitePago: cuota.fechaLimitePago,
-            medioPago: cuota.medioPago as "PSE" | "Efectivo" | "Tarjeta de Debito" | "Tarjeta de Credito" | "Otro",
-            aplicaA: cuota.aplicaA,
+            name: cuota.name,
+            description: cuota.description,
+            amount: cuota.amount,
+            periodicity: cuota.periodicity,
+            scope: cuota.scope,
+            start_date: cuota.start_date,
+            end_date: cuota.end_date,
+            associated_to: cuota.associated_to,
           }}
           submitButtonText="Actualizar cuota"
         />

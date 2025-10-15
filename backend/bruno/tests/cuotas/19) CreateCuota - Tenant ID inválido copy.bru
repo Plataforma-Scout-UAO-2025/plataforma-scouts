@@ -1,0 +1,110 @@
+meta {
+  name: 19) CreateCuota - Tenant ID inválido copy
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tenant_id": "invalid-uuid",
+    "name": "Cuota Bad Tenant",
+    "description": "Validación tenant_id inválido",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "SCOUT",
+    "start_date": "2025-01-01",
+    "end_date": "2025-06-01",
+    "associated_to": {
+      "id": "72b0e16c-84d4-4e49-838b-d473e2e000b0",
+      "name": "Camila Mendoza"
+    }
+  }
+}
+
+tests {
+  test('Status code expected', () => {
+    expect([422, 400]).to.include(res.status);
+  });
+  
+  // Validar que la respuesta es JSON válido (si no es 204)
+  test('Response is JSON or empty (204)', () => {
+    if (res.status !== 204) {
+      expect(res.body).to.be.an('object');
+    }
+  });
+  
+  // Validar presencia de mensaje de error en negativos
+  test('Response contains message', () => {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string').and.not.empty;
+  });
+  
+  // Log del resultado
+  test('Log', () => {
+    console.log('Nombre del caso: 16) CreateCuota - Tenant ID inválido');
+    console.log('Status:', res.status);
+    console.log('Body:', JSON.stringify(res.body));
+    expect(true).to.be.true;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 📋 Caso 16: Crear Cuota - Tenant ID Inválido
+  
+  ## 🎯 Objetivo
+  Verificar que el sistema rechaza la creación de cuotas con un `tenant_id` inválido (valor negativo).
+  
+  ## 📍 Endpoint
+  ```
+  POST {{baseUrl}}/api/{{apiVersion}}/finanzas/cuotas
+  ```
+  
+  ## 📦 Request Body
+  ```json
+  {
+    "tenant_id": -1,  // ❌ Valor negativo no permitido
+    "name": "Cuota Bad Tenant",
+    "description": "Validación tenant_id inválido",
+    "amount": 50000,
+    "periodicity": "MONTH",
+    "scope": "ALL",
+    "start_date": "2025-10-01",
+    "end_date": "2026-01-30"
+  }
+  ```
+  
+  ## ❌ Respuesta Esperada
+  - **Status Code:** `422 Unprocessable Entity` o `400 Bad Request`
+  - **Body:** Mensaje de error indicando que el tenant_id debe ser positivo
+  
+  ```json
+  {
+    "message": "El tenant_id debe ser un valor positivo",
+    "field": "tenant_id"
+  }
+  ```
+  
+  ## 🔗 Historia de Usuario
+  **HU-FIN-1.1** - Gestión de Cuotas
+  
+  ## 👤 Responsable
+  Edwin
+  
+  ## 📅 Última Actualización
+  2025-10-04
+}

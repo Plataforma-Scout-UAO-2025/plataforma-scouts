@@ -13,12 +13,12 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         secondary:
           "border-2 border-secondary bg-transparent text-secondary shadow-xs hover:bg-secondary hover hover:text-white",
-        eyebutton:
+        iconbutton:
           "absolute right-3 top-1/2 -translate-y-1/2 text-accent-strong hover:text-primary",
         outline:
-          "border bg-background border-primary text-primary shadow-xs hover:bg-primary/80 hover:text-white dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border bg-background border-primary text-primary shadow-xs hover:bg-primary/80 hover:text-white",
         ghost:
-          "hover:bg-secondary/80 hover:text-white dark:hover:bg-accent/50",
+          "hover:bg-secondary/80 hover:text-white",
         link: "text-primary underline-offset-4 hover:underline",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/70",
