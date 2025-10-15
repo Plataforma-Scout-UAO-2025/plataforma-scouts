@@ -28,7 +28,7 @@ import OrgAuthGuard from './app/routes/organigrama/OrgAuthGuard';
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 
-// Guardians (Acudientes)
+// Guardianes
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
 import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
 
@@ -114,7 +114,7 @@ function App() {
             {/* Rutas para Guardianes*/}
             <Route path="guardians/members" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><MembersInCharge /></ProtectedRoute>} />
             <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><GuardianProfile /></ProtectedRoute>} />
-            </Route>
+          </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
       </div>

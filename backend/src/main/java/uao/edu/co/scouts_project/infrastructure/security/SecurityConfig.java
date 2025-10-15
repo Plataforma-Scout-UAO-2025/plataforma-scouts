@@ -145,31 +145,35 @@ public class SecurityConfig {
                                                 // //
                                                 // // Datos básicos de miembros
 
-
                                                 // Guardians
 
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                                DEV_SUPPORT.name())
+                                                        DEV_SUPPORT.name())
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                                DEV_SUPPORT.name())
+                                                        DEV_SUPPORT.name())
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                                DEV_SUPPORT.name())
+                                                        DEV_SUPPORT.name())
                                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                                DEV_SUPPORT.name())
+                                                        DEV_SUPPORT.name())
 
                                                 //
-                                                // Pagos
-                                                .requestMatchers("/api/v1/finanzas/payments/**").permitAll() // Cambiar
-                                                                                                             // a
-                                                                                                             // .hasAnyRole(TESORERO.name())
-                                                .requestMatchers("/api/v1/finanzas/payments").permitAll()
-                                                //
-                                                // Datos médicos
-                                                .requestMatchers("/api/v1/medical_record/**").permitAll()
+                                                // ==== FICHAS MÉDICAS ====
+
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/medical_record/create_record/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_record/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(), SCOUT.name())
+
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/medical_record/update_record/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_by_tenant")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
 
                                                 //
                                                 // Pagos
