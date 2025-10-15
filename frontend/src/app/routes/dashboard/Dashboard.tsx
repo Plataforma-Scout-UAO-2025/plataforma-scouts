@@ -5,8 +5,6 @@ import AdminGrupoView from "./components/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
 import ScoutView from "./components/ScoutView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
-import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
 
 
 export default function Dashboard() {
@@ -15,25 +13,6 @@ export default function Dashboard() {
   if (status === "loading" || status === "idle") {
     return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;
   }
-  const { getAccessTokenSilently, user, isAuthenticated } = useAuth0();
-  useEffect(() => {
-    const obtenerToken = async () => {
-      try {
-        const accessToken = await getAccessTokenSilently();
-        console.log("Access Token:", accessToken);
-      } catch (error) {
-        console.error("Error al obtener el token:", error);
-      }
-    }
-
-    obtenerToken();
-  }, [getAccessTokenSilently]);
-
-
-
-
-
-
 
   // Solo se renderiza Y ejecuta el componente correspondiente al rol del usuario
   switch (currentUserRole) {
