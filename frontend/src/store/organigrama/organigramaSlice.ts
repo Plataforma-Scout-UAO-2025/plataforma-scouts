@@ -1,9 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  fetchSectionsAction,
-  fetchSectionWithSubgroupsAction,
-  fetchMembersBySubgroupAction,
-} from "./organigramaActions";
+import { fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchMembersBySubgroupAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { Member } from "@/types/member.type";
@@ -50,20 +46,14 @@ const organigramaSlice = createSlice({
       state.loading = true;
       state.error = null;
     });
-    builder.addCase(
-      fetchSectionWithSubgroupsAction.fulfilled,
-      (state, action) => {
-        state.loading = false;
-        state.currentSection = action.payload;
-      },
-    );
-    builder.addCase(
-      fetchSectionWithSubgroupsAction.rejected,
-      (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      },
-    );
+    builder.addCase(fetchSectionWithSubgroupsAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.currentSection = action.payload;
+    });
+    builder.addCase(fetchSectionWithSubgroupsAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
 
     builder.addCase(fetchMembersBySubgroupAction.pending, (state) => {
       state.loading = true;
@@ -73,8 +63,7 @@ const organigramaSlice = createSlice({
       state.loading = false;
       const payload = action.payload as MemberLike[];
       if (payload && payload.length > 0) {
-        const subgroupId =
-          payload[0].subgroup_id ?? payload[0].subgroup_id ?? null;
+        const subgroupId = payload[0].subgroup_id ?? payload[0].subgroup_id ?? null;
         if (subgroupId != null) {
           // Guardamos usando el ID numérico descubierto
           state.membersBySubgroup[subgroupId] = payload as Member[];

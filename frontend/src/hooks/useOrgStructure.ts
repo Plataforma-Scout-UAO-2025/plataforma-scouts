@@ -56,7 +56,6 @@ export function useOrgStructure({ orgId, open }: UseOrgStructureOptions) {
       setLoadingGroups(true);
       try {
         const data = await getGroupsByTenant(orgId, ac.signal);
-
         const mapped: Group[] = (data ?? []).map((g: RawGroup) => ({
           groupId: g.groupId ?? g.id ?? 0,
           groupName: g.groupName ?? g.name ?? "Sin nombre",
@@ -121,7 +120,7 @@ export function useOrgStructure({ orgId, open }: UseOrgStructureOptions) {
         const data = await getSubgroups(
           Number(selectedSection),
           orgId,
-          selectedGroupSlug,
+          selectedGroupSlug
         );
         setSubgroups(data ?? []);
       } catch (e) {
