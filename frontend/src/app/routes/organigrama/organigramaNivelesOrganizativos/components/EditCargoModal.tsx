@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useMemo, useState } from "react";
 import type { Cargo } from "../types/niveles.types";
 import type { Member } from "@/types/member.type";
+import { deepCamelize } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -29,7 +30,7 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
   const memberOptions = useMemo(() => {
     return (members || [])
       .map((m) => {
-        const rec = m as unknown as Record<string, unknown>;
+        const rec = deepCamelize(m) as unknown as Record<string, unknown>;
         const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
         const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
         const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");

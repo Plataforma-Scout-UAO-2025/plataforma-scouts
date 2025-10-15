@@ -6,7 +6,8 @@ import type {
   CreateSubgroupData as CreateSubramaData,
   UpdateSubgroupData as UpdateSubramaData,
 } from '../types/frontend';
-import type { SectionDTO, SubgroupDTO } from '../types/api';
+import type { Section as SectionDTO } from '@/types/section-simple.type';
+import type { Subgroup as SubgroupDTO } from '@/types/subgroup-simple.type';
 import type {
   CreateBranchBackendData as CreateRamaBackendData,
   UpdateBranchBackendData as UpdateRamaBackendData,
@@ -24,20 +25,6 @@ type GalleryItem = {
 const toRecord = (value: unknown): AnyRecord =>
   value && typeof value === 'object' ? (value as AnyRecord) : {};
 
-const pickIdentifier = (record: AnyRecord, keys: string[]): string | undefined => {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (trimmed.length > 0) return trimmed;
-    }
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return String(value);
-    }
-  }
-  return undefined;
-};
-
 const pickString = (record: AnyRecord, keys: string[]): string | undefined => {
   for (const key of keys) {
     const value = record[key];
@@ -50,53 +37,6 @@ const pickString = (record: AnyRecord, keys: string[]): string | undefined => {
     }
   }
   return undefined;
-};
-
-const pickNumber = (record: AnyRecord, keys: string[]): number | undefined => {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-  }
-  return undefined;
-};
-
-const pickBoolean = (record: AnyRecord, keys: string[]): boolean | undefined => {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'boolean') return value;
-  }
-  return undefined;
-};
-
-const pickStringArray = (record: AnyRecord, keys: string[]): string[] | undefined => {
-  for (const key of keys) {
-    const value = record[key];
-    if (!Array.isArray(value)) continue;
-
-    const normalized = value
-      .map((entry) => {
-        if (typeof entry === 'string') {
-          const trimmed = entry.trim();
-          return trimmed.length > 0 ? trimmed : undefined;
-        }
-        if (typeof entry === 'number' && Number.isFinite(entry)) {
-          return String(entry);
-        }
-        return undefined;
-      })
-      .filter((item): item is string => item !== undefined);
-
-    return normalized;
-  }
-  return undefined;
-};
-
-const ensureIdentifier = (record: AnyRecord, keys: string[], entity: string): string => {
-  const identifier = pickIdentifier(record, keys);
-  if (!identifier) {
-    throw new Error(`${entity} sin identificador valido en la respuesta del backend.`);
-  }
-  return identifier;
 };
 
 const toBoolean = (value: unknown): boolean | undefined => {
@@ -136,6 +76,7 @@ const extractPhotoPrincipal = (record: AnyRecord): string | null | undefined => 
   }
 
   const candidateKeys = [
+    'photoPrincipalUrl',
     'photoPrincipalObjectId',
     'photo_principal_object_id',
     'mainImageObjectId',
@@ -187,22 +128,18 @@ const deriveYear = (isoDate: string): number => {
 export const mapBackendRamaToFrontend = (backendRama: SectionDTO): Rama => {
   const record = toRecord(backendRama);
 
-  const sectionId = ensureIdentifier(record, ['sectionId', 'section_id'], 'Section');
-  const name = pickString(record, ['name', 'sectionName']) ?? '';
-  const description = pickString(record, ['description', 'sectionDescription']);
-  const iconUrl = pickString(record, ['iconObjectUrl', 'icon_object_url']);
-  const iconObjectId = pickString(record, ['iconObjectId', 'icon_object_id']);
-  const mainImageUrl = pickString(record, ['photoPrincipalUrl', 'photo_principal_url']);
-  const mainImageObjectId = pickString(record, ['photoPrincipalObjectId', 'photo_principal_object_id']);
-  const minAge = pickNumber(record, ['minAge', 'min_age']) ?? 0;
-  const maxAge = pickNumber(record, ['maxAge', 'max_age']) ?? 0;
-  const createdAt = safeIsoDate(pickString(record, ['createdAt', 'created_at']));
+  const sectionId = String(record.sectionId || '');
+  const name = (record.name as string) ?? '';
+  const description = record.description as string;
+  const iconUrl = record.iconObjectUrl as string;
+  const iconObjectId = record.iconObjectId as string;
+  const mainImageUrl = record.photoPrincipalUrl as string;
+  const mainImageObjectId = record.photoPrincipalObjectId as string;
+  const minAge = (record.minAge as number) ?? 0;
+  const maxAge = (record.maxAge as number) ?? 0;
+  const createdAt = safeIsoDate(record.createdAt as string);
   const gallery = extractGallery(record);
-  const galleryObjectIds =
-    pickStringArray(record, ['galleryObjectIds', 'gallery_object_ids', 'sectionGalleryObjectIds']) ??
-    gallery?.map((item) => item.id) ??
-    [];
-  const galleryObjectUrls = pickStringArray(record, ['galleryObjectUrls', 'gallery_object_urls']);
+  const galleryObjectIds = gallery?.map((item) => item.id) ?? [];
 
   const mappedRama: Rama = {
     id: sectionId,
@@ -223,46 +160,26 @@ export const mapBackendRamaToFrontend = (backendRama: SectionDTO): Rama => {
     subgroups: [],
   };
 
-  // Maintain legacy aliases until the UI completes the migration.
-  const ramaRecord = mappedRama as unknown as AnyRecord;
-  ramaRecord.section_id = sectionId;
-  ramaRecord.nombre = mappedRama.name;
-  ramaRecord.descripcion = mappedRama.description;
-  ramaRecord.icono = mappedRama.iconUrl;
-  ramaRecord.iconoObjectId = mappedRama.iconObjectId;
-  ramaRecord.imagenPrincipal = mappedRama.mainImageUrl;
-  ramaRecord.imagenPrincipalObjectId = mappedRama.mainImageObjectId;
-  ramaRecord.sectionGalleryObjectIds = mappedRama.galleryObjectIds;
-  ramaRecord.gallery = mappedRama.gallery ?? [];
-  ramaRecord.galleryObjectUrls = galleryObjectUrls ?? [];
-  ramaRecord.subramas = mappedRama.subgroups;
-  ramaRecord.ramaId = mappedRama.sectionId;
-  ramaRecord['año'] = mappedRama.year;
-
   return mappedRama;
 };
 
 export const mapBackendSubramaToFrontend = (backendSubrama: SubgroupDTO): Subrama => {
   const record = toRecord(backendSubrama);
 
-  const subgroupId = ensureIdentifier(record, ['subgroupId', 'subgroup_id', 'id'], 'Subgroup');
-  const sectionId = ensureIdentifier(record, ['sectionId', 'section_id'], 'Section para Subgroup');
-  const name = pickString(record, ['name', 'subgroupName', 'subgroup_name']) ?? '';
-  const description = pickString(record, ['description', 'subgroupDescription', 'subgroup_description']);
-  const iconUrl = pickString(record, ['iconObjectUrl', 'icon_object_url']);
-  const iconObjectId = pickString(record, ['iconObjectId', 'icon_object_id']);
-  const mainImageUrl = pickString(record, ['photoPrincipalUrl', 'photo_principal_url']);
-  const mainImageObjectId = pickString(record, ['photoPrincipalObjectId', 'photo_principal_object_id']);
-  const leader = pickString(record, ['leader', 'leaderName', 'leader_name']);
-  const createdAt = safeIsoDate(pickString(record, ['createdAt', 'created_at']));
-  const memberCount = pickNumber(record, ['memberCount', 'members']) ?? 0;
+  const subgroupId = String(record.subgroupId || '');
+  const sectionId = String(record.sectionId || '');
+  const name = (record.name as string) ?? '';
+  const description = record.description as string;
+  const iconUrl = record.iconObjectUrl as string;
+  const iconObjectId = record.iconObjectId as string;
+  const mainImageUrl = record.photoPrincipalUrl as string;
+  const mainImageObjectId = record.photoPrincipalObjectId as string;
+  const leader = record.leader as string;
+  const createdAt = safeIsoDate(record.createdAt as string);
+  const memberCount = (record.memberCount as number) ?? 0;
   const gallery = extractGallery(record);
-  const galleryObjectIds =
-    pickStringArray(record, ['galleryObjectIds', 'gallery_object_ids', 'subgroupGalleryObjectIds']) ??
-    gallery?.map((item) => item.id) ??
-    [];
-  const galleryObjectUrls = pickStringArray(record, ['galleryObjectUrls', 'gallery_object_urls']);
-  const isActive = pickBoolean(record, ['isActive', 'is_active']);
+  const galleryObjectIds = gallery?.map((item) => item.id) ?? [];
+  const isActive = (record.isActive as boolean) ?? true;
 
   const mappedSubrama: Subrama = {
     id: subgroupId,
@@ -275,26 +192,12 @@ export const mapBackendSubramaToFrontend = (backendSubrama: SubgroupDTO): Subram
     mainImageObjectId,
     branchId: sectionId,
     leader,
-    status: isActive === false ? 'inactive' : 'active',
+    status: isActive ? 'active' : 'inactive',
     createdAt,
     memberCount,
     galleryObjectIds,
     gallery,
   };
-
-  // Maintain legacy aliases until the UI completes the migration.
-  const subramaRecord = mappedSubrama as unknown as AnyRecord;
-  subramaRecord.section_id = mappedSubrama.branchId;
-  subramaRecord.subgroup_id = mappedSubrama.id;
-  subramaRecord.nombre = mappedSubrama.name;
-  subramaRecord.descripcion = mappedSubrama.description;
-  subramaRecord.icono = mappedSubrama.iconUrl;
-  subramaRecord.iconoObjectId = mappedSubrama.iconObjectId;
-  subramaRecord.imagenPrincipal = mappedSubrama.mainImageUrl;
-  subramaRecord.subgroupGalleryObjectIds = mappedSubrama.galleryObjectIds ?? [];
-  subramaRecord.gallery = mappedSubrama.gallery ?? [];
-  subramaRecord.galleryObjectUrls = galleryObjectUrls ?? [];
-  subramaRecord.ramaId = mappedSubrama.branchId;
 
   return mappedSubrama;
 };

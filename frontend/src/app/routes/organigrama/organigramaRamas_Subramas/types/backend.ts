@@ -1,56 +1,30 @@
 
 export interface BackendBranch {
-  sectionId?: string | number;
-  section_id?: string;
-  id?: string;
-  ID?: string;
-  Section_ID?: string;
-  tenantId?: number;
-  groupId?: number;
+  section_id: number;
+  tenant_id: string;
+  group_id: number;
   name: string;
-  sectionName?: string;
   description?: string;
-  sectionDescription?: string;
-  iconObjectUrl?: string | null;
-  photoPrincipalUrl?: string | null;
-  photoPrincipalObjectId?: string;
-  iconObjectId?: string;
-  galleryObjectUrls?: string[];
-  galleryObjectIds?: string[];
-  sectionGalleryObjectIds?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-  minAge?: number;
-  maxAge?: number;
+  icon_object_url?: string | null;
+  photo_principal_url?: string | null;
+  gallery_object_urls?: string[];
+  gallery?: Array<{ id: string; url: string }>;
+  created_at?: string;
+  updated_at?: string;
+  min_age?: number;
+  max_age?: number;
 }
 export interface BackendSubgroup {
-  subgroup_id?: string;
-  subgroupId?: string;
-  id?: string;
-  ID?: string;
-  subgroupIdLegacy?: string;
-  subgroupName?: string;
-  subgroup_name?: string;
-  name?: string;
-  nombre?: string;
-  subgroupDescription?: string;
-  subgroup_description?: string;
-  description?: string;
-  section_id?: string;
-  sectionId?: string;
-  leader?: string;
-  leaderName?: string;
-  isActive?: boolean;
-  status?: string;
-  createdAt?: string;
-  memberCount?: number;
-  members?: number;
-  iconObjectUrl?: string | null;
-  photoPrincipalUrl?: string | null;
-  galleryObjectUrls?: string[];
-  iconObjectId?: string;
-  photoPrincipalObjectId?: string;
-  galleryObjectIds?: string[];
+  subgroup_id: number;
+  tenant_id: string;
+  group_id: number;
+  section_id: number;
+  name: string;
+  description?: string | null;
+  photo_principal_url?: string | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Backend request payloads

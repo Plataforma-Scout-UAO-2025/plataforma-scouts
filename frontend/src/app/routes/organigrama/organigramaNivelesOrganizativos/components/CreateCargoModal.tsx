@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Member } from "@/types/member.type";
+import { deepCamelize } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -27,7 +28,7 @@ export default function CreateCargoModal({ open, onClose, onSave, members = [] }
   const memberOptions = useMemo(() => {
     return (members || [])
       .map((m) => {
-        const rec = m as unknown as Record<string, unknown>;
+        const rec = deepCamelize(m) as unknown as Record<string, unknown>;
         const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
         const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
         const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");

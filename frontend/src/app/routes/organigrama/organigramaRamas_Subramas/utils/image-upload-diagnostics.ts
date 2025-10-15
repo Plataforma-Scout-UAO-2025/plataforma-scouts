@@ -1,9 +1,8 @@
-import api from "@/api/axios";
 import { uploadToStorage } from '@/api/upload';
 import { createPayloadForBackend } from '../utils/galleryPayload';
 import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
 import { getRamaById } from '../services';
-import { sectionPath } from '@/api/organigramaApi';
+import { patchGallery } from '@/api/organigramaApi';
 
 interface UploadDiagnostic {
   fileInfo: {
@@ -29,13 +28,13 @@ interface UploadDiagnostic {
 
 
 export const diagnosticImageUpload = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   file: File
 ): Promise<UploadDiagnostic> => {
   
-  const initialRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+  const initialRama = await getRamaById(tenantId, groupSlug, sectionId);
   const initialGallery = (initialRama as unknown as Record<string, unknown>)?.['gallery'] as unknown[] | undefined;
   const initialUrls = Array.isArray(initialGallery) ? (initialGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean) : [...(initialRama?.sectionGalleryObjectIds || [])];
   const initialImageCount = initialUrls.length;
@@ -47,7 +46,6 @@ export const diagnosticImageUpload = async (
   const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData);
   
 
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
   const addPayload = {
     operations: [{ 
       op: "add", 
@@ -58,9 +56,9 @@ export const diagnosticImageUpload = async (
   const addPayloadToSend = Array.isArray(addPayload.operations)
     ? createPayloadForBackend(addPayload.operations as unknown as (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[])
     : createPayloadForBackend([]);
-  await api.patch(patchEndpoint, addPayloadToSend);
+  await patchGallery(sectionId, addPayloadToSend, tenantId, groupSlug);
 
-  const finalRama = await getRamaById(tenantSlug, groupSlug, sectionId);
+  const finalRama = await getRamaById(tenantId, groupSlug, sectionId);
   const finalGallery = (finalRama as unknown as Record<string, unknown>)?.['gallery'] as unknown[] | undefined;
   const finalUrls = Array.isArray(finalGallery) ? (finalGallery as Array<Record<string, unknown>>).map(g => String(g.url)).filter(Boolean) : [...(finalRama?.sectionGalleryObjectIds || [])];
   const finalImageCount = finalUrls.length;
@@ -151,12 +149,12 @@ export const analyzeImageUrls = (urls: string[]): {
 
 
 export const tryGalleryPayloadVariants = async (
-  tenantSlug: string,
+  tenantId: string,
   groupSlug: string,
   sectionId: string,
   objectId: string
 ) => {
-  const patchEndpoint = `${sectionPath(sectionId, tenantSlug, groupSlug)}/gallery`;
+  // handled by organigramaClient
 
   const variants = [
   { name: 'value (payload)', payload: createPayloadForBackend([{ op: 'add', newValue: objectId } as GalleryAddOperation]) },
@@ -169,8 +167,8 @@ export const tryGalleryPayloadVariants = async (
 
   for (const v of variants) {
     try {
-  const resp = await api.patch(patchEndpoint, v.payload);
-  results[v.name] = { success: true, status: (resp as unknown as { status?: number })?.status, data: (resp as unknown as { data?: unknown })?.data };
+      const resp = await patchGallery(sectionId, v.payload, tenantId, groupSlug);
+      results[v.name] = { success: true, status: undefined, data: resp };
       console.log(` Variant ${v.name} succeeded:`, resp);
     } catch (err) {
       results[v.name] = { success: false, error: err };

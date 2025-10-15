@@ -7,8 +7,7 @@ import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
-import api from "@/api/axios";
-import { sectionPath } from '@/api/organigramaApi';
+import { getSection } from '@/api/organigramaApi';
 import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 import { toast } from "sonner";
@@ -54,9 +53,7 @@ export default function RamaDetail() {
         }
         if (galleryUrls.length === 0) {
           try {
-            const endpoint = sectionPath(id ?? '', tenantId, groupSlug);
-            const response = await api.get<Record<string, unknown>>(endpoint);
-            const backendRec = response.data as Record<string, unknown> | undefined;
+            const backendRec = await getSection(id ?? '', tenantId, groupSlug) as Record<string, unknown>;
             if (backendRec) {
               const fromBackendGallery = (backendRec['gallery'] as unknown[] | undefined) ?? [];
               if (Array.isArray(fromBackendGallery) && fromBackendGallery.length > 0) {

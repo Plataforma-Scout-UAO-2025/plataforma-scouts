@@ -1,4 +1,4 @@
-import api from "@/api/axios";
+import { getAllTenants, getGroupsByTenant } from '@/api/organigramaApi';
 
 interface TenantInfo {
   slug: string;
@@ -15,15 +15,11 @@ interface GroupInfo {
 export const getAvailableTenants = async (): Promise<TenantInfo[]> => {
   try {
     console.log('🔄 [TenantService] Obteniendo tenants disponibles');
-    
-  const response = await api.get<TenantInfo[]>('/tenants');
-  const tenants = response.data;
-    
-  console.log(' [TenantService] Tenants obtenidos:', tenants);
-  return tenants;
+    const tenants = await getAllTenants();
+    console.log(' [TenantService] Tenants obtenidos:', tenants);
+    return tenants as TenantInfo[];
   } catch (error) {
     console.warn(' [TenantService] No se pudieron obtener tenants:', error);
-    
     return [
       {
         slug: 'scouts-main',
@@ -37,18 +33,14 @@ export const getAvailableTenants = async (): Promise<TenantInfo[]> => {
 };
 
 // Función para obtener grupos de un tenant
-export const getAvailableGroups = async (tenantSlug: string): Promise<GroupInfo[]> => {
+export const getAvailableGroups = async (tenantId: string): Promise<GroupInfo[]> => {
   try {
-    console.log('🔄 [TenantService] Obteniendo grupos para tenant:', tenantSlug);
-    
-  const response = await api.get<GroupInfo[]>(`/tenants/${tenantSlug}/groups`);
-  const groups = response.data;
-    
-  console.log('✅ [TenantService] Grupos obtenidos:', groups);
-  return groups;
+    console.log('🔄 [TenantService] Obteniendo grupos para tenant:', tenantId);
+    const groups = await getGroupsByTenant(tenantId);
+    console.log('✅ [TenantService] Grupos obtenidos:', groups);
+    return groups as GroupInfo[];
   } catch (error) {
     console.warn('⚠️ [TenantService] No se pudieron obtener grupos:', error);
-    
     return [
       { slug: 'group-1', name: 'Grupo 1' }
     ];
