@@ -55,12 +55,15 @@ function App() {
             <Route path="grupos" element={<Grupos />} />
 
             {/* Rutas para admin de grupo */}
-            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Financiero /></ProtectedRoute>} />
+            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO", "COMITE_ADMIN"]}><Financiero /></ProtectedRoute>} />
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
-            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO"]}><Dashboard /></ProtectedRoute>} />
-            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE"]}><ScoutEnrollment /></ProtectedRoute>}/>
+            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO", "COMITE_ADMIN"]}><Pagos /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE", "SCOUTER", "COMITE_ADMIN"]}><ScoutEnrollment /></ProtectedRoute>}/>
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO", "COMITE_ADMIN"]}><EstadoCuenta /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO", "SCOUTER", "COMITE_ADMIN"]}><Dashboard /></ProtectedRoute>} />
+            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUTER"]}><Miembros /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE", "SCOUTER", "COMITE_ADMIN"]}><ScoutEnrollment /></ProtectedRoute>}/>
             
 
             {/*
@@ -69,9 +72,9 @@ function App() {
             */}
 
             {/* Rutas para acudiente */}
-            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO", "COMITE_ADMIN"]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
-            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><MedicalRecordsView /></ProtectedRoute>} />
+            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "SCOUTER"]}><MedicalRecordsView /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

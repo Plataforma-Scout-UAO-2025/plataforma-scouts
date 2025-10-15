@@ -4,6 +4,8 @@ import AdminGlobalView from "./components/AdminGlobalView";
 import AdminGrupoView from "./components/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
 import ScoutView from "./components/ScoutView";
+import ComiteAdminView from "./components/ComiteAdminView";
+import ScouterView from "./components/ScouterView";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
 
 
@@ -27,6 +29,12 @@ export default function Dashboard() {
     
     case RawRole.SCOUT:
       return <ScoutView />;
+
+    case RawRole.COMITE_ADMIN:
+      return <ComiteAdminView />;
+
+    case RawRole.SCOUTER:
+      return <ScouterView />;
 
     default:
       // Dashboard genérico para otros roles
