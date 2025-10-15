@@ -47,7 +47,7 @@ export interface SectionWithGallery {
  */
 export interface ImageUploadParams {
   file: File;
-  tenantSlug: string;
+  tenantId: string;
   groupSlug: string;
   sectionId: number;
 }
