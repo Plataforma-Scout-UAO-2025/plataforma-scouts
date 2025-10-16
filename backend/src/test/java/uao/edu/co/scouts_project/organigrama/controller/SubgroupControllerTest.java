@@ -48,7 +48,7 @@ class SubgroupControllerTest {
         return new SubgroupResponseDTO(
             SUBID, "T1", 42L, SECTION,
             "Panteras", "Patrulla Panteras",
-            "https://cdn.url/panteras.png",
+            UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), "https://cdn.url/panteras.png",
             true, Instant.parse("2024-01-01T00:00:00Z"), Instant.parse("2024-01-02T00:00:00Z")
         );
     }
@@ -105,7 +105,7 @@ class SubgroupControllerTest {
         SubgroupResponseDTO updated = new SubgroupResponseDTO(
             SUBID, "T1", 42L, SECTION,
             "Panteras (upd)", "Actualizada",
-            "https://cdn.url/panteras.png",
+            UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), "https://cdn.url/panteras.png",
             true, Instant.parse("2024-02-01T00:00:00Z"), Instant.parse("2024-02-02T00:00:00Z")
         );
 

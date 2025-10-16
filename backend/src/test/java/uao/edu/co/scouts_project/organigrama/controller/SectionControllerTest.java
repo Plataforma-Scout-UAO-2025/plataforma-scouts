@@ -65,8 +65,8 @@ class SectionControllerTest {
         );
         return new SectionResponseDTO(
             id, TENANT_ID, 11L, "Manada", "Descripción",
-            "https://cdn.example/icon.png",
-            "https://cdn.example/photo-principal.jpg",
+            UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"), "https://cdn.example/icon.png",
+            UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd"), "https://cdn.example/photo-principal.jpg",
             List.of("https://cdn.example/legacy-1.jpg","https://cdn.example/legacy-2.jpg"),
             gallery,
             Instant.parse("2024-01-01T00:00:00Z"),

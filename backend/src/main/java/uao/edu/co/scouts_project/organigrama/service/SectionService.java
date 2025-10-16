@@ -398,7 +398,9 @@ public class SectionService {
                 section.getGroupId(),
                 section.getName(),
                 section.getDescription(),
+                section.getIconObjectId(),
                 iconUrl,
+                section.getPhotoPrincipal(),
                 photoPrincipalUrl,
                 galleryUrls, // legacy
                 gallery,     // nuevo
