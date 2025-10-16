@@ -51,7 +51,7 @@ export default function MedicalRecordsView() {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await api.get<ApiResponse>('http://localhost:8080/api/v1/medical_record/list_by_tenant', {
+            const response = await api.get<ApiResponse>('/medical_record/list_by_tenant', {
                 headers: {
                     'X-Tenant-Id': tenantId
                 },
