@@ -1,5 +1,4 @@
 import {
-  Button,
   Table,
   TableBody,
   TableCell,
@@ -7,83 +6,85 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/index";
-import { Pencil, Trash, User, Medal } from "lucide-react";
 import type { Member } from "@/types/member.type";
-import { formatDate } from "@/lib/utils";
 
 interface MembersTableProps {
   filteredMembers: Member[];
 }
 
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
-  const statusLabels: Record<string, string> = {
-    PENDING: "Pendiente",
-    APPROVED: "Aceptado",
-    REJECTED: "Rechazado",
+  // Función para formatear la fecha
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return "N/A";
+
+    try {
+      const date = new Date(dateString);
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const year = date.getFullYear();
+
+      return `${day}/${month}/${year}`;
+    } catch {
+      return "N/A";
+    }
   };
+
   return (
     <div>
-      <Table className="text-sm">
+      <Table className="text-sm px-0 table-fixed">
         <TableHeader className="text-primary">
           <TableRow>
-            <TableHead className="pl-4 font-bold text-primary">Id</TableHead>
-            <TableHead className="font-bold text-primary">Nombres</TableHead>
-            <TableHead className="font-bold text-primary">Apellidos</TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="pl-4 font-bold text-primary w-16">
+              Id
+            </TableHead>
+            <TableHead className="font-bold text-primary w-24">
+              Nombres
+            </TableHead>
+            <TableHead className="font-bold text-primary w-24">
+              Apellidos
+            </TableHead>
+            <TableHead className="font-bold text-primary w-36">
               Identificación
             </TableHead>
-            <TableHead className="font-bold text-primary">Rama</TableHead>
-            <TableHead className="font-bold text-primary">Creado</TableHead>
-            <TableHead className="font-bold text-primary">Estado</TableHead>
-            <TableHead className="font-bold text-primary">Dirección</TableHead>
-            <TableHead className="text-right"></TableHead>
+            <TableHead className="font-bold text-primary w-24">Rama</TableHead>
+            <TableHead className="font-bold text-primary w-24">
+              Creado
+            </TableHead>
+            <TableHead className="font-bold text-primary w-24">
+              Estado
+            </TableHead>
+            <TableHead className="font-bold text-primary w-32">
+              Dirección
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredMembers.length > 0 ? (
-            filteredMembers.map((member) => (
-              <TableRow key={member.member_id}>
-                <TableCell className="pl-4 font-medium">
-                  {member.member_id}
+            filteredMembers.map((member, index) => (
+              <TableRow key={member.member_id || index}>
+                <TableCell className="pl-4 font-medium w-16 truncate">
+                  {member.member_id || "N/A"}
                 </TableCell>
-                <TableCell>{member.first_name}</TableCell>
-                <TableCell>{member.last_name}</TableCell>
-                <TableCell>{member.identification}</TableCell>
-                <TableCell>
-                  {member.subgroup_name
-                    ? member.subgroup_name
-                    : member.subgroup_id
-                    ? `Subgrupo ${member.subgroup_id}`
-                    : "Sin rama"}
+                <TableCell className="w-32 truncate">
+                  {member.first_name || "N/A"}
                 </TableCell>
-                <TableCell>{formatDate(member.created_at)}</TableCell>
-                <TableCell>
-                  <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
-                    {statusLabels[member.status ?? "Aceptado"]}
-                  </span>
+                <TableCell className="w-32 truncate">
+                  {member.last_name || "N/A"}
                 </TableCell>
-                <TableCell>{member.address}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="iconbutton" size="icon">
-                    <User />
-                  </Button>
-                  <Button variant="iconbutton" size="icon">
-                    <Medal />
-                  </Button>
-                  <Button
-                    variant="iconbutton"
-                    size="icon"
-                    className="text-secondary hover:text-blue-800"
-                  >
-                    <Pencil />
-                  </Button>
-                  <Button
-                    variant="iconbutton"
-                    size="icon"
-                    className="text-destructive hover:text-destructive-hover"
-                  >
-                    <Trash />
-                  </Button>
+                <TableCell className="w-32 truncate">
+                  {member.identification || "N/A"}
+                </TableCell>
+                <TableCell className="w-28 truncate">
+                  {member.subgroup?.section?.name || "Sin rama"}
+                </TableCell>
+                <TableCell className="w-28 truncate">
+                  {formatDate(member.created_at)}
+                </TableCell>
+                <TableCell className="w-24 truncate">
+                  {member.status || "N/A"}
+                </TableCell>
+                <TableCell className="w-40 truncate">
+                  {member.address || "N/A"}
                 </TableCell>
               </TableRow>
             ))

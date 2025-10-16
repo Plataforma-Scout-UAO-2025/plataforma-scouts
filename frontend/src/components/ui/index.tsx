@@ -78,8 +78,9 @@ export {
   TableHeader,
   TableRow,
 } from "./table";
-export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
+
 export { Textarea } from "./textarea";
+export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
 export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator, SelectScrollUpButton, SelectScrollDownButton } from "./select"
 export {
     Form,
