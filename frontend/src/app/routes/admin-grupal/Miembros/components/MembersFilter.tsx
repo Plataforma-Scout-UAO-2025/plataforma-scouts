@@ -7,28 +7,31 @@ import {
   Button,
   Input,
 } from "@/components/ui/index";
-import { useMembersManagement } from "@/hooks/useMembersManagement";
 import { ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
+import type { Member } from "@/types/member.type";
 
 interface MembersFilterProps {
   searchFilter: string;
   setSearchFilter: (value: string) => void;
-  statusFilter: string;
-  setStatusFilter: (value: string) => void;
+  isActiveFilter: string;
+  setIsActiveFilter: (value: string) => void;
   branchFilter: string;
   setBranchFilter: (value: string) => void;
+  filteredMembers: Member[];
+  extractSectionsFromMember: (member: unknown) => string[];
 }
 
 const MembersFilter = ({
   searchFilter,
   setSearchFilter,
-  statusFilter,
-  setStatusFilter,
+  isActiveFilter,
+  setIsActiveFilter,
   branchFilter,
   setBranchFilter,
+  filteredMembers,
+  extractSectionsFromMember,
 }: MembersFilterProps) => {
   const [isActive, setIsActive] = useState(false);
-  const { filteredMembers, extractSectionsFromMember } = useMembersManagement();
   const branches = Array.from(
     new Set(filteredMembers.flatMap((m) => extractSectionsFromMember(m)))
   );
@@ -45,13 +48,13 @@ const MembersFilter = ({
         />
         <DropdownMenu onOpenChange={setIsActive}>
           <DropdownMenuTrigger className="w-3/5 py-1 px-2 text-sm border border-primary rounded-md justify-between flex items-center">
-            {statusFilter || "Seleccionar Estado..."}{" "}
+            {isActiveFilter || "Seleccionar Estado..."}{" "}
             {isActive ? <ChevronUp /> : <ChevronDown />}
           </DropdownMenuTrigger>
           <DropdownMenuContent className="py-1 px-2 text-sm border border-primary bg-background rounded-md">
             <DropdownMenuItem
               className="cursor-pointer"
-              onSelect={() => setStatusFilter("")}
+              onSelect={() => setIsActiveFilter("")}
             >
               Todos los estados
             </DropdownMenuItem>
@@ -59,7 +62,7 @@ const MembersFilter = ({
               <DropdownMenuItem
                 key={status}
                 className="cursor-pointer"
-                onSelect={() => setStatusFilter(status)}
+                onSelect={() => setIsActiveFilter(status)}
               >
                 {status}
               </DropdownMenuItem>
@@ -96,7 +99,7 @@ const MembersFilter = ({
           className="flex h-auto px-3"
           onClick={() => {
             setSearchFilter("");
-            setStatusFilter("");
+            setIsActiveFilter("");
             setBranchFilter("");
           }}
         >

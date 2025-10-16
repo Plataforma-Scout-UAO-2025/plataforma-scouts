@@ -6,22 +6,28 @@ import { clearNotification } from "@/store/members/membersSlice";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useTenant } from "@/hooks/useTenant";
 
+const toStr = (v: unknown) => (v === undefined || v === null ? "" : String(v));
+const parseIsActive = (raw: unknown): boolean => {
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "number") return raw === 1;
+  if (typeof raw === "string") {
+    const v = raw.toLowerCase().trim();
+    return v === "activo" || v === "true" || v === "1";
+  }
+  return false;
+};
+
 interface UseMembersManagementProps {
   itemsPerPage?: number;
 }
 
-const mappingStatus = (isActive: boolean | undefined): string => {
-  if (isActive === undefined || isActive === null) return "Inactivo";
-  return isActive ? "Activo" : "Inactivo";
-};
-
 export const useMembersManagement = ({
   itemsPerPage = 10,
 }: UseMembersManagementProps = {}) => {
-  const [searchFilter, setSearchFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [branchFilter, setBranchFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchFilter, setSearchFilter] = useState<string>("");
+  const [isActiveFilter, setIsActiveFilter] = useState<string>("");
+  const [branchFilter, setBranchFilter] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const dispatch = useAppDispatch();
   const { members, error, message, loading } = useMember();
@@ -36,93 +42,79 @@ export const useMembersManagement = ({
     dispatch(fetchMembersWithBranchAction());
   }, [dispatch, tenantId]);
 
+  // helpers moved to module-scope to avoid recreating on every render
   const filteredMembers = useMemo(() => {
-    if (!members || !members.length) return [];
+    if (!members || members.length === 0) return [];
 
-    const filtered = members.filter((member: Member) => {
-      const memberRec = member as unknown as Record<string, unknown>;
-      const memberTenantId = (memberRec["tenant_id"] ??
-        memberRec["tenantId"]) as string | undefined;
-      const matchesTenant = memberTenantId === tenantId;
-      const firstName = (memberRec["first_name"] ??
-        memberRec["firstName"] ??
-        "") as string;
-      const lastName = (memberRec["last_name"] ??
-        memberRec["lastName"] ??
-        "") as string;
-      const identification = (memberRec["identification"] ?? "") as string;
+    const searchLower = searchFilter.toLowerCase();
+    const activeFilterLower = isActiveFilter.toLowerCase();
+    const branchLower = branchFilter.toLowerCase();
 
-      const matchesSearch =
-        searchFilter === "" ||
-        firstName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        lastName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        identification?.toLowerCase().includes(searchFilter.toLowerCase());
+    return members
+      .filter((member: Member) => {
+        const m = member as unknown as Record<string, unknown>;
+        const status = toStr(
+          member.status ?? m.member_status ?? m.approval_status
+        ).toLowerCase();
+        if (status !== "approved") return false;
 
-      const isActiveField = (memberRec["is_active"] ??
-        memberRec["isActive"]) as boolean | undefined;
-      const matchesStatus =
-        statusFilter === "" ||
-        mappingStatus(isActiveField)
-          .toLowerCase()
-          .includes(statusFilter.toLowerCase());
+        if (toStr(m.tenant_id ?? m.tenantId) !== tenantId) return false;
 
-      const matchesBranch =
-        branchFilter === "" ||
-        (Array.isArray(member?.subgroup?.section)
-          ? member?.subgroup?.section?.some((section) =>
-              section?.name?.toLowerCase().includes(branchFilter.toLowerCase())
-            )
-          : member?.subgroup?.section?.name
-              ?.toLowerCase()
-              .includes(branchFilter.toLowerCase()));
+        const fullName = `${toStr(m.first_name)} ${toStr(
+          m.last_name
+        )}`.toLowerCase();
+        const identification = toStr(m.identification).toLowerCase();
+        const matchesSearch =
+          !searchLower ||
+          fullName.includes(searchLower) ||
+          identification.includes(searchLower);
 
-      return matchesTenant && matchesSearch && matchesStatus && matchesBranch;
-    });
+        const rawIsActive = m.is_active ?? m.isActive;
+        const isActive = parseIsActive(rawIsActive);
+        const matchesStatus =
+          !activeFilterLower ||
+          (isActive ? "activo" : "inactivo") === activeFilterLower;
 
-    // Mapear a formato de tabla, traducir estados y normalizar nombres de campo
-    return filtered.map((member: Member): Member => {
-      const normalized: Record<string, unknown> = { ...member } as Record<
-        string,
-        unknown
-      >;
+        const matchesBranch =
+          !branchLower ||
+          (() => {
+            const subgroupField = (member as unknown as Record<string, unknown>)
+              .subgroup;
+            const section =
+              subgroupField && typeof subgroupField === "object"
+                ? (subgroupField as Record<string, unknown>).section
+                : undefined;
+            if (!section) return false;
+            if (Array.isArray(section)) {
+              return section.some((s) =>
+                toStr((s as Record<string, unknown>)?.name)
+                  .toLowerCase()
+                  .includes(branchLower)
+              );
+            }
+            return toStr((section as Record<string, unknown>)?.name)
+              .toLowerCase()
+              .includes(branchLower);
+          })();
 
-      const memberRec = member as unknown as Record<string, unknown>;
-      const memberId = (memberRec["member_id"] ?? memberRec["memberId"]) as
-        | number
-        | undefined;
-      const firstName = (memberRec["first_name"] ??
-        memberRec["firstName"] ??
-        "") as string;
-      const lastName = (memberRec["last_name"] ??
-        memberRec["lastName"] ??
-        "") as string;
-      const createdAt = (memberRec["created_at"] ??
-        memberRec["createdAt"] ??
-        null) as string | null;
-      const address = (memberRec["address"] ?? "") as string;
-      const isActive = (memberRec["is_active"] ?? memberRec["isActive"]) as
-        | boolean
-        | undefined;
-
-      normalized["member_id"] = memberId;
-      normalized["first_name"] = firstName;
-      normalized["last_name"] = lastName;
-      normalized["created_at"] = createdAt;
-      normalized["address"] = address;
-      normalized["status"] = mappingStatus(isActive);
-
-      return normalized as Member;
-    });
-  }, [members, searchFilter, statusFilter, branchFilter, tenantId]);
+        return matchesSearch && matchesStatus && matchesBranch;
+      })
+      .map(
+        (m) =>
+          ({
+            ...m,
+            is_active: parseIsActive(
+              (m as unknown as Record<string, unknown>).is_active ??
+                (m as unknown as Record<string, unknown>).isActive
+            ),
+          } as Member)
+      );
+  }, [members, searchFilter, isActiveFilter, branchFilter, tenantId]);
 
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedMembers = filteredMembers.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchFilter, statusFilter, branchFilter]);
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -131,6 +123,34 @@ export const useMembersManagement = ({
     setCurrentPage((prev) =>
       totalPages < 1 ? 1 : Math.min(prev + 1, totalPages)
     );
+  };
+
+  const extractSectionsFromMember = (member: Member): string[] => {
+    const rec = member as unknown as Record<string, unknown>;
+    const results = new Set<string>();
+
+    const pushIfName = (val: unknown) => {
+      if (val === null || val === undefined) return;
+      if (Array.isArray(val)) return val.forEach((v) => pushIfName(v));
+      if (typeof val === "string") return results.add(val.trim());
+      if (typeof val === "object") {
+        const obj = val as Record<string, unknown>;
+        const name =
+          obj.name ?? obj.section ?? obj.section_name ?? obj.sectionName;
+        if (typeof name === "string") return results.add(name.trim());
+      }
+    };
+
+    pushIfName(rec["subgroup"]);
+    pushIfName(rec["branch"]);
+    pushIfName(rec["sectionName"]);
+    pushIfName(rec["section_name"]);
+    pushIfName(rec["section"]);
+
+    const sg = (member as unknown as Record<string, unknown>).subgroup;
+    if (sg) pushIfName((sg as Record<string, unknown>).section ?? sg);
+
+    return Array.from(results).filter(Boolean);
   };
 
   useEffect(() => {
@@ -142,104 +162,27 @@ export const useMembersManagement = ({
     }
   }, [message, error, dispatch]);
 
-  const extractSectionsFromMember = (member: Member): string[] => {
-    const names: string[] = [];
-    try {
-      const rec = member as unknown as Record<string, unknown>;
-      // subgroup.section (obj or array)
-      const subgroup = rec["subgroup"] as unknown;
-      if (subgroup) {
-        if (Array.isArray(subgroup)) {
-          for (const sg of subgroup) {
-            const sec = (sg as Record<string, unknown>)?.section as unknown;
-            if (Array.isArray(sec)) {
-              for (const s of sec)
-                if (s && (s as Record<string, unknown>).name)
-                  names.push(String((s as Record<string, unknown>).name));
-            } else if (sec && (sec as Record<string, unknown>).name)
-              names.push(String((sec as Record<string, unknown>).name));
-          }
-        } else {
-          const sec = (subgroup as Record<string, unknown>).section as unknown;
-          if (Array.isArray(sec)) {
-            for (const s of sec)
-              if (s && (s as Record<string, unknown>).name)
-                names.push(String((s as Record<string, unknown>).name));
-          } else if (sec && (sec as Record<string, unknown>).name)
-            names.push(String((sec as Record<string, unknown>).name));
-        }
-      }
-
-      // legacy branch[]
-      const branchArr = rec["branch"] as unknown;
-      if (Array.isArray(branchArr)) {
-        for (const b of branchArr)
-          if (b && (b as Record<string, unknown>).name)
-            names.push(String((b as Record<string, unknown>).name));
-      }
-
-      // direct fields
-      if (rec["sectionName"] && typeof rec["sectionName"] === "string")
-        names.push(String(rec["sectionName"]));
-      if (rec["section_name"] && typeof rec["section_name"] === "string")
-        names.push(String(rec["section_name"]));
-      if (
-        rec["section"] &&
-        typeof rec["section"] === "object" &&
-        (rec["section"] as Record<string, unknown>).name
-      )
-        names.push(String((rec["section"] as Record<string, unknown>).name));
-
-      // fallback for older shape where subgroup?.section?.name exists directly on member
-      const mrec = member as unknown as Record<string, unknown>;
-      if (
-        mrec.subgroup &&
-        (mrec.subgroup as Record<string, unknown>)?.section &&
-        (
-          (mrec.subgroup as Record<string, unknown>).section as Record<
-            string,
-            unknown
-          >
-        ).name
-      ) {
-        names.push(
-          String(
-            (
-              (mrec.subgroup as Record<string, unknown>).section as Record<
-                string,
-                unknown
-              >
-            ).name
-          )
-        );
-      }
-    } catch (err) {
-      // log to help debugging but don't break UI
-      console.debug("extractSectionsFromMember error:", err);
-    }
-    return names.map((s) => s.trim()).filter(Boolean);
-  };
-
   return {
-    // Estados de filtros
+    // Filtros
     searchFilter,
     setSearchFilter,
-    statusFilter,
-    setStatusFilter,
+    isActiveFilter,
+    setIsActiveFilter,
     branchFilter,
     setBranchFilter,
-    extractSectionsFromMember,
 
-    // Datos de miembros
+    // Datos
     filteredMembers,
     paginatedMembers,
+    extractSectionsFromMember,
     totalMembers: members
       ? members.filter((m) => {
-          const rec = m as unknown as Record<string, unknown>;
-          const t = (rec["tenant_id"] ?? rec["tenantId"]) as string | undefined;
+          const rec = m as Record<string, string>;
+          const t = String(rec.tenant_id ?? rec.tenantId);
           return t === tenantId;
         }).length
       : 0,
+
     // Paginación
     currentPage,
     totalPages,
@@ -248,7 +191,7 @@ export const useMembersManagement = ({
     handlePreviousPage,
     handleNextPage,
 
-    // Estados de la store
+    // Estados del store
     error,
     loading,
     message,
