@@ -4,36 +4,11 @@ import { Plus } from 'lucide-react';
 import type { MedicalRecord } from '../../../../types/medical-record.type';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
-import type { MedicalFormData } from '../../../../types/medical-form.type';
+import type { MedicalDB, MedicalFormData } from '@/types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
-import api from '@/api/axios';
 import type { Member } from '@/types/member.type';
-
-// Interface para la respuesta de la API
-interface ApiMedicalRecord {
-    id: string;
-    member_id: string;
-    blood_type: string;
-    eps: string;
-    allergies: string;
-    chronic_diseases: string;
-    physical_restrictions: string;
-    surgical_history: string;
-    vaccines_detail: Array<{
-        name: string;
-        applied_at: string;
-    }>;
-    medications_detail: Array<{
-        name: string;
-        frequency: string;
-    }>;
-    created_at: string;
-    updated_at: string;
-}
-
-interface ApiResponse {
-    content: ApiMedicalRecord[];
-}
+import { getMedicalRecordsByTenantApi } from '@/api/medicalApi';
+import { getMembers } from '@/api/membersApi';
 
 export default function MedicalRecordsView() {
     const [records, setRecords] = useState<MedicalRecord[]>([]);
@@ -51,32 +26,24 @@ export default function MedicalRecordsView() {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await api.get<ApiResponse>('/medical_record/list_by_tenant', {
-                headers: {
-                    'X-Tenant-Id': tenantId
-                },
-                params: {
-                    page: 0,
-                    size: 50
-                }
-            });
+            const response = await getMedicalRecordsByTenantApi(tenantId)
 
             // PRIMERO: Cargar los miembros para tener los nombres
-            const membersResponse = await api.get('/members/list_members');
-            const membersMap = new Map();
+            const membersResponse = await getMembers();
+            const membersMap = new Map<string, string>();
 
-            membersResponse.data.forEach((member: Member) => {
-                if (member.status === 'APPROVED' && member.is_active !== false) {
-                    membersMap.set(member.member_id, `${member.first_name} ${member.last_name}`);
+            membersResponse.forEach((member: Member) => {
+                if (member.status === 'APPROVED' && member.is_active) {
+                    membersMap.set(member.member_id?.toString() || "", `${member.first_name} ${member.last_name}`);
                 }
             });
 
-            const adaptedRecords: MedicalRecord[] = response.data.content.map((record: ApiMedicalRecord) => {
-                const memberId = parseInt(record.member_id);
-                const memberName = membersMap.get(memberId) || `Miembro ${memberId}`;
+            const adaptedRecords: MedicalRecord[] = response.content.map((record: MedicalDB) => {
+                const memberId = record.member_id;
+                const memberName = membersMap.get(memberId.toString()) || `Miembro ${memberId}`;
 
                 return {
-                    id: parseInt(record.id),
+                    id: record.id,
                     member_id: memberId,
                     member_name: memberName, // ¡AQUÍ ESTÁ EL NOMBRE REAL!
                     blood_type: record.blood_type,
@@ -85,14 +52,15 @@ export default function MedicalRecordsView() {
                     chronic_diseases: record.chronic_diseases,
                     physical_restrictions: record.physical_restrictions,
                     surgical_history: record.surgical_history,
+                    active: record.active,
                     vaccines_detail: record.vaccines_detail.map((vaccine) => ({
                         name: vaccine.name,
-                        date: vaccine.applied_at
+                        applied_at: vaccine.applied_at
                     })),
                     medications_detail: record.medications_detail.map((med) => ({
                         name: med.name,
-                        dose: '',
-                        frecuency: med.frequency
+                        dose: med.dose,
+                        frequency: med.frequency
                     })),
                     created_at: record.created_at,
                     updated_at: record.updated_at
@@ -153,6 +121,7 @@ export default function MedicalRecordsView() {
                     id: Date.now(),
                     member_id: 0,
                     member_name: 'Nuevo Integrante',
+                    active: true,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                 };
