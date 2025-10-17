@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -17,9 +17,11 @@ interface Props {
   onClose: () => void;
   onSave: (nombre: string, titular: string, descripcion?: string) => void;
   members?: Member[];
+  /** Valor inicial opcional para el campo nombre */
+  initialNombre?: string;
 }
 
-export default function CreateCargoModal({ open, onClose, onSave, members = [] }: Props) {
+export default function CreateCargoModal({ open, onClose, onSave, members = [], initialNombre }: Props) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -47,6 +49,30 @@ export default function CreateCargoModal({ open, onClose, onSave, members = [] }
     setDescripcion("");
     setSelectedMemberId(null);
   };
+
+  // Precargar nombre cuando se abre el modal si se proporcionó initialNombre
+  // No sobreescribimos si el usuario ya ha tipeado un valor
+  useEffect(() => {
+    if (open) {
+      if (initialNombre && !nombre) {
+        setNombre(initialNombre);
+      }
+    } else {
+      // Limpiar campos al cerrar
+      setNombre("");
+      setDescripcion("");
+      setSelectedMemberId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialNombre]);
+
+  // Si se pasa initialNombre al abrir el modal, precargar el campo
+  // Nota: no sobrescribimos mientras el modal esté abierto para permitir edición por el usuario
+  // Se reestablece cuando se cierra.
+  if (open && nombre === "" && (arguments[0] as any)?.initialNombre) {
+    // noop - placeholder to satisfy TS; we'll use effect below
+  }
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

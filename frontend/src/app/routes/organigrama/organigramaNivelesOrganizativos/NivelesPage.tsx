@@ -7,6 +7,10 @@ import LevelAccordion from "./components/LevelAccordion";
 import { useNiveles } from "./hooks/useNiveles";
 import { useNavigate } from "react-router-dom";
 import { getMembers } from "@/api/membersApi";
+// Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
+import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
+import useOrganigramaData from "../organigramaRamas_Subramas/hooks/useOrganigramaData";
+import RamaList from "../organigramaRamas_Subramas/components/RamaList";
 
 // 🔹 Modales importados
 import CreateNivelModal from "./components/CreateNivelModal";
@@ -31,6 +35,7 @@ export default function NivelesPage() {
 
   const [openCreateCargo, setOpenCreateCargo] = useState(false);
   const [nivelActual, setNivelActual] = useState<Nivel | null>(null);
+  const [initialCargoNombre, setInitialCargoNombre] = useState<string | undefined>(undefined);
 
   const [openEditCargo, setOpenEditCargo] = useState(false);
   const [cargoToEdit, setCargoToEdit] = useState<Cargo | null>(null);
@@ -46,6 +51,16 @@ export default function NivelesPage() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const navigate = useNavigate();
+
+  // Hooks del submódulo de ramas: deben invocarse en el mismo orden siempre
+  const { tenantId, groupSlug } = useTenantParams();
+  const { ramas } = useOrganigramaData(tenantId, groupSlug);
+
+  // Filtrar las ramas que sean comités (case-insensitive)
+  const comiteRamas = (ramas ?? []).filter((r) => {
+    const name = String((r as any).name ?? (r as any).nombre ?? '').toLowerCase();
+    return name.includes('comit');
+  });
 
   // ===== MIEMBROS DESDE BACKEND =====
   const [members, setMembers] = useState<Member[]>([]);
@@ -86,6 +101,30 @@ export default function NivelesPage() {
   };
 
   // ===== HANDLERS DE CARGOS =====
+
+  // Abrir modal de crear cargo desde una rama (comité). Intentamos mapear la rama al nivel
+  const handleCreateCargoFromRama = (ramaIdOrName: string) => {
+    // Buscar nivel que coincida por palabra clave en el nombre
+    const key = String(ramaIdOrName ?? '').toLowerCase();
+    const encontrado = data.niveles.find((n) => {
+      const nombre = (n.nombre || '').toLowerCase();
+      return key && nombre.includes(key.split(' ')[0]);
+    });
+
+    if (encontrado) {
+      setNivelActual(encontrado);
+      setInitialCargoNombre('');
+      setOpenCreateCargo(true);
+      console.info('[NivelesPage] Abriendo Crear Cargo para nivel encontrado', encontrado.nombre);
+      return;
+    }
+
+    // Si no encontramos por id/name, sólo abrimos el modal vacío
+    setNivelActual(null);
+    setInitialCargoNombre('');
+    setOpenCreateCargo(true);
+    console.warn('[NivelesPage] No se encontró un nivel mapeado para la rama:', ramaIdOrName);
+  };
 
   const handleCreateCargo = (
     nombre: string,
@@ -208,6 +247,20 @@ export default function NivelesPage() {
         </Card>
       ) : (
         <div className="space-y-5">
+          {/* ===== Sección: Acordeones de COMITÉ (ramas) ===== */}
+          {comiteRamas && comiteRamas.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold text-primary mb-3">Comités</h2>
+              <RamaList
+                ramas={comiteRamas}
+                // Pasamos handlers: onCreateSubrama abre el modal Crear Cargo en este módulo
+                onEditRama={() => { console.info('editar rama (desde niveles)'); }}
+                onCreateSubrama={(ramaId) => handleCreateCargoFromRama(ramaId)}
+                onEditSubrama={() => { console.info('editar subrama (desde niveles)'); }}
+                onDeleteSubrama={() => { console.info('eliminar subrama (desde niveles)'); }}
+              />
+            </div>
+          )}
           {/* Estado de carga/errores de miembros */}
           {membersLoading && (
             <Card className="p-3 text-sm text-accent-foreground bg-card border border-border">
@@ -279,6 +332,7 @@ export default function NivelesPage() {
         open={openCreateCargo}
         onClose={() => setOpenCreateCargo(false)}
         onSave={handleCreateCargo}
+        initialNombre={initialCargoNombre}
         members={members}
       />
 
