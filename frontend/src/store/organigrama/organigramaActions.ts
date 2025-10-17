@@ -3,6 +3,7 @@ import { AxiosError } from "axios";
 import { getSections, getSectionWithSubgroups, getMembersBySubgroup } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
 import { setPhotoPrincipal, deletePhotoPrincipal } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/photoPrincipal.service';
+import { addGalleryImage, replaceGalleryImage } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/gallery.service';
 
 // Fetch sections for tenant/group
 export const fetchSectionsAction = createAsyncThunk("organigrama/fetchSections", async ({ tenantId, groupSlug }: { tenantId: string; groupSlug: string }, { rejectWithValue }) => {
@@ -85,6 +86,30 @@ export const deletePhotoPrincipalAction = createAsyncThunk("organigrama/deletePh
     const axiosError = error as AxiosError;
     const errorData = axiosError.response?.data as { error?: string };
     const message = errorData?.error || "Error al eliminar foto principal";
+    return rejectWithValue(message);
+  }
+});
+
+export const addGalleryImageAction = createAsyncThunk("organigrama/addGalleryImage", async ({ tenantId, groupSlug, sectionId, file }: { tenantId: string; groupSlug: string; sectionId: string; file: File }, { rejectWithValue }) => {
+  try {
+    const url = await addGalleryImage(tenantId, groupSlug, sectionId, file);
+    return { sectionId, url };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al agregar imagen a galería";
+    return rejectWithValue(message);
+  }
+});
+
+export const replaceGalleryImageAction = createAsyncThunk("organigrama/replaceGalleryImage", async ({ tenantId, groupSlug, sectionId, targetImageUuid, newFile }: { tenantId: string; groupSlug: string; sectionId: string; targetImageUuid: string; newFile: File }, { rejectWithValue }) => {
+  try {
+    const url = await replaceGalleryImage(tenantId, groupSlug, sectionId, targetImageUuid, newFile);
+    return { sectionId, url };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al reemplazar imagen en galería";
     return rejectWithValue(message);
   }
 });

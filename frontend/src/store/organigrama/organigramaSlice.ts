@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchMembersBySubgroupAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction } from "./organigramaActions";
+import { fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchMembersBySubgroupAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { Member } from "@/types/member.type";
@@ -121,6 +121,31 @@ const organigramaSlice = createSlice({
       if (state.currentSection?.section.sectionId === sectionId) {
         state.currentSection.section.photoPrincipal = null;
       }
+    });
+
+    // Gallery actions - no state updates needed as gallery is not in Section type
+    builder.addCase(addGalleryImageAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(addGalleryImageAction.fulfilled, (state) => {
+      state.loading = false;
+    });
+    builder.addCase(addGalleryImageAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    builder.addCase(replaceGalleryImageAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(replaceGalleryImageAction.fulfilled, (state) => {
+      state.loading = false;
+    });
+    builder.addCase(replaceGalleryImageAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
     });
   },
 });

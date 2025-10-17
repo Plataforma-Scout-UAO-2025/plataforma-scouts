@@ -89,7 +89,7 @@ export default function RamaDetail() {
   }, [id, tenantId, groupSlug]);
 
   // Hook de acciones (incluye acciones de galería)
-  const { addGalleryImage, replaceGalleryImage, removeGalleryImage, isLoadingGallery } = useOrganigramaActions({
+  const { addGalleryImage, replaceGalleryImage, isLoadingGallery } = useOrganigramaActions({
     tenantId,
     groupSlug,
     loadRamas: fetchRama,
@@ -303,10 +303,8 @@ export default function RamaDetail() {
             toast.success('Imagen eliminada físicamente del servidor.');
           }
         } catch (deleteErr) {
-          console.warn(' [RamaDetail] DELETE físico falló, intentando fallback con PATCH remove:', deleteErr);
-          // Fallback: usar PATCH remove si DELETE falla
-          await removeGalleryImage(sectionId, finalTarget, false);
-          toast.warning('Imagen desvinculada de la galería. La eliminación física pudo fallar.');
+          console.error(' [RamaDetail] Error eliminando imagen físicamente:', deleteErr);
+          toast.error('Error eliminando la imagen. Inténtalo de nuevo.');
         }
       }
 

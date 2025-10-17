@@ -1,7 +1,7 @@
 import { postFormData, uploadToStorage } from '@/api/upload';
 import { getSection, patchGallery, getSubgroup, patchSubgroupGallery, setIcon, setPhotoPrincipal } from '@/api/organigramaApi';
-import { createAddPayload, createReplacePayload, createAddsPayloadFromArray, createRemovePayload, createPayloadForBackend } from '../utils/galleryPayload';
-import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
+import { createReplacePayload, createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
+import type { GalleryAddOperation, GalleryReplaceOperation } from '../types/operations';
 type MaybeAxiosError = { response?: { data?: unknown } };
 
 type FileProgressHandler = (fileName: string, percent: number) => void;
@@ -10,49 +10,6 @@ type OverallProgressHandler = (percent: number) => void;
 const getRamaByIdDirect = async (tenantId: string, groupSlug: string, id: string) => {
   return await getSection(id, tenantId, groupSlug);
 };
-
-export const diagnoseBatchImageUpload = async (
-  tenantId: string,
-  groupSlug: string,
-  sectionId: string,
-  file: File
-): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
-
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData);
-
-  await patchGallery(sectionId, createPayloadForBackend(createAddPayload(uploadResponse.objectId).operations), tenantId, groupSlug);
-
-  const updatedRama = await getRamaByIdDirect(tenantId, groupSlug, sectionId);
-    const updatedRec = updatedRama as unknown as Record<string, unknown> | undefined;
-    const gallery =
-      (updatedRec?.["galleryObjectIds"] as string[] | undefined) ??
-      (updatedRec?.["sectionGalleryObjectIds"] as string[] | undefined) ??
-      [];
-    const resultCount = gallery?.length || 0;
-
-    const result = {
-      uploaded: 1,
-      returned: resultCount,
-      details: {
-        originalObjectId: uploadResponse.objectId,
-        returnedUrls:
-          (updatedRec?.["sectionGalleryObjectIds"] as string[] | undefined) ?? [],
-        isProbablyMultiVariant: resultCount > 1,
-      },
-    };
-
-    return result;
-  } catch (error) {
-    console.error(" [DIAGNÓSTICO] Error:", error);
-    throw error;
-  }
-};
-
-(globalThis as unknown as Record<string, unknown>).diagnosticImageUpload = diagnoseBatchImageUpload;
 
 export const uploadSectionIcon = async (
   tenantId: string,
@@ -76,7 +33,7 @@ export const uploadSectionIcon = async (
   // handled by organigramaClient wrappers below
 
     
-    const payload = { object_id: uploadResponse.objectId };
+    const payload = { objectId: uploadResponse.objectId };
   console.info('🔄 [ImageUploadService] Enviando PATCH (icon) via client:', { payload });
   await setIcon(sectionId, payload, tenantId, groupSlug);
 
@@ -116,11 +73,7 @@ export const uploadSectionMainImage = async (
     let mainPatched = false;
     for (const attempt of attemptsMain) {
       try {
-        const payloadToSend = attempt.payload && typeof attempt.payload === 'object' && 'operations' in attempt.payload
-          ? (Array.isArray((attempt.payload as unknown as { operations?: unknown }).operations)
-              ? createPayloadForBackend((attempt.payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
-              : attempt.payload)
-          : attempt.payload;
+        const payloadToSend = { objectId: uploadResponse.objectId };
   console.info('🔄 [ImageUploadService] Enviando PATCH a photo-principal:', { attempt: attempt.description, payload: payloadToSend });
   await setPhotoPrincipal(sectionId, payloadToSend, tenantId, groupSlug);
         mainPatched = true;
@@ -196,7 +149,7 @@ export const uploadGalleryImages = async (
     try {
       const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
         ? (Array.isArray((galleryPayload as unknown as { operations?: unknown }).operations)
-            ? createPayloadForBackend((galleryPayload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
+            ? createPayloadForBackend((galleryPayload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation)[])
             : galleryPayload)
         : galleryPayload;
   console.info(' [ImageUploadService] Enviando PATCH (gallery) via client:', { payload: galleryPayloadToSend });
@@ -262,7 +215,7 @@ export const replaceSubramaGalleryImage = async (
     const replaceOp = createReplacePayload(targetForReplace, uploadResponse.objectId);
     const replaceOpToSend = replaceOp && typeof replaceOp === 'object' && 'operations' in replaceOp
       ? (Array.isArray((replaceOp as unknown as { operations?: unknown }).operations)
-          ? createPayloadForBackend((replaceOp as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+          ? createPayloadForBackend((replaceOp as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation)[] }).operations)
           : replaceOp)
       : replaceOp;
     await patchSubgroupGallery(sectionId, subgroupId, replaceOpToSend as Record<string, unknown>, tenantId, groupSlug);
@@ -282,31 +235,6 @@ export const replaceSubramaGalleryImage = async (
     );
   } catch (error) {
     console.error(" [ImageUploadService] Error reemplazando imagen de galería en subrama:", error);
-    throw error;
-  }
-};
-
-export const removeSubramaGalleryImage = async (
-  tenantId: string,
-  groupSlug: string,
-  sectionId: string,
-  subgroupId: string,
-  objectIdToRemove: string
-): Promise<void> => {
-  console.log(" [ImageUploadService] Eliminando imagen de galería en subrama...", {
-    sectionId,
-    subgroupId,
-    objectIdToRemove,
-  });
-  try {
-  const payload = createRemovePayload(objectIdToRemove);
-    const payloadToSend = payload && typeof payload === 'object' && 'operations' in payload
-  ? createPayloadForBackend((payload as unknown as { operations: unknown[] }).operations as unknown as (import('../types/operations').GalleryAddOperation | import('../types/operations').GalleryReplaceOperation | import('../types/operations').GalleryRemoveOperation)[])
-      : payload;
-    await patchSubgroupGallery(sectionId, subgroupId, payloadToSend, tenantId, groupSlug);
-    console.log(" [ImageUploadService] Imagen eliminada de la galería de subrama");
-  } catch (error) {
-    console.error(" [ImageUploadService] Error eliminando imagen de galería en subrama:", error);
     throw error;
   }
 };

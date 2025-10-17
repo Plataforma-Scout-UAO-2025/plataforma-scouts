@@ -1,7 +1,7 @@
 import { uploadToStorage } from '@/api/upload';
-import { patchGallery, getSection, deleteIcon, setIcon, deletePhotoPrincipal, setPhotoPrincipal } from '@/api/organigramaApi';
-import { createAddPayload, createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
-import type { GalleryAddOperation, GalleryReplaceOperation, GalleryRemoveOperation } from '../types/operations';
+import { patchGallery, deleteIcon, setIcon, deletePhotoPrincipal, setPhotoPrincipal } from '@/api/organigramaApi';
+import { createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
+import type { GalleryAddOperation, GalleryReplaceOperation } from '../types/operations';
 
 type MaybeAxiosError = { response?: { data?: unknown } };
 type PayloadWithOperations = { operations?: unknown };
@@ -10,53 +10,6 @@ interface UploadResponse {
   objectId: string;
   url?: string;
 }
-
-export const diagnoseBatchImageUpload = async (
-  tenantId: string,
-  groupSlug: string,
-  sectionId: string,
-  file: File
-): Promise<{ uploaded: number; returned: number; details: Record<string, unknown> }> => {
-  
-
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-  const uploadResponse = await uploadToStorage<UploadResponse>(formData);
-
-    const addPayload = createAddPayload(uploadResponse.objectId);
-    const addPayloadToSend = addPayload && typeof addPayload === 'object' && 'operations' in addPayload
-      ? (Array.isArray((addPayload as unknown as PayloadWithOperations).operations)
-          ? createPayloadForBackend((addPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
-          : addPayload)
-      : addPayload;
-    console.info(' [ImageUploadCore] Enviando PATCH (gallery add) via client:', { payload: addPayloadToSend });
-    await patchGallery(sectionId, addPayloadToSend as Record<string, unknown>, tenantId, groupSlug);
-
-    const backendRec = await getSection(sectionId, tenantId, groupSlug) as Record<string, unknown> | undefined;
-  const gallery: string[] = (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [];
-  const resultCount = gallery?.length || 0;
-
-    const result = {
-      uploaded: 1,
-      returned: resultCount,
-      details: {
-        originalObjectId: uploadResponse.objectId,
-        returnedUrls: (backendRec?.['galleryObjectIds'] as string[] | undefined) ?? (backendRec?.['sectionGalleryObjectIds'] as string[] | undefined) ?? [],
-        isProbablyMultiVariant: resultCount > 1
-      }
-    };
-
-    return result;
-
-  } catch (error) {
-    console.error(' [DIAGNÓSTICO] Error:', error);
-    throw error;
-  }
-};
-
-(globalThis as unknown as Record<string, unknown>).diagnosticImageUpload = diagnoseBatchImageUpload;
 
 export const uploadSectionIcon = async (
   tenantId: string,
@@ -73,7 +26,7 @@ export const uploadSectionIcon = async (
     
   // handled by organigramaClient
     
-    const payload = { object_id: uploadResponse.objectId };
+    const payload = { objectId: uploadResponse.objectId };
     console.info(' [ImageUploadCore] Enviando PATCH (icon) via client:', { payload });
     await setIcon(sectionId, payload, tenantId, groupSlug);
     console.log(' [ImageUploadService] Icono asociado correctamente con endpoint PATCH (icon)');
@@ -149,7 +102,7 @@ export const uploadGalleryImages = async (
     try {
       const galleryPayloadToSend = galleryPayload && typeof galleryPayload === 'object' && 'operations' in galleryPayload
         ? (Array.isArray((galleryPayload as unknown as PayloadWithOperations).operations)
-            ? createPayloadForBackend((galleryPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation | GalleryRemoveOperation)[] }).operations)
+            ? createPayloadForBackend((galleryPayload as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation)[] }).operations)
             : galleryPayload)
         : galleryPayload;
       await patchGallery(sectionId, galleryPayloadToSend as Record<string, unknown>, tenantId, groupSlug);

@@ -22,7 +22,6 @@ export {
 
 // Gestión de imágenes (reexportadas desde la fachada central)
 export {
-  diagnoseBatchImageUpload,
   uploadSectionIcon,
   uploadSectionMainImage,
   uploadGalleryImages,
@@ -31,7 +30,6 @@ export {
   addGalleryImage,
   getGalleryImageUuids,
   replaceGalleryImage,
-  removeGalleryImage,
   deleteGalleryImageById,
   resolveGalleryItem,
   replaceGalleryList,
