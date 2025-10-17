@@ -50,9 +50,9 @@ public class MedicalRecordMapper {
     // Dominio → DTO expuesto
     public MedicalRecordDTO toDto(MedicalRecord d) {
         return new MedicalRecordDTO(
-                d.getId() == null ? null : d.getId().toString(),
+                d.getId(),
                 d.getTenantId(),
-                d.getMemberId() == null ? null : d.getMemberId().toString(),
+                d.getMemberId(),
                 d.getBloodType(),
                 d.getEps(),
                 d.getAllergies(),

@@ -376,7 +376,7 @@ export default function MedicalRecordsTable({
                           <div key={index} className="flex justify-between items-center p-2 border rounded">
                             <span className="text-sm font-medium">{vaccine.name}</span>
                             <span className="text-sm text-muted-foreground">
-                              {formatDate(vaccine.date)}
+                              {formatDate(vaccine.applied_at)}
                             </span>
                           </div>
                         ))}
@@ -404,7 +404,7 @@ export default function MedicalRecordsTable({
                               <strong>Dosis:</strong> {med.dose}
                             </div>
                             <div className="text-sm">
-                              <strong>Frecuencia:</strong> {med.frecuency}
+                              <strong>Frecuencia:</strong> {med.frequency}
                             </div>
                           </div>
                         ))}

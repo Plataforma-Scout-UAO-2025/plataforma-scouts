@@ -44,7 +44,7 @@ class MedicalRecordControllerTest {
 
     private MedicalRecordDTO dtoStub() {
         return new MedicalRecordDTO(
-                "900001", "tenant-123", "456",
+                900001L, "tenant-123", 456L,
                 "O+", "SURA", "Maní", "Asma", "Ninguna", "Apendicectomía",
                 true, List.of(), List.of(),
                 OffsetDateTime.now(), OffsetDateTime.now()

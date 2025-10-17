@@ -20,7 +20,7 @@ class MedicalRecordMapperTest {
     void testToDomainFromCreateDto() {
         var dto = new CreateMedicalRecordDTO(
                 123L, "O+", "SURA", "Polvo", "Asma", "Ninguna", "Apendicectomía", true,
-                List.of(new MedicationDTO("Ibuprofeno", "1/día")),
+                List.of(new MedicationDTO("Ibuprofeno", "50 mg", "1/día")),
                 List.of(new VaccineDTO("Tétanos", "2023-06-12"))
         );
 
@@ -57,9 +57,9 @@ class MedicalRecordMapperTest {
 
         var dto = mapper.toDto(domain);
 
-        assertEquals("1", dto.id());
+        assertEquals(1L, dto.id());
         assertEquals("tenant-1", dto.tenantId());
-        assertEquals("123", dto.memberId());
+        assertEquals(123L, dto.memberId());
     }
 
     @Test
