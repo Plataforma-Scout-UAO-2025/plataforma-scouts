@@ -38,7 +38,7 @@ export default function LevelAccordion({
       map[key].push(c);
     });
     return map;
-  }, [nivel.cargos]);
+  }, [nivel]);
 
   const toggle = () => setOpen((v) => !v);
   const onKeyToggle: React.KeyboardEventHandler<HTMLDivElement> = (e) => {

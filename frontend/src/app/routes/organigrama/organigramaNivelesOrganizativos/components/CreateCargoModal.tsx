@@ -66,13 +66,6 @@ export default function CreateCargoModal({ open, onClose, onSave, members = [], 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialNombre]);
 
-  // Si se pasa initialNombre al abrir el modal, precargar el campo
-  // Nota: no sobrescribimos mientras el modal esté abierto para permitir edición por el usuario
-  // Se reestablece cuando se cierra.
-  if (open && nombre === "" && (arguments[0] as any)?.initialNombre) {
-    // noop - placeholder to satisfy TS; we'll use effect below
-  }
-
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

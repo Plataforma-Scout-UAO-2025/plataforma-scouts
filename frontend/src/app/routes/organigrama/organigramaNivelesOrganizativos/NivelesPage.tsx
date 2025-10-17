@@ -58,7 +58,7 @@ export default function NivelesPage() {
 
   // Filtrar las ramas que sean comités (case-insensitive)
   const comiteRamas = (ramas ?? []).filter((r) => {
-    const name = String((r as any).name ?? (r as any).nombre ?? '').toLowerCase();
+    const name = String(r.name || r.nombre || '').toLowerCase();
     return name.includes('comit');
   });
 
