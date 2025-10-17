@@ -6,6 +6,7 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,8 @@ public class MemberServiceImp implements IMemberService {
     @Autowired
     private PermissionQueryPort permissionQueryPort;
 
+
+
     /**
      * Crea un nuevo miembro validando duplicados e información obligatoria.
      *
@@ -90,6 +93,8 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
+
+
     /**
      * Lista todos los miembros registrados, ordenados por apellido y nombre.
      *
@@ -108,6 +113,8 @@ public class MemberServiceImp implements IMemberService {
                         .thenComparing(Member::getFirstName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .collect(Collectors.toList());
     }
+
+
 
     /**
      * Obtiene un miembro por su ID.
@@ -135,6 +142,8 @@ public class MemberServiceImp implements IMemberService {
         return maybeMember;
     }
 
+
+
     /**
      * Obtiene un miembro por su ID.
      *
@@ -158,6 +167,7 @@ public class MemberServiceImp implements IMemberService {
         log.info("Found {} members for subgroupId={}", members.size(), subGroupId);
         return Optional.of(members);
     }
+
 
     /**
      * Lista los miembros filtrados por estado.
@@ -190,6 +200,79 @@ public class MemberServiceImp implements IMemberService {
                         .comparing(Member::getLastName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
                         .thenComparing(Member::getFirstName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .collect(Collectors.toList());
+    }
+
+
+    /**
+     * Obtiene todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.
+     * El tenantId se obtiene del JWT token (claim org_id) usando PermissionQueryPort.
+     * Utiliza JOIN FETCH para evitar N+1 queries y obtener toda la información en consultas optimizadas.
+     *
+     * @return Lista de DTOs con información completa del miembro, subgrupo y sección.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<MemberWithSubgroupAndSectionDto> get_members_with_subgroup_and_section() {
+        try {
+            // Obtener el tenantId (org_id) del usuario autenticado desde el JWT
+            String tenantId = null;
+            try {
+                tenantId = permissionQueryPort.getCurrentUserOrgId();
+            } catch (Exception e) {
+                log.error("Error al obtener org_id del usuario autenticado: {}", e.getMessage(), e);
+                throw new IllegalStateException("No se pudo obtener la organización del usuario autenticado", e);
+            }
+
+            if (tenantId == null || tenantId.isBlank()) {
+                log.error("El org_id del usuario autenticado es null o vacío. Verifica que el claim 'org_id' esté presente en el JWT.");
+                throw new IllegalStateException("No se pudo determinar la organización del usuario autenticado");
+            }
+
+            log.info("Fetching members with subgroup and section for authenticated user's tenantId: {}", tenantId);
+
+            // 1. Obtener todos los miembros con subgrupos usando JOIN FETCH
+            List<Member> members = memberRepository.findMembersWithSubgroupByTenantId(tenantId);
+
+            if (members.isEmpty()) {
+                log.info("No members found for tenantId: {}", tenantId);
+                return Collections.emptyList();
+            }
+
+            log.info("Found {} members for tenantId: {}", members.size(), tenantId);
+
+            // 2. Recolectar todos los sectionIds únicos de los subgrupos
+            Set<Long> sectionIds = members.stream()
+                    .map(Member::getSubgroup)
+                    .filter(Objects::nonNull)
+                    .map(Subgroup::getSectionId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            log.debug("Found {} unique sections to fetch", sectionIds.size());
+
+            // 3. Obtener todas las secciones en una sola consulta
+            Map<Long, Section> sectionsMap = new HashMap<>();
+            if (!sectionIds.isEmpty()) {
+                List<Section> sections = sectionRepository.findAllById(sectionIds);
+                sectionsMap = sections.stream()
+                        .collect(Collectors.toMap(Section::getSectionId, section -> section));
+                log.debug("Fetched {} sections from database", sections.size());
+            }
+
+            // 4. Convertir a DTOs usando el mapper con el mapa de secciones
+            List<MemberWithSubgroupAndSectionDto> result = memberWithSubgroupAndSectionMapper.toDtoList(members, sectionsMap);
+
+            log.info("Successfully converted {} members to DTOs with complete information", result.size());
+
+            return result;
+
+        } catch (IllegalStateException e) {
+            // Re-lanzar excepciones de estado para que el controller las maneje
+            throw e;
+        } catch (Exception e) {
+            log.error("Error inesperado al obtener miembros con detalles completos: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al obtener lista de miembros con detalles", e);
+        }
     }
 
     /**
@@ -255,16 +338,22 @@ public class MemberServiceImp implements IMemberService {
         return updatedMember;
     }
 
+    @Override
+    public Boolean update_role(String userId) {
+        return null;
+    }
+
 
     /**
      * Asigna un miembro a un subGrupo existente
-     *
-     * @param memberId     ID del miembro a actualizar.
+     * @param sectionId Id de la seccion a la cual sera asigando el miembro
+     * @param memberId  ID del miembro a actualizar.
      * @param subGroupId Id del sub grupo que recibirá al miembro
      * @return el estado booleano de la operación
      */
     @Override
-    public Boolean assign_subGroup(Long memberId, Long subGroupId) {
+    @Transactional
+    public Boolean assignSubgroupAndSection(Long memberId, Long subGroupId, Long sectionId) {
         try {
             Optional<Member> memberOpt = memberRepository.findById(memberId);
             Optional<Subgroup> subgroupOpt = subgroupRepository.findById(subGroupId);
@@ -276,95 +365,25 @@ public class MemberServiceImp implements IMemberService {
 
             Subgroup subgroup = subgroupOpt.get();
             if (!Boolean.TRUE.equals(subgroup.getIsActive())) {
-                log.warn("Intento de asignar subgrupo inactivo: {}", subGroupId);
+                log.warn("⚠Intento de asignar subgrupo inactivo: {}", subGroupId);
                 return false;
             }
 
             Member member = memberOpt.get();
             member.setSubgroup(subgroup);
             memberRepository.save(member);
+            memberRepository.updateSectionByMember(memberId, sectionId);
 
-            log.info("Subgrupo {} asignado correctamente al miembro {}", subGroupId, memberId);
+            log.info("Subgrupo {} y sección {} asignados correctamente al miembro {}", subGroupId, sectionId, memberId);
             return true;
 
         } catch (Exception e) {
-            log.error("Error al asignar subgrupo al miembro {}", memberId, e);
-            return false;
+            log.error("Error al asignar subgrupo y sección al miembro {}", memberId, e);
+            throw e; // rollback automático
         }
     }
 
 
-    /**
-     * Obtiene todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.
-     * El tenantId se obtiene del JWT token (claim org_id) usando PermissionQueryPort.
-     * Utiliza JOIN FETCH para evitar N+1 queries y obtener toda la información en consultas optimizadas.
-     *
-     * @return Lista de DTOs con información completa del miembro, subgrupo y sección.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public List<MemberWithSubgroupAndSectionDto> get_members_with_subgroup_and_section() {
-        try {
-            // Obtener el tenantId (org_id) del usuario autenticado desde el JWT
-            String tenantId = null;
-            try {
-                tenantId = permissionQueryPort.getCurrentUserOrgId();
-            } catch (Exception e) {
-                log.error("Error al obtener org_id del usuario autenticado: {}", e.getMessage(), e);
-                throw new IllegalStateException("No se pudo obtener la organización del usuario autenticado", e);
-            }
-            
-            if (tenantId == null || tenantId.isBlank()) {
-                log.error("El org_id del usuario autenticado es null o vacío. Verifica que el claim 'org_id' esté presente en el JWT.");
-                throw new IllegalStateException("No se pudo determinar la organización del usuario autenticado");
-            }
-
-            log.info("Fetching members with subgroup and section for authenticated user's tenantId: {}", tenantId);
-
-            // 1. Obtener todos los miembros con subgrupos usando JOIN FETCH
-            List<Member> members = memberRepository.findMembersWithSubgroupByTenantId(tenantId);
-
-            if (members.isEmpty()) {
-                log.info("No members found for tenantId: {}", tenantId);
-                return Collections.emptyList();
-            }
-
-            log.info("Found {} members for tenantId: {}", members.size(), tenantId);
-
-            // 2. Recolectar todos los sectionIds únicos de los subgrupos
-            Set<Long> sectionIds = members.stream()
-                    .map(Member::getSubgroup)
-                    .filter(Objects::nonNull)
-                    .map(Subgroup::getSectionId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-
-            log.debug("Found {} unique sections to fetch", sectionIds.size());
-
-            // 3. Obtener todas las secciones en una sola consulta
-            Map<Long, Section> sectionsMap = new HashMap<>();
-            if (!sectionIds.isEmpty()) {
-                List<Section> sections = sectionRepository.findAllById(sectionIds);
-                sectionsMap = sections.stream()
-                        .collect(Collectors.toMap(Section::getSectionId, section -> section));
-                log.debug("Fetched {} sections from database", sections.size());
-            }
-
-            // 4. Convertir a DTOs usando el mapper con el mapa de secciones
-            List<MemberWithSubgroupAndSectionDto> result = memberWithSubgroupAndSectionMapper.toDtoList(members, sectionsMap);
-
-            log.info("Successfully converted {} members to DTOs with complete information", result.size());
-
-            return result;
-            
-        } catch (IllegalStateException e) {
-            // Re-lanzar excepciones de estado para que el controller las maneje
-            throw e;
-        } catch (Exception e) {
-            log.error("Error inesperado al obtener miembros con detalles completos: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al obtener lista de miembros con detalles", e);
-        }
-    }
 
     /** Valida los campos obligatorios del miembro. */
     private void validateMemberData(Member member) {
