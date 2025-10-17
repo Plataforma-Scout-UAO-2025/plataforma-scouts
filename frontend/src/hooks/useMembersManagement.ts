@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { Member } from "@/types/member.type";
 import { useMember } from "@/hooks/useMember";
-import { fetchMembersWithBranchAction } from "@/store/members/membersActions";
 import { clearNotification } from "@/store/members/membersSlice";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useTenant } from "@/hooks/useTenant";
