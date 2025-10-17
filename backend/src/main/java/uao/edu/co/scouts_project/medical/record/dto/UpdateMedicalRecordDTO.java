@@ -7,6 +7,7 @@ import java.util.List;
 public record UpdateMedicalRecordDTO(
         @NotBlank(message = "bloodType is required")
         String bloodType,
+        @NotBlank(message = "eps is required")
         String eps,
         String allergies,
         String chronicDiseases,

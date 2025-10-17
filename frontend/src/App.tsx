@@ -33,6 +33,7 @@ import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 // Guardianes
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
 import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
+import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
 
 function App() {
   useAuth0ApiWrapper();
@@ -80,6 +81,7 @@ function App() {
             {/* Rutas para Guardianes*/}
             <Route path="guardians/members" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><MembersInCharge /></ProtectedRoute>} />
             <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><GuardianProfile /></ProtectedRoute>} />
+            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><WelcomeAddMember /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

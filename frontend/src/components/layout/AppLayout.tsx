@@ -158,10 +158,10 @@ const acudienteItems: MenuItem[] = [
     href: "/app/dashboard",
   },
   {
-    id: "inscripcion",
-    label: "Inscripcion",
+    id: "miembros",
+    label: "Mis miembros",
     icon: <Pencil />,
-    href: "/app/inscripcion",
+    href: "/app/guardians/members",
   },
   {
     id: "financiero",

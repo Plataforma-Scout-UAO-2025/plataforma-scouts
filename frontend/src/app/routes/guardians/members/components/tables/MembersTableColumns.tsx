@@ -39,10 +39,14 @@ export const createMembersTableColumns = ({
     accessorKey: 'createdAt',
     header: 'CREADO',
     cell: ({ row }) => {
-      const date = new Date(row.getValue('createdAt'));
+      const rawDate = row.getValue('createdAt');
+      const date = rawDate ? new Date(rawDate) : null;
+      const isValidDate = date && !isNaN(date.getTime());
       return (
         <div className="text-sm">
-          {format(date, "d MMM yyyy h:mmaaa", { locale: es })}
+          {isValidDate
+            ? format(date, "d MMM yyyy h:mmaaa", { locale: es })
+            : '-'}
         </div>
       );
     },
