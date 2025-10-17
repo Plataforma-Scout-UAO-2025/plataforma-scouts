@@ -3,6 +3,8 @@ import type { TenantDTO, GroupResponseDTO } from "@/types/group.type";
 import type { Section } from '@/types/section-simple.type';
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { IconSetPayload } from "../app/routes/organigrama/organigramaRamas_Subramas/utils/iconPayload";
+import type { PhotoPrincipalPayload } from "../app/routes/organigrama/organigramaRamas_Subramas/utils/photoPrincipalPayload";
+import { createPayloadForBackend as createPhotoPrincipalPayloadForBackend } from "../app/routes/organigrama/organigramaRamas_Subramas/utils/photoPrincipalPayload";
 
 const mapBackendSectionToSection = (backendSection: Record<string, unknown>): Section => {
   const section = backendSection as unknown as Section;
@@ -10,6 +12,7 @@ const mapBackendSectionToSection = (backendSection: Record<string, unknown>): Se
     ...section,
     id: backendSection.sectionId as number || backendSection.section_id as number,
     sectionId: backendSection.sectionId as number | string || backendSection.section_id as number | string,
+    photoPrincipal: backendSection.photoPrincipalId as string | null || backendSection.photoPrincipal as string | null,
   };
 };
 
@@ -147,14 +150,16 @@ export const deleteIcon = async (sectionId: string | number, tenantId: string, g
 };
 
 // Establece la foto principal de una sección
-export const setPhotoPrincipal = async (sectionId: string | number, payload: Record<string, unknown>, tenantId: string, groupSlug: string) => {
-  const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/sections/${sectionId}/photo-principal`, payload);
+export const setPhotoPrincipal = async (sectionId: string | number, payload: PhotoPrincipalPayload, tenantId: string, groupSlug: string) => {
+  const backendPayload = createPhotoPrincipalPayloadForBackend(payload);
+  const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/sections/${sectionId}/photo-principal`, backendPayload);
   return response.data;
 };
 
 // Elimina la foto principal de una sección
 export const deletePhotoPrincipal = async (sectionId: string | number, tenantId: string, groupSlug: string) => {
-  await api.delete(`/tenants/${tenantId}/groups/${groupSlug}/sections/${sectionId}/photo-principal`);
+  const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/sections/${sectionId}/photo-principal`, { objectId: null });
+  return response.data;
 };
 
 // Operaciones de galería de subgrupos

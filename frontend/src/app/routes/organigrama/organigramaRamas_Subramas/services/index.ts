@@ -48,6 +48,14 @@ export {
   updateIcon
 } from './icon.service';
 
+// Gestión de fotos principales de secciones
+export {
+  getCurrentPhotoPrincipalUuid,
+  setPhotoPrincipal,
+  deletePhotoPrincipal,
+  updatePhotoPrincipal
+} from './photoPrincipal.service';
+
 
 
 // UTILIDADES Y HELPERS

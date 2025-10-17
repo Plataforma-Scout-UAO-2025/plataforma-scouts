@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { getSections, getSectionWithSubgroups, getMembersBySubgroup } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
+import { setPhotoPrincipal, deletePhotoPrincipal } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/photoPrincipal.service';
 
 // Fetch sections for tenant/group
 export const fetchSectionsAction = createAsyncThunk("organigrama/fetchSections", async ({ tenantId, groupSlug }: { tenantId: string; groupSlug: string }, { rejectWithValue }) => {
@@ -60,6 +61,30 @@ export const deleteIconAction = createAsyncThunk("organigrama/deleteIcon", async
     const axiosError = error as AxiosError;
     const errorData = axiosError.response?.data as { error?: string };
     const message = errorData?.error || "Error al eliminar ícono";
+    return rejectWithValue(message);
+  }
+});
+
+export const setPhotoPrincipalAction = createAsyncThunk("organigrama/setPhotoPrincipal", async ({ tenantId, groupSlug, sectionId, objectId }: { tenantId: string; groupSlug: string; sectionId: string; objectId: string }, { rejectWithValue }) => {
+  try {
+    await setPhotoPrincipal(tenantId, groupSlug, sectionId, objectId);
+    return { sectionId, objectId };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al establecer foto principal";
+    return rejectWithValue(message);
+  }
+});
+
+export const deletePhotoPrincipalAction = createAsyncThunk("organigrama/deletePhotoPrincipal", async ({ tenantId, groupSlug, sectionId }: { tenantId: string; groupSlug: string; sectionId: string }, { rejectWithValue }) => {
+  try {
+    await deletePhotoPrincipal(tenantId, groupSlug, sectionId);
+    return { sectionId };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al eliminar foto principal";
     return rejectWithValue(message);
   }
 });
