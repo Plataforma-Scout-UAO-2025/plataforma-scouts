@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchMembersBySubgroupAction } from "./organigramaActions";
+import { fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchMembersBySubgroupAction, setIconAction, deleteIconAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { Member } from "@/types/member.type";
@@ -77,6 +77,30 @@ const organigramaSlice = createSlice({
     builder.addCase(fetchMembersBySubgroupAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
+    });
+
+    builder.addCase(setIconAction.fulfilled, (state, action) => {
+      const { sectionId, objectId } = action.payload;
+      const section = state.sections.find(s => s.sectionId === sectionId);
+      if (section) {
+        section.iconObjectId = objectId;
+      }
+      if (state.currentSection?.section.sectionId === sectionId) {
+        state.currentSection.section.iconObjectId = objectId;
+      }
+    });
+
+    builder.addCase(deleteIconAction.fulfilled, (state, action) => {
+      const { sectionId } = action.payload;
+      const section = state.sections.find(s => s.sectionId === sectionId);
+      if (section) {
+        section.iconObjectId = null;
+        section.iconUrl = null;
+      }
+      if (state.currentSection?.section.sectionId === sectionId) {
+        state.currentSection.section.iconObjectId = null;
+        state.currentSection.section.iconUrl = null;
+      }
     });
   },
 });

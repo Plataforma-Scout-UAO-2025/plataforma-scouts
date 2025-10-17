@@ -40,16 +40,13 @@ export {
 // Nota: las funciones de galería se reexportan desde la fachada central (imageFacade)
 // El antiguo reexport desde './gallery.service' fue eliminado para evitar duplicados.
 
-// Gestión de imágenes de Subramas
+// Gestión de íconos de secciones
 export {
-  updateSubramaMainImage,
-  uploadSubramaGalleryImages,
-  addSubramaGalleryImage,
-  replaceSubramaGalleryImage,
-  removeSubramaGalleryImage,
-  getSubramaGalleryImageUuids,
-  removeSubramaMainImage
-} from './subrama-image.service';
+  getCurrentIconUuid,
+  setIcon,
+  deleteIcon,
+  updateIcon
+} from './icon.service';
 
 
 

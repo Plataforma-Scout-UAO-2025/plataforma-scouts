@@ -2,6 +2,7 @@ import api from "./axios";
 import type { TenantDTO, GroupResponseDTO } from "@/types/group.type";
 import type { Section } from '@/types/section-simple.type';
 import type { Subgroup } from "@/types/subgroup-simple.type";
+import type { IconSetPayload } from "../app/routes/organigrama/organigramaRamas_Subramas/utils/iconPayload";
 
 const mapBackendSectionToSection = (backendSection: Record<string, unknown>): Section => {
   const section = backendSection as unknown as Section;
@@ -135,7 +136,7 @@ export const patchGallery = async (sectionId: string | number, payload: Record<s
 };
 
 // Establece el ícono de una sección
-export const setIcon = async (sectionId: string | number, payload: Record<string, unknown>, tenantId: string, groupSlug: string) => {
+export const setIcon = async (sectionId: string | number, payload: IconSetPayload, tenantId: string, groupSlug: string) => {
   const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/sections/${sectionId}/icon`, payload);
   return response.data;
 };
