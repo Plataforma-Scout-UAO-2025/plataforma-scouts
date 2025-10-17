@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Trash2, Pencil, ChevronDown } from "lucide-react";
@@ -26,6 +26,19 @@ export default function LevelAccordion({
   defaultOpen = true,
 }: Props) {
   const [open, setOpen] = useState<boolean>(defaultOpen);
+  // Estado para sub-acordeones por rol: mapa roleName -> open
+  const [groupsOpen, setGroupsOpen] = useState<Record<string, boolean>>({});
+
+  // Agrupar cargos por rol (nombre del cargo). useMemo para rendimiento.
+  const cargosPorRol = useMemo(() => {
+    const map: Record<string, typeof nivel.cargos> = {};
+    nivel.cargos.forEach((c) => {
+      const key = c.nombre || "Sin rol";
+      if (!map[key]) map[key] = [];
+      map[key].push(c);
+    });
+    return map;
+  }, [nivel.cargos]);
 
   const toggle = () => setOpen((v) => !v);
   const onKeyToggle: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -48,8 +61,6 @@ export default function LevelAccordion({
           className="flex items-center gap-3 flex-1 cursor-pointer select-none"
           role="button"
           tabIndex={0}
-          aria-expanded={open}
-          aria-controls={`nivel-panel-${nivel.id}`}
           onClick={toggle}
           onKeyDown={onKeyToggle}
         >
@@ -111,18 +122,67 @@ export default function LevelAccordion({
         className={`px-5 overflow-hidden transition-[grid-template-rows] duration-200 ease-in-out ${
           open ? "grid grid-rows-[1fr] pt-3" : "grid grid-rows-[0fr]"
         }`}
-        aria-hidden={!open}
       >
         <div className="min-h-0">
-          <div className="space-y-2">
-            {nivel.cargos.map((cargo) => (
-              <PositionItem
-                key={cargo.id}
-                cargo={cargo}
-                onEdit={() => onEditCargo?.(cargo)}
-                onDelete={() => onDeleteCargo?.(cargo)}
-              />
-            ))}
+          <div className="space-y-3">
+            {/* Renderizar sub-acordeones por rol */}
+            {Object.entries(cargosPorRol).map(([rol, cargos]) => {
+              const isOpen = groupsOpen[rol] ?? true;
+              return (
+                <div key={rol} className="border border-border rounded-md bg-card">
+                  <div
+                    className={`flex items-center justify-between px-3 py-2 cursor-pointer select-none ${
+                      isOpen ? "bg-muted/40" : ""
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      setGroupsOpen((prev) => ({ ...prev, [rol]: !isOpen }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setGroupsOpen((prev) => ({ ...prev, [rol]: !isOpen }));
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ChevronDown
+                        className={`h-4 w-4 text-primary transition-transform duration-200 ${
+                          isOpen ? "rotate-0" : "-rotate-90"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <div className="font-medium text-primary">{rol}</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">{cargos.length} miembro{cargos.length > 1 ? "s" : ""}</div>
+                  </div>
+
+                  {isOpen && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {cargos.map((cargo) => (
+                        <PositionItem
+                          key={cargo.id}
+                          cargo={cargo}
+                          onEdit={() => onEditCargo?.(cargo)}
+                          onDelete={() => onDeleteCargo?.(cargo)}
+                        />
+                      ))}
+                      {/* Botón para agregar miembro al cargo (estilo similar a Crear Nuevo Cargo) */}
+                      <div className="mt-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => onAddCargo(nivel.id)}
+                          className="w-full justify-center border border-border text-primary hover:bg-accent font-medium rounded-md"
+                        >
+                          + Agregar miembro al cargo
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Botón "Crear Nuevo Cargo" */}
