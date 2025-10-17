@@ -3,13 +3,15 @@ import BranchCount from "./components/BranchCount";
 import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
 import { useMembersManagement } from "@/hooks/useMembersManagement";
+import { useNavigate } from "react-router-dom";
+import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
 
 const Miembros = () => {
   const {
     searchFilter,
     setSearchFilter,
-    statusFilter,
-    setStatusFilter,
+    isActiveFilter,
+    setIsActiveFilter,
     branchFilter,
     setBranchFilter,
     filteredMembers,
@@ -21,15 +23,26 @@ const Miembros = () => {
     endIndex,
     handlePreviousPage,
     handleNextPage,
+    extractSectionsFromMember,
   } = useMembersManagement({ itemsPerPage: 10 });
+
+  const { loading, error } = useTenantMembersByStatus({
+    status: "APPROVED",
+  });
+  const navigate = useNavigate();
 
   return (
     <div className="mx-4">
       <header className="flex items-center mb-4 justify-between">
-        <p className="text-5xl font-bold text-primary">Gestión de Miembros</p>
+        <p className="text-5xl font-bold text-primary">
+          Gestión de Miembros Aprobados
+        </p>
       </header>
       <section className="my-2 flex gap-4">
-        <BranchCount filteredMembers={filteredMembers} totalMembers={totalMembers} />
+        <BranchCount
+          filteredMembers={filteredMembers}
+          totalMembers={totalMembers}
+        />
       </section>
 
       {/* Filtros */}
@@ -37,18 +50,32 @@ const Miembros = () => {
         <MembersFilter
           searchFilter={searchFilter}
           setSearchFilter={setSearchFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
+          isActiveFilter={isActiveFilter}
+          setIsActiveFilter={setIsActiveFilter}
           branchFilter={branchFilter}
           setBranchFilter={setBranchFilter}
+          filteredMembers={filteredMembers}
+          extractSectionsFromMember={extractSectionsFromMember}
         />
       </section>
 
       {/* Tabla */}
       <section className="mt-6">
-        <MembersTable filteredMembers={paginatedMembers} />
+        {loading && <p>Cargando miembros…</p>}
+        {error && <p className="text-red-600">{error}</p>}
+        {!loading && !error && (
+          <MembersTable filteredMembers={paginatedMembers} />
+        )}
+
+        {/* Footer paginación */}
         <section className="flex justify-between items-center mt-4">
           <div className="flex justify-start mt-3 gap-2">
+            <Button
+              variant="primary"
+              onClick={() => navigate("/app/solicitudes")}
+            >
+              Solicitudes
+            </Button>
             <p className="text-sm text-text self-center ml-4">
               Mostrando {startIndex + 1}-
               {Math.min(endIndex, filteredMembers.length)} de{" "}
@@ -80,5 +107,4 @@ const Miembros = () => {
     </div>
   );
 };
-
 export default Miembros;

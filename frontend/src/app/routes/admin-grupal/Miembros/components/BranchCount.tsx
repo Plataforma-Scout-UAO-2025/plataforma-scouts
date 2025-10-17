@@ -48,7 +48,6 @@ const BranchCount = ({ filteredMembers, totalMembers }: BranchCountProps) => {
       }
     });
 
-    // Construir array de contadores: primero el total, luego cada rama ordenada por cantidad
     const counts = [{ label: "Total Miembros", count: total, isTotal: true }];
 
     // Agregar cada rama ordenada de mayor a menor cantidad de miembros

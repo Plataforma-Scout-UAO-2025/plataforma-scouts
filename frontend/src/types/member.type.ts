@@ -9,6 +9,7 @@ export interface Member {
   sectionName?: string;
   firstName?: string;
   lastName?: string;
+  isActive?: boolean;
   
   member_id?: number;
   first_name?: string;

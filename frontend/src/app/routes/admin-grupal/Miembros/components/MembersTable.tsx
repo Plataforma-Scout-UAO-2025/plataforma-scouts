@@ -5,33 +5,36 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Button,
 } from "@/components/ui/index";
-import type { Member } from "@/types/member.type";
+import { Pencil, Trash, User } from "lucide-react";
+import type { Member as MemberType } from "@/types/member.type";
+import { formatDate } from "@/lib/utils";
 
 interface MembersTableProps {
-  filteredMembers: Member[];
+  filteredMembers: MemberType[];
+}
+
+interface Member {
+  is_active?: boolean | string | number;
+  isActive?: boolean | string | number;
 }
 
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
-  // Función para formatear la fecha
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return "N/A";
-
-    try {
-      const date = new Date(dateString);
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const year = date.getFullYear();
-
-      return `${day}/${month}/${year}`;
-    } catch {
-      return "N/A";
+  const isActive = (member: Member): boolean => {
+    const value = member.is_active ?? member.isActive;
+    if (typeof value === "string") {
+      return value.toLowerCase() === "activo" || value.toLowerCase() === "true";
     }
+    if (typeof value === "number") {
+      return value === 1;
+    }
+    return Boolean(value);
   };
 
   return (
     <div>
-      <Table className="text-sm px-0 table-fixed">
+      <Table className="text-sm">
         <TableHeader className="text-primary">
           <TableRow>
             <TableHead className="pl-4 font-bold text-primary w-16">
@@ -50,29 +53,30 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
             <TableHead className="font-bold text-primary w-24">
               Creado
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">
-              Estado
-            </TableHead>
             <TableHead className="font-bold text-primary w-32">
               Dirección
             </TableHead>
+            <TableHead className="font-bold text-primary w-24">
+              Estado
+            </TableHead>
+            <TableHead className="text-right"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredMembers.length > 0 ? (
-            filteredMembers.map((member, index) => (
-              <TableRow key={member.member_id || index}>
+            filteredMembers.map((member, idx) => (
+              <TableRow key={member.member_id ?? `member-${idx}`}>
                 <TableCell className="pl-4 font-medium w-16 truncate">
-                  {member.member_id || "N/A"}
+                  {member.member_id}
                 </TableCell>
                 <TableCell className="w-32 truncate">
-                  {member.first_name || "N/A"}
+                  {member.first_name}
                 </TableCell>
                 <TableCell className="w-32 truncate">
-                  {member.last_name || "N/A"}
+                  {member.last_name}
                 </TableCell>
                 <TableCell className="w-32 truncate">
-                  {member.identification || "N/A"}
+                  {member.identification}
                 </TableCell>
                 <TableCell className="w-28 truncate">
                   {member.subgroup?.section?.name || "Sin rama"}
@@ -80,16 +84,43 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                 <TableCell className="w-28 truncate">
                   {formatDate(member.created_at)}
                 </TableCell>
-                <TableCell className="w-24 truncate">
-                  {member.status || "N/A"}
-                </TableCell>
                 <TableCell className="w-40 truncate">
-                  {member.address || "N/A"}
+                  {member.address || "Sin dirección"}
+                </TableCell>
+                <TableCell>
+                  {isActive(member) ? (
+                    <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
+                      Activo
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-1 rounded-lg border border-red-300 bg-red-100 text-red-800 font-semibold">
+                      Inactivo
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="iconbutton" size="icon">
+                    <User />
+                  </Button>
+                  <Button
+                    variant="iconbutton"
+                    size="icon"
+                    className="text-secondary hover:text-blue-800"
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    variant="iconbutton"
+                    size="icon"
+                    className="text-destructive hover:text-destructive-hover"
+                  >
+                    <Trash />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
           ) : (
-            <TableRow>
+            <TableRow key="no-members">
               <TableCell colSpan={9} className="text-center py-8">
                 <p className="text-text text-lg">
                   No se encontraron miembros que coincidan con los filtros.
@@ -102,5 +133,4 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
     </div>
   );
 };
-
 export default MembersTable;
