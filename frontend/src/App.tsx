@@ -29,6 +29,7 @@ import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
+import TreasurerEnrollment from "./app/routes/grupos/basic-info/treasurer_info/TreasurerEnrollment";
 
 function App() {
   useAuth0ApiWrapper();
@@ -64,6 +65,7 @@ function App() {
             <Route path="inscripcion" element={<ProtectedRoute allowedRoles={[RawRole.GUEST, RawRole.SCOUT, RawRole.ACUDIENTE]}><ScoutEnrollment /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Requests /></ProtectedRoute>} />
             <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Rejected /></ProtectedRoute>} />
+            <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Insignias /></ProtectedRoute>} />
             */}

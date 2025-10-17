@@ -98,7 +98,7 @@ export default function AssignmentSelectors(props: Props) {
       </div>
 
       <div className="w-full">
-        <Label htmlFor="subgroup">Subrama (opcional)</Label>
+        <Label htmlFor="subgroup">Subrama</Label>
         <Select
           value={selectedSubgroup}
           onValueChange={setSelectedSubgroup}
