@@ -39,7 +39,6 @@ export const useMembersManagement = ({
     if (fetchedTenantsRef.current[tenantId]) return;
 
     fetchedTenantsRef.current[tenantId] = true;
-    dispatch(fetchMembersWithBranchAction());
   }, [dispatch, tenantId]);
 
   // helpers moved to module-scope to avoid recreating on every render
@@ -175,6 +174,7 @@ export const useMembersManagement = ({
     filteredMembers,
     paginatedMembers,
     extractSectionsFromMember,
+    members: members || [],
     totalMembers: members
       ? members.filter((m) => {
           const rec = m as Record<string, string>;
