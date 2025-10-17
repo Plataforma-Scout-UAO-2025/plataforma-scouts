@@ -3,12 +3,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Save } from 'lucide-react';
 import { medicalFormSchema } from '../schemas/CreateMedicalInfoForm.schema';
-import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail } from '../../../../../types/medical-form.type';
+import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail } from '@/types/medical-form.type';
+import { createMedicalRecordApi, updateMedicalRecordApi } from '@/api/medicalApi';
 import type { Member } from '@/types/member.type';
 import { useTenant } from '@/hooks/useTenant';
-import api from '@/api/axios';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { getMembers } from '@/api/membersApi';
 
 interface MedicalWizardFormProps {
   memberId?: number; // Hacerlo opcional para creación
@@ -28,6 +29,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     chronic_diseases: '',
     physical_restrictions: '',
     surgical_history: '',
+    active: true,
     vaccines_detail: [],
     medications_detail: [],
   });
@@ -52,12 +54,12 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
         ...initialData,
         vaccines_detail: initialData.vaccines_detail.map(vaccine => ({
           name: vaccine.name,
-          date: vaccine.date.includes('T') ? vaccine.date : `${vaccine.date}T00:00:00.000Z`
+          applied_at: vaccine.applied_at.includes('T') ? vaccine.applied_at : `${vaccine.applied_at}T00:00:00.000Z`
         })),
         medications_detail: initialData.medications_detail.map(med => ({
           name: med.name,
           dose: med.dose || 'No especificada',
-          frecuency: med.frecuency || 'No especificada'
+          frequency: med.frequency || 'No especificada'
         }))
       };
 
@@ -69,13 +71,13 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   const loadMembers = async () => {
     try {
       setIsLoadingMembers(true);
-      const response = await api.get('/members/list_members');
+      const response = await getMembers();
 
       // Filtrar solo miembros aprobados y activos
-      const scoutMembers = response.data.filter((member: Member) => 
+      const scoutMembers = response.filter((member: Member) => 
       member.role === 'SCOUT' && 
       member.status === 'APPROVED' && 
-      member.is_active !== false
+      member.is_active
       );
 
       setMembers(scoutMembers);
@@ -108,33 +110,19 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
         chronic_diseases: data.chronic_diseases,
         physical_restrictions: data.physical_restrictions,
         surgical_history: data.surgical_history,
-        active: true,
+        active: data.active,
         medications_detail: data.medications_detail.map(med => ({
           name: med.name,
-          frequency: med.frecuency
+          dose: med.dose,
+          frequency: med.frequency
         })),
         vaccines_detail: data.vaccines_detail.map(vaccine => ({
           name: vaccine.name,
-          applied_at: vaccine.date.includes('T') ? vaccine.date : `${vaccine.date}T00:00:00.000Z`
+          applied_at: vaccine.applied_at.includes('T') ? vaccine.applied_at : `${vaccine.applied_at}T00:00:00.000Z`
         }))
       };
 
-      const response = await api.post(
-        `http://localhost:8080/api/v1/medical_record/create_record/${selectedMemberId}`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-Id': tenantId
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        return response.data;
-      } else {
-        throw new Error(`Error del servidor: ${response.status}`);
-      }
+      return await createMedicalRecordApi(selectedMemberId, payload, tenantId)
     } catch (error) {
       console.error('❌ CREATE - Error:', error);
 
@@ -173,33 +161,19 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
         chronic_diseases: data.chronic_diseases,
         physical_restrictions: data.physical_restrictions,
         surgical_history: data.surgical_history,
-        active: true,
+        active: data.active,
         medications_detail: data.medications_detail.map(med => ({
           name: med.name,
-          frequency: med.frecuency
+          dose: med.dose,
+          frequency: med.frequency
         })),
         vaccines_detail: data.vaccines_detail.map(vaccine => ({
           name: vaccine.name,
-          applied_at: vaccine.date.includes('T') ? vaccine.date : `${vaccine.date}T00:00:00.000Z`
+          applied_at: vaccine.applied_at.includes('T') ? vaccine.applied_at : `${vaccine.applied_at}T00:00:00.000Z`
         }))
       };
 
-      const response = await api.put(
-        `http://localhost:8080/api/v1/medical_record/update_record/${memberId}`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-Id': tenantId
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        return response.data;
-      } else {
-        throw new Error(`Error del servidor: ${response.status}`);
-      }
+      return await updateMedicalRecordApi(memberId, payload, tenantId)
     } catch (error) {
       console.error('❌ UPDATE - Error:', error);
 
@@ -252,7 +226,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   const addVaccine = () => {
     setFormData(prev => ({
       ...prev,
-      vaccines_detail: [...prev.vaccines_detail, { name: '', date: new Date().toISOString() }]
+      vaccines_detail: [...prev.vaccines_detail, { name: '', applied_at: new Date().toISOString() }]
     }));
   };
 
@@ -277,7 +251,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
       ...prev,
       vaccines_detail: [...prev.vaccines_detail, {
         name: vaccineName,
-        date: new Date().toISOString()
+        applied_at: new Date().toISOString()
       }]
     }));
   };
@@ -285,7 +259,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   const addMedication = () => {
     setFormData(prev => ({
       ...prev,
-      medications_detail: [...prev.medications_detail, { name: '', dose: '', frecuency: '' }]
+      medications_detail: [...prev.medications_detail, { name: '', dose: '', frequency: '' }]
     }));
   };
 
@@ -319,6 +293,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
           newErrors[fieldName] = issue.message;
         }
       });
+      console.log(newErrors)
       setErrors(newErrors);
       return false;
     }
@@ -648,8 +623,8 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                         <input
                           type="datetime-local"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          value={vaccine.date.slice(0, 16)}
-                          onChange={(e) => updateVaccine(index, 'date', new Date(e.target.value).toISOString())}
+                          value={vaccine.applied_at.slice(0, 16)}
+                          onChange={(e) => updateVaccine(index, 'applied_at', new Date(e.target.value).toISOString())}
                         />
                       </div>
                     </div>
@@ -715,11 +690,11 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                         <input
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                           placeholder="ej: 2 veces al día"
-                          value={medication.frecuency}
-                          onChange={(e) => updateMedication(index, 'frecuency', e.target.value)}
+                          value={medication.frequency}
+                          onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
                           maxLength={100}
                         />
-                        <p className="text-xs text-gray-500">{medication.frecuency.length}/100 caracteres</p>
+                        <p className="text-xs text-gray-500">{medication.frequency.length}/100 caracteres</p>
                       </div>
                     </div>
                   </div>
