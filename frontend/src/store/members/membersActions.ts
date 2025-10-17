@@ -4,6 +4,7 @@ import {
   getMember,
   getMembers,
   getMembersByStatus,
+  getMembersWithBranch,
   updateMember,
   updateMemberStatus,
   createMember,
@@ -29,7 +30,6 @@ export const fetchMemberAction = createAsyncThunk<
   }
 });
 
-// Obtener datos de todos los miembros desde Firestore
 export const fetchMembersAction = createAsyncThunk(
   "members/fetch",
   async (_, { rejectWithValue }) => {
@@ -55,6 +55,22 @@ export const fetchMembersByStatusAction = createAsyncThunk<
   async (status: "PENDING" | "APPROVED" | "REJECTED", { rejectWithValue }) => {
     try {
       const members = await getMembersByStatus(status);
+      return members;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al obtener los miembros";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Obtener miembros con su respectiva rama
+export const fetchMembersWithBranchAction = createAsyncThunk(
+  "members/fetchWithBranch",
+  async (_, { rejectWithValue }) => {
+    try {
+      const members = await getMembersWithBranch();
       return members;
     } catch (error: unknown) {
       const axiosError = error as AxiosError;
@@ -91,6 +107,7 @@ export const updateMemberStatusAction = createAsyncThunk<
     }
   }
 );
+
 
 // Actualizar datos de un miembro en Firestore
 export const updateMemberAction = createAsyncThunk<

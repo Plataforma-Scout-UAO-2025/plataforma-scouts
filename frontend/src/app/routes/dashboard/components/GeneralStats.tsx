@@ -6,32 +6,19 @@ interface GeneralStatsProps {
 }
 
 const GeneralStats = ({ members }: GeneralStatsProps) => {
+  const isScout = (role: string | undefined) => role?.toUpperCase() === "SCOUT";
+
   // Calcular edad promedio
-  const conEdad = members.filter((m) => m.age);
+  const conEdad = members.filter((m) => m.age && isScout(m.role));
   const edadPromedio = conEdad.length > 0
     ? Math.round(conEdad.reduce((acc, m) => acc + (m.age || 0), 0) / conEdad.length)
     : 0;
 
   // Scouts con insignias
-  const conInsignias = 0 //members.filter((m) => m.badges && m.badges.length > 0).length;
+  const conInsignias = 0;
   const porcentajeConInsignias = members.length > 0 
     ? Math.round((conInsignias / members.length) * 100)
     : 0;
-
-  /* Perfiles completos
-  const perfilesCompletos = members.filter(
-    (m) =>
-      m.first_name &&
-      m.last_name &&
-      m.email &&
-      m.phone &&
-      m.age &&
-      m.gender &&
-      m.address
-  ).length;
-  const porcentajeCompletos = members.length > 0
-    ? Math.round((perfilesCompletos / members.length) * 100)
-    : 0;*/
 
   const estadisticas = [
     {
@@ -45,16 +32,9 @@ const GeneralStats = ({ members }: GeneralStatsProps) => {
       icon: Award,
       titulo: "Con Insignias",
       valor: `${porcentajeConInsignias}%`,
-      detalle: `${conInsignias} de ${members.length} scouts`,
+      detalle: `${conInsignias} de ${members.filter((m) => isScout(m.role)).length} scouts`,
       color: "text-amber-600",
-    },
-    /*{
-      icon: Contact,
-      titulo: "Perfiles Completos",
-      valor: `${porcentajeCompletos}%`,
-      detalle: `${perfilesCompletos} de ${members.length} scouts`,
-      color: "text-green-600",
-    },*/
+    }
   ];
 
   return (

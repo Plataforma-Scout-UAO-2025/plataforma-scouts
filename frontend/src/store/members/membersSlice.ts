@@ -5,6 +5,7 @@ import {
   updateMemberAction,
   createMemberAction,
   createMemberWithSchoolDataAction,
+  fetchMembersWithBranchAction,
   fetchMembersByStatusAction,
   updateMemberStatusAction,
 } from "./membersActions";
@@ -75,6 +76,20 @@ const membersSlice = createSlice({
       state.loading = false;
       state.error = action.payload?.error as string;
     });
+
+    builder.addCase(fetchMembersWithBranchAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchMembersWithBranchAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.members = action.payload as Member[];
+    });
+    builder.addCase(fetchMembersWithBranchAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
     builder.addCase(createMemberAction.pending, (state) => {
       state.loading = true;
       state.error = null;
