@@ -20,7 +20,7 @@ function TreasurerEnrollment() {
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
       <h1 className="text-2xl font-bold text-primary mb-8">
-        Inscripción al grupo scout
+        Inscribe a un tesorero
       </h1>
 
       <form
