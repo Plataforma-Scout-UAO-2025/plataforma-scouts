@@ -7,7 +7,6 @@ interface BranchCountProps {
 }
 
 const BranchCount = ({ filteredMembers, totalMembers }: BranchCountProps) => {
-  console.log("Rendering BranchCount with members:", filteredMembers);
   const branchCounts = useMemo(() => {
     const total = totalMembers;
     const countBySection: Record<string, number> = {};
@@ -59,7 +58,7 @@ const BranchCount = ({ filteredMembers, totalMembers }: BranchCountProps) => {
       });
 
     return counts;
-  }, [totalMembers]);
+  }, [filteredMembers, totalMembers]);
 
   return (
     <>

@@ -18,7 +18,7 @@ interface MembersFilterProps {
   branchFilter: string;
   setBranchFilter: (value: string) => void;
   filteredMembers: Member[];
-  extractSectionsFromMember: (member: unknown) => string[];
+  extractSectionsFromMember: (member: Member) => string[];
 }
 
 const MembersFilter = ({

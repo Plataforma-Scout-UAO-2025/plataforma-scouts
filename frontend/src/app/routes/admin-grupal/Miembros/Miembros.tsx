@@ -23,6 +23,7 @@ const Miembros = () => {
     endIndex,
     handlePreviousPage,
     handleNextPage,
+    extractSectionsFromMember,
   } = useMembersManagement({ itemsPerPage: 10 });
 
   const { loading, error } = useTenantMembersByStatus({
@@ -54,7 +55,7 @@ const Miembros = () => {
           branchFilter={branchFilter}
           setBranchFilter={setBranchFilter}
           filteredMembers={filteredMembers}
-          extractSectionsFromMember={() => []}
+          extractSectionsFromMember={extractSectionsFromMember}
         />
       </section>
 
