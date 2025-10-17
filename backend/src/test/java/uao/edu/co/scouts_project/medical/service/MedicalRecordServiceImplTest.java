@@ -44,7 +44,7 @@ class MedicalRecordServiceImplTest {
                 900001L, TENANT_ID, MEMBER_ID,
                 "O+", "SURA", "Maní", "Asma", "Ninguna", "Apendicectomía 2018",
                 true,
-                List.of(new MedicationDTO("Salbutamol","2/día")),
+                List.of(new MedicationDTO("Salbutamol", "50 mg","2/día")),
                 List.of(new VaccineDTO("Tétanos","2023-06-12")),
                 OffsetDateTime.parse("2024-01-01T00:00:00Z"),
                 OffsetDateTime.parse("2024-01-01T00:00:00Z")
@@ -53,12 +53,12 @@ class MedicalRecordServiceImplTest {
 
     private MedicalRecordDTO dtoStub() {
         return new MedicalRecordDTO(
-                "900001",
+                900001L,
                 TENANT_ID,
-                MEMBER_ID.toString(),
+                MEMBER_ID,
                 "O+", "SURA", "Maní", "Asma", "Ninguna", "Apendicectomía 2018",
                 true,
-                List.of(new MedicationDTO("Salbutamol","2/día")),
+                List.of(new MedicationDTO("Salbutamol","50 mg","2/día")),
                 List.of(new VaccineDTO("Tétanos","2023-06-12")),
                 OffsetDateTime.parse("2024-01-01T00:00:00Z"),
                 OffsetDateTime.parse("2024-01-01T00:00:00Z")
@@ -72,7 +72,7 @@ class MedicalRecordServiceImplTest {
         var req = new CreateMedicalRecordDTO(
                 MEMBER_ID, "O+", "SURA", "Maní", "Asma", "Ninguna", "Apendicectomía 2018",
                 true,
-                List.of(new MedicationDTO("Salbutamol","2/día")),
+                List.of(new MedicationDTO("Salbutamol","50 mg","2/día")),
                 List.of(new VaccineDTO("Tétanos","2023-06-12"))
         );
 
@@ -84,7 +84,7 @@ class MedicalRecordServiceImplTest {
         var res = service.crear(TENANT_ID, MEMBER_ID, req);
 
         assertEquals(TENANT_ID, res.tenantId());
-        assertEquals(MEMBER_ID.toString(), res.memberId());
+        assertEquals(MEMBER_ID, res.memberId());
         assertEquals("O+", res.bloodType());
     }
 
@@ -123,7 +123,7 @@ class MedicalRecordServiceImplTest {
 
         var res = service.obtenerPorMember(TENANT_ID, MEMBER_ID);
         assertEquals(TENANT_ID, res.tenantId());
-        assertEquals(MEMBER_ID.toString(), res.memberId());
+        assertEquals(MEMBER_ID, res.memberId());
     }
 
     @Test
@@ -140,7 +140,7 @@ class MedicalRecordServiceImplTest {
     void actualizar_ok() {
         var upd = new UpdateMedicalRecordDTO(
                 "O+", "SURA Plan Oro", "Maní, Penicilina", "Asma", "Evitar esfuerzo extremo", "Apendicectomía 2018",
-                true, List.of(new MedicationDTO("Salbutamol","1/día")),
+                true, List.of(new MedicationDTO("Salbutamol","50 mg","1/día")),
                 List.of(new VaccineDTO("Fiebre amarilla","2024-02-01"))
         );
 

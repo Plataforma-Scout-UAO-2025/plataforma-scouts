@@ -1,9 +1,6 @@
-import type { MedicalFormData } from "./medical-form.type";
+import type { MedicalDB } from "./medical-form.type";
 
-export interface MedicalRecord extends MedicalFormData {
-  id: number;
-  created_at: string;
-  updated_at: string;
+export interface MedicalRecord extends MedicalDB {
   member_name: string;
 }
 
