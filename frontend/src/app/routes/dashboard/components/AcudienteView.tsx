@@ -20,7 +20,7 @@ export default function AcudienteView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            ¡Bienvenido, {user?.nickname}!
+            ¡Bienvenido, {user?.nickname || user?.name}!
           </h1>
           <p className="text-muted-foreground">
             Panel de Acudiente
