@@ -29,7 +29,7 @@ import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
-import TreasurerEnrollment from "./app/routes/grupos/basic-info/treasurer_info/TreasurerEnrollment";
+import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollment";
 
 function App() {
   useAuth0ApiWrapper();

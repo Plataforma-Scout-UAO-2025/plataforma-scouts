@@ -1,6 +1,6 @@
 import api from "./axios";
 import type { Member, UpdateMember } from "@/types/member.type";
-import type { CreateMemberWithSchoolRequest } from "@/types/enrollment.type";
+import type { CreateMemberWithSchoolRequest, CreateAuth0Request, CreateAuth0Response } from "@/types/enrollment.type";
 
 // Crear un nuevo miembro
 export const createMember = async (data: Member) => {
@@ -14,6 +14,22 @@ export const createMemberWithSchool = async (
 ) => {
   const response = await api.post("/members/create_member_with_school", data);
   return response.data;
+};
+
+// Crear miembro en Auth0
+export const createMemberAuth0 = async (
+  data: CreateAuth0Request,
+): Promise<CreateAuth0Response> => {
+  const resp = await api.post<CreateAuth0Response>("/auth0/create-user", data);
+  return resp.data;
+};
+
+// Crear scout en Auth0
+export const createScoutAuth0 = async (
+  data: CreateAuth0Request,
+): Promise<CreateAuth0Response> => {
+  const resp = await api.post<CreateAuth0Response>("/auth0/create-user", data);
+  return resp.data;
 };
 
 // Obtener perfil de miembro

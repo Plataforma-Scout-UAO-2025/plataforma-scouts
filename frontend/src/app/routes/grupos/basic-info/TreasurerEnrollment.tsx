@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import PersonalDataForm from "../components/PersonalDataForm";
-import SuccessModal from "../components/SuccessModal";
+import PersonalDataForm from "./components/PersonalDataForm";
+import SuccessModal from "./components/SuccessModal";
 
-import { useTreasurerEnrollment } from "@/hooks/useTreasurerEnrollment";
+import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 
 function TreasurerEnrollment() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ function TreasurerEnrollment() {
     loadingSubmit,
     handlePersonalChange,
     handleSubmit,
-  } = useTreasurerEnrollment();
+  } = useRoleEnrollment({ role: "TESORERO" });
 
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">

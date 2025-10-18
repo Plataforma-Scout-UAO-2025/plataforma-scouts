@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useMember } from "@/hooks/useMember";
-import { createMemberAction } from "@/store/members/membersActions";
+import { createMemberAction, createMemberAuth0Action } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
-import { createScout } from "@/api/auth0";
 
 import type { ChangeEvent, PersonalData } from "@/types/enrollment.type";
 import type { Member } from "@/types/member.type";
+import type { role } from "@/types/enrollment.type";
 
-type useTreasurerEnrollment = {
+type useRoleEnrollmentProps = {
+  role: role;
+};
+
+type useRoleEnrollmentReturn = {
   datosPersonales: PersonalData;
   setDatosPersonales: React.Dispatch<React.SetStateAction<PersonalData>>;
 
@@ -25,7 +29,7 @@ type useTreasurerEnrollment = {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 };
 
-export function useTreasurerEnrollment(): useTreasurerEnrollment {
+export function useRoleEnrollment({ role }: useRoleEnrollmentProps): useRoleEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
   const { orgId } = useAuth0ApiWrapper();
@@ -49,11 +53,7 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
     gender: "",
     weight: "",
     height: "",
-    hobbies: "",
-    sports: "",
-    instruments: "",
     tenantId: "",
-    emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
 
   useEffect(() => {
@@ -74,18 +74,18 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
         return;
       }
 
-      try {
-        await createScout({
+      const auth0Result = await dispatch(
+        createMemberAuth0Action({
           email: datosPersonales.email,
           password: datosPersonales.password,
           username: datosPersonales.username,
-        });
-      } catch (err) {
-        console.error("Error creando usuario en Auth0:", err);
-        alert(
-          "No se pudo crear el usuario en Auth0. " +
-            (err instanceof Error ? err.message : "")
-        );
+          role: role,
+        })
+      );
+
+      if (createMemberAuth0Action.rejected.match(auth0Result)) {
+        const errorMessage = auth0Result.payload?.error || "Error desconocido al crear usuario en Auth0";
+        alert(`No se pudo crear el usuario en Auth0: ${errorMessage}`);
         return;
       }
 
@@ -106,7 +106,7 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
       console.error("Error al enviar la solicitud:", error);
       alert("Error al enviar la solicitud.");
     }
-  }, [datosPersonales, orgId, dispatch]);
+  }, [datosPersonales, orgId, role, dispatch]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
