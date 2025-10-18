@@ -4,10 +4,10 @@ import { useMember } from "@/hooks/useMember";
 import {
   createMemberAction,
   createMemberWithSchoolDataAction,
+  createScoutAuth0Action,
 } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
-import { createScout } from "@/api/auth0";
 
 import type {
   ChangeEvent,
@@ -98,7 +98,6 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
   const enviarDatos = useCallback(async () => {
     try {
-      // Before creating member in backend, create user in Auth0 using dedicated endpoint
       if (!datosPersonales.username || !datosPersonales.password) {
         alert(
           "username y password son obligatorios para crear la cuenta de Auth0",
@@ -106,19 +105,17 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return;
       }
 
-      // Create user in Auth0 (this endpoint will also add to organization and assign role SCOUT)
-      try {
-        await createScout({
+      const auth0Result = await dispatch(
+        createScoutAuth0Action({
           email: datosPersonales.email,
           password: datosPersonales.password,
           username: datosPersonales.username,
-        });
-      } catch (err) {
-        console.error("Error creando usuario en Auth0:", err);
-        alert(
-          "No se pudo crear el usuario en Auth0. " +
-            (err instanceof Error ? err.message : ""),
-        );
+        })
+      );
+
+      if (createScoutAuth0Action.rejected.match(auth0Result)) {
+        const errorMessage = auth0Result.payload?.error || "Error desconocido al crear usuario en Auth0";
+        alert(`No se pudo crear el usuario en Auth0: ${errorMessage}`);
         return;
       }
 

@@ -28,7 +28,7 @@ export const createMemberAuth0 = async (
 export const createScoutAuth0 = async (
   data: CreateAuth0Request,
 ): Promise<CreateAuth0Response> => {
-  const resp = await api.post<CreateAuth0Response>("/auth0/create-user", data);
+  const resp = await api.post<CreateAuth0Response>("/auth0/scouts", data);
   return resp.data;
 };
 
