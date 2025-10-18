@@ -1,6 +1,10 @@
 import api from "./axios";
 import type { Member, UpdateMember } from "@/types/member.type";
-import type { CreateMemberWithSchoolRequest, CreateAuth0Request, CreateAuth0Response } from "@/types/enrollment.type";
+import type {
+  CreateMemberWithSchoolRequest,
+  CreateAuth0Request,
+  CreateAuth0Response,
+} from "@/types/enrollment.type";
 
 // Crear un nuevo miembro
 export const createMember = async (data: Member) => {
@@ -10,7 +14,7 @@ export const createMember = async (data: Member) => {
 
 // Crear un miembro con datos escolares
 export const createMemberWithSchool = async (
-  data: CreateMemberWithSchoolRequest
+  data: CreateMemberWithSchoolRequest,
 ) => {
   const response = await api.post("/members/create_member_with_school", data);
   return response.data;
@@ -32,6 +36,19 @@ export const createScoutAuth0 = async (
   return resp.data;
 };
 
+// Obtener lista de roles
+export interface RoleSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export const listRoles = async (): Promise<RoleSummary[]> => {
+  const resp = await api.get<RoleSummary[]>("/auth0/roles");
+  console.log("Roles fetched:", resp.data);
+  return resp.data;
+};
+
 // Obtener perfil de miembro
 export const getMember = async (id: string | number | bigint) => {
   const response = await api.get<Member>("/members/list_member_by_id", {
@@ -48,7 +65,7 @@ export const getMembers = async () => {
 
 // Obtener miembros por estado
 export const getMembersByStatus = async (
-  status: "PENDING" | "APPROVED" | "REJECTED"
+  status: "PENDING" | "APPROVED" | "REJECTED",
 ) => {
   const response = await api.get<Member[]>("/members/list_members_by_status", {
     params: { status },
@@ -58,14 +75,16 @@ export const getMembersByStatus = async (
 
 // Obtener miembros por subrama
 export const getMembersWithBranch = async () => {
-  const response = await api.get<Member[]>("/members/list_members_with_details");
+  const response = await api.get<Member[]>(
+    "/members/list_members_with_details",
+  );
   return response.data;
 };
 
 // Actualizar estado de un miembro
 export const updateMemberStatus = async (
   id: string | number,
-  status: "PENDING" | "APPROVED" | "REJECTED"
+  status: "PENDING" | "APPROVED" | "REJECTED",
 ) => {
   const response = await api.put(`/members/update_member_status/${id}`, null, {
     params: { status },
@@ -76,7 +95,7 @@ export const updateMemberStatus = async (
 // Actualizar perfil de usuario
 export const updateMember = async (
   id: string,
-  updates: Partial<UpdateMember>
+  updates: Partial<UpdateMember>,
 ) => {
   const response = await api.put(`/members/update_member_by_id/${id}`, updates);
   return response.data;

@@ -21,7 +21,8 @@ function getMemberId(m?: AnyMember | null): number | undefined {
 interface UseMemberApprovalArgs {
   member: AnyMember | null;
   selectedSection: string;
-  selectedSubgroup: string;
+  selectedSubgroup?: string;
+  selectedRole?: string;
   onSuccess: () => void;
   onClose: () => void;
 }
@@ -29,6 +30,7 @@ interface UseMemberApprovalArgs {
 export function useMemberApproval({
   member,
   selectedSubgroup,
+  selectedRole,
   onSuccess,
   onClose,
 }: UseMemberApprovalArgs) {
@@ -52,7 +54,7 @@ export function useMemberApproval({
         updateMemberStatusAction({
           id: memberId,
           status: "APPROVED",
-        })
+        }),
       ).unwrap();
 
       const updates: Partial<UpdateMember> = {};
@@ -62,13 +64,17 @@ export function useMemberApproval({
       if (selectedSubgroup) {
         updates.subgroupId = Number(selectedSubgroup);
       }
+      if (selectedRole) {
+        // cast to UpdateMember.role union
+        updates.role = selectedRole as UpdateMember["role"];
+      }
 
       if (Object.keys(updates).length > 0) {
         await dispatch(
           updateMemberAction({
             uid: String(memberId),
             updates,
-          })
+          }),
         ).unwrap();
       }
 
@@ -80,7 +86,7 @@ export function useMemberApproval({
         (member as UpdateMember).lastName ?? (member as Member).last_name ?? "";
 
       toast.success(
-        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`
+        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`,
       );
 
       onClose();
@@ -88,7 +94,7 @@ export function useMemberApproval({
     } catch (e) {
       console.error("Error al aceptar solicitud:", e);
       toast.error(
-        "Ocurrió un error al procesar la solicitud. Intenta nuevamente."
+        "Ocurrió un error al procesar la solicitud. Intenta nuevamente.",
       );
     } finally {
       setLoading(false);
