@@ -45,7 +45,6 @@ export interface RoleSummary {
 
 export const listRoles = async (): Promise<RoleSummary[]> => {
   const resp = await api.get<RoleSummary[]>("/auth0/roles");
-  console.log("Roles fetched:", resp.data);
   return resp.data;
 };
 
