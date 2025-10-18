@@ -111,6 +111,12 @@ const adminGrupalItems: MenuItem[] = [
     ],
   },
   {
+    id: "treasurer_info",
+    label: "tesorería",
+    icon: <Award />,
+    href: "/app/inscripcion/tesorero",
+  },
+  {
     id: "insignias",
     label: "Insignias",
     icon: <Award />,
