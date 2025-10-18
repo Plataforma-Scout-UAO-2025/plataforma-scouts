@@ -125,22 +125,6 @@ export default function MemberDetailsModal({
               selectedRole={selectedRole}
               setSelectedRole={setSelectedRole}
             />
-            <AssignmentSelectors
-              groups={groups}
-              sections={sections}
-              subgroups={subgroups}
-              selectedGroupSlug={selectedGroupSlug}
-              setSelectedGroupSlug={setSelectedGroupSlug}
-              selectedSection={selectedSection}
-              setSelectedSection={setSelectedSection}
-              selectedSubgroup={selectedSubgroup}
-              setSelectedSubgroup={setSelectedSubgroup}
-              roles={roles}
-              rolesLoading={rolesLoading}
-              rolesError={rolesError}
-              selectedRole={selectedRole}
-              setSelectedRole={setSelectedRole}
-            />
             <MemberStatusBar member={member} />
           </div>
         )}
