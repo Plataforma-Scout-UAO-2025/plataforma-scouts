@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import PersonalDataForm from "./components/PersonalDataForm";
+import EmergencyContacts from "./components/EmergencyContacts";
 import InterestsForm from "./components/InterestsForm";
 import SchoolDataForm from "./components/SchoolDataForm";
 import SchoolDialog from "./components/SchoolDialog";
@@ -34,11 +35,14 @@ function ScoutEnrollment() {
   const getCamposPagina = () => {
     if (pagina === 1)
       return (
+        <>
         <PersonalDataForm
           datos={datosPersonales}
           handleChange={handlePersonalChange}
           setDatos={setDatosPersonales}
         />
+        <EmergencyContacts datos={datosPersonales} setDatos={setDatosPersonales} />
+      </>
       );
     if (pagina === 2)
       return (

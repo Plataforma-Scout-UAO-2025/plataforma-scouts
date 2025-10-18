@@ -8,7 +8,6 @@ import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 function ScouterEnrollment() {
   const navigate = useNavigate();
 
-  // Aquí pasamos el rol correspondiente al hook
   const {
     datosPersonales,
     setDatosPersonales,
@@ -22,7 +21,6 @@ function ScouterEnrollment() {
 
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
-      {/* Título */}
       <h1 className="text-2xl font-bold text-primary mb-6 text-center md:text-left">
         Inscripción de Scouter
       </h1>
@@ -52,7 +50,7 @@ function ScouterEnrollment() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/app/members")}
+            onClick={() => navigate("/app/miembros")}
           >
             Cancelar
           </Button>
