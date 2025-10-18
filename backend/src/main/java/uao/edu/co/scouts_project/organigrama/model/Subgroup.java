@@ -2,6 +2,9 @@ package uao.edu.co.scouts_project.organigrama.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
 // TODO: GALERÍA DE FOTOS - Imports temporalmente comentados
 // import org.hibernate.annotations.JdbcTypeCode;
 // import org.hibernate.type.SqlTypes;
@@ -10,6 +13,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "subgroup")
+@Builder
+@AllArgsConstructor
 public class Subgroup {
     
     @Id
