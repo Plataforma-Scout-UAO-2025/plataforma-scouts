@@ -98,18 +98,7 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
     @Override
     public CreatedUserDTO createUserWithRole(CreateUserWithRoleCommandDTO request) {
-        // Validar que el rol no sea administrativo
         String roleName = request.getRole().toUpperCase();
-        
-        // Lista de roles administrativos que NO se pueden asignar
-        List<String> forbiddenRoles = Arrays.asList("ADMIN_GLOBAL", "ADMIN_GRUPO", "DEV_SUPPORT");
-        
-        if (forbiddenRoles.contains(roleName)) {
-            throw new UnauthorizedRoleAssignmentException(
-                "No está autorizado para asignar roles administrativos. " +
-                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-            );
-        }
 
         // Convertir string a enum Role
         Role role;
@@ -122,15 +111,23 @@ public class Auth0ServiceImpl implements IAuth0Service {
             );
         }
 
+        // Validar que el rol NO sea administrativo
+        List<Role> forbiddenRoles = Arrays.asList(Role.ADMIN_GLOBAL, Role.ADMIN_GRUPO, Role.DEV_SUPPORT);
+        if (forbiddenRoles.contains(role)) {
+            throw new UnauthorizedRoleAssignmentException(
+                "No está autorizado para asignar roles administrativos. " +
+                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
+            );
+        }
+
         // Validar que el rol esté en la lista de permitidos
         List<Role> allowedRoles = Arrays.asList(
             Role.SCOUT, 
             Role.ACUDIENTE, 
             Role.TESORERO, 
-            Role.SCOUTER,
+            Role.SCOUTER, 
             Role.COMITE_ADMIN
         );
-        
         if (!allowedRoles.contains(role)) {
             throw new UnauthorizedRoleAssignmentException(
                 "El rol " + roleName + " no está permitido para este endpoint. " +
