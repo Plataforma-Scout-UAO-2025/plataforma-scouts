@@ -61,7 +61,7 @@ function App() {
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUT, RawRole.GUEST, RawRole.ACUDIENTE, RawRole.TESORERO]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Miembros /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={[RawRole.GUEST, RawRole.SCOUT, RawRole.ACUDIENTE]}><ScoutEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.GUEST, RawRole.SCOUT, RawRole.ACUDIENTE]}><ScoutEnrollment /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Requests /></ProtectedRoute>} />
             <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Rejected /></ProtectedRoute>} />
             {/*
