@@ -30,6 +30,8 @@ import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollment";
+import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
+import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
 
 function App() {
   useAuth0ApiWrapper();
@@ -66,6 +68,8 @@ function App() {
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Requests /></ProtectedRoute>} />
             <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Rejected /></ProtectedRoute>} />
             <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Insignias /></ProtectedRoute>} />
             */}

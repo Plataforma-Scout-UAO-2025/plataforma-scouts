@@ -43,7 +43,7 @@ const MembersFilter = ({
   );
 
   // Roles de ejemplo
-  const roles = ["Scout", "Tesorero", "Acudiente", "Scouter", "Comité Admin"];
+  const roles = ["Scout", "Tesorero", "Acudiente", "Scouter", "Comite Admin"];
 
   // Rutas según el rol seleccionado
   const roleRoutes: Record<string, string> = {
@@ -51,7 +51,7 @@ const MembersFilter = ({
     Tesorero: "/app/inscripcion/tesorero",
     Acudiente: "/app/inscripcion/acudiente",
     Scouter: "/app/inscripcion/scouter",
-    "Comité Admin": "/app/inscripcion/comite",
+    "Comite Admin": "/app/inscripcion/comite-admin",
   };
 
   // Manejar selección de rol

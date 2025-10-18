@@ -34,7 +34,7 @@ function TreasurerEnrollment() {
         />
 
         <div className="col-span-full flex justify-between mt-6">
-          <Button type="button" variant="outline" onClick={() => navigate("/")}>
+          <Button type="button" variant="outline" onClick={() => navigate("/app/miembros")}>
             Cancelar
           </Button>
 

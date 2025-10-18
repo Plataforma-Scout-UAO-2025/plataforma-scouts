@@ -36,25 +36,25 @@ export function useRoleEnrollment({ role }: useRoleEnrollmentProps): useRoleEnro
 
   const [pagina, setPagina] = useState(1);
   const [showModal, setShowModal] = useState(false);
-
-  const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
-    firstname: "",
-    lastname: "",
-    email: "",
-    confirm_email: "",
-    username: "",
-    password: "",
-    confirm_password: "",
-    document_type: "",
-    identification: "",
-    birth_date: "",
-    address: "",
-    phone: "",
-    gender: "",
-    weight: "",
-    height: "",
-    tenantId: "",
-  });
+const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
+  firstname: "",
+  lastname: "",
+  email: "",
+  confirm_email: "",
+  username: "",
+  password: "",
+  confirm_password: "",
+  document_type: "",
+  identification: "",
+  birth_date: "",
+  address: "",
+  phone: "",
+  gender: "",
+  weight: "",
+  height: "",
+  tenantId: "",
+  ...(role === "SCOUT" ? { emergency_contacts: [] } : {}),
+});
 
   useEffect(() => {
     if (orgId) {
