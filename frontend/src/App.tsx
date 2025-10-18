@@ -30,6 +30,11 @@ import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 
+// Guardianes
+import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
+import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
+import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
+
 function App() {
   useAuth0ApiWrapper();
 
@@ -37,10 +42,10 @@ function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          {/* 🔹 Login & Registro */}
+          {/* Login & Registro */}
           <Route path="/" element={<Home />} />
 
-          {/* 🔹 Rutas internas con layout */}
+          {/* Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
 
@@ -72,6 +77,11 @@ function App() {
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><Grupos /></ProtectedRoute>} />
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><MedicalRecordsView /></ProtectedRoute>} />
+
+            {/* Rutas para Guardianes*/}
+            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><MembersInCharge /></ProtectedRoute>} />
+            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><GuardianProfile /></ProtectedRoute>} />
+            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><WelcomeAddMember /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
