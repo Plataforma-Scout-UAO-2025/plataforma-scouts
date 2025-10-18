@@ -17,14 +17,6 @@ import { useMemberApproval } from "@/hooks/useMemberApproval";
 import { listRoles } from "@/api/membersApi";
 import type { RoleSummary } from "@/api/membersApi";
 import { useEffect, useState } from "react";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface MemberDetailsModalProps {
   open: boolean;
@@ -127,58 +119,28 @@ export default function MemberDetailsModal({
               setSelectedSection={setSelectedSection}
               selectedSubgroup={selectedSubgroup}
               setSelectedSubgroup={setSelectedSubgroup}
+              roles={roles}
+              rolesLoading={rolesLoading}
+              rolesError={rolesError}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
             />
-            <div className="pt-4">
-              <h3 className="text-lg font-medium">Rol</h3>
-              {rolesError ? (
-                <p className="text-destructive">{rolesError}</p>
-              ) : (
-                <div className="w-full">
-                  <Label htmlFor="role">Selecciona un rol *</Label>
-                  <Select
-                    value={selectedRole}
-                    onValueChange={(val) => setSelectedRole(val)}
-                    disabled={rolesLoading || roles.length === 0}
-                  >
-                    <SelectTrigger id="role" className="w-full">
-                      <SelectValue
-                        placeholder={
-                          rolesLoading
-                            ? "Cargando roles..."
-                            : roles.length === 0
-                              ? "No hay roles disponibles"
-                              : "Selecciona un rol"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.length > 0 ? (
-                        roles.map((r) => (
-                          <SelectItem key={r.id} value={r.name.toUpperCase()}>
-                            {r.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="no-roles" disabled>
-                          {rolesLoading
-                            ? "Cargando..."
-                            : "Sin roles disponibles"}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-
-                  {selectedRole && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {
-                        roles.find((x) => x.name.toUpperCase() === selectedRole)
-                          ?.description
-                      }
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+            <AssignmentSelectors
+              groups={groups}
+              sections={sections}
+              subgroups={subgroups}
+              selectedGroupSlug={selectedGroupSlug}
+              setSelectedGroupSlug={setSelectedGroupSlug}
+              selectedSection={selectedSection}
+              setSelectedSection={setSelectedSection}
+              selectedSubgroup={selectedSubgroup}
+              setSelectedSubgroup={setSelectedSubgroup}
+              roles={roles}
+              rolesLoading={rolesLoading}
+              rolesError={rolesError}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
+            />
             <MemberStatusBar member={member} />
           </div>
         )}
