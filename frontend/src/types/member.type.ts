@@ -11,7 +11,7 @@ export interface Member {
   firstName?: string;
   lastName?: string;
   isActive?: boolean;
-  
+
   member_id?: number;
   first_name?: string;
   last_name?: string;
@@ -89,7 +89,7 @@ export interface Member {
     };
   };
   branch?: Section[];
-  }
+}
 
 export interface CreateMember {
   tenantId?: string;
@@ -104,7 +104,7 @@ export interface CreateMember {
   birthDate?: Date;
   isActive?: boolean;
   emergencyContacts?: EmergencyContact[];
-  
+
   member_id?: number;
   first_name?: string;
   last_name?: string;
@@ -145,6 +145,8 @@ export interface UpdateMember {
   lastName?: string;
   subgroupId?: number;
   subgroupName?: string;
+  sectionId?: number;
+  sectionName?: string;
   age?: number;
   userId?: string;
   tenantId?: string;

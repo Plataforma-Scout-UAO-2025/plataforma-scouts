@@ -99,3 +99,25 @@ export const updateMember = async (
   const response = await api.put(`/members/update_member_by_id/${id}`, updates);
   return response.data;
 };
+
+// Enviar un DTO completo para update_member_by_id (backend valida campos requeridos)
+export const updateMemberByDto = async (
+  id: string,
+  memberDto: Record<string, unknown>,
+) => {
+  const response = await api.put(
+    `/members/update_member_by_id/${id}`,
+    memberDto,
+  );
+  return response.data;
+};
+
+// Asignar subgrupo y sección a un miembro
+export const assignSubgroupAndSection = async (data: {
+  memberId: number | string;
+  subGroupId?: number | string;
+  sectionId?: number | string;
+}) => {
+  const response = await api.put(`/members/assign_subgroup_and_section`, data);
+  return response.data;
+};
