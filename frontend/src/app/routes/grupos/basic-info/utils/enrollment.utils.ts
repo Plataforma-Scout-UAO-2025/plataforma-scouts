@@ -1,5 +1,7 @@
 import type { PersonalData } from "@/types/enrollment.type";
 import type { EmergencyContact, CreateMember } from "@/types/member.type";
+import type { RawRole } from "@/roles/roles";
+import { RawRole as RawRoleEnum } from "@/roles/roles";
 
 export const calculateAge = (fecha: string): number => {
   if (!fecha) return 0;
@@ -11,16 +13,22 @@ export const calculateAge = (fecha: string): number => {
   return edad;
 };
 
-export const transformData = (data: PersonalData): CreateMember => {
+export const transformData = (
+  data: PersonalData,
+  currentUserRole?: RawRole
+): CreateMember => {
   const edad = calculateAge(data.birth_date);
 
-  const emergencyContacts: EmergencyContact[] = data.emergency_contacts
+  const emergencyContacts: EmergencyContact[] = (data.emergency_contacts ?? [])
     .filter((contact) => contact.name && contact.phone)
     .map((contact) => ({
       name: contact.name,
       relationship: contact.relationship,
       phone: contact.phone,
     }));
+
+  // Determinar el status basándose en el rol del usuario actual
+  const status = currentUserRole === RawRoleEnum.ADMIN_GRUPO ? "APPROVED" : "PENDING";
 
   return {
     tenantId: data.tenantId,
@@ -31,7 +39,7 @@ export const transformData = (data: PersonalData): CreateMember => {
     documentType: data.document_type,
     email: data.email,
     gender: data.gender,
-    role: "scout",
+    role: data.role,
     birthDate: new Date(data.birth_date),
     address: data.address,
     phone: data.phone,
@@ -41,7 +49,7 @@ export const transformData = (data: PersonalData): CreateMember => {
     sports: data.sports,
     instruments: data.instruments,
     isActive: true,
-    status: "PENDING",
+    status,
     emergencyContacts,
   };
 };

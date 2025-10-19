@@ -37,26 +37,29 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
       <Table className="text-sm">
         <TableHeader className="text-primary">
           <TableRow>
-            <TableHead className="pl-4 font-bold text-primary w-16">
+            <TableHead className="pl-4 font-bold text-primary">
               Id
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">
               Nombres
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">
               Apellidos
             </TableHead>
-            <TableHead className="font-bold text-primary w-36">
+            <TableHead className="font-bold text-primary">
               Identificación
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">Rama</TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">Rama</TableHead>
+            <TableHead className="font-bold text-primary">
               Creado
             </TableHead>
-            <TableHead className="font-bold text-primary w-32">
+            <TableHead className="font-bold text-primary">
               Dirección
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">
+              Rol
+            </TableHead>
+            <TableHead className="font-bold text-primary">
               Estado
             </TableHead>
             <TableHead className="text-right"></TableHead>
@@ -66,7 +69,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member, idx) => (
               <TableRow key={member.member_id ?? `member-${idx}`}>
-                <TableCell className="pl-4 font-medium w-16 truncate">
+                <TableCell className="pl-4 font-medium truncate">
                   {member.member_id}
                 </TableCell>
                 <TableCell className="w-32 truncate">
@@ -86,6 +89,9 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                 </TableCell>
                 <TableCell className="w-40 truncate">
                   {member.address || "Sin dirección"}
+                </TableCell>
+                <TableCell className="w-40 truncate">
+                  {member.role}
                 </TableCell>
                 <TableCell>
                   {isActive(member) ? (

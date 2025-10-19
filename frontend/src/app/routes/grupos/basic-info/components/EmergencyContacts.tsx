@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { PersonalData } from "@/types/enrollment.type";
+import { Trash } from "lucide-react";
 
 export default function EmergencyContacts({
   datos,
@@ -12,28 +13,31 @@ export default function EmergencyContacts({
 }) {
   const handleChange = (i: number, field: string, value: string) => {
     setDatos((prev) => {
-      const newContacts = [...prev.emergency_contacts];
+      const currentContacts = prev.emergency_contacts ?? [];
+      const newContacts = [...currentContacts];
       newContacts[i] = { ...newContacts[i], [field]: value };
       return { ...prev, emergency_contacts: newContacts };
     });
   };
 
-  const addContact = () =>
+  const addContact = () => {
     setDatos((p) => ({
       ...p,
-      emergency_contacts: [...p.emergency_contacts, { name: "", relationship: "", phone: "" }],
+      emergency_contacts: [...(p.emergency_contacts ?? []), { name: "", relationship: "", phone: "" }],
     }));
+  };
 
-  const removeContact = (i: number) =>
+  const removeContact = (i: number) => {
     setDatos((p) => ({
       ...p,
-      emergency_contacts: p.emergency_contacts.filter((_, idx) => idx !== i),
+      emergency_contacts: (p.emergency_contacts ?? []).filter((_, idx) => idx !== i),
     }));
+  };
 
   return (
     <div className="col-span-full mt-4">
       <h3 className="text-lg font-semibold mb-3">Contactos de emergencia *</h3>
-      {datos.emergency_contacts.map((c, i) => (
+      {(datos.emergency_contacts ?? []).map((c, i) => (
         <div key={i} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border rounded-lg">
           <div>
             <Label>Nombre</Label>
@@ -60,15 +64,15 @@ export default function EmergencyContacts({
             />
           </div>
           <div className="flex gap-2">
-            {datos.emergency_contacts.length > 1 && (
-              <Button variant="destructive" size="sm" onClick={() => removeContact(i)}>
-                X
+            {(datos.emergency_contacts ?? []).length > 1 && (
+              <Button variant="destructive" className="hover:text-destructive-hover" size="sm" onClick={() => removeContact(i)}>
+                <Trash/>
               </Button>
             )}
           </div>
         </div>
       ))}
-      <Button type="button" variant="outline" onClick={addContact} className="w-full">
+      <Button type="button" variant="primary" onClick={addContact} className="w-full">
         + Agregar contacto
       </Button>
     </div>
