@@ -10,19 +10,7 @@ import { FullScreenLoader } from '@/components/common/FullScreenLoader';
 import { guardianService } from '../../../services/guardianService';
 import type { Member } from '../../types/member.type';
 import type { MemberFormData } from '../../schemas/MemberForm.schema';
-
-function getErrorStatus(error: unknown): number | undefined { // Helper: De manera segura, extrae el estado HTTP de formas comunes de error sin usar `any`
-  if (typeof error !== 'object' || error === null) return undefined;
-
-
-  const candidate = error as { response?: unknown }; // Verificar si el error tiene una propiedad 'response'
-  if (!candidate.response || typeof candidate.response !== 'object') return undefined;
-
-  const resp = candidate.response as { status?: unknown };
-  if (typeof resp.status === 'number') return resp.status;
-
-  return undefined;
-}
+import { getErrorStatus } from '@/lib/errorUtils';
 
 export default function MembersInCharge() {
   const navigate = useNavigate();

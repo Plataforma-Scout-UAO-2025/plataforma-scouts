@@ -12,20 +12,7 @@ import { guardianService } from '../../services/guardianService';
 import type { Member } from '../../members/types/member.type';
 import type { GuardianWithMembers, UpdateGuardianDTO, MemberBasicInfo } from '@/types/guardianTypes';
 import { FullScreenLoader } from '@/components/common/FullScreenLoader';
-
-// Helper: safely extract HTTP status from common error shapes without using `any`
-function getErrorStatus(error: unknown): number | undefined {
-  if (typeof error !== 'object' || error === null) return undefined;
-
-  // Common axios-like shape: { response?: { status?: number } }
-  const candidate = error as { response?: unknown };
-  if (!candidate.response || typeof candidate.response !== 'object') return undefined;
-
-  const resp = candidate.response as { status?: unknown };
-  if (typeof resp.status === 'number') return resp.status;
-
-  return undefined;
-}
+import { getErrorStatus } from '@/lib/errorUtils';
 
 const GuardianProfilePage: React.FC = () => {
   const navigate = useNavigate();
