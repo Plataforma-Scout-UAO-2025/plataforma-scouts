@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { memberFormSchema, type MemberFormData } from '../../schemas/MemberForm.schema';
 import PersonalInfoForm from '../forms/PersonalInfoForm';
 import HealthInfoForm from '../forms/HealthInfoForm';
-import EmergencyContactsForm, { type EmergencyContact } from '../forms/EmergencyContactsForm';
+import EmergencyContactsForm from '../forms/EmergencyContactsForm';
 import SuccessCard from '../forms/SuccessCard';
+import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -23,9 +24,6 @@ export default function AddMemberModal({
   onSuccess, 
   isFirstMember = false 
 }: AddMemberModalProps) {
-  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([
-    { name: '', relationship: '', phone: '' }
-  ]);
   const [showSuccessCard, setShowSuccessCard] = useState(false);
   const [addedMemberName, setAddedMemberName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -41,23 +39,7 @@ export default function AddMemberModal({
     resolver: zodResolver(memberFormSchema)
   });
 
-  const addEmergencyContact = () => {
-    if (emergencyContacts.length < 3) {
-      setEmergencyContacts([...emergencyContacts, { name: '', relationship: '', phone: '' }]);
-    }
-  };
-
-  const removeEmergencyContact = (index: number) => {
-    if (emergencyContacts.length > 1) {
-      setEmergencyContacts(emergencyContacts.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateEmergencyContact = (index: number, field: keyof EmergencyContact, value: string) => {
-    const updated = [...emergencyContacts];
-    updated[index] = { ...updated[index], [field]: value };
-    setEmergencyContacts(updated);
-  };
+  const { emergencyContacts, setEmergencyContacts, addEmergencyContact, removeEmergencyContact, updateEmergencyContact } = useEmergencyContacts();
 
   const validateEmergencyContacts = (): boolean => {
     return emergencyContacts.some(contact => 
@@ -159,7 +141,7 @@ export default function AddMemberModal({
               )}
 
               <PersonalInfoForm register={register} errors={errors} setValue={setValue} />
-              <HealthInfoForm register={register} errors={errors} />
+              <HealthInfoForm register={register} />
               <EmergencyContactsForm
                 emergencyContacts={emergencyContacts}
                 onAdd={addEmergencyContact}
