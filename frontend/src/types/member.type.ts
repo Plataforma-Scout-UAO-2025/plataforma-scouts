@@ -1,4 +1,5 @@
 import type { Section } from "./section.type";
+import type { role } from "./enrollment.type";
 
 export interface Member {
   // Campos opcionales para manejar ambas convenciones de nombres
@@ -23,7 +24,7 @@ export interface Member {
   tenant_id?: string;
   guardian_id?: number;
   relationship?: string;
-  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
+  role?: role;
   status?: string;
   is_active?: boolean;
   identification?: string;
@@ -116,7 +117,7 @@ export interface CreateMember {
   tenant_id?: string;
   guardian_id?: number;
   relationship?: string;
-  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
+  role?: role;
   status?: string;
   is_active?: boolean;
   identification?: string;
@@ -149,7 +150,7 @@ export interface UpdateMember {
   tenantId?: string;
   guardianId?: number;
   relationship?: string;
-  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
+  role?: role;
   status?: string;
   isActive?: boolean;
   identification?: string;

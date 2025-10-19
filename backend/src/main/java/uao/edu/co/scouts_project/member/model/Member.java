@@ -53,7 +53,6 @@ public class Member {
 
     private Integer guardianId;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subgroup_id")
     private Subgroup subgroup;
