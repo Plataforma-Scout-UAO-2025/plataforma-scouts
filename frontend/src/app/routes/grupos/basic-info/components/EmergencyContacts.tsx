@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { PersonalData } from "@/types/enrollment.type";
+import { Trash } from "lucide-react";
 
 export default function EmergencyContacts({
   datos,
@@ -64,14 +65,14 @@ export default function EmergencyContacts({
           </div>
           <div className="flex gap-2">
             {(datos.emergency_contacts ?? []).length > 1 && (
-              <Button variant="destructive" size="sm" onClick={() => removeContact(i)}>
-                X
+              <Button variant="destructive" className="hover:text-destructive-hover" size="sm" onClick={() => removeContact(i)}>
+                <Trash/>
               </Button>
             )}
           </div>
         </div>
       ))}
-      <Button type="button" variant="outline" onClick={addContact} className="w-full">
+      <Button type="button" variant="primary" onClick={addContact} className="w-full">
         + Agregar contacto
       </Button>
     </div>

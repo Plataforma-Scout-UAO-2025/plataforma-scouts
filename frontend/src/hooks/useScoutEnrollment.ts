@@ -8,6 +8,8 @@ import {
 } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
+import { useRoleContext } from "@/hooks/useRoleContext";
+import { normalizeRawRole } from "@/roles/roles";
 
 import type {
   ChangeEvent,
@@ -44,6 +46,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
   const { orgId } = useAuth0ApiWrapper();
+  const { currentUserRole } = useRoleContext();
 
   const [pagina, setPagina] = useState(1);
   const [showSchoolDialog, setShowSchoolDialog] = useState(false);
@@ -70,6 +73,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     sports: "",
     instruments: "",
     tenantId: "",
+    role: "SCOUT",
     emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
 
@@ -125,10 +129,16 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return;
       }
 
-      const memberData: Member = transformData({
-        ...datosPersonales,
-        tenantId: tenant,
-      });
+      // Normalizar el rol del usuario actual
+      const normalizedUserRole = normalizeRawRole(currentUserRole);
+
+      const memberData: Member = transformData(
+        {
+          ...datosPersonales,
+          tenantId: tenant,
+        },
+        normalizedUserRole
+      );
 
       if (incluirDatosEscolares) {
         const requestData: CreateMemberWithSchoolRequest = {
@@ -146,7 +156,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
       console.error("Error al enviar la solicitud:", error);
       alert("Error al enviar la solicitud.");
     }
-  }, [datosPersonales, incluirDatosEscolares, datosEscolares, orgId, dispatch]);
+  }, [datosPersonales, incluirDatosEscolares, datosEscolares, orgId, currentUserRole, dispatch]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {

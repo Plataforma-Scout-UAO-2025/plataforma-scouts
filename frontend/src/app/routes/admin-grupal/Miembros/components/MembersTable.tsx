@@ -57,6 +57,9 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
               Dirección
             </TableHead>
             <TableHead className="font-bold text-primary">
+              Rol
+            </TableHead>
+            <TableHead className="font-bold text-primary">
               Estado
             </TableHead>
             <TableHead className="text-right"></TableHead>
@@ -86,6 +89,9 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                 </TableCell>
                 <TableCell className="w-40 truncate">
                   {member.address || "Sin dirección"}
+                </TableCell>
+                <TableCell className="w-40 truncate">
+                  {member.role}
                 </TableCell>
                 <TableCell>
                   {isActive(member) ? (
