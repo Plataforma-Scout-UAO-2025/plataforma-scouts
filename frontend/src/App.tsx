@@ -33,11 +33,6 @@ import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollm
 import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
 import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
 
-// Guardianes
-import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
-import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
-import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
-
 function App() {
   useAuth0ApiWrapper();
 
