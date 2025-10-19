@@ -13,6 +13,20 @@ import type { Member } from '../../members/types/member.type';
 import type { GuardianWithMembers, UpdateGuardianDTO, MemberBasicInfo } from '@/types/guardianTypes';
 import { FullScreenLoader } from '@/components/common/FullScreenLoader';
 
+// Helper: safely extract HTTP status from common error shapes without using `any`
+function getErrorStatus(error: unknown): number | undefined {
+  if (typeof error !== 'object' || error === null) return undefined;
+
+  // Common axios-like shape: { response?: { status?: number } }
+  const candidate = error as { response?: unknown };
+  if (!candidate.response || typeof candidate.response !== 'object') return undefined;
+
+  const resp = candidate.response as { status?: unknown };
+  if (typeof resp.status === 'number') return resp.status;
+
+  return undefined;
+}
+
 const GuardianProfilePage: React.FC = () => {
   const navigate = useNavigate();
   
@@ -47,13 +61,14 @@ const GuardianProfilePage: React.FC = () => {
           const members = await guardianService.getMembersInChargeOf(guardianId);
           setMembersInCharge(members || []);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error al cargar datos del guardian:', error);
         
         // Mensaje específico según el tipo de error
-        if (error?.response?.status === 404) {
+        const status = getErrorStatus(error);
+        if (status === 404) {
           toast.error(`Guardian con ID ${guardianId} no encontrado. Por favor contacta al administrador.`);
-        } else if (error?.response?.status === 401 || error?.response?.status === 403) {
+        } else if (status === 401 || status === 403) {
           toast.error('No tienes permisos para ver este perfil');
         } else {
           toast.error('No se pudieron cargar los datos del perfil. Intenta nuevamente.');
@@ -66,12 +81,12 @@ const GuardianProfilePage: React.FC = () => {
     fetchGuardianData();
   }, [guardianId]);
 
-  const handleEditProfile = async (data: any) => {
+  const handleEditProfile = async (data: unknown) => {
     try {
       // El modal devuelve strings, necesitamos convertirlos al formato correcto
       const updateData: UpdateGuardianDTO = {
-        ...data,
-        documentType: data.documentType as UpdateGuardianDTO['documentType']
+        ...(data as Record<string, unknown>),
+        documentType: (data as Record<string, unknown>).documentType as UpdateGuardianDTO['documentType']
       };
       
       await guardianService.updateData(guardianId, updateData);
@@ -128,7 +143,8 @@ const GuardianProfilePage: React.FC = () => {
     }
   };
 
-  const handleEditMember = (_member: Member) => {
+  const handleEditMember = (member: Member) => {
+    console.log('Editing member:', member);
     setIsDetailsSheetOpen(false);
     toast.info('Funcionalidad de edición en desarrollo');
   };

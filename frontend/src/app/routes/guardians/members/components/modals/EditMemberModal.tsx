@@ -96,7 +96,7 @@ export default function EditarMiembroModal({
       toast.success('Miembro actualizado correctamente');
       onClose();
     } catch (error) {
-      toast.error('Error al actualizar el miembro');
+      toast.error('Error al actualizar el miembro: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 

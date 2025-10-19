@@ -40,8 +40,11 @@ export const createMembersTableColumns = ({
     header: 'CREADO',
     cell: ({ row }) => {
       const rawDate = row.getValue('createdAt');
-      const date = rawDate ? new Date(rawDate) : null;
-      const isValidDate = date && !isNaN(date.getTime());
+      if (typeof rawDate !== 'string') { // Validar que rawDate es una cadena antes de crear el objeto Date
+        return <div className="text-sm">-</div>;
+      }
+      const date = new Date(rawDate);
+      const isValidDate = !isNaN(date.getTime());
       return (
         <div className="text-sm">
           {isValidDate

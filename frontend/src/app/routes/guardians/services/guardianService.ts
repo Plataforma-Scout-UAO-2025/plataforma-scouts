@@ -17,6 +17,20 @@ import type {
   GuardianCreateResponse 
 } from '@/types/guardianTypes';
 
+// Helper: Extraer status code de un error (si existe)
+function getErrorStatus(error: unknown): number | undefined {
+  if (typeof error !== 'object' || error === null) return undefined;
+
+  // Verificar si el error tiene una propiedad 'response'
+  const candidate = error as { response?: unknown };
+  if (!candidate.response || typeof candidate.response !== 'object') return undefined;
+
+  const resp = candidate.response as { status?: unknown };
+  if (typeof resp.status === 'number') return resp.status;
+
+  return undefined;
+}
+
 // @deprecated Use Guardian from @/types/guardianTypes instead
 export interface GuardianData {
   userId: string;
@@ -87,7 +101,8 @@ export const guardianService = {
       const guardian = await getGuardianById(guardianId);
       return guardian;
     } catch (error) {
-      if ((error as any).response?.status === 404) {
+      const status = getErrorStatus(error);
+      if (status === 404) {
         return null;
       }
       console.error('Error obteniendo guardian:', error);
@@ -101,7 +116,8 @@ export const guardianService = {
       const guardian = await getGuardianWithMembers(guardianId);
       return guardian;
     } catch (error) {
-      if ((error as any).response?.status === 404) {
+      const status = getErrorStatus(error);
+      if (status === 404) {
         return null;
       }
       console.error('Error obteniendo guardian con miembros:', error);
