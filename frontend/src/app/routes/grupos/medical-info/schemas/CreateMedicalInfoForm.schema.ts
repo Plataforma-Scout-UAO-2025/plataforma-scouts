@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const vaccineDetailSchema = z.object({
   name: z.string().min(1, "El nombre de la vacuna es requerido").max(50, "Máximo 50 caracteres"),
-  date: z.string().refine((date) => {
+  applied_at: z.string().refine((date) => {
     return /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z)?$/.test(date);
   }, "Fecha inválida"),
 });
@@ -10,7 +10,7 @@ export const vaccineDetailSchema = z.object({
 export const medicationDetailSchema = z.object({
   name: z.string().min(1, "El nombre del medicamento es requerido").max(50, "Máximo 50 caracteres"),
   dose: z.string().min(1, "La dosis es requerida").max(100, "Máximo 100 caracteres"),
-  frecuency: z.string().min(1, "La frecuencia es requerida").max(100, "Máximo 100 caracteres"),
+  frequency: z.string().min(1, "La frecuencia es requerida").max(100, "Máximo 100 caracteres"),
 });
 
 export const medicalFormSchema = z.object({

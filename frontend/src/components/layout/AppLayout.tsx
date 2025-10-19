@@ -26,7 +26,6 @@ import {
   Award,
   ChevronRight,
   DollarSign,
-  CalendarDays,
   Pencil,
   Network,
   BriefcaseMedical,
@@ -110,19 +109,35 @@ const adminGrupalItems: MenuItem[] = [
       },
     ],
   },
-  { id: "insignias", label: "Insignias", icon: <Award />, href: "/app/insignias" },
-  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
-  { id: "eventos", label: "Eventos", icon: <CalendarDays />, href: "/app/eventos" },
-  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
-  { id: "medico", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
-]
+  
+  
+  {
+    id: "insignias",
+    label: "Insignias",
+    icon: <Award />,
+    href: "/app/insignias",
+  },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/cuotas",
+  },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
+  },
+];
 
 const tesoreroItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/cuotas" },
-]
-
-const acudienteItems: MenuItem[] = [
   {
     id: "inicio",
     label: "Inicio",
@@ -130,17 +145,32 @@ const acudienteItems: MenuItem[] = [
     href: "/app/dashboard",
   },
   {
-    id: "inscripcion",
-    label: "Inscripcion",
-    icon: <Pencil />,
-    href: "/app/inscripcion",
-  },
-  {
     id: "financiero",
     label: "Financiero",
     icon: <DollarSign />,
-    href: "/app/financiero/estado-cuenta",
+    href: "/app/financiero/cuotas",
   },
+];
+
+const acudienteItems: MenuItem[] = [
+    {
+        id: "inicio",
+        label: "Inicio",
+        icon: <LineChart />,
+        href: "/app/dashboard",
+    },
+    {
+        id: "miembros",
+        label: "Mis miembros",
+        icon: <Pencil />,
+        href: "/app/guardians/members",
+    },
+    {
+        id: "financiero",
+        label: "Financiero",
+        icon: <DollarSign />,
+        href: "/app/financiero/estado-cuenta",
+    },
 ];
 
 const ScoutItems: MenuItem[] = [

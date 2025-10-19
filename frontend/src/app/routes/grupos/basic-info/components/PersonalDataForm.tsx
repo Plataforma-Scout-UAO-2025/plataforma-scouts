@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import EmergencyContacts from "./EmergencyContacts";
 import type { PersonalData, ChangeEvent } from "@/types/enrollment.type";
 
 interface Props {
@@ -12,7 +11,6 @@ interface Props {
 export default function PersonalDataForm({
   datos,
   handleChange,
-  setDatos,
 }: Props) {
   return (
     <>
@@ -35,7 +33,7 @@ export default function PersonalDataForm({
           name="lastname"
           value={datos.lastname}
           onChange={handleChange}
-          className="w-full"  
+          className="w-full"
           required
         />
       </div>
@@ -67,6 +65,44 @@ export default function PersonalDataForm({
       </div>
 
       <div>
+        <Label htmlFor="username">Nombre de usuario *</Label>
+        <Input
+          id="username"
+          name="username"
+          value={datos.username ?? ""}
+          onChange={handleChange}
+          className="w-full"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="password">Contraseña *</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          value={datos.password ?? ""}
+          onChange={handleChange}
+          className="w-full"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="confirm_password">Confirmar contraseña *</Label>
+        <Input
+          id="confirm_password"
+          name="confirm_password"
+          type="password"
+          value={datos.confirm_password ?? ""}
+          onChange={handleChange}
+          className="w-full"
+          required
+        />
+      </div>
+
+      <div>
         <Label htmlFor="document_type">Tipo de documento *</Label>
         <select
           id="document_type"
@@ -90,7 +126,7 @@ export default function PersonalDataForm({
           name="identification"
           value={datos.identification}
           onChange={handleChange}
-          className="w-full"   
+          className="w-full"
           required
         />
       </div>
@@ -157,7 +193,8 @@ export default function PersonalDataForm({
           name="weight"
           value={datos.weight}
           onChange={handleChange}
-          className="w-full"/>
+          className="w-full"
+        />
       </div>
 
       <div>
@@ -167,10 +204,10 @@ export default function PersonalDataForm({
           name="height"
           value={datos.height}
           onChange={handleChange}
-          className="w-full"/>
+          className="w-full"
+        />
       </div>
 
-      <EmergencyContacts datos={datos} setDatos={setDatos} />
     </>
   );
 }

@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
@@ -24,6 +24,7 @@ import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundExceptio
 import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
 import java.util.List;
@@ -329,6 +330,78 @@ public class Auth0Controller {
             body.put("causeMessage", cause.getMessage());
         }
         return body;
+    }
+
+    @PostMapping("/create-user")
+    @PreAuthorize("hasAnyRole('ADMIN_GRUPO', 'ADMIN_GLOBAL')")
+    @Operation(
+        summary = "Crea un usuario completo con rol específico (Solo ADMIN_GRUPO y ADMIN_GLOBAL)",
+        description = "Crea un usuario en Auth0, lo asocia a la organización del admin autenticado y le asigna el rol especificado. " +
+                      "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN. " +
+                      "NO se pueden crear roles administrativos (ADMIN_GLOBAL, ADMIN_GRUPO, DEV_SUPPORT).",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Usuario creado exitosamente", 
+                        content = @Content(schema = @Schema(implementation = CreatedUserDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida o rol no permitido"),
+            @ApiResponse(responseCode = "403", description = "No autorizado - Solo ADMIN_GRUPO y ADMIN_GLOBAL pueden usar este endpoint"),
+            @ApiResponse(responseCode = "409", description = "El usuario ya pertenece a la organización"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+        }
+    )
+    @RequestBody(
+        required = true, 
+        description = "Datos para crear el usuario con rol específico", 
+        content = @Content(schema = @Schema(implementation = CreateUserWithRoleCommandDTO.class))
+    )
+    public ResponseEntity<Object> createUserWithRole(
+            @Valid @org.springframework.web.bind.annotation.RequestBody CreateUserWithRoleCommandDTO request,
+            BindingResult bindingResult) {
+        try {
+            // Validar errores de binding
+            if (bindingResult.hasErrors()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationErrorBody(bindingResult));
+            }
+
+            // Crear usuario con rol
+            CreatedUserDTO createdUser = auth0Service.createUserWithRole(request);
+
+            // Preparar respuesta exitosa
+            Map<String, Object> body = Map.of(
+                    "message", "Usuario creado exitosamente",
+                    "userId", createdUser.getId(),
+                    "email", createdUser.getEmail(),
+                    "username", createdUser.getUsername(),
+                    "role", request.getRole(),
+                    "user", createdUser
+            );
+            return ResponseEntity.ok(body);
+
+        } catch (UserAlreadyMemberException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "El usuario ya pertenece a la organización"));
+                    
+        } catch (UnauthorizedRoleAssignmentException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(
+                        "message", ex.getMessage(),
+                        "allowedRoles", "SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
+                    ));
+                    
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", ex.getMessage()));
+                    
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                        "message", ex.getMessage(),
+                        "allowedRoles", "SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
+                    ));
+                    
+        } catch (Auth0GatewayException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(gatewayErrorBody(ex, "Fallo creando usuario con rol"));
+        }
     }
 
 }

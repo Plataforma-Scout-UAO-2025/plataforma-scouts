@@ -4,15 +4,18 @@ package uao.edu.co.scouts_project.application.service;
 // import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
+import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 // no checked exceptions in service; adapter throws runtime Auth0GatewayException
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -91,6 +94,72 @@ public class Auth0ServiceImpl implements IAuth0Service {
     @Override
     public UserSummaryDTO getUserInOrganization(String organizationId, String userId) {
         return adminPort.getUserInOrganization(organizationId, userId);
+    }
+
+    @Override
+    public CreatedUserDTO createUserWithRole(CreateUserWithRoleCommandDTO request) {
+        String roleName = request.getRole().toUpperCase();
+
+        // Convertir string a enum Role
+        Role role;
+        try {
+            role = Role.valueOf(roleName);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                "Rol inválido: " + roleName + ". " +
+                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
+            );
+        }
+
+        // Validar que el rol NO sea administrativo
+        List<Role> forbiddenRoles = Arrays.asList(Role.ADMIN_GLOBAL, Role.ADMIN_GRUPO, Role.DEV_SUPPORT);
+        if (forbiddenRoles.contains(role)) {
+            throw new UnauthorizedRoleAssignmentException(
+                "No está autorizado para asignar roles administrativos. " +
+                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
+            );
+        }
+
+        // Validar que el rol esté en la lista de permitidos
+        List<Role> allowedRoles = Arrays.asList(
+            Role.SCOUT, 
+            Role.ACUDIENTE, 
+            Role.TESORERO, 
+            Role.SCOUTER, 
+            Role.COMITE_ADMIN
+        );
+        if (!allowedRoles.contains(role)) {
+            throw new UnauthorizedRoleAssignmentException(
+                "El rol " + roleName + " no está permitido para este endpoint. " +
+                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
+            );
+        }
+
+        // Crear el comando base para crear usuario
+        CreateUserCommandDTO createCommand = new CreateUserCommandDTO(
+            request.getEmail(),
+            request.getPassword(),
+            request.getUsername()
+        );
+
+        // Paso 1: Crear usuario en Auth0
+        CreatedUserDTO createdUser = createUser(createCommand);
+        String userId = createdUser.getId();
+
+        try {
+            // Paso 2: Asociar a la organización del usuario autenticado (usa org_id del JWT)
+            addUserToOwnOrganization(userId);
+
+            // Paso 3: Asignar el rol especificado
+            assignRole(userId, role);
+
+            return createdUser;
+
+        } catch (Exception ex) {
+            // Si falla algún paso posterior a la creación, re-lanzar la excepción
+            // El usuario ya fue creado en Auth0
+            throw ex;
+        }
     }
 
 }

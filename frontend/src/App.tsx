@@ -5,6 +5,7 @@ import { useAuth0ApiWrapper } from "./hooks/useAuth0ApiWrapper";
 import { Toaster } from "sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
+import { RawRole } from "./roles/roles";
 import Home from "./app/routes/Home";
 import Dashboard from "./app/routes/dashboard/Dashboard";
 import Miembros from "./app/routes/admin-grupal/Miembros/Miembros";
@@ -28,6 +29,9 @@ import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
+import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollment";
+import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
+import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
 
 function App() {
   useAuth0ApiWrapper();
@@ -55,23 +59,25 @@ function App() {
             <Route path="grupos" element={<Grupos />} />
 
             {/* Rutas para admin de grupo */}
-            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Financiero /></ProtectedRoute>} />
-            <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Gestion /></ProtectedRoute>} />
-            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "TESORERO"]}><Pagos /></ProtectedRoute>} />
-            <Route path="dashboard" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "SCOUT", "GUEST", "ACUDIENTE", "TESORERO"]}><Dashboard /></ProtectedRoute>} />
-            <Route path="miembros" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Miembros /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "GUEST", "SCOUT", "ACUDIENTE"]}><ScoutEnrollment /></ProtectedRoute>}/>
-            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
-            <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Rejected /></ProtectedRoute>} />
+            <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Financiero /></ProtectedRoute>} />
+            <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Gestion /></ProtectedRoute>} />
+            <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Pagos /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUT, RawRole.GUEST, RawRole.ACUDIENTE, RawRole.TESORERO]}><Dashboard /></ProtectedRoute>} />
+            <Route path="miembros" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Miembros /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.GUEST, RawRole.SCOUT, RawRole.ACUDIENTE]}><ScoutEnrollment /></ProtectedRoute>} />
+            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Requests /></ProtectedRoute>} />
+            <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Rejected /></ProtectedRoute>} />
+            <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
             {/*
-            <Route path="insignias" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Insignias /></ProtectedRoute>} />
-            <Route path="solicitudes" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO"]}><Requests /></ProtectedRoute>} />
+            <Route path="insignias" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Insignias /></ProtectedRoute>} />
             */}
 
             {/* Rutas para acudiente */}
-            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE", "TESORERO"]}><EstadoCuenta /></ProtectedRoute>} />
-            <Route path="grupos" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><Grupos /></ProtectedRoute>} />
-            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={["ADMIN_GRUPO", "ACUDIENTE"]}><MedicalRecordsView /></ProtectedRoute>} />
+            <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />
+            <Route path="grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><Grupos /></ProtectedRoute>} />
+            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><MedicalRecordsView /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
