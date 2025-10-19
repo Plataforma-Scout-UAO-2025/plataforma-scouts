@@ -37,7 +37,6 @@ import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollme
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
 import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
 import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
-
 function App() {
   useAuth0ApiWrapper();
 
@@ -45,10 +44,10 @@ function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          {/* Login & Registro */}
+          {/* 🔹 Login & Registro */}
           <Route path="/" element={<Home />} />
 
-          {/* Rutas internas con layout */}
+          {/* 🔹 Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
 
