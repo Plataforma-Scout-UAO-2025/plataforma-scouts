@@ -90,7 +90,6 @@ const adminGrupalItems: MenuItem[] = [
     href: "/app/dashboard",
   },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
-  { id: "inscripcion", label: "Inscripcion", icon: <Pencil />, href: "/app/inscripcion" },
   {
     id: "solicitudes",
     label: "Solicitudes",
@@ -110,6 +109,8 @@ const adminGrupalItems: MenuItem[] = [
       },
     ],
   },
+  
+  
   {
     id: "insignias",
     label: "Insignias",

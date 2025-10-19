@@ -98,9 +98,6 @@ const Requests = () => {
         <p className="text-2xl text-text font-medium my-5">
           Aquí se mostrarán las solicitudes pendientes.
         </p>
-        <p className="text-sm text-gray-600">
-          Organización: <span className="font-semibold">{orgId}</span>
-        </p>
       </header>
 
       {/* Filtros */}

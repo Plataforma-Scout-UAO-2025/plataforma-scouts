@@ -35,7 +35,7 @@ class MemberDtoTest {
                 .documentType("CC")
                 .email("juan.perez@example.com")
                 .phone("3001234567")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .isActive(true)
                 .build();
 
@@ -55,7 +55,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -76,7 +76,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -97,7 +97,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -118,7 +118,7 @@ class MemberDtoTest {
                 .lastName("")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -140,7 +140,7 @@ class MemberDtoTest {
                 .age(-5)
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -162,7 +162,7 @@ class MemberDtoTest {
                 .age(200)
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -183,7 +183,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -204,7 +204,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("INVALID")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -228,7 +228,7 @@ class MemberDtoTest {
                     .lastName("Pérez")
                     .identification("1234567890")
                     .documentType(type)
-                    .status("ACTIVE")
+                    .status("APPROVED")
                     .build();
 
             Set<ConstraintViolation<MemberDto>> violations = validator.validate(memberDto);
@@ -249,7 +249,7 @@ class MemberDtoTest {
                 .identification("1234567890")
                 .documentType("CC")
                 .email("invalid-email")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -271,7 +271,7 @@ class MemberDtoTest {
                 .identification("1234567890")
                 .documentType("CC")
                 .email("juan.perez@example.com")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -292,7 +292,7 @@ class MemberDtoTest {
                 .identification("1234567890")
                 .documentType("CC")
                 .phone("123")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         // Act
@@ -317,7 +317,7 @@ class MemberDtoTest {
                     .identification("1234567890")
                     .documentType("CC")
                     .phone(phone)
-                    .status("ACTIVE")
+                    .status("APPROVED")
                     .build();
 
             Set<ConstraintViolation<MemberDto>> violations = validator.validate(memberDto);
@@ -352,7 +352,7 @@ class MemberDtoTest {
     @Test
     void testMemberDto_withAllValidStatuses_shouldPassValidation() {
         // Arrange & Act & Assert
-        String[] validStatuses = {"ACTIVE", "INACTIVE", "SUSPENDED", "PENDING"};
+        String[] validStatuses = {"APPROVED", "REJECTED", "PENDING"};
         
         for (String status : validStatuses) {
             MemberDto memberDto = MemberDto.builder()
@@ -382,7 +382,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .hobbies(longHobbies)
                 .build();
 
@@ -410,7 +410,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .emergencyContacts(List.of(contact))
                 .build();
 
@@ -436,7 +436,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .emergencyContacts(List.of(contact))
                 .build();
 
@@ -464,7 +464,7 @@ class MemberDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .emergencyContacts(List.of(contact))
                 .build();
 
@@ -503,7 +503,7 @@ class MemberDtoTest {
                 .instruments("Guitarra")
                 .isActive(true)
                 .relationship("Hijo")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .acceptanceDate(LocalDate.now())
                 .build();
 

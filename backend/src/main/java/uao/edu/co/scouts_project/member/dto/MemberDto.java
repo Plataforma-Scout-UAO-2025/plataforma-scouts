@@ -101,8 +101,8 @@ public class MemberDto {
     private String relationship;
 
     @NotBlank(message = "El estado es obligatorio")
-    @Pattern(regexp = "^(ACTIVE|INACTIVE|SUSPENDED|PENDING)$", 
-             message = "Estado inválido. Valores permitidos: ACTIVE, INACTIVE, SUSPENDED, PENDING")
+    @Pattern(regexp = "^(APPROVED|REJECTED|PENDING)$", 
+             message = "Estado inválido. Valores permitidos: APPROVED, REJECTED, PENDING")
     private String status;
 
     @JsonProperty("acceptanceDate")
