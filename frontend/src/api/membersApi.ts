@@ -45,7 +45,19 @@ export interface RoleSummary {
 
 export const listRoles = async (): Promise<RoleSummary[]> => {
   const resp = await api.get<RoleSummary[]>("/auth0/roles");
-  return resp.data;
+  // Filtrar solo roles permitidos
+  const allowed = new Set([
+    "TESORERO",
+    "SCOUT",
+    "SCOUTER",
+    "ACUDIENTE",
+    "COMITE_ADMIN",
+  ]);
+
+  const normalize = (s: string) =>
+    s?.toString().replace(/\s+/g, "_").replace(/-/g, "_").toUpperCase();
+
+  return resp.data.filter((r) => allowed.has(normalize(r.name)));
 };
 
 // Obtener perfil de miembro
