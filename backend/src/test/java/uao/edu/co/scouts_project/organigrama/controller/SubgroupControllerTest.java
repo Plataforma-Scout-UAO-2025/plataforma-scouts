@@ -141,4 +141,15 @@ class SubgroupControllerTest {
                 .content(body))
            .andExpect(status().isNoContent());
     }
+
+    @Test
+    @DisplayName("DELETE /subgroups/{id}/photo-principal → 204 No Content")
+    void delete_photo_ok() throws Exception {
+        doNothing().when(subgroupService).deletePhotoPrincipal(TENANT, GROUP, SECTION, SUBID);
+
+        mvc.perform(delete(BASE + "/{subgroupId}/photo-principal", TENANT, GROUP, SECTION, SUBID))
+           .andExpect(status().isNoContent());
+
+        verify(subgroupService).deletePhotoPrincipal(TENANT, GROUP, SECTION, SUBID);
+    }
 }

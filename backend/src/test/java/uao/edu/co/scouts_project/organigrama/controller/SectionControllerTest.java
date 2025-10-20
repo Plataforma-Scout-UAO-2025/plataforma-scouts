@@ -231,6 +231,17 @@ class SectionControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE photo-principal → 204 No Content")
+    void deletePhotoPrincipal_returns204() throws Exception {
+          doNothing().when(sectionService).deletePhotoPrincipal(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
+
+    mvc.perform(delete(BASE + "/{id}/photo-principal", TENANT_ID, GROUP, SECTION_ID))
+           .andExpect(status().isNoContent());
+
+    verify(sectionService).deletePhotoPrincipal(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
+    }
+
+    @Test
     @DisplayName("DELETE gallery item → 200 OK con recurso actualizado")
     void deleteGallery_returns200() throws Exception {
         UUID objectId = UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
