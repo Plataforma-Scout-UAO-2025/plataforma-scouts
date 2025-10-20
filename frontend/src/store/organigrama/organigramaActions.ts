@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getSections, getSectionWithSubgroups, getMembersBySubgroup, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi } from '@/api/organigramaApi';
+import { getSections, getSectionWithSubgroups, getMembersBySubgroup, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
 import { addGalleryImage, replaceGalleryImage } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/gallery.service';
 
@@ -109,6 +109,30 @@ export const replaceGalleryImageAction = createAsyncThunk("organigrama/replaceGa
     const axiosError = error as AxiosError;
     const errorData = axiosError.response?.data as { error?: string };
     const message = errorData?.error || "Error al reemplazar imagen en galería";
+    return rejectWithValue(message);
+  }
+});
+
+export const setSubgroupPhotoPrincipalAction = createAsyncThunk("organigrama/setSubgroupPhotoPrincipal", async ({ tenantId, groupSlug, sectionId, subgroupId, objectId }: { tenantId: string; groupSlug: string; sectionId: string; subgroupId: string; objectId: string }, { rejectWithValue }) => {
+  try {
+    await setSubgroupPhotoPrincipal(sectionId, subgroupId, { objectId }, tenantId, groupSlug);
+    return { sectionId, subgroupId, objectId };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al establecer foto principal de subgrupo";
+    return rejectWithValue(message);
+  }
+});
+
+export const deleteSubgroupPhotoPrincipalAction = createAsyncThunk("organigrama/deleteSubgroupPhotoPrincipal", async ({ tenantId, groupSlug, sectionId, subgroupId }: { tenantId: string; groupSlug: string; sectionId: string; subgroupId: string }, { rejectWithValue }) => {
+  try {
+    await deleteSubgroupPhotoPrincipal(sectionId, subgroupId, tenantId, groupSlug);
+    return { sectionId, subgroupId };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al eliminar foto principal de subgrupo";
     return rejectWithValue(message);
   }
 });

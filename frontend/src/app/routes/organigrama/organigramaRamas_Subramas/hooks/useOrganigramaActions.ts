@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { setPhotoPrincipalAction, deletePhotoPrincipalAction } from '@/store/organigrama/organigramaActions';
+import { setPhotoPrincipalAction, deletePhotoPrincipalAction, setSubgroupPhotoPrincipalAction, deleteSubgroupPhotoPrincipalAction } from '@/store/organigrama/organigramaActions';
 import { uploadPhotoFile } from '@/lib/imageUtils';
 import * as organigramaService from '../services';
 import type { CreateBranchData, UpdateBranchData, CreateSubgroupData, UpdateSubgroupData } from '../types/frontend';
@@ -216,6 +216,53 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     }
   }, [tenantId, groupSlug, dispatch, loadRamas, showSuccessLocal, handleError]);
 
+  const setSubgroupPhotoPrincipal = useCallback(async (sectionId: string, subgroupId: string, objectId: string) => {
+    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    setIsLoadingPhotoPrincipal(true);
+    try {
+      await dispatch(setSubgroupPhotoPrincipalAction({ tenantId, groupSlug, sectionId, subgroupId, objectId }));
+      await loadRamas({ force: true });
+      showSuccessLocal('Foto principal de subgrupo establecida');
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setIsLoadingPhotoPrincipal(false);
+    }
+  }, [tenantId, groupSlug, dispatch, loadRamas, showSuccessLocal, handleError]);
+
+  const deleteSubgroupPhotoPrincipal = useCallback(async (sectionId: string, subgroupId: string) => {
+    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    setIsLoadingPhotoPrincipal(true);
+    try {
+      await dispatch(deleteSubgroupPhotoPrincipalAction({ tenantId, groupSlug, sectionId, subgroupId }));
+      await loadRamas({ force: true });
+      showSuccessLocal('Foto principal de subgrupo eliminada');
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setIsLoadingPhotoPrincipal(false);
+    }
+  }, [tenantId, groupSlug, dispatch, loadRamas, showSuccessLocal, handleError]);
+
+  const uploadSubgroupPhotoPrincipal = useCallback(async (sectionId: string, subgroupId: string, file: File, onProgress?: (percent: number) => void) => {
+    if (!tenantId || !groupSlug) throw new Error('Tenant o group no disponibles');
+    setIsLoadingPhotoPrincipal(true);
+    try {
+      const objectId = await uploadPhotoFile(file, onProgress);
+      await dispatch(setSubgroupPhotoPrincipalAction({ tenantId, groupSlug, sectionId, subgroupId, objectId }));
+      await loadRamas({ force: true });
+      showSuccessLocal('Foto principal de subgrupo subida');
+      return objectId;
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setIsLoadingPhotoPrincipal(false);
+    }
+  }, [tenantId, groupSlug, dispatch, loadRamas, showSuccessLocal, handleError]);
+
   return {
     createRama,
     updateRama,
@@ -234,6 +281,9 @@ export function useOrganigramaActions({ tenantId, groupSlug, loadRamas, showSucc
     setPhotoPrincipal,
     deletePhotoPrincipal,
     uploadPhotoPrincipal,
+    setSubgroupPhotoPrincipal,
+    deleteSubgroupPhotoPrincipal,
+    uploadSubgroupPhotoPrincipal,
     isLoadingPhotoPrincipal,
   };
 }

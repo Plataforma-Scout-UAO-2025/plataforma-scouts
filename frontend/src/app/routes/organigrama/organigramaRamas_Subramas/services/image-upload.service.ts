@@ -1,8 +1,6 @@
-import { postFormData, uploadToStorage } from '@/api/upload';
-import { getSection, patchGallery, getSubgroup, patchSubgroupGallery, setIcon, setPhotoPrincipal } from '@/api/organigramaApi';
-import { createReplacePayload, createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
-import type { GalleryAddOperation, GalleryReplaceOperation } from '../types/operations';
-type MaybeAxiosError = { response?: { data?: unknown } };
+import { uploadToStorage } from '@/api/upload';
+import { getSection, patchGallery, setIcon, setPhotoPrincipal } from '@/api/organigramaApi';
+import { createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
 
 type FileProgressHandler = (fileName: string, percent: number) => void;
 type OverallProgressHandler = (percent: number) => void;
@@ -63,36 +61,10 @@ export const uploadSectionMainImage = async (
       signal,
     });
 
-  // handled by organigramaClient
-
-    const attemptsMain = [
-      { description: 'camelCase objectId', payload: { objectId: uploadResponse.objectId } },
-    ];
-
-    let lastMainError: unknown = null;
-    let mainPatched = false;
-    for (const attempt of attemptsMain) {
-      try {
-        const payloadToSend = { objectId: uploadResponse.objectId };
-  console.info('🔄 [ImageUploadService] Enviando PATCH a photo-principal:', { attempt: attempt.description, payload: payloadToSend });
-  await setPhotoPrincipal(sectionId, payloadToSend, tenantId, groupSlug);
-        mainPatched = true;
-        break;
-      } catch (patchError) {
-        lastMainError = patchError;
-          if ((patchError as MaybeAxiosError)?.response) {
-          console.error(' [ImageUploadService] Respuesta del backend en intento imagen principal:', (patchError as MaybeAxiosError).response?.data);
-        } else {
-          console.error(' [ImageUploadService] Error en intento PATCH imagen principal (sin respuesta):', patchError);
-        }
-      }
-    }
-
-    if (!mainPatched) {
-      console.error(' [ImageUploadService] Ningún formato de PATCH funcionó para asociar la imagen principal. Último error:', lastMainError);
-      throw lastMainError;
-    }
-
+    // handled by organigramaClient
+    const payload = { objectId: uploadResponse.objectId };
+    console.info('🔄 [ImageUploadService] Enviando PATCH a photo-principal:', { payload });
+    await setPhotoPrincipal(sectionId, payload, tenantId, groupSlug);
 
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
@@ -184,57 +156,6 @@ export const uploadGalleryImages = async (
     }
   } catch (error) {
     console.error(" [ImageUploadService] Error subiendo galería:", error);
-    throw error;
-  }
-};
-
-// Operaciones para la galería de SUBRAMAS (replace / remove)
-export const replaceSubramaGalleryImage = async (
-  tenantId: string,
-  groupSlug: string,
-  sectionId: string,
-  subgroupId: string,
-  oldObjectId: string | null,
-  file: File
-): Promise<string> => {
-  console.log(" [ImageUploadService] Reemplazando imagen de galería en subrama...", {
-    sectionId,
-    subgroupId,
-    oldObjectId,
-  });
-
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const uploadResponse = await postFormData<{ objectId: string; url: string }>(
-      "storage/upload",
-      formData
-    );
-
-  const targetForReplace = oldObjectId ?? '';
-    const replaceOp = createReplacePayload(targetForReplace, uploadResponse.objectId);
-    const replaceOpToSend = replaceOp && typeof replaceOp === 'object' && 'operations' in replaceOp
-      ? (Array.isArray((replaceOp as unknown as { operations?: unknown }).operations)
-          ? createPayloadForBackend((replaceOp as unknown as { operations: (GalleryAddOperation | GalleryReplaceOperation)[] }).operations)
-          : replaceOp)
-      : replaceOp;
-    await patchSubgroupGallery(sectionId, subgroupId, replaceOpToSend as Record<string, unknown>, tenantId, groupSlug);
-    console.log(" [ImageUploadService] Replace PATCH enviado con éxito");
-
-    const rec = await getSubgroup(sectionId, subgroupId, tenantId, groupSlug) as Record<string, unknown> | undefined;
-    const galleryUrls =
-      (rec?.["galleryObjectIds"] as string[] | undefined) ??
-      (rec?.["subgroupGalleryObjectIds"] as string[] | undefined) ??
-      [];
-
-    return (
-      uploadResponse.url ||
-      uploadResponse.objectId ||
-      galleryUrls.find((url) => url.includes(uploadResponse.objectId)) ||
-      uploadResponse.objectId
-    );
-  } catch (error) {
-    console.error(" [ImageUploadService] Error reemplazando imagen de galería en subrama:", error);
     throw error;
   }
 };

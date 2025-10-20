@@ -12,6 +12,7 @@ import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
 import FotoModal from "../components/FotoModal";
 import { deepCamelize } from "@/lib/utils";
+import useOrganigramaActions from "../hooks/useOrganigramaActions";
 
 
 export default function SubramaDetail() {
@@ -44,31 +45,10 @@ export default function SubramaDetail() {
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersError, setMembersError] = useState<string | null>(null);
 
-  const animatePercentTo = (target: number) => {
-    if (uploadAnimateRef.current) {
-      clearInterval(uploadAnimateRef.current);
-      uploadAnimateRef.current = null;
-    }
-    uploadAnimateRef.current = window.setInterval(() => {
-      setUploadPercent(prev => {
-        if (prev >= target) {
-          if (uploadAnimateRef.current) {
-            clearInterval(uploadAnimateRef.current);
-            uploadAnimateRef.current = null;
-          }
-          return prev;
-        }
-        const remaining = target - prev;
-        const step = remaining > 20 ? Math.ceil(remaining * 0.2) : Math.ceil(Math.max(1, remaining * 0.25));
-        const next = prev + step;
-        return next > target ? target : next;
-      });
-    }, 120);
-  };
   // ===== Modal de fotos =====
   const [fotoModalOpen, setFotoModalOpen] = useState(false);
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string>("");
-  const [fotoTipo, setFotoTipo] = useState<"principal" | "galeria" | null>(null);
+  const [fotoTipo, setFotoTipo] = useState<"principal" | null>(null);
 
 
   const mainImageInputRef = useRef<HTMLInputElement>(null);
@@ -85,10 +65,10 @@ export default function SubramaDetail() {
     const file = event.target.files?.[0];
     if (file && subrama) {
       try {
-      console.log(' [SubramaDetail] Subiendo imagen principal:', file.name);
-  const preview = URL.createObjectURL(file);
-  previousImagenPrincipalRef.current = imagenPrincipal || '';
-  setImagenPrincipal(preview);
+        console.log(' [SubramaDetail] Subiendo imagen principal:', file.name);
+        const preview = URL.createObjectURL(file);
+        previousImagenPrincipalRef.current = imagenPrincipal || '';
+        setImagenPrincipal(preview);
 
         if (uploadControllerRef.current) {
           try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
@@ -101,66 +81,29 @@ export default function SubramaDetail() {
         setUploadCompleteAnnounced(false);
         setCurrentUploadingFile(file.name);
 
-        uploadProgressReceivedRef.current = false;
-        if (uploadIntervalRef.current) {
-          clearInterval(uploadIntervalRef.current);
-          uploadIntervalRef.current = null;
-        }
-        uploadIntervalRef.current = window.setInterval(() => {
-          setUploadPercent(prev => {
-            const next = prev + Math.ceil(Math.random() * 5);
-            return next >= 95 ? 95 : next;
-          });
-        }, 250);
+        const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+        const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
 
-  const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-  const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
-        const updatedUrl = await organigramaService.updateSubramaMainImage(
-          resolvedTenantId,
-          resolvedGroupSlug,
+        await uploadSubgroupPhotoPrincipal(
           String(sectionId),
           String(subgroupId),
           file,
-          (fileName, percent) => {
-            uploadProgressReceivedRef.current = true;
-            if (uploadIntervalRef.current) {
-              clearInterval(uploadIntervalRef.current);
-              uploadIntervalRef.current = null;
-            }
-            setCurrentUploadingFile(fileName);
-            const display = percent >= 100 ? 99 : Math.floor(percent);
-            animatePercentTo(display);
+          (percent) => {
+            setUploadPercent(percent >= 100 ? 99 : Math.floor(percent));
             if (percent >= 100 && !uploadCompleteAnnounced) {
               setUploadCompleteAnnounced(true);
               toast('Subida completada. Procesando en servidor...');
             }
-          },
-          controller.signal
+          }
         );
-  
-  if (uploadControllerRef.current && uploadControllerRef.current.signal.aborted) {
-    console.warn('[SubramaDetail] Upload fue abortado - evitando refresh y restaurando preview si aplica');
-    throw new Error('UploadCanceled');
-  }
 
-  console.log(' [SubramaDetail] Refrescando datos de la subrama...');
-  if (updatedUrl) {
-    setImagenPrincipal(updatedUrl);
-    setImageRefreshToken(Date.now());
-    setUploadPercent(100);
-    toast.success('Imagen principal actualizada correctamente');
-    console.log(' [SubramaDetail] Imagen principal actualizada y persistida');
-  } else {
-    setUploadPercent(100);
-    setImageRefreshToken(Date.now());
-    console.log(' [SubramaDetail] Imagen principal actualizada (sin URL devuelta)');
-  }
-  await fetchSubrama();
+        setUploadPercent(100);
+        setImageRefreshToken(Date.now());
+        toast.success('Imagen principal actualizada correctamente');
       } catch (error) {
         console.error(' [SubramaDetail] Error subiendo imagen principal:', error);
-    const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
+        const msg = error instanceof Error ? error.message : String(error);
         if (msg === 'UploadCanceled' || msg === 'canceled') {
-          console.debug('[SubramaDetail] upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
           previousImagenPrincipalRef.current = null;
         } else {
@@ -201,79 +144,39 @@ export default function SubramaDetail() {
   const handleReplaceFoto = async (file: File) => {
     if (!subrama || !fotoTipo) return;
     if (fotoTipo === 'principal') {
-  const preview = URL.createObjectURL(file);
-  previousImagenPrincipalRef.current = imagenPrincipal || '';
-      if (uploadControllerRef.current) {
-        try { uploadControllerRef.current.abort(); } catch (e) { console.warn('Could not abort previous upload controller', e); }
-      }
-      const controller = new AbortController();
-      uploadControllerRef.current = controller;
+      const preview = URL.createObjectURL(file);
+      previousImagenPrincipalRef.current = imagenPrincipal || '';
+      setImagenPrincipal(preview);
 
       try {
-        setImagenPrincipal(preview);
         setUploading(true);
         setUploadPercent(0);
         setUploadCompleteAnnounced(false);
         setCurrentUploadingFile(file.name);
 
-        uploadProgressReceivedRef.current = false;
-        if (uploadIntervalRef.current) {
-          clearInterval(uploadIntervalRef.current);
-          uploadIntervalRef.current = null;
-        }
-        uploadIntervalRef.current = window.setInterval(() => {
-          setUploadPercent(prev => {
-            const next = prev + Math.ceil(Math.random() * 5);
-            return next >= 95 ? 95 : next;
-          });
-        }, 250);
+        const sectionId = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
+        const subgroupId = subrama.subgroup_id ?? subrama.id ?? '';
 
-        const sectionId2 = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-        const subgroupId2 = subrama.subgroup_id ?? subrama.id ?? '';
-        const updatedUrl = await organigramaService.updateSubramaMainImage(
-          resolvedTenantId,
-          resolvedGroupSlug,
-          String(sectionId2),
-          String(subgroupId2),
+        await uploadSubgroupPhotoPrincipal(
+          String(sectionId),
+          String(subgroupId),
           file,
-          (fileName, percent) => {
-            uploadProgressReceivedRef.current = true;
-            if (uploadIntervalRef.current) {
-              clearInterval(uploadIntervalRef.current);
-              uploadIntervalRef.current = null;
-            }
-            setCurrentUploadingFile(fileName);
-            const display = percent >= 100 ? 99 : Math.floor(percent);
-            animatePercentTo(display);
+          (percent) => {
+            setUploadPercent(percent >= 100 ? 99 : Math.floor(percent));
             if (percent >= 100 && !uploadCompleteAnnounced) {
               setUploadCompleteAnnounced(true);
               toast('Subida completada. Procesando en servidor...');
             }
-          },
-          controller.signal
+          }
         );
 
-        if (uploadControllerRef.current && uploadControllerRef.current.signal.aborted) {
-          console.warn('[SubramaDetail] modal upload fue abortado - evitando refresh y restaurando preview');
-          throw new Error('UploadCanceled');
-        }
-
-        if (updatedUrl) {
-          setImagenPrincipal(updatedUrl);
-          setImageRefreshToken(Date.now());
-          setUploadPercent(100);
-          toast.success('Imagen principal actualizada correctamente');
-        } else {
-          setUploadPercent(100);
-          setImageRefreshToken(Date.now());
-          console.log(' [SubramaDetail] Imagen principal actualizada (sin URL devuelta)');
-        }
-        await fetchSubrama();
-
+        setUploadPercent(100);
+        toast.success("Foto actualizada correctamente");
         setFotoModalOpen(false);
+        await fetchSubrama();
       } catch (error) {
         console.error(' [SubramaDetail] Error reemplazando imagen principal desde modal:', error);
-    const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
+        const msg = error instanceof Error ? error.message : ((error && typeof error === 'object') ? (error as unknown as Record<string, unknown>)['message'] as string ?? String(error) : String(error));
         if (msg === 'UploadCanceled' || msg === 'canceled') {
           console.debug('[SubramaDetail] modal upload canceled catch: previous=', previousImagenPrincipalRef.current, 'imagenPrincipal=', imagenPrincipal);
           toast('Subida cancelada');
@@ -293,27 +196,6 @@ export default function SubramaDetail() {
         if (uploadControllerRef.current) { uploadControllerRef.current = null; }
       }
       return;
-    }
-
-        
-    try {
-  const cleanUuid = ''.match(/[0-9a-fA-F-]{36}/)?.[0] || '';
-  const sectionIdReplace = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-  const subgroupIdReplace = subrama.subgroup_id ?? subrama.id ?? '';
-      await organigramaService.replaceSubramaGalleryImage(
-        resolvedTenantId,
-        resolvedGroupSlug,
-        String(sectionIdReplace),
-        String(subgroupIdReplace),
-        cleanUuid,
-        file
-      );
-      toast.success("Foto actualizada correctamente");
-      setFotoModalOpen(false);
-      await fetchSubrama();
-    } catch (error) {
-      console.error(error);
-      toast.error("Error al actualizar la foto");
     }
   };
 
@@ -359,64 +241,12 @@ export default function SubramaDetail() {
       }, 300);
 
       if (fotoTipo === "principal") {
-  const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-  const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
-        await organigramaService.removeSubramaMainImage(
-          resolvedTenantId,
-          resolvedGroupSlug,
-          String(sectionIdDel),
-          String(subgroupIdDel)
+        // Usar la acción de Redux para eliminar la foto principal del subgrupo
+        await deleteSubgroupPhotoPrincipal(
+          String(subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? ''),
+          String(subrama.subgroup_id ?? subrama.id ?? '')
         );
-        try {
-          const refreshed = await organigramaService.getSubramaById(resolvedTenantId, resolvedGroupSlug, String(sectionIdDel), String(subgroupIdDel));
-          const mainStill = refreshed?.imagenPrincipal ?? refreshed?.mainImageUrl ?? null;
-          if (mainStill) {
-            console.warn('[SubramaDetail] La imagen principal sigue presente tras remove; la eliminación física pudo fallar o no aplicarse');
-            toast.warning('La imagen fue desvinculada, pero su eliminación física puede haber fallado. Por favor verifica en el servidor.');
-          } else {
-            toast.success('Imagen principal eliminada correctamente');
-          }
-        } catch (err) {
-          console.warn('[SubramaDetail] No se pudo verificar estado tras remove main image:', err);
-          toast('Operación completada. Verificar estado en el servidor si es necesario');
-        }
-      } else if (fotoTipo === "galeria") {
-        
-        const sectionIdDel = subrama.section_id ?? subrama.ramaId ?? subrama.branchId ?? '';
-        const subgroupIdDel = subrama.subgroup_id ?? subrama.id ?? '';
-        const candidate = fotoSeleccionada || '';
-        const cleanUuid = (candidate.match(/[0-9a-fA-F-]{36}/) || [])[0] || '';
-
-        if (!cleanUuid) {
-          console.warn('[SubramaDetail] No se pudo extraer UUID de la foto seleccionada, usando fallback remove (PATCH)');
-          await organigramaService.removeSubramaGalleryImage(
-            resolvedTenantId,
-            resolvedGroupSlug,
-            String(sectionIdDel),
-            String(subgroupIdDel),
-            ''
-          );
-          toast.success('Foto removida de la galería (fallback).');
-        } else {
-          try {
-            const result = await organigramaService.deleteGalleryImageById(
-              resolvedTenantId,
-              resolvedGroupSlug,
-              String(sectionIdDel),
-              cleanUuid,
-              true
-            );
-
-            if (result === null) {
-              toast.success('La foto ya no estaba presente o fue removida anteriormente.');
-            } else {
-              toast.success('Foto eliminada físicamente (intento realizado).');
-            }
-          } catch (err) {
-            console.error('[SubramaDetail] Error intentando DELETE físico de galería:', err);
-            toast.error('No fue posible eliminar físicamente la foto. Se intentó desvincular la referencia.');
-          }
-        }
+        toast.success('Imagen principal eliminada correctamente');
       }
 
       if (deleteIntervalRef.current) {
@@ -425,16 +255,13 @@ export default function SubramaDetail() {
       }
       setUploadPercent(100);
       setUploadCompleteAnnounced(true);
-      toast('Subida completada. Procesando en servidor...');
 
       setFotoModalOpen(false);
       await fetchSubrama();
-      toast.success("Foto eliminada correctamente");
     } catch (error) {
-      console.error(error);
+      console.error('[SubramaDetail] Error eliminando foto:', error);
       toast.error("Error al eliminar la foto");
-    }
-    finally {
+    } finally {
       if (deleteIntervalRef.current) {
         clearInterval(deleteIntervalRef.current);
         deleteIntervalRef.current = null;
@@ -483,7 +310,7 @@ export default function SubramaDetail() {
           setSubrama(subramaEncontrada as Subrama);
           console.log(" [SubramaDetail] Subrama cargada:", subramaEncontrada);
 
-          console.log(" [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre);
+          console.log(" [SubramaDetail] Analizando imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre ?? subramaEncontrada.subgroupName);
           console.log(" [SubramaDetail] subrama.imagenPrincipal:", subramaEncontrada.imagenPrincipal);
 
           const backendMainImage = (subramaEncontrada as { mainImageUrl?: string }).mainImageUrl;
@@ -500,7 +327,7 @@ export default function SubramaDetail() {
             setImagenPrincipal(resolvedMainImage);
             setImageRefreshToken(Date.now());
           } else {
-            console.log(" [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.nombre);
+            console.log(" [SubramaDetail] No hay imagen principal para subrama:", subramaEncontrada.name ?? subramaEncontrada.nombre ?? subramaEncontrada.subgroupName);
             setImagenPrincipal('');
             setImageRefreshToken(Date.now());
           }
@@ -525,6 +352,17 @@ export default function SubramaDetail() {
       setLoading(false);
     }
   }, [id, hasTenantContext, resolvedTenantId, resolvedGroupSlug]);
+
+  // Hook de acciones (incluye acciones de galería y foto principal)
+  const { uploadSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal } = useOrganigramaActions({
+    tenantId: resolvedTenantId,
+    groupSlug: resolvedGroupSlug,
+    loadRamas: fetchSubrama,
+    handleError: (err: unknown) => {
+      console.error('Error en acción de organigrama:', err);
+      toast.error('Error en operación de organigrama');
+    }
+  });
 
   useEffect(() => {
     fetchSubrama();
