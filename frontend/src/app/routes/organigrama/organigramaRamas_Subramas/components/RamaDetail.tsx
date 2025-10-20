@@ -88,8 +88,8 @@ export default function RamaDetail() {
     }
   }, [id, tenantId, groupSlug]);
 
-  // Hook de acciones (incluye acciones de galería)
-  const { addGalleryImage, replaceGalleryImage, isLoadingGallery } = useOrganigramaActions({
+  // Hook de acciones (incluye acciones de galería y foto principal)
+  const { addGalleryImage, replaceGalleryImage, isLoadingGallery, uploadPhotoPrincipal, deletePhotoPrincipal } = useOrganigramaActions({
     tenantId,
     groupSlug,
     loadRamas: fetchRama,
@@ -179,15 +179,15 @@ export default function RamaDetail() {
         }, controller.signal);
     } else if (fotoTipo === "principal") {
   const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
-  await organigramaService.uploadSectionMainImage(tenantId, groupSlug, sectionId, file, (fileName, percent) => {
-          setCurrentUploadingFile(fileName);
+  await uploadPhotoPrincipal(sectionId, file, (percent) => {
+          setCurrentUploadingFile(file.name);
           const display = percent >= 100 ? 99 : Math.floor(percent);
           setUploadPercent(display);
           if (percent >= 100 && !uploadCompleteAnnounced) {
             setUploadCompleteAnnounced(true);
             toast('Subida completada. Procesando en servidor...');
           }
-        }, controller.signal);
+        });
       } else if (fotoTipo === "galeria") {
         let targetId = galeriaObjetivoId ?? null;
         if (!targetId) {
@@ -270,7 +270,7 @@ export default function RamaDetail() {
         await organigramaService.removeSectionIcon(tenantId, groupSlug, sectionId);
       } else if (fotoTipo === "principal") {
         const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
-        await organigramaService.removeSectionMainImage(tenantId, groupSlug, sectionId);
+        await deletePhotoPrincipal(sectionId);
       } else if (fotoTipo === "galeria") {
         const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
         let resolvedObjectId = galeriaObjetivoId ?? null;
@@ -561,13 +561,11 @@ export default function RamaDetail() {
       return;
     }
 
-  await organigramaService.uploadSectionMainImage(
-    tenantId,
-    groupSlug,
-  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
+  await uploadPhotoPrincipal(
+    String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
         file,
-        (fileName: string, percent: number) => {
-          setCurrentUploadingFile(fileName);
+        (percent: number) => {
+          setCurrentUploadingFile(file.name);
           const display = percent >= 100 ? 99 : Math.floor(percent);
           setUploadPercent(display);
           if (percent >= 100 && !uploadCompleteAnnounced) {

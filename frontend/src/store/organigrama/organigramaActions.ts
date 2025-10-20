@@ -1,8 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getSections, getSectionWithSubgroups, getMembersBySubgroup } from '@/api/organigramaApi';
+import { getSections, getSectionWithSubgroups, getMembersBySubgroup, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
-import { setPhotoPrincipal, deletePhotoPrincipal } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/photoPrincipal.service';
 import { addGalleryImage, replaceGalleryImage } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/gallery.service';
 
 // Fetch sections for tenant/group
@@ -68,7 +67,7 @@ export const deleteIconAction = createAsyncThunk("organigrama/deleteIcon", async
 
 export const setPhotoPrincipalAction = createAsyncThunk("organigrama/setPhotoPrincipal", async ({ tenantId, groupSlug, sectionId, objectId }: { tenantId: string; groupSlug: string; sectionId: string; objectId: string }, { rejectWithValue }) => {
   try {
-    await setPhotoPrincipal(tenantId, groupSlug, sectionId, objectId);
+    await setPhotoPrincipalApi(sectionId, { objectId }, tenantId, groupSlug);
     return { sectionId, objectId };
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
@@ -80,7 +79,7 @@ export const setPhotoPrincipalAction = createAsyncThunk("organigrama/setPhotoPri
 
 export const deletePhotoPrincipalAction = createAsyncThunk("organigrama/deletePhotoPrincipal", async ({ tenantId, groupSlug, sectionId }: { tenantId: string; groupSlug: string; sectionId: string }, { rejectWithValue }) => {
   try {
-    await deletePhotoPrincipal(tenantId, groupSlug, sectionId);
+    await deletePhotoPrincipalApi(sectionId, tenantId, groupSlug);
     return { sectionId };
   } catch (error: unknown) {
     const axiosError = error as AxiosError;

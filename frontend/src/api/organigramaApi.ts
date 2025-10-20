@@ -3,7 +3,6 @@ import type { TenantDTO, GroupResponseDTO } from "@/types/group.type";
 import type { Section } from '@/types/section-simple.type';
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { IconSetPayload } from "../app/routes/organigrama/organigramaRamas_Subramas/utils/iconPayload";
-import type { PhotoPrincipalPayload } from "../app/routes/organigrama/organigramaRamas_Subramas/utils/photoPrincipalPayload";
 
 const mapBackendSectionToSection = (backendSection: Record<string, unknown>): Section => {
   const section = backendSection as unknown as Section;
@@ -149,7 +148,7 @@ export const deleteIcon = async (sectionId: string | number, tenantId: string, g
 };
 
 // Establece la foto principal de una sección
-export const setPhotoPrincipal = async (sectionId: string | number, payload: PhotoPrincipalPayload, tenantId: string, groupSlug: string) => {
+export const setPhotoPrincipal = async (sectionId: string | number, payload: Record<string, unknown>, tenantId: string, groupSlug: string) => {
   const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/sections/${sectionId}/photo-principal`, payload);
   return response.data;
 };
