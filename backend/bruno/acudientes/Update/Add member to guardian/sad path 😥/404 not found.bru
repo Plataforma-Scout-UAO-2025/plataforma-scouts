@@ -1,0 +1,20 @@
+meta {
+  name: 404 not found
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}guardian/:guardianId/members/:memberId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  guardianId: 288
+  memberId: 1000000000
+}
+
+settings {
+  encodeUrl: true
+}
