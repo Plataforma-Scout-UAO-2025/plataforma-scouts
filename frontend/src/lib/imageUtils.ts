@@ -15,8 +15,7 @@ export const uploadPhotoFile = async (
   const formData = new FormData();
   formData.append('file', file);
   const uploadResponse = await uploadToStorage<{ objectId: string; url: string }>(formData, {
-    onUploadProgress: onProgress ? (progressEvent: any) => {
-      const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+    onUploadProgress: onProgress ? (percent: number) => {
       onProgress(percent);
     } : undefined,
   });
