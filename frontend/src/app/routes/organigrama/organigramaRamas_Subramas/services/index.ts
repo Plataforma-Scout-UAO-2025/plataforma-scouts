@@ -54,6 +54,14 @@ export {
   updatePhotoPrincipal
 } from './photoPrincipal.service';
 
+// Gestión de imágenes de subramas
+export {
+  updateSubramaMainImage,
+  removeSubramaMainImage,
+  replaceSubramaGalleryImage,
+  removeSubramaGalleryImage
+} from './subrama-image.service';
+
 
 
 // UTILIDADES Y HELPERS

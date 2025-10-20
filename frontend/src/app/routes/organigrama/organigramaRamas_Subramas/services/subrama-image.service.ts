@@ -245,3 +245,22 @@ export const getSubramaGalleryImageUuids = async (
     return [];
   }
 };
+
+export const removeSubramaGalleryImage = async (
+  tenantId: string,
+  groupSlug: string,
+  sectionId: string,
+  subgroupId: string,
+  objectId: string
+): Promise<void> => {
+  console.log("🗑️ [SubramaImageService] Eliminando imagen de galería de subrama...");
+  try {
+    // Para subgrupos, no hay endpoint DELETE individual, usar PATCH con operations para eliminar
+    // Como no hay op "remove", por ahora loggear y no hacer nada o implementar con PATCH completo
+    console.warn(` [SubramaImageService] Eliminación de imagen individual de galería de subrama no implementada. Tenant: ${tenantId}, Group: ${groupSlug}, Section: ${sectionId}, Subgroup: ${subgroupId}, ObjectId: ${objectId}`);
+    // TODO: Implementar eliminación individual si es necesario
+  } catch (error: unknown) {
+    console.error(' Error eliminando imagen de galería de subrama:', error);
+    throw error;
+  }
+};

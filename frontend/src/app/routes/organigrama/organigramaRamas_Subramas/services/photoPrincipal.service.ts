@@ -1,5 +1,5 @@
 import { uploadToStorage } from '@/api/upload';
-import { getSection, setPhotoPrincipal as setPhotoPrincipalApi } from '@/api/organigramaApi';
+import { getSection, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi } from '@/api/organigramaApi';
 import { createSetPhotoPrincipalPayload } from '../utils/photoPrincipalPayload';
 
 const getRamaByIdDirect = async (tenantId: string, groupSlug: string, id: string) => {
@@ -43,11 +43,7 @@ export const deletePhotoPrincipal = async (
   groupSlug: string,
   sectionId: string
 ): Promise<void> => {
-  const currentUuid = await getCurrentPhotoPrincipalUuid(tenantId, groupSlug, sectionId);
-  if (currentUuid) {
-    const payload = createSetPhotoPrincipalPayload(currentUuid);
-    await setPhotoPrincipalApi(sectionId, payload, tenantId, groupSlug);
-  }
+  await deletePhotoPrincipalApi(sectionId, tenantId, groupSlug);
 };
 
 export const updatePhotoPrincipal = async (
