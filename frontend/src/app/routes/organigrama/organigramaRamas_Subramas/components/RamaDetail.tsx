@@ -536,7 +536,7 @@ export default function RamaDetail() {
       setIconPreview(previousIcon);
       toast.error('Error subiendo el ícono');
     } finally {
-  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for icon preview', _err); }
+      // NO revocar el preview aquí - se revocará cuando se reemplace o al desmontar
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -589,7 +589,7 @@ export default function RamaDetail() {
       setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
     } finally {
-  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for main image preview', _err); }
+      // NO revocar el preview aquí - se revocará cuando se reemplace o al desmontar
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -621,17 +621,13 @@ export default function RamaDetail() {
   toast.success('Galería actualizada correctamente');
       setImageRefreshToken(Date.now());
 
-      for (const p of previews) {
-  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview', _err); }
-      }
+      // NO revocar los previews aquí - se revocarán cuando se reemplacen o al desmontar
       setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
       console.error(' [RamaDetail] Error subiendo galería:', err);
       const addedPreviews = galleryLocalPreviews.slice(-files.length);
       setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
-      for (const p of addedPreviews) {
-  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview (error case)', _err); }
-      }
+      // NO revocar los previews aquí - se revocarán cuando se reemplacen o al desmontar
       setGalleryLocalPreviews(prev => prev.slice(0, -files.length));
       toast.error('Error subiendo la galería');
     }
@@ -645,6 +641,47 @@ export default function RamaDetail() {
     if (!tenantId || !groupSlug) return;
     void fetchRama();
   }, [tenantId, groupSlug, fetchRama]);
+
+  // Cleanup para iconPreview - revocar blob cuando cambie o al desmontar
+  useEffect(() => {
+    return () => {
+      if (iconPreview && iconPreview.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(iconPreview);
+        } catch (err) {
+          console.warn('Could not revoke icon preview blob URL:', err);
+        }
+      }
+    };
+  }, [iconPreview]);
+
+  // Cleanup para imagenPrincipal - revocar blob cuando cambie o al desmontar
+  useEffect(() => {
+    return () => {
+      if (imagenPrincipal && imagenPrincipal.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(imagenPrincipal);
+        } catch (err) {
+          console.warn('Could not revoke main image preview blob URL:', err);
+        }
+      }
+    };
+  }, [imagenPrincipal]);
+
+  // Cleanup para galleryLocalPreviews - revocar blobs cuando cambien o al desmontar
+  useEffect(() => {
+    return () => {
+      galleryLocalPreviews.forEach(preview => {
+        if (preview && preview.startsWith('blob:')) {
+          try {
+            URL.revokeObjectURL(preview);
+          } catch (err) {
+            console.warn('Could not revoke gallery preview blob URL:', err);
+          }
+        }
+      });
+    };
+  }, [galleryLocalPreviews]);
 
 
   if (isFetching) {

@@ -186,7 +186,7 @@ export default function SubramaDetail() {
           setImagenPrincipal('');
         }
       } finally {
-        try { URL.revokeObjectURL(preview); } catch { /* ignore */ }
+        // NO revocar el preview aquí - se revocará cuando se reemplace o al desmontar
         if (uploadIntervalRef.current) { clearInterval(uploadIntervalRef.current); uploadIntervalRef.current = null; }
         if (uploadAnimateRef.current) { clearInterval(uploadAnimateRef.current); uploadAnimateRef.current = null; }
         uploadProgressReceivedRef.current = false;
@@ -419,6 +419,19 @@ export default function SubramaDetail() {
   useEffect(() => {
     if (subrama) fetchMembers(subrama);
   }, [subrama, fetchMembers]);
+
+  // Cleanup para imagenPrincipal - revocar blob cuando cambie o al desmontar
+  useEffect(() => {
+    return () => {
+      if (imagenPrincipal && imagenPrincipal.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(imagenPrincipal);
+        } catch (err) {
+          console.warn('Could not revoke main image preview blob URL:', err);
+        }
+      }
+    };
+  }, [imagenPrincipal]);
 
   if (!hasTenantContext) {
     if (isFetching) {

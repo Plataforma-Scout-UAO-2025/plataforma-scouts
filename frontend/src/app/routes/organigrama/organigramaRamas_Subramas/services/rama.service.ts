@@ -7,7 +7,7 @@ import type {
 
 import type { Section } from '@/types/section-simple.type';
 import type { Subgroup } from '@/types/subgroup-simple.type';
-import { getSections, getSection, getSectionWithSubgroups, createSection, updateSection, deleteSection } from '@/api/organigramaApi';
+import { getSections, getSection, getSectionWithSubgroups, getSubgroups, createSection, updateSection, deleteSection } from '@/api/organigramaApi';
 import { 
   mapBackendRamaToFrontend, 
   mapFrontendCreateRamaToBackend, 
@@ -123,23 +123,18 @@ export const getRamas = async (
         };
 
         try {
-          const sectionWithSubgroups = await getSectionWithSubgroups(normalizedId, tenantId, groupSlug, signal) as { section: Section; subgroups: Subgroup[] };
-          const canonicalSection: SectionDTO | undefined = sectionWithSubgroups?.section;
-          const canonicalRama = canonicalSection
-            ? mapBackendRamaToFrontend(canonicalSection)
-            : rama;
-
-          const canonicalSectionId = resolveSectionId(canonicalSection) ?? normalizedId;
-          const mappedSubgrupos = (sectionWithSubgroups?.subgroups ?? []).map((subgroup: SubgroupDTO) =>
+          // Usar endpoint de solo subgrupos para evitar datos duplicados
+          const subgroups = await getSubgroups(normalizedId, tenantId, groupSlug) as SubgroupDTO[];
+          
+          const mappedSubgrupos = (subgroups ?? []).map((subgroup: SubgroupDTO) =>
             mapBackendSubramaToFrontend({
               ...subgroup,
-              sectionId: resolveSubgroupSectionId(subgroup) ?? canonicalSectionId,
+              sectionId: resolveSubgroupSectionId(subgroup) ?? normalizedId,
             } as SubgroupDTO)
           );
 
           const hydratedRama: Rama = {
             ...rama,
-            ...canonicalRama,
             id: String(normalizedId),
             sectionId: String(normalizedId),
             subgroups: mappedSubgrupos,
