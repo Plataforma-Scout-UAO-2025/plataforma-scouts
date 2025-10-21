@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useMemo, useState } from "react";
 import type { Cargo } from "../types/niveles.types";
 import type { Member } from "@/types/member.type";
+import { normalizeRawRole, RawRole, getRoleLabel } from "@/roles/roles";
 import {
   Select,
   SelectContent,
@@ -26,16 +27,29 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
   const [descripcion, setDescripcion] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
-  const memberOptions = useMemo(() => {
+  type MemberOption = { id: string; label: string; displayName: string };
+  const memberOptions: MemberOption[] = useMemo(() => {
     return (members || [])
       .map((m) => {
         const rec = m as unknown as Record<string, unknown>;
-        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
-        const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
-        const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");
-        return memberId ? { id: String(memberId), name: `${firstName} ${lastName}`.trim() } : null;
+        const memberId = rec["memberId"] ?? rec["member_id"] ?? rec["id"];
+        const firstName = String(rec["firstName"] ?? rec["first_name"] ?? "");
+        const lastName = String(rec["lastName"] ?? rec["last_name"] ?? "");
+
+        const rawRoleSingle = rec["role"] as string | undefined;
+        const rawRolesList = Array.isArray(rec["roles"]) ? (rec["roles"] as string[]) : undefined;
+        const collected = rawRolesList ?? (rawRoleSingle ? [rawRoleSingle] : []);
+        const normalized = Array.from(new Set(collected.map((r) => normalizeRawRole(r))));
+        const withoutScout = normalized.filter((r) => r !== RawRole.SCOUT);
+
+        if (!memberId || withoutScout.length === 0) return null;
+
+        const rolesLabel = withoutScout.map((r) => getRoleLabel(r)).join(", ");
+        const displayName = `${firstName} ${lastName}`.trim();
+        const label = rolesLabel ? `${displayName} — ${rolesLabel}` : displayName;
+        return { id: String(memberId), label, displayName } as MemberOption;
       })
-      .filter((x): x is { id: string; name: string } => x !== null);
+      .filter((x): x is MemberOption => x !== null);
   }, [members]);
 
   useEffect(() => {
@@ -51,7 +65,7 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
     let titularValue = cargo.titular || "";
     if (selectedMemberId) {
       const selected = memberOptions.find((m) => m.id === selectedMemberId);
-      if (selected) titularValue = selected.name;
+      if (selected) titularValue = selected.displayName;
     }
     onSave({ ...cargo, nombre, titular: titularValue, descripcion });
   };
@@ -88,7 +102,7 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
                 <SelectContent>
                   {memberOptions.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.name}
+                      {m.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
