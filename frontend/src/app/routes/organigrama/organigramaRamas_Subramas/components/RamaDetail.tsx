@@ -125,7 +125,7 @@ export default function RamaDetail() {
 
   const openIconModal = () => {
     if (!rama) return;
-    const url = getIconUrl(rama);
+    const url = iconPreview || getIconUrl(rama);
     if (!url) return;
     setFotoTipo("icono");
     setFotoSeleccionada(url);

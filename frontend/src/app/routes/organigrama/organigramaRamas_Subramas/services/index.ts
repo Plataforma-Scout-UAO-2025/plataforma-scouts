@@ -40,7 +40,6 @@ export {
 
 // Gestión de íconos de secciones
 export {
-  getCurrentIconUuid,
   setIcon,
   deleteIcon,
   updateIcon
