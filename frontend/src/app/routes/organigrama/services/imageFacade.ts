@@ -11,6 +11,7 @@ import {
   removeSectionIcon as removeIconCore,
   removeSectionMainImage as removeMainCore,
 } from '../organigramaRamas_Subramas/services/image-upload-core.service';
+import type { AppDispatch } from '@/store/store';
 import {
   addGalleryImage as addGalleryCore,
   getGalleryImageUuids as getGalleryUuidsCore,
@@ -27,11 +28,28 @@ import type { GalleryItemsZ } from '../schemas/gallery.schema';
 
 // Reexportar la API con nombres estables
 export const uploadSectionIcon = (...args: Parameters<typeof uploadIconCore>) => uploadIconCore(...args);
-export const uploadSectionMainImage = (...args: Parameters<typeof uploadMainCore>) => uploadMainCore(...args);
+
+// Updated functions to require Redux dispatch
+export const uploadSectionMainImage = (
+  tenantId: string,
+  groupSlug: string,
+  sectionId: string,
+  file: File,
+  dispatch: AppDispatch,
+  onFileProgress?: (fileName: string, percent: number) => void,
+  signal?: AbortSignal
+) => uploadMainCore(tenantId, groupSlug, sectionId, file, dispatch, onFileProgress, signal);
+
 export const uploadGalleryImages = (...args: Parameters<typeof uploadGalleryCore>) => uploadGalleryCore(...args);
 
 export const removeSectionIcon = (...args: Parameters<typeof removeIconCore>) => removeIconCore(...args);
-export const removeSectionMainImage = (...args: Parameters<typeof removeMainCore>) => removeMainCore(...args);
+
+export const removeSectionMainImage = (
+  tenantId: string,
+  groupSlug: string,
+  sectionId: string,
+  dispatch: AppDispatch
+) => removeMainCore(tenantId, groupSlug, sectionId, dispatch);
 
 // Nota: funciones de gallery/service se mantienen donde están (gallery.service.ts)
 // La fachada facilita redirigir llamadas futuras desde aquí.

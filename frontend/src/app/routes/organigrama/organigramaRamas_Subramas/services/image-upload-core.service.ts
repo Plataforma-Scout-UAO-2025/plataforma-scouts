@@ -1,7 +1,9 @@
 import { uploadToStorage } from '@/api/upload';
-import { patchGallery, deleteIcon, setIcon, deletePhotoPrincipal, setPhotoPrincipal } from '@/api/organigramaApi';
+import { patchGallery, deleteIcon, setIcon } from '@/api/organigramaApi';
 import { createAddsPayloadFromArray, createPayloadForBackend } from '../utils/galleryPayload';
 import type { GalleryAddOperation, GalleryReplaceOperation } from '../types/operations';
+import type { AppDispatch } from '@/store/store';
+import { setPhotoPrincipalAction, deletePhotoPrincipalAction } from '@/store/organigrama/organigramaActions';
 
 type MaybeAxiosError = { response?: { data?: unknown } };
 type PayloadWithOperations = { operations?: unknown };
@@ -43,29 +45,30 @@ export const uploadSectionMainImage = async (
   tenantId: string,
   groupSlug: string,
   sectionId: string,
-  file: File
+  file: File,
+  dispatch: AppDispatch
 ): Promise<string> => {
   
   try {
     const formData = new FormData();
     formData.append('file', file);
     
-  const uploadResponse = await uploadToStorage<UploadResponse>(formData);
+    const uploadResponse = await uploadToStorage<UploadResponse>(formData);
     
-  // handled by organigramaClient
-    
-
     try {
-      const primaryPayload = { objectId: uploadResponse.objectId };
-  console.info(' [ImageUploadCore] Enviando PATCH a photo-principal con objectId');
-  await setPhotoPrincipal(sectionId, primaryPayload, tenantId, groupSlug);
-      console.log(' [ImageUploadService] Imagen principal asociada correctamente con endpoint PATCH (photo-principal)');
+      console.info(' [ImageUploadCore] Usando Redux action para photo-principal:', { objectId: uploadResponse.objectId });
+      await dispatch(setPhotoPrincipalAction({ 
+        tenantId, 
+        groupSlug, 
+        sectionId, 
+        objectId: uploadResponse.objectId 
+      }));
+      console.log(' [ImageUploadService] Imagen principal asociada correctamente con Redux action');
     } catch (primaryError: unknown) {
-      console.error(' [ImageUploadService] Error en endpoint PATCH para imagen principal (photo-principal):', primaryError);
-      console.error(' [ImageUploadService] Respuesta del backend (photo-principal):', (primaryError as MaybeAxiosError)?.response?.data ?? (primaryError as MaybeAxiosError)?.response ?? primaryError);
+      console.error(' [ImageUploadService] Error ejecutando Redux action para imagen principal:', primaryError);
+      console.error(' [ImageUploadService] Respuesta del error:', (primaryError as MaybeAxiosError)?.response?.data ?? (primaryError as MaybeAxiosError)?.response ?? primaryError);
       throw primaryError;
     }
-    
     
     return uploadResponse.url || uploadResponse.objectId;
   } catch (error) {
@@ -134,16 +137,18 @@ export const removeSectionIcon = async (
   }
 };
 
-//  Eliminar imagen principal de sección (PATCH remove)
+//  Eliminar imagen principal de sección
 export const removeSectionMainImage = async (
   tenantId: string,
   groupSlug: string,
-  sectionId: string
+  sectionId: string,
+  dispatch: AppDispatch
 ): Promise<void> => {
   console.log(" [ImageUploadService] Eliminando imagen principal de sección...");
   try {
-    await deletePhotoPrincipal(sectionId, tenantId, groupSlug);
-    console.log(" Imagen principal eliminada correctamente");
+    console.info(' [ImageUploadCore] Usando Redux action para eliminar photo-principal');
+    await dispatch(deletePhotoPrincipalAction({ tenantId, groupSlug, sectionId }));
+    console.log(" Imagen principal eliminada correctamente con Redux action");
   } catch (error: unknown) {
     console.error(' Error eliminando imagen principal de sección:', error);
     throw error;
