@@ -7,6 +7,8 @@ import InterestsForm from "./components/InterestsForm";
 import SchoolDataForm from "./components/SchoolDataForm";
 import SchoolDialog from "./components/SchoolDialog";
 import SuccessModal from "./components/SuccessModal";
+import { UserExistsDialog } from "./components/UserExistsDialog";
+import { ErrorDialog } from "./components/ErrorDialog";
 
 import { useScoutEnrollment } from "@/hooks/useScoutEnrollment";
 
@@ -21,12 +23,18 @@ function ScoutEnrollment() {
     setPagina,
     showSchoolDialog,
     showModal,
-
+    setShowModal,
+    showUserExistsDialog,
+    setShowUserExistsDialog,
+    showAuth0ErrorDialog,
+    setShowAuth0ErrorDialog,
+    errorMessage,
     totalPaginas,
     progreso,
     loadingSubmit,
-
+    errors,
     handlePersonalChange,
+    handleEmergencyContactsChange,
     handleSchoolChange,
     handleSubmit,
     handleSchoolDialogResponse,
@@ -40,16 +48,30 @@ function ScoutEnrollment() {
             datos={datosPersonales}
             handleChange={handlePersonalChange}
             setDatos={setDatosPersonales}
+            errors={errors}
           />
-          <EmergencyContacts datos={datosPersonales} setDatos={setDatosPersonales} />
+          <EmergencyContacts
+            datos={datosPersonales}
+            setDatos={setDatosPersonales}
+            onContactChange={handleEmergencyContactsChange}
+            errors={errors}
+          />
         </>
       );
     if (pagina === 2)
       return (
-        <InterestsForm datos={datosPersonales} handleChange={handlePersonalChange} />
+        <InterestsForm
+          datos={datosPersonales}
+          handleChange={handlePersonalChange}
+          errors={errors}
+        />
       );
     return (
-      <SchoolDataForm datos={datosEscolares} handleChange={handleSchoolChange} />
+      <SchoolDataForm
+        datos={datosEscolares}
+        handleChange={handleSchoolChange}
+        errors={errors}
+      />
     );
   };
 
@@ -93,9 +115,31 @@ function ScoutEnrollment() {
         </div>
       </form>
 
-      <SchoolDialog open={showSchoolDialog} onResponse={handleSchoolDialogResponse} />
+      <SchoolDialog
+        open={showSchoolDialog}
+        onResponse={handleSchoolDialogResponse}
+      />
 
-      <SuccessModal open={showModal} onClose={() => navigate("/app/miembros")} />
+      <SuccessModal
+        open={showModal}
+        onClose={() => {
+          setShowModal(false);
+          navigate("/app/miembros");
+        }}
+      />
+
+      <UserExistsDialog
+        open={showUserExistsDialog}
+        onOpenChange={setShowUserExistsDialog}
+        identification={datosPersonales.identification}
+      />
+
+      <ErrorDialog
+        open={showAuth0ErrorDialog}
+        onOpenChange={setShowAuth0ErrorDialog}
+        title="Error en el registro"
+        description={errorMessage}
+      />
     </div>
   );
 }

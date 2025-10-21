@@ -14,15 +14,12 @@ import SuccessModal from "./components/SuccessModal";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 import { useOrgStructure } from "@/hooks/useOrgStructure";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
+import { UserExistsDialog } from "./components/UserExistsDialog";
+import { ErrorDialog } from "./components/ErrorDialog";
 
 function ScouterEnrollment() {
   const navigate = useNavigate();
-
-  const {
-    orgId,
-    isLoading: authLoading,
-  } = useAuth0ApiWrapper();
-
+  const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
   const {
     datosPersonales,
     setDatosPersonales,
@@ -30,7 +27,13 @@ function ScouterEnrollment() {
     totalPaginas,
     progreso,
     showModal,
+    showUserExistsDialog,
+    setShowUserExistsDialog,
+    showAuth0ErrorDialog,
+    setShowAuth0ErrorDialog,
+    errorMessage,
     loadingSubmit,
+    errors,
     handlePersonalChange,
     handleSubmit,
   } = useRoleEnrollment({ role: "SCOUTER", totalPaginas: 1 });
@@ -45,12 +48,11 @@ function ScouterEnrollment() {
     setSelectedSubgroup,
     loadingSections,
     loadingSubgroups,
-  } = useOrgStructure({ 
+  } = useOrgStructure({
     orgId: orgId || "",
-    open: true 
+    open: true,
   });
 
-  // Mostrar loading mientras autentica
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -83,6 +85,7 @@ function ScouterEnrollment() {
           datos={datosPersonales}
           handleChange={handlePersonalChange}
           setDatos={setDatosPersonales}
+          errors={errors}
         />
 
         {/* Sección de asignación organizacional */}
@@ -97,7 +100,10 @@ function ScouterEnrollment() {
             <Select
               value={selectedSection}
               onValueChange={setSelectedSection}
-              disabled={!selectedGroupSlug || loadingSections || sections.length === 0}
+              disabled={
+                !selectedGroupSlug || loadingSections || sections.length === 0
+              }
+              required
             >
               <SelectTrigger id="section">
                 <SelectValue placeholder="Selecciona una sección" />
@@ -118,7 +124,9 @@ function ScouterEnrollment() {
             <Select
               value={selectedSubgroup}
               onValueChange={setSelectedSubgroup}
-              disabled={!selectedSection || loadingSubgroups || subgroups.length === 0}
+              disabled={
+                !selectedSection || loadingSubgroups || subgroups.length === 0
+              }
             >
               <SelectTrigger id="subgroup">
                 <SelectValue placeholder="Selecciona un subgrupo" />
@@ -146,7 +154,12 @@ function ScouterEnrollment() {
           <Button
             type="submit"
             variant="primary"
-            disabled={loadingSubmit || !selectedGroupSlug || !selectedSection || !selectedSubgroup}
+            disabled={
+              loadingSubmit ||
+              !selectedGroupSlug ||
+              !selectedSection ||
+              !selectedSubgroup
+            }
           >
             {loadingSubmit
               ? "Enviando..."
@@ -161,6 +174,19 @@ function ScouterEnrollment() {
       <SuccessModal
         open={showModal}
         onClose={() => navigate("/app/dashboard")}
+      />
+
+      <UserExistsDialog
+        open={showUserExistsDialog}
+        onOpenChange={setShowUserExistsDialog}
+        identification={datosPersonales.identification}
+      />
+
+      <ErrorDialog
+        open={showAuth0ErrorDialog}
+        onOpenChange={setShowAuth0ErrorDialog}
+        title="Error en el registro"
+        description={errorMessage}
       />
     </div>
   );

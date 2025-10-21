@@ -50,7 +50,7 @@ export const fetchMembersAction = createAsyncThunk(
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Obtener miembros por estado
@@ -70,7 +70,7 @@ export const fetchMembersByStatusAction = createAsyncThunk<
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Obtener miembros con su respectiva rama
@@ -86,7 +86,7 @@ export const fetchMembersWithBranchAction = createAsyncThunk(
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Actualizar estado de un miembro
@@ -101,7 +101,7 @@ export const updateMemberStatusAction = createAsyncThunk<
       id,
       status,
     }: { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
-    { rejectWithValue },
+    { rejectWithValue }
   ) => {
     try {
       const response = await updateMemberStatus(id, status);
@@ -113,7 +113,7 @@ export const updateMemberStatusAction = createAsyncThunk<
         errorData?.error || "Error al actualizar el estado del miembro";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Actualizar datos de un miembro en Firestore
@@ -176,7 +176,7 @@ export const createMemberWithSchoolDataAction = createAsyncThunk<
         errorData?.error || "Error al crear el miembro con datos escolares";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Crear miembro en Auth0
@@ -197,7 +197,7 @@ export const createMemberAuth0Action = createAsyncThunk<
         errorData?.error || "Error al crear el miembro en Auth0";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Crear scout en Auth0
@@ -218,7 +218,7 @@ export const createScoutAuth0Action = createAsyncThunk<
         errorData?.error || "Error al crear el scout en Auth0";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Asignar subgrupo y sección a un miembro (backend endpoint separado)
@@ -247,7 +247,7 @@ export const assignSubgroupAndSectionAction = createAsyncThunk<
         errorData?.error || "Error al asignar subgrupo y sección";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Actualizar miembro enviando un DTO completo (usado cuando backend valida campos obligatorios)
