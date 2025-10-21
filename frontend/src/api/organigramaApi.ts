@@ -2,7 +2,7 @@ import api from "./axios";
 import type { TenantDTO, GroupResponseDTO } from "@/types/group.type";
 import type { Section } from '@/types/section-simple.type';
 import type { Subgroup } from "@/types/subgroup-simple.type";
-import type { IconSetPayload } from "../app/routes/organigrama/organigramaRamas_Subramas/utils/iconPayload";
+import type { IconSetPayload } from "../app/routes/organigrama/organigramaRamas_Subramas/services/icon.service";
 
 const mapBackendSectionToSection = (backendSection: Record<string, unknown>): Section => {
   const section = backendSection as unknown as Section;

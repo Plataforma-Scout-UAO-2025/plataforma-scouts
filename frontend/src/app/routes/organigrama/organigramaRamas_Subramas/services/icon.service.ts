@@ -3,7 +3,14 @@ import {
   setIcon as setIconApi,
   deleteIcon as deleteIconApi,
 } from "@/api/organigramaApi";
-import { createSetIconPayload } from "../utils/iconPayload";
+
+export interface IconSetPayload {
+  objectId: string;
+}
+
+export const createSetIconPayload = (objectId: string): IconSetPayload => ({
+  objectId,
+});
 
 export const setIcon = async (
   tenantId: string,
