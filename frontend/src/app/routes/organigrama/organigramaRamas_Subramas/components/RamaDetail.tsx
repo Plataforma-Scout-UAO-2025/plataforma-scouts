@@ -251,9 +251,7 @@ export default function RamaDetail() {
       setUploading(false);
       setUploadPercent(0);
       setCurrentUploadingFile(null);
-      if (fotoTipo === 'icono' && iconPreview && rama) {
-        setIconPreview(getIconUrl(rama) || null);
-      }
+      // iconPreview ya se limpió antes del refetch
     }
   };
 
@@ -323,6 +321,16 @@ export default function RamaDetail() {
 
   const getIconUrl = (rama: Rama): string => {
     const iconUrl = rama.iconUrl ?? rama.icono;
+    
+    // DEBUG: Log temporal para diagnosticar el problema
+    console.log('🔍 [DEBUG] getIconUrl called:', {
+      ramaName: rama.name ?? rama.nombre,
+      iconUrl: iconUrl,
+      ramaIconUrl: rama.iconUrl,
+      ramaIcono: rama.icono,
+      hasIconUrl: !!iconUrl
+    });
+    
     if (iconUrl && iconUrl.startsWith('http')) return fixSupabaseUrl(iconUrl);
     if (iconUrl && iconUrl.startsWith('data:')) return iconUrl;
     console.log(' [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
@@ -575,8 +583,25 @@ export default function RamaDetail() {
         }
       );
 
-  const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
-        if (updatedRama) {
+      if (iconPreview && iconPreview.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(iconPreview);
+        } catch (err) {
+          console.warn('Could not revoke icon preview blob URL:', err);
+        }
+      }
+      setIconPreview(null);
+
+      console.log('🔍 [DEBUG] About to fetch updated rama...');
+      const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
+      console.log('🔍 [DEBUG] Received updatedRama:', {
+        hasUpdatedRama: !!updatedRama,
+        updatedRamaIconUrl: updatedRama?.iconUrl,
+        updatedRamaName: updatedRama?.name
+      });
+      
+      if (updatedRama) {
+        console.log('🔍 [DEBUG] About to setRama with updated data...');
         setRama(updatedRama);
         const mainImageUrl = getMainImageUrl(updatedRama);
         setImagenPrincipal(`${mainImageUrl}?v=${Date.now()}`);
@@ -642,20 +667,7 @@ export default function RamaDetail() {
     void fetchRama();
   }, [tenantId, groupSlug, fetchRama]);
 
-  // Cleanup para iconPreview - revocar blob cuando cambie o al desmontar
-  useEffect(() => {
-    return () => {
-      if (iconPreview && iconPreview.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(iconPreview);
-        } catch (err) {
-          console.warn('Could not revoke icon preview blob URL:', err);
-        }
-      }
-    };
-  }, [iconPreview]);
-
-  // Cleanup para imagenPrincipal - revocar blob cuando cambie o al desmontar
+  
   useEffect(() => {
     return () => {
       if (imagenPrincipal && imagenPrincipal.startsWith('blob:')) {
@@ -668,7 +680,6 @@ export default function RamaDetail() {
     };
   }, [imagenPrincipal]);
 
-  // Cleanup para galleryLocalPreviews - revocar blobs cuando cambien o al desmontar
   useEffect(() => {
     return () => {
       galleryLocalPreviews.forEach(preview => {
