@@ -74,13 +74,21 @@ public interface IMemberService {
     Member update_member_by_id(Long memberId, Member memberUpdate);
 
     /**
+     * Actualiza el rol de un miembro solo si su rol en Auth0 ha cambiado
+     *
+     * @param userId  ID del miembro a actualizar.
+     * @return {@code true} si la actualización fue exitosa, {@code false} en caso contrario.
+     */
+    Boolean update_role(String userId);
+
+    /**
      * Asigna un miembro a un subGrupo existente
      *
      * @param memberId     ID del miembro a actualizar.
      * @param subGroupId Id del sub grupo que recibirá al miembro
      * @return el estado booleano de la operación
      */
-    Boolean assign_subGroup(Long memberId, Long subGroupId);
+    Boolean assignSubgroupAndSection(Long memberId, Long subGroupId, Long sectionId);
 
     /**
      * Obtiene todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.

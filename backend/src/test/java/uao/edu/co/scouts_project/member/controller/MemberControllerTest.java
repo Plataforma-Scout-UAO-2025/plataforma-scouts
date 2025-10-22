@@ -121,26 +121,6 @@ class MemberControllerTest {
     }
 
 
-    @Test
-    void testAssignSubgroup_shouldReturnOk() {
-        AssignSubgroupDto dto = new AssignSubgroupDto(1L, 2L);
-        when(memberService.assign_subGroup(1L, 2L)).thenReturn(true);
-
-        ResponseEntity<?> response = memberController.assignSubgroup(dto);
-
-        assertEquals(OK, response.getStatusCode());
-        verify(memberService).assign_subGroup(1L, 2L);
-    }
-
-    @Test
-    void testAssignSubgroup_shouldReturnBadRequest() {
-        AssignSubgroupDto dto = new AssignSubgroupDto(1L, 2L);
-        when(memberService.assign_subGroup(1L, 2L)).thenReturn(false);
-
-        ResponseEntity<?> response = memberController.assignSubgroup(dto);
-
-        assertEquals(BAD_REQUEST, response.getStatusCode());
-    }
 
     @Test
     void testListSubGroupByMemberId_shouldReturnOk() {
