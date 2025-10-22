@@ -8,6 +8,7 @@ public record CreateMedicalRecordDTO(
         Long id, // medical_record_id (BIGINT) provisto por el cliente
         @NotBlank(message = "bloodType is required")
         String bloodType,        // A+, A-, B+, B-, AB+, AB-, O+, O-
+        @NotBlank(message = "eps is required")
         String eps,
         String allergies,
         String chronicDiseases,

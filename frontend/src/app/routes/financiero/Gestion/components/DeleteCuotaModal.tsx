@@ -30,7 +30,7 @@ export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalP
     console.log("Eliminando cuota:", cuota.fee_id);
     try{
       const response = await api.delete(
-        `${import.meta.env.VITE_BACKEND_URL}finanzas/fees/${tenantId}/${cuota.fee_id}`
+        `finanzas/fees/${tenantId}/${cuota.fee_id}`
       );
       if(response.status === 204) {
         toast.success("Cuota eliminada correctamente");

@@ -1,36 +1,48 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/index";
 import BranchCount from "./components/BranchCount";
 import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
+import { useMembersManagement } from "@/hooks/useMembersManagement";
+import { useNavigate } from "react-router-dom";
 import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
 
-const TeamMembers = () => {
-  const [searchFilter, setSearchFilter] = useState("");
-  const [cityFilter, setCityFilter] = useState("");
-  const [branchFilter, setBranchFilter] = useState("");
+const Miembros = () => {
+  const {
+    searchFilter,
+    setSearchFilter,
+    isActiveFilter,
+    setIsActiveFilter,
+    branchFilter,
+    setBranchFilter,
+    filteredMembers,
+    paginatedMembers,
+    totalMembers,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    handlePreviousPage,
+    handleNextPage,
+    extractSectionsFromMember,
+  } = useMembersManagement({ itemsPerPage: 10 });
+
+  const { loading, error } = useTenantMembersByStatus({
+    status: "APPROVED",
+  });
   const navigate = useNavigate();
-
-  const { members, total, page, totalPages, setPage, loading, error } =
-    useTenantMembersByStatus({
-      status: "APPROVED",
-      pageSize: 10,
-      search: searchFilter,
-      city: cityFilter,
-      branch: branchFilter,
-    });
-
-  const startIdx = total === 0 ? 0 : (page - 1) * 10 + 1;
-  const endIdx = Math.min(page * 10, total);
 
   return (
     <div className="mx-4">
       <header className="flex items-center mb-4 justify-between">
-        <p className="text-5xl font-bold text-primary">Gestión de Miembros</p>
+        <p className="text-5xl font-bold text-primary">
+          Gestión de Miembros Aprobados
+        </p>
       </header>
       <section className="my-2 flex gap-4">
-        <BranchCount />
+        <BranchCount
+          filteredMembers={filteredMembers}
+          totalMembers={totalMembers}
+        />
       </section>
 
       {/* Filtros */}
@@ -38,10 +50,12 @@ const TeamMembers = () => {
         <MembersFilter
           searchFilter={searchFilter}
           setSearchFilter={setSearchFilter}
-          cityFilter={cityFilter}
-          setCityFilter={setCityFilter}
+          isActiveFilter={isActiveFilter}
+          setIsActiveFilter={setIsActiveFilter}
           branchFilter={branchFilter}
           setBranchFilter={setBranchFilter}
+          filteredMembers={filteredMembers}
+          extractSectionsFromMember={extractSectionsFromMember}
         />
       </section>
 
@@ -49,7 +63,9 @@ const TeamMembers = () => {
       <section className="mt-6">
         {loading && <p>Cargando miembros…</p>}
         {error && <p className="text-red-600">{error}</p>}
-        {!loading && !error && <MembersTable filteredMembers={members} />}
+        {!loading && !error && (
+          <MembersTable filteredMembers={paginatedMembers} />
+        )}
 
         {/* Footer paginación */}
         <section className="flex justify-between items-center mt-4">
@@ -61,22 +77,27 @@ const TeamMembers = () => {
               Solicitudes
             </Button>
             <p className="text-sm text-text self-center ml-4">
-              Mostrando {startIdx}–{endIdx} de {total} miembros
+              Mostrando {startIndex + 1}-
+              {Math.min(endIndex, filteredMembers.length)} de{" "}
+              {filteredMembers.length} miembros
             </p>
           </div>
 
-          <div className="flex justify-end mt-3 gap-2">
+          <div className="flex justify-end mt-3 gap-2 items-center">
+            <p className="text-sm text-text mr-2">
+              Página {currentPage} de {totalPages || 1}
+            </p>
             <Button
               variant="outline"
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page <= 1 || loading}
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
             >
               Anterior
             </Button>
             <Button
               variant="outline"
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page >= totalPages || loading}
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || totalPages === 0}
             >
               Siguiente
             </Button>
@@ -86,5 +107,4 @@ const TeamMembers = () => {
     </div>
   );
 };
-
-export default TeamMembers;
+export default Miembros;

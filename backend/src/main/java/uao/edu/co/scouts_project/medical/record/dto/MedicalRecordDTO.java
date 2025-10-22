@@ -5,9 +5,9 @@ import java.util.List;
 
 /** DTO expuesto al frontend. */
 public record MedicalRecordDTO(
-        String id,                      // medical_record_id como String
+        Long id,                      // medical_record_id como String
         String tenantId,                // viene del header/token
-        String memberId,
+        Long memberId,
         String bloodType,
         String eps,
         String allergies,

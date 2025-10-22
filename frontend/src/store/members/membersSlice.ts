@@ -5,6 +5,9 @@ import {
   updateMemberAction,
   createMemberAction,
   createMemberWithSchoolDataAction,
+  createMemberAuth0Action,
+  createScoutAuth0Action,
+  fetchMembersWithBranchAction,
   fetchMembersByStatusAction,
   updateMemberStatusAction,
 } from "./membersActions";
@@ -75,6 +78,20 @@ const membersSlice = createSlice({
       state.loading = false;
       state.error = action.payload?.error as string;
     });
+
+    builder.addCase(fetchMembersWithBranchAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchMembersWithBranchAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.members = action.payload as Member[];
+    });
+    builder.addCase(fetchMembersWithBranchAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
     builder.addCase(createMemberAction.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -129,6 +146,32 @@ const membersSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(updateMemberStatusAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
+    builder.addCase(createMemberAuth0Action.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createMemberAuth0Action.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message || "Usuario creado exitosamente en Auth0";
+    });
+    builder.addCase(createMemberAuth0Action.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
+    builder.addCase(createScoutAuth0Action.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createScoutAuth0Action.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message || "Scout creado exitosamente en Auth0";
+    });
+    builder.addCase(createScoutAuth0Action.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload?.error as string;
     });
