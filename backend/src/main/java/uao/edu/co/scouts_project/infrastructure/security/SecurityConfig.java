@@ -177,7 +177,7 @@ public class SecurityConfig {
 
                                                 //
                                                 // Pagos
-                                                .requestMatchers(HttpMethod.GET,"/api/v1/finanzas/payments/status/*/*")
+                                                .requestMatchers(HttpMethod.GET,"/api/v1/finanzas/payments/status/guardian/*")
                                                 .hasAnyRole(ACUDIENTE.name())
 
                                                 .requestMatchers("/api/v1/finanzas/payments/**")

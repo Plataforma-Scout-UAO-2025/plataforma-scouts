@@ -54,4 +54,9 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
            "JOIN FETCH m.subgroup sg " +
            "WHERE m.tenantId = :tenantId")
     List<Member> findMembersWithSubgroupByTenantId(@Param("tenantId") String tenantId);
+
+
+    @Query("SELECT m.memberId FROM Member m WHERE m.userId = :userId")
+    Optional<Long> findMemberIdByUserId(@Param("userId") String userId);
+
 }

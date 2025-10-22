@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.persistence.EntityNotFoundException;
 import uao.edu.co.scouts_project.finanzas.payments.dto.AppendPaymentDto;
 import uao.edu.co.scouts_project.finanzas.payments.dto.CuotasEstadoDto;
 import uao.edu.co.scouts_project.finanzas.payments.dto.EstadoCuentaDto;
@@ -24,15 +25,21 @@ import uao.edu.co.scouts_project.finanzas.payments.repository.IPaymentsReadRepos
 import uao.edu.co.scouts_project.finanzas.payments.repository.projection.InstallmentWithConceptAndMemberRow;
 import uao.edu.co.scouts_project.finanzas.payments.repository.projection.InstallmentWithConceptRow;
 import uao.edu.co.scouts_project.finanzas.payments.repository.projection.MemberWithGroupsRow;
+import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 
 @Service
 public class PaymentsService {
 
     private final IPaymentsReadRepository readRepo;
+    
+    private final IMemberRepository memberRepo;
 
-    public PaymentsService(IPaymentsReadRepository readRepo) {
+
+    public PaymentsService(IPaymentsReadRepository readRepo, IMemberRepository memberRepo) {
         this.readRepo = readRepo;
+        this.memberRepo = memberRepo;
     }
+
 
     public List<PaymentRecordDto> listMembersWithInstallments(String tenantId) {
         return readRepo.findScoutMembersWithInstallments(tenantId)
@@ -205,6 +212,11 @@ public void appendPayment(String tenantId, Long installmentId, AppendPaymentDto 
 
     private static BigDecimal nullSafe(BigDecimal v) {
         return v == null ? BigDecimal.ZERO : v;
+    }
+
+    public Long getGuardianIdFromUserId(String userId) {
+        return memberRepo.findMemberIdByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("No se encontró un acudiente asociado al usuario " + userId));
     }
 
 }
