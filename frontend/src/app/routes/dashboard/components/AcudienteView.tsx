@@ -30,7 +30,10 @@ export default function AcudienteView() {
           cuotasPendientes: res.data.kpis.cuotas_vencidas ?? 0,
         }));
       } catch (error) {
-        setError("No se pudo cargar el estado de cuenta. Intenta nuevamente más tarde.");
+        setError(
+          "No se pudo cargar el estado de cuenta. Intenta nuevamente más tarde: " +
+          (error instanceof Error ? error.message : String(error))
+        );
       }
     };
     if (tenantId) fetchEstadoCuenta();
