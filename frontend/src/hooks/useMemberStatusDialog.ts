@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Member } from "@/types/member.type";
 import { toast } from "sonner";
+import { useAppDispatch } from "./useAppDispatch";
+import { updateMemberAction, fetchMembersByStatusAction } from "@/store/members/membersActions";
 
 interface MemberStatus {
   is_active?: boolean | string | number;
@@ -8,6 +10,7 @@ interface MemberStatus {
 }
 
 export const useMemberStatusDialog = () => {
+  const dispatch = useAppDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,16 +32,27 @@ export const useMemberStatusDialog = () => {
   };
 
   const handleConfirmToggle = async () => {
-    if (!selectedMember) return;
+    if (!selectedMember || !selectedMember.member_id) return;
 
     try {
       setLoading(true);
 
-      // Pendiente integración con endpoint del backend
-      console.log(
-        `${isActive(selectedMember) ? "Desactivando" : "Activando"} miembro:`,
-        selectedMember
-      );
+      const newActiveStatus = !isActive(selectedMember);
+      const memberName = `${selectedMember.first_name} ${selectedMember.last_name}`;
+      const action = newActiveStatus ? "activado" : "desactivado";
+
+      await dispatch(
+        updateMemberAction({
+          uid: selectedMember.member_id.toString(),
+          updates: {
+            isActive: newActiveStatus,
+          },
+        })
+      ).unwrap();
+
+      toast.success(`${memberName} fue ${action} exitosamente.`);
+
+      await dispatch(fetchMembersByStatusAction("APPROVED"));
 
       setIsDialogOpen(false);
       setSelectedMember(null);

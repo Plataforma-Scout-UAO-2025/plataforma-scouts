@@ -29,7 +29,6 @@ interface MembersTableProps {
 }
 
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
-  // Hook para manejar el diálogo de confirmación de activar/desactivar
   const {
     isDialogOpen,
     setIsDialogOpen,
@@ -39,12 +38,10 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
     handleConfirmToggle,
   } = useMemberStatusDialog();
 
-  // Estados para el modal de información del miembro
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [selectedMemberForInfo, setSelectedMemberForInfo] =
     useState<MemberType | null>(null);
 
-  // Función para abrir el modal de información del miembro
   const handleViewInfo = (member: MemberType) => {
     setSelectedMemberForInfo(member);
     setIsInfoModalOpen(true);
@@ -170,13 +167,17 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
               <strong>
                 {selectedMember?.first_name} {selectedMember?.last_name}
               </strong>
+              {" "}a{" "}
+              <strong>
+                {selectedMember && isActive(selectedMember) ? "INACTIVO" : "ACTIVO"}
+              </strong>
               .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmToggle}>
-              Aceptar
+              {selectedMember && isActive(selectedMember) ? "Desactivar" : "Activar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
