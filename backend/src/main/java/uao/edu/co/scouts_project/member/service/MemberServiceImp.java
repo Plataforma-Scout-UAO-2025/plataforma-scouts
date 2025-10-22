@@ -229,7 +229,6 @@ public class MemberServiceImp implements IMemberService {
 
             log.info("Fetching members with subgroup and section for authenticated user's tenantId: {}", tenantId);
 
-            // 1. Obtener todos los miembros con subgrupos usando JOIN FETCH
             List<Member> members = memberRepository.findMembersWithSubgroupByTenantId(tenantId);
 
             if (members.isEmpty()) {

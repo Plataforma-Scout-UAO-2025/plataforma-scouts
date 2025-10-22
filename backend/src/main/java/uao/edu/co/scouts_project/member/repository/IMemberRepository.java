@@ -52,8 +52,8 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
      * @param tenantId ID del tenant para filtrar los miembros
      * @return Lista de miembros con subgrupo y sección
      */
-    @Query("SELECT m FROM Member m " +
-            "JOIN FETCH m.subgroup sg " +
+    @Query("SELECT DISTINCT m FROM Member m " +
+            "LEFT JOIN FETCH m.subgroup sg " +
             "WHERE m.tenantId = :tenantId")
     List<Member> findMembersWithSubgroupByTenantId(@Param("tenantId") String tenantId);
 
