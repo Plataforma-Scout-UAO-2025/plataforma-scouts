@@ -43,8 +43,6 @@ export const useMemberFilters = ({
             const subgroupField = (member as unknown as Record<string, unknown>)
               .subgroup;
 
-            if (!branchFilter.toLowerCase()) return true;
-
             if (branchFilter.toLowerCase() === "sin rama") {
               return (
                 !subgroupField ||

@@ -1,5 +1,3 @@
-/*import { useEffect, useMemo } from "react";
-import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";*/
 import { useAuth0 } from "@auth0/auth0-react";
 import { useMembersManagement } from "@/hooks/useMembersManagement";
 import HomeCard from "./HomeCard";
@@ -18,12 +16,7 @@ const AdminGrupoView = () => {
     nuevosEsteMes,
   } = useMembersManagement();
 
-  let scoutsActivos = 0;
-  scoutMembers.map((member) => {
-    if (member.isActive) {
-      scoutsActivos += 1;
-    }
-  });
+  const scoutsActivos = scoutMembers.filter(member => member.isActive).length;
 
   const stats = {
     totalScouts: scoutMembers.length || 0,

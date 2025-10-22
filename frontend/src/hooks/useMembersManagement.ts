@@ -35,7 +35,10 @@ export const useMembersManagement = () => {
     branchMemberCount[sectionName] = (branchMemberCount[sectionName] || 0) + 1;
   }
 
-  for (const member of members) {
+  const approvedMembers = members.filter(
+    (member) => member.status?.toLowerCase() === "approved"
+  );
+  for (const member of approvedMembers) {
     let sectionName = "Sin Rama";
 
     if (member.subgroup?.section?.name) {
@@ -54,7 +57,11 @@ export const useMembersManagement = () => {
   const ahora = new Date();
   const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
   const nuevosEsteMes = members.filter((member) => {
-    const fecha = new Date(member.createdAt || (member.created_at as string));
+    const dateValue = member.createdAt || member.created_at;
+    if (!dateValue) {
+      return false;
+    }
+    const fecha = new Date(dateValue as string);
     return (
       fecha >= inicioMes &&
       fecha <= ahora &&

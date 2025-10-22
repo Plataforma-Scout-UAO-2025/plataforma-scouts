@@ -27,8 +27,6 @@ const Miembros = () => {
     branchTotalMemberCount,
   } = useMemberFilters({ itemsPerPage: 10 });
 
-  console.log(branchTotalMemberCount);
-
   const { loading, error } = useTenantMembersByStatus({
     status: "APPROVED",
   });
