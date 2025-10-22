@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import EmergencyContacts from "./EmergencyContacts";
 import type { PersonalData, ChangeEvent } from "@/types/enrollment.type";
 
 interface Props {
@@ -12,7 +11,6 @@ interface Props {
 export default function PersonalDataForm({
   datos,
   handleChange,
-  setDatos,
 }: Props) {
   return (
     <>
@@ -210,7 +208,6 @@ export default function PersonalDataForm({
         />
       </div>
 
-      <EmergencyContacts datos={datos} setDatos={setDatos} />
     </>
   );
 }

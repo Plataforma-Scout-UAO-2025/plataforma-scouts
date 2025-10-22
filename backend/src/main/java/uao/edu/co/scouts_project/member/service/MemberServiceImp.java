@@ -1,17 +1,14 @@
 package uao.edu.co.scouts_project.member.service;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
-import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
 import uao.edu.co.scouts_project.member.MemberStatusException;
 import uao.edu.co.scouts_project.member.dto.MemberWithSubgroupAndSectionDto;
 import uao.edu.co.scouts_project.member.mapper.MemberWithSubgroupAndSectionMapper;
@@ -63,6 +60,7 @@ public class MemberServiceImp implements IMemberService {
      * @return El miembro creado con su información persistida.
      */
     @Override
+    @Transactional
     public Member create_member(Member miembro) {
         validateMemberData(miembro);
 
@@ -151,6 +149,7 @@ public class MemberServiceImp implements IMemberService {
      * @return {@link Optional} con el miembro si existe.
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<List<Member>> get_members_by_subGroupId(Long subGroupId) {
         if (subGroupId == null || subGroupId <= 0) {
             log.warn("Invalid subgroup ID for search: {}", subGroupId);
@@ -283,6 +282,7 @@ public class MemberServiceImp implements IMemberService {
      * @return {@code true} si se actualizó correctamente, {@code false} si el estado era el mismo.
      */
     @Override
+    @Transactional
     public Boolean update_status(Long memberId, Status enumStatus) {
         if (memberId == null || memberId <= 0) {
             throw new IllegalArgumentException("Invalid member ID: " + memberId);
@@ -316,10 +316,11 @@ public class MemberServiceImp implements IMemberService {
      * Actualiza la información de un miembro existente sin sobrescribir valores nulos.
      *
      * @param memberId     ID del miembro a actualizar.
-     * @param memberUpdate Datos nuevos del miembro.
+     * @param memberUpdate Entidad Member con los datos a actualizar (campos null no se actualizan).
      * @return El miembro actualizado.
      */
     @Override
+    @Transactional
     public Member update_member_by_id(Long memberId, Member memberUpdate) {
         if (memberId == null || memberId <= 0) {
             throw new IllegalArgumentException("Invalid member ID: " + memberId);
@@ -330,6 +331,7 @@ public class MemberServiceImp implements IMemberService {
 
         log.info("Starting update for member with ID: {}", memberId);
 
+        // BeanUtils.copyProperties ignora los campos null automáticamente
         BeanUtils.copyProperties(memberUpdate, existingMember, getNullPropertyNames(memberUpdate));
         existingMember.setMemberId(memberId);
 
@@ -339,6 +341,7 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
+    @Transactional
     public Boolean update_role(String userId) {
         return null;
     }

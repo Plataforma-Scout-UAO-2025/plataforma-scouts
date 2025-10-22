@@ -1,28 +1,66 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import PersonalDataForm from "./components/PersonalDataForm";
 import SuccessModal from "./components/SuccessModal";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
+import { useOrgStructure } from "@/hooks/useOrgStructure";
+import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
 
 function ScouterEnrollment() {
   const navigate = useNavigate();
 
-  // Aquí pasamos el rol correspondiente al hook
+  const {
+    orgId,
+    isLoading: authLoading,
+  } = useAuth0ApiWrapper();
+
   const {
     datosPersonales,
     setDatosPersonales,
     pagina,
+    totalPaginas,
     progreso,
     showModal,
     loadingSubmit,
     handlePersonalChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "SCOUTER" });
+  } = useRoleEnrollment({ role: "SCOUTER", totalPaginas: 1 });
+
+  const {
+    sections,
+    subgroups,
+    selectedGroupSlug,
+    selectedSection,
+    setSelectedSection,
+    selectedSubgroup,
+    setSelectedSubgroup,
+    loadingSections,
+    loadingSubgroups,
+  } = useOrgStructure({ 
+    orgId: orgId || "",
+    open: true 
+  });
+
+  // Mostrar loading mientras autentica
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
-      {/* Título */}
       <h1 className="text-2xl font-bold text-primary mb-6 text-center md:text-left">
         Inscripción de Scouter
       </h1>
@@ -31,7 +69,7 @@ function ScouterEnrollment() {
       <div className="max-w-2xl mx-auto mb-8">
         <Progress value={progreso} className="h-2 bg-muted" />
         <p className="text-sm text-center mt-2 text-muted-foreground">
-          Paso {pagina} de 2
+          Paso {pagina} de {totalPaginas}
         </p>
       </div>
 
@@ -47,33 +85,75 @@ function ScouterEnrollment() {
           setDatos={setDatosPersonales}
         />
 
-        {/* Controles inferiores */}
+        {/* Sección de asignación organizacional */}
+        <div className="col-span-full space-y-4 border-t pt-6 mt-6">
+          <h3 className="text-lg font-semibold text-primary">
+            Asignación Organizacional
+          </h3>
+
+          {/* Selector de Sección */}
+          <div className="space-y-2">
+            <Label htmlFor="section">Sección *</Label>
+            <Select
+              value={selectedSection}
+              onValueChange={setSelectedSection}
+              disabled={!selectedGroupSlug || loadingSections || sections.length === 0}
+            >
+              <SelectTrigger id="section">
+                <SelectValue placeholder="Selecciona una sección" />
+              </SelectTrigger>
+              <SelectContent>
+                {sections.map((section) => (
+                  <SelectItem key={section.id} value={String(section.id)}>
+                    {section.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Selector de Subgrupo */}
+          <div className="space-y-2">
+            <Label htmlFor="subgroup">Subgrupo *</Label>
+            <Select
+              value={selectedSubgroup}
+              onValueChange={setSelectedSubgroup}
+              disabled={!selectedSection || loadingSubgroups || subgroups.length === 0}
+            >
+              <SelectTrigger id="subgroup">
+                <SelectValue placeholder="Selecciona un subgrupo" />
+              </SelectTrigger>
+              <SelectContent>
+                {subgroups.map((subgroup) => (
+                  <SelectItem key={subgroup.id} value={String(subgroup.id)}>
+                    {subgroup.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="col-span-full flex justify-between mt-6">
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/app/members")}
+            onClick={() => navigate("/app/miembros")}
           >
             Cancelar
           </Button>
 
-          {pagina === 1 ? (
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loadingSubmit}
-            >
-              Siguiente
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loadingSubmit}
-            >
-              {loadingSubmit ? "Enviando..." : "Finalizar inscripción"}
-            </Button>
-          )}
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loadingSubmit || !selectedGroupSlug || !selectedSection || !selectedSubgroup}
+          >
+            {loadingSubmit
+              ? "Enviando..."
+              : pagina === totalPaginas
+              ? "Finalizar inscripción"
+              : "Siguiente"}
+          </Button>
         </div>
       </form>
 

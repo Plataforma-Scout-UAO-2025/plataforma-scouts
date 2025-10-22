@@ -1,17 +1,16 @@
 package uao.edu.co.scouts_project.member.controller;
-
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.member.dto.*;
 import uao.edu.co.scouts_project.member.mapper.MemberMapper;
 import uao.edu.co.scouts_project.member.mapper.ListMemberMapper;
 import uao.edu.co.scouts_project.member.mapper.SchoolDataMapper;
+import uao.edu.co.scouts_project.member.mapper.UpdateMemberMapper;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.model.SchoolData;
 import uao.edu.co.scouts_project.member.service.IMemberService;
@@ -94,7 +93,6 @@ public class MemberController {
      * @return respuesta con ambos objetos creados
      */
     @PostMapping("/create_member_with_school")
-    @Transactional
     public ResponseEntity<Map<String, Object>> create_member_with_school(
             @Valid @RequestBody CreateMemberWithSchoolDto request) {
 
@@ -129,7 +127,6 @@ public class MemberController {
      * @return lista de miembros (puede ser vacía)
      */
     @GetMapping("/list_members")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<ListMemberDto>> list_members() {
         List<Member> members = memberservice.get_members();
         List<ListMemberDto> membersDto = members != null
@@ -146,7 +143,6 @@ public class MemberController {
      * @return información del miembro o 404 si no existe
      */
     @GetMapping("/list_member_by_id")
-    @Transactional(readOnly = true)
     public ResponseEntity<ListMemberDto> list_member_by_id(@RequestParam("id") Long memberId) {
         Optional<Member> memberOpt = memberservice.get_member_by_id(memberId);
         return memberOpt.map(member -> ResponseEntity.ok(ListMemberMapper.toDto(member)))
@@ -161,7 +157,6 @@ public class MemberController {
      * @return lista de miembros del subgrupo
      */
     @GetMapping("/list_members_by_subgroup")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<ListMemberDto>> list_members_by_subGroup(@RequestParam("id") Long subGroupId) {
         Optional<List<Member>> membersOpt = memberservice.get_members_by_subGroupId(subGroupId);
         List<ListMemberDto> memberDtos = membersOpt.orElse(Collections.emptyList())
@@ -176,7 +171,6 @@ public class MemberController {
      * @return lista de miembros filtrada por estado
      */
     @GetMapping("/list_members_by_status")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<ListMemberDto>> list_members_by_status(@RequestParam String status) {
         List<ListMemberDto> membersDto = memberservice.get_members_by_status(status)
                 .stream().map(ListMemberMapper::toDto).toList();
@@ -190,7 +184,6 @@ public class MemberController {
      * @return subgrupo correspondiente o 404 si no existe
      */
     @GetMapping("/list_subGroup_by_memberId")
-    @Transactional(readOnly = true)
     public ResponseEntity<Subgroup> list_subGroup_by_memberId(@RequestParam("id") Long memberId) {
         Optional<Subgroup> subgroupOpt = subgroupService.getSubgroupByMemberId(memberId);
         return subgroupOpt.map(ResponseEntity::ok)
@@ -204,7 +197,6 @@ public class MemberController {
      * @return datos escolares o 404 si no existen
      */
     @GetMapping("/list_schoolData_by_memberId")
-    @Transactional(readOnly = true)
     public ResponseEntity<SchoolDataDto> list_schoolData_by_memberId(@RequestParam("id") Long memberId) {
         Optional<SchoolData> schoolDataOpt = schoolservice.getSchoolDataByMemberId(memberId);
         return schoolDataOpt.map(schoolData -> ResponseEntity.ok(SchoolDataMapper.toDto(schoolData)))
@@ -251,20 +243,23 @@ public class MemberController {
     }
 
     /**
-     * Actualiza toda la información de un miembro existente.
+     * Actualiza información de un miembro existente (actualización parcial).
+     * Solo actualiza los campos que vengan informados en el DTO.
      *
-     * @param memberId        ID del miembro
-     * @param memberUpdateDto DTO con los nuevos datos
+     * @param memberId   ID del miembro
+     * @param updateDto  DTO con los campos a actualizar
      * @return miembro actualizado o 404 si no existe
      */
     @PutMapping("/update_member_by_id/{id}")
     public ResponseEntity<MemberDto> update_member_by_id(
-            @PathVariable("id") Long memberId, @Valid @RequestBody MemberDto memberUpdateDto) {
-        Member miembroUpdate = MemberMapper.toEntity(memberUpdateDto);
-        Member miembroActualizado = memberservice.update_member_by_id(memberId, miembroUpdate);
-        return miembroActualizado != null
-                ? ResponseEntity.ok(MemberMapper.toDto(miembroActualizado))
-                : ResponseEntity.notFound().build();
+            @PathVariable("id") Long memberId,
+            @Valid @RequestBody UpdateMemberDto updateDto) {
+
+        Member memberUpdate = UpdateMemberMapper.toEntity(updateDto);
+
+        Member miembroActualizado = memberservice.update_member_by_id(memberId, memberUpdate);
+
+        return ResponseEntity.ok(MemberMapper.toDto(miembroActualizado));
     }
 
     /**
@@ -274,7 +269,6 @@ public class MemberController {
      * @return mensaje de éxito o error
      */
     @PutMapping("/assign_subgroup_and_section")
-    @Transactional
     public ResponseEntity<Map<String, String>> assign_subgroup_and_section(@Valid @RequestBody AssignSubgroupAndSectionDto request) {
         Long memberId = request.getMemberId();
         Long subgroupId = request.getSubGroupId();

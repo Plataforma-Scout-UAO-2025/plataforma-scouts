@@ -4,6 +4,8 @@ import { useMember } from "@/hooks/useMember";
 import { createMemberAction, createMemberAuth0Action } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
+import { useRoleContext } from "@/hooks/useRoleContext";
+import { normalizeRawRole } from "@/roles/roles";
 
 import type { ChangeEvent, PersonalData } from "@/types/enrollment.type";
 import type { Member } from "@/types/member.type";
@@ -11,6 +13,7 @@ import type { role } from "@/types/enrollment.type";
 
 type useRoleEnrollmentProps = {
   role: role;
+  totalPaginas: number;
 };
 
 type useRoleEnrollmentReturn = {
@@ -22,6 +25,7 @@ type useRoleEnrollmentReturn = {
   showModal: boolean;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
 
+  totalPaginas: number;
   progreso: number;
   loadingSubmit: boolean;
 
@@ -29,32 +33,33 @@ type useRoleEnrollmentReturn = {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 };
 
-export function useRoleEnrollment({ role }: useRoleEnrollmentProps): useRoleEnrollmentReturn {
+export function useRoleEnrollment({ role, totalPaginas }: useRoleEnrollmentProps): useRoleEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
   const { orgId } = useAuth0ApiWrapper();
+  const { currentUserRole } = useRoleContext();
 
   const [pagina, setPagina] = useState(1);
   const [showModal, setShowModal] = useState(false);
-const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
-  firstname: "",
-  lastname: "",
-  email: "",
-  confirm_email: "",
-  username: "",
-  password: "",
-  confirm_password: "",
-  document_type: "",
-  identification: "",
-  birth_date: "",
-  address: "",
-  phone: "",
-  gender: "",
-  weight: "",
-  height: "",
-  tenantId: "",
-  ...(role === "SCOUT" ? { emergency_contacts: [] } : {}),
-});
+  const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
+    firstname: "",
+    lastname: "",
+    email: "",
+    confirm_email: "",
+    username: "",
+    password: "",
+    confirm_password: "",
+    document_type: "",
+    identification: "",
+    birth_date: "",
+    address: "",
+    phone: "",
+    gender: "",
+    weight: "",
+    height: "",
+    tenantId: "",
+    role
+  });
 
   useEffect(() => {
     if (orgId) {
@@ -95,10 +100,16 @@ const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
         return;
       }
 
-      const memberData: Member = transformData({
-        ...datosPersonales,
-        tenantId: tenant,
-      });
+      const normalizedUserRole = normalizeRawRole(currentUserRole);
+
+      const memberData: Member = transformData(
+        {
+          ...datosPersonales,
+          tenantId: tenant,
+          role
+        },
+        normalizedUserRole
+      );
 
       await dispatch(createMemberAction(memberData)).unwrap();
       setShowModal(true);
@@ -106,7 +117,7 @@ const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
       console.error("Error al enviar la solicitud:", error);
       alert("Error al enviar la solicitud.");
     }
-  }, [datosPersonales, orgId, role, dispatch]);
+  }, [datosPersonales, orgId, role, currentUserRole, dispatch]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -125,7 +136,10 @@ const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
           alert("Las contraseñas no coinciden");
           return;
         }
-        setPagina(2);
+      }
+
+      if (pagina < totalPaginas) {
+        setPagina((prev) => prev + 1);
         return;
       }
 
@@ -133,6 +147,7 @@ const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     },
     [
       pagina,
+      totalPaginas,
       datosPersonales.email,
       datosPersonales.username,
       datosPersonales.password,
@@ -142,7 +157,6 @@ const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     ]
   );
 
-  const totalPaginas = useMemo(() => 2, []);
   const progreso = useMemo(() => (pagina / totalPaginas) * 100, [pagina, totalPaginas]);
 
   return {
@@ -152,6 +166,7 @@ const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     setPagina,
     showModal,
     setShowModal,
+    totalPaginas,
     progreso,
     loadingSubmit,
     handlePersonalChange,

@@ -13,7 +13,7 @@ export type DocumentType =
   | "";
 export type Gender = "Femenino" | "Masculino" | "";
 export type Shift = "Mañana" | "Tarde" | "Noche" | "Completa" | "";
-export type role = "SCOUT" | "ACUDIENTE" | "TESORERO" | "SCOUTER" | "COMITE_ADMIN";
+export type role = "SCOUT" | "ACUDIENTE" | "TESORERO" | "SCOUTER" | "COMITE_ADMIN" | "DEV_SUPPORT" | "ADMIN_GLOBAL" | "ADMIN_GRUPO";
 
 export interface PersonalData {
   firstname: string;
@@ -26,6 +26,7 @@ export interface PersonalData {
   document_type: DocumentType;
   identification: string;
   birth_date: string;
+  role: role;
   address: string;
   phone: string;
   gender: Gender;

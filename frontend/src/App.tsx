@@ -40,10 +40,10 @@ function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          {/* 🔹 Login & Registro */}
+          {/* Login & Registro */}
           <Route path="/" element={<Home />} />
 
-          {/* 🔹 Rutas internas con layout */}
+          {/* Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
 
@@ -78,6 +78,7 @@ function App() {
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><Grupos /></ProtectedRoute>} />
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><MedicalRecordsView /></ProtectedRoute>} />
+
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

@@ -121,8 +121,8 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name())
                                                 .requestMatchers("/api/v1/members/create_member_with_school")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name())
-                                                .requestMatchers("/api/v1/members/list_members")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                //.requestMatchers("/api/v1/members/list_members")
+                                                //.hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_members_by_subgroup")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_members_by_status")
@@ -133,20 +133,30 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/update_member_status/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
-                                                .requestMatchers("/api/v1/members/update_member_by_id/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
-                                                .requestMatchers("/api/v1/members/assign_subgroup/")
+                                                //.requestMatchers("/api/v1/members/update_member_by_id/**")
+                                                //.hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/assign_subgroup_and_section/")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
 
                                                 // // Cualquier otra operación en auth0: SOLO ADMINS
                                                 .requestMatchers("/api/v1/auth0/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                                                // //
-                                                // // Datos básicos de miembros
 
-                                                //
-                                                // Acudientes
+                                                // Guardians
+
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
 
                                                 //
                                                 // ==== FICHAS MÉDICAS ====
@@ -198,7 +208,7 @@ public class SecurityConfig {
 
         /*
          * @Bean
-         * 
+         *
          * @Profile("production")
          * public SecurityFilterChain productionFilterChain(HttpSecurity http) throws
          * Exception {
@@ -212,28 +222,28 @@ public class SecurityConfig {
          * .requestMatchers("/actuator/health").permitAll() // Solo health check
          * .anyRequest().authenticated()
          * );
-         * 
+         *
          * return http.build();
          * }
-         * 
+         *
          * @Bean
-         * 
+         *
          * @Profile("production")
          * public CorsConfigurationSource productionCorsConfigurationSource() {
          * CorsConfiguration configuration = new CorsConfiguration();
-         * 
+         *
          * // Solo dominios de producción específicos
          * configuration.setAllowedOrigins(Arrays.asList(
          * "https://scouts.uao.edu.co",
          * "https://app.scouts.uao.edu.co"
          * ));
-         * 
+         *
          * configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT",
          * "DELETE"));
          * configuration.setAllowedHeaders(Arrays.asList("Authorization",
          * "Content-Type"));
          * configuration.setAllowCredentials(true);
-         * 
+         *
          * UrlBasedCorsConfigurationSource source = new
          * UrlBasedCorsConfigurationSource();
          * source.registerCorsConfiguration("/api/", configuration);

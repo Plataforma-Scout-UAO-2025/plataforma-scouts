@@ -1,3 +1,8 @@
+# Archivos temporales de pnpm y npm que no se deben subir al repositorio
+pnpm-lock.yaml
+pnpm-workspace.yaml
+package-lock.json
+
 # Logs
 logs
 *.log

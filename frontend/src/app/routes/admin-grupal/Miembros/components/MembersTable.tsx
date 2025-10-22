@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -7,29 +8,46 @@ import {
   TableRow,
   Button,
 } from "@/components/ui/index";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Pencil, Trash, User } from "lucide-react";
 import type { Member as MemberType } from "@/types/member.type";
 import { formatDate } from "@/lib/utils";
+import MemberInfoModal from "../detalles/memberInfoModal";
+import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
 
 interface MembersTableProps {
   filteredMembers: MemberType[];
 }
 
-interface Member {
-  is_active?: boolean | string | number;
-  isActive?: boolean | string | number;
-}
-
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
-  const isActive = (member: Member): boolean => {
-    const value = member.is_active ?? member.isActive;
-    if (typeof value === "string") {
-      return value.toLowerCase() === "activo" || value.toLowerCase() === "true";
-    }
-    if (typeof value === "number") {
-      return value === 1;
-    }
-    return Boolean(value);
+  // Hook para manejar el diálogo de confirmación de activar/desactivar
+  const {
+    isDialogOpen,
+    setIsDialogOpen,
+    selectedMember,
+    isActive,
+    handleDeleteClick,
+    handleConfirmToggle,
+  } = useMemberStatusDialog();
+
+  // Estados para el modal de información del miembro
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [selectedMemberForInfo, setSelectedMemberForInfo] =
+    useState<MemberType | null>(null);
+
+  // Función para abrir el modal de información del miembro
+  const handleViewInfo = (member: MemberType) => {
+    setSelectedMemberForInfo(member);
+    setIsInfoModalOpen(true);
   };
 
   return (
@@ -37,26 +55,29 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
       <Table className="text-sm">
         <TableHeader className="text-primary">
           <TableRow>
-            <TableHead className="pl-4 font-bold text-primary w-16">
+            <TableHead className="pl-4 font-bold text-primary">
               Id
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">
               Nombres
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">
               Apellidos
             </TableHead>
-            <TableHead className="font-bold text-primary w-36">
+            <TableHead className="font-bold text-primary">
               Identificación
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">Rama</TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">Rama</TableHead>
+            <TableHead className="font-bold text-primary">
               Creado
             </TableHead>
-            <TableHead className="font-bold text-primary w-32">
+            <TableHead className="font-bold text-primary">
               Dirección
             </TableHead>
-            <TableHead className="font-bold text-primary w-24">
+            <TableHead className="font-bold text-primary">
+              Rol
+            </TableHead>
+            <TableHead className="font-bold text-primary">
               Estado
             </TableHead>
             <TableHead className="text-right"></TableHead>
@@ -66,7 +87,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member, idx) => (
               <TableRow key={member.member_id ?? `member-${idx}`}>
-                <TableCell className="pl-4 font-medium w-16 truncate">
+                <TableCell className="pl-4 font-medium truncate">
                   {member.member_id}
                 </TableCell>
                 <TableCell className="w-32 truncate">
@@ -87,6 +108,9 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                 <TableCell className="w-40 truncate">
                   {member.address || "Sin dirección"}
                 </TableCell>
+                <TableCell className="w-40 truncate">
+                  {member.role}
+                </TableCell>
                 <TableCell>
                   {isActive(member) ? (
                     <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
@@ -99,7 +123,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="iconbutton" size="icon">
+                  <Button variant="iconbutton" size="icon" onClick={() => handleViewInfo(member)}>
                     <User />
                   </Button>
                   <Button
@@ -113,6 +137,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                     variant="iconbutton"
                     size="icon"
                     className="text-destructive hover:text-destructive-hover"
+                    onClick={() => handleDeleteClick(member)}
                   >
                     <Trash />
                   </Button>
@@ -130,6 +155,39 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
           )}
         </TableBody>
       </Table>
+
+      {/* Diálogo de confirmación para activar/desactivar miembro */}
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {selectedMember && isActive(selectedMember)
+                ? "¿Desea desactivar al miembro?"
+                : "¿Desea activar al miembro?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción cambiará el estado de{" "}
+              <strong>
+                {selectedMember?.first_name} {selectedMember?.last_name}
+              </strong>
+              .
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmToggle}>
+              Aceptar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de información del miembro */}
+      <MemberInfoModal
+        open={isInfoModalOpen}
+        onOpenChange={setIsInfoModalOpen}
+        member={selectedMemberForInfo}
+      />
     </div>
   );
 };
