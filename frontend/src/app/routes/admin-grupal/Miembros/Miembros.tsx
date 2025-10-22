@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/index";
 import BranchCount from "./components/BranchCount";
 import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
-import { useMembersManagement } from "@/hooks/useMembersManagement";
 import { useNavigate } from "react-router-dom";
 import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
+import { useMemberFilters } from "@/hooks/useMemberFilters";
 
 const Miembros = () => {
   const {
@@ -23,8 +23,9 @@ const Miembros = () => {
     endIndex,
     handlePreviousPage,
     handleNextPage,
-    extractSectionsFromMember,
-  } = useMembersManagement({ itemsPerPage: 10 });
+    branchMembers,
+    branchTotalMemberCount,
+  } = useMemberFilters({ itemsPerPage: 10 });
 
   const { loading, error } = useTenantMembersByStatus({
     status: "APPROVED",
@@ -40,7 +41,7 @@ const Miembros = () => {
       </header>
       <section className="my-2 flex gap-4">
         <BranchCount
-          filteredMembers={filteredMembers}
+          branchMemberCount={branchTotalMemberCount}
           totalMembers={totalMembers}
         />
       </section>
@@ -55,7 +56,7 @@ const Miembros = () => {
           branchFilter={branchFilter}
           setBranchFilter={setBranchFilter}
           filteredMembers={filteredMembers}
-          extractSectionsFromMember={extractSectionsFromMember}
+          branchMembers={branchMembers}
         />
       </section>
 
