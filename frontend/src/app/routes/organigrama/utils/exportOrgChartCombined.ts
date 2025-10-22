@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { OrganigramaNiveles } from "../organigramaNivelesOrganizativos/types/niveles.types";
 import type { Member } from "@/types/member.type";
+import { getMembersBySubgroup } from "@/api/organigramaApi";
 
 type BranchLite = {
   id: string | number;
@@ -113,7 +114,7 @@ export async function exportBranchesCSV(
   download("organigrama_ramas.csv", csv);
 }
 
-export function exportLevelsCSV(data: OrganigramaNiveles) {
+export async function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []) {
   const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
   const rows: string[][] = [];
   const stripAccents = (s: string) =>
@@ -137,15 +138,9 @@ export function exportLevelsCSV(data: OrganigramaNiveles) {
     "Tesorero",
     "Vocal",
   ].map(normalize);
-  data.niveles.forEach((nivel) => {
+  for (const nivel of data.niveles) {
     if (!nivel.cargos || nivel.cargos.length === 0) {
-      rows.push([
-        nivel.nombre,
-        "—",
-        "—",
-        String(data.anio ?? "—"),
-        nivel.descripcion || "—",
-      ]);
+      rows.push([nivel.nombre, "—", "—", String(data.anio ?? "—"), nivel.descripcion || "—"]);
     } else {
       const nName = normalize(nivel.nombre);
       const isJef = nName.includes("comite de jefatura");
@@ -164,18 +159,42 @@ export function exportLevelsCSV(data: OrganigramaNiveles) {
         }
         return a.nombre.localeCompare(b.nombre, "es");
       });
-      sorted.forEach((c) => {
+
+      for (const c of sorted) {
         const periodo = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
+        let titulares = c.titular || "";
+        try {
+          const cargoId = Number(c.id);
+          if (!Number.isNaN(cargoId)) {
+            let subgroupMembers: Member[] = [];
+            if (members && members.length > 0) {
+              subgroupMembers = members.filter((m) => m.subgroup_id === cargoId);
+            }
+            if (subgroupMembers.length === 0) {
+              try {
+                const fetched = await getMembersBySubgroup(cargoId);
+                subgroupMembers = (fetched as unknown as Member[]) || [];
+              } catch {}
+            }
+            if (subgroupMembers.length > 0) {
+              titulares = subgroupMembers
+                .map((m: any) => `${m.firstName || m.first_name || ""} ${m.lastName || m.last_name || ""}`.trim())
+                .filter(Boolean)
+                .join(", ");
+            }
+          }
+        } catch {}
+
         rows.push([
           nivel.nombre,
           c.nombre,
-          c.titular || "—",
+          titulares || "—",
           periodo,
           c.descripcion || "—",
         ]);
-      });
+      }
     }
-  });
+  }
 
   const csv = [header, ...rows]
     .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))
@@ -244,15 +263,26 @@ export async function exportOrgChartCombinedPDF(
         let integrantes = "";
         try {
           const subgroupId = sg.id;
-          if (subgroupId && members.length > 0) {
-            // Filtrar miembros que pertenecen a este subgrupo
-            const subgroupMembers = members.filter(
-              (member) => member.subgroup_id === Number(subgroupId)
-            );
-
+          if (subgroupId) {
+            // 1) Intentar con los miembros ya cargados si existen
+            let subgroupMembers: Member[] = [];
+            if (members && members.length > 0) {
+              subgroupMembers = members.filter(
+                (m) => m.subgroup_id === Number(subgroupId)
+              );
+            }
+            // 2) Si no hay miembros en cache, intentar obtenerlos del backend
+            if (subgroupMembers.length === 0) {
+              try {
+                const fetched = await getMembersBySubgroup(Number(subgroupId));
+                subgroupMembers = (fetched as unknown as Member[]) || [];
+              } catch (e) {
+                // continuar silenciosamente; dejaremos integrantes vacío
+              }
+            }
             if (subgroupMembers.length > 0) {
               integrantes = subgroupMembers
-                .map((m: Member) => {
+                .map((m: any) => {
                   const firstName = m.firstName || m.first_name || "";
                   const lastName = m.lastName || m.last_name || "";
                   return `${firstName} ${lastName}`.trim();
@@ -281,6 +311,15 @@ export async function exportOrgChartCombinedPDF(
     }
   }
 
+  // Ajuste de anchos dinámico para evitar corte de tabla
+  const pageW = doc.internal.pageSize.getWidth();
+  const availableW = pageW - x * 2;
+  const weights = [14, 14, 22, 38, 12]; // Rama, Descripción, NombreSubrama, Integrantes, JefeRama
+  const totalW = weights.reduce((a, b) => a + b, 0);
+  const colW = weights.map((w) => Math.floor((w / totalW) * availableW));
+  const columnStyles: Record<string, { cellWidth: number }> = {};
+  colW.forEach((w, i) => (columnStyles[i] = { cellWidth: w }));
+
   autoTable(doc, {
     startY: y + 10,
     head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
@@ -288,13 +327,8 @@ export async function exportOrgChartCombinedPDF(
     margin: { left: x, right: x },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
-    columnStyles: {
-      0: { cellWidth: 200 }, // Rama
-      1: { cellWidth: 230 }, // Descripción
-      2: { cellWidth: 200 }, // NombreSubrama
-      3: { cellWidth: 200 }, // Integrantes
-      4: { cellWidth: 200 }, // JefeRama
-    },
+    columnStyles,
+    bodyStyles: { valign: 'top' },
   });
 
   const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
@@ -332,7 +366,7 @@ export async function exportOrgChartCombinedPDF(
     "Tesorero",
     "Vocal",
   ].map(normalize2);
-  levels.niveles.forEach((nivel) => {
+  for (const nivel of levels.niveles) {
     if (!nivel.cargos || nivel.cargos.length === 0) {
       levelsBody.push([nivel.nombre, "—", "—", "—", nivel.descripcion || "—"]);
     } else {
@@ -353,18 +387,42 @@ export async function exportOrgChartCombinedPDF(
         }
         return a.nombre.localeCompare(b.nombre, "es");
       });
-      sorted.forEach((c) => {
+
+      for (const c of sorted) {
         const period = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
+        let titulares = c.titular || "";
+        try {
+          const cargoId = Number(c.id);
+          if (!Number.isNaN(cargoId)) {
+            let subgroupMembers: Member[] = [];
+            if (members && members.length > 0) {
+              subgroupMembers = members.filter((m) => m.subgroup_id === cargoId);
+            }
+            if (subgroupMembers.length === 0) {
+              try {
+                const fetched = await getMembersBySubgroup(cargoId);
+                subgroupMembers = (fetched as unknown as Member[]) || [];
+              } catch {}
+            }
+            if (subgroupMembers.length > 0) {
+              titulares = subgroupMembers
+                .map((m: any) => `${m.firstName || m.first_name || ""} ${m.lastName || m.last_name || ""}`.trim())
+                .filter(Boolean)
+                .join(", ");
+            }
+          }
+        } catch {}
+
         levelsBody.push([
           nivel.nombre,
           c.nombre,
-          c.titular || "—",
+          titulares || "—",
           period,
           c.descripcion || "—",
         ]);
-      });
+      }
     }
-  });
+  }
 
   autoTable(doc, {
     startY: y + 10,

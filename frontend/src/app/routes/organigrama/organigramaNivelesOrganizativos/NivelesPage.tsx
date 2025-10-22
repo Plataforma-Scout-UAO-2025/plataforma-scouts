@@ -19,6 +19,7 @@ import CreateNivelModal from "./components/CreateNivelModal";
 import EditNivelModal from "./components/EditNivelModal";
 import CreateCargoModal from "./components/CreateCargoModal";
 import EditCargoModal from "./components/EditCargoModal";
+import AddMemberToCargoModal from "./components/AddMemberToCargoModal";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import SuccessModal from "./components/SuccessModal";
 
@@ -48,6 +49,9 @@ export default function NivelesPage() {
 
   const [openEditCargo, setOpenEditCargo] = useState(false);
   const [cargoToEdit, setCargoToEdit] = useState<Cargo | null>(null);
+
+  const [openAddMember, setOpenAddMember] = useState(false);
+  const [cargoToAddMember, setCargoToAddMember] = useState<Cargo | null>(null);
 
   const [openDelete, setOpenDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -142,6 +146,11 @@ export default function NivelesPage() {
     setOpenEditCargo(true);
   };
 
+  const handleOpenAddMemberToCargo = (cargo: Cargo) => {
+    setCargoToAddMember(cargo);
+    setOpenAddMember(true);
+  };
+
   const handleSaveEditCargo = (cargo: Cargo, assignMemberId?: string) => {
     if (!nivelActual) return;
     (async () => {
@@ -185,6 +194,45 @@ export default function NivelesPage() {
         setShowSuccess(true);
       } catch (e) {
         console.error('Error actualizando cargo o asignando miembro', e);
+      }
+    })();
+  };
+
+  const handleSaveAddMemberToCargo = (memberId: string) => {
+    if (!nivelActual || !cargoToAddMember) return;
+    (async () => {
+      try {
+        let subgroupNumId = Number(cargoToAddMember.id);
+        if (!Number.isFinite(subgroupNumId)) {
+          const parsed = parseInt(String(cargoToAddMember.id), 10);
+          if (Number.isFinite(parsed)) subgroupNumId = parsed;
+        }
+        if (!Number.isFinite(subgroupNumId)) {
+          console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargoToAddMember.id);
+        } else {
+          let sectionNumId = Number(nivelActual.id);
+          if (!Number.isFinite(sectionNumId)) {
+            const parsedSec = parseInt(String(nivelActual.id), 10);
+            if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
+          }
+          await dispatch(updateMemberAction({
+            uid: memberId,
+            updates: {
+              subgroupId: subgroupNumId,
+              subgroup_id: subgroupNumId,
+              isActive: true,
+              ...(Number.isFinite(sectionNumId) && {
+                sectionId: sectionNumId,
+                section_id: sectionNumId,
+              } as { sectionId: number; section_id: number }),
+            } as Partial<UpdateMember> & { sectionId?: number; section_id?: number },
+          }));
+          setMembersRefreshKey((k) => k + 1);
+        }
+        setOpenAddMember(false);
+        setShowSuccess(true);
+      } catch (e) {
+        console.error('Error asignando miembro al cargo', e);
       }
     })();
   };
@@ -321,6 +369,10 @@ export default function NivelesPage() {
                 setNivelActual(nivel);
                 handleEditCargo(cargo);
               }}
+              onAddMemberToCargo={(cargo) => {
+                setNivelActual(nivel);
+                handleOpenAddMemberToCargo(cargo);
+              }}
               onDeleteCargo={(cargo) => handleDeleteCargo(cargo, nivel)}
             />
           ))}
@@ -359,6 +411,15 @@ export default function NivelesPage() {
         cargo={cargoToEdit}
         onClose={() => setOpenEditCargo(false)}
         onSave={handleSaveEditCargo}
+        members={members}
+      />
+
+      {/* Agregar miembro al cargo */}
+      <AddMemberToCargoModal
+        open={openAddMember}
+        cargo={cargoToAddMember}
+        onClose={() => setOpenAddMember(false)}
+        onSave={handleSaveAddMemberToCargo}
         members={members}
       />
 

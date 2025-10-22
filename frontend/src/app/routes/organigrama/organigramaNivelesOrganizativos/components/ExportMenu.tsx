@@ -9,11 +9,12 @@ import { Download } from "lucide-react";
 import type { OrganigramaNiveles } from "../types/niveles.types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getMembersBySubgroup } from "@/api/organigramaApi";
 
 /* ============================================================
    📄 Exportación a PDF
    ============================================================ */
-function exportPDF(data: OrganigramaNiveles) {
+async function exportPDF(data: OrganigramaNiveles) {
   const doc = new jsPDF();
   const title = `Organigrama de Niveles - ${data.anio}`;
   const fecha = new Date().toLocaleDateString("es-CO");
@@ -45,7 +46,7 @@ function exportPDF(data: OrganigramaNiveles) {
     "Vocal",
   ].map(normalize);
 
-  data.niveles.forEach((nivel) => {
+  for (const nivel of data.niveles) {
     if (nivel.cargos.length === 0) {
       tableData.push([
         nivel.nombre,
@@ -70,18 +71,33 @@ function exportPDF(data: OrganigramaNiveles) {
         }
         return a.nombre.localeCompare(b.nombre, 'es');
       });
-      sorted.forEach((cargo) => {
+      for (const cargo of sorted) {
         const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
+        let titulares = cargo.titular || "";
+        // Intentar rellenar titulares con miembros del subgrupo (cargo.id)
+        const cargoId = Number(cargo.id);
+        if (!Number.isNaN(cargoId)) {
+          try {
+            const miembros = await getMembersBySubgroup(cargoId);
+            if (Array.isArray(miembros) && miembros.length > 0) {
+              titulares = miembros
+                .map((m: any) => `${m.firstName || m.first_name || ''} ${m.lastName || m.last_name || ''}`.trim())
+                .filter(Boolean)
+                .join(', ');
+            }
+          } catch {}
+        }
+
         tableData.push([
           nivel.nombre,
           cargo.nombre,
-          cargo.titular || "—",
+          titulares || "—",
           periodo, // Periodo (Año)
           cargo.descripcion || "—", // Descripción
         ]);
-      });
+      }
     }
-  });
+  }
 
   autoTable(doc, {
     head: [

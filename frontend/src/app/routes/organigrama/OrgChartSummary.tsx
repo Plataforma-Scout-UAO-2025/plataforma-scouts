@@ -175,7 +175,9 @@ export default function OrgChartSummary() {
       setExportingBranches(false);
     }
   };
-  const onExportCSVLevels = () => exportLevelsCSV(nivelesData as OrganigramaNiveles);
+  const onExportCSVLevels = async () => {
+    await exportLevelsCSV(nivelesData as OrganigramaNiveles, members);
+  };
 
   return (
     <div className="min-h-screen bg-background px-6 md:px-8 py-6">

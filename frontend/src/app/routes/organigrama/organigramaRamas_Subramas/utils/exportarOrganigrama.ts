@@ -8,6 +8,51 @@ type ExportPDFOpts = {
   colorHex?: string;
 };
 
+// Detecta si un nombre corresponde a un nivel organizativo (comités, asambleas, cortes, consejos)
+function esNivelOrganizativoPorNombre(nombre?: string | null): boolean {
+  if (!nombre) return false;
+  const norm = nombre
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+  return (
+    norm.includes("comit") ||
+    norm.includes("asamblea") ||
+    norm.includes("corte") ||
+    norm.includes("consejo")
+  );
+}
+
+function filtrarSoloRamas(ramas: Rama[]): Rama[] {
+  const filtradas = ramas.filter((r) => !esNivelOrganizativoPorNombre((r as any).name ?? (r as any).nombre));
+  if (filtradas.length !== ramas.length) {
+    console.log(
+      ` [Export] Filtrado de niveles organizativos: ${ramas.length - filtradas.length} removidos, ${filtradas.length} ramas restantes`
+    );
+  }
+  return filtradas;
+}
+
+// Ordena las ramas con el mismo criterio de la UI: Cachorros, Manada, Webelos, Tropa, Clan; resto alfabético
+function ordenarRamasComoUI(ramas: Rama[]): Rama[] {
+  const orden = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
+  const getIndex = (name?: string | null) => {
+    const n = String(name ?? '').toLowerCase();
+    const idx = orden.findIndex((o) => n.includes(o));
+    return idx === -1 ? Number.POSITIVE_INFINITY : idx; // no match goes to the end
+  };
+  return [...ramas].sort((a, b) => {
+    const nameA = (a as any).name ?? (a as any).nombre ?? '';
+    const nameB = (b as any).name ?? (b as any).nombre ?? '';
+    const idxA = getIndex(nameA);
+    const idxB = getIndex(nameB);
+    if (idxA !== idxB) return idxA - idxB;
+    // same bucket: alphabetical fallback
+    return String(nameA).localeCompare(String(nameB));
+  });
+}
+
 function downloadBlob(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -107,7 +152,10 @@ async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
 }
 
 export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts = {}) => {
-  console.log(' [ExportPDF] Iniciando exportación PDF con', ramas.length, 'ramas');
+  console.log(' [ExportPDF] Iniciando exportación PDF con', ramas.length, 'ramas (antes de filtrar)');
+  // Asegurar que en export no se cuelen niveles organizativos
+  const ramasVisibles = ordenarRamasComoUI(filtrarSoloRamas(ramas));
+  console.log(' [ExportPDF] Exportando', ramasVisibles.length, 'ramas (tras filtrar niveles organizativos)');
   console.log(' [ExportPDF] Opciones:', opts);
   
   try {
@@ -128,8 +176,8 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
     doc.setTextColor(0, 0, 0);
     doc.text(`Generado: ${new Date().toLocaleString()}`, x, y + 16);
 
-    console.log(' [ExportPDF] Construyendo datos para la tabla...');
-    const body = await construirFilasDetalle(ramas);
+  console.log(' [ExportPDF] Construyendo datos para la tabla...');
+  const body = await construirFilasDetalle(ramasVisibles);
     console.log(' [ExportPDF] Tabla tendrá', body.length, 'filas');
 
     console.log(' [ExportPDF] Generando tabla con autoTable...');
@@ -163,11 +211,13 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
 };
 
 export const exportarOrganigramaCSV = async (ramas: Rama[]) => {
-  console.log(' [ExportCSV] Iniciando exportación CSV con', ramas.length, 'ramas');
+  console.log(' [ExportCSV] Iniciando exportación CSV con', ramas.length, 'ramas (antes de filtrar)');
+  const ramasVisibles = ordenarRamasComoUI(filtrarSoloRamas(ramas));
+  console.log(' [ExportCSV] Exportando', ramasVisibles.length, 'ramas (tras filtrar niveles organizativos)');
   
   try {
     console.log(' [ExportCSV] Construyendo datos detallados...');
-    const filasDetalle = await construirFilasDetalle(ramas);
+    const filasDetalle = await construirFilasDetalle(ramasVisibles);
     const detalleRows = filasDetalle.map((cols) => ({
       Rama: cols[0],
       Descripción: cols[1],
