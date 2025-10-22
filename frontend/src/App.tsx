@@ -60,7 +60,6 @@ function App() {
             <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrgChartSummary /></ProtectedRoute>} />
 
             {/* ===================== GRUPOS ===================== */}
-            <Route path="grupos" element={<Grupos />} />
 
             {/* Rutas para admin de grupo */}
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Financiero /></ProtectedRoute>} />

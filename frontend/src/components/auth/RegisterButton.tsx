@@ -3,7 +3,7 @@ import { Button, type buttonVariants } from "@/components/ui/button"
 import type { VariantProps } from "class-variance-authority"
 import * as React from "react"
 
-interface LoginButtonProps
+interface RegisterButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   children?: React.ReactNode
@@ -11,8 +11,8 @@ interface LoginButtonProps
   asChild?: boolean
 }
 
-const LoginButton: React.FC<LoginButtonProps> = ({
-  children = "Iniciar Sesión",
+const RegisterButton: React.FC<RegisterButtonProps> = ({
+  children = "Registrarse",
   organization,
   ...props
 }) => {
@@ -22,6 +22,7 @@ const LoginButton: React.FC<LoginButtonProps> = ({
     loginWithRedirect({
       authorizationParams: {
         organization,
+        screen_hint: "signup", // <- fuerza el flujo de registro
       },
     })
   }
@@ -33,4 +34,4 @@ const LoginButton: React.FC<LoginButtonProps> = ({
   )
 }
 
-export default LoginButton
+export default RegisterButton
