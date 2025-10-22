@@ -1,11 +1,11 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]) { // Combina clases condicionales y resuelve conflictos de Tailwind CSS
   return twMerge(clsx(inputs));
 }
 
-export const formatDate = (
+export const formatDate = ( // Formato de fecha a 'DD/MM/YYYY HH:mm:ss' en zona horaria local
   isoDate: string | Date | null | undefined,
   includeTime: boolean = true
 ): string => {
@@ -13,29 +13,27 @@ export const formatDate = (
 
   try {
     const date = new Date(isoDate);
-
-    if (isNaN(date.getTime())) return "Fecha inválida";
-
-    const options: Intl.DateTimeFormatOptions = {
+    if (isNaN(date.getTime())) return "Fecha inválida"; // Validar fecha
+    const options: Intl.DateTimeFormatOptions = { // Opciones de formato
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      ...(includeTime && {
+      ...(includeTime && { // Incluir tiempo si es necesario
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: false,
       }),
     };
-
     return new Intl.DateTimeFormat("es-CO", options).format(date);
+
   } catch (error) {
     console.error("Error al formatear fecha:", error);
     return "Error de formato";
   }
 };
-// Convierte keys snake_case a camelCase de forma recursiva
-const toCamel = (s: string) =>
+
+const toCamel = (s: string) => // Convierte keys snake_case a camelCase de forma recursiva, incluyendo objetos anidados y arrays
   s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 
 export const deepCamelize = (obj: unknown): unknown => {
