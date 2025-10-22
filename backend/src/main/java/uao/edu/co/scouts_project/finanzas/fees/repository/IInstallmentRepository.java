@@ -59,15 +59,15 @@ public interface IInstallmentRepository extends JpaRepository<Installment, Long>
      * que aún no estén marcadas OVERDUE. Devuelve filas afectadas.
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query(
-        value = """
-            UPDATE installment i
-               SET status = 'OVERDUE'
-             WHERE i.tenant_id = :tenantId
-               AND i.status <> 'OVERDUE'
-               AND i.balance > 0
-               AND i.due_date < CURRENT_DATE
-            """,
+    @Query(value = """
+        UPDATE installment i
+        SET status = 'OVERDUE'
+        WHERE i.tenant_id = :tenantId
+        AND i.status NOT IN ('OVERDUE', 'PAID')
+        AND i.balance > 0
+        AND i.due_date < CURRENT_DATE
+        AND COALESCE(jsonb_array_length(i.payments), 0) = 0
+        """,
         nativeQuery = true
     )
     int markPastDueAsOverdue(@Param("tenantId") String tenantId);
