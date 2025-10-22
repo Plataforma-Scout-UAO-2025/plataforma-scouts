@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import PersonalDataForm from "./components/PersonalDataForm";
 import SuccessModal from "./components/SuccessModal";
+import { UserExistsDialog } from "./components/UserExistsDialog";
+import { ErrorDialog } from "./components/ErrorDialog";
 
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 
@@ -16,7 +18,13 @@ function TreasurerEnrollment() {
     totalPaginas,
     progreso,
     showModal,
+    showUserExistsDialog,
+    setShowUserExistsDialog,
+    showAuth0ErrorDialog,
+    setShowAuth0ErrorDialog,
+    errorMessage,
     loadingSubmit,
+    errors,
     handlePersonalChange,
     handleSubmit,
   } = useRoleEnrollment({ role: "TESORERO", totalPaginas: 1 });
@@ -45,6 +53,7 @@ function TreasurerEnrollment() {
           datos={datosPersonales}
           handleChange={handlePersonalChange}
           setDatos={setDatosPersonales}
+          errors={errors}
         />
 
         {/* Controles inferiores */}
@@ -57,11 +66,7 @@ function TreasurerEnrollment() {
             Cancelar
           </Button>
 
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={loadingSubmit}
-          >
+          <Button type="submit" variant="primary" disabled={loadingSubmit}>
             {loadingSubmit
               ? "Enviando..."
               : pagina === totalPaginas
@@ -75,6 +80,19 @@ function TreasurerEnrollment() {
       <SuccessModal
         open={showModal}
         onClose={() => navigate("/app/dashboard")}
+      />
+
+      <UserExistsDialog
+        open={showUserExistsDialog}
+        onOpenChange={setShowUserExistsDialog}
+        identification={datosPersonales.identification}
+      />
+
+      <ErrorDialog
+        open={showAuth0ErrorDialog}
+        onOpenChange={setShowAuth0ErrorDialog}
+        title="Error en el registro"
+        description={errorMessage}
       />
     </div>
   );
