@@ -10,6 +10,7 @@ import { FullScreenLoader } from '@/components/common/FullScreenLoader';
 import { guardianService } from '../../../services/guardianService';
 import type { Member } from '../../types/member.type';
 import type { MemberFormData } from '../../schemas/MemberForm.schema';
+import { getErrorStatus } from '@/lib/errorUtils';
 
 export default function MembersInCharge() {
   const navigate = useNavigate();
@@ -67,13 +68,14 @@ export default function MembersInCharge() {
         }));
         
         setMiembros(membersData);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error al cargar miembros:', error);
-        
+
         // Mensaje específico según el tipo de error
-        if (error?.response?.status === 404) {
+        const status = getErrorStatus(error);
+        if (status === 404) {
           toast.error(`No se encontraron miembros para el guardian con ID ${guardianId}. Puedes agregar nuevos miembros.`);
-        } else if (error?.response?.status === 401 || error?.response?.status === 403) {
+        } else if (status === 401 || status === 403) {
           toast.error('No tienes permisos para ver estos miembros');
         } else {
           toast.error('No se pudieron cargar los miembros a cargo. Intenta nuevamente.');

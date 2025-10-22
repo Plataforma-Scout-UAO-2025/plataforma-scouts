@@ -1,101 +1,126 @@
+import { useEffect } from "react";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useAppSelector } from "@/hooks/useAppSelector";
 import { useAuth0 } from "@auth0/auth0-react";
 
-const ScoutView = () => {
-  const { user } = useAuth0();
-  // Información del scout
-  const displayName = user?.nickname || "";
+import { fetchMembersWithBranchAction } from "@/store/members/membersActions";
 
-  const scoutInfo = {
-    nombre: displayName,
-    grupo: "Grupo 1",
-    rama: "Lobatos",
-    subrama: "Manada Amarilla",
-    progreso: 75,
+const Dashboard = () => {
+  const dispatch = useAppDispatch();
+
+  // Obtenemos el estado global de miembros desde Redux
+  const { members, loading, error } = useAppSelector((state) => state.members);
+
+  useEffect(() => {
+    dispatch(fetchMembersWithBranchAction());
+  }, [dispatch]);
+
+  // Información del usuario autenticado (Auth0)
+  const { user } = useAuth0();
+  const currentUserEmail = user?.email;
+  const scoutInfo = members.find((m) => m.email === currentUserEmail);
+  console.log("📦 scoutInfo:", scoutInfo);
+
+  // Simulación de progreso
+  const progreso = {
+    progreso: 75, 
   };
 
-  // Actividades recientes
-  const actividades = [
-    "Gran Rally de Aventureros 2025",
-    "Desafío de Orientación Nocturna",
-    "Carrera de Supervivencia en la Montaña",
-  ];
+  if (loading) {
+    return <p className="text-center text-lg">Cargando información...</p>;
+  }
 
-  // Próximos retos
-  const retos = [
-    "Construir una tienda de campaña",
-    "Aprender a hacer nudos básicos",
-    "Explorar el bosque cercano",
-  ];
+  if (error) {
+    return (
+      <p className="text-center text-red-500">
+        Error al cargar datos: {error}
+      </p>
+    );
+  }
 
+  if (!scoutInfo) {
+    return (
+      <p className="text-center text-gray-600">
+        No se encontró información del scout.
+      </p>
+    );
+  }
+
+  // Render principal del dashboard
   return (
     <div className="mx-4">
       {/* Encabezado */}
       <header className="flex flex-col items-center mb-4 justify-center">
         <p className="text-5xl font-bold text-primary">
-          ¡Hola, {scoutInfo.nombre}!
+          ¡Hola, {scoutInfo.firstName}!
         </p>
         <p className="text-2xl font-bold text-text my-3">
           Aquí puedes ver tu información y progreso
         </p>
       </header>
 
-      {/* Información del grupo */}
+      {/* Información personal */}
       <section className="my-8 bg-white shadow-md rounded-lg p-6">
         <h3 className="text-3xl font-bold text-primary mb-4">Tu Información</h3>
-        <ul className="text-lg space-y-1">
-          <li>
-            <strong>Grupo:</strong> {scoutInfo.grupo}
+        <ul className="text-lg space-y-2">
+        <li>
+          <strong>Grupo:</strong> {scoutInfo.subgroup?.groupId || "Sin grupo"} 
+        </li>
+        <li>
+          <strong>Rama:</strong> {scoutInfo.subgroup?.name || "Sin rama"}
+        </li>
+        <li>
+          <strong>Subrama:</strong> {scoutInfo.subgroup?.section?.name || "Sin subrama"}
+        </li>
+        <li>
+            <strong>Rol:</strong>{" "}
+            {scoutInfo.role
+              ? scoutInfo.role.charAt(0).toUpperCase() +
+                scoutInfo.role.slice(1).toLowerCase()
+              : "Sin rol"}
           </li>
-          <li>
-            <strong>Rama:</strong> {scoutInfo.rama}
-          </li>
-          <li>
-            <strong>Subrama:</strong> {scoutInfo.subrama}
-          </li>
-        </ul>
+      </ul>
       </section>
 
-      {/* Progreso */}
+      {/* Barra de progreso */}
       <section className="my-8 bg-white shadow-md rounded-lg p-6">
         <h3 className="text-3xl font-bold text-primary mb-4">Tu Progreso</h3>
-        <div className="relative w-full bg-gray-200 rounded-full h-6">
+
+        {/* Barra visual */}
+        <div className="relative w-full bg-gray-200 rounded-full h-6 overflow-hidden">
           <div
-            className="bg-primary h-6 rounded-full"
-            style={{ width: `${scoutInfo.progreso}%` }}
+            className="bg-green-500 h-6 rounded-full transition-all duration-500"
+            style={{ width: `${progreso.progreso}%` }}
           ></div>
         </div>
-        <p className="text-lg mt-2">
-          Has completado el <strong>{scoutInfo.progreso}%</strong> de tus
-          actividades.
+
+        <p className="text-lg mt-2 text-center">
+          Has completado el{" "}
+          <strong>{progreso.progreso}%</strong> de tus actividades.
         </p>
       </section>
 
-      {/* Actividades y Retos */}
-      <section className="my-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Actividades */}
-        <div className="bg-white shadow-md rounded-lg p-4">
-          <h3 className="text-xl font-bold text-primary mb-2">
-            Actividades Recientes
-          </h3>
-          <ul className="list-disc pl-5 text-lg">
-            {actividades.map((actividad, index) => (
-              <li key={index}>{actividad}</li>
-            ))}
-          </ul>
-        </div>
 
-        {/* Próximos Retos */}
-        <div className="bg-white shadow-md rounded-lg p-4">
-          <h3 className="text-xl font-bold text-primary mb-2">Próximos Retos</h3>
-          <ul className="list-disc pl-5 text-lg">
-            {retos.map((reto, index) => (
-              <li key={index}>{reto}</li>
-            ))}
-          </ul>
+      {/* Actividades recientes y retos */}
+      <section className="my-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white shadow-md rounded-lg p-4">
+            <h3 className="text-xl font-bold text-primary mb-2">
+              Próximos Retos
+            </h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Construir una tienda de campaña</li>
+              <li>Aprender a hacer nudos básicos</li>
+              <li>Explorar el bosque cercano</li>
+            </ul>
+          </div>
         </div>
       </section>
     </div>
   );
 };
 
-export default ScoutView;
+export default Dashboard;
+
+
+

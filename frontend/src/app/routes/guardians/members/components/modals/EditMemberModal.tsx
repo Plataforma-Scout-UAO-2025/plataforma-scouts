@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,7 +8,8 @@ import type { Member } from '../../types/member.type';
 import { memberFormSchema, type MemberFormData } from '../../schemas/MemberForm.schema';
 import PersonalInfoForm from '../forms/PersonalInfoForm';
 import HealthInfoForm from '../forms/HealthInfoForm';
-import EmergencyContactsForm, { type EmergencyContact } from '../forms/EmergencyContactsForm';
+import EmergencyContactsForm from '../forms/EmergencyContactsForm';
+import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
 
 interface EditMemberModalProps {
   isOpen: boolean;
@@ -23,10 +24,6 @@ export default function EditarMiembroModal({
   miembro,
   onSave,
 }: EditMemberModalProps) {
-  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([
-    { name: '', relationship: '', phone: '' }
-  ]);
-
   const {
     register,
     handleSubmit,
@@ -36,6 +33,8 @@ export default function EditarMiembroModal({
   } = useForm<MemberFormData>({
     resolver: zodResolver(memberFormSchema)
   });
+
+  const { emergencyContacts, setEmergencyContacts, addEmergencyContact, removeEmergencyContact, updateEmergencyContact } = useEmergencyContacts();
 
   // Pre-llenar el formulario cuando se abre con un miembro
   useEffect(() => {
@@ -70,25 +69,7 @@ export default function EditarMiembroModal({
         setEmergencyContacts(convertedContacts);
       }
     }
-  }, [miembro, isOpen, reset]);
-
-  const addEmergencyContact = () => {
-    if (emergencyContacts.length < 3) {
-      setEmergencyContacts([...emergencyContacts, { name: '', relationship: '', phone: '' }]);
-    }
-  };
-
-  const removeEmergencyContact = (index: number) => {
-    if (emergencyContacts.length > 1) {
-      setEmergencyContacts(emergencyContacts.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateEmergencyContact = (index: number, field: keyof EmergencyContact, value: string) => {
-    const updated = [...emergencyContacts];
-    updated[index] = { ...updated[index], [field]: value };
-    setEmergencyContacts(updated);
-  };
+  }, [miembro, isOpen, reset, setEmergencyContacts]);
 
   const onSubmit = async (data: MemberFormData) => {
     try {
@@ -96,7 +77,7 @@ export default function EditarMiembroModal({
       toast.success('Miembro actualizado correctamente');
       onClose();
     } catch (error) {
-      toast.error('Error al actualizar el miembro');
+      toast.error('Error al actualizar el miembro: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 
@@ -120,7 +101,7 @@ export default function EditarMiembroModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <PersonalInfoForm register={register} errors={errors} setValue={setValue} />
-          <HealthInfoForm register={register} errors={errors} />
+          <HealthInfoForm register={register} />
           <EmergencyContactsForm
             emergencyContacts={emergencyContacts}
             onAdd={addEmergencyContact}

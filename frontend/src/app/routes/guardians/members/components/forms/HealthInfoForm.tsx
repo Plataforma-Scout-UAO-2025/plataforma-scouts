@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { UseFormRegister } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,10 +6,9 @@ import type { MemberFormData } from '../../schemas/MemberForm.schema';
 
 interface HealthInfoFormProps {
   register: UseFormRegister<MemberFormData>;
-  errors: FieldErrors<MemberFormData>;
 }
 
-export default function HealthInfoForm({ register, errors }: HealthInfoFormProps) {
+export default function HealthInfoForm({ register }: HealthInfoFormProps) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-[#1a4134]">Información de Salud</h3>
