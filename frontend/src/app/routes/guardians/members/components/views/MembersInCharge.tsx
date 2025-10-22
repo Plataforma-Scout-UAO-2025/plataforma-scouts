@@ -11,11 +11,16 @@ import { guardianService } from '../../../services/guardianService';
 import type { Member } from '../../types/member.type';
 import type { MemberFormData } from '../../schemas/MemberForm.schema';
 import { getErrorStatus } from '@/lib/errorUtils';
+import { useMembersManagement } from '@/hooks/useMembersManagement';
+
+
+//import { useAuth0 } from '@auth0/auth0-react';
 
 export default function MembersInCharge() {
   const navigate = useNavigate();
+  //const {user} = useAuth0();
+  const {members}=useMembersManagement();
   const [isLoading, setIsLoading] = useState(true);
-  const [miembros, setMiembros] = useState<Member[]>([]);
   const [selectedMiembro, setSelectedMiembro] = useState<Member | null>(null);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -26,7 +31,12 @@ export default function MembersInCharge() {
   // 1. Crear endpoint: GET /api/v1/guardian/by-user-id/{userId}
   // 2. Incluir guardianId en el token JWT de Auth0
   // 3. Llamar a un endpoint que mapee userId -> guardianId
-  const guardianId = 309;
+ 
+  // const guardianId = user?.member_id || user?.memberId;
+ // console.log(guardianId)
+
+ const guardianId = 309
+ console.log(guardianId)
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -141,7 +151,7 @@ export default function MembersInCharge() {
 
       <div className="bg-white rounded-lg shadow-sm border">
         <MembersTable
-          members={miembros}
+          members={members}
           onViewDetails={handleViewDetails}
           onEdit={handleEdit}
         />
