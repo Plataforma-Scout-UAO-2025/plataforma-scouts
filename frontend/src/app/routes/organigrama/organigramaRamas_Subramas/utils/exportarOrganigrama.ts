@@ -8,6 +8,17 @@ type ExportPDFOpts = {
   colorHex?: string;
 };
 
+// Utilidades de acceso seguro para evitar "any"
+function getString(obj: unknown, keys: string[]): string {
+  if (!obj || typeof obj !== "object") return "";
+  const o = obj as Record<string, unknown>;
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === "string") return v;
+  }
+  return "";
+}
+
 // Detecta si un nombre corresponde a un nivel organizativo (comités, asambleas, cortes, consejos)
 function esNivelOrganizativoPorNombre(nombre?: string | null): boolean {
   if (!nombre) return false;
@@ -25,7 +36,7 @@ function esNivelOrganizativoPorNombre(nombre?: string | null): boolean {
 }
 
 function filtrarSoloRamas(ramas: Rama[]): Rama[] {
-  const filtradas = ramas.filter((r) => !esNivelOrganizativoPorNombre((r as any).name ?? (r as any).nombre));
+  const filtradas = ramas.filter((r) => !esNivelOrganizativoPorNombre(getString(r, ["name", "nombre"])));
   if (filtradas.length !== ramas.length) {
     console.log(
       ` [Export] Filtrado de niveles organizativos: ${ramas.length - filtradas.length} removidos, ${filtradas.length} ramas restantes`
@@ -43,8 +54,8 @@ function ordenarRamasComoUI(ramas: Rama[]): Rama[] {
     return idx === -1 ? Number.POSITIVE_INFINITY : idx; // no match goes to the end
   };
   return [...ramas].sort((a, b) => {
-    const nameA = (a as any).name ?? (a as any).nombre ?? '';
-    const nameB = (b as any).name ?? (b as any).nombre ?? '';
+    const nameA = getString(a, ["name", "nombre"]) || '';
+    const nameB = getString(b, ["name", "nombre"]) || '';
     const idxA = getIndex(nameA);
     const idxB = getIndex(nameB);
     if (idxA !== idxB) return idxA - idxB;
@@ -197,8 +208,6 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
       headStyles: { fillColor: [r, g, b], textColor: [255, 255, 255] },
       columnStyles: finalColumnStyles,
-      didDrawPage: () => {
-      },
     });
 
     console.log(' [ExportPDF] Guardando archivo organigrama.pdf...');

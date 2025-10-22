@@ -4,6 +4,26 @@ import type { OrganigramaNiveles } from "../organigramaNivelesOrganizativos/type
 import type { Member } from "@/types/member.type";
 import { getMembersBySubgroup } from "@/api/organigramaApi";
 
+// Helpers to safely read possible camelCase/snake_case name fields without using `any`
+const getFirstName = (obj: unknown): string => {
+  if (!obj || typeof obj !== "object") return "";
+  const o = obj as Record<string, unknown>;
+  return typeof o.firstName === "string"
+    ? o.firstName
+    : typeof o.first_name === "string"
+    ? o.first_name
+    : "";
+};
+const getLastName = (obj: unknown): string => {
+  if (!obj || typeof obj !== "object") return "";
+  const o = obj as Record<string, unknown>;
+  return typeof o.lastName === "string"
+    ? o.lastName
+    : typeof o.last_name === "string"
+    ? o.last_name
+    : "";
+};
+
 type BranchLite = {
   id: string | number;
   name: string;
@@ -85,11 +105,7 @@ export async function exportBranchesCSV(
 
             if (subgroupMembers.length > 0) {
               integrantes = subgroupMembers
-                .map((m: Member) => {
-                  const firstName = m.firstName || m.first_name || "";
-                  const lastName = m.lastName || m.last_name || "";
-                  return `${firstName} ${lastName}`.trim();
-                })
+                .map((m) => `${getFirstName(m)} ${getLastName(m)}`.trim())
                 .filter(Boolean)
                 .join(", ");
             }
@@ -174,16 +190,20 @@ export async function exportLevelsCSV(data: OrganigramaNiveles, members: Member[
               try {
                 const fetched = await getMembersBySubgroup(cargoId);
                 subgroupMembers = (fetched as unknown as Member[]) || [];
-              } catch {}
+              } catch (error) {
+                console.warn("[Export Levels CSV] No se pudieron cargar miembros para cargo", cargoId, error);
+              }
             }
             if (subgroupMembers.length > 0) {
               titulares = subgroupMembers
-                .map((m: any) => `${m.firstName || m.first_name || ""} ${m.lastName || m.last_name || ""}`.trim())
+                .map((m) => `${getFirstName(m)} ${getLastName(m)}`.trim())
                 .filter(Boolean)
                 .join(", ");
             }
           }
-        } catch {}
+        } catch (error) {
+          console.warn("[Export Levels CSV] Error procesando cargo", c.id, error);
+        }
 
         rows.push([
           nivel.nombre,
@@ -276,17 +296,13 @@ export async function exportOrgChartCombinedPDF(
               try {
                 const fetched = await getMembersBySubgroup(Number(subgroupId));
                 subgroupMembers = (fetched as unknown as Member[]) || [];
-              } catch (e) {
+              } catch {
                 // continuar silenciosamente; dejaremos integrantes vacío
               }
             }
             if (subgroupMembers.length > 0) {
               integrantes = subgroupMembers
-                .map((m: any) => {
-                  const firstName = m.firstName || m.first_name || "";
-                  const lastName = m.lastName || m.last_name || "";
-                  return `${firstName} ${lastName}`.trim();
-                })
+                .map((m) => `${getFirstName(m)} ${getLastName(m)}`.trim())
                 .filter(Boolean)
                 .join(", ");
             }
@@ -402,16 +418,20 @@ export async function exportOrgChartCombinedPDF(
               try {
                 const fetched = await getMembersBySubgroup(cargoId);
                 subgroupMembers = (fetched as unknown as Member[]) || [];
-              } catch {}
+              } catch (error) {
+                console.warn("[Export PDF Levels] No se pudieron cargar miembros para cargo", cargoId, error);
+              }
             }
             if (subgroupMembers.length > 0) {
               titulares = subgroupMembers
-                .map((m: any) => `${m.firstName || m.first_name || ""} ${m.lastName || m.last_name || ""}`.trim())
+                .map((m) => `${getFirstName(m)} ${getLastName(m)}`.trim())
                 .filter(Boolean)
                 .join(", ");
             }
           }
-        } catch {}
+        } catch (error) {
+          console.warn("[Export PDF Levels] Error procesando cargo", c.id, error);
+        }
 
         levelsBody.push([
           nivel.nombre,

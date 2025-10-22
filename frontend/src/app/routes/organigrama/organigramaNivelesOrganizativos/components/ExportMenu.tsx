@@ -10,6 +10,12 @@ import type { OrganigramaNiveles } from "../types/niveles.types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getMembersBySubgroup } from "@/api/organigramaApi";
+type NameLike = {
+  firstName?: string;
+  lastName?: string;
+  first_name?: string;
+  last_name?: string;
+};
 
 /* ============================================================
    📄 Exportación a PDF
@@ -81,11 +87,13 @@ async function exportPDF(data: OrganigramaNiveles) {
             const miembros = await getMembersBySubgroup(cargoId);
             if (Array.isArray(miembros) && miembros.length > 0) {
               titulares = miembros
-                .map((m: any) => `${m.firstName || m.first_name || ''} ${m.lastName || m.last_name || ''}`.trim())
+                .map((m: NameLike) => `${m.firstName || m.first_name || ''} ${m.lastName || m.last_name || ''}`.trim())
                 .filter(Boolean)
                 .join(', ');
             }
-          } catch {}
+          } catch (error) {
+            console.warn("[Export PDF Niveles] No se pudieron obtener los miembros del subgrupo", cargoId, error);
+          }
         }
 
         tableData.push([

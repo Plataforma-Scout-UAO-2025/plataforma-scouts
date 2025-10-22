@@ -19,15 +19,19 @@ export default function EmergencyContacts({
   onContactChange,
 }: Props) {
   useEffect(() => {
+    // Asegura al menos un contacto al iniciar o cuando se borren todos
     if (!datos.emergency_contacts || datos.emergency_contacts.length === 0) {
-      const newData = {
-        ...datos,
-        emergency_contacts: [{ name: "", relationship: "", phone: "" }],
-      };
-      setDatos(newData);
-      onContactChange?.(newData);
+      setDatos((prev) => {
+        const hasContacts = Array.isArray(prev.emergency_contacts) && prev.emergency_contacts.length > 0;
+        const nextContacts = hasContacts
+          ? prev.emergency_contacts!
+          : [{ name: "", relationship: "", phone: "" }];
+        const newData = { ...prev, emergency_contacts: nextContacts };
+        onContactChange?.(newData);
+        return newData;
+      });
     }
-  }, []);
+  }, [setDatos, onContactChange, datos.emergency_contacts]);
 
   const handleChange = (i: number, field: string, value: string) => {
     let sanitizedValue = value;
