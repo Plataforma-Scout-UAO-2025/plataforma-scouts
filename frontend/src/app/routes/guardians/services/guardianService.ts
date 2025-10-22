@@ -8,13 +8,13 @@ import {
     removeMemberFromGuardian,
     updateGuardian
 } from '@/api/guardiansApi';
-import type {
-    CreateGuardianDTO,
-    Guardian,
-    GuardianCreateResponse,
-    GuardianWithMembers,
-    MemberBasicInfo,
-    UpdateGuardianDTO
+import type { 
+  Guardian, 
+  GuardianWithMembers,
+  CreateGuardianDTO, 
+  UpdateGuardianDTO,
+  MemberBasicInfo,
+  GuardianCreateResponse 
 } from '@/types/guardian.type';
 
 // Helper: Extraer status code de un error (si existe)

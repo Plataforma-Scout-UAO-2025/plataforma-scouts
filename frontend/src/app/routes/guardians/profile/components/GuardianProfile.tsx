@@ -14,7 +14,7 @@ import { guardianService } from '../../services/guardianService';
 import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
 import { useGuardian } from '@/hooks/useGuardian';
 import type { Member } from '../../members/types/member.type';
-import type { UpdateGuardianDTO } from '@/types/guardian.type';
+import type { GuardianWithMembers, UpdateGuardianDTO, MemberBasicInfo } from '@/types/guardian.type';
 import { FullScreenLoader } from '@/components/common/FullScreenLoader';
 import type { Guardian } from '@/types/guardian.type';
 
