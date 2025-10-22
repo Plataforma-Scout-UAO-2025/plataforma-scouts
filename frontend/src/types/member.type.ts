@@ -11,6 +11,7 @@ export interface Member {
   firstName?: string;
   lastName?: string;
   isActive?: boolean;
+  createdAt?: string;
   
   member_id?: number;
   first_name?: string;

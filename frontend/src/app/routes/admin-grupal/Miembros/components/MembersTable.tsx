@@ -68,15 +68,15 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member, idx) => (
-              <TableRow key={member.member_id ?? `member-${idx}`}>
+              <TableRow key={member.memberId ?? `member-${idx}`}>
                 <TableCell className="pl-4 font-medium truncate">
-                  {member.member_id}
+                  {member.memberId}
                 </TableCell>
                 <TableCell className="w-32 truncate">
-                  {member.first_name}
+                  {member.firstName}
                 </TableCell>
                 <TableCell className="w-32 truncate">
-                  {member.last_name}
+                  {member.lastName}
                 </TableCell>
                 <TableCell className="w-32 truncate">
                   {member.identification}
@@ -85,7 +85,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                   {member.subgroup?.section?.name || "Sin rama"}
                 </TableCell>
                 <TableCell className="w-28 truncate">
-                  {formatDate(member.created_at)}
+                  {formatDate(member.createdAt || (member.created_at as string))}
                 </TableCell>
                 <TableCell className="w-40 truncate">
                   {member.address || "Sin dirección"}
