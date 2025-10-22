@@ -24,7 +24,10 @@ const Miembros = () => {
     handlePreviousPage,
     handleNextPage,
     branchMembers,
+    branchTotalMemberCount,
   } = useMemberFilters({ itemsPerPage: 10 });
+
+  console.log(branchTotalMemberCount);
 
   const { loading, error } = useTenantMembersByStatus({
     status: "APPROVED",
@@ -40,7 +43,7 @@ const Miembros = () => {
       </header>
       <section className="my-2 flex gap-4">
         <BranchCount
-          filteredMembers={filteredMembers}
+          branchMemberCount={branchTotalMemberCount}
           totalMembers={totalMembers}
         />
       </section>

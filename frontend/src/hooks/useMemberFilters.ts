@@ -2,16 +2,6 @@ import { useState, useMemo } from "react";
 import type { Member } from "@/types/member.type";
 import { useMembersManagement } from "./useMembersManagement";
 
-const parseIsActive = (raw: unknown): boolean => {
-  if (typeof raw === "boolean") return raw;
-  if (typeof raw === "number") return raw === 1;
-  if (typeof raw === "string") {
-    const v = raw.toLowerCase().trim();
-    return v === "activo" || v === "true" || v === "1";
-  }
-  return false;
-};
-
 interface useMemberFiltersProps {
   itemsPerPage?: number;
 }
@@ -23,7 +13,8 @@ export const useMemberFilters = ({
   const [isActiveFilter, setIsActiveFilter] = useState<string>("");
   const [branchFilter, setBranchFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const { members, branchMembers } = useMembersManagement();
+  const { members, branchMembers, branchTotalMemberCount } =
+    useMembersManagement();
 
   const filteredMembers = useMemo(() => {
     if (!members || members.length === 0) return [];
@@ -41,10 +32,10 @@ export const useMemberFilters = ({
           fullName.includes(searchFilter.toLowerCase()) ||
           identification.includes(searchFilter.toLowerCase());
 
-        const isActive = parseIsActive(member.isActive ?? member.is_active);
         const matchesStatus =
           !isActiveFilter.toLowerCase() ||
-          (isActive ? "activo" : "inactivo") === isActiveFilter.toLowerCase();
+          (member.isActive || member.is_active ? "activo" : "inactivo") ===
+            isActiveFilter.toLowerCase();
 
         const matchesBranch =
           !branchFilter.toLowerCase() ||
@@ -90,7 +81,7 @@ export const useMemberFilters = ({
         (member) =>
           ({
             ...member,
-            is_active: parseIsActive(member.isActive ?? member.is_active),
+            is_active: member.isActive ?? member.is_active,
           } as Member)
       );
   }, [members, searchFilter, isActiveFilter, branchFilter]);
@@ -126,6 +117,7 @@ export const useMemberFilters = ({
       return member.status?.toLowerCase() === "approved";
     }).length,
     branchMembers,
+    branchTotalMemberCount,
 
     // Paginación
     currentPage,

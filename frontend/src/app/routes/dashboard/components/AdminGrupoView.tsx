@@ -17,7 +17,6 @@ const AdminGrupoView = () => {
     scoutMembers,
     nuevosEsteMes,
   } = useMembersManagement();
-  console.log("Branch member count:", branchMemberCount);
 
   let scoutsActivos = 0;
   scoutMembers.map((member) => {
