@@ -80,8 +80,7 @@ const GuardianProfilePage: React.FC = () => {
       };
       
       await guardianService.updateData(guardianId, updateData);
-      
-      // Actualizar estado local
+
       setGuardianData(prev => prev ? { ...prev, ...updateData } : null);
       toast.success('Perfil actualizado exitosamente');
       setIsEditModalOpen(false);
@@ -154,7 +153,6 @@ const GuardianProfilePage: React.FC = () => {
     );
   }
 
-  // Convertir miembros a formato esperado por el componente
   const miembrosACargo = guardianData.members?.map(member => ({
     id: parseInt(member.userId || '0'),
     fullName: `${member.firstName || ''} ${member.lastName || ''}`,
