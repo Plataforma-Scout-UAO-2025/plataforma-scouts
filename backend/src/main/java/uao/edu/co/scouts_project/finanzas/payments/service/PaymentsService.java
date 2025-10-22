@@ -92,13 +92,21 @@ public void appendPayment(String tenantId, Long installmentId, AppendPaymentDto 
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "payer_member_id is required");
     }
 
-    // 3) el payer debe existir en el mismo tenant
+    // 3) paid_at no puede ser futura
+    if (dto.getPaid_at() != null) {
+        LocalDate today = LocalDate.now(); // o ZoneId.of("America/Bogota")
+        if (dto.getPaid_at().isAfter(today)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "paid_at cannot be in the future");
+        }
+    }
+
+    // 4) el payer debe existir en el mismo tenant
     boolean exists = readRepo.memberExistsInTenant(tenantId, dto.getPayer_member_id());
     if (!exists) {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Payer member not found in tenant");
     }
 
-    // 4) insertar el pago (UPDATE JSONB) y marcar PAID si corresponde
+    // 5) insertar el pago (UPDATE JSONB) y marcar PAID si corresponde
     int updated = readRepo.appendPayment(
             tenantId,
             installmentId,
