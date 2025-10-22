@@ -6,7 +6,7 @@ import ExportMenu from "./components/ExportMenu";
 import LevelAccordion from "./components/LevelAccordion";
 import { useNiveles } from "./hooks/useNiveles";
 import { useNavigate } from "react-router-dom";
-import { getMembers } from "@/api/membersApi";
+import { getMembers, updateMember } from "@/api/membersApi";
 // Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
 import useOrganigramaData from "../organigramaRamas_Subramas/hooks/useOrganigramaData";
@@ -25,8 +25,12 @@ import type { Member } from "@/types/member.type";
 
 export default function NivelesPage() {
   const currentYear = new Date().getFullYear();
-  const { anio, data, loading, addNivel, updateNivel, removeNivel } =
-    useNiveles(currentYear);
+  // Hooks del submódulo de ramas: deben invocarse en el mismo orden siempre
+  const { tenantId, groupSlug } = useTenantParams();
+  const { ramas } = useOrganigramaData(tenantId, groupSlug);
+
+  const { anio, data, loading, addNivel, updateNivel, removeNivel, addCargo, updateCargo, removeCargo } =
+    useNiveles(currentYear, tenantId, groupSlug);
 
   // ===== ESTADOS =====
   const [openCreateNivel, setOpenCreateNivel] = useState(false);
@@ -52,10 +56,6 @@ export default function NivelesPage() {
 
   const navigate = useNavigate();
 
-  // Hooks del submódulo de ramas: deben invocarse en el mismo orden siempre
-  const { tenantId, groupSlug } = useTenantParams();
-  const { ramas } = useOrganigramaData(tenantId, groupSlug);
-
   // Filtrar las ramas que sean comités (case-insensitive)
   const comiteRamas = (ramas ?? []).filter((r) => {
     const name = String(r.name || r.nombre || '').toLowerCase();
@@ -66,6 +66,8 @@ export default function NivelesPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState<boolean>(true);
   const [membersError, setMembersError] = useState<string | null>(null);
+  // Forzar recarga de miembros por cargo en LevelAccordion cuando se asigna alguien
+  const [membersRefreshKey, setMembersRefreshKey] = useState<number>(0);
 
   useEffect(() => {
     let mounted = true;
@@ -132,23 +134,18 @@ export default function NivelesPage() {
     descripcion?: string
   ) => {
     if (!nivelActual) return;
-
-    const nuevoCargo = {
-      id: Date.now().toString(),
-      nombre,
-      titular,
-      descripcion,
-      visible: true,
-    };
-
-    const actualizado = {
-      ...nivelActual,
-      cargos: [...nivelActual.cargos, nuevoCargo],
-    };
-
-    updateNivel(actualizado);
-    setOpenCreateCargo(false);
-    setShowSuccess(true);
+    // Guardado en backend (subgrupo). 'titular' no se persiste en backend actualmente.
+    // Se mantiene para futura extensión.
+    // Usamos el helper del hook para crear cargo y refrescar.
+    (async () => {
+      try {
+        await addCargo(nivelActual.id, nombre, titular, descripcion);
+        setOpenCreateCargo(false);
+        setShowSuccess(true);
+      } catch (e) {
+        console.error('Error creando cargo', e);
+      }
+    })();
   };
 
   const handleEditCargo = (cargo: Cargo) => {
@@ -156,17 +153,46 @@ export default function NivelesPage() {
     setOpenEditCargo(true);
   };
 
-  const handleSaveEditCargo = (cargo: Cargo) => {
+  const handleSaveEditCargo = (cargo: Cargo, assignMemberId?: string) => {
     if (!nivelActual) return;
-    const actualizado = {
-      ...nivelActual,
-      cargos: nivelActual.cargos.map((c) =>
-        c.id === cargo.id ? cargo : c
-      ),
-    };
-    updateNivel(actualizado);
-    setOpenEditCargo(false);
-    setShowSuccess(true);
+    (async () => {
+      try {
+        await updateCargo(nivelActual.id, cargo);
+        // Si se seleccionó un miembro para asignar a este cargo, persistimos la asignación
+        if (assignMemberId) {
+          // Normalizar a número el id de subgrupo (cargo)
+          let subgroupNumId = Number(cargo.id);
+          if (!Number.isFinite(subgroupNumId)) {
+            const parsed = parseInt(String(cargo.id), 10);
+            if (Number.isFinite(parsed)) subgroupNumId = parsed;
+          }
+          if (Number.isFinite(subgroupNumId)) {
+            // También enviamos la sección padre (nivel) para máxima compatibilidad con backend
+            let sectionNumId = Number(nivelActual.id);
+            if (!Number.isFinite(sectionNumId)) {
+              const parsedSec = parseInt(String(nivelActual.id), 10);
+              if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
+            }
+            await updateMember(assignMemberId, {
+              subgroupId: subgroupNumId,
+              subgroup_id: subgroupNumId,
+              sectionId: Number.isFinite(sectionNumId) ? sectionNumId : undefined,
+              section_id: Number.isFinite(sectionNumId) ? sectionNumId : undefined,
+              isActive: true,
+              is_active: true as any,
+            } as any);
+            // Forzar recarga de miembros listados por cargo
+            setMembersRefreshKey((k) => k + 1);
+          } else {
+            console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargo.id);
+          }
+        }
+        setOpenEditCargo(false);
+        setShowSuccess(true);
+      } catch (e) {
+        console.error('Error actualizando cargo o asignando miembro', e);
+      }
+    })();
   };
 
   const handleDeleteCargo = (cargo: Cargo, nivel: Nivel) => {
@@ -190,11 +216,7 @@ export default function NivelesPage() {
         (n) => n.id === deleteTarget.nivelId
       );
       if (nivel) {
-        const actualizado = {
-          ...nivel,
-          cargos: nivel.cargos.filter((c) => c.id !== deleteTarget.id),
-        };
-        updateNivel(actualizado);
+        await removeCargo(nivel.id, deleteTarget.id);
       }
     }
 
@@ -284,6 +306,7 @@ export default function NivelesPage() {
             <LevelAccordion
               key={nivel.id}
               nivel={nivel}
+              refreshKey={membersRefreshKey}
               onUpdate={(nivelEditado) => {
                 setNivelToEdit(nivelEditado);
                 setOpenEditNivel(true);

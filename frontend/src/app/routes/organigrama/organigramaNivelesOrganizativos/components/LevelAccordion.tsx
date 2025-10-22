@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Trash2, Pencil, ChevronDown } from "lucide-react";
 import type { Nivel, Cargo } from "../types/niveles.types";
 import PositionItem from "./PositionItem";
+import { getMembersBySubgroup } from "@/api/organigramaApi";
+import type { Member } from "@/types/member.type";
 
 interface Props {
   nivel: Nivel;
@@ -14,6 +16,8 @@ interface Props {
   onDeleteCargo?: (cargo: Cargo) => void;
   /** Opcional: iniciar abierto o cerrado (por defecto: true) */
   defaultOpen?: boolean;
+  /** Forzar recarga de miembros listados por cargo cuando cambie */
+  refreshKey?: number | string;
 }
 
 export default function LevelAccordion({
@@ -24,10 +28,13 @@ export default function LevelAccordion({
   onEditCargo,
   onDeleteCargo,
   defaultOpen = true,
+  refreshKey,
 }: Props) {
   const [open, setOpen] = useState<boolean>(defaultOpen);
   // Estado para sub-acordeones por rol: mapa roleName -> open
   const [groupsOpen, setGroupsOpen] = useState<Record<string, boolean>>({});
+  // Miembros por cargo (subgroupId -> nombres)
+  const [membersByCargo, setMembersByCargo] = useState<Record<string, string[]>>({});
 
   // Agrupar cargos por rol (nombre del cargo). useMemo para rendimiento.
   const cargosPorRol = useMemo(() => {
@@ -39,6 +46,115 @@ export default function LevelAccordion({
     });
     return map;
   }, [nivel]);
+
+  // Normalizador para comparar cadenas sin tildes y minúsculas
+  const normalize = (s: string) =>
+    String(s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  // Prioridades fijas por comité
+  const jefaturaOrder = useMemo(
+    () =>
+      [
+        "Jefe de Región",
+        "Sub Jefe de Región",
+        "Jefe de Grupo",
+        "Sub Jefe de Grupo",
+        "Jefe de Rama",
+        "Sub Jefe de Subrama",
+      ].map(normalize),
+    []
+  );
+
+  const padresOrder = useMemo(
+    () =>
+      [
+        "Presidente",
+        "Vicepresidente",
+        "Secretario",
+        "Tesorero",
+        "Vocal",
+      ].map(normalize),
+    []
+  );
+
+  // Determinar orden de grupos (roles) según el nombre del nivel (comité)
+  const orderedRoleKeys = useMemo(() => {
+    const keys = Object.keys(cargosPorRol);
+    const nivelName = normalize(nivel.nombre);
+    const isJefatura = nivelName.includes("comite de jefatura");
+    const isPadres = nivelName.includes("comite de padres");
+    if (!isJefatura && !isPadres) {
+      // Por defecto, orden alfabético sensible al español
+      return keys.sort((a, b) => a.localeCompare(b, "es"));
+    }
+    const priority = isJefatura ? jefaturaOrder : padresOrder;
+    return keys.sort((a, b) => {
+      const ai = priority.indexOf(normalize(a));
+      const bi = priority.indexOf(normalize(b));
+      const aIn = ai !== -1;
+      const bIn = bi !== -1;
+      if (aIn && bIn) return ai - bi;
+      if (aIn) return -1;
+      if (bIn) return 1;
+      // Los no listados van después, en orden alfabético
+      return a.localeCompare(b, "es");
+    });
+  }, [cargosPorRol, nivel.nombre, jefaturaOrder, padresOrder]);
+
+  // Cargar miembros para cada cargo del nivel
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const cargos = nivel.cargos || [];
+        if (cargos.length === 0) {
+          if (mounted) setMembersByCargo({});
+          return;
+        }
+        const entries = await Promise.all(
+          cargos.map(async (c) => {
+            const rawId = c.id;
+            // Normalizamos el ID del subgrupo: preferir número; si no, intentar parseInt
+            let numId = Number(rawId);
+            if (!Number.isFinite(numId)) {
+              const parsed = parseInt(String(rawId), 10);
+              if (Number.isFinite(parsed)) numId = parsed;
+            }
+            if (!Number.isFinite(numId)) return [String(rawId), [] as string[]] as const;
+            try {
+              const list = await getMembersBySubgroup(numId);
+              const names = (list || []).map((m: Member | Record<string, any>) => {
+                const mm = m as Member;
+                const name = mm.firstName || (mm as any).first_name || (mm as any).nombres || "";
+                const last = mm.lastName || (mm as any).last_name || (mm as any).apellidos || "";
+                const display = `${String(name).trim()} ${String(last).trim()}`.trim();
+                return (
+                  display.length > 0
+                    ? display
+                    : (mm as any).display_name || (mm as any).full_name || (mm as any).fullname || (mm as any).displayName || (mm as any).name || "Miembro"
+                );
+              });
+              return [String(rawId), names] as const;
+            } catch {
+              return [String(rawId), [] as string[]] as const;
+            }
+          })
+        );
+        const map: Record<string, string[]> = {};
+        for (const [id, names] of entries) map[id] = names;
+        if (mounted) setMembersByCargo(map);
+      } catch {
+        // ignorar errores; no bloquear el acordeón
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [nivel.cargos, refreshKey]);
 
   const toggle = () => setOpen((v) => !v);
   const onKeyToggle: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -126,7 +242,8 @@ export default function LevelAccordion({
         <div className="min-h-0">
           <div className="space-y-3">
             {/* Renderizar sub-acordeones por rol */}
-            {Object.entries(cargosPorRol).map(([rol, cargos]) => {
+            {orderedRoleKeys.map((rol) => {
+              const cargos = cargosPorRol[rol] || [];
               const isOpen = groupsOpen[rol] ?? true;
               return (
                 <div key={rol} className="border border-border rounded-md bg-card">
@@ -155,7 +272,10 @@ export default function LevelAccordion({
                       />
                       <div className="font-medium text-primary">{rol}</div>
                     </div>
-                    <div className="text-sm text-muted-foreground">{cargos.length} miembro{cargos.length > 1 ? "s" : ""}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {cargos.reduce((acc, c) => acc + (membersByCargo[c.id]?.length || 0), 0)} miembro
+                      {cargos.reduce((acc, c) => acc + (membersByCargo[c.id]?.length || 0), 0) === 1 ? "" : "s"}
+                    </div>
                   </div>
 
                   {isOpen && (
@@ -164,20 +284,13 @@ export default function LevelAccordion({
                         <PositionItem
                           key={cargo.id}
                           cargo={cargo}
+                          members={membersByCargo[cargo.id] || []}
                           onEdit={() => onEditCargo?.(cargo)}
                           onDelete={() => onDeleteCargo?.(cargo)}
+                          // El botón interno "Agregar miembro al cargo" usará la misma lógica de editar cargo
+                          onAddMember={() => onEditCargo?.(cargo)}
                         />
                       ))}
-                      {/* Botón para agregar miembro al cargo (estilo similar a Crear Nuevo Cargo) */}
-                      <div className="mt-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => onAddCargo(nivel.id)}
-                          className="w-full justify-center border border-border text-primary hover:bg-accent font-medium rounded-md"
-                        >
-                          + Agregar miembro al cargo
-                        </Button>
-                      </div>
                     </div>
                   )}
                 </div>

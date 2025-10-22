@@ -12,16 +12,49 @@ import { exportOrgChartCombinedPDF, exportLevelsCSV, exportBranchesCSV } from ".
 type BranchLite = { id: string | number; name: string; description?: string; minAge?: number; maxAge?: number; status?: string };
 type SubgroupLite = { id: string | number; name?: string; status?: string; leader?: string };
 
+// Helpers to avoid mixing committees (niveles) inside the branches list
+const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const isCommitteeName = (name: string) => {
+  const n = stripAccents(name).toLowerCase();
+  // Tratar estos nombres como niveles organizativos (excluir de Ramas)
+  return n.includes("comit") || n.includes("asamblea") || n.includes("corte") || n.includes("consejo");
+};
+const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
+
+// Fixed orders for specific committees
+const JEFATURA_ORDER = [
+  "Jefe de Región",
+  "Sub Jefe de Región",
+  "Jefe de Grupo",
+  "Sub Jefe de Grupo",
+  "Jefe de Rama",
+  "Sub Jefe de Subrama",
+].map(normalize);
+
+const PADRES_ORDER = [
+  "Presidente",
+  "Vicepresidente",
+  "Secretario",
+  "Tesorero",
+  "Vocal",
+].map(normalize);
+
 export default function OrgChartSummary() {
   const currentYear = new Date().getFullYear();
-  const { anio, data: nivelesData, loading: nivelesLoading } = useNiveles(currentYear);
+  // Get tenant/group first to use them for both ramas/subramas and niveles
+  const { tenantId, groupSlug } = useTenantParams();
+  // Pass tenant/group to the niveles hook so it fetches from backend (sections/subgroups)
+  const { anio, data: nivelesData, loading: nivelesLoading } = useNiveles(
+    currentYear,
+    tenantId ? String(tenantId) : undefined,
+    groupSlug
+  );
   const navigate = useNavigate();
 
   const [branches, setBranches] = useState<Array<{ section: BranchLite; subgroups: SubgroupLite[] }>>([]);
   const [branchesLoading, setBranchesLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { tenantId, groupSlug } = useTenantParams();
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -35,7 +68,14 @@ export default function OrgChartSummary() {
 
         const ramas = await getRamasWithSubramas(String(tenantId), groupSlug);
 
-        const result = (ramas || []).map((r) => {
+        // Exclude committees from the Ramas/Subramas panel to prevent mixing with niveles
+        const onlyRamas = (ramas || []).filter((r) => {
+          const rec = r as unknown as Record<string, unknown>;
+          const rawName = String(rec['name'] ?? rec['nombre'] ?? '');
+          return !isCommitteeName(rawName);
+        });
+
+        const result = onlyRamas.map((r) => {
           const rec = r as unknown as Record<string, unknown>;
           const section: BranchLite = {
             id: (rec['sectionId'] ?? rec['id'] ?? '') as string | number,
@@ -221,7 +261,26 @@ export default function OrgChartSummary() {
                     <div className="text-sm text-muted-foreground mt-2">— Sin cargos</div>
                   ) : (
                     <ul className="list-disc ml-5 mt-2 text-sm">
-                      {nivel.cargos.map((c) => (
+                      {(() => {
+                        const nName = normalize(nivel.nombre);
+                        const isJefatura = nName.includes("comite de jefatura");
+                        const isPadres = nName.includes("comite de padres");
+                        const priority = isJefatura ? JEFATURA_ORDER : isPadres ? PADRES_ORDER : null;
+                        const sorted = [...nivel.cargos].sort((a, b) => {
+                          if (priority) {
+                            const ai = priority.indexOf(normalize(a.nombre));
+                            const bi = priority.indexOf(normalize(b.nombre));
+                            const aIn = ai !== -1;
+                            const bIn = bi !== -1;
+                            if (aIn && bIn) return ai - bi;
+                            if (aIn) return -1;
+                            if (bIn) return 1;
+                            return a.nombre.localeCompare(b.nombre, "es");
+                          }
+                          // Default: alphabetical
+                          return a.nombre.localeCompare(b.nombre, "es");
+                        });
+                        return sorted.map((c) => (
                         <li key={c.id} className="text-foreground">
                           {c.nombre}
                           {c.titular ? (
@@ -231,7 +290,8 @@ export default function OrgChartSummary() {
                             <span className="ml-2 text-muted-foreground">({c.inicio}-{c.fin})</span>
                           ) : null}
                         </li>
-                      ))}
+                        ));
+                      })()}
                     </ul>
                   )}
                 </div>

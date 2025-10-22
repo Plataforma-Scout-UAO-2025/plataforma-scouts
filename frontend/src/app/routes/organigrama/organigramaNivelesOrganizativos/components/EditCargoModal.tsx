@@ -18,7 +18,8 @@ interface Props {
   open: boolean;
   cargo: Cargo | null;
   onClose: () => void;
-  onSave: (cargo: Cargo) => void;
+  // Permite devolver el cargo editado y opcionalmente el miembro a asignar al cargo
+  onSave: (cargo: Cargo, assignMemberId?: string) => void;
   members?: Member[];
 }
 
@@ -67,7 +68,8 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
       const selected = memberOptions.find((m) => m.id === selectedMemberId);
       if (selected) titularValue = selected.displayName;
     }
-    onSave({ ...cargo, nombre, titular: titularValue, descripcion });
+    // Devolvemos también el memberId seleccionado para que el padre lo asigne al cargo
+    onSave({ ...cargo, nombre, titular: titularValue, descripcion }, selectedMemberId ?? undefined);
   };
 
   return (

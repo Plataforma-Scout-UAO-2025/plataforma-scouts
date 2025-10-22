@@ -201,8 +201,26 @@ export const deleteGalleryImageById = async (
 
 // Obtiene la lista de miembros pertenecientes a un subgrupo específico
 export const getMembersBySubgroup = async (subgroupId: number) => {
-  const response = await api.get(`/members/list_members_by_subgroup`, { params: { id: subgroupId } });
-  return response.data;
+  // Primero intentamos con 'id' (comportamiento principal). Solo usamos fallback si esta llamada falla.
+  try {
+    const response = await api.get(`/members/list_members_by_subgroup`, { params: { id: subgroupId } });
+    const data = response.data as unknown;
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray((data as any).members)) return (data as any).members;
+    return [] as any[];
+  } catch (err1) {
+    // Fallback: algunos backends usan 'subgroup_id'
+    try {
+      const response2 = await api.get(`/members/list_members_by_subgroup`, { params: { subgroup_id: subgroupId } });
+      const data2 = response2.data as unknown;
+      if (Array.isArray(data2)) return data2;
+      if (data2 && typeof data2 === 'object' && Array.isArray((data2 as any).members)) return (data2 as any).members;
+      return [] as any[];
+    } catch (err2) {
+      console.warn('getMembersBySubgroup failed', { subgroupId, err1, err2 });
+      return [] as any[];
+    }
+  }
 };
 
 // Obtiene un subgrupo junto con su sección padre

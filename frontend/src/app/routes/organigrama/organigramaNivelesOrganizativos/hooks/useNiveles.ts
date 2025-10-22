@@ -8,7 +8,7 @@ import type { OrganigramaNiveles, Nivel, Cargo } from "../types/niveles.types";
  * - CRUD de Niveles y Cargos
  * - Helpers para togglear visibilidad
  */
-export function useNiveles(anioInicial: number) {
+export function useNiveles(anioInicial: number, tenantId?: string, groupSlug?: string) {
   const [anio, setAnio] = useState(anioInicial);
   const [data, setData] = useState<OrganigramaNiveles>({
     anio: anioInicial,
@@ -24,7 +24,7 @@ export function useNiveles(anioInicial: number) {
     (async () => {
       try {
         setLoading(true);
-        const d = await service.getByAnio(anio); // Carga los datos del año seleccionado, incluyendo los mocks
+  const d = await service.getByAnio(anio, tenantId, groupSlug); // Carga los datos desde backend (secciones/subgrupos) con overrides
         if (mounted) setData(d);
       } finally {
         if (mounted) setLoading(false);
@@ -33,11 +33,11 @@ export function useNiveles(anioInicial: number) {
     return () => {
       mounted = false;
     };
-  }, [anio]);
+  }, [anio, tenantId, groupSlug]);
 
   // Util: recargar desde el backend y setear estado
   const refresh = async () => {
-    const d = await service.getByAnio(anio);
+    const d = await service.getByAnio(anio, tenantId, groupSlug);
     setData(d);
   };
 
@@ -49,14 +49,8 @@ export function useNiveles(anioInicial: number) {
    * Crea un nivel (visible por defecto).
    */
   const addNivel = async (nombre: string, descripcion?: string) => {
-    const nivel: Nivel = {
-      id: crypto.randomUUID(),
-      nombre,
-      descripcion,
-      visible: true,
-      cargos: [],
-    };
-    await service.upsertNivel(anio, nivel);
+    if (!(tenantId && groupSlug)) return;
+    await service.createNivel(tenantId, groupSlug, nombre, descripcion);
     await refresh();
   };
 
@@ -64,7 +58,7 @@ export function useNiveles(anioInicial: number) {
    * Actualiza un nivel (nombre/descripcion/visible/cargos...).
    */
   const updateNivel = async (nivel: Nivel) => {
-    await service.upsertNivel(anio, nivel);
+    await service.upsertNivel(anio, nivel, tenantId, groupSlug);
     await refresh();
   };
 
@@ -72,7 +66,7 @@ export function useNiveles(anioInicial: number) {
    * Elimina un nivel por id.
    */
   const removeNivel = async (nivelId: string) => {
-    await service.deleteNivel(anio, nivelId);
+    await service.deleteNivel(anio, nivelId, tenantId, groupSlug);
     await refresh();
   };
 
@@ -95,21 +89,13 @@ export function useNiveles(anioInicial: number) {
   const addCargo = async (
     nivelId: string,
     nombre: string,
-    titular?: string,
+    _titular?: string,
     descripcion?: string,
-    inicio?: number,
-    fin?: number
+    _inicio?: number,
+    _fin?: number
   ) => {
-    const cargo: Cargo = {
-      id: crypto.randomUUID(),
-      nombre,
-      titular,
-      descripcion,
-      inicio,
-      fin,
-      visible: true,
-    };
-    await service.upsertCargo(anio, nivelId, cargo);
+    if (!(tenantId && groupSlug)) return;
+    await service.createCargo(tenantId, groupSlug, nivelId, nombre, descripcion);
     await refresh();
   };
 
@@ -117,7 +103,7 @@ export function useNiveles(anioInicial: number) {
    * Actualiza un cargo perteneciente a un nivel.
    */
   const updateCargo = async (nivelId: string, cargo: Cargo) => {
-    await service.upsertCargo(anio, nivelId, cargo);
+    await service.upsertCargo(anio, nivelId, cargo, tenantId, groupSlug);
     await refresh();
   };
 
@@ -125,7 +111,7 @@ export function useNiveles(anioInicial: number) {
    * Elimina un cargo de un nivel.
    */
   const removeCargo = async (nivelId: string, cargoId: string) => {
-    await service.deleteCargo(anio, nivelId, cargoId);
+    await service.deleteCargo(anio, nivelId, cargoId, tenantId, groupSlug);
     await refresh();
   };
 

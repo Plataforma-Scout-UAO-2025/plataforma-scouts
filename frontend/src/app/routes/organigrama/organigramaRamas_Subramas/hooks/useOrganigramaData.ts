@@ -59,15 +59,24 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
               { signal: ctrl.signal }
             );
             
-            // Filtrar ramas de comité (excluir las que contengan "comit" en el nombre)
-            const ramasSinComites = data.filter((rama) => {
-              const name = String(rama.name || rama.nombre || '').toLowerCase();
-              return !name.includes('comit');
+            // Filtrar niveles organizativos: excluir nombres que contengan 'comit', 'asamblea', 'corte', 'consejo' (sin acentos)
+            const normalize = (s: string) => String(s || '')
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .toLowerCase();
+            const ramasSinOrganizativos = data.filter((rama) => {
+              const n = normalize(String(rama.name || (rama as any).nombre || ''));
+              return !(
+                n.includes('comit') ||
+                n.includes('asamblea') ||
+                n.includes('corte') ||
+                n.includes('consejo')
+              );
             });
             
             // Ordenar ramas según el orden específico de secciones scout
             const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
-            const ramasOrdenadas = ramasSinComites.sort((a, b) => {
+            const ramasOrdenadas = ramasSinOrganizativos.sort((a, b) => {
               const nameA = String(a.name || a.nombre || '').toLowerCase();
               const nameB = String(b.name || b.nombre || '').toLowerCase();
               

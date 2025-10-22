@@ -142,6 +142,8 @@ export interface UpdateMember {
   firstName?: string;
   lastName?: string;
   subgroupId?: number;
+  // Variante snake_case para compatibilidad con backend
+  subgroup_id?: number;
   subgroupName?: string;
   age?: number;
   userId?: string;
