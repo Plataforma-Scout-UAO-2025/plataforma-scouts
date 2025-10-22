@@ -27,7 +27,6 @@ export const CompleteDataModal = () => {
         throw new Error("Could not get user ID");
       }
 
-      // Send data to backend
       await guardianService.updateData(userId, {
         identification: data.identification,
         documentType: data.documentType,
@@ -38,7 +37,6 @@ export const CompleteDataModal = () => {
         age: data.age,
       });
 
-      // If successful, mark as complete
       markDataComplete();
       
       toast.success("Datos guardados exitosamente");

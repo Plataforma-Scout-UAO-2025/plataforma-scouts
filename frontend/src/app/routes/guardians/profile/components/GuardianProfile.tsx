@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,8 @@ const GuardianProfilePage: React.FC = () => {
   // 3. Llamar a un endpoint que mapee userId -> guardianId
 
     const guardianId = 309;
+    const { user } = useAuth0();
+    
 
   useEffect(() => {
     const fetchGuardianData = async () => {
@@ -77,8 +80,7 @@ const GuardianProfilePage: React.FC = () => {
       };
       
       await guardianService.updateData(guardianId, updateData);
-      
-      // Actualizar estado local
+
       setGuardianData(prev => prev ? { ...prev, ...updateData } : null);
       toast.success('Perfil actualizado exitosamente');
       setIsEditModalOpen(false);
@@ -151,7 +153,6 @@ const GuardianProfilePage: React.FC = () => {
     );
   }
 
-  // Convertir miembros a formato esperado por el componente
   const miembrosACargo = guardianData.members?.map(member => ({
     id: parseInt(member.userId || '0'),
     fullName: `${member.firstName || ''} ${member.lastName || ''}`,
@@ -177,17 +178,17 @@ const GuardianProfilePage: React.FC = () => {
         </div>
         <div className="flex-1 p-6">
           <ProfileHeader 
-            firstName={guardianData.firstName || ''} 
-            lastName={guardianData.lastName || ''} 
-            grupo={guardianData.subgroup?.name || 'Sin grupo'} 
+            firstName={guardianData.firstName ?? user?.nickname ?? ''} 
+            lastName={guardianData.lastName ?? user?.middle_name ??''} 
+            grupo={guardianData.subgroup?.name ?? ''} 
             isActive={guardianData.isActive || false} 
           />
           <ProfileInfoCard 
-            firstName={guardianData.firstName || ''} 
-            lastName={guardianData.lastName || ''} 
+            firstName={guardianData.firstName ?? user?.nickname ?? ''} 
+            lastName={guardianData?.lastName ?? user?.middle_name ?? ''} 
             identification={guardianData.identification || ''} 
             documentType={guardianData.documentType || 'CC'} 
-            email={'N/A'} 
+            email={user?.email ?? 'N/A'} 
             emailAlt={undefined} 
             phone={guardianData.phone || ''} 
             phoneAlt={undefined} 
@@ -210,11 +211,11 @@ const GuardianProfilePage: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleEditProfile} 
         initialData={{
-          firstName: guardianData.firstName || '',
+          firstName: guardianData.firstName ?? user?.nickname ?? '',
           lastName: guardianData.lastName || '',
           identification: guardianData.identification || '',
           documentType: guardianData.documentType || 'CC',
-          email: 'N/A',
+          email: user?.email ?? 'N/A',
           emailAlt: undefined,
           phone: guardianData.phone || '',
           phoneAlt: undefined,
