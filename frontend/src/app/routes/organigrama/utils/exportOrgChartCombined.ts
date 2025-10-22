@@ -93,11 +93,43 @@ export async function exportBranchesCSV(branches: SimpleBranches) {
 export function exportLevelsCSV(data: OrganigramaNiveles) {
   const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
   const rows: string[][] = [];
+  const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
+  const JEFATURA_ORDER = [
+    "Jefe de Región",
+    "Sub Jefe de Región",
+    "Jefe de Grupo",
+    "Sub Jefe de Grupo",
+    "Jefe de Rama",
+    "Sub Jefe de Subrama",
+  ].map(normalize);
+  const PADRES_ORDER = [
+    "Presidente",
+    "Vicepresidente",
+    "Secretario",
+    "Tesorero",
+    "Vocal",
+  ].map(normalize);
   data.niveles.forEach((nivel) => {
     if (!nivel.cargos || nivel.cargos.length === 0) {
       rows.push([nivel.nombre, "—", "—", String(data.anio ?? "—"), nivel.descripcion || "—"]);
     } else {
-      nivel.cargos.forEach((c) => {
+      const nName = normalize(nivel.nombre);
+      const isJef = nName.includes("comite de jefatura");
+      const isPad = nName.includes("comite de padres");
+      const priority = isJef ? JEFATURA_ORDER : isPad ? PADRES_ORDER : null;
+      const sorted = [...nivel.cargos].sort((a, b) => {
+        if (priority) {
+          const ai = priority.indexOf(normalize(a.nombre));
+          const bi = priority.indexOf(normalize(b.nombre));
+          const aIn = ai !== -1; const bIn = bi !== -1;
+          if (aIn && bIn) return ai - bi;
+          if (aIn) return -1; if (bIn) return 1;
+          return a.nombre.localeCompare(b.nombre, 'es');
+        }
+        return a.nombre.localeCompare(b.nombre, 'es');
+      });
+      sorted.forEach((c) => {
         const periodo = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
         rows.push([nivel.nombre, c.nombre, c.titular || "—", periodo, c.descripcion || "—"]);
       });
@@ -218,11 +250,37 @@ export async function exportOrgChartCombinedPDF(
   doc.text("Niveles Organizativos", x, y);
 
   const levelsBody: (string | number)[][] = [];
+  const stripAccents2 = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const normalize2 = (s: string) => stripAccents2(String(s || '')).toLowerCase().trim();
+  const JEFATURA_ORDER2 = [
+    'Jefe de Región',
+    'Sub Jefe de Región',
+    'Jefe de Grupo',
+    'Sub Jefe de Grupo',
+    'Jefe de Rama',
+    'Sub Jefe de Subrama',
+  ].map(normalize2);
+  const PADRES_ORDER2 = ['Presidente', 'Vicepresidente', 'Secretario', 'Tesorero', 'Vocal'].map(normalize2);
   levels.niveles.forEach((nivel) => {
     if (!nivel.cargos || nivel.cargos.length === 0) {
       levelsBody.push([nivel.nombre, "—", "—", "—", nivel.descripcion || "—"]);
     } else {
-      nivel.cargos.forEach((c) => {
+      const nName = normalize2(nivel.nombre);
+      const isJef = nName.includes('comite de jefatura');
+      const isPad = nName.includes('comite de padres');
+      const priority = isJef ? JEFATURA_ORDER2 : isPad ? PADRES_ORDER2 : null;
+      const sorted = [...nivel.cargos].sort((a, b) => {
+        if (priority) {
+          const ai = priority.indexOf(normalize2(a.nombre));
+          const bi = priority.indexOf(normalize2(b.nombre));
+          const aIn = ai !== -1; const bIn = bi !== -1;
+          if (aIn && bIn) return ai - bi;
+          if (aIn) return -1; if (bIn) return 1;
+          return a.nombre.localeCompare(b.nombre, 'es');
+        }
+        return a.nombre.localeCompare(b.nombre, 'es');
+      });
+      sorted.forEach((c) => {
         const period = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
         levelsBody.push([nivel.nombre, c.nombre, c.titular || "—", period, c.descripcion || "—"]);
       });
