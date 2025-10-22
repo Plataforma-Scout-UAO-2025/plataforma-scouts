@@ -1,0 +1,38 @@
+meta {
+  name: 200 ok
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}api/v1/guardian/:guardianId/members/:memberId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  memberId: 251
+  guardianId: 305
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "user_id": "anonymousUser",
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "rol": "ACUDIENTE",
+    "first_name": "Geronimo",
+    "last_name": "Cruz Ramirez",
+    "age": 41,
+    "identification": "78166588",
+    "document_type": "CC",
+    "phone": "3001234567"
+  }
+}
+
+settings {
+  encodeUrl: false
+}

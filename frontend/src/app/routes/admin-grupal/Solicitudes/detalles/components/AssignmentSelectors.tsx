@@ -9,6 +9,7 @@ import {
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { Group } from "@/hooks/useOrgStructure";
+import type { RoleSummary } from "@/api/membersApi";
 
 interface Props {
   groups: Group[];
@@ -20,6 +21,12 @@ interface Props {
   setSelectedSection: (v: string) => void;
   selectedSubgroup: string;
   setSelectedSubgroup: (v: string) => void;
+  // role related
+  roles: RoleSummary[];
+  rolesLoading: boolean;
+  rolesError: string | null;
+  selectedRole: string;
+  setSelectedRole: (v: string) => void;
 }
 
 export default function AssignmentSelectors(props: Props) {
@@ -33,6 +40,11 @@ export default function AssignmentSelectors(props: Props) {
     setSelectedSection,
     selectedSubgroup,
     setSelectedSubgroup,
+    roles,
+    rolesLoading,
+    rolesError,
+    selectedRole,
+    setSelectedRole,
   } = props;
 
   return (
@@ -128,6 +140,56 @@ export default function AssignmentSelectors(props: Props) {
           <p className="text-xs text-gray-500 mt-1">
             No hay subramas disponibles para esta rama
           </p>
+        )}
+      </div>
+
+      <div className="pt-4">
+        <h3 className="text-lg font-medium">Rol</h3>
+        {rolesError ? (
+          <p className="text-destructive">{rolesError}</p>
+        ) : (
+          <div className="w-full">
+            <Label htmlFor="role">Selecciona un rol *</Label>
+            <Select
+              value={selectedRole}
+              onValueChange={(val) => setSelectedRole(val)}
+              disabled={rolesLoading || roles.length === 0}
+            >
+              <SelectTrigger id="role" className="w-full">
+                <SelectValue
+                  placeholder={
+                    rolesLoading
+                      ? "Cargando roles..."
+                      : roles.length === 0
+                        ? "No hay roles disponibles"
+                        : "Selecciona un rol"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {roles.length > 0 ? (
+                  roles.map((r) => (
+                    <SelectItem key={r.id} value={r.name.toUpperCase()}>
+                      {r.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-roles" disabled>
+                    {rolesLoading ? "Cargando..." : "Sin roles disponibles"}
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+
+            {selectedRole && (
+              <p className="text-xs text-gray-500 mt-1">
+                {
+                  roles.find((x) => x.name.toUpperCase() === selectedRole)
+                    ?.description
+                }
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>

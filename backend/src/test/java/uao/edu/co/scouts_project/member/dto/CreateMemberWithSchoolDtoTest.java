@@ -30,7 +30,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -84,7 +84,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         CreateMemberWithSchoolDto dto = CreateMemberWithSchoolDto.builder()
@@ -110,7 +110,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -142,7 +142,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("INVALID")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -174,7 +174,7 @@ class CreateMemberWithSchoolDtoTest {
                 .tenantId("tenant-123")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -219,7 +219,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -246,7 +246,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -290,7 +290,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .email("invalid-email") // Email inválido
                 .build();
 
@@ -360,7 +360,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -390,7 +390,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("Pérez")
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()
@@ -420,7 +420,7 @@ class CreateMemberWithSchoolDtoTest {
                 .lastName("") // Vacío
                 .identification("1234567890")
                 .documentType("CC")
-                .status("ACTIVE")
+                .status("APPROVED")
                 .build();
 
         SchoolDataDto schoolDto = SchoolDataDto.builder()

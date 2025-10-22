@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useMember } from "@/hooks/useMember";
-import { createMemberAction } from "@/store/members/membersActions";
+import { createMemberAction, createMemberAuth0Action } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
-import { createScout } from "@/api/auth0";
+import { useRoleContext } from "@/hooks/useRoleContext";
+import { normalizeRawRole } from "@/roles/roles";
 
 import type { ChangeEvent, PersonalData } from "@/types/enrollment.type";
 import type { Member } from "@/types/member.type";
+import type { role } from "@/types/enrollment.type";
 
-type useTreasurerEnrollment = {
+type useRoleEnrollmentProps = {
+  role: role;
+  totalPaginas: number;
+};
+
+type useRoleEnrollmentReturn = {
   datosPersonales: PersonalData;
   setDatosPersonales: React.Dispatch<React.SetStateAction<PersonalData>>;
 
@@ -18,6 +25,7 @@ type useTreasurerEnrollment = {
   showModal: boolean;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
 
+  totalPaginas: number;
   progreso: number;
   loadingSubmit: boolean;
 
@@ -25,14 +33,14 @@ type useTreasurerEnrollment = {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 };
 
-export function useTreasurerEnrollment(): useTreasurerEnrollment {
+export function useRoleEnrollment({ role, totalPaginas }: useRoleEnrollmentProps): useRoleEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
   const { orgId } = useAuth0ApiWrapper();
+  const { currentUserRole } = useRoleContext();
 
   const [pagina, setPagina] = useState(1);
   const [showModal, setShowModal] = useState(false);
-
   const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
     firstname: "",
     lastname: "",
@@ -49,11 +57,8 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
     gender: "",
     weight: "",
     height: "",
-    hobbies: "",
-    sports: "",
-    instruments: "",
     tenantId: "",
-    emergency_contacts: [{ name: "", relationship: "", phone: "" }],
+    role
   });
 
   useEffect(() => {
@@ -74,18 +79,18 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
         return;
       }
 
-      try {
-        await createScout({
+      const auth0Result = await dispatch(
+        createMemberAuth0Action({
           email: datosPersonales.email,
           password: datosPersonales.password,
           username: datosPersonales.username,
-        });
-      } catch (err) {
-        console.error("Error creando usuario en Auth0:", err);
-        alert(
-          "No se pudo crear el usuario en Auth0. " +
-            (err instanceof Error ? err.message : "")
-        );
+          role: role,
+        })
+      );
+
+      if (createMemberAuth0Action.rejected.match(auth0Result)) {
+        const errorMessage = auth0Result.payload?.error || "Error desconocido al crear usuario en Auth0";
+        alert(`No se pudo crear el usuario en Auth0: ${errorMessage}`);
         return;
       }
 
@@ -95,10 +100,16 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
         return;
       }
 
-      const memberData: Member = transformData({
-        ...datosPersonales,
-        tenantId: tenant,
-      });
+      const normalizedUserRole = normalizeRawRole(currentUserRole);
+
+      const memberData: Member = transformData(
+        {
+          ...datosPersonales,
+          tenantId: tenant,
+          role
+        },
+        normalizedUserRole
+      );
 
       await dispatch(createMemberAction(memberData)).unwrap();
       setShowModal(true);
@@ -106,7 +117,7 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
       console.error("Error al enviar la solicitud:", error);
       alert("Error al enviar la solicitud.");
     }
-  }, [datosPersonales, orgId, dispatch]);
+  }, [datosPersonales, orgId, role, currentUserRole, dispatch]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -125,7 +136,10 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
           alert("Las contraseñas no coinciden");
           return;
         }
-        setPagina(2);
+      }
+
+      if (pagina < totalPaginas) {
+        setPagina((prev) => prev + 1);
         return;
       }
 
@@ -133,6 +147,7 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
     },
     [
       pagina,
+      totalPaginas,
       datosPersonales.email,
       datosPersonales.username,
       datosPersonales.password,
@@ -142,7 +157,6 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
     ]
   );
 
-  const totalPaginas = useMemo(() => 2, []);
   const progreso = useMemo(() => (pagina / totalPaginas) * 100, [pagina, totalPaginas]);
 
   return {
@@ -152,6 +166,7 @@ export function useTreasurerEnrollment(): useTreasurerEnrollment {
     setPagina,
     showModal,
     setShowModal,
+    totalPaginas,
     progreso,
     loadingSubmit,
     handlePersonalChange,

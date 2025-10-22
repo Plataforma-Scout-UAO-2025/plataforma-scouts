@@ -4,10 +4,12 @@ import { useMember } from "@/hooks/useMember";
 import {
   createMemberAction,
   createMemberWithSchoolDataAction,
+  createScoutAuth0Action,
 } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
-import { createScout } from "@/api/auth0";
+import { useRoleContext } from "@/hooks/useRoleContext";
+import { normalizeRawRole } from "@/roles/roles";
 
 import type {
   ChangeEvent,
@@ -44,6 +46,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
   const { orgId } = useAuth0ApiWrapper();
+  const { currentUserRole } = useRoleContext();
 
   const [pagina, setPagina] = useState(1);
   const [showSchoolDialog, setShowSchoolDialog] = useState(false);
@@ -70,6 +73,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     sports: "",
     instruments: "",
     tenantId: "",
+    role: "SCOUT",
     emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
 
@@ -98,7 +102,6 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
   const enviarDatos = useCallback(async () => {
     try {
-      // Before creating member in backend, create user in Auth0 using dedicated endpoint
       if (!datosPersonales.username || !datosPersonales.password) {
         alert(
           "username y password son obligatorios para crear la cuenta de Auth0",
@@ -106,19 +109,17 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return;
       }
 
-      // Create user in Auth0 (this endpoint will also add to organization and assign role SCOUT)
-      try {
-        await createScout({
+      const auth0Result = await dispatch(
+        createScoutAuth0Action({
           email: datosPersonales.email,
           password: datosPersonales.password,
           username: datosPersonales.username,
-        });
-      } catch (err) {
-        console.error("Error creando usuario en Auth0:", err);
-        alert(
-          "No se pudo crear el usuario en Auth0. " +
-            (err instanceof Error ? err.message : ""),
-        );
+        })
+      );
+
+      if (createScoutAuth0Action.rejected.match(auth0Result)) {
+        const errorMessage = auth0Result.payload?.error || "Error desconocido al crear usuario en Auth0";
+        alert(`No se pudo crear el usuario en Auth0: ${errorMessage}`);
         return;
       }
 
@@ -128,10 +129,16 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return;
       }
 
-      const memberData: Member = transformData({
-        ...datosPersonales,
-        tenantId: tenant,
-      });
+      // Normalizar el rol del usuario actual
+      const normalizedUserRole = normalizeRawRole(currentUserRole);
+
+      const memberData: Member = transformData(
+        {
+          ...datosPersonales,
+          tenantId: tenant,
+        },
+        normalizedUserRole
+      );
 
       if (incluirDatosEscolares) {
         const requestData: CreateMemberWithSchoolRequest = {
@@ -149,7 +156,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
       console.error("Error al enviar la solicitud:", error);
       alert("Error al enviar la solicitud.");
     }
-  }, [datosPersonales, incluirDatosEscolares, datosEscolares, orgId, dispatch]);
+  }, [datosPersonales, incluirDatosEscolares, datosEscolares, orgId, currentUserRole, dispatch]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {

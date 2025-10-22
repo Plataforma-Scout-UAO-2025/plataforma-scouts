@@ -13,6 +13,7 @@ export type DocumentType =
   | "";
 export type Gender = "Femenino" | "Masculino" | "";
 export type Shift = "Mañana" | "Tarde" | "Noche" | "Completa" | "";
+export type role = "SCOUT" | "ACUDIENTE" | "TESORERO" | "SCOUTER" | "COMITE_ADMIN" | "DEV_SUPPORT" | "ADMIN_GLOBAL" | "ADMIN_GRUPO";
 
 export interface PersonalData {
   firstname: string;
@@ -25,16 +26,17 @@ export interface PersonalData {
   document_type: DocumentType;
   identification: string;
   birth_date: string;
+  role: role;
   address: string;
   phone: string;
   gender: Gender;
   weight: string;
   height: string;
-  hobbies: string;
-  sports: string;
-  instruments: string;
+  hobbies?: string;
+  sports?: string;
+  instruments?: string;
   tenantId: string;
-  emergency_contacts: EmergencyContact[];
+  emergency_contacts?: EmergencyContact[];
 }
 
 export interface SchoolData {
@@ -63,4 +65,19 @@ export interface EnrollmentFormState {
   isLoading: boolean;
   showSuccessModal: boolean;
   showSchoolDialog: boolean;
+}
+
+export interface CreateAuth0Request {
+  email: string;
+  password: string;
+  username: string;
+  role?: role;
+}
+
+export interface CreateAuth0Response {
+  message: string;
+  userId: string;
+  email: string;
+  username: string;
+  role: string;
 }

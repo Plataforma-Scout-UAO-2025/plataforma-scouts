@@ -1,4 +1,5 @@
 import type { Section } from "./section.type";
+import type { role } from "./enrollment.type";
 
 export interface Member {
   // Campos opcionales para manejar ambas convenciones de nombres
@@ -10,7 +11,7 @@ export interface Member {
   firstName?: string;
   lastName?: string;
   isActive?: boolean;
-  
+
   member_id?: number;
   first_name?: string;
   last_name?: string;
@@ -23,7 +24,7 @@ export interface Member {
   tenant_id?: string;
   guardian_id?: number;
   relationship?: string;
-  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
+  role?: role;
   status?: string;
   is_active?: boolean;
   identification?: string;
@@ -88,7 +89,7 @@ export interface Member {
     };
   };
   branch?: Section[];
-  }
+}
 
 export interface CreateMember {
   tenantId?: string;
@@ -103,7 +104,7 @@ export interface CreateMember {
   birthDate?: Date;
   isActive?: boolean;
   emergencyContacts?: EmergencyContact[];
-  
+
   member_id?: number;
   first_name?: string;
   last_name?: string;
@@ -116,7 +117,7 @@ export interface CreateMember {
   tenant_id?: string;
   guardian_id?: number;
   relationship?: string;
-  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
+  role?: role;
   status?: string;
   is_active?: boolean;
   identification?: string;
@@ -144,12 +145,14 @@ export interface UpdateMember {
   lastName?: string;
   subgroupId?: number;
   subgroupName?: string;
+  sectionId?: number;
+  sectionName?: string;
   age?: number;
   userId?: string;
   tenantId?: string;
   guardianId?: number;
   relationship?: string;
-  role?: "admin_group" | "admin_global" | "scout" | "SCOUT";
+  role?: role;
   status?: string;
   isActive?: boolean;
   identification?: string;

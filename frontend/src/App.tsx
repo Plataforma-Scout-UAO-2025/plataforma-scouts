@@ -29,7 +29,9 @@ import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
-import TreasurerEnrollment from "./app/routes/grupos/basic-info/treasurer_info/TreasurerEnrollment";
+import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollment";
+import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
+import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
 
 function App() {
   useAuth0ApiWrapper();
@@ -38,10 +40,10 @@ function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          {/* 🔹 Login & Registro */}
+          {/* Login & Registro */}
           <Route path="/" element={<Home />} />
 
-          {/* 🔹 Rutas internas con layout */}
+          {/* Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
 
@@ -66,6 +68,8 @@ function App() {
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Requests /></ProtectedRoute>} />
             <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Rejected /></ProtectedRoute>} />
             <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Insignias /></ProtectedRoute>} />
             */}
@@ -74,6 +78,7 @@ function App() {
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><Grupos /></ProtectedRoute>} />
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><MedicalRecordsView /></ProtectedRoute>} />
+
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
