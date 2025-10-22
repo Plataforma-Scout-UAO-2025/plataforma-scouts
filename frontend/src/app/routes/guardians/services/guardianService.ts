@@ -15,7 +15,7 @@ import type {
   UpdateGuardianDTO,
   MemberBasicInfo,
   GuardianCreateResponse 
-} from '@/types/guardianTypes';
+} from '@/types/guardian.type';
 
 // Helper: Extraer status code de un error (si existe)
 function getErrorStatus(error: unknown): number | undefined {

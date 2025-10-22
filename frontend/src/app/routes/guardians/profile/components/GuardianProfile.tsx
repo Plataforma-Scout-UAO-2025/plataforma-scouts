@@ -11,7 +11,7 @@ import EditProfileModal from './EditProfileModal';
 import MemberDetailsSheet from '../../members/components/modals/MemberDetailsSheet';
 import { guardianService } from '../../services/guardianService';
 import type { Member } from '../../members/types/member.type';
-import type { GuardianWithMembers, UpdateGuardianDTO, MemberBasicInfo } from '@/types/guardianTypes';
+import type { GuardianWithMembers, UpdateGuardianDTO, MemberBasicInfo } from '@/types/guardian.type';
 import { FullScreenLoader } from '@/components/common/FullScreenLoader';
 import { getErrorStatus } from '@/lib/errorUtils';
 

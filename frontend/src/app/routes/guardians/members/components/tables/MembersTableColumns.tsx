@@ -70,11 +70,6 @@ export const createMembersTableColumns = ({
     },
   },
   {
-    accessorKey: 'city',
-    header: 'CIUDAD',
-    cell: ({ row }) => <div>{row.getValue('city')}</div>,
-  },
-  {
     accessorKey: 'rama',
     header: 'RAMAS',
     cell: ({ row }) => <div>{row.getValue('rama')}</div>,
