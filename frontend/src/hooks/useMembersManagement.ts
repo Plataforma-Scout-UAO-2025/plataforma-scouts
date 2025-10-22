@@ -11,13 +11,9 @@ export const useMembersManagement = () => {
     dispatch(fetchMembersWithBranchAction());
   }, [dispatch]);
 
-  console.log("Members in useMembersManagement:", members);
-
   const scoutMembers = members.filter(
     (member) => member.role?.toUpperCase() === "SCOUT"
   );
-
-  console.log("Scout members:", scoutMembers);
 
   const branchMembers: string[] = [];
   const branchMemberCount: Record<string, number> = {};
@@ -40,9 +36,9 @@ export const useMembersManagement = () => {
 
   const ahora = new Date();
   const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-  const nuevosEsteMes = scoutMembers.filter((member) => {
+  const nuevosEsteMes = members.filter((member) => {
     const fecha = new Date(member.createdAt || (member.created_at as string));
-    return fecha >= inicioMes && fecha <= ahora;
+    return fecha >= inicioMes && fecha <= ahora && member.status?.toUpperCase() === "APPROVED";
   }).length;
 
   return {

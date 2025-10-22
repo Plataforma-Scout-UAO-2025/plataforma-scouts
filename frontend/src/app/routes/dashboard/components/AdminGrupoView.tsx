@@ -10,8 +10,13 @@ import GeneralStats from "./GeneralStats";
 const AdminGrupoView = () => {
   useMembersManagement();
   const { user } = useAuth0();
-  const { branchMemberCount, branchMembers, members, scoutMembers, nuevosEsteMes } =
-    useMembersManagement();
+  const {
+    branchMemberCount,
+    branchMembers,
+    members,
+    scoutMembers,
+    nuevosEsteMes,
+  } = useMembersManagement();
   console.log("Branch member count:", branchMemberCount);
 
   let scoutsActivos = 0;
@@ -24,7 +29,7 @@ const AdminGrupoView = () => {
   const stats = {
     totalScouts: scoutMembers.length || 0,
     scoutsActivos: scoutsActivos,
-    totalRamas: branchMembers.length || 0,
+    totalRamas: branchMembers.filter((rama) => rama !== "Sin Rama").length || 0,
     nuevosEsteMes: nuevosEsteMes,
   };
 
@@ -44,7 +49,9 @@ const AdminGrupoView = () => {
       <section className="my-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           <GenderChart members={scoutMembers || []} />
-          <BranchDistribution branchMembers={Object.entries(branchMemberCount || {})} />
+          <BranchDistribution
+            branchMembers={Object.entries(branchMemberCount || {})}
+          />
           <GeneralStats members={members || []} />
         </div>
       </section>
