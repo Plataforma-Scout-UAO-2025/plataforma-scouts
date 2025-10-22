@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Trash2, Pencil, ChevronDown } from "lucide-react";
 import type { Nivel, Cargo } from "../types/niveles.types";
 import PositionItem from "./PositionItem";
-import { getMembersBySubgroup } from "@/api/organigramaApi";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMembersAction } from "@/store/members/membersActions";
+import type { RootState, AppDispatch } from "@/store/store";
 import type { Member } from "@/types/member.type";
 
 interface Props {
@@ -30,6 +32,9 @@ export default function LevelAccordion({
   defaultOpen = true,
   refreshKey,
 }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { members } = useSelector((state: RootState) => state.members);
+  
   const [open, setOpen] = useState<boolean>(defaultOpen);
   // Estado para sub-acordeones por rol: mapa roleName -> open
   const [groupsOpen, setGroupsOpen] = useState<Record<string, boolean>>({});
@@ -105,56 +110,74 @@ export default function LevelAccordion({
     });
   }, [cargosPorRol, nivel.nombre, jefaturaOrder, padresOrder]);
 
-  // Cargar miembros para cada cargo del nivel
+  // Cargar miembros al montar el componente
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const cargos = nivel.cargos || [];
-        if (cargos.length === 0) {
-          if (mounted) setMembersByCargo({});
-          return;
+    if (members.length === 0) {
+      dispatch(fetchMembersAction());
+    }
+  }, [dispatch, members.length]);
+
+  // Procesar miembros para cada cargo del nivel
+  useEffect(() => {
+    const cargos = nivel.cargos || [];
+    if (cargos.length === 0) {
+      setMembersByCargo({});
+      return;
+    }
+
+    const map: Record<string, string[]> = {};
+    
+    cargos.forEach((cargo) => {
+      // Mapeo específico entre nombres de cargos y roles de la base de datos
+      const getRoleForCargo = (cargoNombre: string): string[] => {
+        const nombre = cargoNombre?.toLowerCase().trim() || '';
+        
+        // Mapeo específico basado en los roles reales de la BD
+        if (nombre.includes('jefe de región') || nombre.includes('jefe región')) {
+          return ['ADMIN_GLOBAL'];
         }
-        const entries = await Promise.all(
-          cargos.map(async (c) => {
-            const rawId = c.id;
-            // Normalizamos el ID del subgrupo: preferir número; si no, intentar parseInt
-            let numId = Number(rawId);
-            if (!Number.isFinite(numId)) {
-              const parsed = parseInt(String(rawId), 10);
-              if (Number.isFinite(parsed)) numId = parsed;
-            }
-            if (!Number.isFinite(numId)) return [String(rawId), [] as string[]] as const;
-            try {
-              const list = await getMembersBySubgroup(numId);
-              const names = (list || []).map((m: Member | Record<string, any>) => {
-                const mm = m as Member;
-                const name = mm.firstName || (mm as any).first_name || (mm as any).nombres || "";
-                const last = mm.lastName || (mm as any).last_name || (mm as any).apellidos || "";
-                const display = `${String(name).trim()} ${String(last).trim()}`.trim();
-                return (
-                  display.length > 0
-                    ? display
-                    : (mm as any).display_name || (mm as any).full_name || (mm as any).fullname || (mm as any).displayName || (mm as any).name || "Miembro"
-                );
-              });
-              return [String(rawId), names] as const;
-            } catch {
-              return [String(rawId), [] as string[]] as const;
-            }
-          })
-        );
-        const map: Record<string, string[]> = {};
-        for (const [id, names] of entries) map[id] = names;
-        if (mounted) setMembersByCargo(map);
-      } catch {
-        // ignorar errores; no bloquear el acordeón
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [nivel.cargos, refreshKey]);
+        if (nombre.includes('jefe de rama') || nombre.includes('jefe rama')) {
+          return ['SCOUTER'];
+        }
+        if (nombre.includes('jefe de grupo') || nombre.includes('jefe grupo')) {
+          return ['ADMIN_GRUPO'];
+        }
+        if (nombre.includes('tesorero')) {
+          return ['TESORERO'];
+        }
+        if (nombre.includes('presidente')) {
+          return ['PRESIDENTE']; // Asumiendo que existe este rol
+        }
+        if (nombre.includes('secretario')) {
+          return ['SECRETARIO']; // Asumiendo que existe este rol
+        }
+        if (nombre.includes('vicepresidente')) {
+          return ['VICEPRESIDENTE']; // Asumiendo que existe este rol
+        }
+        
+        // Fallback: intentar coincidencia directa transformada
+        return [cargoNombre.toUpperCase().replace(/\s+/g, '_')];
+      };
+
+      const allowedRoles = getRoleForCargo(cargo.nombre || '');
+      
+      const membersWithRole = members.filter((member: Member) => {
+        const memberRole = member.role?.toString().toUpperCase();
+        return allowedRoles.includes(memberRole || '');
+      });
+
+      const names = membersWithRole.map((member: Member) => {
+        const name = member.firstName || member.first_name || "";
+        const last = member.lastName || member.last_name || "";
+        const display = `${String(name).trim()} ${String(last).trim()}`.trim();
+        return display.length > 0 ? display : "Miembro";
+      });
+
+      map[String(cargo.id)] = names;
+    });
+
+    setMembersByCargo(map);
+  }, [members, nivel.cargos, refreshKey]);
 
   const toggle = () => setOpen((v) => !v);
   const onKeyToggle: React.KeyboardEventHandler<HTMLDivElement> = (e) => {

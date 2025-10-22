@@ -65,7 +65,7 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
               .replace(/[\u0300-\u036f]/g, '')
               .toLowerCase();
             const ramasSinOrganizativos = data.filter((rama) => {
-              const n = normalize(String(rama.name || (rama as any).nombre || ''));
+              const n = normalize(String(rama.name || rama.nombre || ''));
               return !(
                 n.includes('comit') ||
                 n.includes('asamblea') ||

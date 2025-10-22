@@ -6,7 +6,9 @@ import ExportMenu from "./components/ExportMenu";
 import LevelAccordion from "./components/LevelAccordion";
 import { useNiveles } from "./hooks/useNiveles";
 import { useNavigate } from "react-router-dom";
-import { getMembers, updateMember } from "@/api/membersApi";
+import { useDispatch, useSelector } from "react-redux";
+import { updateMemberAction, fetchMembersAction } from "@/store/members/membersActions";
+import type { RootState, AppDispatch } from "@/store/store";
 // Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
 import useOrganigramaData from "../organigramaRamas_Subramas/hooks/useOrganigramaData";
@@ -21,9 +23,12 @@ import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import SuccessModal from "./components/SuccessModal";
 
 import type { Nivel, Cargo } from "./types/niveles.types";
-import type { Member } from "@/types/member.type";
+import type { UpdateMember } from "@/types/member.type";
 
 export default function NivelesPage() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { members, loading: membersLoading, error: membersError } = useSelector((state: RootState) => state.members);
+  
   const currentYear = new Date().getFullYear();
   // Hooks del submódulo de ramas: deben invocarse en el mismo orden siempre
   const { tenantId, groupSlug } = useTenantParams();
@@ -62,31 +67,15 @@ export default function NivelesPage() {
     return name.includes('comit');
   });
 
-  // ===== MIEMBROS DESDE BACKEND =====
-  const [members, setMembers] = useState<Member[]>([]);
-  const [membersLoading, setMembersLoading] = useState<boolean>(true);
-  const [membersError, setMembersError] = useState<string | null>(null);
   // Forzar recarga de miembros por cargo en LevelAccordion cuando se asigna alguien
   const [membersRefreshKey, setMembersRefreshKey] = useState<number>(0);
 
+  // Cargar miembros al montar el componente
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setMembersLoading(true);
-        const list = await getMembers();
-        if (mounted) setMembers(list || []);
-      } catch (e) {
-        console.warn("No se pudieron cargar los miembros", e);
-        if (mounted) setMembersError("No se pudieron cargar los miembros");
-      } finally {
-        if (mounted) setMembersLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    if (members.length === 0) {
+      dispatch(fetchMembersAction());
+    }
+  }, [dispatch, members.length]);
 
   // ===== HANDLERS DE NIVELES =====
 
@@ -173,14 +162,19 @@ export default function NivelesPage() {
               const parsedSec = parseInt(String(nivelActual.id), 10);
               if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
             }
-            await updateMember(assignMemberId, {
-              subgroupId: subgroupNumId,
-              subgroup_id: subgroupNumId,
-              sectionId: Number.isFinite(sectionNumId) ? sectionNumId : undefined,
-              section_id: Number.isFinite(sectionNumId) ? sectionNumId : undefined,
-              isActive: true,
-              is_active: true as any,
-            } as any);
+            await dispatch(updateMemberAction({
+              uid: assignMemberId,
+              updates: {
+                subgroupId: subgroupNumId,
+                subgroup_id: subgroupNumId,
+                isActive: true,
+                ...(Number.isFinite(sectionNumId) && {
+                  // Campos adicionales para compatibilidad con backend
+                  sectionId: sectionNumId,
+                  section_id: sectionNumId,
+                } as { sectionId: number; section_id: number }),
+              } as Partial<UpdateMember> & { sectionId?: number; section_id?: number },
+            }));
             // Forzar recarga de miembros listados por cargo
             setMembersRefreshKey((k) => k + 1);
           } else {

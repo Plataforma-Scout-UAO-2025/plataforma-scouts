@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getSections, getSectionWithSubgroups, getMembersBySubgroup, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal } from '@/api/organigramaApi';
+import { getSections, getSectionWithSubgroups, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
 import { addGalleryImage, replaceGalleryImage } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/gallery.service';
 
@@ -29,17 +29,6 @@ export const fetchSectionWithSubgroupsAction = createAsyncThunk("organigrama/fet
   }
 });
 
-export const fetchMembersBySubgroupAction = createAsyncThunk("organigrama/fetchMembersBySubgroup", async (subgroupId: number, { rejectWithValue }) => {
-  try {
-    const data = await getMembersBySubgroup(subgroupId);
-    return data;
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error?: string };
-    const message = errorData?.error || "Error al obtener miembros por subgrupo";
-    return rejectWithValue(message);
-  }
-});
 
 export const setIconAction = createAsyncThunk("organigrama/setIcon", async ({ tenantId, groupSlug, sectionId, objectId }: { tenantId: string; groupSlug: string; sectionId: string; objectId: string }, { rejectWithValue }) => {
   try {

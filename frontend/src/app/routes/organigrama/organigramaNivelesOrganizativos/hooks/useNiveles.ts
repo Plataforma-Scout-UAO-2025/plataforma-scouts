@@ -90,9 +90,7 @@ export function useNiveles(anioInicial: number, tenantId?: string, groupSlug?: s
     nivelId: string,
     nombre: string,
     _titular?: string,
-    descripcion?: string,
-    _inicio?: number,
-    _fin?: number
+    descripcion?: string
   ) => {
     if (!(tenantId && groupSlug)) return;
     await service.createCargo(tenantId, groupSlug, nivelId, nombre, descripcion);

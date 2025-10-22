@@ -1,15 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchMembersBySubgroupAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
+import { fetchSectionsAction, fetchSectionWithSubgroupsAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
-import type { Member } from "@/types/member.type";
-
-type MemberLike = Member & { subgroup_id?: number };
 
 interface OrganigramaState {
   sections: Section[];
   currentSection?: { section: Section; subgroups: Subgroup[] } | null;
-  membersBySubgroup: Record<string, Member[]>;
   loading: boolean;
   error: string | null;
 }
@@ -17,7 +13,6 @@ interface OrganigramaState {
 const initialState: OrganigramaState = {
   sections: [],
   currentSection: null,
-  membersBySubgroup: {},
   loading: false,
   error: null,
 };
@@ -53,29 +48,7 @@ const organigramaSlice = createSlice({
       state.error = action.payload as string;
     });
 
-    builder.addCase(fetchMembersBySubgroupAction.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchMembersBySubgroupAction.fulfilled, (state, action) => {
-      state.loading = false;
-      const payload = action.payload as MemberLike[];
-      if (payload && payload.length > 0) {
-        // Try to determine subgroup id from multiple possible shapes
-        const first = payload[0] as unknown as Record<string, unknown>;
-        const rawId = (first['subgroup_id'] as number | string | undefined)
-          ?? (first['subgroupId'] as number | string | undefined)
-          ?? (first['subgroup'] as number | string | undefined);
-        const subgroupId = typeof rawId === 'string' ? rawId.trim() : rawId;
-        if (subgroupId !== undefined && subgroupId !== null && String(subgroupId).length > 0) {
-          state.membersBySubgroup[String(subgroupId)] = payload as Member[];
-        }
-      }
-    });
-    builder.addCase(fetchMembersBySubgroupAction.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload as string;
-    });
+
 
     builder.addCase(setIconAction.fulfilled, (state, action) => {
       const { sectionId, objectId } = action.payload;

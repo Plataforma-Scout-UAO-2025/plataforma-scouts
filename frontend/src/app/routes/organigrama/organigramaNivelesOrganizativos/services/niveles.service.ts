@@ -57,13 +57,13 @@ export async function getByAnio(anio: number, tenantId?: string, groupSlug?: str
    ============================================================ */
 export async function createNivel(tenantId: string, groupSlug: string, nombre: string, descripcion?: string): Promise<void> {
   // Respetar el nombre tal como lo ingresa el usuario (sin prefijos automáticos)
-  await createSection({ name: nombre, description: descripcion ?? undefined } as any, tenantId, groupSlug);
+  await createSection({ name: nombre, description: descripcion ?? undefined } as Omit<Section, 'id' | 'sectionId' | 'groupId' | 'createdAt' | 'updatedAt'>, tenantId, groupSlug);
 }
 
 export async function upsertNivel(_anio: number, nivel: Nivel, tenantId?: string, groupSlug?: string): Promise<void> {
   // Para compatibilidad: si tenemos tenant/grupo, actualizamos sección; si no, no-op
   if (tenantId && groupSlug) {
-    await updateSection(nivel.id, { name: nivel.nombre, description: nivel.descripcion ?? undefined } as any, tenantId, groupSlug);
+    await updateSection(nivel.id, { name: nivel.nombre, description: nivel.descripcion ?? undefined } as Partial<Section>, tenantId, groupSlug);
   }
 }
 
@@ -77,12 +77,12 @@ export async function deleteNivel(_anio: number, nivelId: string, tenantId?: str
    🔹 CRUD Cargos
    ============================================================ */
 export async function createCargo(tenantId: string, groupSlug: string, nivelId: string, nombre: string, descripcion?: string): Promise<void> {
-  await createSubgroup(nivelId, { name: nombre, description: descripcion ?? undefined } as any, tenantId, groupSlug);
+  await createSubgroup(nivelId, { name: nombre, description: descripcion ?? undefined } as Omit<Subgroup, 'id' | 'subgroupId' | 'tenantId' | 'groupId' | 'sectionId' | 'createdAt' | 'updatedAt'>, tenantId, groupSlug);
 }
 
 export async function upsertCargo(_anio: number, nivelId: string, cargo: Cargo, tenantId?: string, groupSlug?: string): Promise<void> {
   if (tenantId && groupSlug) {
-    await updateSubgroup(nivelId, cargo.id, { name: cargo.nombre, description: cargo.descripcion ?? undefined } as any, tenantId, groupSlug);
+    await updateSubgroup(nivelId, cargo.id, { name: cargo.nombre, description: cargo.descripcion ?? undefined } as Partial<Subgroup>, tenantId, groupSlug);
   }
 }
 

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMembersAction } from "@/store/members/membersActions";
+import type { RootState, AppDispatch } from "@/store/store";
 import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
 import { getRamasWithSubramas } from "./organigramaRamas_Subramas/services/rama.service";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +43,9 @@ const PADRES_ORDER = [
 ].map(normalize);
 
 export default function OrgChartSummary() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { members } = useSelector((state: RootState) => state.members);
+  
   const currentYear = new Date().getFullYear();
   // Get tenant/group first to use them for both ramas/subramas and niveles
   const { tenantId, groupSlug } = useTenantParams();
@@ -54,6 +60,13 @@ export default function OrgChartSummary() {
   const [branches, setBranches] = useState<Array<{ section: BranchLite; subgroups: SubgroupLite[] }>>([]);
   const [branchesLoading, setBranchesLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Cargar miembros al montar el componente
+  useEffect(() => {
+    if (members.length === 0) {
+      dispatch(fetchMembersAction());
+    }
+  }, [dispatch, members.length]);
 
   useEffect(() => {
     let mounted = true;
@@ -149,7 +162,7 @@ export default function OrgChartSummary() {
   const onExportPDF = async () => {
     try {
       setExportingPDF(true);
-      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, { year: anio });
+      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, members, { year: anio });
     } finally {
       setExportingPDF(false);
     }
@@ -157,7 +170,7 @@ export default function OrgChartSummary() {
   const onExportCSVBranches = async () => {
     try {
       setExportingBranches(true);
-      await exportBranchesCSV(branches);
+      await exportBranchesCSV(branches, members);
     } finally {
       setExportingBranches(false);
     }
