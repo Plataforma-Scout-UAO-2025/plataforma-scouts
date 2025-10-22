@@ -1,73 +1,29 @@
-import { useMemo } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useMembersManagement } from "@/hooks/useMembersManagement";
 import HomeCard from "./HomeCard";
+import GenderChart from "./GenderChart";
 import BranchDistribution from "./BranchDistribution";
 import GeneralStats from "./GeneralStats";
-import { useMembersManagement } from "@/hooks/useMembersManagement";
 
 const AdminGrupoView = () => {
+  useMembersManagement();
   const { user } = useAuth0();
-  const { filteredMembers, loading } = useMembersManagement();
+  const {
+    branchMemberCount,
+    branchMembers,
+    members,
+    scoutMembers,
+    nuevosEsteMes,
+  } = useMembersManagement();
 
-  const stats = useMemo(() => {
-    if (!filteredMembers || filteredMembers.length === 0) {
-      return {
-        totalScouts: 0,
-        scoutsActivos: 0,
-        totalRamas: 0,
-        nuevosEsteMes: 0,
-      };
-    }
+  const scoutsActivos = scoutMembers.filter(member => member.isActive).length;
 
-    // Total de scouts (excluyendo admins)
-    const totalScouts = filteredMembers.filter(
-      (m) => m.role?.toUpperCase() === "SCOUT" && m.is_active !== false
-    ).length;
-
-    // Scouts activos
-    const scoutsActivos = filteredMembers.filter(
-      (m) => m.role?.toUpperCase() === "SCOUT" && m.is_active
-    ).length;
-
-    // Total de ramas únicos
-    const totalBranches = filteredMembers.length
-      ? Array.from(
-          new Set(
-            filteredMembers
-              .map((m) => m.subgroup?.name || m.subgroup?.name)
-              .filter((id) => id !== undefined && id !== null)
-          )
-        ).length
-      : 0;
-
-    // Nuevos scouts este mes
-    const ahora = new Date();
-    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-    const nuevosEsteMes = filteredMembers.filter((m) => {
-      if (!m.created_at) return false;
-      const fecha = new Date(m.created_at);
-      return fecha >= inicioMes;
-    }).length;
-
-    return {
-      totalScouts,
-      scoutsActivos,
-      totalRamas: totalBranches,
-      nuevosEsteMes,
-    };
-  }, [filteredMembers]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Cargando estadísticas...</p>
-        </div>
-      </div>
-    );
-  }
-
+  const stats = {
+    totalScouts: scoutMembers.length || 0,
+    scoutsActivos: scoutsActivos,
+    totalRamas: branchMembers.filter((rama) => rama !== "Sin Rama").length || 0,
+    nuevosEsteMes: nuevosEsteMes,
+  };
 
   return (
     <div className="mx-4">
@@ -83,13 +39,16 @@ const AdminGrupoView = () => {
         <HomeCard stats={stats} />
       </section>
       <section className="my-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <BranchDistribution members={filteredMembers || []} />
-          <GeneralStats members={filteredMembers || []} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <GenderChart members={scoutMembers || []} />
+          <BranchDistribution
+            branchMembers={Object.entries(branchMemberCount || {})}
+          />
+          <GeneralStats members={members || []} />
         </div>
       </section>
     </div>
   );
-}
+};
 
 export default AdminGrupoView;
