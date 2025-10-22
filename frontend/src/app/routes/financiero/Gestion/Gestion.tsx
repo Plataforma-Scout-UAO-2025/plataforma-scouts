@@ -20,7 +20,7 @@ export default function Gestion() {
       );
 
       if (response.status === 200) {
-        // Transformar las fechas de string a Date objects
+        // Mantener las fechas como strings del backend
         const cuotasData: Cuota[] = response.data.map((cuota: {
           fee_id: string;
           amount: number;
@@ -33,8 +33,8 @@ export default function Gestion() {
           associated_to: { id: string; name: string } | null;
         }) => ({
           ...cuota,
-          start_date: new Date(cuota.start_date),
-          end_date: cuota.end_date ? new Date(cuota.end_date) : undefined,
+          start_date: cuota.start_date as any, // Mantener como string
+          end_date: cuota.end_date as any, // Mantener como string
         }));
         setCuotas(cuotasData);
       } else if (response.status === 401) {

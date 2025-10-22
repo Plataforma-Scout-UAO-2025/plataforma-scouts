@@ -15,6 +15,7 @@ import {
   SidebarTrigger,
   SidebarMenuSub,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -45,6 +46,7 @@ import FullScreenError from "@/components/common/FullScreenError";
 import { RawRole } from "@/roles/roles";
 import { setAuth0TokenProvider } from "@/api/axios";
 import { useEffect } from "react";
+import * as React from "react";
 
 type SubMenuItem = {
   id: string;
@@ -205,6 +207,21 @@ const bottomItems: MenuItem[] = [
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
 ];
 
+// Componente interno que maneja el cierre automático del sidebar
+function SidebarAutoClose() {
+  const location = useLocation();
+  const { setOpen } = useSidebar();
+
+  React.useEffect(() => {
+    // Cerrar el sidebar cuando se navega a estado de cuenta
+    if (location.pathname === "/app/financiero/estado-cuenta") {
+      setOpen(false);
+    }
+  }, [location.pathname]);
+
+  return null;
+}
+
 function AppLayoutContent() {
   const location = useLocation();
   const { user, logout, getAccessTokenSilently } = useAuth0();
@@ -281,8 +298,10 @@ function AppLayoutContent() {
 
   return (
     <SidebarProvider>
+      <SidebarAutoClose />
       <Sidebar
         className="bg-primary text-primary-foreground"
+
         collapsible="offcanvas"
       >
         {/* Header */}

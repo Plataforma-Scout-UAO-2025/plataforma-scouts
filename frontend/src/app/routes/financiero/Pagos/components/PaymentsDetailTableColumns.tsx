@@ -22,8 +22,11 @@ export const paymentsDetailTableColumns = (onRefresh?: () => void): ColumnDef<In
   {
     accessorKey: "due_date",
     header: "Fecha de vencimiento",
-    cell: ({ row }) =>
-      row.original.due_date ? format(row.original.due_date, "dd/MM/yyyy") : "-",
+    cell: ({ row }) => {
+      if (!row.original.due_date) return "-";
+      
+      return row.original.due_date;
+    },
   },
   {
     accessorKey: "amount",
@@ -69,8 +72,7 @@ export const paymentsDetailTableColumns = (onRefresh?: () => void): ColumnDef<In
   {
     accessorKey: "paid_at",
     header: "Fecha de pago",
-    cell: ({ row }) =>
-      row.original.paid_at ? format(row.original.paid_at, "dd/MM/yyyy") : "-",
+    cell: ({ row }) => <div>{row.original.paid_at ? row.original.paid_at.toString() : "-"}</div>,
   },
   {
     accessorKey: "method",

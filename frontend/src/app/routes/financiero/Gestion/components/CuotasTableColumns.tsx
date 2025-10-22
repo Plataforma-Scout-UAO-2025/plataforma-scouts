@@ -82,18 +82,12 @@ export const getColumns = (onRefresh?: () => void): ColumnDef<Cuota>[] => [
     {
       accessorKey: "start_date",
       header: "Fecha inicio",
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("start_date"));
-        return <div>{date.toLocaleDateString("es-ES")}</div>;
-      },
+      cell: ({ row }) => <div>{row.getValue("start_date")}</div>,
     },
     {
       accessorKey: "end_date",
       header: "Fecha fin",
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("end_date"));
-        return <div>{date.toLocaleDateString("es-ES")}</div>;
-      },
+      cell: ({ row }) => <div>{row.getValue("end_date")}</div>,
     },
     {
       accessorKey: "member",

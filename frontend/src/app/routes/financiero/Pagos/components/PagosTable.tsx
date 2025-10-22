@@ -78,7 +78,22 @@ export default function PagosTable({
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
+    globalFilterFn: (row, _, value) => {
+      // Función para normalizar texto eliminando tildes y acentos
+      const normalizeText = (text: string) => {
+        return text
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+      };
+      
+      // Función personalizada para buscar en nombre y apellido combinados
+      const searchValue = normalizeText(value);
+      const fullName = normalizeText(`${row.original.first_name} ${row.original.last_name}`);
+      const memberId = row.original.member_id?.toString().toLowerCase() || '';
+      
+      return fullName.includes(searchValue) || memberId.includes(searchValue);
+    },
     state: {
       sorting,
       columnFilters,
@@ -116,7 +131,7 @@ export default function PagosTable({
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <Input
-            placeholder="Buscar por nombre o ID..."
+            placeholder="Buscar por nombre, apellido o ID..."
             value={globalFilter ?? ""}
             onChange={(event) => setGlobalFilter(event.target.value)}
             className="max-w-sm"
