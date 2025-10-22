@@ -124,10 +124,10 @@ export interface UpdateGuardianDTO {
 }
 
 export interface GuardianSummary {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  isActive: boolean;
+  userId?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  isActive?: boolean;
   membersCount?: number;
 }
