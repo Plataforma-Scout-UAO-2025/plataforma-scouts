@@ -145,8 +145,20 @@ public class SecurityConfig {
                                                 // //
                                                 // // Datos básicos de miembros
 
-                                                //
-                                                // Acudientes
+                                                // Guardians
+
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/guardian/**")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
+                                                        DEV_SUPPORT.name())
 
                                                 //
                                                 // ==== FICHAS MÉDICAS ====
@@ -198,7 +210,7 @@ public class SecurityConfig {
 
         /*
          * @Bean
-         * 
+         *
          * @Profile("production")
          * public SecurityFilterChain productionFilterChain(HttpSecurity http) throws
          * Exception {
@@ -212,28 +224,28 @@ public class SecurityConfig {
          * .requestMatchers("/actuator/health").permitAll() // Solo health check
          * .anyRequest().authenticated()
          * );
-         * 
+         *
          * return http.build();
          * }
-         * 
+         *
          * @Bean
-         * 
+         *
          * @Profile("production")
          * public CorsConfigurationSource productionCorsConfigurationSource() {
          * CorsConfiguration configuration = new CorsConfiguration();
-         * 
+         *
          * // Solo dominios de producción específicos
          * configuration.setAllowedOrigins(Arrays.asList(
          * "https://scouts.uao.edu.co",
          * "https://app.scouts.uao.edu.co"
          * ));
-         * 
+         *
          * configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT",
          * "DELETE"));
          * configuration.setAllowedHeaders(Arrays.asList("Authorization",
          * "Content-Type"));
          * configuration.setAllowCredentials(true);
-         * 
+         *
          * UrlBasedCorsConfigurationSource source = new
          * UrlBasedCorsConfigurationSource();
          * source.registerCorsConfiguration("/api/", configuration);

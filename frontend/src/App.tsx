@@ -29,7 +29,14 @@ import OrgChartSummary from "./app/routes/organigrama/OrgChartSummary";
 
 // Miembros
 import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
+import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollment";
+import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
+import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
 
+// Guardianes
+import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
+import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
+import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
 function App() {
   useAuth0ApiWrapper();
 
@@ -61,9 +68,12 @@ function App() {
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Pagos /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUT, RawRole.GUEST, RawRole.ACUDIENTE, RawRole.TESORERO]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Miembros /></ProtectedRoute>} />
-            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={[RawRole.GUEST, RawRole.SCOUT, RawRole.ACUDIENTE]}><ScoutEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.GUEST, RawRole.SCOUT, RawRole.ACUDIENTE]}><ScoutEnrollment /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Requests /></ProtectedRoute>} />
             <Route path="solicitudes/rechazadas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Rejected /></ProtectedRoute>} />
+            <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
             {/*
             <Route path="insignias" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Insignias /></ProtectedRoute>} />
             */}
@@ -72,6 +82,11 @@ function App() {
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><Grupos /></ProtectedRoute>} />
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><MedicalRecordsView /></ProtectedRoute>} />
+
+            {/* Rutas para Guardianes*/}
+            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><MembersInCharge /></ProtectedRoute>} />
+            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><GuardianProfile /></ProtectedRoute>} />
+            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><WelcomeAddMember /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

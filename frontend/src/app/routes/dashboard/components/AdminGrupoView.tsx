@@ -1,20 +1,13 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { fetchMembersAction } from "@/store/members/membersActions";
 import HomeCard from "./HomeCard";
 import BranchDistribution from "./BranchDistribution";
 import GeneralStats from "./GeneralStats";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useMembersManagement } from "@/hooks/useMembersManagement";
 
 const AdminGrupoView = () => {
-  const dispatch = useAppDispatch();
   const { user } = useAuth0();
   const { filteredMembers, loading } = useMembersManagement();
-
-  useEffect(() => {
-    dispatch(fetchMembersAction());
-  }, [dispatch]);
 
   const stats = useMemo(() => {
     if (!filteredMembers || filteredMembers.length === 0) {

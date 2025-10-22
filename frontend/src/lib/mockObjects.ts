@@ -127,11 +127,11 @@ export const paymentMetrics = [
 
 export const membersData = [
   {
-    id: "1",
-    firstName: "José Alberto",
-    lastName: "Gutierrez Jimenez",
+    member_id: "1",
+    first_name: "José Alberto",
+    last_name: "Gutierrez Jimenez",
     identification: "CC 1059901379",
-    createdAt: "13 ago 2025 4:30pm",
+    acceptance_date: "13 ago 2025 4:30pm",
     status: "Activo",
     statusAccount: "En mora",
     city: "Cali",
@@ -161,11 +161,11 @@ export const membersData = [
     ],
   },
   {
-    id: "2",
-    firstName: "María de los Ángeles",
-    lastName: "Ruiz Fernández",
+    member_id: "2",
+    first_name: "María de los Ángeles",
+    last_name: "Ruiz Fernández",
     identification: "CC 11231231902310",
-    createdAt: "15 jul 2025 4:00pm",
+    acceptance_date: "15 jul 2025 4:00pm",
     status: "Activo",
     statusAccount: "Al día",
     city: "Jamundí",
@@ -195,11 +195,11 @@ export const membersData = [
     ],
   },
   {
-    id: "3",
-    firstName: "Miguel Ángel",
-    lastName: "Tutistar Rosales",
+    member_id: "3",
+    first_name: "Miguel Ángel",
+    last_name: "Tutistar Rosales",
     identification: "CC 11231231902310",
-    createdAt: "31 jun 2025 2:10pm",
+    acceptance_date: "31 jun 2025 2:10pm",
     status: "Activo",
     statusAccount: "Al día",
     city: "Dagua",
@@ -222,11 +222,11 @@ export const membersData = [
     ],
   },
   {
-    id: "4",
-    firstName: "Richard Andrés",
-    lastName: "Luna Cano",
+    member_id: "4",
+    first_name: "Richard Andrés",
+    last_name: "Luna Cano",
     identification: "CC 11231231902310",
-    createdAt: "05 ago 2025 8:30am",
+    acceptance_date: "05 ago 2025 8:30am",
     status: "Activo",
     statusAccount: "En mora",
     city: "Cali",
@@ -249,11 +249,11 @@ export const membersData = [
     ],
   },
   {
-    id: "5",
-    firstName: "Melany",
-    lastName: "Camacho Ordoñez",
+    member_id: "5",
+    first_name: "Melany",
+    last_name: "Camacho Ordoñez",
     identification: "CC 11231231902310",
-    createdAt: "20 jun 2025 9:40am",
+    acceptance_date: "20 jun 2025 9:40am",
     status: "Activo",
     statusAccount: "Al día",
     city: "Palmira",
@@ -301,7 +301,60 @@ export const branchCounts = [
 ];
 
 export const cities = ["Cali", "Jamundí", "Dagua", "Popayan", "Palmira"];
-export const branches = ["Cachorros", "Webelos", "Scout", "Lobatos"];
+
+export const branches = ["Cachorros", "Lobatos", "Scouts", "Caminantes", "Rovers"];
+
+export const eventsData = [
+  {
+    id: 1,
+    name: "Tropical",
+    location: "Pance",
+    startTime: "4:30 PM",
+    date: "25/09/2025",
+  },
+  {
+    id: 2,
+    name: "Elementos",
+    location: "Playa blanca",
+    startTime: "4:30 PM",
+    date: "15/10/2025",
+  },
+  {
+    id: 3,
+    name: "Campamento de verano",
+    location: "Parque Nacional",
+    startTime: "10:00 AM",
+    date: "20/12/2025",
+  },
+  {
+    id: 4,
+    name: "Noche de fogata",
+    location: "Parque Central",
+    startTime: "7:00 PM",
+    date: "25/09/2025",
+  },
+  {
+    id: 5,
+    name: "Día de campo",
+    location: "Cerro de las Tres Cruces",
+    startTime: "8:00 AM",
+    date: "30/09/2025",
+  },
+  {
+    id: 6,
+    name: "Excursión ecológica",
+    location: "Reserva Natural",
+    startTime: "9:00 AM",
+    date: "10/10/2025",
+  },
+  {
+    id: 7,
+    name: "Jornada de servicio comunitario",
+    location: "Comunidad Local",
+    startTime: "8:00 AM",
+    date: "05/11/2025",
+  },
+];
 
 export const badgeStats = [
   {
@@ -420,3 +473,123 @@ export const badgeProgressData = [
     ],
   },
 ];
+
+export const filesData = [
+  {
+    id: "1",
+    name: "Manual Scout Centinelas 113.pdf",
+    type: "file" as const,
+    size: 2500000, // 2.5MB
+    uploadDate: "2025-09-20T10:30:00Z",
+    uploadedBy: "Admin Principal",
+    category: "documentos" as const,
+    description: "Manual oficial del grupo scout",
+    fileType: "pdf",
+    url: "/files/manual-scout.pdf",
+  },
+  {
+    id: "2",
+    name: "Formularios",
+    type: "folder" as const,
+    uploadDate: "2025-09-15T14:20:00Z",
+    uploadedBy: "Admin Principal",
+    category: "formularios" as const,
+    description: "Carpeta con todos los formularios oficiales",
+  },
+  {
+    id: "3",
+    name: "Autorizacion Campamento.docx",
+    type: "file" as const,
+    size: 156000, // 156KB
+    uploadDate: "2025-09-18T09:15:00Z",
+    uploadedBy: "María González",
+    category: "formularios" as const,
+    description: "Formato de autorización para campamentos",
+    fileType: "docx",
+    url: "/files/autorizacion-campamento.docx",
+    parentId: "2",
+  },
+  {
+    id: "4",
+    name: "Fotos Campamento Verano 2025",
+    type: "folder" as const,
+    uploadDate: "2025-08-25T16:45:00Z",
+    uploadedBy: "Carlos Ruiz",
+    category: "imagenes" as const,
+    description: "Fotografías del campamento de verano",
+  },
+  {
+    id: "5",
+    name: "IMG_001.jpg",
+    type: "file" as const,
+    size: 3200000, // 3.2MB
+    uploadDate: "2025-08-25T16:50:00Z",
+    uploadedBy: "Carlos Ruiz",
+    category: "imagenes" as const,
+    description: "Ceremonia de apertura del campamento",
+    fileType: "jpg",
+    url: "/files/img_001.jpg",
+    parentId: "4",
+  },
+  {
+    id: "6",
+    name: "Reglamento Interno 2025.pdf",
+    type: "file" as const,
+    size: 890000, // 890KB
+    uploadDate: "2025-09-10T11:20:00Z",
+    uploadedBy: "Admin Principal",
+    category: "documentos" as const,
+    description: "Reglamento interno actualizado para 2025",
+    fileType: "pdf",
+    url: "/files/reglamento-2025.pdf",
+  },
+  {
+    id: "7",
+    name: "Presentacion Padres de Familia.pptx",
+    type: "file" as const,
+    size: 15600000, // 15.6MB
+    uploadDate: "2025-09-12T15:30:00Z",
+    uploadedBy: "Ana Martínez",
+    category: "presentaciones" as const,
+    description: "Presentación para reunión de padres de familia",
+    fileType: "pptx",
+    url: "/files/presentacion-padres.pptx",
+  },
+  {
+    id: "8",
+    name: "Video Actividades Scouts.mp4",
+    type: "file" as const,
+    size: 45000000, // 45MB
+    uploadDate: "2025-09-05T13:10:00Z",
+    uploadedBy: "Diego López",
+    category: "videos" as const,
+    description: "Video promocional de actividades del grupo",
+    fileType: "mp4",
+    url: "/files/video-actividades.mp4",
+  },
+  {
+    id: "9",
+    name: "Inventario Materiales.xlsx",
+    type: "file" as const,
+    size: 78000, // 78KB
+    uploadDate: "2025-09-08T08:45:00Z",
+    uploadedBy: "Luis Fernández",
+    category: "otros" as const,
+    description: "Inventario de materiales y equipos del grupo",
+    fileType: "xlsx",
+    url: "/files/inventario-materiales.xlsx",
+  },
+];
+
+export const fileStats = {
+  totalFiles: 7,
+  totalSize: 69374000, // ~69MB
+  categoryCounts: {
+    documentos: 2,
+    formularios: 1,
+    imagenes: 1,
+    videos: 1,
+    presentaciones: 1,
+    otros: 1,
+  },
+};

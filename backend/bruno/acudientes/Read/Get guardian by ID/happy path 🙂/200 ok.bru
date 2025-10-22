@@ -1,0 +1,42 @@
+meta {
+  name: 200 ok
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseurl}}api/v1/guardian/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 305
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: 
+}
+
+body:json {
+  {
+    "user_id": "anonymousUser",
+    "tenant_id": "org_6B3k4dao2Wf6eGxa",
+    "rol": "ACUDIENTE",
+    "first_name": "María",
+    "last_name": "González Pérez",
+    "age": 35,
+    "identification": "1234567890",
+    "document_type": "CC",
+    "phone": "3001234567",
+    "relationship": "Madre",
+    "is_active": true,
+    "status": "APPROVED",
+    "acceptance_date": "2025-10-12"
+  }
+}
+
+settings {
+  encodeUrl: false
+}
