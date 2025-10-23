@@ -114,7 +114,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-center">
                     <Button
                       variant="iconbutton"
                       size="icon"
