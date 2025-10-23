@@ -79,7 +79,7 @@ export const useMemberFilters = ({
         (member) =>
           ({
             ...member,
-            is_active: member.isActive ?? member.is_active,
+            is_active: member.isActive ?? member.is_active ?? false,
           } as Member)
       );
   }, [members, searchFilter, isActiveFilter, branchFilter]);
