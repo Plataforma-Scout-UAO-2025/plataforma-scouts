@@ -27,23 +27,7 @@ interface MembersTableProps {
   filteredMembers: MemberType[];
 }
 
-interface Member {
-  is_active?: boolean | string | number;
-  isActive?: boolean | string | number;
-}
-
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
-  const getIsActive = (member: Member): boolean => {
-    const value = member.is_active ?? member.isActive;
-    if (typeof value === "string") {
-      return value.toLowerCase() === "activo" || value.toLowerCase() === "true";
-    }
-    if (typeof value === "number") {
-      return value === 1;
-    }
-    return Boolean(value);
-  };
-
   const formatRole = (role?: string): string => {
     if (!role) return "";
     return role
@@ -91,16 +75,16 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
             filteredMembers.map((member, idx) => {
               return (
                 <TableRow key={member.memberId ?? `member-${idx}`}>
-                  <TableCell className="w-1/8 truncate">{member.firstName}</TableCell>
-                  <TableCell className="w-1/8 truncate">{member.lastName}</TableCell>
-                  <TableCell className="w-1/8 truncate">{member.age}</TableCell>
-                  <TableCell className="w-1/8 truncate">
+                  <TableCell className="w-1/6 truncate">{member.firstName}</TableCell>
+                  <TableCell className="w-1/6 truncate">{member.lastName}</TableCell>
+                  <TableCell className="w-1/6 truncate">{member.age}</TableCell>
+                  <TableCell className="w-1/6 truncate">
                     {member.subgroup?.section?.name || "Sin Rama"}
                   </TableCell>
-                  <TableCell className="w-1/8 truncate">
+                  <TableCell className="w-1/6 truncate">
                     {member.subgroup?.name || "Sin Subrama"}
                   </TableCell>
-                  <TableCell className="w-1/8 truncate">
+                  <TableCell className="w-1/6 truncate">
                     {formatRole(member.role)}
                   </TableCell>
                   <TableCell>
@@ -177,7 +161,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
               </strong>{" "}
               a{" "}
               <strong>
-                {selectedMember && getIsActive(selectedMember)
+                {selectedMember && isActive(selectedMember)
                   ? "INACTIVO"
                   : "ACTIVO"}
               </strong>
