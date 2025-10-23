@@ -24,7 +24,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Eye,
   Edit,
   MoreVertical,
   User,
@@ -36,9 +35,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import type { MedicalRecord, MedicalRecordsTableProps } from '../../../../types/medical-record.type';
+
+type SortColumn = 'member_name' | 'blood_type' | 'eps' | 'allergies' | 'vaccines' | 'medications' | 'updated_at';
+type SortDirection = 'asc' | 'desc';
 
 export default function MedicalRecordsTable({
   records,
@@ -51,6 +56,10 @@ export default function MedicalRecordsTable({
   // ESTADOS PARA PAGINACIÓN
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // ESTADOS PARA ORDENAMIENTO
+  const [sortColumn, setSortColumn] = useState<SortColumn>('member_name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleView = (record: MedicalRecord) => {
     setSelectedRecord(record);
@@ -73,11 +82,67 @@ export default function MedicalRecordsTable({
     return diseases && diseases.trim().length > 0;
   };
 
-  // LÓGICA DE PAGINACIÓN
-  const totalPages = Math.ceil(records.length / itemsPerPage);
+  // FUNCIÓN PARA MANEJAR EL ORDENAMIENTO
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Si es la misma columna, cambiar dirección
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Si es una columna diferente, establecer nueva columna y dirección ascendente
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+    // Resetear a la primera página al ordenar
+    setCurrentPage(1);
+  };
+
+  // FUNCIÓN PARA OBTENER EL ÍCONO DE ORDENAMIENTO
+  const getSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-1" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-4 w-4 ml-1" />
+      : <ArrowDown className="h-4 w-4 ml-1" />;
+  };
+
+  // LÓGICA DE PAGINACIÓN Y ORDENAMIENTO
+  const sortedRecords = [...records].sort((a, b) => {
+    let compareResult = 0;
+
+    switch (sortColumn) {
+      case 'member_name':
+        compareResult = a.member_name.localeCompare(b.member_name, 'es-ES');
+        break;
+      case 'blood_type':
+        compareResult = a.blood_type.localeCompare(b.blood_type, 'es-ES');
+        break;
+      case 'eps':
+        compareResult = a.eps.localeCompare(b.eps, 'es-ES');
+        break;
+      case 'allergies':
+        compareResult = hasAllergies(a.allergies) === hasAllergies(b.allergies) 
+          ? 0 
+          : hasAllergies(a.allergies) ? -1 : 1;
+        break;
+      case 'vaccines':
+        compareResult = a.vaccines_detail.length - b.vaccines_detail.length;
+        break;
+      case 'medications':
+        compareResult = a.medications_detail.length - b.medications_detail.length;
+        break;
+      case 'updated_at':
+        compareResult = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+        break;
+    }
+
+    return sortDirection === 'asc' ? compareResult : -compareResult;
+  });
+
+  const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentRecords = records.slice(startIndex, endIndex);
+  const currentRecords = sortedRecords.slice(startIndex, endIndex);
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
@@ -146,13 +211,69 @@ export default function MedicalRecordsTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Integrante</TableHead>
-                <TableHead>Tipo Sangre</TableHead>
-                <TableHead>EPS</TableHead>
-                <TableHead>Alergias</TableHead>
-                <TableHead>Vacunas</TableHead>
-                <TableHead>Medicamentos</TableHead>
-                <TableHead>Última Actualización</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('member_name')}
+                >
+                  <div className="flex items-center">
+                    Integrante
+                    {getSortIcon('member_name')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('blood_type')}
+                >
+                  <div className="flex items-center">
+                    Tipo Sangre
+                    {getSortIcon('blood_type')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('eps')}
+                >
+                  <div className="flex items-center">
+                    EPS
+                    {getSortIcon('eps')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('allergies')}
+                >
+                  <div className="flex items-center">
+                    Alergias
+                    {getSortIcon('allergies')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('vaccines')}
+                >
+                  <div className="flex items-center">
+                    Vacunas
+                    {getSortIcon('vaccines')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('medications')}
+                >
+                  <div className="flex items-center">
+                    Medicamentos
+                    {getSortIcon('medications')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('updated_at')}
+                >
+                  <div className="flex items-center">
+                    Última Actualización
+                    {getSortIcon('updated_at')}
+                  </div>
+                </TableHead>
                 <TableHead className="w-[80px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -206,8 +327,8 @@ export default function MedicalRecordsTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleView(record)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Ver Detalles
+                          <User className="h-4 w-4 mr-2" />
+                          Ver
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEdit(record)}>
                           <Edit className="h-4 w-4 mr-2" />
