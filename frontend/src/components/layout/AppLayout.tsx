@@ -287,7 +287,6 @@ function AppLayoutContent() {
                   item.submenu ? (
                     <Collapsible
                       key={item.id}
-                      defaultOpen
                       className="group/collapsible"
                     >
                       <SidebarMenuItem>

@@ -4,7 +4,7 @@ import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
 import { useNavigate } from "react-router-dom";
 import { useMemberFilters } from "@/hooks/useMemberFilters";
-import FullScreenLoader from "@/components/common/FullScreenLoader";
+import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 
 const Miembros = () => {
   const {

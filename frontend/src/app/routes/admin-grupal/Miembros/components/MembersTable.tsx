@@ -76,10 +76,10 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
               return (
                 <TableRow key={member.memberId ?? `member-${idx}`}>
                   <TableCell className="w-1/6 truncate">
-                    {member.firstName}
+                    {member.firstName ?? member.first_name}
                   </TableCell>
                   <TableCell className="w-1/6 truncate">
-                    {member.lastName}
+                    {member.lastName ?? member.last_name}
                   </TableCell>
                   <TableCell className="w-1/6 truncate">{member.age}</TableCell>
                   <TableCell className="w-1/6 truncate">
