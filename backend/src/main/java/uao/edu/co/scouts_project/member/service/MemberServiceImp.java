@@ -1,4 +1,5 @@
 package uao.edu.co.scouts_project.member.service;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
@@ -9,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
 import uao.edu.co.scouts_project.member.MemberStatusException;
 import uao.edu.co.scouts_project.member.dto.MemberWithSubgroupAndSectionDto;
 import uao.edu.co.scouts_project.member.mapper.MemberWithSubgroupAndSectionMapper;
@@ -331,7 +333,7 @@ public class MemberServiceImp implements IMemberService {
                 log.error("Error al obtener org_id del usuario autenticado: {}", e.getMessage(), e);
                 throw new IllegalStateException("No se pudo obtener la organización del usuario autenticado", e);
             }
-
+            
             if (tenantId == null || tenantId.isBlank()) {
                 log.error("El org_id del usuario autenticado es null o vacío. Verifica que el claim 'org_id' esté presente en el JWT.");
                 throw new IllegalStateException("No se pudo determinar la organización del usuario autenticado");
@@ -372,7 +374,7 @@ public class MemberServiceImp implements IMemberService {
             log.info("Successfully converted {} members to DTOs with complete information", result.size());
 
             return result;
-
+            
         } catch (IllegalStateException e) {
             // Re-lanzar excepciones de estado para que el controller las maneje
             throw e;
