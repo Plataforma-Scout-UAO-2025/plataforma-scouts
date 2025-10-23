@@ -37,6 +37,12 @@ const membersSlice = createSlice({
       state.message = "";
       state.error = null;
     },
+    clearMembers(state) {
+      state.members = [];
+      state.member = null;
+      state.error = null;
+      state.message = "";
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchMemberAction.pending, (state) => {
@@ -178,5 +184,5 @@ const membersSlice = createSlice({
   },
 });
 
-export const { clearNotification } = membersSlice.actions;
+export const { clearNotification, clearMembers } = membersSlice.actions;
 export default membersSlice.reducer;

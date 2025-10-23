@@ -23,7 +23,6 @@ import {
   HelpCircle,
   LogOut,
   Users,
-  Award,
   ChevronRight,
   DollarSign,
   Pencil,
@@ -61,11 +60,6 @@ type MenuItem = {
   href?: string;
   submenu?: SubMenuItem[];
 };
-
-//const mainItems: MenuItem[] = [
-//  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/home" },
-//  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
-//]
 
 const adminGlobalItems: MenuItem[] = [
   {
@@ -108,13 +102,6 @@ const adminGrupalItems: MenuItem[] = [
         href: "/app/solicitudes/rechazadas",
       },
     ],
-  },
-
-  {
-    id: "insignias",
-    label: "Insignias",
-    icon: <Award />,
-    href: "/app/insignias",
   },
   {
     id: "organigrama",
@@ -300,7 +287,6 @@ function AppLayoutContent() {
                   item.submenu ? (
                     <Collapsible
                       key={item.id}
-                      defaultOpen
                       className="group/collapsible"
                     >
                       <SidebarMenuItem>
