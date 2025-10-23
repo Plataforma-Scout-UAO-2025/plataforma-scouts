@@ -17,7 +17,7 @@ import type {
   UpdateSubgroupData,
 } from './types/frontend';
 import { useTenantParams } from './hooks/useTenantParams';
-import useOrganigramaData from './hooks/useOrganigramaData';
+import useOrganigramaDataWithCache from './hooks/useOrganigramaDataWithCache';
 import useOrganigramaActions from './hooks/useOrganigramaActions';
 import useOrganigramaExport from './hooks/useOrganigramaExport';
 import { useApiError } from './hooks/useApiError';
@@ -53,7 +53,7 @@ export default function Organigrama() {
     ramas,
     loadRamas,
     isLoading: dataLoading,
-  } = useOrganigramaData(tenantId, groupSlug);
+  } = useOrganigramaDataWithCache(tenantId, groupSlug);
 
   const { error, handleError, clearError } = useApiError();
 
