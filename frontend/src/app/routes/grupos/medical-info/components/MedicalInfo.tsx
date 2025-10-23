@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Save } from 'lucide-react';
 import { medicalFormSchema } from '../schemas/CreateMedicalInfoForm.schema';
 import type { MedicalFormData, MedicalFormErrors, VaccineDetail, MedicationDetail } from '@/types/medical-form.type';
-import { createMedicalRecordApi, updateMedicalRecordApi } from '@/api/medicalApi';
+import { createMedicalRecordApi, updateMedicalRecordApi, getMedicalRecordsByTenantApi } from '@/api/medicalApi';
 import type { Member } from '@/types/member.type';
 import { useTenant } from '@/hooks/useTenant';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { getMembers } from '@/api/membersApi';
+import { useAuth0 } from '@auth0/auth0-react';
 
 interface MedicalWizardFormProps {
   memberId?: number; // Hacerlo opcional para creación
@@ -20,6 +21,7 @@ interface MedicalWizardFormProps {
 
 export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initialData }: MedicalWizardFormProps) {
   const tenantId = useTenant();
+  const { user } = useAuth0();
 
   const [formData, setFormData] = useState<MedicalFormData>({
     member_id: memberId || 0, // Valor por defecto 0 para creación
@@ -41,12 +43,66 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   const [selectedMemberId, setSelectedMemberId] = useState<number>(memberId || 0);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
+  // Cargar lista de miembros desde la API
+  const loadMembers = useCallback(async () => {
+    try {
+      setIsLoadingMembers(true);
+      
+      // Cargar miembros
+      const response = await getMembers();
+
+      // Filtrar solo miembros aprobados y activos
+      let scoutMembers = response.filter((member: Member) => 
+        member.role === 'SCOUT' && 
+        member.status === 'APPROVED' && 
+        member.is_active
+      );
+
+      // Filtrar por subgrupo del usuario actual (si tiene email)
+      if (user?.email) {
+        // Buscar el miembro actual por email
+        const currentMember = response.find((member: Member) => 
+          member.email?.toLowerCase() === user.email?.toLowerCase()
+        );
+
+        // Si el usuario actual tiene un subgrupo asignado, filtrar por ese subgrupo
+        if (currentMember?.subgroup_id) {
+          scoutMembers = scoutMembers.filter((member: Member) => 
+            member.subgroup_id === currentMember.subgroup_id
+          );
+        }
+      }
+
+      // Cargar registros médicos existentes
+      if (tenantId) {
+        const medicalRecordsResponse = await getMedicalRecordsByTenantApi(tenantId);
+        const existingRecordIds = new Set(
+          medicalRecordsResponse.content.map((record) => record.member_id)
+        );
+
+        // Filtrar miembros que NO tienen registro médico
+        const membersWithoutRecords = scoutMembers.filter(
+          (member: Member) => !existingRecordIds.has(member.member_id || 0)
+        );
+
+        setMembers(membersWithoutRecords);
+      } else {
+        setMembers(scoutMembers);
+      }
+    } catch (error) {
+      console.error('Error cargando miembros:', error);
+      toast.error('Error al cargar la lista de miembros');
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }, [tenantId, user?.email]);
+
   // Cargar miembros si estamos en modo creación
   useEffect(() => {
     if (!initialData && !memberId) {
       loadMembers();
     }
-  }, [initialData, memberId]);
+  }, [initialData, memberId, loadMembers]);
 
   useEffect(() => {
     if (initialData) {
@@ -66,28 +122,6 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
       setFormData(adaptedData);
     }
   }, [initialData, memberId, tenantId]);
-
-  // Cargar lista de miembros desde la API
-  const loadMembers = async () => {
-    try {
-      setIsLoadingMembers(true);
-      const response = await getMembers();
-
-      // Filtrar solo miembros aprobados y activos
-      const scoutMembers = response.filter((member: Member) => 
-      member.role === 'SCOUT' && 
-      member.status === 'APPROVED' && 
-      member.is_active
-      );
-
-      setMembers(scoutMembers);
-    } catch (error) {
-      console.error('Error cargando miembros:', error);
-      toast.error('Error al cargar la lista de miembros');
-    } finally {
-      setIsLoadingMembers(false);
-    }
-  };
 
   // Función para crear nuevo registro médico
   const createMedicalRecord = async (data: MedicalFormData) => {
@@ -424,24 +458,44 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                 {!initialData && (
                   <div className="space-y-2">
                     <Label htmlFor="member" className="font-medium">Seleccionar Integrante *</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Solo se muestran integrantes de tu rama/subgrupo sin registro médico
+                    </p>
                     <Select
                       value={selectedMemberId.toString()}
                       onValueChange={(value) => handleMemberChange(parseInt(value))}
-                      disabled={isLoadingMembers}
+                      disabled={isLoadingMembers || members.length === 0}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder={isLoadingMembers ? "Cargando miembros..." : "Seleccione un integrante"} />
+                        <SelectValue placeholder={
+                          isLoadingMembers 
+                            ? "Cargando miembros..." 
+                            : members.length === 0 
+                              ? "No hay integrantes disponibles"
+                              : "Seleccione un integrante"
+                        } />
                       </SelectTrigger>
                       <SelectContent>
-                        {members.map(member => (
-                          <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
-                            {member.first_name} {member.last_name} - ID {member.identification} ({member.role})
-                          </SelectItem>
-                        ))}
+                        {members.length === 0 ? (
+                          <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                            No hay integrantes disponibles de tu rama/subgrupo
+                          </div>
+                        ) : (
+                          members.map(member => (
+                            <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
+                              {member.first_name} {member.last_name} - ID {member.identification}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
-                    {!selectedMemberId && (
+                    {!selectedMemberId && members.length > 0 && (
                       <p className="text-sm text-red-500">Debe seleccionar un integrante</p>
+                    )}
+                    {members.length === 0 && !isLoadingMembers && (
+                      <p className="text-sm text-amber-600">
+                        Todos los integrantes de tu rama/subgrupo ya tienen un registro médico asignado.
+                      </p>
                     )}
                   </div>
                 )}
