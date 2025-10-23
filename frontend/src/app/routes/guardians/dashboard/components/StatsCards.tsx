@@ -1,9 +1,8 @@
-//import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, DollarSign, AlertTriangle } from 'lucide-react';
+import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
 
 interface StatsCardsProps {
   data: {
-    miembrosACargo: number;
     valorPendiente: number;
     cuotasPendientes: number;
   };
@@ -19,11 +18,14 @@ const formatearMoneda = (monto: number) => {
 };
 
 export default function StatsCards({ data }: StatsCardsProps) {
+  // Obtener miembros a cargo usando el hook
+  const { members, loading } = useMembersInChargeOf(309);
+
   const estadisticas = [
     {
       icon: Users,
       titulo: "Miembros a Cargo",
-      valor: data.miembrosACargo.toString(),
+      valor: loading ? "..." : members.length.toString(),
       detalle: "Total de miembros",
       color: "text-blue-600",
     },
@@ -42,7 +44,6 @@ export default function StatsCards({ data }: StatsCardsProps) {
       color: "text-amber-600",
     }
   ];
-
 
   return (
     <div className="mx-4">
