@@ -1,8 +1,21 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getSections, getSectionWithSubgroups, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal } from '@/api/organigramaApi';
+import { getSections, getSectionWithSubgroups, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal, getGroupBySlug } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
 import { addGalleryImage, replaceGalleryImage } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/gallery.service';
+
+// Fetch group information
+export const fetchGroupAction = createAsyncThunk("organigrama/fetchGroup", async ({ tenantId, groupSlug }: { tenantId: string; groupSlug: string }, { rejectWithValue }) => {
+  try {
+    const data = await getGroupBySlug(tenantId, groupSlug);
+    return data;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al obtener información del grupo";
+    return rejectWithValue(message);
+  }
+});
 
 // Fetch sections for tenant/group
 export const fetchSectionsAction = createAsyncThunk("organigrama/fetchSections", async ({ tenantId, groupSlug }: { tenantId: string; groupSlug: string }, { rejectWithValue }) => {

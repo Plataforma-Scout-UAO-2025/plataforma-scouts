@@ -1,9 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchSectionsAction, fetchSectionWithSubgroupsAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
+import { fetchGroupAction, fetchSectionsAction, fetchSectionWithSubgroupsAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
+import type { GroupResponseDTO } from "@/types/group.type";
 
 interface OrganigramaState {
+  group: GroupResponseDTO | null;
   sections: Section[];
   currentSection?: { section: Section; subgroups: Subgroup[] } | null;
   loading: boolean;
@@ -11,6 +13,7 @@ interface OrganigramaState {
 }
 
 const initialState: OrganigramaState = {
+  group: null,
   sections: [],
   currentSection: null,
   loading: false,
@@ -22,6 +25,19 @@ const organigramaSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
+    builder.addCase(fetchGroupAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchGroupAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.group = action.payload;
+    });
+    builder.addCase(fetchGroupAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
     builder.addCase(fetchSectionsAction.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -96,7 +112,6 @@ const organigramaSlice = createSlice({
       }
     });
 
-    // Gallery actions - no state updates needed as gallery is not in Section type
     builder.addCase(addGalleryImageAction.pending, (state) => {
       state.loading = true;
       state.error = null;
