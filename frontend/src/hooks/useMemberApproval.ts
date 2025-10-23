@@ -11,13 +11,37 @@ import { toast } from "sonner";
 
 type AnyMember = Member | UpdateMember;
 
+function isUpdateMember(member: AnyMember): member is UpdateMember {
+  return "memberId" in member && member.memberId !== undefined;
+}
+
+function hasGenericId(member: unknown): member is { id: number | string } {
+  return (
+    typeof member === "object" &&
+    member !== null &&
+    "id" in member &&
+    (typeof (member as { id: unknown }).id === "number" ||
+      typeof (member as { id: unknown }).id === "string")
+  );
+}
+
 function getMemberId(m?: AnyMember | null): number | undefined {
   if (!m) return undefined;
-  const id =
-    (m as UpdateMember).memberId ??
-    (m as Member).member_id ??
-    (m as unknown as { id?: number }).id;
-  return typeof id === "string" ? Number(id) : id;
+
+  if (isUpdateMember(m) && m.memberId !== undefined) {
+    return m.memberId;
+  }
+
+  const member = m as Member;
+  if (member.member_id !== undefined) {
+    return member.member_id;
+  }
+
+  if (hasGenericId(m)) {
+    return typeof m.id === "string" ? Number(m.id) : m.id;
+  }
+
+  return undefined;
 }
 
 interface UseMemberApprovalArgs {
@@ -41,12 +65,21 @@ export function useMemberApproval({
   const [loading, setLoading] = useState(false);
 
   const memberId = getMemberId(member);
-  const canAccept = Boolean(memberId); // ahora no exige sección
+  const canAccept = Boolean(memberId);
 
-  function getMemberField(keyCamel: string, keySnake: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const m = member as any;
-    return m?.[keyCamel] ?? m?.[keySnake] ?? "";
+  function getMemberField(
+    keyCamel: keyof UpdateMember,
+    keySnake: keyof Member
+  ): string {
+    if (!member) return "";
+
+    const updateMember = member as UpdateMember;
+    const regularMember = member as Member;
+
+    const camelValue = updateMember[keyCamel];
+    const snakeValue = regularMember[keySnake];
+
+    return String(camelValue ?? snakeValue ?? "");
   }
 
   const accept = async () => {
@@ -63,29 +96,26 @@ export function useMemberApproval({
         updateMemberStatusAction({
           id: memberId,
           status: "APPROVED",
-        }),
+        })
       ).unwrap();
 
-      // Call backend endpoint that assigns subgroup and section when available
       if (selectedSubgroup || selectedSection) {
         await dispatch(
           assignSubgroupAndSectionAction({
             memberId,
             subGroupId: selectedSubgroup ? Number(selectedSubgroup) : undefined,
             sectionId: selectedSection ? Number(selectedSection) : undefined,
-          }),
+          })
         ).unwrap();
       }
 
       const updates: Partial<UpdateMember> = {};
 
       if (selectedRole) {
-        // cast to UpdateMember.role union
         updates.role = selectedRole as UpdateMember["role"];
       }
 
       if (Object.keys(updates).length > 0) {
-        // If updates only contains role, backend may still require other fields; build a minimal DTO
         if (updates.role) {
           const memberDto: Record<string, unknown> = {
             memberId: memberId,
@@ -102,27 +132,28 @@ export function useMemberApproval({
             updateMemberByDtoAction({
               uid: String(memberId),
               memberDto,
-            }),
+            })
           ).unwrap();
         } else {
           await dispatch(
             updateMemberAction({
               uid: String(memberId),
               updates,
-            }),
+            })
           ).unwrap();
         }
       }
 
+      const updateMemberData = member as UpdateMember;
+      const regularMemberData = member as Member;
+
       const firstName =
-        (member as UpdateMember).firstName ??
-        (member as Member).first_name ??
-        "";
+        updateMemberData.firstName ?? regularMemberData.first_name ?? "";
       const lastName =
-        (member as UpdateMember).lastName ?? (member as Member).last_name ?? "";
+        updateMemberData.lastName ?? regularMemberData.last_name ?? "";
 
       toast.success(
-        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`,
+        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`
       );
 
       onClose();
@@ -130,7 +161,7 @@ export function useMemberApproval({
     } catch (e) {
       console.error("Error al aceptar solicitud:", e);
       toast.error(
-        "Ocurrió un error al procesar la solicitud. Intenta nuevamente.",
+        "Ocurrió un error al procesar la solicitud. Intenta nuevamente."
       );
     } finally {
       setLoading(false);

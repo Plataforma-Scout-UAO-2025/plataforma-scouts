@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import uao.edu.co.scouts_project.member.dto.*;
 import uao.edu.co.scouts_project.member.mapper.MemberMapper;
@@ -211,13 +212,26 @@ public class MemberController {
      */
     @GetMapping("/list_members_with_details")
     public ResponseEntity<List<MemberWithSubgroupAndSectionDto>> listMembersWithDetails() {
+        
+        log.info("Listando miembros con detalles completos para el usuario autenticado");
+
         try {
-            List<MemberWithSubgroupAndSectionDto> members =
+            List<MemberWithSubgroupAndSectionDto> members = 
                     memberservice.get_members_with_subgroup_and_section();
+
+            if (members.isEmpty()) {
+                log.info("No se encontraron miembros para el tenant del usuario autenticado");
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            log.info("Se encontraron {} miembros con detalles completos", members.size());
             return ResponseEntity.ok(members);
+
         } catch (IllegalStateException e) {
+            log.error("Error: No se pudo determinar la organizaci�n del usuario: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
+            log.error("Error inesperado al listar miembros con detalles: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -243,11 +257,10 @@ public class MemberController {
     }
 
     /**
-     * Actualiza información de un miembro existente (actualización parcial).
-     * Solo actualiza los campos que vengan informados en el DTO.
+     * Actualiza toda la información de un miembro existente.
      *
-     * @param memberId   ID del miembro
-     * @param updateDto  DTO con los campos a actualizar
+     * @param memberId        ID del miembro
+     * @param memberUpdateDto DTO con los nuevos datos
      * @return miembro actualizado o 404 si no existe
      */
     @PutMapping("/update_member_by_id/{id}")
@@ -269,6 +282,7 @@ public class MemberController {
      * @return mensaje de éxito o error
      */
     @PutMapping("/assign_subgroup_and_section")
+    @Transactional
     public ResponseEntity<Map<String, String>> assign_subgroup_and_section(@Valid @RequestBody AssignSubgroupAndSectionDto request) {
         Long memberId = request.getMemberId();
         Long subgroupId = request.getSubGroupId();

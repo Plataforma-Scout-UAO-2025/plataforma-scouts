@@ -21,7 +21,6 @@ interface Props {
   setSelectedSection: (v: string) => void;
   selectedSubgroup: string;
   setSelectedSubgroup: (v: string) => void;
-  // role related
   roles: RoleSummary[];
   rolesLoading: boolean;
   rolesError: string | null;
@@ -161,8 +160,8 @@ export default function AssignmentSelectors(props: Props) {
                     rolesLoading
                       ? "Cargando roles..."
                       : roles.length === 0
-                        ? "No hay roles disponibles"
-                        : "Selecciona un rol"
+                      ? "No hay roles disponibles"
+                      : "Selecciona un rol"
                   }
                 />
               </SelectTrigger>
