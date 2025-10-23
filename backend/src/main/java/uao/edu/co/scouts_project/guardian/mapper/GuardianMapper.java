@@ -84,7 +84,7 @@ public class GuardianMapper {
                 .gender(member.getGender())
                 .phone(member.getPhone())
                 .birthDate(member.getBirthDate())
-                .role(member.getRole().toString())
+                .role(member.getRole())
                 .build();
     }
 
@@ -97,6 +97,4 @@ public class GuardianMapper {
                 .birthDate(memberCustom.getBirthDate())
                 .build();
     }
-
-
 }

@@ -1,20 +1,20 @@
-import { 
-  getGuardianById, 
-  getGuardianWithMembers,
-  getMembersInChargeOf,
-  updateGuardian, 
-  createGuardian,
-  addMemberToGuardian,
-  removeMemberFromGuardian,
-  deleteGuardian
+import {
+    addMemberToGuardian,
+    createGuardian,
+    deleteGuardian,
+    getGuardianById,
+    getGuardianWithMembers,
+    getMembersInChargeOf,
+    removeMemberFromGuardian,
+    updateGuardian
 } from '@/api/guardiansApi';
-import type { 
-  Guardian, 
-  GuardianWithMembers,
-  CreateGuardianDTO, 
-  UpdateGuardianDTO,
-  MemberBasicInfo,
-  GuardianCreateResponse 
+import type {
+    CreateGuardianDTO,
+    Guardian,
+    GuardianCreateResponse,
+    GuardianWithMembers,
+    MemberBasicInfo,
+    UpdateGuardianDTO
 } from '@/types/guardian.type';
 
 // Helper: Extraer status code de un error (si existe)
@@ -32,11 +32,10 @@ function getErrorStatus(error: unknown): number | undefined {
 }
 
 export const guardianService = {
-  // Obtener guardian por ID (solo datos básicos)
+
   getGuardianById: async (guardianId: number | string): Promise<Guardian | null> => {
     try {
-      const guardian = await getGuardianById(guardianId);
-      return guardian;
+        return await getGuardianById(guardianId);
     } catch (error) {
       const status = getErrorStatus(error);
       if (status === 404) {
@@ -47,11 +46,9 @@ export const guardianService = {
     }
   },
 
-  // Obtener guardian con sus miembros asociados
   getGuardianWithMembers: async (guardianId: number | string): Promise<GuardianWithMembers | null> => {
     try {
-      const guardian = await getGuardianWithMembers(guardianId);
-      return guardian;
+        return await getGuardianWithMembers(guardianId);
     } catch (error) {
       const status = getErrorStatus(error);
       if (status === 404) {
@@ -65,8 +62,7 @@ export const guardianService = {
   // Obtener lista de miembros a cargo
   getMembersInChargeOf: async (guardianId: number | string): Promise<MemberBasicInfo[]> => {
     try {
-      const members = await getMembersInChargeOf(guardianId);
-      return members;
+        return await getMembersInChargeOf(guardianId);
     } catch (error) {
       console.error('Error obteniendo miembros a cargo:', error);
       throw error;
@@ -108,8 +104,7 @@ export const guardianService = {
   // Crear un nuevo guardian
   crearGuardian: async (datos: CreateGuardianDTO): Promise<GuardianCreateResponse> => {
     try {
-      const newGuardian = await createGuardian(datos);
-      return newGuardian;
+        return await createGuardian(datos);
     } catch (error) {
       console.error('Error creando guardian:', error);
       throw error;

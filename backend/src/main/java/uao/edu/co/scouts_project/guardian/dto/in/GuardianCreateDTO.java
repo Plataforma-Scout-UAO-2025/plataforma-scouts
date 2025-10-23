@@ -40,7 +40,6 @@ public class GuardianCreateDTO {
     private String identification;
     private DocumentType documentType;
     @Size(max = 10, message = "Phone must not exceed 10 characters")
-@Size(max = 10, message = "Phone must not exceed 10 characters")
     private String phone;
     private String relationship;
     private Boolean isActive;

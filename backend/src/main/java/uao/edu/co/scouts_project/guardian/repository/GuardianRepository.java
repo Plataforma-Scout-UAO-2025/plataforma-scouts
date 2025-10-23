@@ -14,9 +14,6 @@ import uao.edu.co.scouts_project.member.model.Member;
 
 @Repository
 public interface GuardianRepository extends JpaRepository<Member, Long> {
-
-    List<Member> findByIsActive(boolean active);
-
     @Query("SELECT new uao.edu.co.scouts_project.guardian.model.MemberCustom(" +
             "m.firstName, m.lastName, m.identification, m.documentType, m.age, m.gender, m.phone, m.birthDate) " +
             "FROM Member m WHERE m.guardianId = :guardianId")
@@ -24,9 +21,6 @@ public interface GuardianRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m FROM Member m WHERE m.memberId = :id AND m.role = 'ACUDIENTE'")
     Optional<Member> findValidGuardianById(@Param("id") Long id);
-
-    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.memberId = :id AND m.role = 'ACUDIENTE'")
-    boolean existsByIdAndHasRoleAcudiente(@Param("id") Long id);
 
     @Modifying
     @Query("UPDATE Member m SET m.guardianId = NULL WHERE m.guardianId = :guardianId")

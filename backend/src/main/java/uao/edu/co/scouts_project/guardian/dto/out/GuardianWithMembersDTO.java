@@ -18,18 +18,6 @@ import uao.edu.co.scouts_project.guardian.dto.shared.SubgroupDTO;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 
-
-/**
- * Represents a DTO response for Guardian with associated Members.
- *
- * <p>
- * This class only deals with serving responses from the database to show
- * guardian with members and members with emergency contacts
- * 
- * This DTO can also be used for update in batch members associated 
- * </p>
- *
- */
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
