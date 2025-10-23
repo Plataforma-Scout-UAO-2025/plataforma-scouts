@@ -124,7 +124,7 @@ function ScoutEnrollment() {
         open={showModal}
         onClose={() => {
           setShowModal(false);
-          navigate("/app/miembros");
+          navigate("/app/dashboard");
         }}
       />
 
