@@ -19,7 +19,11 @@ interface RequestsTableProps {
   loading?: boolean;
 }
 
-const RequestsTable = ({ filteredMembers, onViewMember, loading }: RequestsTableProps) => {
+const RequestsTable = ({
+  filteredMembers,
+  onViewMember,
+  loading,
+}: RequestsTableProps) => {
   const [loadingMemberId, setLoadingMemberId] = useState<number | null>(null);
   const dispatch = useAppDispatch();
 
@@ -36,7 +40,9 @@ const RequestsTable = ({ filteredMembers, onViewMember, loading }: RequestsTable
     }
     try {
       setLoadingMemberId(member.member_id);
-      const result = await dispatch(fetchMemberAction(member.member_id)).unwrap();
+      const result = await dispatch(
+        fetchMemberAction(member.member_id)
+      ).unwrap();
       onViewMember(result);
     } catch (err) {
       console.error("Error al obtener detalles:", err);
@@ -54,10 +60,14 @@ const RequestsTable = ({ filteredMembers, onViewMember, loading }: RequestsTable
             <TableHead className="pl-4 font-bold text-primary">Id</TableHead>
             <TableHead className="font-bold text-primary">Nombres</TableHead>
             <TableHead className="font-bold text-primary">Apellidos</TableHead>
-            <TableHead className="font-bold text-primary">Identificación</TableHead>
+            <TableHead className="font-bold text-primary">
+              Identificación
+            </TableHead>
             <TableHead className="font-bold text-primary">Ciudad</TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
-            <TableHead className="text-center font-bold text-primary">Acciones</TableHead>
+            <TableHead className="text-center font-bold text-primary">
+              Acciones
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -70,14 +80,16 @@ const RequestsTable = ({ filteredMembers, onViewMember, loading }: RequestsTable
           ) : filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
               <TableRow key={member.member_id}>
-                <TableCell className="pl-4 font-medium">{member.member_id}</TableCell>
+                <TableCell className="pl-4 font-medium">
+                  {member.member_id}
+                </TableCell>
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
                 <TableCell>{member.identification}</TableCell>
-                <TableCell>{member.address?.split(",")[0] || "N/A"}</TableCell>
+                <TableCell>{member.address || "Sin dirección"}</TableCell>
                 <TableCell>
-                  <span className="py-1 px-2 rounded font-medium bg-gray-300 text-gray-800">
-                    {statusLabels[member.status ?? "PENDING"]}
+                  <span className="inline-block px-2 py-1 rounded-lg border border-yellow-300 bg-yellow-100 text-yellow-800 font-semibold">
+                    {statusLabels[member.status ?? "Pendiente"]}
                   </span>
                 </TableCell>
                 <TableCell className="text-center">
