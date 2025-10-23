@@ -165,7 +165,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
               </strong>{" "}
               a{" "}
               <strong>
-                {selectedMember && isActive(selectedMember)
+                {selectedMember && selectedMember.isActive
                   ? "INACTIVO"
                   : "ACTIVO"}
               </strong>
@@ -175,7 +175,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmToggle}>
-              {selectedMember && isActive(selectedMember)
+              {selectedMember && selectedMember.isActive
                 ? "Desactivar"
                 : "Activar"}
             </AlertDialogAction>
