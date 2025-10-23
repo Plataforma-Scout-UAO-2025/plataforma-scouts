@@ -4,9 +4,9 @@ import HomeCard from "./HomeCard";
 import GenderChart from "./GenderChart";
 import BranchDistribution from "./BranchDistribution";
 import GeneralStats from "./GeneralStats";
+import FullScreenLoader from "@/components/common/FullScreenLoader";
 
 const AdminGrupoView = () => {
-  useMembersManagement();
   const { user } = useAuth0();
   const {
     branchMemberCount,
@@ -14,9 +14,10 @@ const AdminGrupoView = () => {
     members,
     scoutMembers,
     nuevosEsteMes,
+    loading,
   } = useMembersManagement();
 
-  const scoutsActivos = scoutMembers.filter(member => member.isActive).length;
+  const scoutsActivos = scoutMembers.filter((member) => member.isActive).length;
 
   const stats = {
     totalScouts: scoutMembers.length || 0,
@@ -24,6 +25,10 @@ const AdminGrupoView = () => {
     totalRamas: branchMembers.filter((rama) => rama !== "Sin Rama").length || 0,
     nuevosEsteMes: nuevosEsteMes,
   };
+
+  if (loading) {
+    return <FullScreenLoader message="Cargando..." />;
+  }
 
   return (
     <div className="mx-4">

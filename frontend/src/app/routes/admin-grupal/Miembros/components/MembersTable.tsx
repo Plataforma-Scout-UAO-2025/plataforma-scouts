@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/index";
 import { Pencil, Trash, User } from "lucide-react";
 import type { Member as MemberType } from "@/types/member.type";
-import { formatDate } from "@/lib/utils";
 
 interface MembersTableProps {
   filteredMembers: MemberType[];
@@ -32,66 +31,50 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
     return Boolean(value);
   };
 
+  const formatRole = (role?: string): string => {
+    if (!role) return "";
+    return role
+      .toLowerCase()
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   return (
     <div>
       <Table className="text-sm">
         <TableHeader className="text-primary">
           <TableRow>
-            <TableHead className="pl-4 font-bold text-primary">
-              Id
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Nombres
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Apellidos
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Identificación
-            </TableHead>
+            <TableHead className="font-bold text-primary">Nombres</TableHead>
+            <TableHead className="font-bold text-primary">Apellidos</TableHead>
+            <TableHead className="font-bold text-primary">Edad</TableHead>
             <TableHead className="font-bold text-primary">Rama</TableHead>
-            <TableHead className="font-bold text-primary">
-              Creado
+            <TableHead className="font-bold text-primary">Subrama</TableHead>
+            <TableHead className="font-bold text-primary">Rol</TableHead>
+            <TableHead className="font-bold text-primary">Estado</TableHead>
+            <TableHead className="font-bold text-primary text-center">
+              Acciones
             </TableHead>
-            <TableHead className="font-bold text-primary">
-              Dirección
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Rol
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Estado
-            </TableHead>
-            <TableHead className="text-right"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member, idx) => (
               <TableRow key={member.memberId ?? `member-${idx}`}>
-                <TableCell className="pl-4 font-medium truncate">
-                  {member.memberId}
-                </TableCell>
-                <TableCell className="w-32 truncate">
+                <TableCell className="w-1/8 truncate">
                   {member.firstName}
                 </TableCell>
-                <TableCell className="w-32 truncate">
+                <TableCell className="w-1/8 truncate">
                   {member.lastName}
                 </TableCell>
-                <TableCell className="w-32 truncate">
-                  {member.identification}
-                </TableCell>
-                <TableCell className="w-28 truncate">
+                <TableCell className="w-1/8 truncate">{member.age}</TableCell>
+                <TableCell className="w-1/8 truncate">
                   {member.subgroup?.section?.name || "Sin rama"}
                 </TableCell>
-                <TableCell className="w-28 truncate">
-                  {formatDate(member.createdAt || (member.created_at as string))}
+                <TableCell className="w-1/8 truncate">
+                  {member.subgroup?.name || "Sin Subrama"}
                 </TableCell>
-                <TableCell className="w-40 truncate">
-                  {member.address || "Sin dirección"}
-                </TableCell>
-                <TableCell className="w-40 truncate">
-                  {member.role}
+                <TableCell className="w-1/8 truncate">
+                  {formatRole(member.role)}
                 </TableCell>
                 <TableCell>
                   {isActive(member) ? (
@@ -104,7 +87,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-center">
                   <Button variant="iconbutton" size="icon">
                     <User />
                   </Button>
