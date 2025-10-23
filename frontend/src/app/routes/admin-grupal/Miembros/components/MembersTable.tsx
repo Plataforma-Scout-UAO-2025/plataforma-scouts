@@ -75,8 +75,12 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
             filteredMembers.map((member, idx) => {
               return (
                 <TableRow key={member.memberId ?? `member-${idx}`}>
-                  <TableCell className="w-1/6 truncate">{member.firstName}</TableCell>
-                  <TableCell className="w-1/6 truncate">{member.lastName}</TableCell>
+                  <TableCell className="w-1/6 truncate">
+                    {member.firstName}
+                  </TableCell>
+                  <TableCell className="w-1/6 truncate">
+                    {member.lastName}
+                  </TableCell>
                   <TableCell className="w-1/6 truncate">{member.age}</TableCell>
                   <TableCell className="w-1/6 truncate">
                     {member.subgroup?.section?.name || "Sin Rama"}
@@ -88,7 +92,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                     {formatRole(member.role)}
                   </TableCell>
                   <TableCell>
-                    {isActive(member) ? (
+                    {member.isActive ? (
                       <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
                         Activo
                       </span>
