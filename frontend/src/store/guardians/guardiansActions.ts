@@ -10,6 +10,7 @@ export const fetchMembersInChargeAction = createAsyncThunk<
 >("member/fetchMembersInCharge", async (id, { rejectWithValue }) => {
   try {
     const member = await getMembersInChargeOf(id);
+    console.log(member);
     return member;
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
