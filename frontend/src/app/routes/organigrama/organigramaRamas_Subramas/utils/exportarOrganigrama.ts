@@ -35,7 +35,10 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 
-async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
+
+
+// Optimized function with parallelization and proper member filtering
+async function construirFilasDetalleSimple(ramas: Rama[]): Promise<string[][]> {
   const filas: string[][] = [];
 
   // Filter out committee branches (comités, asambleas, cortes, consejos)
@@ -44,6 +47,20 @@ async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
     return !isCommitteeName(rawName);
   });
 
+  console.log(' [Export] Procesando', onlyRamas.length, 'ramas con paralelización...');
+
+  // Collect all subgroup IDs for parallel processing
+  const allSubgroupRequests: Array<{
+    subgroupId: number;
+    ramaInfo: {
+      ramaNombre: string;
+      descripcionRama: string;
+      nombreSubrama: string;
+      jefeRama: string;
+    };
+  }> = [];
+
+  // Prepare all requests
   for (const r of onlyRamas) {
     const ramaNombre = (r.name ?? r.nombre ?? '').toString();
     const descripcionRama = (r.description ?? (r as { descripcion?: string }).descripcion ?? '').toString().trim() ||
@@ -66,48 +83,23 @@ async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
     if (subgroups && subgroups.length > 0) {
       for (const s of subgroups) {
         const nombreSubramaFull = (s.name ?? s.nombre ?? '').toString();
-
-        // Obtener miembros de la subrama
-        let integrantes = '';
-        try {
-          const sUnknown = s as unknown as Record<string, unknown>;
-          const subgroupId = sUnknown['subgroupId'] ?? sUnknown['id'];
-          if (subgroupId) {
-            const members = await getMembersBySubgroup(Number(subgroupId));
-            if (members && members.length > 0) {
-              integrantes = members.map((m: Record<string, unknown>) => {
-                const firstName = m.firstName ?? m.first_name ?? '';
-                const lastName = m.lastName ?? m.last_name ?? '';
-                return `${firstName} ${lastName}`.trim();
-              }).filter(Boolean).join(', ');
+        const sUnknown = s as unknown as Record<string, unknown>;
+        const subgroupId = sUnknown['subgroupId'] ?? sUnknown['id'];
+        
+        if (subgroupId) {
+          allSubgroupRequests.push({
+            subgroupId: Number(subgroupId),
+            ramaInfo: {
+              ramaNombre,
+              descripcionRama,
+              nombreSubrama: nombreSubramaFull,
+              jefeRama: jefeRama ?? '',
             }
-          }
-        } catch (error) {
-          console.warn(' [Export] Error obteniendo miembros para subrama:', s.name ?? s.nombre, error);
-          // Fallback: intentar usar datos existentes si están disponibles
-          const sUnknown = s as unknown as Record<string, unknown>;
-          if (sUnknown.members && Array.isArray(sUnknown.members)) {
-            integrantes = (sUnknown.members as string[]).join(', ');
-          } else if (sUnknown.integrantes && Array.isArray(sUnknown.integrantes)) {
-            integrantes = (sUnknown.integrantes as string[]).join(', ');
-          } else if (sUnknown.membersNames && Array.isArray(sUnknown.membersNames)) {
-            integrantes = (sUnknown.membersNames as string[]).join(', ');
-          } else if (typeof sUnknown.integrantes === 'string' && sUnknown.integrantes) {
-            integrantes = sUnknown.integrantes;
-          } else if (sUnknown.leader) {
-            integrantes = String(sUnknown.leader);
-          }
+          });
         }
-
-        filas.push([
-          ramaNombre,
-          descripcionRama,
-          nombreSubramaFull,
-          integrantes,
-          jefeRama ?? '',
-        ]);
       }
     } else {
+      // Rama without subgroups
       filas.push([
         ramaNombre,
         descripcionRama,
@@ -118,7 +110,63 @@ async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
     }
   }
 
+  console.log(' [Export] Obteniendo miembros para', allSubgroupRequests.length, 'subgrupos en paralelo...');
+
+  // Execute all member requests in parallel
+  const memberPromises = allSubgroupRequests.map(async (request) => {
+    try {
+      const members = await getMembersBySubgroup(request.subgroupId);
+      
+      // Filter only active and approved members
+      const activeMembers = (members || []).filter((m: Record<string, unknown>) => 
+        m.status === 'APPROVED' && m.is_active === true
+      );
+
+      // Use full_name directly from API response
+      const integrantes = activeMembers
+        .map((m: Record<string, unknown>) => m.full_name || '')
+        .filter(Boolean)
+        .join(', ');
+
+      return {
+        ...request.ramaInfo,
+        integrantes,
+      };
+    } catch (error) {
+      console.warn(' [Export] Error obteniendo miembros para subgrupo', request.subgroupId, ':', error);
+      return {
+        ...request.ramaInfo,
+        integrantes: '', // Empty if failed
+      };
+    }
+  });
+
+  // Wait for all requests to complete
+  const results = await Promise.allSettled(memberPromises);
+  
+  // Process results
+  results.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      const data = result.value;
+      filas.push([
+        data.ramaNombre,
+        data.descripcionRama,
+        data.nombreSubrama,
+        data.integrantes,
+        data.jefeRama,
+      ]);
+    } else {
+      console.warn(' [Export] Promise rejected:', result.reason);
+    }
+  });
+
+  console.log(' [Export] Procesamiento completado. Total filas:', filas.length);
   return filas;
+}
+
+// Legacy function for backward compatibility
+async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
+  return construirFilasDetalleSimple(ramas);
 }
 
 export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts = {}) => {
@@ -152,13 +200,13 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
     doc.text(`Generado: ${new Date().toLocaleString()}`, x, y + 16);
 
     console.log(' [ExportPDF] Construyendo datos para la tabla...');
-    const body = await construirFilasDetalle(onlyRamas);
+    const body = await construirFilasDetalleSimple(onlyRamas);
     console.log(' [ExportPDF] Tabla tendrá', body.length, 'filas');
 
     console.log(' [ExportPDF] Generando tabla con autoTable...');
     const pageW = doc.internal.pageSize.getWidth();
     const availableW = pageW - x * 2;
-    const updatedWeights = [12, 12, 32, 28, 11]; 
+    const updatedWeights = [10, 14, 16, 48, 12]; 
     const totalW = updatedWeights.reduce((a, b) => a + b, 0);
     const colW = updatedWeights.map((w) => Math.floor((w / totalW) * availableW));
     const finalColumnStyles: Record<string, { cellWidth: number }> = {};
@@ -169,7 +217,13 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
       body,
       margin: { left: x, right: x },
-      styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+      styles: { 
+        fontSize: 8, 
+        cellPadding: 4, 
+        overflow: "linebreak",
+        lineColor: [200, 200, 200],
+        lineWidth: 0.3
+      },
       headStyles: { fillColor: [r, g, b], textColor: [255, 255, 255] },
       columnStyles: finalColumnStyles,
       didDrawPage: () => {
@@ -192,10 +246,10 @@ export const exportarOrganigramaCSV = async (ramas: Rama[]) => {
     return !isCommitteeName(rawName);
   });
   
-  console.log(' [ExportCSV] Iniciando exportación CSV con', onlyRamas.length, 'ramas (filtradas de', ramas.length, 'totales)');
+  console.log(' [ExportCSV] Iniciando exportación CSV optimizada con', onlyRamas.length, 'ramas (filtradas de', ramas.length, 'totales)');
   
   try {
-    console.log(' [ExportCSV] Construyendo datos detallados...');
+    console.log(' [ExportCSV] Construyendo datos con paralelización y filtrado...');
     const filasDetalle = await construirFilasDetalle(onlyRamas);
     const detalleRows = filasDetalle.map((cols) => ({
       Rama: cols[0],
