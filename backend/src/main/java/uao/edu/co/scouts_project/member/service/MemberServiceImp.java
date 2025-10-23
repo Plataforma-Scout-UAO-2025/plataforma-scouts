@@ -62,6 +62,7 @@ public class MemberServiceImp implements IMemberService {
      * @return El miembro creado con su información persistida.
      */
     @Override
+    @Transactional
     public Member create_member(Member miembro) {
         validateMemberData(miembro);
 
@@ -150,6 +151,7 @@ public class MemberServiceImp implements IMemberService {
      * @return {@link Optional} con el miembro si existe.
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<List<Member>> get_members_by_subGroupId(Long subGroupId) {
         if (subGroupId == null || subGroupId <= 0) {
             log.warn("Invalid subgroup ID for search: {}", subGroupId);
@@ -242,10 +244,11 @@ public class MemberServiceImp implements IMemberService {
      * Actualiza la información de un miembro existente sin sobrescribir valores nulos.
      *
      * @param memberId     ID del miembro a actualizar.
-     * @param memberUpdate Datos nuevos del miembro.
+     * @param memberUpdate Entidad Member con los datos a actualizar (campos null no se actualizan).
      * @return El miembro actualizado.
      */
     @Override
+    @Transactional
     public Member update_member_by_id(Long memberId, Member memberUpdate) {
         if (memberId == null || memberId <= 0) {
             throw new IllegalArgumentException("Invalid member ID: " + memberId);
@@ -265,6 +268,7 @@ public class MemberServiceImp implements IMemberService {
     }
 
     @Override
+    @Transactional
     public Boolean update_role(String userId) {
         return null;
     }

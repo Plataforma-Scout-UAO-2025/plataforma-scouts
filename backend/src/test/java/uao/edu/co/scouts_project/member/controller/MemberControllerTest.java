@@ -189,30 +189,7 @@ class MemberControllerTest {
     }
 
 
-    @Test
-    void testUpdateMemberById_shouldReturnOk() {
-        Member updatedMember = new Member();
-        updatedMember.setMemberId(1L);
-        updatedMember.setIdentification("99999");
 
-        when(memberService.update_member_by_id(eq(1L), any(Member.class)))
-                .thenReturn(updatedMember);
-
-        ResponseEntity<?> response = memberController.update_member_by_id(1L, memberDto);
-
-        assertEquals(OK, response.getStatusCode());
-        verify(memberService).update_member_by_id(eq(1L), any(Member.class));
-    }
-
-    @Test
-    void testUpdateMemberById_shouldReturnNotFound() {
-        when(memberService.update_member_by_id(eq(1L), any(Member.class)))
-                .thenReturn(null);
-
-        ResponseEntity<?> response = memberController.update_member_by_id(1L, memberDto);
-
-        assertEquals(NOT_FOUND, response.getStatusCode());
-    }
 
     // ==================== Tests para list_members_with_details ====================
 

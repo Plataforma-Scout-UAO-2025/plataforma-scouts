@@ -12,6 +12,7 @@ import uao.edu.co.scouts_project.member.dto.*;
 import uao.edu.co.scouts_project.member.mapper.MemberMapper;
 import uao.edu.co.scouts_project.member.mapper.ListMemberMapper;
 import uao.edu.co.scouts_project.member.mapper.SchoolDataMapper;
+import uao.edu.co.scouts_project.member.mapper.UpdateMemberMapper;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.model.SchoolData;
 import uao.edu.co.scouts_project.member.service.IMemberService;
@@ -272,12 +273,14 @@ public class MemberController {
      */
     @PutMapping("/update_member_by_id/{id}")
     public ResponseEntity<MemberDto> update_member_by_id(
-            @PathVariable("id") Long memberId, @Valid @RequestBody MemberDto memberUpdateDto) {
-        Member miembroUpdate = MemberMapper.toEntity(memberUpdateDto);
-        Member miembroActualizado = memberservice.update_member_by_id(memberId, miembroUpdate);
-        return miembroActualizado != null
-                ? ResponseEntity.ok(MemberMapper.toDto(miembroActualizado))
-                : ResponseEntity.notFound().build();
+            @PathVariable("id") Long memberId,
+            @Valid @RequestBody UpdateMemberDto updateDto) {
+
+        Member memberUpdate = UpdateMemberMapper.toEntity(updateDto);
+
+        Member miembroActualizado = memberservice.update_member_by_id(memberId, memberUpdate);
+
+        return ResponseEntity.ok(MemberMapper.toDto(miembroActualizado));
     }
 
     /**
