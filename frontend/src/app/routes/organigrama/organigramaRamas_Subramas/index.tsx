@@ -174,11 +174,11 @@ export default function Organigrama() {
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Exportar organigrama</Button>
+              <Button variant="outline">Exportar Datos</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={handleExportPDF}>Exportar en PDF</DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel}>Exportar en Excel</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>Exportar en CSV</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

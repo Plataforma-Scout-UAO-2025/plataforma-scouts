@@ -3,9 +3,18 @@ import autoTable from "jspdf-autotable";
 import type { Branch as Rama, Subgroup as Subrama } from "../types/frontend";
 import { getMembersBySubgroup } from "@/api/organigramaApi";
 
+// Helper functions to filter out committee branches
+const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const isCommitteeName = (name: string) => {
+  const n = stripAccents(name).toLowerCase();
+  // Treat these names as organizational levels (exclude from Branches)
+  return n.includes("comit") || n.includes("asamblea") || n.includes("corte") || n.includes("consejo");
+};
+
 type ExportPDFOpts = {
   anio?: number;
   colorHex?: string;
+  groupName?: string;
 };
 
 function downloadBlob(filename: string, blob: Blob) {
@@ -29,7 +38,13 @@ function hexToRgb(hex: string): [number, number, number] {
 async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
   const filas: string[][] = [];
 
-  for (const r of ramas) {
+  // Filter out committee branches (comités, asambleas, cortes, consejos)
+  const onlyRamas = ramas.filter((r) => {
+    const rawName = String(r.name ?? r.nombre ?? '');
+    return !isCommitteeName(rawName);
+  });
+
+  for (const r of onlyRamas) {
     const ramaNombre = (r.name ?? r.nombre ?? '').toString();
     const descripcionRama = (r.description ?? (r as { descripcion?: string }).descripcion ?? '').toString().trim() ||
       ((typeof r.minAge === 'number' && typeof r.maxAge === 'number' && r.minAge > 0 && r.maxAge > 0)
@@ -107,7 +122,13 @@ async function construirFilasDetalle(ramas: Rama[]): Promise<string[][]> {
 }
 
 export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts = {}) => {
-  console.log(' [ExportPDF] Iniciando exportación PDF con', ramas.length, 'ramas');
+  // Filter out committee branches before processing
+  const onlyRamas = ramas.filter((r) => {
+    const rawName = String(r.name ?? r.nombre ?? '');
+    return !isCommitteeName(rawName);
+  });
+  
+  console.log(' [ExportPDF] Iniciando exportación PDF con', onlyRamas.length, 'ramas (filtradas de', ramas.length, 'totales)');
   console.log(' [ExportPDF] Opciones:', opts);
   
   try {
@@ -120,7 +141,9 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(r, g, b);
-    const titulo = "Organigrama Scout" + (opts.anio ? ` – ${opts.anio}` : "");
+    const titulo = opts.groupName 
+      ? `Conformación de ramas scout - ${opts.groupName}` 
+      : "Conformación de ramas scout";
     doc.text(titulo, x, y);
 
     doc.setFont("helvetica", "normal");
@@ -129,7 +152,7 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
     doc.text(`Generado: ${new Date().toLocaleString()}`, x, y + 16);
 
     console.log(' [ExportPDF] Construyendo datos para la tabla...');
-    const body = await construirFilasDetalle(ramas);
+    const body = await construirFilasDetalle(onlyRamas);
     console.log(' [ExportPDF] Tabla tendrá', body.length, 'filas');
 
     console.log(' [ExportPDF] Generando tabla con autoTable...');
@@ -163,11 +186,17 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
 };
 
 export const exportarOrganigramaCSV = async (ramas: Rama[]) => {
-  console.log(' [ExportCSV] Iniciando exportación CSV con', ramas.length, 'ramas');
+  // Filter out committee branches before processing
+  const onlyRamas = ramas.filter((r) => {
+    const rawName = String(r.name ?? r.nombre ?? '');
+    return !isCommitteeName(rawName);
+  });
+  
+  console.log(' [ExportCSV] Iniciando exportación CSV con', onlyRamas.length, 'ramas (filtradas de', ramas.length, 'totales)');
   
   try {
     console.log(' [ExportCSV] Construyendo datos detallados...');
-    const filasDetalle = await construirFilasDetalle(ramas);
+    const filasDetalle = await construirFilasDetalle(onlyRamas);
     const detalleRows = filasDetalle.map((cols) => ({
       Rama: cols[0],
       Descripción: cols[1],
