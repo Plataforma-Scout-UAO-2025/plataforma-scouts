@@ -248,7 +248,7 @@ export default function NivelesPage() {
           Niveles Organizativos
         </h1>
         <p className="text-accent-foreground">
-          Administra la estructura organizativa del grupo scout
+          Administra la estructura organizativa de tu grupo scout
         </p>
       </header>
 
