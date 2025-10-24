@@ -7,7 +7,7 @@ import LevelAccordion from "./components/LevelAccordion";
 import { useNiveles } from "./hooks/useNiveles";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { updateMemberAction, fetchMembersAction } from "@/store/members/membersActions";
+import { fetchMembersAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
 import type { RootState, AppDispatch } from "@/store/store";
 // Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
@@ -24,7 +24,7 @@ import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import SuccessModal from "./components/SuccessModal";
 
 import type { Nivel, Cargo } from "./types/niveles.types";
-import type { UpdateMember } from "@/types/member.type";
+ 
 
 export default function NivelesPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -192,20 +192,29 @@ export default function NivelesPage() {
           const parsedSec = parseInt(String(nivelActual.id), 10);
           if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
         }
-        await dispatch(updateMemberAction({
-          uid: memberId,
-          updates: {
-            subgroupId: subgroupNumId,
-            subgroup_id: subgroupNumId,
-            isActive: true,
-            ...(Number.isFinite(sectionNumId) && {
-              sectionId: sectionNumId,
-              section_id: sectionNumId,
-            } as { sectionId: number; section_id: number }),
-          } as Partial<UpdateMember> & { sectionId?: number; section_id?: number },
-        }));
-        // Forzar recarga de miembros listados por cargo
-        setMembersRefreshKey((k) => k + 1);
+        // Usar endpoint dedicado con permisos adecuados
+        // Preparar memberId (número si es posible)
+        const memberIdNum = Number(memberId);
+        const memberIdToSend: number | string = Number.isFinite(memberIdNum)
+          ? memberIdNum
+          : memberId;
+
+        const resultAction = await dispatch(
+          assignSubgroupAndSectionAction({
+            memberId: memberIdToSend,
+            subGroupId: subgroupNumId,
+            sectionId: Number.isFinite(sectionNumId) ? sectionNumId : undefined,
+          })
+        );
+        // Mostrar éxito solo si la acción se resolvió correctamente
+        if ((resultAction as any).meta?.requestStatus === "fulfilled") {
+          setShowSuccess(true);
+          // Refrescar miembros desde el backend para que el listado por cargo se actualice
+          await dispatch(fetchMembersAction());
+          setMembersRefreshKey((k) => k + 1);
+        } else {
+          console.error("Error al asignar subgrupo/sección: ", (resultAction as any).payload || resultAction);
+        }
       } else {
         console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargoToAssign.id);
       }
@@ -213,7 +222,6 @@ export default function NivelesPage() {
       console.error('Error asignando miembro al cargo', e);
     } finally {
       setOpenAddMember(false);
-      setShowSuccess(true);
     }
   };
 

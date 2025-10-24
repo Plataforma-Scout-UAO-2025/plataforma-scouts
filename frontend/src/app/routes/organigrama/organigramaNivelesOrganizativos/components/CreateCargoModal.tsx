@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,6 +47,9 @@ export default function CreateCargoModal({ open, onClose, onSave, initialNombre 
           <DialogTitle className="text-primary text-2xl font-extrabold">
             Crear Nuevo Cargo
           </DialogTitle>
+          <DialogDescription>
+            Define el nombre y una descripción opcional para el cargo dentro del nivel organizativo.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">

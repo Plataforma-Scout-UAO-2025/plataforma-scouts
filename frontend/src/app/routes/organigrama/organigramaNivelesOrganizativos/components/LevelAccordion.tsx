@@ -120,6 +120,24 @@ export default function LevelAccordion({
     }
   }, [dispatch, members.length]);
 
+  // Helper: convertir a número seguro
+  const toNumberSafe = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+
+  // Helper: obtener subgroupId del miembro, soportando varias formas
+  const getMemberSubgroupId = (m: Member): number | undefined => {
+    const anyM = m as unknown as Record<string, any>;
+    return (
+      toNumberSafe(anyM.subgroupId) ??
+      toNumberSafe(anyM.subgroup_id) ??
+      toNumberSafe(anyM?.subgroup?.subgroupId) ??
+      toNumberSafe(anyM?.subgroup?.subgroup_id)
+    );
+  };
+
   // Procesar miembros para cada cargo del nivel
   useEffect(() => {
     const cargos = nivel.cargos || [];
@@ -131,45 +149,13 @@ export default function LevelAccordion({
     const map: Record<string, string[]> = {};
     
     cargos.forEach((cargo) => {
-      // Mapeo específico entre nombres de cargos y roles de la base de datos
-      const getRoleForCargo = (cargoNombre: string): string[] => {
-        const nombre = cargoNombre?.toLowerCase().trim() || '';
-        
-        // Mapeo específico basado en los roles reales de la BD
-        if (nombre.includes('jefe de región') || nombre.includes('jefe región')) {
-          return ['ADMIN_GLOBAL'];
-        }
-        if (nombre.includes('jefe de rama') || nombre.includes('jefe rama')) {
-          return ['SCOUTER'];
-        }
-        if (nombre.includes('jefe de grupo') || nombre.includes('jefe grupo')) {
-          return ['ADMIN_GRUPO'];
-        }
-        if (nombre.includes('tesorero')) {
-          return ['TESORERO'];
-        }
-        if (nombre.includes('presidente')) {
-          return ['PRESIDENTE']; // Asumiendo que existe este rol
-        }
-        if (nombre.includes('secretario')) {
-          return ['SECRETARIO']; // Asumiendo que existe este rol
-        }
-        if (nombre.includes('vicepresidente')) {
-          return ['VICEPRESIDENTE']; // Asumiendo que existe este rol
-        }
-        
-        // Fallback: intentar coincidencia directa transformada
-        return [cargoNombre.toUpperCase().replace(/\s+/g, '_')];
-      };
-
-      const allowedRoles = getRoleForCargo(cargo.nombre || '');
-      
-      const membersWithRole = members.filter((member: Member) => {
-        const memberRole = member.role?.toString().toUpperCase();
-        return allowedRoles.includes(memberRole || '');
+      const cargoIdNum = toNumberSafe(cargo.id);
+      const assigned = members.filter((member: Member) => {
+        const sgId = getMemberSubgroupId(member);
+        return cargoIdNum !== undefined && sgId === cargoIdNum;
       });
 
-      const names = membersWithRole.map((member: Member) => {
+      const names = assigned.map((member: Member) => {
         const name = member.firstName || member.first_name || "";
         const last = member.lastName || member.last_name || "";
         const display = `${String(name).trim()} ${String(last).trim()}`.trim();

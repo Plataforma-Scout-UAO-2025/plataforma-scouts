@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +37,9 @@ export default function EditCargoModal({ open, cargo, onClose, onSave }: Props) 
           <DialogTitle className="text-primary text-2xl font-extrabold">
             Editar Cargo
           </DialogTitle>
+          <DialogDescription>
+            Actualiza el nombre y la descripción del cargo. La asignación de miembros se realiza en el modal dedicado.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">

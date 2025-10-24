@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,7 +22,8 @@ interface Props {
 }
 
 export default function AddMemberModal({ open, cargo, onClose, onAssign, members = [] }: Props) {
-  const [selectedMemberId, setSelectedMemberId] = useState<string | undefined>(undefined);
+  // Mantener el Select controlado desde el inicio para evitar warnings
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
 
   type MemberOption = { id: string; label: string };
   const memberOptions: MemberOption[] = useMemo(() => {
@@ -33,15 +34,15 @@ export default function AddMemberModal({ open, cargo, onClose, onAssign, members
         const firstName = String(rec["firstName"] ?? rec["first_name"] ?? "");
         const lastName = String(rec["lastName"] ?? rec["last_name"] ?? "");
 
+        if (!memberId) return null;
+
         const rawRoleSingle = rec["role"] as string | undefined;
         const rawRolesList = Array.isArray(rec["roles"]) ? (rec["roles"] as string[]) : undefined;
         const collected = rawRolesList ?? (rawRoleSingle ? [rawRoleSingle] : []);
         const normalized = Array.from(new Set(collected.map((r) => normalizeRawRole(r))));
-        const withoutScout = normalized.filter((r) => r !== RawRole.SCOUT);
-
-        if (!memberId || withoutScout.length === 0) return null;
-
-        const rolesLabel = withoutScout.map((r) => getRoleLabel(r)).join(", ");
+        // Excluir cualquier miembro que tenga el rol SCOUT
+        if (normalized.includes(RawRole.SCOUT)) return null;
+        const rolesLabel = normalized.length > 0 ? normalized.map((r) => getRoleLabel(r)).join(", ") : "";
         const displayName = `${firstName} ${lastName}`.trim();
         const label = rolesLabel ? `${displayName} — ${rolesLabel}` : displayName;
         return { id: String(memberId), label } as MemberOption;
@@ -51,7 +52,7 @@ export default function AddMemberModal({ open, cargo, onClose, onAssign, members
 
   useEffect(() => {
     // Reset selection when opening a different cargo
-    setSelectedMemberId(undefined);
+    setSelectedMemberId("");
   }, [cargo?.id, open]);
 
   const handleAssign = () => {
@@ -66,6 +67,9 @@ export default function AddMemberModal({ open, cargo, onClose, onAssign, members
           <DialogTitle className="text-primary text-2xl font-extrabold">
             Agregar miembro al cargo
           </DialogTitle>
+          <DialogDescription>
+            Selecciona un miembro de la lista y confirma para asignarlo al cargo seleccionado.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
