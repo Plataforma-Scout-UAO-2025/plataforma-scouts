@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Trash2, Pencil, ChevronDown } from "lucide-react";
 import type { Nivel, Cargo } from "../types/niveles.types";
 import PositionItem from "./PositionItem";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMembersAction } from "@/store/members/membersActions";
+import type { RootState, AppDispatch } from "@/store/store";
+import type { Member } from "@/types/member.type";
 
 interface Props {
   nivel: Nivel;
@@ -14,6 +18,8 @@ interface Props {
   onDeleteCargo?: (cargo: Cargo) => void;
   /** Opcional: iniciar abierto o cerrado (por defecto: true) */
   defaultOpen?: boolean;
+  /** Forzar recarga de miembros listados por cargo cuando cambie */
+  refreshKey?: number | string;
 }
 
 export default function LevelAccordion({
@@ -24,8 +30,154 @@ export default function LevelAccordion({
   onEditCargo,
   onDeleteCargo,
   defaultOpen = true,
+  refreshKey,
 }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { members } = useSelector((state: RootState) => state.members);
+  
   const [open, setOpen] = useState<boolean>(defaultOpen);
+  // Estado para sub-acordeones por rol: mapa roleName -> open
+  const [groupsOpen, setGroupsOpen] = useState<Record<string, boolean>>({});
+  // Miembros por cargo (subgroupId -> nombres)
+  const [membersByCargo, setMembersByCargo] = useState<Record<string, string[]>>({});
+
+  // Agrupar cargos por rol (nombre del cargo). useMemo para rendimiento.
+  const cargosPorRol = useMemo(() => {
+    const map: Record<string, typeof nivel.cargos> = {};
+    nivel.cargos.forEach((c) => {
+      const key = c.nombre || "Sin rol";
+      if (!map[key]) map[key] = [];
+      map[key].push(c);
+    });
+    return map;
+  }, [nivel]);
+
+  // Normalizador para comparar cadenas sin tildes y minúsculas
+  const normalize = (s: string) =>
+    String(s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  // Prioridades fijas por comité
+  const jefaturaOrder = useMemo(
+    () =>
+      [
+        "Jefe de Región",
+        "Sub Jefe de Región",
+        "Jefe de Grupo",
+        "Sub Jefe de Grupo",
+        "Jefe de Rama",
+        "Sub Jefe de Subrama",
+      ].map(normalize),
+    []
+  );
+
+  const padresOrder = useMemo(
+    () =>
+      [
+        "Presidente",
+        "Vicepresidente",
+        "Secretario",
+        "Tesorero",
+        "Vocal",
+      ].map(normalize),
+    []
+  );
+
+  // Determinar orden de grupos (roles) según el nombre del nivel (comité)
+  const orderedRoleKeys = useMemo(() => {
+    const keys = Object.keys(cargosPorRol);
+    const nivelName = normalize(nivel.nombre);
+    const isJefatura = nivelName.includes("comite de jefatura");
+    const isPadres = nivelName.includes("comite de padres");
+    if (!isJefatura && !isPadres) {
+      // Por defecto, orden alfabético sensible al español
+      return keys.sort((a, b) => a.localeCompare(b, "es"));
+    }
+    const priority = isJefatura ? jefaturaOrder : padresOrder;
+    return keys.sort((a, b) => {
+      const ai = priority.indexOf(normalize(a));
+      const bi = priority.indexOf(normalize(b));
+      const aIn = ai !== -1;
+      const bIn = bi !== -1;
+      if (aIn && bIn) return ai - bi;
+      if (aIn) return -1;
+      if (bIn) return 1;
+      // Los no listados van después, en orden alfabético
+      return a.localeCompare(b, "es");
+    });
+  }, [cargosPorRol, nivel.nombre, jefaturaOrder, padresOrder]);
+
+  // Cargar miembros al montar el componente
+  useEffect(() => {
+    if (members.length === 0) {
+      dispatch(fetchMembersAction());
+    }
+  }, [dispatch, members.length]);
+
+  // Procesar miembros para cada cargo del nivel
+  useEffect(() => {
+    const cargos = nivel.cargos || [];
+    if (cargos.length === 0) {
+      setMembersByCargo({});
+      return;
+    }
+
+    const map: Record<string, string[]> = {};
+    
+    cargos.forEach((cargo) => {
+      // Mapeo específico entre nombres de cargos y roles de la base de datos
+      const getRoleForCargo = (cargoNombre: string): string[] => {
+        const nombre = cargoNombre?.toLowerCase().trim() || '';
+        
+        // Mapeo específico basado en los roles reales de la BD
+        if (nombre.includes('jefe de región') || nombre.includes('jefe región')) {
+          return ['ADMIN_GLOBAL'];
+        }
+        if (nombre.includes('jefe de rama') || nombre.includes('jefe rama')) {
+          return ['SCOUTER'];
+        }
+        if (nombre.includes('jefe de grupo') || nombre.includes('jefe grupo')) {
+          return ['ADMIN_GRUPO'];
+        }
+        if (nombre.includes('tesorero')) {
+          return ['TESORERO'];
+        }
+        if (nombre.includes('presidente')) {
+          return ['PRESIDENTE']; // Asumiendo que existe este rol
+        }
+        if (nombre.includes('secretario')) {
+          return ['SECRETARIO']; // Asumiendo que existe este rol
+        }
+        if (nombre.includes('vicepresidente')) {
+          return ['VICEPRESIDENTE']; // Asumiendo que existe este rol
+        }
+        
+        // Fallback: intentar coincidencia directa transformada
+        return [cargoNombre.toUpperCase().replace(/\s+/g, '_')];
+      };
+
+      const allowedRoles = getRoleForCargo(cargo.nombre || '');
+      
+      const membersWithRole = members.filter((member: Member) => {
+        const memberRole = member.role?.toString().toUpperCase();
+        return allowedRoles.includes(memberRole || '');
+      });
+
+      const names = membersWithRole.map((member: Member) => {
+        const name = member.firstName || member.first_name || "";
+        const last = member.lastName || member.last_name || "";
+        const display = `${String(name).trim()} ${String(last).trim()}`.trim();
+        return display.length > 0 ? display : "Miembro";
+      });
+
+      map[String(cargo.id)] = names;
+    });
+
+    setMembersByCargo(map);
+  }, [members, nivel.cargos, refreshKey]);
 
   const toggle = () => setOpen((v) => !v);
   const onKeyToggle: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -48,8 +200,6 @@ export default function LevelAccordion({
           className="flex items-center gap-3 flex-1 cursor-pointer select-none"
           role="button"
           tabIndex={0}
-          aria-expanded={open}
-          aria-controls={`nivel-panel-${nivel.id}`}
           onClick={toggle}
           onKeyDown={onKeyToggle}
         >
@@ -111,18 +261,64 @@ export default function LevelAccordion({
         className={`px-5 overflow-hidden transition-[grid-template-rows] duration-200 ease-in-out ${
           open ? "grid grid-rows-[1fr] pt-3" : "grid grid-rows-[0fr]"
         }`}
-        aria-hidden={!open}
       >
         <div className="min-h-0">
-          <div className="space-y-2">
-            {nivel.cargos.map((cargo) => (
-              <PositionItem
-                key={cargo.id}
-                cargo={cargo}
-                onEdit={() => onEditCargo?.(cargo)}
-                onDelete={() => onDeleteCargo?.(cargo)}
-              />
-            ))}
+          <div className="space-y-3">
+            {/* Renderizar sub-acordeones por rol */}
+            {orderedRoleKeys.map((rol) => {
+              const cargos = cargosPorRol[rol] || [];
+              const isOpen = groupsOpen[rol] ?? true;
+              return (
+                <div key={rol} className="border border-border rounded-md bg-card">
+                  <div
+                    className={`flex items-center justify-between px-3 py-2 cursor-pointer select-none ${
+                      isOpen ? "bg-muted/40" : ""
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      setGroupsOpen((prev) => ({ ...prev, [rol]: !isOpen }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setGroupsOpen((prev) => ({ ...prev, [rol]: !isOpen }));
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ChevronDown
+                        className={`h-4 w-4 text-primary transition-transform duration-200 ${
+                          isOpen ? "rotate-0" : "-rotate-90"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <div className="font-medium text-primary">{rol}</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {cargos.reduce((acc, c) => acc + (membersByCargo[c.id]?.length || 0), 0)} miembro
+                      {cargos.reduce((acc, c) => acc + (membersByCargo[c.id]?.length || 0), 0) === 1 ? "" : "s"}
+                    </div>
+                  </div>
+
+                  {isOpen && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {cargos.map((cargo) => (
+                        <PositionItem
+                          key={cargo.id}
+                          cargo={cargo}
+                          members={membersByCargo[cargo.id] || []}
+                          onEdit={() => onEditCargo?.(cargo)}
+                          onDelete={() => onDeleteCargo?.(cargo)}
+                          // El botón interno "Agregar miembro al cargo" usará la misma lógica de editar cargo
+                          onAddMember={() => onEditCargo?.(cargo)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Botón "Crear Nuevo Cargo" */}

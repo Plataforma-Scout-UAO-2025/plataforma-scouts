@@ -1,5 +1,7 @@
 package uao.edu.co.scouts_project.organigrama.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
@@ -11,6 +13,8 @@ public record UpdateImageRequest(
     @Schema(description = "UUID del objeto de storage en Supabase", 
             example = "123e4567-e89b-12d3-a456-426614174000",
             required = true)
+    @JsonProperty("object_id")
+    @JsonAlias("objectId")
     @NotNull(message = "El objectId es obligatorio")
     UUID objectId
 ) {}

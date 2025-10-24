@@ -58,8 +58,47 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
               groupSlug,
               { signal: ctrl.signal }
             );
-            ramasCache.set(cacheKey, { ts: Date.now(), data });
-            setRamas(data);
+            
+            // Filtrar niveles organizativos: excluir nombres que contengan 'comit', 'asamblea', 'corte', 'consejo' (sin acentos)
+            const normalize = (s: string) => String(s || '')
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .toLowerCase();
+            const ramasSinOrganizativos = data.filter((rama) => {
+              const n = normalize(String(rama.name || rama.nombre || ''));
+              return !(
+                n.includes('comit') ||
+                n.includes('asamblea') ||
+                n.includes('corte') ||
+                n.includes('consejo')
+              );
+            });
+            
+            // Ordenar ramas según el orden específico de secciones scout
+            const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
+            const ramasOrdenadas = ramasSinOrganizativos.sort((a, b) => {
+              const nameA = String(a.name || a.nombre || '').toLowerCase();
+              const nameB = String(b.name || b.nombre || '').toLowerCase();
+              
+              // Buscar el índice de cada rama en el orden definido
+              const indexA = ordenRamas.findIndex(orden => nameA.includes(orden));
+              const indexB = ordenRamas.findIndex(orden => nameB.includes(orden));
+              
+              // Si ambas ramas están en el orden definido, ordenar por índice
+              if (indexA !== -1 && indexB !== -1) {
+                return indexA - indexB;
+              }
+              
+              // Si solo una está en el orden, la que está va primero
+              if (indexA !== -1) return -1;
+              if (indexB !== -1) return 1;
+              
+              // Si ninguna está en el orden, ordenar alfabéticamente
+              return nameA.localeCompare(nameB);
+            });
+            
+            ramasCache.set(cacheKey, { ts: Date.now(), data: ramasOrdenadas });
+            setRamas(ramasOrdenadas);
             setIsLoaded(true);
             setIsFetching(false);
             return;

@@ -162,8 +162,8 @@ class SectionServiceTest {
     void testGetSectionWithSubgroups() {
         // Arrange
         List<SubgroupResponseDTO> subgroups = Arrays.asList(
-            new SubgroupResponseDTO(1L, TENANT_ID, 1L, 1L, "Subgrupo 1", "Desc 1", null, null, null, null),
-            new SubgroupResponseDTO(2L, TENANT_ID, 1L, 1L, "Subgrupo 2", "Desc 2", null, null, null, null)
+            new SubgroupResponseDTO(1L, TENANT_ID, 1L, 1L, "Subgrupo 1", "Desc 1", null, null, true, Instant.now(), Instant.now()),
+            new SubgroupResponseDTO(2L, TENANT_ID, 1L, 1L, "Subgrupo 2", "Desc 2", null, null, true, Instant.now(), Instant.now())
         );
 
         when(groupRepository.findByTenantIdAndSlug(TENANT_ID, GROUP_SLUG)).thenReturn(Optional.of(group));
