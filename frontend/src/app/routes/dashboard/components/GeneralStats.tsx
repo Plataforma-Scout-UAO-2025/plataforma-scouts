@@ -1,5 +1,5 @@
 import type { Member } from "@/types/member.type";
-import { User2, Award } from "lucide-react";
+import { User2 } from "lucide-react";
 
 interface GeneralStatsProps {
   members: Member[];
@@ -14,12 +14,6 @@ const GeneralStats = ({ members }: GeneralStatsProps) => {
     ? Math.round(conEdad.reduce((acc, m) => acc + (m.age || 0), 0) / conEdad.length)
     : 0;
 
-  // Scouts con insignias
-  const conInsignias = 0;
-  const porcentajeConInsignias = members.length > 0 
-    ? Math.round((conInsignias / members.length) * 100)
-    : 0;
-
   const estadisticas = [
     {
       icon: User2,
@@ -27,13 +21,6 @@ const GeneralStats = ({ members }: GeneralStatsProps) => {
       valor: edadPromedio > 0 ? `${edadPromedio} años` : "N/A",
       detalle: conEdad.length > 0 ? `${conEdad.length} scouts con edad registrada` : "Sin datos",
       color: "text-blue-600",
-    },
-    {
-      icon: Award,
-      titulo: "Con Insignias",
-      valor: `${porcentajeConInsignias}%`,
-      detalle: `${conInsignias} de ${members.filter((m) => isScout(m.role)).length} scouts`,
-      color: "text-amber-600",
     }
   ];
 

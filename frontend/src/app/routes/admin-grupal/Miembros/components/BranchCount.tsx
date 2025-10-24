@@ -1,64 +1,22 @@
-import type { Member } from "@/types/member.type";
 import { useMemo } from "react";
 
 interface BranchCountProps {
-  filteredMembers: Member[];
+  branchMemberCount: Record<string, number>;
   totalMembers: number;
 }
 
-const BranchCount = ({ filteredMembers, totalMembers }: BranchCountProps) => {
+const BranchCount = ({ branchMemberCount, totalMembers }: BranchCountProps) => {
   const branchCounts = useMemo(() => {
-    const total = totalMembers;
-    const countBySection: Record<string, number> = {};
+    const counts = [
+      { label: "Total Miembros", count: totalMembers, isTotal: true },
+    ];
 
-    filteredMembers.forEach((member: Member) => {
-      const rec = member as unknown as Record<string, unknown>;
-
-      const branches = rec["branch"] as unknown;
-      if (Array.isArray(branches) && branches.length > 0) {
-        branches.forEach((b) => {
-          const br = b as Record<string, unknown> | string | undefined;
-          const name = (typeof br === "string"
-            ? br
-            : (br && (br["name"] ?? br["nombre"])) ?? "Sin rama") as string;
-          countBySection[name] = (countBySection[name] || 0) + 1;
-        });
-        return;
-      }
-
-      const subgroup = rec["subgroup"] as Record<string, unknown> | undefined;
-      if (subgroup) {
-        const section = subgroup["section"] as Record<string, unknown> | undefined;
-        const sectionName = (section && (section["name"] ?? section["nombre"])) as string | undefined;
-        if (sectionName) {
-          countBySection[sectionName] = (countBySection[sectionName] || 0) + 1;
-          return;
-        }
-        const subgroupName = (subgroup["name"] ?? subgroup["nombre"]) as string | undefined;
-        if (subgroupName) {
-          countBySection[subgroupName] = (countBySection[subgroupName] || 0) + 1;
-          return;
-        }
-      }
-
-      const sectionNameDirect = (rec["section_name"] ?? rec["sectionName"]) as string | undefined;
-      if (sectionNameDirect) {
-        countBySection[sectionNameDirect] = (countBySection[sectionNameDirect] || 0) + 1;
-        return;
-      }
+    Object.entries(branchMemberCount).forEach(([sectionName, count]) => {
+      counts.push({ label: sectionName, count, isTotal: false });
     });
 
-    const counts = [{ label: "Total Miembros", count: total, isTotal: true }];
-
-    // Agregar cada rama ordenada de mayor a menor cantidad de miembros
-    Object.entries(countBySection)
-      .sort(([, a], [, b]) => b - a)
-      .forEach(([sectionName, count]) => {
-        counts.push({ label: sectionName, count, isTotal: false });
-      });
-
     return counts;
-  }, [filteredMembers, totalMembers]);
+  }, [branchMemberCount, totalMembers]);
 
   return (
     <>

@@ -52,12 +52,12 @@ function App() {
             <Route index element={<Dashboard />} />
 
             {/* ===================== ORGANIGRAMA ===================== */}
-            <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrganigramaHome /></ProtectedRoute>} />
-            <Route path="organigrama/ramas-y-subramas" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><Organigrama /></ProtectedRoute>} />
-            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><RamaDetail /></ProtectedRoute>} />
-            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><SubramaDetail /></ProtectedRoute>} />
-            <Route path="organigrama/niveles-organizativos" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><NivelesPage /></ProtectedRoute>} />
-            <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrgChartSummary /></ProtectedRoute>} />
+            <Route path="organigrama" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><OrganigramaHome /></ProtectedRoute>} />
+            <Route path="organigrama/ramas-y-subramas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><Organigrama /></ProtectedRoute>} />
+            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><RamaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><SubramaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/niveles-organizativos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><NivelesPage /></ProtectedRoute>} />
+            <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><OrgChartSummary /></ProtectedRoute>} />
 
             {/* ===================== GRUPOS ===================== */}
             {/* Mantener solo la ruta protegida más abajo */}
@@ -74,9 +74,6 @@ function App() {
             <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
-            {/*
-            <Route path="insignias" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Insignias /></ProtectedRoute>} />
-            */}
 
             {/* Rutas para acudiente */}
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />
@@ -84,9 +81,9 @@ function App() {
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><MedicalRecordsView /></ProtectedRoute>} />
 
             {/* Rutas para Guardianes*/}
-            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><MembersInCharge /></ProtectedRoute>} />
-            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><GuardianProfile /></ProtectedRoute>} />
-            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><WelcomeAddMember /></ProtectedRoute>} />
+            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><MembersInCharge /></ProtectedRoute>} />
+            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><GuardianProfile /></ProtectedRoute>} />
+            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><WelcomeAddMember /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

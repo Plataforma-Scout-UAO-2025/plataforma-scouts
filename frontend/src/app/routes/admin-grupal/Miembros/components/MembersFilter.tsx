@@ -19,7 +19,7 @@ interface MembersFilterProps {
   branchFilter: string;
   setBranchFilter: (value: string) => void;
   filteredMembers: Member[];
-  extractSectionsFromMember: (member: Member) => string[];
+  branchMembers: string[];
 }
 
 const MembersFilter = ({
@@ -29,18 +29,13 @@ const MembersFilter = ({
   setIsActiveFilter,
   branchFilter,
   setBranchFilter,
-  filteredMembers,
-  extractSectionsFromMember,
+  branchMembers
 }: MembersFilterProps) => {
   const navigate = useNavigate();
 
   const [isActive, setIsActive] = useState(false);
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
-
-  const branches = Array.from(
-    new Set(filteredMembers.flatMap((m) => extractSectionsFromMember(m)))
-  );
 
   // Roles de ejemplo
   const roles = ["Scout", "Tesorero", "Acudiente", "Scouter", "Comite Admin"];
@@ -112,13 +107,13 @@ const MembersFilter = ({
             >
               Todas las ramas
             </DropdownMenuItem>
-            {branches.map((b) => (
+            {branchMembers.map((branch) => (
               <DropdownMenuItem
-                key={b}
+                key={branch}
                 className="cursor-pointer"
-                onSelect={() => setBranchFilter(b)}
+                onSelect={() => setBranchFilter(branch)}
               >
-                {b}
+                {branch}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
