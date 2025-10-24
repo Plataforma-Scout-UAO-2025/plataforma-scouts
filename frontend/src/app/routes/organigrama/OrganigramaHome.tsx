@@ -1,8 +1,25 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
+import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
+import { fetchGroupAction } from "@/store/organigrama/organigramaActions";
+import type { RootState, AppDispatch } from "@/store/store";
 
 export default function OrganigramaHome() {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { tenantId, groupSlug, isFetching: tenantLoading } = useTenantParams();
+  const { group, loading } = useSelector(
+    (state: RootState) => state.organigrama
+  );
+
+  // Fetch group information when tenant params are available
+  useEffect(() => {
+    if (tenantId && groupSlug && !group) {
+      dispatch(fetchGroupAction({ tenantId, groupSlug }));
+    }
+  }, [dispatch, tenantId, groupSlug, group]);
 
   const cards = [
     {
@@ -27,7 +44,11 @@ export default function OrganigramaHome() {
       {/* Encabezado */}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-extrabold text-primary">
-          Grupo Scout Centinelas 113
+          {loading || tenantLoading ? (
+            <span className="animate-pulse">Cargando...</span>
+          ) : (
+            group?.name || "Grupo Scout"
+          )}
         </h1>
         <p className="text-accent-foreground text-lg">
           Sistema de Gestión del Organigrama

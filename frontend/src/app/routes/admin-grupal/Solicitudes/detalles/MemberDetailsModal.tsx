@@ -14,6 +14,9 @@ import AssignmentSelectors from "./components/AssignmentSelectors";
 import MemberStatusBar from "./components/MemberStatusBar";
 import { useOrgStructure } from "@/hooks/useOrgStructure";
 import { useMemberApproval } from "@/hooks/useMemberApproval";
+import { listRoles } from "@/api/membersApi";
+import type { RoleSummary } from "@/api/membersApi";
+import { useEffect, useState } from "react";
 
 interface MemberDetailsModalProps {
   open: boolean;
@@ -47,16 +50,44 @@ export default function MemberDetailsModal({
 
   const handleClose = () => {
     resetSelections();
+    setSelectedRole("");
     onOpenChange(false);
   };
+  const [roles, setRoles] = useState<RoleSummary[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+  const [rolesError, setRolesError] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
   const { loading, canAccept, accept } = useMemberApproval({
     member,
     selectedSection,
     selectedSubgroup,
+    selectedRole,
     onSuccess,
     onClose: handleClose,
   });
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchRoles = async () => {
+      if (!open) return;
+      setRolesLoading(true);
+      setRolesError(null);
+      try {
+        const data = await listRoles();
+        if (mounted) setRoles(data);
+      } catch {
+        if (mounted) setRolesError("No fue posible cargar los roles");
+      } finally {
+        if (mounted) setRolesLoading(false);
+      }
+    };
+
+    fetchRoles();
+    return () => {
+      mounted = false;
+    };
+  }, [open, setRoles, setRolesLoading, setRolesError]);
 
   if (!member) return null;
 
@@ -88,6 +119,11 @@ export default function MemberDetailsModal({
               setSelectedSection={setSelectedSection}
               selectedSubgroup={selectedSubgroup}
               setSelectedSubgroup={setSelectedSubgroup}
+              roles={roles}
+              rolesLoading={rolesLoading}
+              rolesError={rolesError}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
             />
             <MemberStatusBar member={member} />
           </div>
@@ -105,7 +141,9 @@ export default function MemberDetailsModal({
           <Button
             variant="primary"
             onClick={accept}
-            disabled={loading || !canAccept || !selectedGroupSlug}
+            disabled={
+              loading || !canAccept || !selectedGroupSlug || !selectedRole
+            }
             className="flex-1 bg-green-600 hover:bg-green-700"
           >
             {loading ? "Procesando..." : "Aceptar Solicitud"}

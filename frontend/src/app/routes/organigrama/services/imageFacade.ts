@@ -3,7 +3,6 @@
 // consolidación sin tocar la lógica actual en los servicios individuales.
 
 import {
-  diagnoseBatchImageUpload as diagUploadCore,
   uploadSectionIcon as uploadIconCore,
   uploadSectionMainImage as uploadMainCore,
   uploadGalleryImages as uploadGalleryCore,
@@ -12,11 +11,11 @@ import {
   removeSectionIcon as removeIconCore,
   removeSectionMainImage as removeMainCore,
 } from '../organigramaRamas_Subramas/services/image-upload-core.service';
+import type { AppDispatch } from '@/store/store';
 import {
   addGalleryImage as addGalleryCore,
   getGalleryImageUuids as getGalleryUuidsCore,
   replaceGalleryImage as replaceGalleryCore,
-  removeGalleryImage as removeGalleryCore,
   deleteGalleryImageById as deleteGalleryByIdCore,
   resolveGalleryItem as resolveGalleryItemCore,
   replaceGalleryList as replaceGalleryListCore,
@@ -28,19 +27,34 @@ import type { GalleryItemZ } from '../schemas/gallery.schema';
 import type { GalleryItemsZ } from '../schemas/gallery.schema';
 
 // Reexportar la API con nombres estables
-export const diagnoseBatchImageUpload = (...args: Parameters<typeof diagUploadCore>) => diagUploadCore(...args);
 export const uploadSectionIcon = (...args: Parameters<typeof uploadIconCore>) => uploadIconCore(...args);
-export const uploadSectionMainImage = (...args: Parameters<typeof uploadMainCore>) => uploadMainCore(...args);
+
+// Updated functions to require Redux dispatch
+export const uploadSectionMainImage = (
+  tenantId: string,
+  groupSlug: string,
+  sectionId: string,
+  file: File,
+  dispatch: AppDispatch,
+  onFileProgress?: (fileName: string, percent: number) => void,
+  signal?: AbortSignal
+) => uploadMainCore(tenantId, groupSlug, sectionId, file, dispatch, onFileProgress, signal);
+
 export const uploadGalleryImages = (...args: Parameters<typeof uploadGalleryCore>) => uploadGalleryCore(...args);
 
 export const removeSectionIcon = (...args: Parameters<typeof removeIconCore>) => removeIconCore(...args);
-export const removeSectionMainImage = (...args: Parameters<typeof removeMainCore>) => removeMainCore(...args);
+
+export const removeSectionMainImage = (
+  tenantId: string,
+  groupSlug: string,
+  sectionId: string,
+  dispatch: AppDispatch
+) => removeMainCore(tenantId, groupSlug, sectionId, dispatch);
 
 // Nota: funciones de gallery/service se mantienen donde están (gallery.service.ts)
 // La fachada facilita redirigir llamadas futuras desde aquí.
 
 export default {
-  diagnoseBatchImageUpload,
   uploadSectionIcon,
   uploadSectionMainImage,
   uploadGalleryImages,
@@ -52,7 +66,6 @@ export default {
 export const addGalleryImage = (...args: Parameters<typeof addGalleryCore>) => addGalleryCore(...args);
 export const getGalleryImageUuids = (...args: Parameters<typeof getGalleryUuidsCore>) => getGalleryUuidsCore(...args);
 export const replaceGalleryImage = (...args: Parameters<typeof replaceGalleryCore>) => replaceGalleryCore(...args);
-export const removeGalleryImage = (...args: Parameters<typeof removeGalleryCore>) => removeGalleryCore(...args);
 export const deleteGalleryImageById = (...args: Parameters<typeof deleteGalleryByIdCore>) => deleteGalleryByIdCore(...args);
 export const resolveGalleryItem: (...args: Parameters<typeof resolveGalleryItemCore>) => Promise<GalleryItemZ> = async (...args) => {
   const raw = await resolveGalleryItemCore(...args);

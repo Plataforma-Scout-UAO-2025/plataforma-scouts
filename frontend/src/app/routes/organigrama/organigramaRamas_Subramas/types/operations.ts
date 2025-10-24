@@ -1,20 +1,15 @@
 // Gallery operation types
 export interface GalleryReplaceOperation {
   op: "replace";
-  targetUuid: string;
-  newValue: string;
+  target_uuid: string;
+  new_value: string;
 }
 
 export interface GalleryAddOperation {
   op: "add";
-  newValue: string;
+  new_value: string;
 }
 
-export interface GalleryRemoveOperation {
-  op: "remove";
-  targetUuid: string | null;
-}
-
-export interface GalleryUpdatePayload {
-  operations: (GalleryReplaceOperation | GalleryAddOperation | GalleryRemoveOperation)[];
+export interface GalleryUpdatePayload extends Record<string, unknown> {
+  operations: (GalleryReplaceOperation | GalleryAddOperation)[];
 }

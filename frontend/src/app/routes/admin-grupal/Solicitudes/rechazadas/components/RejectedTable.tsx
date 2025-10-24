@@ -40,25 +40,23 @@ const RejectedTable = ({ filteredMembers }: RejectedTableProps) => {
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
               <TableRow key={member.member_id}>
-                <TableCell className="pl-4 font-medium">{member.member_id}</TableCell>
+                <TableCell className="pl-4 font-medium">
+                  {member.member_id}
+                </TableCell>
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
                 <TableCell>{member.identification}</TableCell>
-                <TableCell>{member.address}</TableCell>
+                <TableCell>{member.address || "Sin dirección"}</TableCell>
                 <TableCell>
-                    <span className="inline-block px-2 py-1 rounded-lg border border-red-300 bg-red-100 text-red-800 font-semibold">
-                        {statusLabels[member.status ?? "Rechazado"]}
-                    </span>
+                  <span className="inline-block px-2 py-1 rounded-lg border border-red-300 bg-red-100 text-red-800 font-semibold">
+                    {statusLabels[member.status ?? "Rechazado"]}
+                  </span>
                 </TableCell>
                 <TableCell className="text-center">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        title="Ver detalles"
-                      >
-                        <Eye size={16} />
-                      </Button>
-                    </TableCell>
+                  <Button variant="primary" size="sm" title="Ver detalles">
+                    <Eye size={16} />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))
           ) : (

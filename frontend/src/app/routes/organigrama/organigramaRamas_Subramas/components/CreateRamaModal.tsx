@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Upload, Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -32,6 +32,19 @@ export default function CreateRamaModal({
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { error, handleError, clearError } = useApiError();
+
+  // Cleanup para imagenUrl - revocar blob cuando cambie o al desmontar
+  useEffect(() => {
+    return () => {
+      if (imagenUrl && imagenUrl.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(imagenUrl);
+        } catch (err) {
+          console.warn('Could not revoke image preview blob URL:', err);
+        }
+      }
+    };
+  }, [imagenUrl]);
   type FormState = {
     name?: string;
     nombre?: string;

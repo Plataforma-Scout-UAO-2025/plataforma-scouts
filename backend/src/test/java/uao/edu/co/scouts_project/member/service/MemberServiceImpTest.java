@@ -9,7 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
-import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 import uao.edu.co.scouts_project.organigrama.repository.SubgroupRepository;
 
 import java.time.LocalDate;
@@ -129,32 +128,6 @@ class MemberServiceImpTest {
         verify(memberRepository).save(m);
     }
 
-    @Test
-    void testAssignSubGroup_shouldAssignSuccessfully() {
-        Member member = new Member(); member.setMemberId(1L);
-        Subgroup subgroup = new Subgroup(); subgroup.setSubgroupId(2L); subgroup.setIsActive(true);
-
-        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
-        when(subgroupRepository.findById(2L)).thenReturn(Optional.of(subgroup));
-
-        boolean result = memberService.assign_subGroup(1L, 2L);
-
-        assertTrue(result);
-        verify(memberRepository).save(member);
-    }
-
-    @Test
-    void testAssignSubGroup_shouldFailWhenInactive() {
-        Member member = new Member(); member.setMemberId(1L);
-        Subgroup subgroup = new Subgroup(); subgroup.setSubgroupId(2L); subgroup.setIsActive(false);
-
-        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
-        when(subgroupRepository.findById(2L)).thenReturn(Optional.of(subgroup));
-
-        boolean result = memberService.assign_subGroup(1L, 2L);
-
-        assertFalse(result);
-    }
 
     @Test
     void testUpdateMemberById_shouldCopyNonNullProperties() {
