@@ -1,13 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchGroupAction, fetchSectionsAction, fetchSectionWithSubgroupsAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
+import { fetchGroupAction, fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchSubgroupMembersAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { GroupResponseDTO } from "@/types/group.type";
+import type { Member } from "@/types/member.type";
 
 interface OrganigramaState {
   group: GroupResponseDTO | null;
   sections: Section[];
   currentSection?: { section: Section; subgroups: Subgroup[] } | null;
+  subgroupMembers: {
+    [subgroupId: number]: {
+      members: Member[];
+      loading: boolean;
+      error: string | null;
+    };
+  };
   loading: boolean;
   error: string | null;
 }
@@ -16,6 +24,7 @@ const initialState: OrganigramaState = {
   group: null,
   sections: [],
   currentSection: null,
+  subgroupMembers: {},
   loading: false,
   error: null,
 };
@@ -135,7 +144,50 @@ const organigramaSlice = createSlice({
       state.loading = false;
       state.error = action.payload as string;
     });
+
+    // Subgroup members actions
+    builder.addCase(fetchSubgroupMembersAction.pending, (state, action) => {
+      const subgroupId = action.meta.arg;
+      if (!state.subgroupMembers[subgroupId]) {
+        state.subgroupMembers[subgroupId] = {
+          members: [],
+          loading: false,
+          error: null,
+        };
+      }
+      state.subgroupMembers[subgroupId].loading = true;
+      state.subgroupMembers[subgroupId].error = null;
+    });
+    builder.addCase(fetchSubgroupMembersAction.fulfilled, (state, action) => {
+      const { subgroupId, members } = action.payload;
+      state.subgroupMembers[subgroupId] = {
+        members: members as Member[],
+        loading: false,
+        error: null,
+      };
+    });
+    builder.addCase(fetchSubgroupMembersAction.rejected, (state, action) => {
+      const subgroupId = action.meta.arg;
+      if (!state.subgroupMembers[subgroupId]) {
+        state.subgroupMembers[subgroupId] = {
+          members: [],
+          loading: false,
+          error: null,
+        };
+      }
+      state.subgroupMembers[subgroupId].loading = false;
+      state.subgroupMembers[subgroupId].error = action.payload as string;
+    });
   },
 });
+
+// Selectors
+export const selectSubgroupMembers = (subgroupId: number) => (state: { organigrama: OrganigramaState }) => {
+  return state.organigrama.subgroupMembers[subgroupId] || { members: [], loading: false, error: null };
+};
+
+export const selectAllSubgroupMembers = (state: { organigrama: OrganigramaState }) => {
+  return state.organigrama.subgroupMembers;
+};
 
 export default organigramaSlice.reducer;

@@ -1,7 +1,9 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Branch as Rama, Subgroup as Subrama } from "../types/frontend";
-import { getMembersBySubgroup } from "@/api/organigramaApi";
+import { store } from "@/store/store";
+import { fetchSubgroupMembersAction } from "@/store/organigrama/organigramaActions";
+import { getMemberFullName, isMemberActiveAndApproved, isMemberScouter } from "@/hooks/useSubgroupMembers";
 
 // Helper functions to filter out committee branches
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -37,6 +39,50 @@ function hexToRgb(hex: string): [number, number, number] {
 
 
 
+// Helper function to get branch leaders (SCOUTERS) from all subgroups of a branch
+async function getBranchLeaders(subgroups: Subrama[]): Promise<string> {
+  if (!subgroups || subgroups.length === 0) return '';
+  
+  try {
+    // Get all subgroup IDs
+    const subgroupIds = subgroups
+      .map(s => {
+        const sUnknown = s as unknown as Record<string, unknown>;
+        return sUnknown['subgroupId'] ?? sUnknown['id'];
+      })
+      .filter(Boolean)
+      .map(Number);
+
+    if (subgroupIds.length === 0) return '';
+
+    // Get members from all subgroups in parallel using Redux actions
+    const memberPromises = subgroupIds.map(async (id) => {
+      const result = await store.dispatch(fetchSubgroupMembersAction(id));
+      if (fetchSubgroupMembersAction.fulfilled.match(result)) {
+        return result.payload.members;
+      }
+      return [];
+    });
+    const allMembersArrays = await Promise.all(memberPromises);
+    
+    // Flatten all members and filter for active SCOUTERS
+    const allMembers = allMembersArrays.flat();
+    const scouters = allMembers.filter(member => 
+      isMemberActiveAndApproved(member) && isMemberScouter(member)
+    );
+
+    // Get unique scouter names
+    const scouterNames = [...new Set(
+      scouters.map(member => getMemberFullName(member))
+    )];
+
+    return scouterNames.join(', ');
+  } catch (error) {
+    console.warn(' [Export] Error obteniendo jefes de rama:', error);
+    return '';
+  }
+}
+
 // Optimized function with parallelization and proper member filtering
 async function construirFilasDetalleSimple(ramas: Rama[]): Promise<string[][]> {
   const filas: string[][] = [];
@@ -60,76 +106,96 @@ async function construirFilasDetalleSimple(ramas: Rama[]): Promise<string[][]> {
     };
   }> = [];
 
-  // Prepare all requests
-  for (const r of onlyRamas) {
+  // Prepare all requests - process branches in parallel to get leaders
+  const branchPromises = onlyRamas.map(async (r) => {
     const ramaNombre = (r.name ?? r.nombre ?? '').toString();
     const descripcionRama = (r.description ?? (r as { descripcion?: string }).descripcion ?? '').toString().trim() ||
       ((typeof r.minAge === 'number' && typeof r.maxAge === 'number' && r.minAge > 0 && r.maxAge > 0)
         ? `${r.minAge}-${r.maxAge} años`
         : '—');
 
-    const jefeRama = (r as { leader?: string; jefe?: string }).leader ??
-      (r as { leader?: string; jefe?: string }).jefe ?? (() => {
-        const subs = (r.subgroups ?? r.subramas) as Subrama[] | undefined;
-        if (subs && subs.length > 0) {
-          const leaders = subs.map(s => (s as { leader?: string }).leader).filter(Boolean);
-          return leaders.length > 0 ? [...new Set(leaders)].join(', ') : '';
-        }
-        return '';
-      })();
-
     const subgroups = (r.subgroups ?? r.subramas) as Subrama[] | undefined;
 
     if (subgroups && subgroups.length > 0) {
+      // Get branch leaders from all subgroups
+      const jefeRama = await getBranchLeaders(subgroups);
+      
+      const subgroupRequests = [];
       for (const s of subgroups) {
         const nombreSubramaFull = (s.name ?? s.nombre ?? '').toString();
         const sUnknown = s as unknown as Record<string, unknown>;
         const subgroupId = sUnknown['subgroupId'] ?? sUnknown['id'];
         
         if (subgroupId) {
-          allSubgroupRequests.push({
+          subgroupRequests.push({
             subgroupId: Number(subgroupId),
             ramaInfo: {
               ramaNombre,
               descripcionRama,
               nombreSubrama: nombreSubramaFull,
-              jefeRama: jefeRama ?? '',
+              jefeRama: jefeRama,
             }
           });
         }
       }
+      return { type: 'subgroups' as const, requests: subgroupRequests };
     } else {
-      // Rama without subgroups
-      filas.push([
-        ramaNombre,
-        descripcionRama,
-        '— (Sin subramas)',
-        '',
-        jefeRama ?? '',
-      ]);
+      // Rama without subgroups - no leaders to fetch
+      return {
+        type: 'direct' as const,
+        row: [
+          ramaNombre,
+          descripcionRama,
+          '— (Sin subramas)',
+          '',
+          '', // No jefe de rama for branches without subgroups
+        ] as string[]
+      };
     }
-  }
+  });
+
+  // Wait for all branch processing to complete
+  const branchResults = await Promise.all(branchPromises);
+  
+  // Separate direct rows from subgroup requests
+  branchResults.forEach(result => {
+    if (result.type === 'direct') {
+      filas.push(result.row);
+    } else if (result.requests) {
+      allSubgroupRequests.push(...result.requests);
+    }
+  });
 
   console.log(' [Export] Obteniendo miembros para', allSubgroupRequests.length, 'subgrupos en paralelo...');
 
-  // Execute all member requests in parallel
+  // Execute all member requests in parallel using Redux actions
   const memberPromises = allSubgroupRequests.map(async (request) => {
     try {
-      const members = await getMembersBySubgroup(request.subgroupId);
+      const result = await store.dispatch(fetchSubgroupMembersAction(request.subgroupId));
+      const members = fetchSubgroupMembersAction.fulfilled.match(result) ? result.payload.members : [];
       
       // Filter only active and approved members
-      const activeMembers = (members || []).filter((m: Record<string, unknown>) => 
-        m.status === 'APPROVED' && m.is_active === true
+      const activeMembers = (members || []).filter(member => 
+        isMemberActiveAndApproved(member)
       );
 
-      // Use full_name directly from API response
-      const integrantes = activeMembers
-        .map((m: Record<string, unknown>) => m.full_name || '')
-        .filter(Boolean)
+      // Separate SCOUTERS (jefes) from regular members
+      const scouters = activeMembers.filter(member => isMemberScouter(member));
+      const regularMembers = activeMembers.filter(member => !isMemberScouter(member));
+
+      // Get names for integrantes (regular members)
+      const integrantes = regularMembers
+        .map(member => getMemberFullName(member))
         .join(', ');
+
+      // Get names for jefe de rama (scouters)
+      const jefeRama = scouters
+        .map(member => getMemberFullName(member))
+        .join(', ') || request.ramaInfo.jefeRama; // Fallback to original if no scouters found
 
       return {
         ...request.ramaInfo,
+        jefeRama,
         integrantes,
       };
     } catch (error) {

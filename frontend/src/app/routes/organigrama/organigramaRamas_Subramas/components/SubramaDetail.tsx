@@ -7,11 +7,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Subgroup as Subrama } from "../types/frontend";
 import * as organigramaService from "../services";
-import { getMembersBySubgroup } from '@/api/organigramaApi';
+import { useSubgroupMembers, getMemberFullName, getMemberId } from '@/hooks/useSubgroupMembers';
 import { useTenantParams } from "../hooks/useTenantParams";
 import { toast } from "sonner";
 import FotoModal from "../components/FotoModal";
-import { deepCamelize } from "@/lib/utils";
 import useOrganigramaActions from "../hooks/useOrganigramaActions";
 
 
@@ -40,10 +39,13 @@ export default function SubramaDetail() {
   const uploadProgressReceivedRef = useRef<boolean>(false);
   const uploadAnimateRef = useRef<number | null>(null);
   const previousImagenPrincipalRef = useRef<string | null>(null);
-  // Miembros (lista por subgrupo)
-  const [members, setMembers] = useState<Array<{ member_id?: number; first_name?: string; last_name?: string; memberId?: number; firstName?: string; lastName?: string }>>([]);
-  const [membersLoading, setMembersLoading] = useState(false);
-  const [membersError, setMembersError] = useState<string | null>(null);
+  // Get subgroup ID for the hook
+  const subgroupId = subrama ? 
+    ((subrama as unknown as Record<string, unknown>)['subgroupId'] ?? 
+     (subrama as unknown as Record<string, unknown>)['id']) as number : undefined;
+  
+  // Use Redux hook for members
+  const { members: reduxMembers, loading: membersLoading, error: membersError, fetchMembers } = useSubgroupMembers(subgroupId);
 
   // ===== Modal de fotos =====
   const [fotoModalOpen, setFotoModalOpen] = useState(false);
@@ -368,57 +370,14 @@ export default function SubramaDetail() {
     fetchSubrama();
   }, [fetchSubrama]);
 
-  // Cargar miembros del subgrupo cuando la subrama este cargada (llamada local a api)
-  const fetchMembers = useCallback(async (subgrp: Subrama | null) => {
-    if (!subgrp) return;
-    const subgroupRec = subgrp as unknown as Record<string, unknown>;
-    const subgroupId = subgroupRec['subgroupId'] ?? subgroupRec['id'];
-    if (!subgroupId) return;
-    try {
-      setMembersLoading(true);
-      setMembersError(null);
-      const data = await getMembersBySubgroup(Number(subgroupId));
-      const normalized = (data || []).map((m: unknown) => {
-        const rec = deepCamelize(m) as Record<string, unknown>;
-        const rawId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
-        let memberId: number | undefined;
-        if (typeof rawId === 'number') memberId = rawId;
-        else if (typeof rawId === 'string' && /^\d+$/.test(rawId.trim())) memberId = parseInt(rawId.trim(), 10);
-        else memberId = undefined;
-
-        const firstName = typeof rec['firstName'] === 'string'
-          ? rec['firstName']
-          : typeof rec['first_name'] === 'string'
-          ? rec['first_name']
-          : '';
-
-        const lastName = typeof rec['lastName'] === 'string'
-          ? rec['lastName']
-          : typeof rec['last_name'] === 'string'
-          ? rec['last_name']
-          : '';
-
-        return {
-          member_id: memberId,
-          first_name: firstName,
-          last_name: lastName,
-          memberId: memberId,
-          firstName: firstName,
-          lastName: lastName,
-        };
-      });
-      setMembers(normalized);
-    } catch (err) {
-      console.error('[SubramaDetail] Error cargando miembros por subgrupo', err);
-      setMembersError('No se pudieron cargar los integrantes');
-    } finally {
-      setMembersLoading(false);
-    }
-  }, []);
-
+  // Fetch members when subrama is loaded
   useEffect(() => {
-    if (subrama) fetchMembers(subrama);
-  }, [subrama, fetchMembers]);
+    if (subgroupId) {
+      fetchMembers(subgroupId).catch(err => {
+        console.error('[SubramaDetail] Error cargando miembros por subgrupo', err);
+      });
+    }
+  }, [subgroupId, fetchMembers]);
 
   // Cleanup para imagenPrincipal - revocar blob cuando cambie o al desmontar
   useEffect(() => {
@@ -589,17 +548,18 @@ export default function SubramaDetail() {
             <div className="text-sm text-muted-foreground">Cargando integrantes...</div>
           ) : membersError ? (
             <div className="text-sm text-destructive">{membersError}</div>
-          ) : members && members.length > 0 ? (
+          ) : reduxMembers && reduxMembers.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {members.map((m, idx) => {
-                const display = (m.firstName || m.first_name || '') + (m.lastName || m.last_name ? ` ${m.lastName || m.last_name}` : '');
+              {reduxMembers.map((m, idx) => {
+                const display = getMemberFullName(m);
+                const memberId = getMemberId(m);
                 return (
                   <Badge
-                    key={String(m.memberId ?? m.member_id ?? idx)}
+                    key={String(memberId || idx)}
                     variant="outline"
                     className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
                   >
-                    {display || `Miembro ${m.member_id ?? m.memberId ?? idx}`}
+                    {display}
                   </Badge>
                 );
               })}

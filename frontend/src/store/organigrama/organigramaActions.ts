@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getSections, getSectionWithSubgroups, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal, getGroupBySlug } from '@/api/organigramaApi';
+import { getSections, getSectionWithSubgroups, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal, getGroupBySlug, getMembersBySubgroup } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
 import { addGalleryImage, replaceGalleryImage } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/gallery.service';
 
@@ -135,6 +135,19 @@ export const deleteSubgroupPhotoPrincipalAction = createAsyncThunk("organigrama/
     const axiosError = error as AxiosError;
     const errorData = axiosError.response?.data as { error?: string };
     const message = errorData?.error || "Error al eliminar foto principal de subgrupo";
+    return rejectWithValue(message);
+  }
+});
+
+// Fetch members by subgroup
+export const fetchSubgroupMembersAction = createAsyncThunk("organigrama/fetchSubgroupMembers", async (subgroupId: number, { rejectWithValue }) => {
+  try {
+    const members = await getMembersBySubgroup(subgroupId);
+    return { subgroupId, members };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string };
+    const message = errorData?.error || "Error al obtener miembros del subgrupo";
     return rejectWithValue(message);
   }
 });

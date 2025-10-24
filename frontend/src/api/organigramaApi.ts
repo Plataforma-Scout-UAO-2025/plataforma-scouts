@@ -390,34 +390,27 @@ export const deleteGalleryImageById = async (
 };
 
 // Miembros por subgrupo
-
-// Tipo para miembros básicos
-interface BasicMember {
-  id: number;
-  firstName?: string;
-  first_name?: string;
-  lastName?: string;
-  last_name?: string;
-  [key: string]: unknown;
-}
+import type { Member } from "@/types/member.type";
 
 // Tipo para respuesta de miembros
 interface MembersResponse {
-  members: BasicMember[];
+  members: Member[];
   [key: string]: unknown;
 }
 
 // Obtiene la lista de miembros pertenecientes a un subgrupo específico
 export const getMembersBySubgroup = async (
   subgroupId: number
-): Promise<BasicMember[]> => {
-  // Primero intentamos con 'id' (comportamiento principal). Solo usamos fallback si esta llamada falla.
+): Promise<Member[]> => {
   try {
     const response = await api.get(`/members/list_members_by_subgroup`, {
       params: { id: subgroupId },
     });
     const data = response.data as unknown;
-    if (Array.isArray(data)) return data as BasicMember[];
+
+    if (Array.isArray(data)) {
+      return data as Member[];
+    }
     if (
       data &&
       typeof data === "object" &&
@@ -425,26 +418,10 @@ export const getMembersBySubgroup = async (
     ) {
       return (data as MembersResponse).members;
     }
+
     return [];
-  } catch (err1) {
-    // Fallback: algunos backends usan 'subgroup_id'
-    try {
-      const response2 = await api.get(`/members/list_members_by_subgroup`, {
-        params: { subgroup_id: subgroupId },
-      });
-      const data2 = response2.data as unknown;
-      if (Array.isArray(data2)) return data2 as BasicMember[];
-      if (
-        data2 &&
-        typeof data2 === "object" &&
-        Array.isArray((data2 as MembersResponse).members)
-      ) {
-        return (data2 as MembersResponse).members;
-      }
-      return [];
-    } catch (err2) {
-      console.warn("getMembersBySubgroup failed", { subgroupId, err1, err2 });
-      return [];
-    }
+  } catch (error) {
+    console.error("getMembersBySubgroup failed", { subgroupId, error });
+    return [];
   }
 };
