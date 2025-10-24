@@ -19,6 +19,7 @@ import CreateNivelModal from "./components/CreateNivelModal";
 import EditNivelModal from "./components/EditNivelModal";
 import CreateCargoModal from "./components/CreateCargoModal";
 import EditCargoModal from "./components/EditCargoModal";
+import AddMemberModal from "./components/AddMemberModal";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import SuccessModal from "./components/SuccessModal";
 
@@ -48,6 +49,10 @@ export default function NivelesPage() {
 
   const [openEditCargo, setOpenEditCargo] = useState(false);
   const [cargoToEdit, setCargoToEdit] = useState<Cargo | null>(null);
+
+  // Modal para agregar miembros al cargo
+  const [openAddMember, setOpenAddMember] = useState(false);
+  const [cargoToAssign, setCargoToAssign] = useState<Cargo | null>(null);
 
   const [openDelete, setOpenDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -142,49 +147,21 @@ export default function NivelesPage() {
     setOpenEditCargo(true);
   };
 
-  const handleSaveEditCargo = (cargo: Cargo, assignMemberId?: string) => {
+  const handleOpenAddMember = (nivel: Nivel, cargo: Cargo) => {
+    setNivelActual(nivel);
+    setCargoToAssign(cargo);
+    setOpenAddMember(true);
+  };
+
+  const handleSaveEditCargo = (cargo: Cargo) => {
     if (!nivelActual) return;
     (async () => {
       try {
         await updateCargo(nivelActual.id, cargo);
-        // Si se seleccionó un miembro para asignar a este cargo, persistimos la asignación
-        if (assignMemberId) {
-          // Normalizar a número el id de subgrupo (cargo)
-          let subgroupNumId = Number(cargo.id);
-          if (!Number.isFinite(subgroupNumId)) {
-            const parsed = parseInt(String(cargo.id), 10);
-            if (Number.isFinite(parsed)) subgroupNumId = parsed;
-          }
-          if (Number.isFinite(subgroupNumId)) {
-            // También enviamos la sección padre (nivel) para máxima compatibilidad con backend
-            let sectionNumId = Number(nivelActual.id);
-            if (!Number.isFinite(sectionNumId)) {
-              const parsedSec = parseInt(String(nivelActual.id), 10);
-              if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
-            }
-            await dispatch(updateMemberAction({
-              uid: assignMemberId,
-              updates: {
-                subgroupId: subgroupNumId,
-                subgroup_id: subgroupNumId,
-                isActive: true,
-                ...(Number.isFinite(sectionNumId) && {
-                  // Campos adicionales para compatibilidad con backend
-                  sectionId: sectionNumId,
-                  section_id: sectionNumId,
-                } as { sectionId: number; section_id: number }),
-              } as Partial<UpdateMember> & { sectionId?: number; section_id?: number },
-            }));
-            // Forzar recarga de miembros listados por cargo
-            setMembersRefreshKey((k) => k + 1);
-          } else {
-            console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargo.id);
-          }
-        }
         setOpenEditCargo(false);
         setShowSuccess(true);
       } catch (e) {
-        console.error('Error actualizando cargo o asignando miembro', e);
+        console.error('Error actualizando cargo', e);
       }
     })();
   };
@@ -197,6 +174,47 @@ export default function NivelesPage() {
       nivelId: nivel.id,
     });
     setOpenDelete(true);
+  };
+
+  const handleAssignMemberToCargo = async (memberId: string) => {
+    if (!nivelActual || !cargoToAssign) return;
+    try {
+      // Normalizar a número el id de subgrupo (cargo)
+      let subgroupNumId = Number(cargoToAssign.id);
+      if (!Number.isFinite(subgroupNumId)) {
+        const parsed = parseInt(String(cargoToAssign.id), 10);
+        if (Number.isFinite(parsed)) subgroupNumId = parsed;
+      }
+      if (Number.isFinite(subgroupNumId)) {
+        // También enviamos la sección padre (nivel) para máxima compatibilidad con backend
+        let sectionNumId = Number(nivelActual.id);
+        if (!Number.isFinite(sectionNumId)) {
+          const parsedSec = parseInt(String(nivelActual.id), 10);
+          if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
+        }
+        await dispatch(updateMemberAction({
+          uid: memberId,
+          updates: {
+            subgroupId: subgroupNumId,
+            subgroup_id: subgroupNumId,
+            isActive: true,
+            ...(Number.isFinite(sectionNumId) && {
+              sectionId: sectionNumId,
+              section_id: sectionNumId,
+            } as { sectionId: number; section_id: number }),
+          } as Partial<UpdateMember> & { sectionId?: number; section_id?: number },
+        }));
+        // Forzar recarga de miembros listados por cargo
+        setMembersRefreshKey((k) => k + 1);
+      } else {
+        console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargoToAssign.id);
+      }
+    } catch (e) {
+      console.error('Error asignando miembro al cargo', e);
+    } finally {
+      setOpenAddMember(false);
+      setShowSuccess(true);
+    }
   };
 
   const confirmDelete = async () => {
@@ -321,6 +339,7 @@ export default function NivelesPage() {
                 setNivelActual(nivel);
                 handleEditCargo(cargo);
               }}
+              onAddMember={(cargo) => handleOpenAddMember(nivel, cargo)}
               onDeleteCargo={(cargo) => handleDeleteCargo(cargo, nivel)}
             />
           ))}
@@ -350,7 +369,6 @@ export default function NivelesPage() {
         onClose={() => setOpenCreateCargo(false)}
         onSave={handleCreateCargo}
         initialNombre={initialCargoNombre}
-        members={members}
       />
 
       {/* Editar Cargo */}
@@ -359,6 +377,14 @@ export default function NivelesPage() {
         cargo={cargoToEdit}
         onClose={() => setOpenEditCargo(false)}
         onSave={handleSaveEditCargo}
+      />
+
+      {/* Agregar miembro al Cargo */}
+      <AddMemberModal
+        open={openAddMember}
+        cargo={cargoToAssign}
+        onClose={() => setOpenAddMember(false)}
+        onAssign={handleAssignMemberToCargo}
         members={members}
       />
 

@@ -159,10 +159,24 @@ export default function OrgChartSummary() {
   const [exportingBranches, setExportingBranches] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
 
+  // Asegurar miembros cargados antes de exportar
+  const ensureMembersLoaded = async (): Promise<typeof members> => {
+    if (members && members.length > 0) return members;
+    try {
+      const action = await dispatch(fetchMembersAction());
+      const payload = (action as unknown as { payload?: unknown }).payload;
+      if (Array.isArray(payload)) return payload as typeof members;
+    } catch (_) {
+      // ignore
+    }
+    return members;
+  };
+
   const onExportPDF = async () => {
     try {
       setExportingPDF(true);
-      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, members, { year: anio });
+      const mem = await ensureMembersLoaded();
+      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, mem, { year: anio });
     } finally {
       setExportingPDF(false);
     }
@@ -170,7 +184,8 @@ export default function OrgChartSummary() {
   const onExportCSVBranches = async () => {
     try {
       setExportingBranches(true);
-      await exportBranchesCSV(branches, members);
+      const mem = await ensureMembersLoaded();
+      await exportBranchesCSV(branches, mem);
     } finally {
       setExportingBranches(false);
     }

@@ -36,6 +36,22 @@ function download(
   URL.revokeObjectURL(url);
 }
 
+// Helpers para resolver IDs de subgrupo desde diferentes formatos
+function toNumberSafe(v: unknown): number | undefined {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const s = String(v).trim();
+  if (s.length === 0) return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function getMemberSubgroupId(member: Member): number | undefined {
+  const direct = (member as any)?.subgroup_id ?? (member as any)?.subgroupId;
+  const nested = (member as any)?.subgroup?.subgroup_id ?? (member as any)?.subgroup?.subgroupId;
+  return toNumberSafe(direct ?? nested);
+}
+
 export async function exportBranchesCSV(
   branches: SimpleBranches,
   members: Member[] = []
@@ -78,9 +94,11 @@ export async function exportBranchesCSV(
           const subgroupId = sg.id;
           if (subgroupId && members.length > 0) {
             // Filtrar miembros que pertenecen a este subgrupo
-            const subgroupMembers = members.filter(
-              (member) => member.subgroup_id === Number(subgroupId)
-            );
+            const sgNum = toNumberSafe(subgroupId);
+            const subgroupMembers = members.filter((member) => {
+              const mSgId = getMemberSubgroupId(member);
+              return mSgId !== undefined && sgNum !== undefined && mSgId === sgNum;
+            });
 
             if (subgroupMembers.length > 0) {
               integrantes = subgroupMembers
@@ -102,7 +120,8 @@ export async function exportBranchesCSV(
           // Fallback vacío
         }
 
-        rows.push([section.name, desc, nameFull, integrantes, jefeRama || ""]);
+        // En la UI, el líder mostrado por subrama es sg.leader; usarlo aquí también
+        rows.push([section.name, desc, nameFull, integrantes, sg.leader || ""]);
       }
     }
   }
@@ -246,9 +265,11 @@ export async function exportOrgChartCombinedPDF(
           const subgroupId = sg.id;
           if (subgroupId && members.length > 0) {
             // Filtrar miembros que pertenecen a este subgrupo
-            const subgroupMembers = members.filter(
-              (member) => member.subgroup_id === Number(subgroupId)
-            );
+            const sgNum = toNumberSafe(subgroupId);
+            const subgroupMembers = members.filter((member) => {
+              const mSgId = getMemberSubgroupId(member);
+              return mSgId !== undefined && sgNum !== undefined && mSgId === sgNum;
+            });
 
             if (subgroupMembers.length > 0) {
               integrantes = subgroupMembers
@@ -275,7 +296,7 @@ export async function exportOrgChartCombinedPDF(
           desc,
           nameFull,
           integrantes,
-          jefeRama || "",
+          sg.leader || "",
         ]);
       }
     }
@@ -288,13 +309,6 @@ export async function exportOrgChartCombinedPDF(
     margin: { left: x, right: x },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
-    columnStyles: {
-      0: { cellWidth: 200 }, // Rama
-      1: { cellWidth: 230 }, // Descripción
-      2: { cellWidth: 200 }, // NombreSubrama
-      3: { cellWidth: 200 }, // Integrantes
-      4: { cellWidth: 200 }, // JefeRama
-    },
   });
 
   const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };

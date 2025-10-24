@@ -16,6 +16,8 @@ interface Props {
   onAddCargo: (nivelId: string) => void;
   onEditCargo?: (cargo: Cargo) => void;
   onDeleteCargo?: (cargo: Cargo) => void;
+  /** Abrir modal para agregar miembro a un cargo */
+  onAddMember?: (cargo: Cargo) => void;
   /** Opcional: iniciar abierto o cerrado (por defecto: true) */
   defaultOpen?: boolean;
   /** Forzar recarga de miembros listados por cargo cuando cambie */
@@ -29,6 +31,7 @@ export default function LevelAccordion({
   onAddCargo,
   onEditCargo,
   onDeleteCargo,
+  onAddMember,
   defaultOpen = true,
   refreshKey,
 }: Props) {
@@ -310,8 +313,8 @@ export default function LevelAccordion({
                           members={membersByCargo[cargo.id] || []}
                           onEdit={() => onEditCargo?.(cargo)}
                           onDelete={() => onDeleteCargo?.(cargo)}
-                          // El botón interno "Agregar miembro al cargo" usará la misma lógica de editar cargo
-                          onAddMember={() => onEditCargo?.(cargo)}
+                          // El botón interno "Agregar miembro al cargo" abre un modal propio
+                          onAddMember={() => onAddMember?.(cargo)}
                         />
                       ))}
                     </div>
