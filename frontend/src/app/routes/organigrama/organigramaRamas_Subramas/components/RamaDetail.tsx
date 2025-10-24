@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
 import { getSection } from '@/api/organigramaApi';
@@ -702,18 +703,81 @@ export default function RamaDetail() {
   }, [galleryLocalPreviews]);
 
 
-  if (isFetching) {
-    return <p className="text-center mt-6 text-muted-foreground">Cargando contexto del tenant...</p>;
-  }
+  // Mostrar skeleton hasta que todo esté completamente cargado
+  if (isFetching || loading || !rama) {
+    return (
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-8 w-64" /> {/* Título */}
+            <div className="relative">
+              <Skeleton className="w-[200px] h-[124px] rounded-lg" /> {/* Ícono */}
+            </div>
+          </div>
+        </div>
 
-  if (loading) return <p className="text-center mt-6 text-muted-foreground">Cargando detalles...</p>;
-  if (!rama) return (
-    <div className="text-center mt-6 space-y-4">
-      <p className="text-foreground">No se encontró la rama con id: {id}</p>
-  <p className="text-sm text-muted-foreground">Tenant: {tenantId ?? 'N/A'} | Group: {groupSlug ?? 'N/A'}</p>
-      <Button variant="outline" onClick={() => navigate(-1)} className="border border-secondary text-secondary hover:bg-accent">Volver</Button>
-    </div>
-  );
+        {/* Información Principal skeleton */}
+        <Card className="p-4 space-y-4 bg-card text-card-foreground border border-border">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" /> {/* Título sección */}
+            <Skeleton className="h-8 w-28" /> {/* Botón Añadir Foto */}
+          </div>
+          <Skeleton className="h-[450px] w-full rounded-lg" /> {/* Imagen principal */}
+          
+          <div className="pt-4">
+            <Skeleton className="h-5 w-24 mb-2" /> {/* Título Descripción */}
+            <Skeleton className="h-4 w-full" /> {/* Descripción */}
+          </div>
+
+          {/* Subramas skeleton */}
+          <div className="pt-4">
+            <Skeleton className="h-5 w-20 mb-2" /> {/* Título Subramas */}
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={`subrama-${i}`} className="w-[255px] h-[40px] rounded-[8px]" />
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* Integrantes skeleton */}
+        <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
+          <Skeleton className="h-6 w-32" /> {/* Título Integrantes */}
+          
+          <div className="space-y-4">
+            {/* Acordeón skeleton */}
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={`acordeon-${i}`} className="border rounded-lg">
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-40" /> {/* Nombre subrama */}
+                    <div className="flex gap-2">
+                      <Skeleton className="h-4 w-16" /> {/* Conteo jefes */}
+                      <Skeleton className="h-4 w-16" /> {/* Conteo scouts */}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Galería skeleton */}
+        <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" /> {/* Título Galería */}
+            <Skeleton className="h-8 w-28" /> {/* Botón Añadir Fotos */}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={`galeria-${i}`} className="aspect-square rounded-lg" />
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

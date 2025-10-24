@@ -73,7 +73,7 @@ async function getBranchLeaders(subgroups: Subrama[]): Promise<string> {
 
     // Get unique scouter names
     const scouterNames = [...new Set(
-      scouters.map(member => getMemberFullName(member))
+      scouters.map(member => getMemberFullName(member as typeof member & Record<string, unknown>))
     )];
 
     return scouterNames.join(', ');
@@ -185,12 +185,12 @@ async function construirFilasDetalleSimple(ramas: Rama[]): Promise<string[][]> {
 
       // Get names for integrantes (regular members)
       const integrantes = regularMembers
-        .map(member => getMemberFullName(member))
+        .map(member => getMemberFullName(member as typeof member & Record<string, unknown>))
         .join(', ');
 
       // Get names for jefe de rama (scouters)
       const jefeRama = scouters
-        .map(member => getMemberFullName(member))
+        .map(member => getMemberFullName(member as typeof member & Record<string, unknown>))
         .join(', ') || request.ramaInfo.jefeRama; // Fallback to original if no scouters found
 
       return {
