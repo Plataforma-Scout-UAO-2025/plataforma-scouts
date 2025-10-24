@@ -62,11 +62,6 @@ type MenuItem = {
   submenu?: SubMenuItem[];
 };
 
-//const mainItems: MenuItem[] = [
-//  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/home" },
-//  { id: "info-medica", label: "Grupos", icon: <Settings />, href: "/app/grupos" },
-//]
-
 const adminGlobalItems: MenuItem[] = [
   {
     id: "inicio",
@@ -111,12 +106,6 @@ const adminGrupalItems: MenuItem[] = [
   },
   
   
-  {
-    id: "insignias",
-    label: "Insignias",
-    icon: <Award />,
-    href: "/app/insignias",
-  },
   {
     id: "organigrama",
     label: "Organigrama",
@@ -313,9 +302,7 @@ function AppLayoutContent() {
                   item.submenu ? (
                     <Collapsible
                       key={item.id}
-                      defaultOpen
-                      className="group/collapsible"
-                    >
+                      className="group/collapsible">
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[state=open]:bg-white/20 data-[state=open]:font-semibold data-[state=open]:text-white">
