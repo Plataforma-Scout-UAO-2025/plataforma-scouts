@@ -168,7 +168,7 @@ export default function Organigrama() {
       {/* Cabecera */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Gestión de Organigrama</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Gestión de Ramas y Subramas Scouts</h1>
           <p className="text-muted-foreground">Administra la estructura de ramas y subramas de tu grupo scout</p>
         </div>
         <div className="flex items-center gap-2">

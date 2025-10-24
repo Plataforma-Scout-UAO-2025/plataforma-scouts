@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
 import { getSection } from '@/api/organigramaApi';
@@ -14,6 +15,9 @@ import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 import FotoModal from "../components/FotoModal";
 import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
+import { useRamaMembers } from "@/hooks/useRamaMembers";
+import { getMemberFullName } from "@/hooks/useSubgroupMembers";
+import type { Member } from "@/types/member.type";
 
 
 export default function RamaDetail() {
@@ -122,6 +126,9 @@ export default function RamaDetail() {
   const [fotoTipo, setFotoTipo] = useState<"icono" | "principal" | "galeria" | null>(null);
   const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
   const [galeriaObjetivoId, setGaleriaObjetivoId] = useState<string | null>(null);
+
+  // Hook para obtener miembros de todas las subramas
+  const { subramasWithMembers, loading: membersLoading, error: membersError } = useRamaMembers(rama?.subramas);
 
   const openIconModal = () => {
     if (!rama) return;
@@ -733,7 +740,7 @@ export default function RamaDetail() {
       )}
       <div className="space-y-3">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-primary">Detalles de {rama?.name ?? getLegacyString(rama, 'nombre') ?? ''} – {String(rama?.year ?? getLegacyNumber(rama, 'año') ?? '')}</h1>
+          <h1 className="text-2xl font-bold text-primary">Detalles de {rama?.name ?? getLegacyString(rama, 'nombre') ?? ''}</h1>
           <div className="relative">
             <div className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors" onClick={openIconModal}>
               {rama && (iconPreview || getIconUrl(rama)) ? (
@@ -784,7 +791,11 @@ export default function RamaDetail() {
           )}
         </div>
         <input ref={mainImageInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="hidden" aria-label="Subir imagen principal" />
-  <p className="text-sm text-muted-foreground">{rama.description ?? getLegacyString(rama, 'descripcion') ?? 'Sin descripción'}</p>
+        
+        <div className="pt-4">
+          <h3 className="text-md font-semibold text-primary mb-2">Descripción</h3>
+          <p className="text-sm text-muted-foreground">{rama.description ?? getLegacyString(rama, 'descripcion') ?? 'Sin descripción'}</p>
+        </div>
 
         {/* Subramas embebidas dentro de la Card de Información Principal (según Figma) */}
         {rama.subramas && rama.subramas.length > 0 && (
@@ -809,18 +820,87 @@ export default function RamaDetail() {
       </Card>
 
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-  <h2 className="text-lg font-semibold text-primary">Integrantes en {String(rama.year ?? getLegacyNumber(rama, 'año') ?? '')}</h2>
-        <div className="flex flex-wrap gap-2">
-            {["Roberto Restrepo","Carlos Camargo","Ana Aguillón","Mario Mora"].map((name, idx)=>(
-            <Badge
-              key={idx}
-              variant="outline"
-              className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
-            >
-              {name}
-            </Badge>
-          ))}
-        </div>
+        <h2 className="text-lg font-semibold text-primary">Integrantes</h2>
+        
+        {membersLoading ? (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">Cargando integrantes...</p>
+          </div>
+        ) : membersError ? (
+          <div className="text-center py-4">
+            <p className="text-destructive">{membersError}</p>
+          </div>
+        ) : subramasWithMembers.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">No hay subramas disponibles</p>
+          </div>
+        ) : (
+          <Accordion type="multiple" className="w-full">
+            {subramasWithMembers.map((subrama) => (
+              <AccordionItem key={subrama.subgroupId} value={`subrama-${subrama.subgroupId}`}>
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <span className="font-medium">{subrama.name}</span>
+                    <div className="flex gap-2 text-sm text-muted-foreground">
+                      <span>{subrama.jefes.length} jefe{subrama.jefes.length !== 1 ? 's' : ''}</span>
+                      <span>•</span>
+                      <span>{subrama.scouts.length} scout{subrama.scouts.length !== 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4">
+                  {subrama.loading ? (
+                    <p className="text-muted-foreground text-sm">Cargando miembros...</p>
+                  ) : subrama.error ? (
+                    <p className="text-destructive text-sm">{subrama.error}</p>
+                  ) : (
+                    <>
+                      {/* Jefes de Rama - Scouters */}
+                      <div>
+                        <h4 className="font-medium text-sm text-primary mb-2">Jefe de rama - Scouter</h4>
+                        {subrama.jefes.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {subrama.jefes.map((jefe, idx) => (
+                              <Badge
+                                key={`jefe-${subrama.subgroupId}-${idx}`}
+                                variant="default"
+                                className="bg-primary text-primary-foreground"
+                              >
+                                {getMemberFullName(jefe as Member & Record<string, unknown>)}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground text-sm">Sin jefe asignado</p>
+                        )}
+                      </div>
+
+                      {/* Integrantes Scouts Activos */}
+                      <div>
+                        <h4 className="font-medium text-sm text-primary mb-2">Integrantes scouts activos</h4>
+                        {subrama.scouts.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {subrama.scouts.map((scout, idx) => (
+                              <Badge
+                                key={`scout-${subrama.subgroupId}-${idx}`}
+                                variant="outline"
+                                className="border-primary text-primary"
+                              >
+                                {getMemberFullName(scout as Member & Record<string, unknown>)}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground text-sm">Sin scouts activos</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
       </Card>
 
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
