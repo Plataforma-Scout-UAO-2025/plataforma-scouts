@@ -9,7 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
-import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 import uao.edu.co.scouts_project.organigrama.repository.SubgroupRepository;
 
 import java.time.LocalDate;

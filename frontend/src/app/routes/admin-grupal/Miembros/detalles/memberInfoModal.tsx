@@ -98,6 +98,7 @@ export default function MemberInfoModal({
             <>
               <EmergencyContacts member={member} />
               <Interests member={member} />
+              
             </>
           )}
 

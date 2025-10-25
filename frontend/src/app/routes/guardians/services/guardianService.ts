@@ -31,69 +31,6 @@ function getErrorStatus(error: unknown): number | undefined {
   return undefined;
 }
 
-// @deprecated Use Guardian from @/types/guardianTypes instead
-export interface GuardianData {
-  userId: string;
-  tenantId: string;
-  subgroupId: string;
-  firstName: string;
-  lastName: string;
-  age?: number;
-  identification: string;
-  documentType?: string;
-  phone: string;
-  isActive: boolean;
-  relationship?: string;
-  status?: string;
-  acceptanceDate?: string;
-  gender?: string;
-  birthDate?: string;
-  address?: string;
-  email?: string;
-  membersInCharge?: Array<{
-    userId: string;
-    firstName: string;
-    lastName: string;
-  }>;
-}
-
-// @deprecated Use UpdateGuardianDTO from @/types/guardianTypes instead
-export interface UpdateGuardianData {
-  identification?: string;
-  documentType?: string;
-  phone?: string;
-  address?: string;
-  gender?: string;
-  birthDate?: string;
-  age?: number;
-}
-
-// @deprecated Use CreateGuardianDTO from @/types/guardianTypes instead
-export interface CreateGuardianData {
-  tenantId: string;
-  subgroupId: number;
-  firstName: string;
-  lastName: string;
-  age?: number;
-  identification: string;
-  documentType?: string;
-  email?: string;
-  gender?: string;
-  birthDate?: string;
-  address?: string;
-  phone: string;
-  isActive?: boolean;
-  relationship: string;
-  status?: string;
-  acceptanceDate?: string;
-  memberIdsInCharge?: string[];
-  emergencyContacts?: Array<{
-    name: string;
-    phone: string;
-    relationship: string;
-  }>;
-}
-
 export const guardianService = {
   // Obtener guardian por ID (solo datos básicos)
   getGuardianById: async (guardianId: number | string): Promise<Guardian | null> => {

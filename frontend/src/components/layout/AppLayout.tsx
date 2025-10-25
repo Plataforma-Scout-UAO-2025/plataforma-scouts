@@ -109,8 +109,7 @@ const adminGrupalItems: MenuItem[] = [
       },
     ],
   },
-  
-  
+
   {
     id: "insignias",
     label: "Insignias",
@@ -153,24 +152,24 @@ const tesoreroItems: MenuItem[] = [
 ];
 
 const acudienteItems: MenuItem[] = [
-    {
-        id: "inicio",
-        label: "Inicio",
-        icon: <LineChart />,
-        href: "/app/dashboard",
-    },
-    {
-        id: "miembros",
-        label: "Mis miembros",
-        icon: <Pencil />,
-        href: "/app/guardians/members",
-    },
-    {
-        id: "financiero",
-        label: "Financiero",
-        icon: <DollarSign />,
-        href: "/app/financiero/estado-cuenta",
-    },
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: <LineChart />,
+    href: "/app/dashboard",
+  },
+  {
+    id: "miembros",
+    label: "Mis miembros",
+    icon: <Pencil />,
+    href: "/app/guardians/members",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/estado-cuenta",
+  },
 ];
 
 const ScoutItems: MenuItem[] = [
@@ -184,7 +183,7 @@ const ScoutItems: MenuItem[] = [
     id: "inscripcion",
     label: "Inscripcion",
     icon: <Pencil />,
-    href: "/app/grupos/utils/ScoutEnrollmentInfo",
+    href: "/app/inscripcion",
   },
 ];
 

@@ -52,12 +52,12 @@ function App() {
             <Route index element={<Dashboard />} />
 
             {/* ===================== ORGANIGRAMA ===================== */}
-            <Route path="organigrama" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrganigramaHome /></ProtectedRoute>} />
-            <Route path="organigrama/ramas-y-subramas" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><Organigrama /></ProtectedRoute>} />
-            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><RamaDetail /></ProtectedRoute>} />
-            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><SubramaDetail /></ProtectedRoute>} />
-            <Route path="organigrama/niveles-organizativos" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><NivelesPage /></ProtectedRoute>} />
-            <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={["ADMIN_GLOBAL","ADMIN_GRUPO","SCOUTER","DEV_SUPPORT"]}><OrgChartSummary /></ProtectedRoute>} />
+            <Route path="organigrama" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><OrganigramaHome /></ProtectedRoute>} />
+            <Route path="organigrama/ramas-y-subramas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><Organigrama /></ProtectedRoute>} />
+            <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><RamaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><SubramaDetail /></ProtectedRoute>} />
+            <Route path="organigrama/niveles-organizativos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><NivelesPage /></ProtectedRoute>} />
+            <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><OrgChartSummary /></ProtectedRoute>} />
 
             {/* ===================== GRUPOS ===================== */}
             <Route path="grupos" element={<Grupos />} />

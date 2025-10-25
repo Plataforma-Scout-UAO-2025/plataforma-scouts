@@ -3,8 +3,14 @@ import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import { fetchMembersWithBranchAction } from "@/store/members/membersActions";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { User, Flag } from "lucide-react";
 
 const Dashboard = () => {

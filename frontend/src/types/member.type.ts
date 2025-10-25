@@ -13,8 +13,8 @@ export interface Member {
   firstName?: string;
   lastName?: string;
   isActive?: boolean;
+  createdAt?: string;
   
-
   member_id?: number;
   first_name?: string;
   last_name?: string;
@@ -46,7 +46,6 @@ export interface Member {
   emergency_contacts?: EmergencyContact[];
   created_at?: string;
   updated_at?: string;
-  schoolData?: SchoolData;
   subgroup?: {
     name?: string;
     description?: string | null;
@@ -94,9 +93,8 @@ export interface Member {
   };
  
   branch?: Section[];
- 
-  
-}
+  schoolData?: SchoolData;
+  }
 
 export interface CreateMember {
   tenantId?: string;
@@ -111,7 +109,7 @@ export interface CreateMember {
   birthDate?: Date;
   isActive?: boolean;
   emergencyContacts?: EmergencyContact[];
-
+  
   member_id?: number;
   first_name?: string;
   last_name?: string;
@@ -152,8 +150,6 @@ export interface UpdateMember {
   lastName?: string;
   subgroupId?: number;
   subgroupName?: string;
-  sectionId?: number;
-  sectionName?: string;
   age?: number;
   userId?: string;
   tenantId?: string;

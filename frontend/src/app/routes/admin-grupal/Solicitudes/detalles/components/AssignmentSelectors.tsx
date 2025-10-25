@@ -21,7 +21,6 @@ interface Props {
   setSelectedSection: (v: string) => void;
   selectedSubgroup: string;
   setSelectedSubgroup: (v: string) => void;
-  // role related
   roles: RoleSummary[];
   rolesLoading: boolean;
   rolesError: string | null;
@@ -87,6 +86,7 @@ export default function AssignmentSelectors(props: Props) {
             setSelectedSubgroup("");
           }}
           disabled={!selectedGroupSlug}
+          required
         >
           <SelectTrigger id="section" className="w-full">
             <SelectValue placeholder="Selecciona una rama" />
@@ -115,6 +115,7 @@ export default function AssignmentSelectors(props: Props) {
           value={selectedSubgroup}
           onValueChange={setSelectedSubgroup}
           disabled={!selectedSection || subgroups.length === 0}
+          required
         >
           <SelectTrigger id="subgroup" className="w-full">
             <SelectValue placeholder="Selecciona una subrama" />
@@ -154,6 +155,7 @@ export default function AssignmentSelectors(props: Props) {
               value={selectedRole}
               onValueChange={(val) => setSelectedRole(val)}
               disabled={rolesLoading || roles.length === 0}
+              required
             >
               <SelectTrigger id="role" className="w-full">
                 <SelectValue
@@ -161,8 +163,8 @@ export default function AssignmentSelectors(props: Props) {
                     rolesLoading
                       ? "Cargando roles..."
                       : roles.length === 0
-                        ? "No hay roles disponibles"
-                        : "Selecciona un rol"
+                      ? "No hay roles disponibles"
+                      : "Selecciona un rol"
                   }
                 />
               </SelectTrigger>
