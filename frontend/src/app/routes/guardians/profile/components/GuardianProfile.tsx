@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoCard from './ProfileInfoCard';
 import MembersInChargeCard from './MembersInChargeCard';
+import GroupInfoCard from './GroupInfoCard';
 import EditProfileModal from './EditProfileModal';
 import MemberDetailsSheet from '../../members/components/modals/MemberDetailsSheet';
 import { guardianService } from '../../services/guardianService';
@@ -15,6 +16,8 @@ import { useGuardian } from '@/hooks/useGuardian';
 import type { Member } from '../../members/types/member.type';
 import type { UpdateGuardianDTO } from '@/types/guardian.type';
 import { FullScreenLoader } from '@/components/common/FullScreenLoader';
+import type { Guardian } from '@/types/guardian.type';
+
 
 const GuardianProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ const GuardianProfilePage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
+  const [guardianApiData, setGuardianApiData] = useState<Guardian | null>(null);
 
   // Usar el hook optimizado para obtener miembros a cargo
   const { members: membersInCharge, loading, error, guardianId } = useMembersInChargeOf(309);
@@ -31,6 +35,19 @@ const GuardianProfilePage: React.FC = () => {
   // Obtener datos del guardian actual
   const guardianState = useGuardian();
   const guardianData = guardianState.member || null;
+  
+  
+  useEffect(() => {
+    if (guardianId) {
+      guardianService.getGuardianById(guardianId)
+        .then((response) => {
+          setGuardianApiData(response);
+        })
+        .catch((err) => {
+          console.error("Error al obtener datos del acudiente:", err);
+        });
+    }
+  }, [guardianId]);
 
   const handleEditProfile = async (data: unknown) => {
     try {
@@ -38,7 +55,6 @@ const GuardianProfilePage: React.FC = () => {
         toast.error('No se pudo identificar el guardian');
         return;
       }
-
       const updateData: UpdateGuardianDTO = {
         ...(data as Record<string, unknown>),
         documentType: (data as Record<string, unknown>).documentType as UpdateGuardianDTO['documentType']
@@ -54,41 +70,9 @@ const GuardianProfilePage: React.FC = () => {
   };
 
   const handleViewMemberProfile = (id: number) => {
-    const member = membersInCharge.find(m => m.userId === id.toString());
+    const member = membersInCharge.find(m => m.user_id === id);
     if (member) {
-      // Mapeo de DocumentType
-      const mapDocumentType = (docType?: string): Member['documentType'] => {
-        if (docType === 'PASSPORT') return 'PA';
-        return (docType as Member['documentType']) || 'CC';
-      };
-      
-      // Convertir MemberBasicInfo a Member para compatibilidad
-      const memberData: Member = {
-        id: parseInt(member.userId || '0'),
-        firstName: member.firstName || '', // Nota: usar first_name del backend
-        lastName: member.lastName || '',   // Nota: usar last_name del backend
-        identification: member.identification || '',
-        documentType: mapDocumentType(member.documentType),
-        phone: member.phone || '',
-        isActive: member.isActive || false,
-        birthDate: member.birthDate || '', // Nota: usar birth_date del backend
-        age: member.age,
-        gender: (member.gender as Member['gender']) || 'OTHER',
-        city: '',
-        rama: member.subgroup?.name || '',
-        role: '',
-        email: '',
-        address: '',
-        acceptanceDate: '',
-        createdAt: '',
-        emergencyContacts: (member.emergencyContacts || []).map(ec => ({
-          id: 0,
-          fullName: ec.name || '',
-          relationship: (ec.relationship as Member['emergencyContacts'][0]['relationship']) || 'Otro',
-          phone: ec.phone || ''
-        }))
-      };
-      setSelectedMember(memberData);
+      setSelectedMember(member);
       setIsDetailsSheetOpen(true);
     } else {
       toast.error('No se encontró información del miembro');
@@ -132,14 +116,21 @@ const GuardianProfilePage: React.FC = () => {
   }
 
   // Mapear miembros a cargo para el componente
-  const miembrosACargo = membersInCharge.map(member => ({
-    id: parseInt(member.userId || '0'),
-    fullName: `${member.firstName || ''} ${member.lastName || ''}`, // Usar campos del backend
-    rama: member.subgroup?.name || 'Sin asignar',
-    parentesco: member.relationship || 'No especificado',
-    isActive: member.isActive || false
+const miembrosACargo = membersInCharge
+  .filter(member =>
+    member.first_name &&
+    member.last_name &&
+    member.first_name.trim() !== "" &&
+    member.last_name.trim() !== ""
+  )
+  .map(member => ({
+    id: member.user_id,
+    fullName: `${member.first_name ?? ''} ${member.last_name ?? ''}`,
+    rama: member.subgroup?.name ?? 'Sin asignar',
+    parentesco: member.relationship ?? 'No especificado',
+    isActive: member.is_active ?? false
   }));
-
+console.log("Selected member:", selectedMember);
   return (
     <div className="min-h-screen bg-[#fffaf3]">
       <div className="flex flex-col min-h-screen">
@@ -157,31 +148,30 @@ const GuardianProfilePage: React.FC = () => {
         </div>
         <div className="flex-1 p-6">
           <ProfileHeader 
-            firstName={guardianData?.firstName ?? user?.nickname ?? ''} 
-            lastName={guardianData?.lastName ?? user?.middle_name ?? ''} 
-            grupo={guardianData?.subgroup?.name ?? ''} 
-            isActive={guardianData?.isActive || false} 
+            first_name={guardianApiData?.first_name || ''} 
+            last_name={guardianApiData?.last_name || ''} 
+            grupo={guardianApiData?.rol || ''} 
+            is_active={guardianApiData?.is_active || false} 
           />
           <ProfileInfoCard 
-            firstName={guardianData?.firstName ?? user?.nickname ?? ''} 
-            lastName={guardianData?.lastName ?? user?.middle_name ?? ''} 
-            identification={guardianData?.identification || ''} 
-            documentType={guardianData?.documentType || 'CC'} 
-            email={user?.email ?? 'N/A'} 
-            emailAlt={undefined} 
-            phone={guardianData?.phone || ''} 
-            phoneAlt={undefined} 
-            address={'N/A'} 
+            first_name={guardianApiData?.first_name || ''} 
+            last_name={guardianApiData?.last_name || ''} 
+            identification={guardianApiData?.identification || ''} 
+            documentType={guardianApiData?.document_type || 'CC'} 
+            email={user?.email || 'N/A'} 
+            phone={guardianApiData?.phone || ''} 
+//            address={guardianApiData?.address || 'N/A'} 
           />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 items-start">
             <MembersInChargeCard 
               miembrosACargo={miembrosACargo} 
-              grupo={guardianData?.subgroup?.name || 'Sin grupo'} 
-              role={'Acudiente'} 
-              joinDate={guardianData?.acceptanceDate || ''} 
-              isActive={guardianData?.isActive || false} 
               onViewMember={handleViewMemberProfile} 
             />
+            <GroupInfoCard
+              role={'Acudiente'}
+              joinDate={guardianApiData?.acceptance_date || ''}
+              isActive={guardianApiData?.is_active || false}
+            />            
           </div>
         </div>
       </div>
@@ -190,8 +180,8 @@ const GuardianProfilePage: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleEditProfile} 
         initialData={{
-          firstName: guardianData?.firstName ?? user?.nickname ?? '',
-          lastName: guardianData?.lastName || '',
+          firstName: guardianData?.first_name ?? user?.nickname ?? '',
+          lastName: guardianData?.last_name || '',
           identification: guardianData?.identification || '',
           documentType: guardianData?.documentType || 'CC',
           email: user?.email ?? 'N/A',

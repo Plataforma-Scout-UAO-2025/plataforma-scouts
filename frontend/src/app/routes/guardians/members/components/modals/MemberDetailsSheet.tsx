@@ -71,12 +71,6 @@ export default function MiembroDetallesSheet({
           <Button variant="secondary" onClick={onClose}>
             Cerrar
           </Button>
-          <Button 
-            onClick={() => onEdit(miembro)}
-            className="bg-[#1a4134] hover:bg-[#29765C] text-white"
-          >
-            Editar Miembro
-          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

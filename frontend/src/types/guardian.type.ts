@@ -16,11 +16,11 @@ export interface EmergencyContactDTO {
 }
 
 export interface MemberBasicInfo {
-  userId?: string;
+  user_id?: string;
   tenantId?: string;
   subgroup?: SubgroupDTO;
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   age?: number;
   role?: string;
   identification?: string;
@@ -35,7 +35,7 @@ export interface MemberBasicInfo {
   hobbies?: string;
   sports?: string;
   instruments?: string;
-  isActive?: boolean;
+  is_active?: boolean;
   relationship?: string;
   status?: Status;
   acceptanceDate?: string;
@@ -46,21 +46,18 @@ export interface MemberBasicInfo {
 }
 
 export interface Guardian {
-  userId?: string;
-  subgroup?: SubgroupDTO;
-  rol?: string;
-  tenantId?: string;
-  subgroupId?: string;
-  firstName: string;
-  lastName: string;
-  age?: number;
-  identification?: string;
-  documentType?: DocumentType;
-  phone?: string;
-  relationship?: string;
-  isActive?: boolean;
-  status?: Status;
-  acceptanceDate?: string;
+  user_id: string
+  rol: "ACUDIENTE" | "ADMIN" | "USUARIO"
+  tenant_id: string
+  first_name: string
+  last_name: string
+  age: number
+  identification: string
+  document_type: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP'
+  phone: string
+  is_active: boolean
+  status: "APPROVED" | "PENDING" | "REJECTED" | string
+  acceptance_date: string
 }
 
 export interface GuardianWithMembers {
