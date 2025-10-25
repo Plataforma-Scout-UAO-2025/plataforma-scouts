@@ -101,7 +101,7 @@ const ComiteAdminView = () => {
           <CardContent>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline"><Link to="/app/financiero/pagos">Ver pagos</Link></Button>
-              <Button asChild variant="outline"><Link to="/app/financiero/gestion">Ver cuotas</Link></Button>
+              <Button asChild variant="outline"><Link to="/app/financiero/cuotas/gestion">Ver cuotas</Link></Button>
               <Button asChild variant="outline" disabled title="Próximamente"><Link to="#">Autorizaciones</Link></Button>
               <Button asChild variant="outline" disabled title="Próximamente"><Link to="#">Eventos</Link></Button>
             </div>
