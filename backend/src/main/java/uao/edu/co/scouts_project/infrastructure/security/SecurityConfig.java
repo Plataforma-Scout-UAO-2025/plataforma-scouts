@@ -91,6 +91,12 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
 
+                                                // Cambio de rol: reglas específicas por endpoint
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role")
+                                                .hasAnyRole(ADMIN_GRUPO.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role-global")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
+
                                                 // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia
                                                 // organización
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
