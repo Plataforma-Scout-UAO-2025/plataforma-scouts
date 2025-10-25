@@ -9,6 +9,7 @@ export const store = configureStore({
   reducer: {
     members: membersReducer,
     organigrama: organigramaReducer,
+    
     // Aquí puedes agregar otros reducers cuando los necesites
   },
 });

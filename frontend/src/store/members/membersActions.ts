@@ -13,12 +13,14 @@ import {
   createMemberWithSchool,
   createMemberAuth0,
   createScoutAuth0,
+  getSchoolDataByMemberId,
 } from "@/api/membersApi";
 import type { Member, UpdateMember } from "@/types/member.type";
 import type {
   CreateMemberWithSchoolRequest,
   CreateAuth0Request,
   CreateAuth0Response,
+  SchoolData,
 } from "@/types/enrollment.type";
 
 // Obtener datos de un miembro desde Firestore
@@ -266,4 +268,20 @@ export const updateMemberByDtoAction = createAsyncThunk<
       errorData?.error || "Error al actualizar el miembro (DTO)";
     return rejectWithValue({ error: errorMessage });
   }
+});
+
+export const fetchSchoolDataMemberAction = createAsyncThunk<
+  { memberId: number; schoolData: SchoolData },
+  number,
+  { rejectValue: string | string[] }
+>("member/fetchSchoolData", async (id, { rejectWithValue }) => {
+  try {
+    const schoolData = await getSchoolDataByMemberId(id);
+    return { memberId: id, schoolData };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage = errorData?.error || "Error al obtener los datos escolares del miembro";
+    return rejectWithValue(errorMessage);
+ }
 });

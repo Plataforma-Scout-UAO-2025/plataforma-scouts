@@ -9,8 +9,10 @@ import {
   createScoutAuth0Action,
   fetchMembersWithBranchAction,
   fetchMembersByStatusAction,
+  fetchSchoolDataMemberAction,
   updateMemberStatusAction,
 } from "./membersActions";
+
 import type { Member } from "@/types/member.type";
 
 interface MembersState {
@@ -175,6 +177,25 @@ const membersSlice = createSlice({
       state.loading = false;
       state.error = action.payload?.error as string;
     });
+    builder.addCase(fetchSchoolDataMemberAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchSchoolDataMemberAction.fulfilled, (state, action) => {
+      state.loading = false;
+      if (state.member) {
+        state.member = {
+          ...state.member,
+          schoolData: action.payload.schoolData
+        };
+      } else {
+        state.member = action.payload;
+      }
+    });
+    builder.addCase(fetchSchoolDataMemberAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+});
   },
 });
 

@@ -11,12 +11,13 @@ import PersonalInfo from "./components/PersonalInfo";
 import EmergencyContacts from "./components/EmergencyContacts";
 import Interests from "./components/Interests";
 import AssignmentSelectors from "./components/AssignmentSelectors";
+import SchoolInfo from "./components/SchoolInfo";
 import MemberStatusBar from "./components/MemberStatusBar";
 import { useOrgStructure } from "@/hooks/useOrgStructure";
 import { useMemberApproval } from "@/hooks/useMemberApproval";
 import { listRoles } from "@/api/membersApi";
 import type { RoleSummary } from "@/api/membersApi";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MemberDetailsModalProps {
   open: boolean;
@@ -48,25 +49,18 @@ export default function MemberDetailsModal({
     resetSelections,
   } = useOrgStructure({ orgId, open });
 
-  const handleClose = () => {
-    resetSelections();
-    setSelectedRole("");
-    onOpenChange(false);
-  };
   const [roles, setRoles] = useState<RoleSummary[]>([]);
   const [rolesLoading, setRolesLoading] = useState(false);
   const [rolesError, setRolesError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("");
 
-  const { loading, canAccept, accept } = useMemberApproval({
-    member,
-    selectedSection,
-    selectedSubgroup,
-    selectedRole,
-    onSuccess,
-    onClose: handleClose,
-  });
+  const handleClose = () => {
+    resetSelections();
+    setSelectedRole("");
+    onOpenChange(false);
+  };
 
+  // Cargar roles al abrir el modal
   useEffect(() => {
     let mounted = true;
     const fetchRoles = async () => {
@@ -87,7 +81,16 @@ export default function MemberDetailsModal({
     return () => {
       mounted = false;
     };
-  }, [open, setRoles, setRolesLoading, setRolesError]);
+  }, [open]);
+
+  const { loading, canAccept, accept } = useMemberApproval({
+    member,
+    selectedSection,
+    selectedSubgroup,
+    selectedRole,
+    onSuccess,
+    onClose: handleClose,
+  });
 
   if (!member) return null;
 
@@ -109,6 +112,9 @@ export default function MemberDetailsModal({
             <PersonalInfo member={member} />
             <EmergencyContacts member={member} />
             <Interests member={member} />
+
+            <SchoolInfo memberId={member.member_id} />
+
             <AssignmentSelectors
               groups={groups}
               sections={sections}
@@ -125,6 +131,7 @@ export default function MemberDetailsModal({
               selectedRole={selectedRole}
               setSelectedRole={setSelectedRole}
             />
+
             <MemberStatusBar member={member} />
           </div>
         )}
@@ -144,7 +151,7 @@ export default function MemberDetailsModal({
             disabled={
               loading || !canAccept || !selectedGroupSlug || !selectedRole
             }
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            className="flex-1 bg-green-900 hover:bg-green/800"
           >
             {loading ? "Procesando..." : "Aceptar Solicitud"}
           </Button>

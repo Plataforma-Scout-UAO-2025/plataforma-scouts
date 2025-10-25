@@ -1,5 +1,7 @@
 import type { Section } from "./section.type";
 import type { role } from "./enrollment.type";
+import type { SchoolData } from "./enrollment.type";
+
 
 export interface Member {
   // Campos opcionales para manejar ambas convenciones de nombres
@@ -11,6 +13,7 @@ export interface Member {
   firstName?: string;
   lastName?: string;
   isActive?: boolean;
+  
 
   member_id?: number;
   first_name?: string;
@@ -43,6 +46,7 @@ export interface Member {
   emergency_contacts?: EmergencyContact[];
   created_at?: string;
   updated_at?: string;
+  schoolData?: SchoolData;
   subgroup?: {
     name?: string;
     description?: string | null;
@@ -88,7 +92,10 @@ export interface Member {
       updated_at?: string;
     };
   };
+ 
   branch?: Section[];
+ 
+  
 }
 
 export interface CreateMember {
