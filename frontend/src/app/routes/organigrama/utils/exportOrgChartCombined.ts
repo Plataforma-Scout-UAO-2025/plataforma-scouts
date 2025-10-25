@@ -52,6 +52,24 @@ function getMemberSubgroupId(member: Member): number | undefined {
   return toNumberSafe(direct ?? nested);
 }
 
+// Business rules aligned with RamaDetail view
+function isMemberActiveAndApproved(member: Member): boolean {
+  const isActive = (member as any)?.is_active ?? (member as any)?.isActive;
+  const status = (member as any)?.status;
+  const active = typeof isActive === "boolean" ? isActive : true;
+  return active && status === "APPROVED";
+}
+
+function isMemberScouter(member: Member): boolean {
+  return (member as any)?.role === "SCOUTER";
+}
+
+function fullName(member: Member): string {
+  const fn = (member as any)?.firstName ?? (member as any)?.first_name ?? "";
+  const ln = (member as any)?.lastName ?? (member as any)?.last_name ?? "";
+  return `${String(fn).trim()} ${String(ln).trim()}`.trim();
+}
+
 export async function exportBranchesCSV(
   branches: SimpleBranches,
   members: Member[] = []
@@ -66,12 +84,8 @@ export async function exportBranchesCSV(
   const rows: string[][] = [];
 
   for (const { section, subgroups } of branches) {
-    const uniqueLeaders = Array.from(
-      new Set(
-        (subgroups || []).map((sg) => sg.leader).filter(Boolean) as string[]
-      )
-    );
-    const jefeRama = uniqueLeaders.join(", ");
+    // Nota: el jefe de rama se calculará por subrama a partir de los miembros (rol SCOUTER)
+    const jefeRama = ""; // a nivel de fila de rama sin subramas no es determinable
     const desc =
       section.description && String(section.description).trim()
         ? String(section.description)
@@ -90,6 +104,7 @@ export async function exportBranchesCSV(
 
         // Obtener miembros de la subrama
         let integrantes = "";
+        let jefeNames = "";
         try {
           const subgroupId = sg.id;
           if (subgroupId && members.length > 0) {
@@ -101,14 +116,12 @@ export async function exportBranchesCSV(
             });
 
             if (subgroupMembers.length > 0) {
-              integrantes = subgroupMembers
-                .map((m: Member) => {
-                  const firstName = m.firstName || m.first_name || "";
-                  const lastName = m.lastName || m.last_name || "";
-                  return `${firstName} ${lastName}`.trim();
-                })
-                .filter(Boolean)
-                .join(", ");
+              const activos = subgroupMembers.filter(isMemberActiveAndApproved);
+              const jefes = activos.filter(isMemberScouter);
+              const scouts = activos.filter((m) => !isMemberScouter(m));
+
+              jefeNames = jefes.map(fullName).filter(Boolean).join(", ");
+              integrantes = scouts.map(fullName).filter(Boolean).join(", ");
             }
           }
         } catch (error) {
@@ -120,8 +133,8 @@ export async function exportBranchesCSV(
           // Fallback vacío
         }
 
-        // En la UI, el líder mostrado por subrama es sg.leader; usarlo aquí también
-        rows.push([section.name, desc, nameFull, integrantes, sg.leader || ""]);
+        // Usar los jefes calculados; si no hay datos, intentar respaldarse con sg.leader
+        rows.push([section.name, desc, nameFull, integrantes, jefeNames || sg.leader || ""]);
       }
     }
   }
@@ -206,7 +219,7 @@ export async function exportOrgChartCombinedPDF(
   branches: SimpleBranches,
   levels: OrganigramaNiveles,
   members: Member[] = [],
-  opts?: { year?: number }
+  opts?: { year?: number; groupName?: string }
 ) {
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
   const x = 40;
@@ -216,7 +229,22 @@ export async function exportOrgChartCombinedPDF(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(26, 65, 52);
-  const title = `Organigrama Completo${opts?.year ? ` – ${opts.year}` : ""}`;
+  const titleBase = `Estructura de Ramas, Subramas y Niveles Organizativos`;
+  const normalize = (s?: string) =>
+    (s ?? "")
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  const hasGrupoScoutPrefix = (name?: string) => normalize(name).startsWith("grupo scout");
+  const groupDisplay = opts?.groupName
+    ? hasGrupoScoutPrefix(opts.groupName)
+      ? opts.groupName
+      : `Grupo Scout ${opts.groupName}`
+    : "";
+  // Nota: Se omite el año en el título según solicitud
+  const title = `${titleBase}${groupDisplay ? ` - ${groupDisplay}` : ""}`;
   doc.text(title, x, y);
 
   doc.setFont("helvetica", "normal");
@@ -232,12 +260,8 @@ export async function exportOrgChartCombinedPDF(
 
   const branchesBody: string[][] = [];
   for (const { section, subgroups } of branches) {
-    const uniqueLeaders = Array.from(
-      new Set(
-        (subgroups || []).map((s) => s.leader).filter(Boolean) as string[]
-      )
-    );
-    const jefeRama = uniqueLeaders.join(", ");
+    // Igual que en CSV, los jefes se calculan por subrama usando los miembros
+    const jefeRama = "";
     const desc =
       section.description && String(section.description).trim()
         ? String(section.description)
@@ -261,6 +285,7 @@ export async function exportOrgChartCombinedPDF(
 
         // Obtener miembros de la subrama
         let integrantes = "";
+        let jefeNames = "";
         try {
           const subgroupId = sg.id;
           if (subgroupId && members.length > 0) {
@@ -272,14 +297,12 @@ export async function exportOrgChartCombinedPDF(
             });
 
             if (subgroupMembers.length > 0) {
-              integrantes = subgroupMembers
-                .map((m: Member) => {
-                  const firstName = m.firstName || m.first_name || "";
-                  const lastName = m.lastName || m.last_name || "";
-                  return `${firstName} ${lastName}`.trim();
-                })
-                .filter(Boolean)
-                .join(", ");
+              const activos = subgroupMembers.filter(isMemberActiveAndApproved);
+              const jefes = activos.filter(isMemberScouter);
+              const scouts = activos.filter((m) => !isMemberScouter(m));
+
+              jefeNames = jefes.map(fullName).filter(Boolean).join(", ");
+              integrantes = scouts.map(fullName).filter(Boolean).join(", ");
             }
           }
         } catch (error) {
@@ -296,7 +319,7 @@ export async function exportOrgChartCombinedPDF(
           desc,
           nameFull,
           integrantes,
-          sg.leader || "",
+          jefeNames || sg.leader || "",
         ]);
       }
     }

@@ -131,10 +131,17 @@ export default function LevelAccordion({
   const getMemberSubgroupId = (m: Member): number | undefined => {
     const anyM = m as unknown as Record<string, any>;
     return (
+      // variantes top-level
       toNumberSafe(anyM.subgroupId) ??
+      toNumberSafe(anyM.subGroupId) ??
       toNumberSafe(anyM.subgroup_id) ??
+      toNumberSafe(anyM.sub_group_id) ??
+      toNumberSafe(anyM.subgroup) ??
+      // variantes anidadas
       toNumberSafe(anyM?.subgroup?.subgroupId) ??
-      toNumberSafe(anyM?.subgroup?.subgroup_id)
+      toNumberSafe(anyM?.subgroup?.subGroupId) ??
+      toNumberSafe(anyM?.subgroup?.subgroup_id) ??
+      toNumberSafe(anyM?.subgroup?.id)
     );
   };
 

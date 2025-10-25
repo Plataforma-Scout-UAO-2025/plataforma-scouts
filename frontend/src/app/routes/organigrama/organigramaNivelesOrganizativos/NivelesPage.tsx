@@ -7,7 +7,7 @@ import LevelAccordion from "./components/LevelAccordion";
 import { useNiveles } from "./hooks/useNiveles";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMembersAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
+import { fetchMembersAction, fetchMembersWithBranchAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
 import type { RootState, AppDispatch } from "@/store/store";
 // Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
@@ -78,7 +78,14 @@ export default function NivelesPage() {
   // Cargar miembros al montar el componente
   useEffect(() => {
     if (members.length === 0) {
-      dispatch(fetchMembersAction());
+      // Cargar con endpoint público (list_members). Si falla o queda corto, intentamos con detalles.
+      (async () => {
+        const action = await dispatch(fetchMembersAction());
+        if ((action as any).meta?.requestStatus === "rejected") {
+          // Mejor esfuerzo: intentar con detalles (puede estar prohibido en algunos roles)
+          await dispatch(fetchMembersWithBranchAction());
+        }
+      })();
     }
   }, [dispatch, members.length]);
 
@@ -210,7 +217,11 @@ export default function NivelesPage() {
         if ((resultAction as any).meta?.requestStatus === "fulfilled") {
           setShowSuccess(true);
           // Refrescar miembros desde el backend para que el listado por cargo se actualice
-          await dispatch(fetchMembersAction());
+          // Preferir el endpoint público; si falla, intentamos con detalles
+          let r = await dispatch(fetchMembersAction());
+          if ((r as any).meta?.requestStatus === "rejected") {
+            await dispatch(fetchMembersWithBranchAction());
+          }
           setMembersRefreshKey((k) => k + 1);
         } else {
           console.error("Error al asignar subgrupo/sección: ", (resultAction as any).payload || resultAction);
@@ -253,7 +264,7 @@ export default function NivelesPage() {
       {/* CABECERA */}
       <header className="flex flex-col gap-2 mb-6">
         <h1 className="text-3xl font-extrabold text-primary">
-          Niveles Organizativos
+          Gestión de Niveles Organizativos
         </h1>
         <p className="text-accent-foreground">
           Administra la estructura organizativa de tu grupo scout

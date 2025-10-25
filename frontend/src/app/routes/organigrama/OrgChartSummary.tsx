@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMembersAction } from "@/store/members/membersActions";
+import { fetchMembersAction, fetchMembersWithBranchAction } from "@/store/members/membersActions";
+import { fetchGroupAction } from "@/store/organigrama/organigramaActions";
 import type { RootState, AppDispatch } from "@/store/store";
 import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
 import { getRamasWithSubramas } from "./organigramaRamas_Subramas/services/rama.service";
@@ -45,6 +46,7 @@ const PADRES_ORDER = [
 export default function OrgChartSummary() {
   const dispatch = useDispatch<AppDispatch>();
   const { members } = useSelector((state: RootState) => state.members);
+  const { group } = useSelector((state: RootState) => state.organigrama);
   
   const currentYear = new Date().getFullYear();
   // Get tenant/group first to use them for both ramas/subramas and niveles
@@ -67,6 +69,13 @@ export default function OrgChartSummary() {
       dispatch(fetchMembersAction());
     }
   }, [dispatch, members.length]);
+
+  // Cargar información del grupo para usar el nombre en el título del PDF
+  useEffect(() => {
+    if (tenantId && groupSlug && !group) {
+      dispatch(fetchGroupAction({ tenantId: String(tenantId), groupSlug }));
+    }
+  }, [dispatch, tenantId, groupSlug, group]);
 
   useEffect(() => {
     let mounted = true;
@@ -166,6 +175,10 @@ export default function OrgChartSummary() {
       const action = await dispatch(fetchMembersAction());
       const payload = (action as unknown as { payload?: unknown }).payload;
       if (Array.isArray(payload)) return payload as typeof members;
+      // Fallback: intentar con endpoint enriquecido (incluye relaciones)
+      const action2 = await dispatch(fetchMembersWithBranchAction());
+      const payload2 = (action2 as unknown as { payload?: unknown }).payload;
+      if (Array.isArray(payload2)) return payload2 as typeof members;
     } catch (_) {
       // ignore
     }
@@ -176,7 +189,7 @@ export default function OrgChartSummary() {
     try {
       setExportingPDF(true);
       const mem = await ensureMembersLoaded();
-      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, mem, { year: anio });
+      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, mem, { year: anio, groupName: group?.name || undefined });
     } finally {
       setExportingPDF(false);
     }
