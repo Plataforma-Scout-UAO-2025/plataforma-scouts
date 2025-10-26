@@ -75,6 +75,26 @@ public class GuardianMapper {
                 .build();
     }
 
+    public static GuardianCreateDTO toGuardianDTO(Member member) {
+        return GuardianCreateDTO.builder()
+                .memberId(member.getMemberId())
+                .userId(member.getUserId())
+                .tenantId(member.getTenantId())
+                .firstName(member.getFirstName())
+                .lastName(member.getLastName())
+                .age(member.getAge())
+                .identification(member.getIdentification())
+                .documentType(member.getDocumentType())
+                .phone(member.getPhone())
+                .isActive(member.getIsActive())
+                .relationship(member.getRelationship())
+                .status(member.getStatus())
+                .address(member.getAddress())
+                .acceptanceDate(member.getAcceptanceDate())
+                .rol(member.getRole()) // Assuming a single role for simplicity
+                .build();
+    }
+
     public static MemberDTO toMemberDTO(Member member) {
         return MemberDTO.builder()
                 .userId(member.getUserId())
@@ -90,11 +110,13 @@ public class GuardianMapper {
 
     public static MemberDTO toMemberDTO(MemberCustom memberCustom) {
         return MemberDTO.builder()
+                .memberId(memberCustom.getMemberId())
                 .firstName(memberCustom.getFirstName())
                 .lastName(memberCustom.getLastName())
                 .gender(memberCustom.getGender())
                 .phone(memberCustom.getPhone())
                 .birthDate(memberCustom.getBirthDate())
+                .address(memberCustom.getAddress())
                 .build();
     }
 }
