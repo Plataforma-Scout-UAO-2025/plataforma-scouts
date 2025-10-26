@@ -25,6 +25,7 @@ import jakarta.validation.constraints.Size;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GuardianCreateDTO {
+    private Long memberId;
     private String userId;
     private SubgroupDTO subgroup;
     private String rol;
@@ -41,6 +42,7 @@ public class GuardianCreateDTO {
     private DocumentType documentType;
     @Size(max = 10, message = "Teléfono no debe exceder 10 caracteres")
     private String phone;
+    private String address;
     private String relationship;
     private Boolean isActive;
     private Status status;
