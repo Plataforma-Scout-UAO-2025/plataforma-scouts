@@ -26,6 +26,7 @@ import uao.edu.co.scouts_project.member.shared.enums.Status;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GuardianWithMembersDTO {
 
+    private Long memberId;
     private String userId;
     private SubgroupDTO subgroup;
     private String tenantId;
@@ -42,6 +43,7 @@ public class GuardianWithMembersDTO {
     private String phone;
     private Boolean isActive;
     private String relationship;
+    private String address;
     private Status status;
     private LocalDate acceptanceDate;
     private List<MemberDTO> members;
