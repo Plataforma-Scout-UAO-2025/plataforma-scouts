@@ -19,8 +19,8 @@ export interface GroupResponseDTO {
   config?: Record<string, unknown>;
   isActive: boolean;
   status?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TenantDTO {

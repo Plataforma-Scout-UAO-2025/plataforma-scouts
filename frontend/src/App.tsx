@@ -37,6 +37,11 @@ import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollme
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
 import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
 import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
+
+// Admin global
+import AdminGlobalView from "./app/routes/dashboard/components/admin-global/AdminGlobalView";
+import AdminGlobalGroups from "./app/routes/admin-global/Grupos/Grupos";
+
 function App() {
   useAuth0ApiWrapper();
 
@@ -74,6 +79,10 @@ function App() {
             <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
+
+            {/* Rutas para admin global */}
+            <Route path="admin-global" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL]}><AdminGlobalView /></ProtectedRoute>} />
+            <Route path="admin-global/grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL]}><AdminGlobalGroups /></ProtectedRoute>} />
 
             {/* Rutas para acudiente */}
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />

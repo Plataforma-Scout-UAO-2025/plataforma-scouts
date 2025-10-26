@@ -1,7 +1,7 @@
 import { useRoleContext } from "@/hooks/useRoleContext";
 import { RawRole } from "@/roles/roles";
-import AdminGlobalView from "./components/AdminGlobalView";
-import AdminGrupoView from "./components/AdminGrupoView";
+import AdminGlobalView from "./components/admin-global/AdminGlobalView";
+import AdminGrupoView from "./components/admin-grupal/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
 import ScoutView from "./components/ScoutView";
 import ComiteAdminView from "./components/ComiteAdminView";
