@@ -3,6 +3,9 @@ package uao.edu.co.scouts_project.application.service;
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
@@ -171,6 +174,12 @@ public class Auth0ServiceImpl implements IAuth0Service {
     // --- Added: change role (single-role) for group admin ---
     @Override
     public void changeUserRole(UserAuth0ChangeRoleDTO cmd) {
+        // Prevent changing own role
+        String currentUserId = getCurrentUserIdFromSecurityContext();
+        if (currentUserId != null && currentUserId.equals(cmd.getUser_id())) {
+            throw new UnauthorizedRoleAssignmentException("No está autorizado para cambiar su propio rol");
+        }
+
         // Validate role from enum with friendly error message
         Role target;
         try {
@@ -237,6 +246,15 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
         String roleId = roleMappingPort.getAuth0RoleId(target);
         adminPort.assignRole(cmd.getUser_id(), roleId);
+    }
+
+    private String getCurrentUserIdFromSecurityContext() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth instanceof JwtAuthenticationToken jwtAuth) {
+            Object sub = jwtAuth.getToken().getClaims().get("sub");
+            return sub != null ? sub.toString() : null;
+        }
+        return null;
     }
 
 }
