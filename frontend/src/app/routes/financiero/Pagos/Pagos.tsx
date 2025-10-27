@@ -32,7 +32,7 @@ export default function Pagos() {
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-4">
           <h1 className="text-4xl font-bold tracking-tight text-primary">
-            Gestión de Pagos
+            Pagos agrupados por integrante
           </h1>
           <p className="text-muted-foreground text-sm">
             En esta sección puedes visualizar todos los pagos realizados por los

@@ -338,7 +338,7 @@ export default function CreateCuotaForm({
             name="start_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Fecha de inicio</FormLabel>
+                <FormLabel>{periodicityValue === 'SINGLE' ? 'Fecha límite' : 'Fecha de inicio'}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
