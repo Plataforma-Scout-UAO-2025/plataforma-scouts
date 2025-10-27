@@ -79,16 +79,10 @@ const GuardianMembersTable = ({
               Apellidos
             </TableHead>
             <TableHead className="font-bold text-primary">
-              Identificación
-            </TableHead>
-            <TableHead className="font-bold text-primary">
               Edad
             </TableHead>
             <TableHead className="font-bold text-primary">
               Género
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Teléfono
             </TableHead>
             <TableHead className="font-bold text-primary">
               Rama
@@ -107,11 +101,9 @@ const GuardianMembersTable = ({
             filteredMembers.map((member, idx) => {
               // Acceder directamente a los campos del backend (con underscore)
               const memberRec = member as any;
-              const userId = memberRec.userId || memberRec.user_id || idx;
+              const userId = memberRec.userId || memberRec.userId || idx;
               const firstName = memberRec.first_name || memberRec.firstName || "N/A";
               const lastName = memberRec.last_name || memberRec.lastName || "N/A";
-              const identification = memberRec.identification || "N/A";
-              const phone = memberRec.phone || "N/A";
               const gender = memberRec.gender || "N/A";
               const birthDate = memberRec.birth_date || memberRec.birthDate;
               const relationship = memberRec.relationship || "No especificado";
@@ -127,17 +119,11 @@ const GuardianMembersTable = ({
                   <TableCell className="w-32 truncate">
                     {lastName}
                   </TableCell>
-                  <TableCell className="w-32 truncate">
-                    {identification}
-                  </TableCell>
                   <TableCell className="w-20 truncate">
                     {memberRec.age || getAge(birthDate)}
                   </TableCell>
                   <TableCell className="w-20 truncate">
                     {formatGender(gender)}
-                  </TableCell>
-                  <TableCell className="w-32 truncate">
-                    {phone}
                   </TableCell>
                   <TableCell className="w-28 truncate">
                     {member.subgroup?.name || "Sin rama"}

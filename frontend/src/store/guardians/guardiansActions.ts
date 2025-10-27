@@ -5,12 +5,12 @@ import {getMembersInChargeOf} from "@/api/guardiansApi";
 
 export const fetchMembersInChargeAction = createAsyncThunk<
   MemberBasicInfo[],
-  number,
+  string | number,
   { rejectValue: string | string[] }
 >("member/fetchMembersInCharge", async (id, { rejectWithValue }) => {
   try {
     const member = await getMembersInChargeOf(id);
-    console.log(member);
+    console.log("member from actions", member);
     return member;
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
