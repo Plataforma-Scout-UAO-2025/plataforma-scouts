@@ -34,6 +34,9 @@ public class SecurityConfig {
                         .addFilterAfter(jwtTenantFilter, BearerTokenAuthenticationFilter.class)
                         .csrf(csrf -> csrf.disable())
                             .authorizeHttpRequests(authorize -> authorize
+                                    // Health check
+                                    .requestMatchers("/api/v1/test/health").permitAll()
+
                                     .requestMatchers("/api/v1/sec/roles").authenticated()
                                     .requestMatchers("/api/v1/sec/org_id").authenticated()
 
@@ -213,50 +216,5 @@ public class SecurityConfig {
                 converter.setJwtGrantedAuthoritiesConverter(authoritiesMappingPort::mapFromJwt);
                 return converter;
         }
-
-        /*
-         * @Bean
-         *
-         * @Profile("production")
-         * public SecurityFilterChain productionFilterChain(HttpSecurity http) throws
-         * Exception {
-         * http
-         * .csrf(csrf -> csrf.disable())
-         * .cors(cors -> cors.configurationSource(productionCorsConfigurationSource()))
-         * .authorizeHttpRequests(authz -> authz
-         * .requestMatchers("/api/v1/qa/").denyAll() // No endpoints de QA en producción
-         * .requestMatchers("/swagger-ui/").denyAll() // No Swagger en producción
-         * .requestMatchers("/v3/api-docs/").denyAll()
-         * .requestMatchers("/actuator/health").permitAll() // Solo health check
-         * .anyRequest().authenticated()
-         * );
-         *
-         * return http.build();
-         * }
-         *
-         * @Bean
-         *
-         * @Profile("production")
-         * public CorsConfigurationSource productionCorsConfigurationSource() {
-         * CorsConfiguration configuration = new CorsConfiguration();
-         *
-         * // Solo dominios de producción específicos
-         * configuration.setAllowedOrigins(Arrays.asList(
-         * "https://scouts.uao.edu.co",
-         * "https://app.scouts.uao.edu.co"
-         * ));
-         *
-         * configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT",
-         * "DELETE"));
-         * configuration.setAllowedHeaders(Arrays.asList("Authorization",
-         * "Content-Type"));
-         * configuration.setAllowCredentials(true);
-         *
-         * UrlBasedCorsConfigurationSource source = new
-         * UrlBasedCorsConfigurationSource();
-         * source.registerCorsConfiguration("/api/", configuration);
-         * return source;
-         * }
-         */
 
 }

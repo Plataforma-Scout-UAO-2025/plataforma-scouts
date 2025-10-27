@@ -25,15 +25,6 @@ public class JwtTenantFilter extends OncePerRequestFilter {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-            if (auth == null) {
-                logger.warn("Authentication is null");
-                throw new ServletException("No authentication in security context");
-            }
-            else if (auth.getPrincipal() instanceof Jwt jwt) {
-                var claimKeys = String.join(", ", jwt.getClaims().keySet());
-                logger.info("JWT org_id: " + jwt.getClaimAsString("org_id"));
-            }
-
             if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
                 String tenantId = jwt.getClaimAsString(TENANT_CLAIM);
                 if (tenantId != null && !tenantId.isBlank()) {
