@@ -51,7 +51,7 @@ export default function PersonalInfoSection({ member }: PersonalInfoSectionProps
   };
 
   // Obtener la edad usando la misma lógica que la tabla
-  const memberRec = member as any;
+  const memberRec = member as MemberBasicInfo & { birth_date?: string; birthDate?: string; age?: string };
   const birthDate = memberRec.birth_date || memberRec.birthDate;
   const displayAge = memberRec.age || getAge(birthDate);
 

@@ -22,6 +22,14 @@ interface Member {
   isActive?: boolean | string | number;
 }
 
+interface ExtendedMemberInfo extends MemberBasicInfo {
+  member_id?: string | number;
+  userId?: string | number;
+  firstName?: string;
+  lastName?: string;
+  birth_date?: string;
+}
+
 const GuardianMembersTable = ({ 
   filteredMembers, 
   onViewMember, 
@@ -99,7 +107,7 @@ const GuardianMembersTable = ({
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member, idx) => {
-              const memberRec = member as any;
+              const memberRec = member as ExtendedMemberInfo;
               const memberId = memberRec.member_id || memberRec.userId || memberRec.memberId || idx;
               const firstName = memberRec.first_name || memberRec.firstName || "N/A";
               const lastName = memberRec.last_name || memberRec.lastName || "N/A";
