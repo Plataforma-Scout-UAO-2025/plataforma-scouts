@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 
 // Slices
 import membersReducer from "./members/membersSlice";
+import groupsReducer from "./groups/groupsSlice";
 import organigramaReducer from "./organigrama/organigramaSlice";
 import organigramaCacheReducer from "./organigrama/organigramaCache.slice";
 
@@ -9,6 +10,7 @@ import organigramaCacheReducer from "./organigrama/organigramaCache.slice";
 export const store = configureStore({
   reducer: {
     members: membersReducer,
+    groups: groupsReducer,
     organigrama: organigramaReducer,
     organigramaCache: organigramaCacheReducer,
     // Aquí puedes agregar otros reducers cuando los necesites

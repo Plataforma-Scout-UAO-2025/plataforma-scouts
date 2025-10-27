@@ -39,7 +39,6 @@ import MembersInCharge from "./app/routes/guardians/members/components/views/Mem
 import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
 
 // Admin global
-import AdminGlobalView from "./app/routes/dashboard/components/admin-global/AdminGlobalView";
 import AdminGlobalGroups from "./app/routes/admin-global/Grupos/Grupos";
 
 function App() {
@@ -71,7 +70,7 @@ function App() {
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Financiero /></ProtectedRoute>} />
             <Route path="financiero/cuotas/gestion" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Gestion /></ProtectedRoute>} />
             <Route path="financiero/pagos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Pagos /></ProtectedRoute>} />
-            <Route path="dashboard" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUT, RawRole.GUEST, RawRole.ACUDIENTE, RawRole.TESORERO]}><Dashboard /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUT, RawRole.GUEST, RawRole.ACUDIENTE, RawRole.TESORERO]}><Dashboard /></ProtectedRoute>} />
             <Route path="miembros" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Miembros /></ProtectedRoute>} />
             <Route path="inscripcion" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.GUEST, RawRole.SCOUT, RawRole.ACUDIENTE]}><ScoutEnrollment /></ProtectedRoute>} />
             <Route path="solicitudes" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Requests /></ProtectedRoute>} />
@@ -81,7 +80,6 @@ function App() {
             <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
 
             {/* Rutas para admin global */}
-            <Route path="admin-global" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL]}><AdminGlobalView /></ProtectedRoute>} />
             <Route path="admin-global/grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL]}><AdminGlobalGroups /></ProtectedRoute>} />
 
             {/* Rutas para acudiente */}

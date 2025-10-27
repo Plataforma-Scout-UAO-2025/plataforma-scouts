@@ -66,14 +66,14 @@ const adminGlobalItems: MenuItem[] = [
     id: "inicio",
     label: "Inicio",
     icon: <LineChart />,
-    href: "/app/dashboard-global",
+    href: "/app/dashboard",
   },
   {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
-  },
+    id: "grupos",
+    label: "Grupos",
+    icon: <Users />,
+    href: "/app/admin-global/grupos",
+  }
 ];
 
 const adminGrupalItems: MenuItem[] = [
@@ -206,12 +206,6 @@ function AppLayoutContent() {
 
   // Determinar qué menú mostrar según el rol del usuario
   const getMenuItems = (): MenuItem[] => {
-    const isAdminGlobalRoute = location.pathname.startsWith("/app/adminGlobal");
-
-    if (isAdminGlobalRoute) {
-      return adminGlobalItems;
-    }
-
     switch (currentUserRole) {
       case RawRole.ACUDIENTE:
         return acudienteItems;
@@ -224,8 +218,11 @@ function AppLayoutContent() {
       case RawRole.COMITE_ADMIN:
         return comiteItems;
       case RawRole.ADMIN_GRUPO:
-      default:
         return adminGrupalItems;
+      case RawRole.ADMIN_GLOBAL:
+        return adminGlobalItems;
+      default:
+        return ScoutItems;
     }
   };
 

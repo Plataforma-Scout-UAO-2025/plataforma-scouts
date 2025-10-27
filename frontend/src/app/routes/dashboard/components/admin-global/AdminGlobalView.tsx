@@ -2,7 +2,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import HeaderCard from "./HeaderCard";
 import GroupsDistribution from "./GroupsDistribution";
-import GenderChart from "./GenderChart";
 
 // Mocked loading state and data
 const groupMemberCount: Record<string, number> = {
@@ -35,7 +34,6 @@ const AdminGlobalView = () => {
       </section>
       <section className="my-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          <GenderChart members={[]} />
           <GroupsDistribution
             groupMembers={Object.entries(groupMemberCount || {})}
           />
