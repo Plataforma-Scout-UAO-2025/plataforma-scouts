@@ -55,8 +55,7 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
            "g.groupId, g.name, COUNT(m)) " +
            "FROM Member m " +
            "JOIN m.subgroup s " +
-           "JOIN s.section sec " +
-           "JOIN sec.group g " +
+           "JOIN Group g ON g.groupId = s.groupId " +
            "WHERE g.tenantId = :tenantId " +
            "GROUP BY g.groupId, g.name")
     List<uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO> countMembersByGroup(@Param("tenantId") String tenantId);

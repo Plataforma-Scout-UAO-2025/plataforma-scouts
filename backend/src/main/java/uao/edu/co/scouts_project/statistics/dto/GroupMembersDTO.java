@@ -1,21 +1,24 @@
 package uao.edu.co.scouts_project.statistics.dto;
 
 public class GroupMembersDTO {
-    private String groupId;
+    private Long groupId;
     private String groupName;
     private Long memberCount;
 
-    public GroupMembersDTO(String groupId, String groupName, Long memberCount) {
+    public GroupMembersDTO() {
+    }
+
+    public GroupMembersDTO(Long groupId, String name, Long memberCount) {
         this.groupId = groupId;
-        this.groupName = groupName;
+        this.groupName = name;
         this.memberCount = memberCount;
     }
 
-    public String getGroupId() {
+    public Long getGroupId() {
         return groupId;
     }
 
-    public void setGroupId(String groupId) {
+    public void setGroupId(Long groupId) {
         this.groupId = groupId;
     }
 
