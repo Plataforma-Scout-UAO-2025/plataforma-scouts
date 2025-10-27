@@ -23,7 +23,7 @@ import java.util.List;
 public class UpdateMemberDto {
 
     @Size(min = 2, max = 100, message = "El nombre debe tener entre 2 y 100 caracteres")
-    @JsonProperty("first_name")
+    @JsonProperty("firstName")
     private String firstName;
 
     @Size(min = 2, max = 100, message = "El apellido debe tener entre 2 y 100 caracteres")
