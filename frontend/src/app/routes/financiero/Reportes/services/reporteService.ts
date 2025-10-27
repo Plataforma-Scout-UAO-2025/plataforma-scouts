@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import type { Grupo, MiembroPago, EstadoPago, ReportePagos, FiltrosReporte } from "../types/reporte.type";
+import autoTable from 'jspdf-autotable';
+import type { Grupo, FiltrosReporte, FinancialReport, ReportPayments } from "@/types/reporte-financiero.type";
 
 // Datos mock de grupos
 export const GRUPOS_MOCK: Grupo[] = [
@@ -58,109 +59,89 @@ const randomDate = (start: Date, end: Date): Date => {
   return new Date(randomTime);
 };
 
-// Función para generar miembros mock
-const generarMiembrosMock = (cantidad: number, fechaInicio: Date, fechaFin: Date): MiembroPago[] => {
-  const miembros: MiembroPago[] = [];
+// Función para generar pagos mock
+const generarPagosMock = (cantidad: number, fechaInicio: Date, fechaFin: Date): ReportPayments[] => {
+  const pagos: ReportPayments[] = [];
   
   for (let i = 0; i < cantidad; i++) {
     const nombre = randomItem(NOMBRES);
     const apellido = randomItem(APELLIDOS);
-    const montoTotal = random(40000, 80000); // Montos entre $40,000 y $80,000
+    const monto = random(40000, 80000); // Montos entre $40,000 y $80,000
     
     // Determinar estado con probabilidades realistas
     const estadoRandom = Math.random();
-    let estado: EstadoPago;
-    let montoPagado: number;
-    let fechaUltimoPago: string | undefined;
-    let diasVencido: number | undefined;
+    let paidAt: Date | null = null;
     
     if (estadoRandom < 0.6) { // 60% pagado
-      estado = "pagado";
-      montoPagado = montoTotal;
-      fechaUltimoPago = randomDate(fechaInicio, fechaFin).toISOString().split('T')[0];
+      paidAt = randomDate(fechaInicio, fechaFin);
     } else if (estadoRandom < 0.8) { // 20% pendiente
-      estado = "pendiente";
-      montoPagado = random(0, montoTotal - 10000);
-      if (montoPagado > 0) {
-        fechaUltimoPago = randomDate(fechaInicio, new Date()).toISOString().split('T')[0];
-      }
+      // Sin pago
+      paidAt = null;
     } else { // 20% vencido
-      estado = "vencido";
-      montoPagado = random(0, montoTotal - 15000);
-      diasVencido = random(1, 45);
-      if (montoPagado > 0) {
-        const fechaVencimiento = new Date();
-        fechaVencimiento.setDate(fechaVencimiento.getDate() - diasVencido - random(1, 30));
-        fechaUltimoPago = fechaVencimiento.toISOString().split('T')[0];
-      }
+      // Pagado pero hace mucho tiempo
+      const fechaVencida = new Date();
+      fechaVencida.setDate(fechaVencida.getDate() - random(1, 45));
+      paidAt = fechaVencida;
     }
     
-    miembros.push({
-      id: `miembro-${i + 1}`,
-      nombre,
-      apellido,
-      estado,
-      montoPagado,
-      montoTotal,
-      fechaUltimoPago,
-      diasVencido
+    pagos.push({
+      payment_id: `payment-${i + 1}`,
+      first_name: nombre,
+      last_name: apellido,
+      amount: monto,
+      paid_at: paidAt
     });
   }
   
-  return miembros;
-};
-
-// Función para calcular el resumen financiero
-const calcularResumen = (miembros: MiembroPago[]) => {
-  const totalIngresos = miembros.reduce((sum, m) => sum + m.montoPagado, 0);
-  const totalPendiente = miembros
-    .filter(m => m.estado === "pendiente")
-    .reduce((sum, m) => sum + (m.montoTotal - m.montoPagado), 0);
-  const totalVencido = miembros
-    .filter(m => m.estado === "vencido")
-    .reduce((sum, m) => sum + (m.montoTotal - m.montoPagado), 0);
-  const miembrosCumplidos = miembros.filter(m => m.estado === "pagado").length;
-  const miembrosAtrasados = miembros.filter(m => m.estado === "vencido").length;
-  const totalMiembros = miembros.length;
-  const porcentajeCumplimiento = totalMiembros > 0 ? (miembrosCumplidos / totalMiembros) * 100 : 0;
-  
-  return {
-    totalIngresos,
-    totalPendiente,
-    totalVencido,
-    miembrosCumplidos,
-    miembrosAtrasados,
-    totalMiembros,
-    porcentajeCumplimiento
-  };
+  return pagos;
 };
 
 // Función principal para generar el reporte
-export const generarReporteMock = (filtros: FiltrosReporte): Promise<ReportePagos> => {
+export const generarReporteMock = (filtros: FiltrosReporte): Promise<FinancialReport> => {
   return new Promise((resolve) => {
     // Simular delay de API
     setTimeout(() => {
-      const grupo = GRUPOS_MOCK.find(g => g.id === filtros.grupoId);
-      if (!grupo) {
-        throw new Error("Grupo no encontrado");
-      }
-      
       const fechaInicio = new Date(filtros.fechaInicio);
       const fechaFin = new Date(filtros.fechaFin);
       
-      // Generar miembros mock basado en el número de miembros activos del grupo
-      const miembros = generarMiembrosMock(grupo.miembrosActivos, fechaInicio, fechaFin);
+      // Generar una cantidad de pagos basada en el alcance
+      let cantidadMiembros = 15; // Default
+      let scopeName = filtros.scope.toLowerCase();
       
-      // Calcular resumen
-      const resumen = calcularResumen(miembros);
+      if (filtros.associated_to) {
+        // Si hay un asociado específico, usar una cantidad menor
+        cantidadMiembros = 8;
+      }
       
-      const reporte: ReportePagos = {
-        grupo,
-        fechaInicio: filtros.fechaInicio,
-        fechaFin: filtros.fechaFin,
-        resumen,
-        miembros,
-        generadoEn: new Date().toISOString()
+      // Generar pagos mock
+      const pagos = generarPagosMock(cantidadMiembros, fechaInicio, fechaFin);
+      
+      // Calcular resumen financiero
+      const incomes = pagos.filter(p => p.paid_at !== null).reduce((sum, p) => sum + p.amount, 0);
+      const pending = pagos.filter(p => p.paid_at === null).length * 50000; // Estimado
+      const overdue = Math.floor(pending * 0.3); // 30% vencidos
+      
+      const members_ok = pagos.filter(p => p.paid_at !== null).length;
+      const members_overdue = pagos.filter(p => p.paid_at === null).length;
+      const total = pagos.length;
+      const percentage = total > 0 ? (members_ok / total) * 100 : 0;
+      
+      const reporte: FinancialReport = {
+        financial_summary: {
+          incomes,
+          pending,
+          overdue
+        },
+        members_ok,
+        members_overdue,
+        percentage,
+        payments: pagos,
+        metadata: {
+          generated_for: scopeName, // Alcance del reporte
+          start_date: fechaInicio,
+          end_date: fechaFin,
+          generated_date: new Date()
+        }
       };
       
       resolve(reporte);
@@ -169,7 +150,7 @@ export const generarReporteMock = (filtros: FiltrosReporte): Promise<ReportePago
 };
 
 // Función para exportar reporte a Excel
-export const exportarReporteExcel = (reporte: ReportePagos): Promise<void> => {
+export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       try {
@@ -178,28 +159,27 @@ export const exportarReporteExcel = (reporte: ReportePagos): Promise<void> => {
 
         // Hoja 1: Resumen del Reporte
         const resumenData = [
-          ['REPORTE DE PAGOS - ' + reporte.grupo.nombre.toUpperCase()],
+          ['REPORTE DE PAGOS - ' + reporte.metadata.generated_for.toUpperCase()],
           [''],
-          ['Información del Grupo'],
-          ['Nombre del Grupo', reporte.grupo.nombre],
-          ['Rango de Edad', `${reporte.grupo.edadMinima} - ${reporte.grupo.edadMaxima} años`],
-          ['Miembros Activos', reporte.grupo.miembrosActivos],
+          ['Información del Reporte'],
+          ['Alcance', reporte.metadata.generated_for],
+          ['Total Pagos', reporte.payments.length],
           [''],
           ['Periodo del Reporte'],
-          ['Fecha de Inicio', reporte.fechaInicio],
-          ['Fecha de Fin', reporte.fechaFin],
-          ['Generado el', new Date(reporte.generadoEn).toLocaleString('es-CO')],
+          ['Fecha de Inicio', reporte.metadata.start_date.toISOString().split('T')[0]],
+          ['Fecha de Fin', reporte.metadata.end_date.toISOString().split('T')[0]],
+          ['Generado el', reporte.metadata.generated_date.toLocaleString('es-CO')],
           [''],
           ['Resumen Financiero'],
-          ['Total Ingresos', reporte.resumen.totalIngresos],
-          ['Total Pendiente', reporte.resumen.totalPendiente],
-          ['Total Vencido', reporte.resumen.totalVencido],
+          ['Total Ingresos', reporte.financial_summary.incomes],
+          ['Total Pendiente', reporte.financial_summary.pending],
+          ['Total Vencido', reporte.financial_summary.overdue],
           [''],
           ['Resumen de Miembros'],
-          ['Miembros Cumplidos', reporte.resumen.miembrosCumplidos],
-          ['Miembros Atrasados', reporte.resumen.miembrosAtrasados],
-          ['Total Miembros', reporte.resumen.totalMiembros],
-          ['% Cumplimiento', `${reporte.resumen.porcentajeCumplimiento.toFixed(1)}%`],
+          ['Miembros Cumplidos', reporte.members_ok],
+          ['Miembros Atrasados', reporte.members_overdue],
+          ['Total Miembros', reporte.payments.length],
+          ['% Cumplimiento', `${reporte.percentage.toFixed(1)}%`],
         ];
 
         const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
@@ -210,52 +190,56 @@ export const exportarReporteExcel = (reporte: ReportePagos): Promise<void> => {
           { width: 20 }
         ];
 
-        // Hoja 2: Detalle de Miembros
-        const miembrosHeaders = [
+        // Hoja 2: Detalle de Pagos
+        const pagosHeaders = [
           'ID',
           'Nombre',
           'Apellido', 
+          'Monto',
           'Estado',
-          'Monto Pagado',
-          'Monto Total',
-          'Pendiente',
-          'Último Pago',
-          'Días Vencido'
+          'Fecha de Pago'
         ];
 
-        const miembrosData = reporte.miembros.map(miembro => [
-          miembro.id,
-          miembro.nombre,
-          miembro.apellido,
-          miembro.estado.charAt(0).toUpperCase() + miembro.estado.slice(1),
-          miembro.montoPagado,
-          miembro.montoTotal,
-          miembro.montoTotal - miembro.montoPagado,
-          miembro.fechaUltimoPago || 'Sin pagos',
-          miembro.diasVencido || ''
+        // Función para determinar el estado del pago
+        const getEstadoPago = (paidAt: Date | null) => {
+          if (paidAt !== null) {
+            return 'Pagado';
+          }
+          // Verificar si está vencido comparando con la fecha de fin
+          const ahora = new Date();
+          if (ahora > reporte.metadata.end_date) {
+            return 'Vencido';
+          }
+          return 'Pendiente';
+        };
+
+        const pagosData = reporte.payments.map(pago => [
+          pago.payment_id,
+          pago.first_name,
+          pago.last_name,
+          pago.amount,
+          getEstadoPago(pago.paid_at),
+          pago.paid_at ? pago.paid_at.toISOString().split('T')[0] : 'Sin pagos'
         ]);
 
-        const wsMiembros = XLSX.utils.aoa_to_sheet([miembrosHeaders, ...miembrosData]);
+        const wsPagos = XLSX.utils.aoa_to_sheet([pagosHeaders, ...pagosData]);
 
-        // Configurar ancho de columnas para miembros
-        wsMiembros['!cols'] = [
-          { width: 12 }, // ID
+        // Configurar ancho de columnas para pagos
+        wsPagos['!cols'] = [
+          { width: 15 }, // ID
           { width: 15 }, // Nombre
           { width: 15 }, // Apellido
+          { width: 15 }, // Monto
           { width: 12 }, // Estado
-          { width: 15 }, // Monto Pagado
-          { width: 15 }, // Monto Total
-          { width: 15 }, // Pendiente
-          { width: 15 }, // Último Pago
-          { width: 12 }  // Días Vencido
+          { width: 15 }  // Fecha de Pago
         ];
 
         // Agregar hojas al workbook
         XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-        XLSX.utils.book_append_sheet(wb, wsMiembros, 'Detalle Miembros');
+        XLSX.utils.book_append_sheet(wb, wsPagos, 'Detalle Pagos');
 
         // Generar nombre del archivo
-        const fileName = `reporte-pagos-${reporte.grupo.nombre.toLowerCase().replace(/\s+/g, '-')}-${reporte.fechaInicio}-${reporte.fechaFin}.xlsx`;
+        const fileName = `reporte-pagos-${reporte.metadata.generated_for.toLowerCase()}-${reporte.metadata.start_date.toISOString().split('T')[0]}-${reporte.metadata.end_date.toISOString().split('T')[0]}.xlsx`;
 
         // Exportar archivo
         XLSX.writeFile(wb, fileName);
@@ -269,8 +253,8 @@ export const exportarReporteExcel = (reporte: ReportePagos): Promise<void> => {
   });
 };
 
-// Función para exportar reporte a PDF usando solo jsPDF
-export const exportarReportePDF = (reporte: ReportePagos): Promise<void> => {
+// Función para exportar reporte a PDF usando jsPDF con autoTable
+export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       try {
@@ -280,137 +264,198 @@ export const exportarReportePDF = (reporte: ReportePagos): Promise<void> => {
           format: 'a4'
         });
 
-        const pageWidth = 210;
-        const pageHeight = 295;
-        const margin = 20;
-        const contentWidth = pageWidth - (margin * 2);
-        let currentY = margin;
-
-        // Función auxiliar para agregar texto
-        const addText = (text: string, x: number, y: number, options: { fontSize?: number; fontStyle?: string; color?: number; maxWidth?: number; lineHeight?: number } = {}) => {
-          if (options.fontSize) pdf.setFontSize(options.fontSize);
-          if (options.fontStyle) pdf.setFont('helvetica', options.fontStyle);
-          if (options.color) pdf.setTextColor(options.color);
-          
-          const lines = pdf.splitTextToSize(text, options.maxWidth || contentWidth);
-          pdf.text(lines, x, y);
-          return y + (lines.length * (options.lineHeight || 7));
-        };
-
-        // Título principal
-        pdf.setTextColor(59, 130, 246); // color primary
-        currentY = addText(
-          `REPORTE DE PAGOS - ${reporte.grupo.nombre.toUpperCase()}`,
-          margin,
-          currentY,
-          { fontSize: 18, fontStyle: 'bold', lineHeight: 10 }
-        );
-
-        currentY += 10;
-
-        // Información del grupo
-        pdf.setTextColor(0, 0, 0);
-        currentY = addText('INFORMACIÓN DEL GRUPO', margin, currentY, { fontSize: 14, fontStyle: 'bold' });
-        currentY += 5;
-        
-        currentY = addText(`Nombre: ${reporte.grupo.nombre}`, margin, currentY);
-        currentY = addText(`Rango de Edad: ${reporte.grupo.edadMinima} - ${reporte.grupo.edadMaxima} años`, margin, currentY);
-        currentY = addText(`Miembros Activos: ${reporte.grupo.miembrosActivos}`, margin, currentY);
-        currentY += 10;
-
-        // Periodo del reporte
-        currentY = addText('PERIODO DEL REPORTE', margin, currentY, { fontSize: 14, fontStyle: 'bold' });
-        currentY += 5;
-        
-        currentY = addText(`Fecha de Inicio: ${reporte.fechaInicio}`, margin, currentY);
-        currentY = addText(`Fecha de Fin: ${reporte.fechaFin}`, margin, currentY);
-        currentY = addText(`Generado: ${new Date(reporte.generadoEn).toLocaleString('es-CO')}`, margin, currentY);
-        currentY += 10;
-
-        // Resumen financiero
-        currentY = addText('RESUMEN FINANCIERO', margin, currentY, { fontSize: 14, fontStyle: 'bold' });
-        currentY += 5;
-        
         const formatCurrency = (amount: number) => new Intl.NumberFormat('es-CO', {
           style: 'currency',
           currency: 'COP',
           minimumFractionDigits: 0
         }).format(amount);
 
-        pdf.setTextColor(22, 163, 74); // green
-        currentY = addText(`Total Ingresos: ${formatCurrency(reporte.resumen.totalIngresos)}`, margin, currentY);
-        pdf.setTextColor(202, 138, 4); // yellow
-        currentY = addText(`Total Pendiente: ${formatCurrency(reporte.resumen.totalPendiente)}`, margin, currentY);
-        pdf.setTextColor(220, 38, 38); // red
-        currentY = addText(`Total Vencido: ${formatCurrency(reporte.resumen.totalVencido)}`, margin, currentY);
+        // Función para determinar el estado del pago en PDF
+        const getEstadoPagoPDF = (paidAt: Date | null) => {
+          if (paidAt !== null) {
+            return 'Pagado';
+          }
+          const ahora = new Date();
+          if (ahora > reporte.metadata.end_date) {
+            return 'Vencido';
+          }
+          return 'Pendiente';
+        };
+
+        // Encabezado con colores - verde oscuro rgb(26, 65, 52)
+        pdf.setFillColor(26, 65, 52);
+        pdf.rect(0, 0, 210, 30, 'F');
         
-        pdf.setTextColor(0, 0, 0);
-        currentY = addText(`Miembros Cumplidos: ${reporte.resumen.miembrosCumplidos}`, margin, currentY);
-        currentY = addText(`Miembros Atrasados: ${reporte.resumen.miembrosAtrasados}`, margin, currentY);
-        currentY = addText(`% Cumplimiento: ${reporte.resumen.porcentajeCumplimiento.toFixed(1)}%`, margin, currentY);
-        currentY += 10;
-
-        // Detalle de miembros
-        currentY = addText('DETALLE DE MIEMBROS', margin, currentY, { fontSize: 14, fontStyle: 'bold' });
-        currentY += 5;
-
-        // Headers de tabla
-        pdf.setFontSize(10);
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(20);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('Nombre', margin, currentY);
-        pdf.text('Estado', margin + 50, currentY);
-        pdf.text('Pagado', margin + 80, currentY);
-        pdf.text('Total', margin + 110, currentY);
-        pdf.text('Último Pago', margin + 140, currentY);
-        currentY += 7;
+        pdf.text('REPORTE FINANCIERO DE PAGOS', 105, 15, { align: 'center' });
+        
+        pdf.setFontSize(12);
+        pdf.text(reporte.metadata.generated_for.toUpperCase(), 105, 23, { align: 'center' });
 
-        // Línea separadora
-        pdf.line(margin, currentY - 2, margin + contentWidth, currentY - 2);
-        currentY += 3;
+        let currentY = 40;
 
-        // Datos de miembros
-        pdf.setFont('helvetica', 'normal');
+        // Información del reporte
+        pdf.setTextColor(100, 100, 100);
         pdf.setFontSize(9);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(11);
+        pdf.text('Información del Reporte', 15, currentY);
+        currentY += 8;
 
-        reporte.miembros.forEach((miembro) => {
-          // Verificar si necesitamos una nueva página
-          if (currentY > pageHeight - 30) {
-            pdf.addPage();
-            currentY = margin;
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        const infoData = [
+          ['Alcance:', reporte.metadata.generated_for],
+          ['Fecha de Inicio:', reporte.metadata.start_date.toLocaleDateString('es-CO')],
+          ['Fecha de Fin:', reporte.metadata.end_date.toLocaleDateString('es-CO')],
+          ['Generado el:', reporte.metadata.generated_date.toLocaleString('es-CO')],
+        ];
+
+        autoTable(pdf, {
+          startY: currentY,
+          head: [],
+          body: infoData,
+          theme: 'plain',
+          styles: { 
+            fontSize: 8,
+            cellPadding: 2,
+          },
+          columnStyles: {
+            0: { fontStyle: 'bold', fillColor: [245, 245, 245] },
+            1: { halign: 'left' }
           }
-
-          // Color según estado
-          if (miembro.estado === 'pagado') {
-            pdf.setTextColor(22, 163, 74); // green
-          } else if (miembro.estado === 'pendiente') {
-            pdf.setTextColor(202, 138, 4); // yellow
-          } else {
-            pdf.setTextColor(220, 38, 38); // red
-          }
-
-          const nombreCompleto = `${miembro.nombre} ${miembro.apellido}`;
-          pdf.text(nombreCompleto.substring(0, 20), margin, currentY);
-          pdf.text(miembro.estado.charAt(0).toUpperCase() + miembro.estado.slice(1), margin + 50, currentY);
-          
-          pdf.setTextColor(0, 0, 0);
-          pdf.text(formatCurrency(miembro.montoPagado), margin + 80, currentY);
-          pdf.text(formatCurrency(miembro.montoTotal), margin + 110, currentY);
-          pdf.text(miembro.fechaUltimoPago || 'Sin pagos', margin + 140, currentY);
-
-          currentY += 6;
         });
 
-        // Footer
-        pdf.setFontSize(8);
-        pdf.setTextColor(128, 128, 128);
-        pdf.text(
-          'Este reporte fue generado automáticamente por el sistema de gestión de scouts.',
-          margin,
-          pageHeight - 15
-        );
+        currentY = (pdf as any).lastAutoTable.finalY + 15;
+
+        // Resumen financiero con tabla
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Resumen Financiero', 15, currentY);
+        currentY += 8;
+
+        const resumenData = [
+          ['Total Ingresos', formatCurrency(reporte.financial_summary.incomes)],
+          ['Total Pendiente', formatCurrency(reporte.financial_summary.pending)],
+          ['Total Vencido', formatCurrency(reporte.financial_summary.overdue)],
+          ['Miembros Cumplidos', reporte.members_ok.toString()],
+          ['Miembros Atrasados', reporte.members_overdue.toString()],
+          ['% Cumplimiento', `${reporte.percentage.toFixed(1)}%`],
+        ];
+
+        autoTable(pdf, {
+          startY: currentY,
+          head: [['Concepto', 'Valor']],
+          body: resumenData,
+          theme: 'striped',
+          styles: { 
+            fontSize: 10,
+            cellPadding: 4,
+          },
+          headStyles: {
+            fillColor: [26, 65, 52],
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center'
+          },
+          columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 100 },
+            1: { halign: 'right' }
+          },
+          alternateRowStyles: {
+            fillColor: [250, 250, 250]
+          }
+        });
+
+        currentY = (pdf as any).lastAutoTable.finalY + 15;
+
+        // Detalle de pagos con tabla
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Detalle de Pagos por Miembro', 15, currentY);
+        currentY += 5;
+
+        // Preparar datos de la tabla
+        const pagosData = reporte.payments.map(pago => {
+          const estado = getEstadoPagoPDF(pago.paid_at);
+          const fechaPago = pago.paid_at ? pago.paid_at.toLocaleDateString('es-CO') : 'Sin pagos';
+          return [
+            `${pago.first_name} ${pago.last_name}`,
+            formatCurrency(pago.amount),
+            estado,
+            fechaPago
+          ];
+        });
+
+        autoTable(pdf, {
+          startY: currentY,
+          head: [['Nombre Completo', 'Monto', 'Estado', 'Fecha de Pago']],
+          body: pagosData,
+          theme: 'striped',
+          styles: { 
+            fontSize: 8,
+            cellPadding: 3,
+          },
+          headStyles: {
+            fillColor: [26, 65, 52],
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center',
+            fontSize: 9
+          },
+          columnStyles: {
+            0: { cellWidth: 60 },
+            1: { halign: 'right', cellWidth: 40 },
+            2: { halign: 'center', cellWidth: 30 },
+            3: { halign: 'center', cellWidth: 50 }
+          },
+          didParseCell: function (data) {
+            // Colorear las filas según el estado
+            if (data.row.section === 'body' && data.column.index === 2) {
+              const estado = data.cell.text[0];
+              if (estado === 'Pagado') {
+                data.cell.styles.fillColor = [220, 252, 231]; // verde claro
+                data.cell.styles.textColor = [22, 163, 74]; // verde
+              } else if (estado === 'Pendiente') {
+                data.cell.styles.fillColor = [254, 249, 195]; // amarillo claro
+                data.cell.styles.textColor = [202, 138, 4]; // amarillo
+              } else {
+                data.cell.styles.fillColor = [254, 226, 226]; // rojo claro
+                data.cell.styles.textColor = [220, 38, 38]; // rojo
+              }
+            }
+          },
+          alternateRowStyles: {
+            fillColor: [250, 250, 250]
+          },
+          margin: { left: 15, right: 15 }
+        });
+
+        // Footer en todas las páginas
+        const pageCount = (pdf as any).getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          pdf.setPage(i);
+          pdf.setFontSize(8);
+          pdf.setTextColor(128, 128, 128);
+          pdf.text(
+            `Página ${i} de ${pageCount}`,
+            105,
+            285,
+            { align: 'center' }
+          );
+          pdf.text(
+            'Este reporte fue generado automáticamente por el sistema de gestión de scouts.',
+            105,
+            290,
+            { align: 'center' }
+          );
+        }
 
         // Generar nombre del archivo
-        const fileName = `reporte-pagos-${reporte.grupo.nombre.toLowerCase().replace(/\s+/g, '-')}-${reporte.fechaInicio}-${reporte.fechaFin}.pdf`;
+        const fileName = `reporte-pagos-${reporte.metadata.generated_for.toLowerCase()}-${reporte.metadata.start_date.toISOString().split('T')[0]}-${reporte.metadata.end_date.toISOString().split('T')[0]}.pdf`;
 
         // Descargar PDF
         pdf.save(fileName);

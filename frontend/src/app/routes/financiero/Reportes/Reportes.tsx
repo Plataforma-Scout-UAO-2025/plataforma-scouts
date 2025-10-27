@@ -4,12 +4,12 @@ import { FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ReporteModal from "./components/ReporteModal";
 import ReporteView from "./components/ReporteView";
-import { type ReportePagos, type FiltrosReporte } from "./types/reporte.type";
 import { generarReporteMock, exportarReportePDF, exportarReporteExcel } from "./services/reporteService";
+import type { FinancialReport, FiltrosReporte } from "@/types/reporte-financiero.type";
 
 export default function Reportes() {
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [reporteActual, setReporteActual] = useState<ReportePagos | null>(null);
+  const [reporteActual, setReporteActual] = useState<FinancialReport | null>(null);
   const [cargandoReporte, setCargandoReporte] = useState(false);
   const [exportandoPDF, setExportandoPDF] = useState(false);
   const [exportandoExcel, setExportandoExcel] = useState(false);
@@ -17,14 +17,20 @@ export default function Reportes() {
   // Detectar si hay parámetros de reporte en la URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const grupoId = urlParams.get('grupoId');
+    const scope = urlParams.get('scope') as "SCOUT" | "SUBGROUP" | "SECTION" | null;
+    const associatedToId = urlParams.get('associatedToId');
+    const associatedToName = urlParams.get('associatedToName');
     const fechaInicio = urlParams.get('fechaInicio');
     const fechaFin = urlParams.get('fechaFin');
     
-    if (grupoId && fechaInicio && fechaFin) {
-      // Generar reporte automáticamente con los parámetros de la URL
+    // Solo procesar si hay suficientes parámetros válidos
+    if (scope && fechaInicio && fechaFin) {
       const filtros: FiltrosReporte = {
-        grupoId,
+        scope,
+        associated_to: associatedToId && associatedToName ? {
+          id: associatedToId,
+          name: associatedToName
+        } : undefined,
         fechaInicio,
         fechaFin
       };

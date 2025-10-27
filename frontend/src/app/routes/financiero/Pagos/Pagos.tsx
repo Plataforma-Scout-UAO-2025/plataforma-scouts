@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import api from "@/api/axios";
 import { useTenant } from "@/hooks/useTenant";
 import ReporteModal from "../Reportes/components/ReporteModal";
-import type { FiltrosReporte } from "../Reportes/types/reporte.type";
+import type { FiltrosReporte } from "@/types/reporte-financiero.type";
 import { useNavigate } from "react-router-dom";
 
 export default function Pagos() {
@@ -35,10 +35,16 @@ export default function Pagos() {
   const handleGenerarReporte = (filtros: FiltrosReporte) => {
     // Crear URL con parámetros para navegar a reportes
     const params = new URLSearchParams({
-      grupoId: filtros.grupoId,
+      scope: filtros.scope,
       fechaInicio: filtros.fechaInicio,
       fechaFin: filtros.fechaFin
     });
+    
+    // Agregar parámetros de asociado si existe
+    if (filtros.associated_to) {
+      params.append('associatedToId', filtros.associated_to.id);
+      params.append('associatedToName', filtros.associated_to.name);
+    }
     
     // Navegar a la página de reportes con los parámetros
     navigate(`/app/financiero/reportes?${params.toString()}`);
