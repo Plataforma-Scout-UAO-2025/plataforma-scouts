@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { PersonalData } from "@/types/enrollment.type";
 import { Trash, AlertCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface Props {
   datos: PersonalData;
@@ -18,8 +18,11 @@ export default function EmergencyContacts({
   errors = {},
   onContactChange,
 }: Props) {
+  const initializedRef = useRef(false);
+
   useEffect(() => {
-    if (!datos.emergency_contacts || datos.emergency_contacts.length === 0) {
+    if (!initializedRef.current && (!datos.emergency_contacts || datos.emergency_contacts.length === 0)) {
+      initializedRef.current = true;
       const newData = {
         ...datos,
         emergency_contacts: [{ name: "", relationship: "", phone: "" }],
@@ -27,7 +30,7 @@ export default function EmergencyContacts({
       setDatos(newData);
       onContactChange?.(newData);
     }
-  }, []);
+  }, [datos, setDatos, onContactChange]);
 
   const handleChange = (i: number, field: string, value: string) => {
     let sanitizedValue = value;

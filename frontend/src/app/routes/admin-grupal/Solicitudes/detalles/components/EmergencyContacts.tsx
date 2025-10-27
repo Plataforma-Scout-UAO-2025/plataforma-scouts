@@ -4,8 +4,8 @@ import type { Member } from "@/types/member.type";
 export default function EmergencyContacts({ member }: { member: Member }) {
   if (!member.emergency_contacts?.length) return null;
   return (
-    <div className="mt-4">
-      <h3 className="text-lg font-semibold mb-3">Contactos de emergencia *</h3>
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold text-primary border-b-2 border-primary pb-2">Contactos de emergencia</h2>
       {member.emergency_contacts.map((c, i) => (
         <div
           key={i}
