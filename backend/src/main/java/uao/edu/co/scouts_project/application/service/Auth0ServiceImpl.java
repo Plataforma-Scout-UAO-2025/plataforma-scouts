@@ -12,25 +12,29 @@ import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.common.ResponseDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO; // Added
 import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
+import uao.edu.co.scouts_project.infrastructure.auth0.Auth0AdminAdapter;
 import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.member.service.IMemberService;
+import uao.edu.co.scouts_project.member.service.MemberServiceImp;
 // no checked exceptions in service; adapter throws runtime Auth0GatewayException
+import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
+import uao.edu.co.scouts_project.organigrama.service.GroupService;
+import uao.edu.co.scouts_project.organigrama.service.TenantService;
 
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Implementación de {@link IAuth0Service} siguiendo SOLID:
- * - SRP: orquesta llamadas al puerto de infraestructura sin exponer detalles.
- * - DIP: depende de la abstracción {@link Auth0AdminPort}.
- */
 @Service
 public class Auth0ServiceImpl implements IAuth0Service {
+
+    private final Auth0AdminAdapter auth0AdminAdapter;
     // Logger can be added if needed
 
     private final Auth0AdminPort adminPort;
@@ -38,13 +42,23 @@ public class Auth0ServiceImpl implements IAuth0Service {
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final PermissionQueryPort permissionQueryPort; // Added
 
-    public Auth0ServiceImpl(Auth0AdminPort adminPort, RoleMappingPort roleMappingPort, 
-                           RoleAssignmentValidator roleAssignmentValidator,
-                           PermissionQueryPort permissionQueryPort) { // Added
+    private final TenantService tenantService;
+    private final GroupService groupService;
+    private final IMemberService memberServiceImp;
+
+    public Auth0ServiceImpl(Auth0AdminPort adminPort, RoleMappingPort roleMappingPort,
+            RoleAssignmentValidator roleAssignmentValidator,
+            PermissionQueryPort permissionQueryPort, Auth0AdminAdapter auth0AdminAdapter,
+            TenantService tenantService, GroupService groupService, IMemberService memberService) {
         this.adminPort = adminPort;
         this.roleMappingPort = roleMappingPort;
         this.roleAssignmentValidator = roleAssignmentValidator;
-        this.permissionQueryPort = permissionQueryPort; // Added
+        this.permissionQueryPort = permissionQueryPort;
+        this.auth0AdminAdapter = auth0AdminAdapter;
+
+        this.memberServiceImp = memberService;
+        this.groupService = groupService;
+        this.tenantService = tenantService;
     }
 
     @Override
@@ -61,10 +75,10 @@ public class Auth0ServiceImpl implements IAuth0Service {
     public void assignRole(String userId, Role role) {
         // Validar si el usuario ya tiene roles
         boolean targetUserHasRoles = adminPort.userHasRoles(userId);
-        
+
         // Validar autorización para asignar este rol
         roleAssignmentValidator.validateRoleAssignment(role, targetUserHasRoles);
-        
+
         // Si pasa la validación, proceder con la asignación
         String auth0RoleId = roleMappingPort.getAuth0RoleId(role);
         adminPort.assignRole(userId, auth0RoleId);
@@ -115,48 +129,44 @@ public class Auth0ServiceImpl implements IAuth0Service {
             role = Role.valueOf(roleName);
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException(
-                "Rol inválido: " + roleName + ". " +
-                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-            );
+                    "Rol inválido: " + roleName + ". " +
+                            "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN");
         }
 
         // Validar que el rol NO sea administrativo
         List<Role> forbiddenRoles = Arrays.asList(Role.ADMIN_GLOBAL, Role.ADMIN_GRUPO, Role.DEV_SUPPORT);
         if (forbiddenRoles.contains(role)) {
             throw new UnauthorizedRoleAssignmentException(
-                "No está autorizado para asignar roles administrativos. " +
-                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-            );
+                    "No está autorizado para asignar roles administrativos. " +
+                            "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN");
         }
 
         // Validar que el rol esté en la lista de permitidos
         List<Role> allowedRoles = Arrays.asList(
-            Role.SCOUT, 
-            Role.ACUDIENTE, 
-            Role.TESORERO, 
-            Role.SCOUTER, 
-            Role.COMITE_ADMIN
-        );
+                Role.SCOUT,
+                Role.ACUDIENTE,
+                Role.TESORERO,
+                Role.SCOUTER,
+                Role.COMITE_ADMIN);
         if (!allowedRoles.contains(role)) {
             throw new UnauthorizedRoleAssignmentException(
-                "El rol " + roleName + " no está permitido para este endpoint. " +
-                "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-            );
+                    "El rol " + roleName + " no está permitido para este endpoint. " +
+                            "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN");
         }
 
         // Crear el comando base para crear usuario
         CreateUserCommandDTO createCommand = new CreateUserCommandDTO(
-            request.getEmail(),
-            request.getPassword(),
-            request.getUsername()
-        );
+                request.getEmail(),
+                request.getPassword(),
+                request.getUsername());
 
         // Paso 1: Crear usuario en Auth0
         CreatedUserDTO createdUser = createUser(createCommand);
         String userId = createdUser.getId();
 
         try {
-            // Paso 2: Asociar a la organización del usuario autenticado (usa org_id del JWT)
+            // Paso 2: Asociar a la organización del usuario autenticado (usa org_id del
+            // JWT)
             addUserToOwnOrganization(userId);
 
             // Paso 3: Asignar el rol especificado
@@ -186,8 +196,8 @@ public class Auth0ServiceImpl implements IAuth0Service {
             target = Role.valueOf(cmd.getNewRole().toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException(
-                "Rol inválido: " + cmd.getNewRole() + ". Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-            );
+                    "Rol inválido: " + cmd.getNewRole()
+                            + ". Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN");
         }
 
         // Forbid admin roles at group scope
@@ -206,7 +216,8 @@ public class Auth0ServiceImpl implements IAuth0Service {
             adminPort.getUserInOrganization(orgId, cmd.getUser_id());
         } catch (ResourceNotFoundException ex) {
             // Convert to BAD_REQUEST semantics for invalid input context
-            throw new IllegalArgumentException("La organización especificada no existe o el usuario no pertenece a ella");
+            throw new IllegalArgumentException(
+                    "La organización especificada no existe o el usuario no pertenece a ella");
         }
 
         // Enforce single role
@@ -218,7 +229,8 @@ public class Auth0ServiceImpl implements IAuth0Service {
         adminPort.assignRole(cmd.getUser_id(), roleId);
     }
 
-    // --- Change role (single-role) for global admin, org comes from body if provided ---
+    // --- Change role (single-role) for global admin, org comes from body if
+    // provided ---
     @Override
     public void changeUserRoleGlobal(UserAuth0ChangeRoleDTO cmd) {
         Role target;
@@ -226,8 +238,8 @@ public class Auth0ServiceImpl implements IAuth0Service {
             target = Role.valueOf(cmd.getNewRole().toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException(
-                "Rol inválido: " + cmd.getNewRole() + ". Roles válidos: " + java.util.Arrays.toString(Role.values())
-            );
+                    "Rol inválido: " + cmd.getNewRole() + ". Roles válidos: "
+                            + java.util.Arrays.toString(Role.values()));
         }
 
         // If a specific organizationId is provided, validate membership there
@@ -236,7 +248,8 @@ public class Auth0ServiceImpl implements IAuth0Service {
                 adminPort.getUserInOrganization(cmd.getOrganizationId(), cmd.getUser_id());
             } catch (ResourceNotFoundException ex) {
                 // Convert to BAD_REQUEST semantics for invalid input context
-                throw new IllegalArgumentException("La organización especificada no existe o el usuario no pertenece a ella");
+                throw new IllegalArgumentException(
+                        "La organización especificada no existe o el usuario no pertenece a ella");
             }
         }
 
@@ -255,6 +268,46 @@ public class Auth0ServiceImpl implements IAuth0Service {
             return sub != null ? sub.toString() : null;
         }
         return null;
+    }
+
+    @Override
+    public String createTenant(GroupDTO group) {
+
+        // Que me pida Nombre del Grupo, Imagen del Grupo, Ubicación, número de identificación
+        // Dirección, Teléfono, email, isActive y Status.
+
+
+
+
+
+
+        // // 1. Obtener el Grupo y crear un slug válido. Ver la entidad de Group y
+        // poder validar en BD (creando un método o algo)
+        // para poder crear un slug a partir del nombre.
+
+        String probableSlug = "";
+
+
+        // - [Listo] Create la Organization en Auth0 UNIENDO LA CONEXIÓN de la BD de
+        // Auth0 (con el identificador 'con_id' )
+
+        // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
+        // de forma: $'uep-{tenant.slug}'
+
+        // - [No implementado] Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
+        // de conexión de dicha organization
+        // (con el 'con_id' o como se específique) en Auth0.
+
+        // [No implementado] Crear el Tenant en BD con el org_id de Auth0
+        // (TenantService).
+
+        // - [No implementado] Crear el Group en BD con el tenant_id (GroupService).
+
+        // - [No implementado] Create Member (MemberService) Asignar al ADMIN_GLOBAL a
+        // ese Grupo en BD
+
+        return "Todo bien";
+
     }
 
 }
