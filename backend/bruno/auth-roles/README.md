@@ -1,17 +1,38 @@
-# Tests Bruno - HU-ING-1.2: Autenticación diferenciada por roles
+# Tests Bruno - HU-ING-1.2: Autenticación diferenciada por roles (Backend)
 
-Este directorio contiene las pruebas E2E para la Historia de Usuario **HU-ING-1.2 - Autenticación diferenciada por roles**.
+Este directorio contiene las pruebas de **backend (API)** para la Historia de Usuario **HU-ING-1.2 - Autenticación diferenciada por roles**.
 
 ## 🚀 Inicio Rápido
 
 **¿Primera vez ejecutando estos tests?** Lee primero:
 - 📘 **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Guía completa test por test con requisitos específicos
-- 🔧 **[ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md)** - Configuración de variables de entorno
-- ⚡ **[ENV_QUICK_REF.md](./ENV_QUICK_REF.md)** - Referencia rápida de variables
-- 🔍 **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Solución de problemas comunes
+
+## � Tests Incluidos (Solo Backend)
+
+Esta carpeta contiene **4 tests de backend** que validan la autorización a nivel de API:
+
+### Criterio 3: Bloqueo de acceso no autorizado
+- `ADMIN_GRUPO-BlockedFromGlobalEndpoint.bru` - ADMIN_GRUPO no puede acceder a recursos globales
+- `SCOUT-BlockedFromAdminAction.bru` - SCOUT no puede crear tenants
+
+### Criterio 4: Usuario sin rol bloqueado
+- `UserWithoutRole-Blocked.bru` - Usuario sin rol no puede listar miembros
+- `UserWithoutRole-BlockedFromDashboard.bru` - Usuario sin rol no puede acceder al dashboard
+
+## 🎯 Alcance de Estos Tests
+
+**Estos tests validan:**
+- ✅ Autorización a nivel de API (backend)
+- ✅ Bloqueo de endpoints para usuarios sin permisos
+- ✅ Validación de roles en JWT
+
+**NO incluyen (van en frontend E2E):**
+- ❌ Tests de login y reconocimiento de rol
+- ❌ Tests de acceso autorizado (cuando el usuario SÍ tiene permisos)
+- ❌ Validación de UI y navegación
 
 ## Descripción
-Como usuario de la plataforma, quiero que al iniciar sesión el sistema me reconozca según mi rol, para acceder solo a las funciones que me corresponden y evitar accesos indebidos.
+Como usuario de la plataforma, el backend debe validar mi rol en cada request y bloquear el acceso a funciones que no me corresponden.
 
 ## Criterios de aceptación cubiertos
 
@@ -35,18 +56,12 @@ Como usuario de la plataforma, quiero que al iniciar sesión el sistema me recon
 
 ## 📊 Resumen de Tests
 
-| # | Test | Rol Requerido | Variables Env | Respuesta Esperada |
-|---|------|---------------|---------------|-------------------|
-| 1 | Login-ADMIN_GLOBAL-RoleRecognition | ADMIN_GLOBAL | `baseurl` | 200 OK |
-| 2 | Login-ADMIN_GRUPO-RoleRecognition | ADMIN_GRUPO | `baseurl` | 200 OK |
-| 3 | Login-SCOUT-RoleRecognition | SCOUT | `baseurl`, `tenantId` | 200 OK |
-| 4 | ADMIN_GLOBAL-AccessToGlobalResources | ADMIN_GLOBAL | `baseurl` | 200 OK |
-| 5 | ADMIN_GRUPO-AccessToGroupResources | ADMIN_GRUPO | `baseurl` | 201 Created |
-| 6 | SCOUT-AccessToMemberFunctions | SCOUT | `baseurl`, `tenantId`, `memberId` | 200 OK |
-| 7 | ADMIN_GRUPO-BlockedFromGlobalEndpoint | ADMIN_GRUPO | `baseurl` | 403 Forbidden |
-| 8 | SCOUT-BlockedFromAdminAction | SCOUT | `baseurl` | 403 Forbidden |
-| 9 | UserWithoutRole-Blocked | Sin rol | `baseurl`, `tenantId` | 403 Forbidden |
-| 10 | UserWithoutRole-BlockedFromDashboard | Sin rol | `baseurl` | 403 Forbidden |
+| # | Test | Rol | Endpoint | Método | Esperado |
+|---|------|-----|----------|--------|----------|
+| 1 | ADMIN_GRUPO-BlockedFromGlobalEndpoint | ADMIN_GRUPO | /api/v1/auth0/roles | GET | 401/403 |
+| 2 | SCOUT-BlockedFromAdminAction | SCOUT | /api/v1/tenants | POST | 401/403 |
+| 3 | UserWithoutRole-Blocked | Sin rol | /api/v1/members/list_members | GET | 401/403 |
+| 4 | UserWithoutRole-BlockedFromDashboard | Sin rol | /api/v1/tenants | GET | 401/403/302 |
 
 ## Prerrequisitos
 

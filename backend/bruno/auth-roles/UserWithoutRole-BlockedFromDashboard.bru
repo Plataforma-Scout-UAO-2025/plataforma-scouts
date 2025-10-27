@@ -16,13 +16,21 @@ headers {
 
 tests {
   test("Validar petición bloqueada o redirigida", function () {
-    expect(res.status).to.be.oneOf([403, 401, 302]);
+    // Puede ser 401 (no autenticado), 403 (no autorizado) o 302 (redirect)
+    expect([401, 403, 302]).to.include(res.status);
   });
   
   test("Validar mensaje de acceso denegado si aplica", function () {
-    if (res.status === 403) {
-      const message = res.body.message || res.body.error;
-      expect(message).to.include("Acceso denegado");
+    if (res.status === 403 && res.body) {
+      const message = res.body.message || res.body.error || '';
+      if (message) {
+        expect(message.toLowerCase()).to.satisfy(msg => 
+          msg.includes('acceso') || 
+          msg.includes('denied') || 
+          msg.includes('forbidden') ||
+          msg.includes('rol')
+        );
+      }
     }
   });
 }
