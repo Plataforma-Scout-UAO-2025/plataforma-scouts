@@ -8,8 +8,6 @@ import ComiteAdminView from "./components/ComiteAdminView";
 import ScouterView from "./components/ScouterView";
 import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import TesoreroView from "./components/TesoreroView";
-import { useEffect } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
