@@ -99,9 +99,8 @@ const GuardianMembersTable = ({
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member, idx) => {
-              // Acceder directamente a los campos del backend (con underscore)
               const memberRec = member as any;
-              const userId = memberRec.userId || memberRec.userId || idx;
+              const memberId = memberRec.member_id || memberRec.userId || memberRec.memberId || idx;
               const firstName = memberRec.first_name || memberRec.firstName || "N/A";
               const lastName = memberRec.last_name || memberRec.lastName || "N/A";
               const gender = memberRec.gender || "N/A";
@@ -109,9 +108,9 @@ const GuardianMembersTable = ({
               const relationship = memberRec.relationship || "No especificado";
 
               return (
-                <TableRow key={`member-${userId}-${idx}`}>
+                <TableRow key={`member-${memberId}-${idx}`}>
                   <TableCell className="pl-4 font-medium truncate">
-                    {userId}
+                    {memberId}
                   </TableCell>
                   <TableCell className="w-32 truncate">
                     {firstName}

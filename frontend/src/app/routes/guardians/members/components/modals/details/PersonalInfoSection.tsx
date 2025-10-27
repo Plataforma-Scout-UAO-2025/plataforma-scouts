@@ -1,81 +1,103 @@
-import { User } from 'lucide-react';
-import type { Member } from '../../../types/member.type';
+import type { MemberBasicInfo } from "@/types/guardian.type";
 
 interface PersonalInfoSectionProps {
-  miembro: Member;
+  member: MemberBasicInfo;
 }
 
-/**
- * Calcula la edad a partir de una fecha de nacimiento
- */
-const calcularEdad = (fechaNacimiento: string): number => {
-  const today = new Date();
-  const birthDate = new Date(fechaNacimiento);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  
-  return age;
-};
+export default function PersonalInfoSection({ member }: PersonalInfoSectionProps) {
+  const formatDocumentType = (docType?: string): string => {
+    const types: Record<string, string> = {
+      CC: "Cédula de Ciudadanía",
+      TI: "Tarjeta de Identidad",
+      CE: "Cédula de Extranjería",
+      RC: "Registro Civil",
+      PA: "Pasaporte",
+      PEP: "Permiso Especial de Permanencia",
+      PPT: "Permiso por Protección Temporal",
+      NIT: "Número de Identificación Tributaria",
+      NUIP: "Número Único de Identificación Personal",
+      PASSPORT: "Pasaporte"
+    };
+    return types[docType || ""] || docType || "No especificado";
+  };
 
-/**
- * Formatea el género a texto legible
- */
-const formatGender = (gender: 'MALE' | 'FEMALE' | 'OTHER'): string => {
-  switch (gender) {
-    case 'MALE':
-      return 'Masculino';
-    case 'FEMALE':
-      return 'Femenino';
-    case 'OTHER':
-      return 'Otro';
-    default:
-      return 'No especificado';
-  }
-};
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return "No especificado";
+    try {
+      return new Date(dateString).toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
 
-export default function PersonalInfoSection({ miembro }: PersonalInfoSectionProps) {
-  const edad = calcularEdad(miembro.birthDate);
+  // Función para obtener edad a partir de birth_date (igual que en la tabla)
+  const getAge = (birthDate?: string): string => {
+    if (!birthDate) return "N/A";
+    
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age.toString();
+  };
+
+  // Obtener la edad usando la misma lógica que la tabla
+  const memberRec = member as any;
+  const birthDate = memberRec.birth_date || memberRec.birthDate;
+  const displayAge = memberRec.age || getAge(birthDate);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <User className="h-5 w-5 text-[#1a4134]" />
-        <h4 className="text-lg font-semibold text-[#1a4134]">Información Personal</h4>
-      </div>
-      <div className="grid grid-cols-2 gap-4 pl-7">
+    <div className="bg-white p-6 rounded-lg border border-gray-200">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        Información Personal
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <p className="text-sm font-medium text-gray-600">Edad</p>
-          <p className="text-base">{edad} años</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-600">Rol</p>
-          <p className="text-base">{miembro.role || 'Scout Aspirante'}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-600">Identificación</p>
-          <p className="text-base font-mono">{miembro.documentType} {miembro.identification}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-600">Email</p>
-          <p className="text-base">{miembro.email}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-600">Género</p>
-          <p className="text-base">{formatGender(miembro.gender)}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-600">Fecha de Nacimiento</p>
-          <p className="text-base">
-            {new Date(miembro.birthDate).toLocaleDateString('es-CO')}
+          <label className="text-sm font-medium text-gray-500">Nombre completo</label>
+          <p className="text-gray-900 font-medium">
+            {member.first_name} {member.last_name}
           </p>
         </div>
-        <div className="col-span-2">
-          <p className="text-sm font-medium text-gray-600">Teléfono</p>
-          <p className="text-base">{miembro.phone}</p>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Edad</label>
+          <p className="text-gray-900">{displayAge}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Identificación</label>
+          <p className="text-gray-900">{member.identification || "No especificado"}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Tipo de documento</label>
+          <p className="text-gray-900">{formatDocumentType(member.documentType)}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Email</label>
+          <p className="text-gray-900">{member.email || "No especificado"}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Teléfono</label>
+          <p className="text-gray-900">{member.phone || "No especificado"}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Género</label>
+          <p className="text-gray-900">{member.gender || "No especificado"}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Fecha de nacimiento</label>
+          <p className="text-gray-900">{formatDate(member.birthDate)}</p>
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-sm font-medium text-gray-500">Dirección</label>
+          <p className="text-gray-900">{member.address || "No especificado"}</p>
         </div>
       </div>
     </div>

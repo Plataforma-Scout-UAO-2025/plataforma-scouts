@@ -16,7 +16,7 @@ export interface EmergencyContactDTO {
 }
 
 export interface MemberBasicInfo {
-  user_id?: string;
+  memberId?: string;
   tenantId?: string;
   subgroup?: SubgroupDTO;
   first_name?: string;

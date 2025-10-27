@@ -80,7 +80,7 @@ export const guardianService = {
 
       const camposRequeridos = [
         guardian.identification,
-        guardian.documentType,
+        guardian.document_type,
         guardian.phone,
       ];
 
