@@ -24,11 +24,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FiltrosReporte, Grupo } from "../types/reporte.type";
-import type { ReportSection } from "@/types/reporte-financiero.type";
+import type { FiltrosReporte } from "@/types/reporte-financiero.type";
 import api from "@/api/axios";
 import { useTenant } from "@/hooks/useTenant";
 import { toast } from "sonner";
+import type { Member as MemberType } from "@/types/member.type";
+import type { Subgroup as SubgroupType } from "@/types/subgroup.type";
+import type { Section as SectionType } from "@/types/section.type";
 
 interface ReporteModalProps {
   open: boolean;
@@ -36,40 +38,20 @@ interface ReporteModalProps {
   onGenerarReporte: (filtros: FiltrosReporte) => void;
 }
 
-// Datos mock de grupos
-const GRUPOS_MOCK: Grupo[] = [
-  {
-    id: "1",
-    nombre: "Manada Kuna",
-    edadMinima: 7,
-    edadMaxima: 11,
-    miembrosActivos: 15,
-  },
-  {
-    id: "2",
-    nombre: "Tropa Paez",
-    edadMinima: 11,
-    edadMaxima: 15,
-    miembrosActivos: 20,
-  },
-  {
-    id: "3",
-    nombre: "Clan Muisca",
-    edadMinima: 15,
-    edadMaxima: 18,
-    miembrosActivos: 10,
-  },
-];
-
 export default function ReporteModal({
   open,
   onOpenChange,
   onGenerarReporte,
 }: ReporteModalProps) {
-  const [grupoSeleccionado, setGrupoSeleccionado] = useState<string>("");
+  const [scope, setScope] = useState<"SCOUT" | "SUBGROUP" | "SECTION">("SECTION");
+  const [associatedTo, setAssociatedTo] = useState<{ id: string; name: string } | null>(null);
   const [fechaInicio, setFechaInicio] = useState<Date>();
   const [fechaFin, setFechaFin] = useState<Date>();
-  const [sections, setSections] = useState<ReportSection[]>([]);
+  
+  // Estados para los datos
+  const [members, setMembers] = useState<MemberType[]>([]);
+  const [subgroups, setSubgroups] = useState<SubgroupType[]>([]);
+  const [sections, setSections] = useState<SectionType[]>([]);
 
   const {tenantId} = useTenant();
 
@@ -83,31 +65,53 @@ export default function ReporteModal({
       setFechaFin(hoy);
     }
 
-    async function getSections() {
+    // Cargar todos los datos necesarios
+    async function fetchData() {
+      try {
+        // Cargar miembros
+        const membersResponse = await api.get(`finanzas/fees/members/${tenantId}`);
+        setMembers(membersResponse.data || []);
+      } catch (error) {
+        console.error("Error al cargar miembros:", error);
+        toast.error("Error al cargar miembros del grupo");
+      }
+
+      try {
+        // Cargar subgrupos
+        const subgroupsResponse = await api.get(`finanzas/fees/subgroups/${tenantId}`);
+        setSubgroups(subgroupsResponse.data || []);
+      } catch (error) {
+        console.error("Error al cargar subgrupos:", error);
+        toast.error("Error al cargar subgrupos del grupo");
+      }
+
       try {
         // Cargar secciones
-        try {
-          const sectionsResponse = await api.get(
-            `finanzas/fees/sections/${tenantId}`
-          );
-          setSections(sectionsResponse.data || []);
-        } catch (error) {
-          console.error("Error al cargar secciones:", error);
-          toast.error("Error al cargar secciones del grupo");
-        }
-      } catch (error) {}
+        const sectionsResponse = await api.get(`finanzas/fees/sections/${tenantId}`);
+        setSections(sectionsResponse.data || []);
+      } catch (error) {
+        console.error("Error al cargar secciones:", error);
+        toast.error("Error al cargar secciones del grupo");
+      }
     }
 
-    getSections();
-  }, [open]);
+    fetchData();
+  }, [open, tenantId]);
 
   const handleGenerarReporte = () => {
-    if (!grupoSeleccionado || !fechaInicio || !fechaFin) {
+    if (!fechaInicio || !fechaFin) {
+      return;
+    }
+
+    // Validar que se haya seleccionado un asociado
+    if (!associatedTo) {
+      toast.error("Debes seleccionar un asociado para este alcance");
       return;
     }
 
     const filtros: FiltrosReporte = {
-      grupoId: grupoSeleccionado,
+      scope,
+      associated_to: associatedTo || undefined,
       fechaInicio: format(fechaInicio, "yyyy-MM-dd"),
       fechaFin: format(fechaFin, "yyyy-MM-dd"),
     };
@@ -117,11 +121,47 @@ export default function ReporteModal({
   };
 
   const resetForm = () => {
-    setGrupoSeleccionado("");
+    setScope("SECTION");
+    setAssociatedTo(null);
     // No resetear las fechas ya que se inicializan automáticamente cuando se abre el modal
   };
 
-  const isFormValid = grupoSeleccionado && fechaInicio && fechaFin;
+  const isFormValid = fechaInicio && fechaFin && (scope === "SECTION" || associatedTo !== null);
+
+  // Función para manejar el cambio de scope
+  const handleScopeChange = (value: "SCOUT" | "SUBGROUP" | "SECTION") => {
+    setScope(value);
+    setAssociatedTo(null); // Resetear el asociado cuando cambia el alcance
+  };
+
+  // Función para manejar el cambio del asociado
+  const handleAssociatedToChange = (value: string) => {
+    if (scope === "SCOUT") {
+      const member = members.find(m => m.member_id.toString() === value);
+      if (member) {
+        setAssociatedTo({ id: member.member_id.toString(), name: `${member.first_name} ${member.last_name}` });
+      }
+    } else if (scope === "SUBGROUP") {
+      const subgroup = subgroups.find(s => s.id.toString() === value);
+      if (subgroup) {
+        setAssociatedTo({ id: subgroup.id.toString(), name: subgroup.name });
+      }
+    } else if (scope === "SECTION") {
+      const section = sections.find(s => s.id.toString() === value);
+      if (section) {
+        setAssociatedTo({ id: section.id.toString(), name: section.name });
+      }
+    }
+  };
+
+  const getPlaceholder = () => {
+    switch (scope) {
+      case "SCOUT": return "Selecciona un scout...";
+      case "SUBGROUP": return "Selecciona un subgrupo...";
+      case "SECTION": return "Selecciona una sección...";
+      default: return "Selecciona un asociado...";
+    }
+  };
 
   return (
     <Dialog
@@ -137,22 +177,61 @@ export default function ReporteModal({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Selector de Grupo */}
+          {/* Selector de Alcance */}
           <div className="grid gap-2">
-            <label htmlFor="grupo" className="text-sm font-medium">
-              Grupo
+            <label htmlFor="alcance" className="text-sm font-medium">
+              Alcance del Reporte
             </label>
             <Select
-              value={grupoSeleccionado}
-              onValueChange={setGrupoSeleccionado}
+              value={scope}
+              onValueChange={handleScopeChange}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecciona un grupo" />
+                <SelectValue placeholder="Selecciona un alcance" />
               </SelectTrigger>
               <SelectContent>
-                {sections.map((section) => (
-                  <SelectItem key={section.id} value={section.id.toString()}>
-                    {section.name}
+                <SelectItem value="SCOUT">Scout específico</SelectItem>
+                <SelectItem value="SUBGROUP">Subgrupo</SelectItem>
+                <SelectItem value="SECTION">Sección</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Selector condicional según el alcance */}
+          <div className="grid gap-2">
+            <label htmlFor="asociado" className="text-sm font-medium">
+              Seleccionar {scope === "SCOUT" ? "Scout" : scope === "SUBGROUP" ? "Subgrupo" : "Sección"}
+            </label>
+            <Select
+              value={associatedTo?.id || ""}
+              onValueChange={handleAssociatedToChange}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={getPlaceholder()} />
+              </SelectTrigger>
+              <SelectContent>
+                {scope === "SCOUT" && members.map((member) => (
+                  <SelectItem
+                    key={member.member_id}
+                    value={member.member_id.toString()}
+                  >
+                    {member.member_id} - {member.first_name} {member.last_name}
+                  </SelectItem>
+                ))}
+                {scope === "SUBGROUP" && subgroups.map((subgroup) => (
+                  <SelectItem
+                    key={subgroup.id}
+                    value={subgroup.id.toString()}
+                  >
+                    {subgroup.id} - {subgroup.name}
+                  </SelectItem>
+                ))}
+                {scope === "SECTION" && sections.map((section) => (
+                  <SelectItem
+                    key={section.id}
+                    value={section.id.toString()}
+                  >
+                    {section.id} - {section.name}
                   </SelectItem>
                 ))}
               </SelectContent>

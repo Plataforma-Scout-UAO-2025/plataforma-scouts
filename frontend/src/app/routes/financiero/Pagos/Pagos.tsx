@@ -5,128 +5,9 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/api/axios";
 import ReporteModal from "../Reportes/components/ReporteModal";
-import type { FiltrosReporte } from "../Reportes/types/reporte.type";
+import type { FiltrosReporte } from "@/types/reporte-financiero.type";
 import { useNavigate } from "react-router-dom";
 
-// Datos mock para pagos
-// const mockPagos: PaymentRecord[] = [
-//   {
-//     member_id: "1",
-//     first_name: "Juan",
-//     last_name: "Perez",
-//     age: 20,
-//     subgroup: {
-//       subgroup_id: "1",
-//       subgroup_name: "Subgrupo 1",
-//     },
-//     section: {
-//       section_id: "1",
-//       section_name: "Sección 1",
-//     },
-//     installment: [
-//       {
-//         installment_id: "1",
-//         name: "Cuota 1",
-//         due_date: new Date(),
-//         amount: 100,
-//         status: "PAID",
-//         payment_id: crypto.randomUUID(),
-//         paid_at: new Date(),
-//         method: "Efectivo",
-//         reference: "1234567890",
-//         payer_member_id: "1",
-//       },
-//       {
-//         installment_id: "2",
-//         name: "Cuota 2",
-//         due_date: new Date(),
-//         amount: 100,
-//         status: "PENDING",
-//         payment_id: null,
-//         paid_at: null,
-//         method: null,
-//         reference: null,
-//         payer_member_id: null,
-//       },
-//       {
-//         installment_id: "3",
-//         name: "Cuota 3",
-//         due_date: new Date(),
-//         amount: 100,
-//         status: "OVERDUE",
-//         payment_id: null,
-//         paid_at: null,
-//         method: null,
-//         reference: null,
-//         payer_member_id: null,
-//       },
-//     ],
-//   },
-//   {
-//     member_id: "2",
-//     first_name: "Maria",
-//     last_name: "Gomez",
-//     age: 25,
-//     subgroup: {
-//       subgroup_id: "2",
-//       subgroup_name: "Subgrupo 2",
-//     },
-//     section: {
-//       section_id: "2",
-//       section_name: "Sección 2",
-//     },
-//     installment: [
-//       {
-//         installment_id: "1",
-//         name: "Cuota 1",
-//         due_date: new Date(),
-//         amount: 100,
-//         status: "PAID",
-//         payment_id: crypto.randomUUID(),
-//         paid_at: new Date(),
-//         method: "Tarjeta de Debito",
-//         reference: "1234567890",
-//         payer_member_id: "2",
-//       },
-//       {
-//         installment_id: "2",
-//         name: "Cuota 2",
-//         due_date: new Date(),
-//         amount: 100,
-//         status: "PAID",
-//         payment_id: crypto.randomUUID(),
-//         paid_at: new Date(),
-//         method: "Efectivo",
-//         reference: "1234567890",
-//         payer_member_id: "2",
-//       },
-//       {
-//         installment_id: "3",
-//         name: "Cuota 3",
-//         due_date: new Date(),
-//         amount: 100,
-//         status: "PENDING",
-//         payment_id: null,
-//         paid_at: null,
-//         method: null,
-//         reference: null,
-//         payer_member_id: null,
-//       },
-//       {
-//         installment_id: "4",
-//         name: "Cuota 4",
-//         due_date: new Date(),
-//         amount: 100,
-//         status: "PENDING",
-//         payment_id: null,
-//         paid_at: null,
-//         method: null,
-//         reference: null,
-//         payer_member_id: null,
-//       },
-//     ],
-//   }
-// ];
 
 export default function Pagos() {
   const [pagos, setPagos] = useState<PaymentRecord[]>([]);
@@ -153,10 +34,16 @@ export default function Pagos() {
   const handleGenerarReporte = (filtros: FiltrosReporte) => {
     // Crear URL con parámetros para navegar a reportes
     const params = new URLSearchParams({
-      grupoId: filtros.grupoId,
+      scope: filtros.scope,
       fechaInicio: filtros.fechaInicio,
       fechaFin: filtros.fechaFin
     });
+    
+    // Agregar parámetros de asociado si existe
+    if (filtros.associated_to) {
+      params.append('associatedToId', filtros.associated_to.id);
+      params.append('associatedToName', filtros.associated_to.name);
+    }
     
     // Navegar a la página de reportes con los parámetros
     navigate(`/app/financiero/reportes?${params.toString()}`);
