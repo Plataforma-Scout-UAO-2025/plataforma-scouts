@@ -11,6 +11,7 @@ export interface Member {
   firstName?: string;
   lastName?: string;
   isActive?: boolean;
+  createdAt?: string;
   
   member_id?: number;
   first_name?: string;
@@ -144,6 +145,8 @@ export interface UpdateMember {
   firstName?: string;
   lastName?: string;
   subgroupId?: number;
+  // Variante snake_case para compatibilidad con backend
+  subgroup_id?: number;
   subgroupName?: string;
   age?: number;
   userId?: string;

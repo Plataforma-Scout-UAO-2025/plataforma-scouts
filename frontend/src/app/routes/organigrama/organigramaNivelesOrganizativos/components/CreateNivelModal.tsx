@@ -36,7 +36,7 @@ export default function CreateNivelModal({ open, onClose, onSave }: Props) {
               Nombre del Nivel *
             </label>
             <Input
-              placeholder="Ej: Administrativo"
+              placeholder="Ej: Asamblea General de Jefatura y Padres"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
@@ -54,6 +54,9 @@ export default function CreateNivelModal({ open, onClose, onSave }: Props) {
           </div>
 
           <div className="flex justify-end gap-3 mt-4">
+            <div className="text-xs text-muted-foreground mr-auto">
+              Sugerencia: puedes crear niveles como "Comité de Jefatura", "Asamblea", "Corte de Honor" o "Consejo de Región".
+            </div>
             <Button
               variant="outline"
               onClick={onClose}

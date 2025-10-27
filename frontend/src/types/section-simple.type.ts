@@ -14,6 +14,7 @@ export type Section = {
   description?: string | null;
   // Medios
   iconObjectId?: string | null;
+  iconUrl?: string | null;
   photoPrincipal?: string | null;
   galleryObjectIds?: string[];
   // Auditoría

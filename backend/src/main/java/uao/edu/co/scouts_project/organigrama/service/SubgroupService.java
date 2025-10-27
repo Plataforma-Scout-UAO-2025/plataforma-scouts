@@ -360,7 +360,7 @@ public class SubgroupService {
         return new SubgroupResponseDTO(
                 subgroup.getSubgroupId(), subgroup.getTenantId(), subgroup.getGroupId(),
                 subgroup.getSectionId(), subgroup.getName(), subgroup.getDescription(),
-                photoPrincipalUrl, /* galleryUrls, */ subgroup.getIsActive(), subgroup.getCreatedAt(), subgroup.getUpdatedAt()
+                subgroup.getPhotoPrincipal(), photoPrincipalUrl, /* galleryUrls, */ subgroup.getIsActive(), subgroup.getCreatedAt(), subgroup.getUpdatedAt()
         );
     }
 

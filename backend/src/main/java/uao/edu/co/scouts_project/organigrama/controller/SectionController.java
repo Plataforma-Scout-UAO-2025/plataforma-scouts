@@ -156,6 +156,23 @@ public class SectionController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Eliminar foto principal de una sección", description = "Elimina el archivo de la foto principal de Supabase y desvincula el ID de la sección.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Foto principal eliminada exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo o sección no encontrada")
+    })
+    @DeleteMapping("/{sectionId}/photo-principal")
+    public ResponseEntity<Void> deletePhotoPrincipal(
+    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
+    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId) {
+    sectionService.deletePhotoPrincipal(tenantId, groupSlug, sectionId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Eliminar una imagen específica de la galería de una sección",
                description = "Desvincula una imagen (por UUID) de la galería de la sección. Opcionalmente, borra el objeto del storage si `deleteFromStorage=true`.")
     @ApiResponses(value = {

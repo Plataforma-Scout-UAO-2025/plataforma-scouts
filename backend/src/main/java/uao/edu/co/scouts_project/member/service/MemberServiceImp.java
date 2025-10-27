@@ -53,6 +53,8 @@ public class MemberServiceImp implements IMemberService {
     @Autowired
     private PermissionQueryPort permissionQueryPort;
 
+
+
     /**
      * Crea un nuevo miembro validando duplicados e información obligatoria.
      *
@@ -60,6 +62,7 @@ public class MemberServiceImp implements IMemberService {
      * @return El miembro creado con su información persistida.
      */
     @Override
+    @Transactional
     public Member create_member(Member miembro) {
         validateMemberData(miembro);
 
@@ -90,6 +93,8 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
+
+
     /**
      * Lista todos los miembros registrados, ordenados por apellido y nombre.
      *
@@ -108,6 +113,8 @@ public class MemberServiceImp implements IMemberService {
                         .thenComparing(Member::getFirstName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .collect(Collectors.toList());
     }
+
+
 
     /**
      * Obtiene un miembro por su ID.
@@ -135,6 +142,8 @@ public class MemberServiceImp implements IMemberService {
         return maybeMember;
     }
 
+
+
     /**
      * Obtiene un miembro por su ID.
      *
@@ -142,6 +151,7 @@ public class MemberServiceImp implements IMemberService {
      * @return {@link Optional} con el miembro si existe.
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<List<Member>> get_members_by_subGroupId(Long subGroupId) {
         if (subGroupId == null || subGroupId <= 0) {
             log.warn("Invalid subgroup ID for search: {}", subGroupId);
@@ -158,6 +168,7 @@ public class MemberServiceImp implements IMemberService {
         log.info("Found {} members for subgroupId={}", members.size(), subGroupId);
         return Optional.of(members);
     }
+
 
     /**
      * Lista los miembros filtrados por estado.
@@ -233,10 +244,11 @@ public class MemberServiceImp implements IMemberService {
      * Actualiza la información de un miembro existente sin sobrescribir valores nulos.
      *
      * @param memberId     ID del miembro a actualizar.
-     * @param memberUpdate Datos nuevos del miembro.
+     * @param memberUpdate Entidad Member con los datos a actualizar (campos null no se actualizan).
      * @return El miembro actualizado.
      */
     @Override
+    @Transactional
     public Member update_member_by_id(Long memberId, Member memberUpdate) {
         if (memberId == null || memberId <= 0) {
             throw new IllegalArgumentException("Invalid member ID: " + memberId);
@@ -255,16 +267,23 @@ public class MemberServiceImp implements IMemberService {
         return updatedMember;
     }
 
+    @Override
+    @Transactional
+    public Boolean update_role(String userId) {
+        return null;
+    }
+
 
     /**
      * Asigna un miembro a un subGrupo existente
-     *
-     * @param memberId     ID del miembro a actualizar.
+     * @param sectionId Id de la seccion a la cual sera asigando el miembro
+     * @param memberId  ID del miembro a actualizar.
      * @param subGroupId Id del sub grupo que recibirá al miembro
      * @return el estado booleano de la operación
      */
     @Override
-    public Boolean assign_subGroup(Long memberId, Long subGroupId) {
+    @Transactional
+    public Boolean assignSubgroupAndSection(Long memberId, Long subGroupId, Long sectionId) {
         try {
             Optional<Member> memberOpt = memberRepository.findById(memberId);
             Optional<Subgroup> subgroupOpt = subgroupRepository.findById(subGroupId);
@@ -276,20 +295,21 @@ public class MemberServiceImp implements IMemberService {
 
             Subgroup subgroup = subgroupOpt.get();
             if (!Boolean.TRUE.equals(subgroup.getIsActive())) {
-                log.warn("Intento de asignar subgrupo inactivo: {}", subGroupId);
+                log.warn("⚠Intento de asignar subgrupo inactivo: {}", subGroupId);
                 return false;
             }
 
             Member member = memberOpt.get();
             member.setSubgroup(subgroup);
             memberRepository.save(member);
+            memberRepository.updateSectionByMember(memberId, sectionId);
 
-            log.info("Subgrupo {} asignado correctamente al miembro {}", subGroupId, memberId);
+            log.info("Subgrupo {} y sección {} asignados correctamente al miembro {}", subGroupId, sectionId, memberId);
             return true;
 
         } catch (Exception e) {
-            log.error("Error al asignar subgrupo al miembro {}", memberId, e);
-            return false;
+            log.error("Error al asignar subgrupo y sección al miembro {}", memberId, e);
+            throw e; // rollback automático
         }
     }
 
@@ -321,7 +341,6 @@ public class MemberServiceImp implements IMemberService {
 
             log.info("Fetching members with subgroup and section for authenticated user's tenantId: {}", tenantId);
 
-            // 1. Obtener todos los miembros con subgrupos usando JOIN FETCH
             List<Member> members = memberRepository.findMembersWithSubgroupByTenantId(tenantId);
 
             if (members.isEmpty()) {
@@ -331,7 +350,6 @@ public class MemberServiceImp implements IMemberService {
 
             log.info("Found {} members for tenantId: {}", members.size(), tenantId);
 
-            // 2. Recolectar todos los sectionIds únicos de los subgrupos
             Set<Long> sectionIds = members.stream()
                     .map(Member::getSubgroup)
                     .filter(Objects::nonNull)

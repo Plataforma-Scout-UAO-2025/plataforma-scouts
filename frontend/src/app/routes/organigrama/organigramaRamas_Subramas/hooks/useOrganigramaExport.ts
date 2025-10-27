@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { exportarOrganigramaPDF, exportarOrganigramaCSV } from '../utils/exportarOrganigrama';
 import type { Branch as Rama } from '../types/frontend';
 import { getRamasWithSubramas } from '../services';
+import { getGroupBySlug } from '@/api/organigramaApi';
 
 type Opts = { tenantId?: string; groupSlug?: string };
 
@@ -10,6 +11,7 @@ export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
     console.log(' [useOrganigramaExport] Iniciando exportación PDF');
     
     let data = ramas;
+    let groupName = '';
     
     
     if (opts?.tenantId && opts?.groupSlug) {
@@ -17,6 +19,10 @@ export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
       console.log(' [useOrganigramaExport] Parámetros:', { tenantId: opts.tenantId, groupSlug: opts.groupSlug });
 
       try {
+        // Get group name for the title
+        const groupInfo = await getGroupBySlug(opts.tenantId!, opts.groupSlug!);
+        groupName = groupInfo?.name || '';
+        
         const fetched = await getRamasWithSubramas(opts.tenantId!, opts.groupSlug!);
         
         if (fetched && fetched.length > 0) {
@@ -40,7 +46,7 @@ export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
     }
 
     console.log(' [useOrganigramaExport] Generando PDF con', data.length, 'ramas');
-    await exportarOrganigramaPDF(data, { colorHex: '#1A4134' });
+    await exportarOrganigramaPDF(data, { colorHex: '#1A4134', groupName });
   }, [ramas, opts]);
 
   const exportExcel = useCallback(async () => {
