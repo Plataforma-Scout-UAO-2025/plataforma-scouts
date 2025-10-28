@@ -25,23 +25,24 @@ import jakarta.validation.constraints.Size;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GuardianCreateDTO {
+    private Long memberId;
     private String userId;
     private SubgroupDTO subgroup;
     private String rol;
     private String tenantId;
     private String subgroupId;
-    @NotBlank(message = "First name is required")
+    @NotBlank(message = "El nombre es obligatorio")
     private String firstName;
-    @NotBlank(message = "Last name is required")
+    @NotBlank(message = "El apellido es obligatorio")
     private String lastName;
-    @Positive(message = "Age must be positive")
+    @Positive(message = "Edad debe ser un número positivo")
     private Integer age;
-    @Size(max = 10, message = "Identification must not exceed 10 characters")
+    @Size(max = 10, message = "El ID no debe exceder 10 caracteres")
     private String identification;
     private DocumentType documentType;
-    @Size(max = 10, message = "Phone must not exceed 10 characters")
-@Size(max = 10, message = "Phone must not exceed 10 characters")
+    @Size(max = 10, message = "Teléfono no debe exceder 10 caracteres")
     private String phone;
+    private String address;
     private String relationship;
     private Boolean isActive;
     private Status status;
