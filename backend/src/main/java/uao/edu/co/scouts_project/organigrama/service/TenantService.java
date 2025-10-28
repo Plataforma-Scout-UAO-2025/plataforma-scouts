@@ -1,6 +1,7 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
 import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
+import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
 import uao.edu.co.scouts_project.organigrama.model.Tenant;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class TenantService {
+public class TenantService implements ITenantService{
     
     private final TenantRepository tenantRepository;
     

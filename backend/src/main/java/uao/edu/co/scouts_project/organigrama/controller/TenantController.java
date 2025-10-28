@@ -1,6 +1,7 @@
 package uao.edu.co.scouts_project.organigrama.controller;
 
 import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
+import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
 import uao.edu.co.scouts_project.organigrama.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,9 +19,9 @@ import java.util.List;
 @RequestMapping("/api/v1/tenants")
 public class TenantController {
     
-    private final TenantService tenantService;
+    private final ITenantService tenantService;
     
-    public TenantController(TenantService tenantService) {
+    public TenantController(ITenantService tenantService) {
         this.tenantService = tenantService;
     }
     

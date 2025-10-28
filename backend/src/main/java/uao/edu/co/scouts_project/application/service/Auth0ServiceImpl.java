@@ -3,6 +3,11 @@ package uao.edu.co.scouts_project.application.service;
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -12,7 +17,6 @@ import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
-import uao.edu.co.scouts_project.domain.dto.common.ResponseDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO; // Added
 import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
@@ -21,18 +25,22 @@ import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
 import uao.edu.co.scouts_project.infrastructure.auth0.Auth0AdminAdapter;
 import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.service.IMemberService;
-import uao.edu.co.scouts_project.member.service.MemberServiceImp;
-// no checked exceptions in service; adapter throws runtime Auth0GatewayException
-import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupDTO;
+import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
+import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
 import uao.edu.co.scouts_project.organigrama.service.GroupService;
-import uao.edu.co.scouts_project.organigrama.service.TenantService;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class Auth0ServiceImpl implements IAuth0Service {
+
+    @Value("${SUPERUSER_PASSWORD}")
+    private String SUPERUSERPASSWORD;
 
     private final Auth0AdminAdapter auth0AdminAdapter;
     // Logger can be added if needed
@@ -42,14 +50,14 @@ public class Auth0ServiceImpl implements IAuth0Service {
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final PermissionQueryPort permissionQueryPort; // Added
 
-    private final TenantService tenantService;
-    private final GroupService groupService;
+    private final ITenantService tenantService;
+    private final IGroupService groupService;
     private final IMemberService memberServiceImp;
 
     public Auth0ServiceImpl(Auth0AdminPort adminPort, RoleMappingPort roleMappingPort,
             RoleAssignmentValidator roleAssignmentValidator,
             PermissionQueryPort permissionQueryPort, Auth0AdminAdapter auth0AdminAdapter,
-            TenantService tenantService, GroupService groupService, IMemberService memberService) {
+            ITenantService tenantService, IGroupService groupService, IMemberService memberService) {
         this.adminPort = adminPort;
         this.roleMappingPort = roleMappingPort;
         this.roleAssignmentValidator = roleAssignmentValidator;
@@ -271,40 +279,63 @@ public class Auth0ServiceImpl implements IAuth0Service {
     }
 
     @Override
-    public String createTenant(GroupDTO group) {
-
-        // Que me pida Nombre del Grupo, Imagen del Grupo, Ubicación, número de identificación
-        // Dirección, Teléfono, email, isActive y Status.
-
-
-
-
-
+    public String createTenant(CreateGroupDTO group) {
 
         // // 1. Obtener el Grupo y crear un slug válido. Ver la entidad de Group y
         // poder validar en BD (creando un método o algo)
         // para poder crear un slug a partir del nombre.
 
-        String probableSlug = "";
+        String slug = group.getSlug();
+        // Validar el slug
 
+        Boolean isValidSlug = groupService.validateSlug(slug);
+
+        if (!isValidSlug) {
+            throw new IllegalArgumentException(
+                    "El slug proporcionado no es válido. Debe contener solo letras minúsculas, números y guiones.");
+        }
 
         // - [Listo] Create la Organization en Auth0 UNIENDO LA CONEXIÓN de la BD de
         // Auth0 (con el identificador 'con_id' )
 
+
+
+
         // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
         // de forma: $'uep-{tenant.slug}'
+
+
+
 
         // - [No implementado] Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
         // de conexión de dicha organization
         // (con el 'con_id' o como se específique) en Auth0.
 
+        CreateUserWithRoleCommandDTO superUser = new CreateUserWithRoleCommandDTO("canavia@uao.edu.co",
+                SUPERUSERPASSWORD, "canavia", Role.ADMIN_GLOBAL);
+
+        CreatedUserDTO createdSuperUser = this.createUserWithRole(superUser);
+
         // [No implementado] Crear el Tenant en BD con el org_id de Auth0
         // (TenantService).
+
+
+
+
+        
+        // tenantService.createTenant(tenantId, group.getName(), group.getDescription())
 
         // - [No implementado] Crear el Group en BD con el tenant_id (GroupService).
 
         // - [No implementado] Create Member (MemberService) Asignar al ADMIN_GLOBAL a
         // ese Grupo en BD
+
+        Member superUserMember = new Member(null, createdSuperUser.getId(), org_id, null, null, "Cesar", "Navia",
+                100, DocumentType.CC, "canavia@uao.edu.co", null,
+                null, null, null, null, null, null, null, null, null, null, true, null, Status.APPROVED,
+                LocalDate.now(), null, LocalDate.now(), LocalDate.now());
+
+        memberServiceImp.create_member(superUserMember);
 
         return "Todo bien";
 

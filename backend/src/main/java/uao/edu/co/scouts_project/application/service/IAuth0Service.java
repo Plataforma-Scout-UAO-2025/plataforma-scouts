@@ -9,6 +9,7 @@ import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.common.ResponseDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 
 import java.util.List;
@@ -46,6 +47,7 @@ public interface IAuth0Service {
 
     void changeUserRoleGlobal(UserAuth0ChangeRoleDTO request); // ADMIN_GLOBAL (any role, optional org validation)
 
-    String createTenant(GroupDTO group);
+    String createTenant(CreateGroupDTO group);
+
 
 }
