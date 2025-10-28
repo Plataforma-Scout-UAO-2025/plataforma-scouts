@@ -143,7 +143,7 @@ export const createMemberAction = createAsyncThunk<
   { rejectValue: { error: string } }
 >("member/create", async (memberData: Member, { rejectWithValue }) => {
   try {
-    z;
+    ;
     const response = await createMember(memberData);
 
     return {

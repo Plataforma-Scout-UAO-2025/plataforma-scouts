@@ -45,7 +45,7 @@ export default function EditMemberModal({
     if (open && member) {
       initEdit();
     }
-  }, [open, member]);
+  }, [open, member, initEdit]);
 
   if (!member) return null;
 

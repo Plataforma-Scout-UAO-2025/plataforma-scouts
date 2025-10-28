@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Member, UpdateMember, EmergencyContact } from "@/types/member.type";
 import { useAppDispatch } from "./useAppDispatch";
 import { updateMemberAction, fetchMembersByStatusAction } from "@/store/members/membersActions";
@@ -6,11 +6,15 @@ import { toast } from "sonner";
 
 type AnyMember = Member | UpdateMember;
 
+interface MemberWithId extends Record<string, unknown> {
+  memberId?: number;
+  member_id?: number;
+}
+
 function getMemberId(m?: AnyMember | null): number | undefined {
   if (!m) return undefined;
-  const updateMember = m as UpdateMember;
-  const member = m as Member;
-  return updateMember.memberId ?? member.member_id ?? (m as any).memberId;
+  const memberWithId = m as MemberWithId;
+  return memberWithId.memberId ?? memberWithId.member_id;
 }
 
 function getMemberField(
@@ -29,6 +33,12 @@ interface UseMemberEditArgs {
   onClose: () => void;
 }
 
+interface EmergencyContactRaw {
+  name?: string;
+  relationship?: string;
+  phone?: string;
+}
+
 export function useMemberEdit({
   member,
   onSuccess,
@@ -40,7 +50,7 @@ export function useMemberEdit({
 
   const memberId = getMemberId(member);
 
-  const initEdit = () => {
+  const initEdit = useCallback(() => {
     if (!member) {
       setEditedData({});
       return;
@@ -67,36 +77,23 @@ export function useMemberEdit({
       initialData.birthDate = birthDate;
     }
 
-    // DEBUG: Buscar contactos de emergencia
-    const memberAny = member as any;
-    console.log("🔍 initEdit - Buscando contactos:", {
-      emergency_contacts: memberAny.emergency_contacts,
-      emergencyContacts: memberAny.emergencyContacts,
-      fullMember: member
-    });
-
-    const emergencyContacts = memberAny.emergency_contacts ?? 
-                             memberAny.emergencyContacts ?? 
+    const memberWithContacts = member as Member & { emergencyContacts?: EmergencyContact[] };
+    const emergencyContacts = memberWithContacts.emergency_contacts ?? 
+                             memberWithContacts.emergencyContacts ?? 
                              [];
-    
-    console.log("🔍 initEdit - Contactos encontrados:", emergencyContacts);
-    console.log("🔍 initEdit - Es array?", Array.isArray(emergencyContacts));
-    console.log("🔍 initEdit - Length:", emergencyContacts.length);
 
     if (Array.isArray(emergencyContacts) && emergencyContacts.length > 0) {
-      initialData.emergencyContacts = emergencyContacts.map((contact: any) => ({
+      initialData.emergencyContacts = emergencyContacts.map((contact: EmergencyContactRaw) => ({
         name: contact.name || "",
         relationship: contact.relationship || "",
         phone: contact.phone || "",
       }));
-      console.log("✅ initEdit - Contactos mapeados:", initialData.emergencyContacts);
     } else {
       initialData.emergencyContacts = [];
-      console.log("⚠️ initEdit - No hay contactos, array vacío");
     }
 
     setEditedData(initialData);
-  };
+  }, [member]);
 
   const handleFieldChange = (
     field: keyof UpdateMember,
@@ -149,7 +146,6 @@ export function useMemberEdit({
       return;
     }
 
-    // Validar campos obligatorios básicos
     const requiredFields = {
       phone: "Teléfono",
       address: "Dirección",
@@ -165,13 +161,11 @@ export function useMemberEdit({
       }
     }
 
-    // Validar formato de teléfono
     if (editedData.phone && !validatePhone(editedData.phone)) {
       toast.error("El teléfono debe contener solo números (entre 7 y 15 dígitos). Puede incluir + al inicio.");
       return;
     }
 
-    // Validar que peso y altura sean números positivos
     const weight = editedData.weight ? parseFloat(editedData.weight) : 0;
     const height = editedData.height ? parseFloat(editedData.height) : 0;
 
@@ -185,7 +179,6 @@ export function useMemberEdit({
       return;
     }
 
-    // Validar contactos de emergencia
     if (editedData.emergencyContacts && !validateEmergencyContacts(editedData.emergencyContacts)) {
       return;
     }
@@ -212,7 +205,6 @@ export function useMemberEdit({
         updates.height = String(height);
       }
 
-      // Incluir contactos de emergencia solo si existen y tienen datos válidos
       if (editedData.emergencyContacts && editedData.emergencyContacts.length > 0) {
         const validContacts = editedData.emergencyContacts.filter(
           contact => contact.name && contact.relationship && contact.phone
@@ -232,8 +224,6 @@ export function useMemberEdit({
         updates: updates,
       };
 
-      console.log("Payload enviado:", payload);
-
       await dispatch(updateMemberAction(payload)).unwrap();
 
       const firstName = editedData.firstName || "";
@@ -246,14 +236,12 @@ export function useMemberEdit({
 
       onClose();
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al actualizar miembro:", error);
       
       let errorMessage = "Ocurrió un error al actualizar la información.";
       
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
+      if (error instanceof Error) {
         errorMessage = error.message;
       }
       
