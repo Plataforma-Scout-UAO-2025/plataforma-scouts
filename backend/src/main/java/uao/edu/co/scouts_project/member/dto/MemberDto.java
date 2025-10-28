@@ -100,7 +100,6 @@ public class MemberDto {
 
     private String relationship;
 
-    @NotBlank(message = "El estado es obligatorio")
     @Pattern(regexp = "^(APPROVED|REJECTED|PENDING)$", 
              message = "Estado inválido. Valores permitidos: APPROVED, REJECTED, PENDING")
     private String status;
@@ -109,7 +108,6 @@ public class MemberDto {
     private LocalDate acceptanceDate;
 
     @JsonProperty("emergencyContacts")
-    @Valid
     private List<EmergencyContactDto> emergencyContacts;
 
     @JsonProperty("created_at")
