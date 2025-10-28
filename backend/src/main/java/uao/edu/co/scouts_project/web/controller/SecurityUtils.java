@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
 import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
+import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
 
 import java.util.List;
 import java.util.Map;
@@ -20,13 +21,15 @@ public class SecurityUtils {
 
     private final PermissionQueryPort permissionQueryPort;
     private final ConnectionQueryPort connectionQueryPort;
+    private final OrganizationQueryPort organizationQueryPort;
 
     @Value("${auth0.connections.admin-endpoint.enabled:false}")
     private boolean adminEndpointEnabled;
 
-    public SecurityUtils(PermissionQueryPort permissionQueryPort, ConnectionQueryPort connectionQueryPort) {
+    public SecurityUtils(PermissionQueryPort permissionQueryPort, ConnectionQueryPort connectionQueryPort, OrganizationQueryPort organizationQueryPort) {
         this.permissionQueryPort = permissionQueryPort;
         this.connectionQueryPort = connectionQueryPort;
+        this.organizationQueryPort = organizationQueryPort;
     }
 
     @GetMapping("/roles")
@@ -63,6 +66,25 @@ public class SecurityUtils {
         return Map.of(
                 "slug", slug,
                 "resultId", id
+        );
+    }
+
+    /**
+     * ADMIN ONLY - TEST ONLY ENDPOINT
+     * Endpoint para probar la habilitación (o actualización) de una conexión existente dentro de una organización existente en Auth0.
+     * Protegido por flag: auth0.connections.admin-endpoint.enabled (default: false).
+     */
+    @PostMapping("/admin/auth0/organizations/{orgId}/connections/{connectionId}")
+    public Map<String, Object> enableConnectionInOrganizationAdmin(@PathVariable("orgId") String orgId,
+                                                                   @PathVariable("connectionId") String connectionId) {
+        if (!adminEndpointEnabled) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        String resultId = organizationQueryPort.enableConnectionForOrganization(orgId, connectionId);
+        return Map.of(
+                "orgId", orgId,
+                "connectionId", connectionId,
+                "resultId", resultId
         );
     }
 }
