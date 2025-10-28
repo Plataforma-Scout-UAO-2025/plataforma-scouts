@@ -94,16 +94,17 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
             // Verificar existencia de la organización
             executeWithRetry(() -> api().organizations().get(orgId).execute(), "get organization");
 
-            // Construir payload de enabled connection con flags disponibles
-            EnabledConnection payload = new EnabledConnection();
+            // Construir payload extendido con flags completos
+            EnabledConnectionPayload payload = new EnabledConnectionPayload();
             payload.setConnectionId(connId);
             payload.setAssignMembershipOnLogin(true);
+            payload.setIsSignupEnabled(true);
+            payload.setShowAsButton(true);
 
-            log.debug("[Auth0-Orgs] Payload (request): {}", payload);
+            log.debug("[Auth0-Orgs] Payload addConnection (request): {}", payload);
 
-            // Intentar habilitar conexión usando subentidad de conexiones si está disponible
+            // Intentar ADD
             try {
-                // add/enable
                 executeWithRetry(() -> api().organizations().addConnection(orgId, payload).execute(), "add enabled connection");
                 long tookMs = System.currentTimeMillis() - startedAt;
                 log.info("[Auth0-Orgs] Conexión habilitada: orgId={}, connectionId={}, durationMs={}", orgId, connId, tookMs);
@@ -111,8 +112,13 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
             } catch (APIException addEx) {
                 if (addEx.getStatusCode() == 409) {
                     log.warn("[Auth0-Orgs] add-enabled-connection 409 (ya habilitada), procediendo con update: orgId={}, connectionId={}", orgId, connId);
-                    EnabledConnection updatePayload = new EnabledConnection();
+                    EnabledConnectionPayload updatePayload = new EnabledConnectionPayload();
                     updatePayload.setAssignMembershipOnLogin(true);
+                    updatePayload.setIsSignupEnabled(true);
+                    updatePayload.setShowAsButton(true);
+
+                    log.debug("[Auth0-Orgs] Payload updateConnection (request): {}", updatePayload);
+
                     executeWithRetry(() -> api().organizations().updateConnection(orgId, connId, updatePayload).execute(), "update enabled connection");
                     long tookMs = System.currentTimeMillis() - startedAt;
                     log.info("[Auth0-Orgs] Conexión actualizada tras 409: orgId={}, connectionId={}, durationMs={}", orgId, connId, tookMs);
