@@ -14,6 +14,8 @@ import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * Contrato del servicio de alto nivel para operaciones de administración contra
  * Auth0.
@@ -47,7 +49,7 @@ public interface IAuth0Service {
 
     void changeUserRoleGlobal(UserAuth0ChangeRoleDTO request); // ADMIN_GLOBAL (any role, optional org validation)
 
-    String createTenant(CreateGroupDTO group);
+    String createTenant(CreateGroupDTO group, MultipartFile logoFile);
 
 
 }

@@ -1,12 +1,16 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory; 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import uao.edu.co.scouts_project.organigrama.dto.CreatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
+import uao.edu.co.scouts_project.organigrama.interfaces.IMapper;
 import uao.edu.co.scouts_project.organigrama.model.Group;
 import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
@@ -27,15 +31,20 @@ public class GroupService implements IGroupService {
     private final GroupRepository groupRepository;
     private final TenantRepository tenantRepository;
     private final SupabaseStorageService storageService;
+    private final IMapper<CreatingGroupDTO, Group> groupMapper;
+
+    private static final Logger log = LoggerFactory.getLogger(GroupService.class);
 
     private static final Pattern SLUG_PATTERN = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$");
 
     public GroupService(GroupRepository groupRepository,
             TenantRepository tenantRepository,
-            @Qualifier("organigramaStorageService") SupabaseStorageService storageService) {
+            @Qualifier("organigramaStorageService") SupabaseStorageService storageService,
+            IMapper<CreatingGroupDTO, Group> groupMapper) {
         this.groupRepository = groupRepository;
         this.tenantRepository = tenantRepository;
         this.storageService = storageService;
+        this.groupMapper = groupMapper;
     }
 
     @Transactional(readOnly = true)
@@ -77,15 +86,41 @@ public class GroupService implements IGroupService {
         return toResponseDTO(group); // La versión simple es suficiente para un solo objeto
     }
 
+    public GroupResponseDTO createGroup(CreatingGroupDTO dto) {
+        if (!validateSlug(dto.getSlug())) {
+            throw new IllegalArgumentException(
+                    dto.getSlug() + " Slug no válido, debe de seguir el patrón: " + SLUG_PATTERN.pattern());
+        }
+
+        Group entity;
+        try {
+            entity = groupMapper.toEntity(dto);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error al crear el grupo: " + e.getMessage(), e);
+        }
+        groupRepository.save(entity);
+        return toResponseDTO(entity);
+    }
+
     @Transactional
     public GroupResponseDTO createGroup(String tenantId, GroupDTO dto) {
         ensureTenantExists(tenantId);
 
-        if (groupRepository.existsByTenantIdAndSlug(tenantId, dto.slug())) {
-            throw new IllegalArgumentException("Group with slug '" + dto.slug() + "' already exists in this tenant");
+        if (groupRepository.existsBySlug(dto.slug())) {
+            throw new IllegalArgumentException("Grupo con Slug '" + dto.slug() + "' ya existe ");
         }
 
-        Group group = new Group(tenantId, dto.slug(), dto.name());
+        if (!validateSlug(dto.slug())) {
+            throw new IllegalArgumentException(
+                    dto.slug() + " Slug no válido, debe de seguir el patrón: " + SLUG_PATTERN.pattern());
+        }
+
+        Group group;
+        try {
+            group = new Group(tenantId, dto.slug(), dto.name());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error al crear el grupo: " + e.getMessage(), e);
+        }
         mapDtoToEntity(dto, group);
 
         Group saved = groupRepository.save(group);

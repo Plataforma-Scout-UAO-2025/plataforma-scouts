@@ -3,6 +3,7 @@ package uao.edu.co.scouts_project.application.service;
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
@@ -11,6 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+
+import uao.edu.co.scouts_project.common.dto.storage.StorageUploadResponse;
+import uao.edu.co.scouts_project.common.service.SupabaseStorageService;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
@@ -21,6 +25,8 @@ import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO; // Add
 import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
+import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
+import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
 import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
 import uao.edu.co.scouts_project.infrastructure.auth0.Auth0AdminAdapter;
 import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
@@ -28,11 +34,14 @@ import uao.edu.co.scouts_project.infrastructure.security.Role;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.service.IMemberService;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
 import uao.edu.co.scouts_project.organigrama.service.GroupService;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,6 +55,8 @@ public class Auth0ServiceImpl implements IAuth0Service {
     // Logger can be added if needed
 
     private final Auth0AdminPort adminPort;
+    private final ConnectionQueryPort connectionQueryPort;
+    private final OrganizationQueryPort organizationQueryPort;
     private final RoleMappingPort roleMappingPort;
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final PermissionQueryPort permissionQueryPort; // Added
@@ -53,12 +64,19 @@ public class Auth0ServiceImpl implements IAuth0Service {
     private final ITenantService tenantService;
     private final IGroupService groupService;
     private final IMemberService memberServiceImp;
+    private final SupabaseStorageService supabaseStorageService;
 
-    public Auth0ServiceImpl(Auth0AdminPort adminPort, RoleMappingPort roleMappingPort,
+    public Auth0ServiceImpl(Auth0AdminPort adminPort,
+            ConnectionQueryPort connectionQueryPort,
+            OrganizationQueryPort organizationQueryPort,
+            RoleMappingPort roleMappingPort,
             RoleAssignmentValidator roleAssignmentValidator,
             PermissionQueryPort permissionQueryPort, Auth0AdminAdapter auth0AdminAdapter,
-            ITenantService tenantService, IGroupService groupService, IMemberService memberService) {
+            ITenantService tenantService, IGroupService groupService, IMemberService memberService,
+            SupabaseStorageService supabaseStorageService) {
         this.adminPort = adminPort;
+        this.connectionQueryPort = connectionQueryPort;
+        this.organizationQueryPort = organizationQueryPort;
         this.roleMappingPort = roleMappingPort;
         this.roleAssignmentValidator = roleAssignmentValidator;
         this.permissionQueryPort = permissionQueryPort;
@@ -67,6 +85,8 @@ public class Auth0ServiceImpl implements IAuth0Service {
         this.memberServiceImp = memberService;
         this.groupService = groupService;
         this.tenantService = tenantService;
+        this.supabaseStorageService = supabaseStorageService;
+
     }
 
     @Override
@@ -279,63 +299,98 @@ public class Auth0ServiceImpl implements IAuth0Service {
     }
 
     @Override
-    public String createTenant(CreateGroupDTO group) {
+    public String createTenant(CreateGroupDTO group, MultipartFile logoFile) {
 
-        // // 1. Obtener el Grupo y crear un slug válido. Ver la entidad de Group y
-        // poder validar en BD (creando un método o algo)
-        // para poder crear un slug a partir del nombre.
+        // // // 1. Obtener el Grupo y crear un slug válido. Ver la entidad de Group y
+        // // poder validar en BD (creando un método o algo)
+        // // para poder crear un slug a partir del nombre.
 
-        String slug = group.getSlug();
-        // Validar el slug
+        // String slug = group.getSlug();
 
-        Boolean isValidSlug = groupService.validateSlug(slug);
+        // // Validar el slug
+        // Boolean isValidSlug = groupService.validateSlug(slug);
 
-        if (!isValidSlug) {
-            throw new IllegalArgumentException(
-                    "El slug proporcionado no es válido. Debe contener solo letras minúsculas, números y guiones.");
-        }
+        // if (!isValidSlug) {
+        //     throw new IllegalArgumentException(
+        //             "El slug proporcionado no es válido. Debe contener solo letras minúsculas, números y guiones.");
+        // }
 
-        // - [Listo] Create la Organization en Auth0 UNIENDO LA CONEXIÓN de la BD de
-        // Auth0 (con el identificador 'con_id' )
+        // // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
+        // // de forma: $'uep-{tenant.slug}'
 
+        // String conId = connectionQueryPort.createOrUpdateAuth0DbConnection(slug);
 
+        // // - [Listo] Create la Organization en Auth0 UNIENDO LA CONEXIÓN de la BD de
+        // // Auth0 (con el identificador 'con_id' )
 
+        // // Crear la imagen y subirla al Supabase Storage:
+        // StorageUploadResponse res = supabaseStorageService.uploadImage(logoFile,
+        //         "logos/" + slug + "-" + logoFile.getOriginalFilename());
 
-        // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
-        // de forma: $'uep-{tenant.slug}'
+        // String logoUrl = res.getFileUrl();
+        // String displayName = slug;
 
+        // // Crear Organización
+        // String orgId = organizationQueryPort.createOrganization(displayName, logoUrl);
 
+        // // - Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
+        // // de conexión de dicha organization
+        // // (con el 'con_id' o como se específique) en Auth0.
 
+        // CreateUserWithRoleCommandDTO superUser = new CreateUserWithRoleCommandDTO("canavia@uao.edu.co",
+        //         SUPERUSERPASSWORD, "canavia", Role.ADMIN_GLOBAL);
 
-        // - [No implementado] Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
-        // de conexión de dicha organization
-        // (con el 'con_id' o como se específique) en Auth0.
+        // CreatedUserDTO createdSuperUser = this.createUserWithRole(superUser);
 
-        CreateUserWithRoleCommandDTO superUser = new CreateUserWithRoleCommandDTO("canavia@uao.edu.co",
-                SUPERUSERPASSWORD, "canavia", Role.ADMIN_GLOBAL);
+        // // [No implementado] Crear el Tenant en BD con el org_id de Auth0
+        // // (TenantService).
 
-        CreatedUserDTO createdSuperUser = this.createUserWithRole(superUser);
+        // TenantDTO tenantDTO = new TenantDTO(
+        //         orgId,
+        //         slug,
+        //         "ACTIVE",
+        //         LocalDate.now().atStartOfDay().toInstant(java.time.ZoneOffset.UTC),
+        //         LocalDate.now().atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
 
-        // [No implementado] Crear el Tenant en BD con el org_id de Auth0
-        // (TenantService).
+        // tenantService.createTenant(tenantDTO);
 
+        // // - [No implementado] Crear el Group en BD con el tenant_id (GroupService).
+        // GroupDTO createdGroup = new GroupDTO(
+        //         null, // groupId
+        //         orgId, // tenantId
+        //         slug, // slug
+        //         group.getName(), // name
+        //         group.getDistrict(), // district
+        //         group.getIdentifierNumber(), // identifierNumber
+        //         group.getAddress(), // address
+        //         null, // phone
+        //         group.getEmail(), // email
+        //         null, // foundedIn
+        //         null, // motto
+        //         null, // mission
+        //         null, // vision
+        //         null, // history
+        //         null, // logoObjectId
+        //         null, // scarfObjectId
+        //         null, // socialLinks
+        //         null, // config
+        //         true, // isActive
+        //         null, // status
+        //         LocalDateTime.now(), // createdAt
+        //         LocalDateTime.now() // updatedAt
+        // );
 
+        // // groupService.createGroup(orgId, )
 
+        // // - [No implementado] Create Member (MemberService) Asignar al ADMIN_GLOBAL a
+        // // ese Grupo en BD
 
-        
-        // tenantService.createTenant(tenantId, group.getName(), group.getDescription())
+        // Member superUserMember = new Member(null, createdSuperUser.getId(), orgId, null, null, "Cesar", "Navia",
+        //         100, Role.ADMIN_GLOBAL, DocumentType.CC, "canavia@uao.edu.co", null,
+        //         null, null, null, null, null, null, null, null, null, null, true, null, Status.APPROVED,
+        //         LocalDate.now(), null, LocalDate.now(), LocalDate.now());
 
-        // - [No implementado] Crear el Group en BD con el tenant_id (GroupService).
-
-        // - [No implementado] Create Member (MemberService) Asignar al ADMIN_GLOBAL a
-        // ese Grupo en BD
-
-        Member superUserMember = new Member(null, createdSuperUser.getId(), org_id, null, null, "Cesar", "Navia",
-                100, DocumentType.CC, "canavia@uao.edu.co", null,
-                null, null, null, null, null, null, null, null, null, null, true, null, Status.APPROVED,
-                LocalDate.now(), null, LocalDate.now(), LocalDate.now());
-
-        memberServiceImp.create_member(superUserMember);
+        // memberServiceImp.create_member(superUserMember);
 
         return "Todo bien";
 

@@ -2,6 +2,9 @@ package uao.edu.co.scouts_project.organigrama.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -10,10 +13,11 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
+@Data
 @Entity
 @Table(name = "groups")
+@AllArgsConstructor
 public class Group {
     
     @Id
@@ -115,78 +119,5 @@ public class Group {
     }
 
 
-    // Getters and Setters
-    public Long getGroupId() { return groupId; }
-    public void setGroupId(Long groupId) { this.groupId = groupId; }
     
-    public String getTenantId() { return tenantId; }
-    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-    
-    public String getSlug() { return slug; }
-    public void setSlug(String slug) { this.slug = slug; }
-    
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    
-    public String getDistrict() { return district; }
-    public void setDistrict(String district) { this.district = district; }
-    
-    public String getIdentifierNumber() { return identifierNumber; }
-    public void setIdentifierNumber(String identifierNumber) { this.identifierNumber = identifierNumber; }
-    
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
-    
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-    
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    
-    public LocalDate getFoundedIn() { return foundedIn; }
-    public void setFoundedIn(LocalDate foundedIn) { this.foundedIn = foundedIn; }
-    
-    public String getMotto() { return motto; }
-    public void setMotto(String motto) { this.motto = motto; }
-    
-    public String getMission() { return mission; }
-    public void setMission(String mission) { this.mission = mission; }
-    
-    public String getVision() { return vision; }
-    public void setVision(String vision) { this.vision = vision; }
-    
-    public String getHistory() { return history; }
-    public void setHistory(String history) { this.history = history; }
-    
-    public UUID getLogoObjectId() { return logoObjectId; }
-    public void setLogoObjectId(UUID logoObjectId) { this.logoObjectId = logoObjectId; }
-    
-    public UUID getScarfObjectId() { return scarfObjectId; }
-    public void setScarfObjectId(UUID scarfObjectId) { this.scarfObjectId = scarfObjectId; }
-    
-    public Map<String, Object> getSocialLinks() { 
-        return socialLinks != null ? socialLinks : new HashMap<>(); 
-    }
-    public void setSocialLinks(Map<String, Object> socialLinks) { 
-        this.socialLinks = socialLinks != null ? socialLinks : new HashMap<>(); 
-    }
-
-    public Map<String, Object> getConfig() { 
-        return config != null ? config : new HashMap<>(); 
-    }
-    public void setConfig(Map<String, Object> config) { 
-        this.config = config != null ? config : new HashMap<>(); 
-    }
-    
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
-    
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
 }

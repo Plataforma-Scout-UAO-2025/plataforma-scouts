@@ -16,6 +16,7 @@ public class CreateGroupDTO {
 
     @NotBlank
     public String name;
+
     public String district;
     public String identifierNumber;
     public String address;
@@ -25,4 +26,5 @@ public class CreateGroupDTO {
     public String email;
     public Boolean isActive;
     public String status;
+
 }

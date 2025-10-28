@@ -2,15 +2,20 @@ package uao.edu.co.scouts_project.organigrama.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import uao.edu.co.scouts_project.organigrama.dto.CreatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdateImageRequest;
+import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.service.GroupService;
 
 import java.net.URI;
@@ -20,107 +25,157 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/groups")
 public class GroupController {
-    
-    private final GroupService groupService;
-    
-    public GroupController(GroupService groupService) {
+
+    private final IGroupService groupService;
+
+    public GroupController(IGroupService groupService) {
         this.groupService = groupService;
     }
-    
+
+    @Operation(summary = "Obtener todos los grupos de un tenant")
+    @ApiResponse(responseCode = "200", description = "Listado de grupos obtenido correctamente")
     @GetMapping
-    public List<GroupResponseDTO> getGroupsByTenant(@PathVariable String tenantId) {
+    public List<GroupResponseDTO> getGroupsByTenant(
+            @Parameter(description = "Identificador del tenant", example = "tenant-001") @PathVariable String tenantId) {
         return groupService.getGroupsByTenant(tenantId);
     }
-    
+
+    @Operation(summary = "Obtener un grupo por su slug")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Grupo encontrado"),
+            @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
+    })
     @GetMapping("/{groupSlug}")
-    public GroupResponseDTO getGroupBySlug(@PathVariable String tenantId, @PathVariable String groupSlug) {
+    public GroupResponseDTO getGroupBySlug(
+            @Parameter(description = "Tenant ID", example = "tenant-001") @PathVariable String tenantId,
+            @Parameter(description = "Slug del grupo", example = "grupo-803") @PathVariable String groupSlug) {
         return groupService.getGroupBySlug(tenantId, groupSlug);
     }
-    
+
+    @Operation(summary = "Crear un nuevo grupo", description = "Crea un nuevo grupo dentro del tenant especificado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Grupo creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o faltantes")
+    })
+
     @PostMapping
-    public ResponseEntity<GroupResponseDTO> createGroup(@PathVariable String tenantId, @Valid @RequestBody GroupDTO dto) {
+    public ResponseEntity<GroupResponseDTO> createGroup(
+            @Parameter(description = "Tenant ID", example = "tenant-001") @PathVariable String tenantId,
+            @Valid @RequestBody GroupDTO dto) {
         GroupResponseDTO created = groupService.createGroup(tenantId, dto);
-        return ResponseEntity.created(URI.create("/api/v1/tenants/" + tenantId + "/groups/" + created.slug())).body(created);
+        return ResponseEntity
+                .created(URI.create("/api/v1/tenants/" + tenantId + "/groups/" + created.slug()))
+                .body(created);
+    }
+
+    @Operation(summary = "Crear un nuevo grupo scout", description = """
+            Crea un nuevo grupo dentro de un tenant específico.
+            Los campos requeridos son `slug`, `name` y el `tenantId` se toma desde la URL.
+            Los demás campos son opcionales (nullable).
+            """, tags = { "Groups" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Grupo creado exitosamente", content = @Content(schema = @Schema(implementation = GroupResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos"),
+            @ApiResponse(responseCode = "409", description = "Ya existe un grupo con el mismo slug dentro del tenant"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @PostMapping("/create")
+    public ResponseEntity<GroupResponseDTO> createGroup(
+            @Parameter(description = "Identificador del tenant donde se creará el grupo", example = "tenant-001", required = true) @PathVariable String tenantId,
+
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, description = "Datos necesarios para crear el grupo", content = @Content(schema = @Schema(implementation = CreatingGroupDTO.class))) @Valid @RequestBody CreatingGroupDTO entity) {
+        // asignar tenantId del path al DTO
+        entity.setTenantId(tenantId);
+
+        GroupResponseDTO created = groupService.createGroup(entity);
+
+        return ResponseEntity
+                .created(URI.create("/api/v1/tenants/" + tenantId + "/groups/" + created.slug()))
+                .body(created);
     }
     
+    @Operation(summary = "Actualizar un grupo existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Grupo actualizado correctamente"),
+            @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
+    })
     @PutMapping("/{groupSlug}")
-    public GroupResponseDTO updateGroup(@PathVariable String tenantId, @PathVariable String groupSlug, @Valid @RequestBody GroupDTO dto) {
+    public GroupResponseDTO updateGroup(
+            @Parameter(description = "Tenant ID", example = "tenant-001") @PathVariable String tenantId,
+            @Parameter(description = "Slug del grupo", example = "grupo-803") @PathVariable String groupSlug,
+            @Valid @RequestBody GroupDTO dto) {
         return groupService.updateGroup(tenantId, groupSlug, dto);
     }
-    
+
+    @Operation(summary = "Eliminar un grupo")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Grupo eliminado correctamente"),
+            @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
+    })
     @DeleteMapping("/{groupSlug}")
-    public ResponseEntity<Void> deleteGroup(@PathVariable String tenantId, @PathVariable String groupSlug) {
+    public ResponseEntity<Void> deleteGroup(
+            @Parameter(description = "Tenant ID", example = "tenant-001") @PathVariable String tenantId,
+            @Parameter(description = "Slug del grupo", example = "grupo-803") @PathVariable String groupSlug) {
         groupService.deleteGroup(tenantId, groupSlug);
         return ResponseEntity.noContent().build();
     }
-
     // ============== NUEVOS ENDPOINTS PARA ELIMINACIÓN INDIVIDUAL ==============
-    
+
     @Operation(summary = "Eliminar imagen del logo de un grupo", description = "Elimina el archivo del logo de Supabase y desvincula el ID del grupo.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Imagen del logo eliminada exitosamente"),
-        @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
+            @ApiResponse(responseCode = "204", description = "Imagen del logo eliminada exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
     })
     @DeleteMapping("/{groupSlug}/logo")
     public ResponseEntity<Void> deleteLogoImage(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
-        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
-        @PathVariable String groupSlug) {
-    groupService.deleteLogoImage(tenantId, groupSlug);
+            @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001") @PathVariable String tenantId,
+            @Parameter(description = "Identificador único del grupo", example = "grupo-803") @PathVariable String groupSlug) {
+        groupService.deleteLogoImage(tenantId, groupSlug);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Eliminar imagen del pañolón de un grupo", description = "Elimina el archivo del pañolón de Supabase y desvincula el ID del grupo.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Imagen del pañolón eliminada exitosamente"),
-        @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
+            @ApiResponse(responseCode = "204", description = "Imagen del pañolón eliminada exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
     })
     @DeleteMapping("/{groupSlug}/scarf")
     public ResponseEntity<Void> deleteScarfImage(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
-        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
-        @PathVariable String groupSlug) {
-    groupService.deleteScarfImage(tenantId, groupSlug);
+            @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001") @PathVariable String tenantId,
+            @Parameter(description = "Identificador único del grupo", example = "grupo-803") @PathVariable String groupSlug) {
+        groupService.deleteScarfImage(tenantId, groupSlug);
         return ResponseEntity.noContent().build();
     }
-    
+
     // ============== NUEVOS ENDPOINTS PATCH PARA ACTUALIZACIÓN INDIVIDUAL ==============
-    
+
     @Operation(summary = "Actualizar solo el logo de un grupo", description = "Actualiza únicamente la imagen del logo sin modificar otros campos del grupo. Elimina automáticamente el logo anterior de Supabase.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Logo actualizado exitosamente"),
-        @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
-        @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
+            @ApiResponse(responseCode = "204", description = "Logo actualizado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
+            @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
     })
     @PatchMapping("/{groupSlug}/logo")
     public ResponseEntity<Void> updateLogo(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
-        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
-        @PathVariable String groupSlug,
-        @Parameter(description = "UUID del nuevo logo en Supabase Storage")
-        @Valid @RequestBody UpdateImageRequest request) {
-    groupService.updateLogo(tenantId, groupSlug, request.objectId());
+            @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001") @PathVariable String tenantId,
+            @Parameter(description = "Identificador único del grupo", example = "grupo-803") @PathVariable String groupSlug,
+            @Parameter(description = "UUID del nuevo logo en Supabase Storage") @Valid @RequestBody UpdateImageRequest request) {
+        groupService.updateLogo(tenantId, groupSlug, request.objectId());
         return ResponseEntity.noContent().build();
     }
-    
+
     @Operation(summary = "Actualizar solo el pañolón de un grupo", description = "Actualiza únicamente la imagen del pañolón sin modificar otros campos del grupo. Elimina automáticamente el pañolón anterior de Supabase.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Pañolón actualizado exitosamente"),
-        @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
-        @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
+            @ApiResponse(responseCode = "204", description = "Pañolón actualizado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "ObjectId inválido"),
+            @ApiResponse(responseCode = "404", description = "Tenant o grupo no encontrado")
     })
     @PatchMapping("/{groupSlug}/scarf")
     public ResponseEntity<Void> updateScarf(
-    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
-    @PathVariable String tenantId,
-        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
-        @PathVariable String groupSlug,
-        @Parameter(description = "UUID del nuevo pañolón en Supabase Storage")
-        @Valid @RequestBody UpdateImageRequest request) {
-    groupService.updateScarf(tenantId, groupSlug, request.objectId());
+            @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001") @PathVariable String tenantId,
+            @Parameter(description = "Identificador único del grupo", example = "grupo-803") @PathVariable String groupSlug,
+            @Parameter(description = "UUID del nuevo pañolón en Supabase Storage") @Valid @RequestBody UpdateImageRequest request) {
+        groupService.updateScarf(tenantId, groupSlug, request.objectId());
         return ResponseEntity.noContent().build();
     }
 }
