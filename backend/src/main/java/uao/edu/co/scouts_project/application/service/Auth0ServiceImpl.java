@@ -5,15 +5,12 @@ package uao.edu.co.scouts_project.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
-import uao.edu.co.scouts_project.member.shared.enums.Status;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
-import uao.edu.co.scouts_project.common.dto.storage.StorageUploadResponse;
 import uao.edu.co.scouts_project.common.service.SupabaseStorageService;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
@@ -31,17 +28,10 @@ import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
 import uao.edu.co.scouts_project.infrastructure.auth0.Auth0AdminAdapter;
 import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
-import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.service.IMemberService;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupDTO;
-import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
-import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
-import uao.edu.co.scouts_project.organigrama.service.GroupService;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +42,6 @@ public class Auth0ServiceImpl implements IAuth0Service {
     private String SUPERUSERPASSWORD;
 
     private final Auth0AdminAdapter auth0AdminAdapter;
-    // Logger can be added if needed
 
     private final Auth0AdminPort adminPort;
     private final ConnectionQueryPort connectionQueryPort;

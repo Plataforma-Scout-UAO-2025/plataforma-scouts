@@ -46,12 +46,12 @@ public class SecurityConfig {
 
                                                 // Operaciones CRUD en tenants
 
-                                                .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
-                                                .hasAnyRole(ADMIN_GLOBAL.name())
-                                                .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
-                                                .hasAnyRole(ADMIN_GLOBAL.name())
-                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
-                                                .hasAnyRole(ADMIN_GLOBAL.name())
+                                                // .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
+                                                // .hasAnyRole(ADMIN_GLOBAL.name())
+                                                // .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
+                                                // .hasAnyRole(ADMIN_GLOBAL.name())
+                                                // .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
+                                                // .hasAnyRole(ADMIN_GLOBAL.name())
                                                 // // Operaciones CRUD en grupos
 
                                                 // .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**")
@@ -75,11 +75,11 @@ public class SecurityConfig {
                                                 //                 SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
                                                 //                 SCOUT.name())
 
-                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*")
-                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
-                                                                COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
-                                                                SCOUT.name())
+                                                // .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*")
+                                                // .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
+                                                //                 COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                                //                 SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
+                                                //                 SCOUT.name())
 
                                                 // Operaciones en almacenamiento de imagenes
 
