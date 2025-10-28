@@ -5,11 +5,13 @@ import com.auth0.exception.APIException;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.organizations.Organization;
 import com.auth0.json.mgmt.organizations.Branding;
+import com.auth0.json.mgmt.organizations.EnabledConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.domain.exception.auth0.OrganizationAlreadyExistsException;
+import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
 
 @Service
@@ -70,6 +72,76 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
             String code = "ERR_ORG_CREATE_TRANSPORT";
             log.error("[Auth0-Orgs] {}: name={}, message='{}', durationMs={}", code, name, e.getMessage(), tookMs);
             throw new Auth0GatewayException(code + ": Fallo creando organización (transport)", e);
+        }
+    }
+
+    @Override
+    public String enableConnectionForOrganization(String organizationId, String connectionId) {
+        if (organizationId == null || organizationId.trim().isEmpty()) {
+            throw new IllegalArgumentException("organizationId no puede ser nulo o vacío");
+        }
+        if (connectionId == null || connectionId.trim().isEmpty()) {
+            throw new IllegalArgumentException("connectionId no puede ser nulo o vacío");
+        }
+
+        final String orgId = organizationId.trim();
+        final String connId = connectionId.trim();
+
+        long startedAt = System.currentTimeMillis();
+        log.info("[Auth0-Orgs] Habilitando conexión en organización: orgId={}, connectionId={}", orgId, connId);
+
+        try {
+            // Verificar existencia de la organización
+            executeWithRetry(() -> api().organizations().get(orgId).execute(), "get organization");
+
+            // Construir payload de enabled connection con flags disponibles
+            EnabledConnection payload = new EnabledConnection();
+            payload.setConnectionId(connId);
+            payload.setAssignMembershipOnLogin(true);
+
+            log.debug("[Auth0-Orgs] Payload (request): {}", payload);
+
+            // Intentar habilitar conexión usando subentidad de conexiones si está disponible
+            try {
+                // add/enable
+                executeWithRetry(() -> api().organizations().addConnection(orgId, payload).execute(), "add enabled connection");
+                long tookMs = System.currentTimeMillis() - startedAt;
+                log.info("[Auth0-Orgs] Conexión habilitada: orgId={}, connectionId={}, durationMs={}", orgId, connId, tookMs);
+                return connId;
+            } catch (APIException addEx) {
+                if (addEx.getStatusCode() == 409) {
+                    log.warn("[Auth0-Orgs] add-enabled-connection 409 (ya habilitada), procediendo con update: orgId={}, connectionId={}", orgId, connId);
+                    EnabledConnection updatePayload = new EnabledConnection();
+                    updatePayload.setAssignMembershipOnLogin(true);
+                    executeWithRetry(() -> api().organizations().updateConnection(orgId, connId, updatePayload).execute(), "update enabled connection");
+                    long tookMs = System.currentTimeMillis() - startedAt;
+                    log.info("[Auth0-Orgs] Conexión actualizada tras 409: orgId={}, connectionId={}, durationMs={}", orgId, connId, tookMs);
+                    return connId;
+                }
+                if (addEx.getStatusCode() == 404) {
+                    long tookMs = System.currentTimeMillis() - startedAt;
+                    String code = "ERR_ORG_ENABLE_CONN_API_404";
+                    log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, message='{}', durationMs={}", code, orgId, connId, addEx.getMessage(), tookMs);
+                    throw new ResourceNotFoundException("Connection not found: " + connId, addEx);
+                }
+                throw addEx;
+            }
+        } catch (APIException e) {
+            long tookMs = System.currentTimeMillis() - startedAt;
+            int status = e.getStatusCode();
+            if (status == 404) {
+                String code = "ERR_ORG_GET_API_404";
+                log.error("[Auth0-Orgs] {}: orgId={}, message='{}', durationMs={}", code, orgId, e.getMessage(), tookMs);
+                throw new ResourceNotFoundException("Organization not found: " + orgId, e);
+            }
+            String code = "ERR_ORG_ENABLE_CONN_API_" + status;
+            log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, status={}, message='{}', durationMs={}", code, orgId, connId, status, e.getMessage(), tookMs);
+            throw new Auth0GatewayException(code + ": Fallo habilitando conexión: status=" + status + ", message=" + e.getMessage(), e);
+        } catch (Auth0Exception e) {
+            long tookMs = System.currentTimeMillis() - startedAt;
+            String code = "ERR_ORG_ENABLE_CONN_TRANSPORT";
+            log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, message='{}', durationMs={}", code, orgId, connId, e.getMessage(), tookMs);
+            throw new Auth0GatewayException(code + ": Fallo habilitando conexión (transport)", e);
         }
     }
 
