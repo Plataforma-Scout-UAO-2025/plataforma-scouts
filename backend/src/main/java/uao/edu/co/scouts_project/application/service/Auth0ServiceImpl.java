@@ -3,15 +3,21 @@ package uao.edu.co.scouts_project.application.service;
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO; // Added
 import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
+import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
+import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 // no checked exceptions in service; adapter throws runtime Auth0GatewayException
 
@@ -30,12 +36,15 @@ public class Auth0ServiceImpl implements IAuth0Service {
     private final Auth0AdminPort adminPort;
     private final RoleMappingPort roleMappingPort;
     private final RoleAssignmentValidator roleAssignmentValidator;
+    private final PermissionQueryPort permissionQueryPort; // Added
 
     public Auth0ServiceImpl(Auth0AdminPort adminPort, RoleMappingPort roleMappingPort, 
-                           RoleAssignmentValidator roleAssignmentValidator) {
+                           RoleAssignmentValidator roleAssignmentValidator,
+                           PermissionQueryPort permissionQueryPort) { // Added
         this.adminPort = adminPort;
         this.roleMappingPort = roleMappingPort;
         this.roleAssignmentValidator = roleAssignmentValidator;
+        this.permissionQueryPort = permissionQueryPort; // Added
     }
 
     @Override
@@ -160,6 +169,92 @@ public class Auth0ServiceImpl implements IAuth0Service {
             // El usuario ya fue creado en Auth0
             throw ex;
         }
+    }
+
+    // --- Added: change role (single-role) for group admin ---
+    @Override
+    public void changeUserRole(UserAuth0ChangeRoleDTO cmd) {
+        // Prevent changing own role
+        String currentUserId = getCurrentUserIdFromSecurityContext();
+        if (currentUserId != null && currentUserId.equals(cmd.getUser_id())) {
+            throw new UnauthorizedRoleAssignmentException("No está autorizado para cambiar su propio rol");
+        }
+
+        // Validate role from enum with friendly error message
+        Role target;
+        try {
+            target = Role.valueOf(cmd.getNewRole().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                "Rol inválido: " + cmd.getNewRole() + ". Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
+            );
+        }
+
+        // Forbid admin roles at group scope
+        List<Role> forbidden = Arrays.asList(Role.ADMIN_GLOBAL, Role.ADMIN_GRUPO, Role.DEV_SUPPORT);
+        if (forbidden.contains(target)) {
+            throw new UnauthorizedRoleAssignmentException("No está autorizado para asignar roles administrativos");
+        }
+
+        // Validate membership in current org (like createUser uses org_id)
+        String orgId = permissionQueryPort.getCurrentUserOrgId();
+        if (orgId == null || orgId.isBlank()) {
+            throw new IllegalStateException("No se pudo determinar el org_id del token");
+        }
+        // Throws or returns if user belongs; ensures scope
+        try {
+            adminPort.getUserInOrganization(orgId, cmd.getUser_id());
+        } catch (ResourceNotFoundException ex) {
+            // Convert to BAD_REQUEST semantics for invalid input context
+            throw new IllegalArgumentException("La organización especificada no existe o el usuario no pertenece a ella");
+        }
+
+        // Enforce single role
+        var existing = adminPort.getUserRoleIds(cmd.getUser_id());
+        adminPort.removeRoles(cmd.getUser_id(), existing);
+
+        // Map enum Role -> Auth0 roleId (via RoleMappingPort)
+        String roleId = roleMappingPort.getAuth0RoleId(target);
+        adminPort.assignRole(cmd.getUser_id(), roleId);
+    }
+
+    // --- Change role (single-role) for global admin, org comes from body if provided ---
+    @Override
+    public void changeUserRoleGlobal(UserAuth0ChangeRoleDTO cmd) {
+        Role target;
+        try {
+            target = Role.valueOf(cmd.getNewRole().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                "Rol inválido: " + cmd.getNewRole() + ". Roles válidos: " + java.util.Arrays.toString(Role.values())
+            );
+        }
+
+        // If a specific organizationId is provided, validate membership there
+        if (cmd.getOrganizationId() != null && !cmd.getOrganizationId().isBlank()) {
+            try {
+                adminPort.getUserInOrganization(cmd.getOrganizationId(), cmd.getUser_id());
+            } catch (ResourceNotFoundException ex) {
+                // Convert to BAD_REQUEST semantics for invalid input context
+                throw new IllegalArgumentException("La organización especificada no existe o el usuario no pertenece a ella");
+            }
+        }
+
+        // Enforce single role
+        var existing = adminPort.getUserRoleIds(cmd.getUser_id());
+        adminPort.removeRoles(cmd.getUser_id(), existing);
+
+        String roleId = roleMappingPort.getAuth0RoleId(target);
+        adminPort.assignRole(cmd.getUser_id(), roleId);
+    }
+
+    private String getCurrentUserIdFromSecurityContext() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth instanceof JwtAuthenticationToken jwtAuth) {
+            Object sub = jwtAuth.getToken().getClaims().get("sub");
+            return sub != null ? sub.toString() : null;
+        }
+        return null;
     }
 
 }
