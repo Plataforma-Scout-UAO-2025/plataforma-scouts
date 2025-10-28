@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,8 +25,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * - dry-run: valida y loguea sin efectuar llamadas a Auth0 cuando está activo
  */
 @Service
-public class Auth0ConnectionsService {
-    private static final Logger log = LoggerFactory.getLogger(Auth0ConnectionsService.class);
+public class Auth0ConnectionAdapter implements ConnectionQueryPort {
+    private static final Logger log = LoggerFactory.getLogger(Auth0ConnectionAdapter.class);
 
     private final Auth0ManagementClientProvider managementProvider;
 
@@ -45,7 +46,7 @@ public class Auth0ConnectionsService {
     // Lock por nombre de conexión para evitar carreras
     private static final ConcurrentHashMap<String, ReentrantLock> LOCKS = new ConcurrentHashMap<>();
 
-    public Auth0ConnectionsService(Auth0ManagementClientProvider managementProvider) {
+    public Auth0ConnectionAdapter(Auth0ManagementClientProvider managementProvider) {
         this.managementProvider = managementProvider;
     }
 
