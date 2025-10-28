@@ -179,7 +179,7 @@ export default function OrgChartSummary() {
       const action2 = await dispatch(fetchMembersWithBranchAction());
       const payload2 = (action2 as unknown as { payload?: unknown }).payload;
       if (Array.isArray(payload2)) return payload2 as typeof members;
-    } catch (_) {
+    } catch {
       // ignore
     }
     return members;

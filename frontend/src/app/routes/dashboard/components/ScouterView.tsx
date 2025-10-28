@@ -15,6 +15,7 @@ import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { Member } from "@/types/member.type";
 import { updateMemberAction } from "@/store/members/membersActions";
+import type { AppDispatch } from "@/store/store";
 import { Pencil, Save, X } from "lucide-react";
 
 const ScouterView = () => {
@@ -33,7 +34,7 @@ const ScouterView = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<number | null>(null);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Cargar ramas del grupo
   useEffect(() => {
@@ -125,9 +126,9 @@ const ScouterView = () => {
         phone: updates.phone,
         address: updates.address,
       };
+      // update_member_by_id espera uid string
       await dispatch(
-        // update_member_by_id espera uid string
-        updateMemberAction({ uid: String(member.member_id || member.memberId || ""), updates: payload }) as unknown as any
+        updateMemberAction({ uid: String(member.member_id || member.memberId || ""), updates: payload })
       );
       toast.success("Integrante actualizado");
     } catch (e) {

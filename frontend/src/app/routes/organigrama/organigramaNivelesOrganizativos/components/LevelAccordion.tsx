@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Trash2, Pencil, ChevronDown } from "lucide-react";
@@ -128,22 +128,15 @@ export default function LevelAccordion({
   };
 
   // Helper: obtener subgroupId del miembro, soportando varias formas
-  const getMemberSubgroupId = (m: Member): number | undefined => {
-    const anyM = m as unknown as Record<string, any>;
+  const getMemberSubgroupId = useCallback((m: Member): number | undefined => {
     return (
-      // variantes top-level
-      toNumberSafe(anyM.subgroupId) ??
-      toNumberSafe(anyM.subGroupId) ??
-      toNumberSafe(anyM.subgroup_id) ??
-      toNumberSafe(anyM.sub_group_id) ??
-      toNumberSafe(anyM.subgroup) ??
+      // variante top-level
+      toNumberSafe(m.subgroup_id) ??
       // variantes anidadas
-      toNumberSafe(anyM?.subgroup?.subgroupId) ??
-      toNumberSafe(anyM?.subgroup?.subGroupId) ??
-      toNumberSafe(anyM?.subgroup?.subgroup_id) ??
-      toNumberSafe(anyM?.subgroup?.id)
+      toNumberSafe(m.subgroup?.subgroupId) ??
+      toNumberSafe(m.subgroup?.subgroup_id)
     );
-  };
+  }, []);
 
   // Procesar miembros para cada cargo del nivel
   useEffect(() => {
@@ -173,7 +166,7 @@ export default function LevelAccordion({
     });
 
     setMembersByCargo(map);
-  }, [members, nivel.cargos, refreshKey]);
+  }, [members, nivel.cargos, refreshKey, getMemberSubgroupId]);
 
   const toggle = () => setOpen((v) => !v);
   const onKeyToggle: React.KeyboardEventHandler<HTMLDivElement> = (e) => {

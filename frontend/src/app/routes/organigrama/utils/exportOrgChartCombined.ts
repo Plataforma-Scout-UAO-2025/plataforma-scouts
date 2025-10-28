@@ -47,26 +47,26 @@ function toNumberSafe(v: unknown): number | undefined {
 }
 
 function getMemberSubgroupId(member: Member): number | undefined {
-  const direct = (member as any)?.subgroup_id ?? (member as any)?.subgroupId;
-  const nested = (member as any)?.subgroup?.subgroup_id ?? (member as any)?.subgroup?.subgroupId;
+  const direct = member.subgroup_id;
+  const nested = member.subgroup?.subgroup_id ?? member.subgroup?.subgroupId;
   return toNumberSafe(direct ?? nested);
 }
 
 // Business rules aligned with RamaDetail view
 function isMemberActiveAndApproved(member: Member): boolean {
-  const isActive = (member as any)?.is_active ?? (member as any)?.isActive;
-  const status = (member as any)?.status;
+  const isActive = member.is_active ?? member.isActive;
+  const status = member.status;
   const active = typeof isActive === "boolean" ? isActive : true;
   return active && status === "APPROVED";
 }
 
 function isMemberScouter(member: Member): boolean {
-  return (member as any)?.role === "SCOUTER";
+  return member.role === "SCOUTER";
 }
 
 function fullName(member: Member): string {
-  const fn = (member as any)?.firstName ?? (member as any)?.first_name ?? "";
-  const ln = (member as any)?.lastName ?? (member as any)?.last_name ?? "";
+  const fn = member.firstName ?? member.first_name ?? "";
+  const ln = member.lastName ?? member.last_name ?? "";
   return `${String(fn).trim()} ${String(ln).trim()}`.trim();
 }
 

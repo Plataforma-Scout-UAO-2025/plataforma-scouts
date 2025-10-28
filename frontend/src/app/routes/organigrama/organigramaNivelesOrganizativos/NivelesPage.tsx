@@ -81,7 +81,7 @@ export default function NivelesPage() {
       // Cargar con endpoint público (list_members). Si falla o queda corto, intentamos con detalles.
       (async () => {
         const action = await dispatch(fetchMembersAction());
-        if ((action as any).meta?.requestStatus === "rejected") {
+        if (fetchMembersAction.rejected.match(action)) {
           // Mejor esfuerzo: intentar con detalles (puede estar prohibido en algunos roles)
           await dispatch(fetchMembersWithBranchAction());
         }
@@ -214,22 +214,22 @@ export default function NivelesPage() {
           })
         );
         // Mostrar éxito solo si la acción se resolvió correctamente
-        if ((resultAction as any).meta?.requestStatus === "fulfilled") {
+        if (assignSubgroupAndSectionAction.fulfilled.match(resultAction)) {
           setShowSuccess(true);
           // Refrescar miembros desde el backend para que el listado por cargo se actualice
           // Preferir el endpoint público; si falla, intentamos con detalles
-          let r = await dispatch(fetchMembersAction());
-          if ((r as any).meta?.requestStatus === "rejected") {
+          const r = await dispatch(fetchMembersAction());
+          if (fetchMembersAction.rejected.match(r)) {
             await dispatch(fetchMembersWithBranchAction());
           }
           setMembersRefreshKey((k) => k + 1);
         } else {
-          console.error("Error al asignar subgrupo/sección: ", (resultAction as any).payload || resultAction);
+          console.error("Error al asignar subgrupo/sección: ", resultAction);
         }
       } else {
         console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargoToAssign.id);
       }
-    } catch (e) {
+      } catch (e) {
       console.error('Error asignando miembro al cargo', e);
     } finally {
       setOpenAddMember(false);

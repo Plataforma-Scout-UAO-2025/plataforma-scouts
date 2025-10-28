@@ -8,6 +8,7 @@ import type { DashboardFinanciero } from "@/types/dashboard-tesorero.types";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import type { AxiosError } from "axios";
 
 const ComiteAdminView = () => {
   const { currentUserRoleLabel } = useRoleContext();
@@ -21,9 +22,10 @@ const ComiteAdminView = () => {
     try {
       const response = await api.get("finanzas/dashboard/" + id);
       setData(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Comité tiene acceso de solo lectura; puede que backend restrinja algunos detalles
-      if (error?.response?.status === 403) {
+      const axiosErr = error as AxiosError | undefined;
+      if (axiosErr?.response?.status === 403) {
         toast.info("Sin permisos para ver algunos indicadores financieros");
       } else {
         toast.error("No se pudo cargar el resumen financiero");
