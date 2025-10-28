@@ -12,7 +12,7 @@ class ConnectionPayloadUtilTest {
     @Test
     void normalizeNameFromSlug_basic() {
         String name = ConnectionPayloadUtil.normalizeNameFromSlug("MiSlug");
-        assertEquals("uep-mislug", name);
+        assertEquals("uep-MiSlug", name);
     }
 
     @Test

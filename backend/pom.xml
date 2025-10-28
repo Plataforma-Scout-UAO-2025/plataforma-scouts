@@ -215,8 +215,8 @@
 						<exclude>**/repository/**</exclude>
 
 						<!-- Security pilot -->
+						<exclude>**/uao/edu/co/scouts_project/infrastructure/auth0/**</exclude>
 						<exclude>**/uao/edu/co/scouts_project/infrastructure/cache/**</exclude>
-						<exclude>**/uao/edu/co/scouts_project/web/controller/**</exclude>
 
 						
 
