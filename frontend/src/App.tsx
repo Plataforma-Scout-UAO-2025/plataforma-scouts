@@ -32,6 +32,7 @@ import ScoutEnrollment from "./app/routes/grupos/basic-info/ScoutEnrollment";
 import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollment";
 import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
 import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
+import ScoutEnrollmentInfo from "./app/routes/grupos/basic-info/ScoutEnrollmentInfo";
 
 // Guardianes
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
@@ -84,6 +85,9 @@ function App() {
             <Route path="guardians/members" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><MembersInCharge /></ProtectedRoute>} />
             <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><GuardianProfile /></ProtectedRoute>} />
             <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><WelcomeAddMember /></ProtectedRoute>} />
+
+            {/* Rutas para Scout*/}
+            <Route path="grupos/utils/ScoutEnrollmentInfo" element={<ProtectedRoute allowedRoles={[RawRole.SCOUT]}><ScoutEnrollmentInfo /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>
