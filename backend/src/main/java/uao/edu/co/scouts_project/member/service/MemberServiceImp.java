@@ -22,6 +22,11 @@ import uao.edu.co.scouts_project.organigrama.model.Section;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 import uao.edu.co.scouts_project.organigrama.repository.SectionRepository;
 import uao.edu.co.scouts_project.organigrama.repository.SubgroupRepository;
+import uao.edu.co.scouts_project.application.service.IAuth0Service;
+import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO;
+import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
+import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
+import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -52,6 +57,9 @@ public class MemberServiceImp implements IMemberService {
 
     @Autowired
     private PermissionQueryPort permissionQueryPort;
+
+    @Autowired
+    private IAuth0Service auth0Service;
 
 
 
@@ -270,7 +278,38 @@ public class MemberServiceImp implements IMemberService {
     @Override
     @Transactional
     public Boolean update_role(String userId) {
-        return null;
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("userId no puede ser nulo o vacío");
+        }
+
+        // Buscar el miembro local asociado al userId (claim 'sub' de Auth0)
+        var memberOpt = memberRepository.findByUserId(userId);
+        if (memberOpt.isEmpty()) {
+            throw new IllegalArgumentException("No se encontró miembro para userId: " + userId);
+        }
+
+        var member = memberOpt.get();
+        String newRole = member.getRole();
+        if (newRole == null || newRole.isBlank()) {
+            throw new IllegalArgumentException("El miembro no tiene rol asignado en la BD");
+        }
+
+        // Construir DTO para la llamada a Auth0
+        UserAuth0ChangeRoleDTO dto = new UserAuth0ChangeRoleDTO();
+        dto.setUser_id(userId);
+        dto.setNewRole(newRole);
+
+        try {
+            // Delegar a IAuth0Service para que realice las validaciones y la llamada a Auth0
+            auth0Service.changeUserRole(dto);
+            return true;
+        } catch (UnauthorizedRoleAssignmentException | ResourceNotFoundException | IllegalArgumentException ex) {
+            // Propagar para que el controlador pueda mapear a 400/403/404 según corresponda
+            throw ex;
+        } catch (Auth0GatewayException ex) {
+            // Error de integración con Auth0
+            throw ex;
+        }
     }
 
 

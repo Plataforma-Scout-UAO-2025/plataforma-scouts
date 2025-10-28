@@ -7,6 +7,7 @@ import {
   assignSubgroupAndSectionAction,
   updateMemberByDtoAction,
 } from "@/store/members/membersActions";
+import { changeAuth0UserRoleAction } from "@/store/members/membersActions";
 import { toast } from "sonner";
 
 type AnyMember = Member | UpdateMember;
@@ -69,7 +70,7 @@ export function useMemberApproval({
 
   function getMemberField(
     keyCamel: keyof UpdateMember,
-    keySnake: keyof Member
+    keySnake: keyof Member,
   ): string {
     if (!member) return "";
 
@@ -96,7 +97,7 @@ export function useMemberApproval({
         updateMemberStatusAction({
           id: memberId,
           status: "APPROVED",
-        })
+        }),
       ).unwrap();
 
       if (selectedSubgroup || selectedSection) {
@@ -105,7 +106,7 @@ export function useMemberApproval({
             memberId,
             subGroupId: selectedSubgroup ? Number(selectedSubgroup) : undefined,
             sectionId: selectedSection ? Number(selectedSection) : undefined,
-          })
+          }),
         ).unwrap();
       }
 
@@ -132,14 +133,34 @@ export function useMemberApproval({
             updateMemberByDtoAction({
               uid: String(memberId),
               memberDto,
-            })
+            }),
           ).unwrap();
+
+          // Intentar asignar el rol también en Auth0 si tenemos el user_id
+          try {
+            const auth0UserId = getMemberField("userId", "user_id");
+            if (auth0UserId) {
+              await dispatch(
+                changeAuth0UserRoleAction({
+                  user_id: String(auth0UserId),
+                  newRole: updates.role as string,
+                }),
+              ).unwrap();
+            } else {
+              // Si no existe user_id, se puede mostrar un aviso (no se crea usuario en Auth0 automáticamente aquí)
+              // Dejarlo silencioso por ahora o mostrar toast si se desea
+            }
+          } catch (err) {
+            console.error("Error cambiando rol en Auth0:", err);
+            // No bloquear la operación en BD, pero avisar al usuario
+            toast.error("Error asignando rol en Auth0. Revisa los logs.");
+          }
         } else {
           await dispatch(
             updateMemberAction({
               uid: String(memberId),
               updates,
-            })
+            }),
           ).unwrap();
         }
       }
@@ -153,7 +174,7 @@ export function useMemberApproval({
         updateMemberData.lastName ?? regularMemberData.last_name ?? "";
 
       toast.success(
-        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`
+        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`,
       );
 
       onClose();
@@ -161,7 +182,7 @@ export function useMemberApproval({
     } catch (e) {
       console.error("Error al aceptar solicitud:", e);
       toast.error(
-        "Ocurrió un error al procesar la solicitud. Intenta nuevamente."
+        "Ocurrió un error al procesar la solicitud. Intenta nuevamente.",
       );
     } finally {
       setLoading(false);

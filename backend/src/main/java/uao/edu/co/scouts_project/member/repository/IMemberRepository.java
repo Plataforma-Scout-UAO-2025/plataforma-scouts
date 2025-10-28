@@ -29,6 +29,15 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByIdentification(@NotNull String identification);
 
     /**
+     * Busca un miembro por su userId (claim 'sub' en Auth0) para operaciones que
+     * sincronizan rol con Auth0.
+     *
+     * @param userId identificador del usuario en Auth0
+     * @return Optional con el miembro si existe
+     */
+    Optional<Member> findByUserId(@NotNull String userId);
+
+    /**
      * Obtiene una lista de miembros filtrados por su estado.
      *
      * @param status Estado del miembro (por ejemplo, ACTIVE, INACTIVE, SUSPENDED).
