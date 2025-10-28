@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.member.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +17,7 @@ import java.util.List;
  * Todos los campos son opcionales para permitir actualizaciones flexibles.
  * Solo los campos que vengan informados serán actualizados.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 @Builder
 @AllArgsConstructor
@@ -73,8 +75,8 @@ public class UpdateMemberDto {
 
     private String relationship;
 
-    @Pattern(regexp = "^(ACTIVE|INACTIVE|SUSPENDED|PENDING)$",
-            message = "Estado inválido. Valores permitidos: ACTIVE, INACTIVE, SUSPENDED, PENDING")
+    @Pattern(regexp = "^(APPROVED|PENDING|REJECTED)$",
+            message = "Estado inválido. Valores permitidos: APPROVED, PENDING, REJECTED")
     private String status;
 
     @JsonProperty("emergencyContacts")

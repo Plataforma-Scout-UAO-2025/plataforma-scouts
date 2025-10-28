@@ -17,7 +17,7 @@ import type {
   UpdateSubgroupData,
 } from './types/frontend';
 import { useTenantParams } from './hooks/useTenantParams';
-import useOrganigramaData from './hooks/useOrganigramaData';
+import useOrganigramaDataWithCache from './hooks/useOrganigramaDataWithCache';
 import useOrganigramaActions from './hooks/useOrganigramaActions';
 import useOrganigramaExport from './hooks/useOrganigramaExport';
 import { useApiError } from './hooks/useApiError';
@@ -53,7 +53,7 @@ export default function Organigrama() {
     ramas,
     loadRamas,
     isLoading: dataLoading,
-  } = useOrganigramaData(tenantId, groupSlug);
+  } = useOrganigramaDataWithCache(tenantId, groupSlug);
 
   const { error, handleError, clearError } = useApiError();
 
@@ -168,17 +168,17 @@ export default function Organigrama() {
       {/* Cabecera */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Gestión de Organigrama</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Gestión de Ramas y Subramas Scouts</h1>
           <p className="text-muted-foreground">Administra la estructura de ramas y subramas de tu grupo scout</p>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Exportar organigrama</Button>
+              <Button variant="outline">Exportar Datos</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={handleExportPDF}>Exportar en PDF</DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel}>Exportar en Excel</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>Exportar en CSV</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -2,7 +2,6 @@ import type { Section } from "./section.type";
 import type { role } from "./enrollment.type";
 import type { SchoolData } from "./enrollment.type";
 
-
 export interface Member {
   // Campos opcionales para manejar ambas convenciones de nombres
   // (camelCase y snake_case)
@@ -32,9 +31,11 @@ export interface Member {
   is_active?: boolean;
   identification?: string;
   document_type?: string;
+  documentType?: string;
   email?: string;
   gender?: string;
   birth_date?: string | Date;
+  birthDate?: string | Date;
   address?: string;
   phone?: string;
   weight?: string;
@@ -91,7 +92,6 @@ export interface Member {
       updated_at?: string;
     };
   };
- 
   branch?: Section[];
   schoolData?: SchoolData;
   }

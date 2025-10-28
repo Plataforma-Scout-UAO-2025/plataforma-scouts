@@ -33,6 +33,7 @@ import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollm
 import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
 import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
 import ScoutEnrollmentInfo from "./app/routes/grupos/basic-info/ScoutEnrollmentInfo";
+
 // Guardianes
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
 import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
@@ -44,10 +45,10 @@ function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          {/* Login & Registro */}
+          {/* 🔹 Login & Registro */}
           <Route path="/" element={<Home />} />
 
-          {/* Rutas internas con layout */}
+          {/* 🔹 Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
 
@@ -60,7 +61,7 @@ function App() {
             <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><OrgChartSummary /></ProtectedRoute>} />
 
             {/* ===================== GRUPOS ===================== */}
-            <Route path="grupos" element={<Grupos />} />
+            {/* Mantener solo la ruta protegida más abajo */}
 
             {/* Rutas para admin de grupo */}
             <Route path="financiero/cuotas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><Financiero /></ProtectedRoute>} />
@@ -74,10 +75,6 @@ function App() {
             <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
-            
-            {/*
-            <Route path="insignias" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Insignias /></ProtectedRoute>} />
-            */}
 
             {/* Rutas para acudiente */}
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO]}><EstadoCuenta /></ProtectedRoute>} />
@@ -85,11 +82,12 @@ function App() {
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><MedicalRecordsView /></ProtectedRoute>} />
 
             {/* Rutas para Guardianes*/}
-            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><MembersInCharge /></ProtectedRoute>} />
-            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><GuardianProfile /></ProtectedRoute>} />
-            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={['ACUDIENTE']}><WelcomeAddMember /></ProtectedRoute>} />
-          {/* Rutas para Scout*/}
-          <Route path="grupos/utils/ScoutEnrollmentInfo" element={<ProtectedRoute allowedRoles={["SCOUT"]}><ScoutEnrollmentInfo /></ProtectedRoute>} />
+            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><MembersInCharge /></ProtectedRoute>} />
+            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><GuardianProfile /></ProtectedRoute>} />
+            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><WelcomeAddMember /></ProtectedRoute>} />
+
+            {/* Rutas para Scout*/}
+            <Route path="grupos/utils/ScoutEnrollmentInfo" element={<ProtectedRoute allowedRoles={[RawRole.SCOUT]}><ScoutEnrollmentInfo /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to={"/"} />} />
         </Routes>

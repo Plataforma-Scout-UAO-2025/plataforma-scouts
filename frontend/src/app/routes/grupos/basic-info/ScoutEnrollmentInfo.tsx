@@ -25,7 +25,7 @@ const ScoutEnrollmentInfo = () => {
   const fullMemberData = useAppSelector((state) => state.members.member);
 
   const [basicMember, setBasicMember] = useState<Member | null>(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [pagina, setPagina] = useState(1);
 
   useEffect(() => {
@@ -45,15 +45,17 @@ const ScoutEnrollmentInfo = () => {
   useEffect(() => {
     const loadFullDetails = async () => {
       const memberId = basicMember?.member_id ?? basicMember?.memberId;
-      if (!memberId) return;
+      if (!memberId) {
+        setInitialLoad(false);
+        return;
+      }
 
-      setLoadingDetails(true);
       try {
         await dispatch(fetchMemberAction(memberId)).unwrap();
       } catch (error) {
-        console.error("❌ Error al cargar datos completos:", error);
+        console.error("Error al cargar datos completos:", error);
       } finally {
-        setLoadingDetails(false);
+        setInitialLoad(false);
       }
     };
 
@@ -62,7 +64,7 @@ const ScoutEnrollmentInfo = () => {
 
   const displayMember = fullMemberData || basicMember;
 
-  if (loading || loadingDetails) {
+  if (initialLoad && !displayMember) {
     return (
       <div className="flex justify-center items-center h-screen">
         <p>Cargando información...</p>

@@ -65,8 +65,8 @@ class SectionControllerTest {
         );
         return new SectionResponseDTO(
             id, TENANT_ID, 11L, "Manada", "Descripción",
-            "https://cdn.example/icon.png",
-            "https://cdn.example/photo-principal.jpg",
+            UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"), "https://cdn.example/icon.png",
+            UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd"), "https://cdn.example/photo-principal.jpg",
             List.of("https://cdn.example/legacy-1.jpg","https://cdn.example/legacy-2.jpg"),
             gallery,
             Instant.parse("2024-01-01T00:00:00Z"),
@@ -228,6 +228,17 @@ class SectionControllerTest {
            .andExpect(status().isNoContent());
 
     verify(sectionService).deleteIconImage(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
+    }
+
+    @Test
+    @DisplayName("DELETE photo-principal → 204 No Content")
+    void deletePhotoPrincipal_returns204() throws Exception {
+          doNothing().when(sectionService).deletePhotoPrincipal(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
+
+    mvc.perform(delete(BASE + "/{id}/photo-principal", TENANT_ID, GROUP, SECTION_ID))
+           .andExpect(status().isNoContent());
+
+    verify(sectionService).deletePhotoPrincipal(eq(TENANT_ID), eq(GROUP), eq(SECTION_ID));
     }
 
     @Test

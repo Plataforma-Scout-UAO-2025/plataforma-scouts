@@ -34,7 +34,8 @@ import java.util.stream.Collectors;
 /**
  * Adaptador concreto contra Auth0 Management API para el puerto Auth0AdminPort.
  *
- * No expone clases de la SDK al dominio; realiza la traducción a records internos.
+ * No expone clases de la SDK al dominio; realiza la traducción a records
+ * internos.
  */
 @Component
 public class Auth0AdminAdapter implements Auth0AdminPort {
@@ -53,30 +54,34 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         return provider.getManagementAPI();
     }
 
-    @SuppressWarnings("deprecation") // setPassword está deprecado en SDK actual; mantener hasta migrar estrategia de creación.
+    @SuppressWarnings("deprecation") // setPassword está deprecado en SDK actual; mantener hasta migrar estrategia de
+                                     // creación.
     public CreatedUserDTO createUser(CreateUserCommandDTO cmd) {
         try {
             // Obtener la conexión del usuario autenticado actual desde el JWT
             String connection = permissionQueryPort.getCurrentUserConnection();
-            
+
             if (connection == null || connection.isBlank()) {
-                log.error("No se pudo obtener la conexión del usuario autenticado. Verifica que el claim 'https://scouts-platform-backend/connections' esté presente en el JWT.");
+                log.error(
+                        "No se pudo obtener la conexión del usuario autenticado. Verifica que el claim 'https://scouts-platform-backend/connections' esté presente en el JWT.");
                 throw new Auth0GatewayException("No se pudo determinar la conexión de Auth0 para crear el usuario");
             }
-            
+
             log.debug("Creando usuario con conexión: {}", connection);
-            
+
             User user = new User(connection);
             user.setEmail(cmd.getEmail());
             user.setPassword(cmd.getPassword());
             user.setUsername(cmd.getUsername());
             user.setEmailVerified(false);
-            
-            // Marcar que este usuario fue creado por API (para que el Action no le asigne rol automático)
+
+            // Marcar que este usuario fue creado por API (para que el Action no le asigne
+            // rol automático)
             user.setAppMetadata(java.util.Map.of("created_by_api", true));
-            
+
             User created = api().users().create(user).execute();
-            return new CreatedUserDTO(created.getId(), created.getEmail(), created.getUsername(), created.isEmailVerified());
+            return new CreatedUserDTO(created.getId(), created.getEmail(), created.getUsername(),
+                    created.isEmailVerified());
         } catch (Auth0GatewayException e) {
             // Re-lanzar excepciones de gateway sin envolver
             throw e;
@@ -103,6 +108,7 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
+    @Override
     public void assignRole(String userId, String roleId) {
         try {
             api().users().addRoles(userId, List.of(roleId)).execute();
@@ -136,6 +142,44 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         } catch (Auth0Exception e) {
             log.error("Error verificando roles de usuario {}: {}", userId, e.getMessage());
             throw new Auth0GatewayException("Fallo verificando roles de usuario", e);
+        }
+    }
+
+    // --- Added: list and remove roles to enforce "single role" ---
+    @Override
+    public List<String> getUserRoleIds(String userId) {
+        try {
+            RolesPage page = api().users().listRoles(userId, new PageFilter().withPage(0, 50)).execute();
+            return page.getItems().stream().map(r -> r.getId()).collect(Collectors.toList());
+        } catch (APIException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn("Usuario no encontrado en listRoles: {}", userId);
+                throw new ResourceNotFoundException("User not found: " + userId);
+            }
+            log.error("Error listando roles del usuario {}: {}", userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo listando roles de usuario", e);
+        } catch (Auth0Exception e) {
+            log.error("Error listando roles del usuario {}: {}", userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo listando roles de usuario", e);
+        }
+    }
+
+    @Override
+    public void removeRoles(String userId, List<String> roleIds) {
+        if (roleIds == null || roleIds.isEmpty())
+            return;
+        try {
+            api().users().removeRoles(userId, roleIds).execute();
+        } catch (APIException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn("Usuario {} o roles {} no encontrados al remover", userId, roleIds);
+                throw new ResourceNotFoundException("User or roles not found while removing roles");
+            }
+            log.error("Error removiendo roles {} del usuario {}: {}", roleIds, userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo removiendo roles", e);
+        } catch (Auth0Exception e) {
+            log.error("Error removiendo roles {} del usuario {}: {}", roleIds, userId, e.getMessage());
+            throw new Auth0GatewayException("Fallo removiendo roles", e);
         }
     }
 
@@ -184,8 +228,8 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
 
             // Si no es miembro, lo agregamos
             api().organizations()
-                .addMembers(organizationId, new Members(java.util.List.of(userId)))
-                .execute();
+                    .addMembers(organizationId, new Members(java.util.List.of(userId)))
+                    .execute();
         } catch (APIException e) {
             if (e.getStatusCode() == 404) {
                 // Auth0 devuelve 404 si la organización no existe
@@ -205,14 +249,15 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
     public void addUserToOwnOrganization(String userId) {
         // Obtener el org_id del usuario autenticado desde el JWT
         String organizationId = permissionQueryPort.getCurrentUserOrgId();
-        
+
         if (organizationId == null || organizationId.isBlank()) {
-            log.error("No se pudo obtener el org_id del usuario autenticado. Verifica que el claim 'org_id' esté presente en el JWT.");
+            log.error(
+                    "No se pudo obtener el org_id del usuario autenticado. Verifica que el claim 'org_id' esté presente en el JWT.");
             throw new Auth0GatewayException("No se pudo determinar la organización del usuario autenticado");
         }
-        
+
         log.debug("Agregando usuario {} a la organización propia: {}", userId, organizationId);
-        
+
         addUserToOrganization(organizationId, userId);
     }
 
@@ -245,21 +290,22 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
     public UserSummaryDTO getUserInOrganization(String organizationId, String userId) {
         try {
             if (!isUserMemberOfOrganization(organizationId, userId)) {
-                throw new UserNotMemberException(userId, organizationId);
+                throw new IllegalArgumentException("El usuario no es miembro de la organización");
             }
             User user = api().users().get(userId, (UserFilter) null).execute();
             return new UserSummaryDTO(user.getId(), user.getEmail(), user.getUsername());
-        } catch (UserNotMemberException ex) {
-            throw ex;
         } catch (APIException e) {
             if (e.getStatusCode() == 404) {
                 log.warn("Usuario {} u organización {} no encontrados en Auth0", userId, organizationId);
-                throw new ResourceNotFoundException("User or organization not found: userId=" + userId + ", orgId=" + organizationId);
+                throw new ResourceNotFoundException(
+                        "User or organization not found: userId=" + userId + ", orgId=" + organizationId);
             }
-            log.error("Error obteniendo usuario {} dentro de organización {}: {}", userId, organizationId, e.getMessage());
+            log.error("Error obteniendo usuario {} dentro de organización {}: {}", userId, organizationId,
+                    e.getMessage());
             throw new Auth0GatewayException("Fallo obteniendo usuario en organización", e);
         } catch (Auth0Exception e) {
-            log.error("Error obteniendo usuario {} dentro de organización {}: {}", userId, organizationId, e.getMessage());
+            log.error("Error obteniendo usuario {} dentro de organización {}: {}", userId, organizationId,
+                    e.getMessage());
             throw new Auth0GatewayException("Fallo obteniendo usuario en organización", e);
         } catch (Exception e) {
             throw new Auth0GatewayException("Error consultando membresía de organización", e);
@@ -276,5 +322,4 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         }
     }
 
-   
 }

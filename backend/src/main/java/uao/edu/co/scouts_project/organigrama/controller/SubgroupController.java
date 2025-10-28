@@ -176,6 +176,25 @@ public class SubgroupController {
     subgroupService.updatePhotoPrincipal(tenantId, groupSlug, sectionId, subgroupId, request.objectId());
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Eliminar foto principal de un subgrupo", description = "Elimina el archivo de la foto principal de Supabase y desvincula el ID del subgrupo.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Foto principal eliminada exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Tenant, grupo, sección o subgrupo no encontrado")
+    })
+    @DeleteMapping("/{subgroupId}/photo-principal")
+    public ResponseEntity<Void> deletePhotoPrincipal(
+    @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001")
+    @PathVariable String tenantId,
+        @Parameter(description = "Identificador único del grupo", example = "grupo-803")
+        @PathVariable String groupSlug,
+        @Parameter(description = "ID único de la sección", example = "1")
+        @PathVariable Long sectionId,
+        @Parameter(description = "ID único del subgrupo", example = "1")
+        @PathVariable Long subgroupId) {
+    subgroupService.deletePhotoPrincipal(tenantId, groupSlug, sectionId, subgroupId);
+        return ResponseEntity.noContent().build();
+    }
     
     // TODO: GALERÍA DE FOTOS - Endpoint temporalmente deshabilitado
     /*@Operation(summary = "Modificar imágenes de la galería", 

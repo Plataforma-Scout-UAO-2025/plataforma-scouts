@@ -2,11 +2,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/index";
 import RejectedFilter from "./components/RejectedFilter";
 import RejectedTable from "./components/RejectedTable";
+import MemberDetailsModal from "../detalles/MemberDetailsModal";
+import ConfirmModal from "../pendientes/components/ConfirmModal";
+import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
 import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
+import type { Member } from "@/types/member.type";
 
 const Rejected = () => {
   const [searchFilter, setSearchFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [openViewModal, setOpenViewModal] = useState(false);
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
 
   const {
     members,
@@ -16,6 +23,7 @@ const Rejected = () => {
     setPage,
     loading,
     error,
+    refetch
   } = useTenantMembersByStatus({
     status: "REJECTED",
     pageSize: 10,
@@ -23,8 +31,21 @@ const Rejected = () => {
     city: cityFilter,
   });
 
+  const { orgId } = useAuth0ApiWrapper();
+
   const startIdx = total === 0 ? 0 : (page - 1) * 10 + 1;
   const endIdx = Math.min(page * 10, total);
+
+  const handleViewMember = (member: Member) => {
+    setSelectedMember(member);
+    setOpenViewModal(true);
+  };
+
+  const handleSuccess = async () => {
+    setOpenViewModal(false);
+    setOpenConfirmModal(true);
+    await refetch();
+  };
 
   return (
     <div className="mx-4">
@@ -47,9 +68,13 @@ const Rejected = () => {
 
       {/* Tabla */}
       <section className="mt-6">
-        {loading && <p>Cargando miembros…</p>}
         {error && <p className="text-red-600">{error}</p>}
-        {!loading && !error && <RejectedTable filteredMembers={members} />}
+
+        <RejectedTable 
+          filteredMembers={members}
+          onViewMember={handleViewMember}
+          loading={loading}
+        />
 
         {/* Footer paginación */}
         <section className="flex justify-between items-center mt-4">
@@ -77,6 +102,23 @@ const Rejected = () => {
           </div>
         </section>
       </section>
+
+      {/* Modales */}
+      <MemberDetailsModal
+        open={openViewModal}
+        onOpenChange={setOpenViewModal}
+        member={selectedMember}
+        orgId={orgId || ""}
+        onSuccess={handleSuccess}
+        showRejectButton={false}
+      />
+
+      <ConfirmModal
+        open={openConfirmModal}
+        onOpenChange={setOpenConfirmModal}
+        title="Solicitud Aceptada"
+        message="La solicitud ha sido aceptada correctamente."
+      />
     </div>
   );
 };

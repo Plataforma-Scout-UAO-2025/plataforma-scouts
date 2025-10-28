@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash, User } from "lucide-react";
 import type { Member as MemberType } from "@/types/member.type";
-import { formatDate } from "@/lib/utils";
 import MemberInfoModal from "../detalles/memberInfoModal";
+import EditMemberModal from "./EditMemberModal";
 import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
 
 interface MembersTableProps {
@@ -31,22 +31,6 @@ interface MembersTableProps {
 interface Member {
   is_active?: boolean | string | number;
   isActive?: boolean | string | number;
-}
-
-function getMemberValue<T = string>(
-  member: MemberType,
-  camelKey: keyof MemberType,
-  snakeKey: keyof MemberType,
-  defaultValue: T = "" as T
-): T {
-  const memberRec = member as unknown as Record<string, unknown>;
-  const value = 
-    member[camelKey] ?? 
-    member[snakeKey] ?? 
-    memberRec[camelKey as string] ?? 
-    memberRec[snakeKey as string] ?? 
-    defaultValue;
-  return value as T;
 }
 
 const MembersTable = ({ filteredMembers }: MembersTableProps) => {
@@ -61,6 +45,13 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
     return Boolean(value);
   };
 
+  const formatRole = (role?: string): string => {
+    if (!role) return "";
+    return role
+      .toLowerCase()
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
   const {
     isDialogOpen,
     setIsDialogOpen,
@@ -74,9 +65,18 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
   const [selectedMemberForInfo, setSelectedMemberForInfo] =
     useState<MemberType | null>(null);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMemberForEdit, setSelectedMemberForEdit] =
+    useState<MemberType | null>(null);
+
   const handleViewInfo = (member: MemberType) => {
     setSelectedMemberForInfo(member);
     setIsInfoModalOpen(true);
+  };
+
+  const handleEdit = (member: MemberType) => {
+    setSelectedMemberForEdit(member);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -84,53 +84,37 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
       <Table className="text-sm">
         <TableHeader className="text-primary">
           <TableRow>
-            <TableHead className="pl-4 font-bold text-primary">Id</TableHead>
             <TableHead className="font-bold text-primary">Nombres</TableHead>
             <TableHead className="font-bold text-primary">Apellidos</TableHead>
-            <TableHead className="font-bold text-primary">
-              Identificación
-            </TableHead>
+            <TableHead className="font-bold text-primary">Edad</TableHead>
             <TableHead className="font-bold text-primary">Rama</TableHead>
-            <TableHead className="font-bold text-primary">Creado</TableHead>
-            <TableHead className="font-bold text-primary">Dirección</TableHead>
+            <TableHead className="font-bold text-primary">Subrama</TableHead>
             <TableHead className="font-bold text-primary">Rol</TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
-            <TableHead className="text-right"></TableHead>
+            <TableHead className="font-bold text-primary text-center">
+              Acciones
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member, idx) => {
-              const memberId = getMemberValue<number>(member, "memberId", "member_id", 0);
-              const firstName = getMemberValue(member, "firstName", "first_name");
-              const lastName = getMemberValue(member, "lastName", "last_name");
-              const identification = getMemberValue(member, "identification", "identification");
-              const createdAt = getMemberValue(member, "createdAt", "created_at");
-              const address = getMemberValue(member, "address", "address");
-              const role = getMemberValue(member, "role", "role");
-
               return (
-                <TableRow key={memberId || `member-${idx}`}>
-                  <TableCell className="pl-4 font-medium truncate">
-                    {memberId}
+                <TableRow key={member.memberId ?? `member-${idx}`}>
+                  <TableCell className="w-1/6 truncate">{member.firstName}</TableCell>
+                  <TableCell className="w-1/6 truncate">{member.lastName}</TableCell>
+                  <TableCell className="w-1/6 truncate">{member.age}</TableCell>
+                  <TableCell className="w-1/6 truncate">
+                    {member.subgroup?.section?.name || "Sin Rama"}
                   </TableCell>
-                  <TableCell className="w-32 truncate">{firstName}</TableCell>
-                  <TableCell className="w-32 truncate">{lastName}</TableCell>
-                  <TableCell className="w-32 truncate">
-                    {identification}
+                  <TableCell className="w-1/6 truncate">
+                    {member.subgroup?.name || "Sin Subrama"}
                   </TableCell>
-                  <TableCell className="w-28 truncate">
-                    {member.subgroup?.section?.name || "Sin rama"}
+                  <TableCell className="w-1/6 truncate">
+                    {formatRole(member.role)}
                   </TableCell>
-                  <TableCell className="w-28 truncate">
-                    {formatDate(createdAt)}
-                  </TableCell>
-                  <TableCell className="w-40 truncate">
-                    {address || "Sin dirección"}
-                  </TableCell>
-                  <TableCell className="w-40 truncate">{role}</TableCell>
                   <TableCell>
-                    {getIsActive(member) ? (
+                    {isActive(member) ? (
                       <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
                         Activo
                       </span>
@@ -140,7 +124,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-center">
                     <Button
                       variant="iconbutton"
                       size="icon"
@@ -152,6 +136,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                       variant="iconbutton"
                       size="icon"
                       className="text-secondary hover:text-blue-800"
+                      onClick={() => handleEdit(member)}
                     >
                       <Pencil />
                     </Button>
@@ -191,14 +176,21 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
             <AlertDialogDescription>
               Esta acción cambiará el estado de{" "}
               <strong>
-                {selectedMember ? 
-                  `${(selectedMember as MemberType).firstName ?? (selectedMember as MemberType).first_name} ${(selectedMember as MemberType).lastName ?? (selectedMember as MemberType).last_name}` 
-                  : ""
-                }
-              </strong>
-              {" "}a{" "}
+                {selectedMember
+                  ? `${
+                      (selectedMember as MemberType).firstName ??
+                      (selectedMember as MemberType).first_name
+                    } ${
+                      (selectedMember as MemberType).lastName ??
+                      (selectedMember as MemberType).last_name
+                    }`
+                  : ""}
+              </strong>{" "}
+              a{" "}
               <strong>
-                {selectedMember && getIsActive(selectedMember) ? "INACTIVO" : "ACTIVO"}
+                {selectedMember && getIsActive(selectedMember)
+                  ? "INACTIVO"
+                  : "ACTIVO"}
               </strong>
               .
             </AlertDialogDescription>
@@ -206,7 +198,9 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmToggle}>
-              {selectedMember && isActive(selectedMember) ? "Desactivar" : "Activar"}
+              {selectedMember && isActive(selectedMember)
+                ? "Desactivar"
+                : "Activar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -217,6 +211,16 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         open={isInfoModalOpen}
         onOpenChange={setIsInfoModalOpen}
         member={selectedMemberForInfo}
+      />
+
+      {/* Modal de edición del miembro */}
+      <EditMemberModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        member={selectedMemberForEdit}
+        onSuccess={() => {
+          // Callback opcional para refrescar datos después de editar
+        }}
       />
     </div>
   );

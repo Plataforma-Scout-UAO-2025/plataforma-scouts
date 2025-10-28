@@ -3,12 +3,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import type { Member } from "@/types/member.type";
 import PersonalInfo from "../../Solicitudes/detalles/components/PersonalInfo";
 import EmergencyContacts from "../../Solicitudes/detalles/components/EmergencyContacts";
 import Interests from "../../Solicitudes/detalles/components/Interests";
 import MemberStatusBar from "../../Solicitudes/detalles/components/MemberStatusBar";
+import SchoolInfo from "../../Solicitudes/detalles/components/SchoolInfo";
 import MembersInChargeCard from "../../../guardians/profile/components/MembersInChargeCard";
 import { useState, useEffect } from "react";
 import { getMembersInChargeOf } from "@/api/guardiansApi";
@@ -31,11 +33,9 @@ export default function MemberInfoModal({
   );
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
-  // Determinar si es un Scout (tiene contactos de emergencia e intereses)
-  const isScout = member?.role === "SCOUT";
-  const isAcudiente = member?.role === "ACUDIENTE";
+  const isScout = member?.role?.toUpperCase() === "SCOUT";
+  const isAcudiente = member?.role?.toUpperCase() === "ACUDIENTE";
 
-  // Obtener miembros a cargo cuando el modal se abre y es un acudiente
   useEffect(() => {
     const fetchMembersInCharge = async () => {
       if (!open || !isAcudiente || !member?.guardian_id) {
@@ -58,14 +58,23 @@ export default function MemberInfoModal({
     fetchMembersInCharge();
   }, [open, isAcudiente, member?.guardian_id]);
 
-  // Handler para ver detalles del miembro a cargo
+  useEffect(() => {
+    if (open && member) {
+      console.log("MemberInfoModal - Member data:", {
+        role: member.role,
+        isScout,
+        member_id: (member as any).member_id,
+        memberId: (member as any).memberId,
+        fullMember: member
+      });
+    }
+  }, [open, member, isScout]);
+
   const handleViewMember = (id: number) => {
     setSelectedMemberId(id);
-    // TODO: Implementar apertura de modal/sheet con detalles del miembro
     console.log("Ver detalles del miembro:", id);
   };
 
-  // Convertir MemberBasicInfo a formato esperado por MembersInChargeCard
   const miembrosACargo = membersInCharge.map((m) => ({
     id: parseInt(m.userId || "0"),
     fullName: `${m.firstName || ""} ${m.lastName || ""}`.trim(),
@@ -74,8 +83,9 @@ export default function MemberInfoModal({
     isActive: m.isActive ?? true,
   }));
 
-  // Early return después de todos los hooks
   if (!member) return null;
+
+  const memberId = (member as any).member_id || (member as any).memberId;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,25 +94,27 @@ export default function MemberInfoModal({
           <DialogTitle className="text-2xl font-bold text-primary">
             Información del Miembro
           </DialogTitle>
+          <DialogDescription>
+            Visualiza toda la información detallada del miembro seleccionado.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Información Personal - Común para todos los roles */}
           <PersonalInfo member={member} />
 
-          {/* Estado del Miembro - Común para todos los roles */}
           <MemberStatusBar member={member} />
 
-          {/* Contactos de Emergencia e Intereses - Solo para SCOUT */}
+          {isScout && memberId && (
+            <SchoolInfo memberId={memberId} />
+          )}
+
           {isScout && (
             <>
               <EmergencyContacts member={member} />
               <Interests member={member} />
-              
             </>
           )}
 
-          {/* Información específica de ACUDIENTE - Miembros a cargo */}
           {isAcudiente && (
             <>
               {isLoadingMembers ? (
@@ -122,11 +134,10 @@ export default function MemberInfoModal({
             </>
           )}
 
-          {/* Placeholders para otros roles */}
           {member.role === "SCOUTER" && (
             <div className="p-4 bg-purple-50 rounded-md border border-purple-200">
               <p className="text-sm text-purple-700">
-                 Información específica de SCOUTER (próximamente)
+                Información específica de SCOUTER (próximamente)
               </p>
             </div>
           )}
@@ -134,7 +145,7 @@ export default function MemberInfoModal({
           {member.role === "TESORERO" && (
             <div className="p-4 bg-green-50 rounded-md border border-green-200">
               <p className="text-sm text-green-700">
-                 Información específica de TESORERO (próximamente)
+                Información específica de TESORERO (próximamente)
               </p>
             </div>
           )}
