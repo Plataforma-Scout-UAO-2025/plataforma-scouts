@@ -1,0 +1,39 @@
+{
+  "info": {
+    "name": "Auth0 - Get User Token (Password Realm)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get User Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "https://{{auth0_domain}}/oauth/token",
+          "protocol": "https",
+          "host": [ "{{auth0_domain}}" ],
+          "path": [ "oauth", "token" ]
+        },
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "http://auth0.com/oauth/grant-type/password-realm" },
+            { "key": "client_id", "value": "{{auth0_client_id}}" },
+            { "key": "client_secret", "value": "{{auth0_client_secret}}" },
+            { "key": "audience", "value": "{{auth0_audience}}" },
+            { "key": "username", "value": "{{user_email}}" },
+            { "key": "password", "value": "{{user_password}}" },
+            { "key": "realm", "value": "{{auth0_connection}}" },
+            { "key": "scope", "value": "{{scope}}" }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": []
+}
