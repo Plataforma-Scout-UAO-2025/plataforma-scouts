@@ -21,6 +21,7 @@ import {
 import { Pencil, Trash, User } from "lucide-react";
 import type { Member as MemberType } from "@/types/member.type";
 import MemberInfoModal from "../detalles/memberInfoModal";
+import EditMemberModal from "./EditMemberModal";
 import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
 
 interface MembersTableProps {
@@ -64,9 +65,18 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
   const [selectedMemberForInfo, setSelectedMemberForInfo] =
     useState<MemberType | null>(null);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMemberForEdit, setSelectedMemberForEdit] =
+    useState<MemberType | null>(null);
+
   const handleViewInfo = (member: MemberType) => {
     setSelectedMemberForInfo(member);
     setIsInfoModalOpen(true);
+  };
+
+  const handleEdit = (member: MemberType) => {
+    setSelectedMemberForEdit(member);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -126,6 +136,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                       variant="iconbutton"
                       size="icon"
                       className="text-secondary hover:text-blue-800"
+                      onClick={() => handleEdit(member)}
                     >
                       <Pencil />
                     </Button>
@@ -200,6 +211,16 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         open={isInfoModalOpen}
         onOpenChange={setIsInfoModalOpen}
         member={selectedMemberForInfo}
+      />
+
+      {/* Modal de edición del miembro */}
+      <EditMemberModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        member={selectedMemberForEdit}
+        onSuccess={() => {
+          // Callback opcional para refrescar datos después de editar
+        }}
       />
     </div>
   );
