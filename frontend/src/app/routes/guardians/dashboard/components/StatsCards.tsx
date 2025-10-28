@@ -1,4 +1,5 @@
 import { Users, DollarSign, AlertTriangle } from 'lucide-react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
 
 interface StatsCardsProps {
@@ -19,7 +20,9 @@ const formatearMoneda = (monto: number) => {
 
 export default function StatsCards({ data }: StatsCardsProps) {
   // Obtener miembros a cargo usando el hook
-  const { members, loading } = useMembersInChargeOf(309);
+  const { user } = useAuth0();
+  const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  const { members, loading } = useMembersInChargeOf(guardianId);
 
   const estadisticas = [
     {

@@ -12,12 +12,14 @@ import EditProfileModal from './EditProfileModal';
 import MemberDetailsSheet from '../../members/components/modals/MemberDetailsSheet';
 import { guardianService } from '../../services/guardianService';
 import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
-import { useGuardian } from '@/hooks/useGuardian';
-import type { Member } from '../../members/types/member.type';
-import type { UpdateGuardianDTO } from '@/types/guardian.type';
-import { FullScreenLoader } from '@/components/common/FullScreenLoader';
-import type { Guardian } from '@/types/guardian.type';
+import type { UpdateGuardianDTO, Guardian, MemberBasicInfo } from '@/types/guardian.type';
+import FullScreenLoader from '@/components/common/FullScreenLoader';
 
+// Interfaz para manejar diferentes formatos de ID en miembros
+interface ExtendedMemberInfo extends MemberBasicInfo {
+  user_id?: string | number;
+  member_id?: string | number;
+}
 
 const GuardianProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,17 +27,15 @@ const GuardianProfilePage: React.FC = () => {
   
   // Estados para modales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
   const [guardianApiData, setGuardianApiData] = useState<Guardian | null>(null);
 
+  // Obtener guardianId de Auth0
+  const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  
   // Usar el hook optimizado para obtener miembros a cargo
-  const { members: membersInCharge, loading, error, guardianId } = useMembersInChargeOf(309);
-  
-  // Obtener datos del guardian actual
-  const guardianState = useGuardian();
-  const guardianData = guardianState.member || null;
-  
+  const { members: membersInCharge, loading, error } = useMembersInChargeOf(guardianId);
   
   useEffect(() => {
     if (guardianId) {
@@ -63,6 +63,10 @@ const GuardianProfilePage: React.FC = () => {
       await guardianService.updateData(guardianId, updateData);
       toast.success('Perfil actualizado exitosamente');
       setIsEditModalOpen(false);
+      
+      // Recargar datos del guardian después de la actualización
+      const updatedGuardian = await guardianService.getGuardianById(guardianId);
+      setGuardianApiData(updatedGuardian);
     } catch (error) {
       console.error('Error al actualizar perfil:', error);
       toast.error('No se pudo actualizar el perfil');
@@ -70,19 +74,20 @@ const GuardianProfilePage: React.FC = () => {
   };
 
   const handleViewMemberProfile = (id: number) => {
-    const member = membersInCharge.find(m => m.user_id === id);
+    const member = membersInCharge.find(m => {
+      const extendedMember = m as ExtendedMemberInfo;
+      const memberId = extendedMember.memberId || extendedMember.user_id || extendedMember.member_id;
+      return memberId === id.toString() || 
+             memberId === id || 
+             parseInt(String(memberId)) === id;
+    });
+    
     if (member) {
       setSelectedMember(member);
       setIsDetailsSheetOpen(true);
     } else {
       toast.error('No se encontró información del miembro');
     }
-  };
-
-  const handleEditMember = (member: Member) => {
-    console.log('Editing member:', member);
-    setIsDetailsSheetOpen(false);
-    toast.info('Funcionalidad de edición en desarrollo');
   };
 
   // Manejo de estados de carga y error
@@ -109,6 +114,7 @@ const GuardianProfilePage: React.FC = () => {
       <div className="min-h-screen bg-[#fffaf3] flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-[#1a4134] mb-4">No se encontró el perfil</h2>
+          <p className="text-gray-600 mb-4">No se pudo obtener la información de autenticación</p>
           <Button onClick={() => navigate('/app/dashboard')}>Volver al inicio</Button>
         </div>
       </div>
@@ -116,21 +122,31 @@ const GuardianProfilePage: React.FC = () => {
   }
 
   // Mapear miembros a cargo para el componente
-const miembrosACargo = membersInCharge
-  .filter(member =>
-    member.first_name &&
-    member.last_name &&
-    member.first_name.trim() !== "" &&
-    member.last_name.trim() !== ""
-  )
-  .map(member => ({
-    id: member.user_id,
-    fullName: `${member.first_name ?? ''} ${member.last_name ?? ''}`,
-    rama: member.subgroup?.name ?? 'Sin asignar',
-    parentesco: member.relationship ?? 'No especificado',
-    isActive: member.is_active ?? false
-  }));
-console.log("Selected member:", selectedMember);
+  const miembrosACargo = membersInCharge
+    .filter(member =>
+      member.first_name &&
+      member.last_name &&
+      member.first_name.trim() !== "" &&
+      member.last_name.trim() !== ""
+    )
+    .map(member => {
+      // Manejar diferentes formatos de ID
+      const extendedMember = member as ExtendedMemberInfo;
+      const memberId = extendedMember.memberId || extendedMember.user_id || extendedMember.member_id;
+      
+      return {
+        id: typeof memberId === 'string' ? parseInt(memberId) || 0 : memberId || 0,
+        fullName: `${member.first_name ?? ''} ${member.last_name ?? ''}`,
+        rama: member.subgroup?.name ?? 'Sin asignar',
+        parentesco: member.relationship ?? 'No especificado',
+        isActive: member.is_active ?? false
+      };
+    });
+
+  console.log("Guardian ID:", guardianId);
+  console.log("Members in charge:", membersInCharge);
+  console.log("Selected member:", selectedMember);
+
   return (
     <div className="min-h-screen bg-[#fffaf3]">
       <div className="flex flex-col min-h-screen">
@@ -146,6 +162,7 @@ console.log("Selected member:", selectedMember);
             Editar Perfil
           </Button>
         </div>
+        
         <div className="flex-1 p-6">
           <ProfileHeader 
             first_name={guardianApiData?.first_name || ''} 
@@ -153,6 +170,7 @@ console.log("Selected member:", selectedMember);
             grupo={guardianApiData?.rol || ''} 
             is_active={guardianApiData?.is_active || false} 
           />
+          
           <ProfileInfoCard 
             first_name={guardianApiData?.first_name || ''} 
             last_name={guardianApiData?.last_name || ''} 
@@ -160,8 +178,8 @@ console.log("Selected member:", selectedMember);
             documentType={guardianApiData?.document_type || 'CC'} 
             email={user?.email || 'N/A'} 
             phone={guardianApiData?.phone || ''} 
-//            address={guardianApiData?.address || 'N/A'} 
           />
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 items-start">
             <MembersInChargeCard 
               miembrosACargo={miembrosACargo} 
@@ -175,27 +193,28 @@ console.log("Selected member:", selectedMember);
           </div>
         </div>
       </div>
+      
       <EditProfileModal 
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleEditProfile} 
         initialData={{
-          firstName: guardianData?.first_name ?? user?.nickname ?? '',
-          lastName: guardianData?.last_name || '',
-          identification: guardianData?.identification || '',
-          documentType: guardianData?.documentType || 'CC',
+          firstName: guardianApiData?.first_name ?? user?.nickname ?? '',
+          lastName: guardianApiData?.last_name || '',
+          identification: guardianApiData?.identification || '',
+          documentType: guardianApiData?.document_type || 'CC',
           email: user?.email ?? 'N/A',
           emailAlt: undefined,
-          phone: guardianData?.phone || '',
+          phone: guardianApiData?.phone || '',
           phoneAlt: undefined,
           address: 'N/A'
         }} 
       />
+      
       <MemberDetailsSheet 
-        isOpen={isDetailsSheetOpen}
-        onClose={() => setIsDetailsSheetOpen(false)}
-        miembro={selectedMember}
-        onEdit={handleEditMember}
+        open={isDetailsSheetOpen}
+        onOpenChange={setIsDetailsSheetOpen}
+        member={selectedMember}
       />
     </div>
   );

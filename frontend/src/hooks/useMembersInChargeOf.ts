@@ -17,23 +17,26 @@ export const useMembersInChargeOf = (guardianId?: number) => {
   const dispatch = useAppDispatch();
   const guardianState = useGuardian() as GuardianState;
 
-  const currentGuardianId = guardianId || 309;
-
   useEffect(() => {
-    if (currentGuardianId) {
-      dispatch(fetchMembersInChargeAction(currentGuardianId));
+    // Solo hacer fetch si tenemos un guardianId válido
+    if (guardianId && guardianId > 0) {
+      console.log("Fetching members for guardian ID:", guardianId);
+      dispatch(fetchMembersInChargeAction(guardianId));
+    } else {
+      console.log("No guardian ID provided, skipping fetch");
     }
-  }, [currentGuardianId, dispatch]);
+  }, [guardianId, dispatch]);
 
   const membersInCharge = guardianState.members || [];
 
+  console.log("Guardian ID received:", guardianId);
   console.log("Guardian state completo:", guardianState);
   console.log("Members from Redux state:", membersInCharge);
 
   return {
     members: membersInCharge,
-    guardianId: currentGuardianId,
-    loading: guardianState.loading,
-    error: guardianState.error
+    guardianId: guardianId,
+    loading: guardianState.loading || false,
+    error: guardianState.error || null
   };
 };

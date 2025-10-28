@@ -1,19 +1,26 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/index";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
 import GuardianMembersTable from "../tables/GuardianMembersTable";
 import MemberDetailsSheet from "../modals/MemberDetailsSheet";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 
-
 const MembersInCharge = () => {
-
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
 
+  // Agregar esta línea que faltaba
+  const { user } = useAuth0();
+  console.log("Usuario completo:", user);
+  console.log("user.sub:", user?.sub);
+
+  
   // Pasar el guardianId al hook y eliminar dispatch duplicado
-  const { members, loading, error } = useMembersInChargeOf(309);
+  const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  console.log("Guardian ID calculado:", guardianId);
+  const { members, loading, error } = useMembersInChargeOf(guardianId);
   const navigate = useNavigate();
 
   const handleViewMember = (member: MemberBasicInfo) => {
@@ -31,7 +38,7 @@ const MembersInCharge = () => {
 
   const totalMembers = members.length;
 
-return (
+  return (
     <>
       <div className="mx-4">
         <header className="flex items-center mb-4 justify-between">
