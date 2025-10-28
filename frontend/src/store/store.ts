@@ -6,8 +6,6 @@ import organigramaReducer from "./organigrama/organigramaSlice";
 import organigramaCacheReducer from "./organigrama/organigramaCache.slice";
 import guardiansReducer from "./guardians/guardiansSlice";
 
-
-
 // Configurar store
 export const store = configureStore({
   reducer: {
