@@ -99,7 +99,7 @@ function ScoutEnrollment() {
             type="button"
             variant="outline"
             onClick={() =>
-              pagina > 1 ? setPagina((p) => p - 1) : navigate("/app/miembros")
+              pagina > 1 ? setPagina((p) => p - 1) : navigate("/app/dashboard")
             }
           >
             {pagina > 1 ? "Atrás" : "Cancelar"}

@@ -5,7 +5,7 @@ import { useMember } from "./useMember";
 
 export const useMembersManagement = () => {
   const dispatch = useAppDispatch();
-  const { members } = useMember();
+  const { members, loading, error } = useMember();
 
   useEffect(() => {
     dispatch(fetchMembersWithBranchAction());
@@ -76,5 +76,8 @@ export const useMembersManagement = () => {
     branchTotalMemberCount,
     branchMembers,
     nuevosEsteMes,
+
+    loading,
+    error,
   };
 };

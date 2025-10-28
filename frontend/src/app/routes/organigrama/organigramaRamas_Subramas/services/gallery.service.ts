@@ -3,9 +3,6 @@ import { getSection, patchGallery, updateSection, deleteGalleryImageById as dele
 import {
   createAddPayload,
   createReplacePayload,
-  createRemovePayload,
-  createPayloadForBackend,
-  retryGalleryOperation,
 } from '../utils/galleryPayload';
 
 // Helper para obtener una rama directamente
@@ -153,7 +150,7 @@ export const addGalleryImage = async (
 
     // prefer client wrapper
     const addPayload = createAddPayload(newUuid);
-    await patchGallery(sectionId, createPayloadForBackend(addPayload.operations), tenantId, groupSlug);
+    await patchGallery(sectionId, addPayload, tenantId, groupSlug);
 
     return uploadResponse.url || uploadResponse.objectId;
 };
@@ -205,40 +202,11 @@ export const replaceGalleryImage = async (
 
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
-    await patchGallery(sectionId, createPayloadForBackend(createReplacePayload(validTargetUuid, newUuid).operations), tenantId, groupSlug);
+    await patchGallery(sectionId, createReplacePayload(validTargetUuid, newUuid), tenantId, groupSlug);
 
     return uploadResponse.url || uploadResponse.objectId;
 };
 
-//  Eliminar imagen de galería
-export const removeGalleryImage = async (
-  tenantId: string,
-  groupSlug: string,
-  sectionId: string,
-  targetImageUuid: string
-): Promise<void> => {
-  console.info('🗑️ [GalleryService] Iniciando eliminación de imagen de galería (PATCH remove):', { targetImageUuid });
-
-  return retryGalleryOperation(async () => {
-    const validTargetUuid = extractUuidFromString(targetImageUuid);
-    if (!validTargetUuid) {
-      console.error(' [GalleryService] UUID inválido detectado. Abortando eliminación.');
-      throw new Error('Invalid UUID format detected');
-    }
-
-    console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de PATCH remove...');
-    const currentUuids = await getGalleryImageUuids(tenantId, groupSlug, sectionId);
-    if (!currentUuids.includes(validTargetUuid)) {
-      console.warn('⚠️ [GalleryService] UUID no encontrado en galería. La imagen ya fue removida por otra operación:', { validTargetUuid, currentUuids });
-      return; 
-    }
-
-    const removePayload = createRemovePayload(validTargetUuid);
-    await patchGallery(sectionId, createPayloadForBackend(removePayload.operations), tenantId, groupSlug);
-
-    console.info(' [GalleryService] Imagen removida de galería correctamente (PATCH)');
-  }, 'RemoveGalleryImage-PATCH');
-};
 //  Eliminar imagen de galería usando endpoint DELETE por objectId
 export const deleteGalleryImageById = async (
   tenantId: string,

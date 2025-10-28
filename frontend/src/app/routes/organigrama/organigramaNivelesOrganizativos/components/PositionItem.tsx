@@ -7,13 +7,17 @@ import type { Cargo } from "../types/niveles.types";
 
 interface Props {
   cargo: Cargo;
+  /** Lista de nombres de miembros asociados a este cargo */
+  members?: string[];
   /** Abre el modal de edición del cargo */
   onEdit?: (cargo: Cargo) => void;
   /** Confirma/elimina el cargo */
   onDelete?: (cargo: Cargo) => void;
+  /** Abre flujo para agregar miembro al cargo (misma lógica de editar) */
+  onAddMember?: () => void;
 }
 
-export default function PositionItem({ cargo, onEdit, onDelete }: Props) {
+export default function PositionItem({ cargo, members = [], onEdit, onDelete, onAddMember }: Props) {
   const [openInfo, setOpenInfo] = useState(false);
 
   // Simulación: nombre y descripción de la persona asignada (usar datos reales si están disponibles)
@@ -32,11 +36,10 @@ export default function PositionItem({ cargo, onEdit, onDelete }: Props) {
       >
         {/* Info del cargo */}
         <div className="flex-1 mr-3">
+          {/* Se omite el nombre del cargo para no repetir el título del sub-acordeón */}
           <div className="flex flex-col md:flex-row md:items-center md:gap-3">
-            <div className="font-medium text-primary">{cargo.nombre}</div>
-
             {cargo.titular && (
-              <div className="text-sm text-muted-foreground">• {cargo.titular}</div>
+              <div className="text-sm text-muted-foreground">Titular: {cargo.titular}</div>
             )}
 
             {!cargo.visible && (
@@ -52,6 +55,28 @@ export default function PositionItem({ cargo, onEdit, onDelete }: Props) {
                 Oculto
               </span>
             )}
+          </div>
+
+          {/* Miembros del cargo */}
+          {members.length > 0 ? (
+            <ul className="list-disc ml-5 mt-2 text-xs text-muted-foreground">
+              {members.map((m, idx) => (
+                <li key={idx}>{m}</li>
+              ))}
+            </ul>
+          ) : (
+            <div className="ml-1 mt-2 text-xs text-muted-foreground">— Sin miembros</div>
+          )}
+
+          {/* Botón para agregar miembro al cargo */}
+          <div className="mt-2">
+            <Button
+              variant="outline"
+              onClick={onAddMember}
+              className="w-full justify-center border border-border text-primary hover:bg-accent font-medium rounded-md"
+            >
+              + Agregar miembro al cargo
+            </Button>
           </div>
         </div>
 

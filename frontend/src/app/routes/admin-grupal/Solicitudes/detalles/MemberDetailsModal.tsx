@@ -25,7 +25,8 @@ interface MemberDetailsModalProps {
   member: Member | null;
   orgId: string;
   onSuccess: () => void;
-  onReject: () => void;
+  onReject?: () => void;
+  showRejectButton?: boolean;
 }
 
 export default function MemberDetailsModal({
@@ -35,6 +36,7 @@ export default function MemberDetailsModal({
   orgId,
   onSuccess,
   onReject,
+  showRejectButton = true
 }: MemberDetailsModalProps) {
   const {
     groups,
@@ -60,7 +62,6 @@ export default function MemberDetailsModal({
     onOpenChange(false);
   };
 
-  // Cargar roles al abrir el modal
   useEffect(() => {
     let mounted = true;
     const fetchRoles = async () => {
@@ -112,9 +113,7 @@ export default function MemberDetailsModal({
             <PersonalInfo member={member} />
             <EmergencyContacts member={member} />
             <Interests member={member} />
-
             <SchoolInfo memberId={member.member_id} />
-
             <AssignmentSelectors
               groups={groups}
               sections={sections}
@@ -131,25 +130,26 @@ export default function MemberDetailsModal({
               selectedRole={selectedRole}
               setSelectedRole={setSelectedRole}
             />
-
             <MemberStatusBar member={member} />
           </div>
         )}
 
         <DialogFooter className="flex gap-2 sm:gap-2 mt-6 border-t pt-4">
-          <Button
-            variant="destructive"
-            onClick={onReject}
-            disabled={loading}
-            className="flex-1"
-          >
-            Rechazar Solicitud
-          </Button>
+          {showRejectButton && (
+            <Button
+              variant="destructive"
+              onClick={onReject}
+              disabled={loading}
+              className="flex-1"
+            >
+              Rechazar Solicitud
+            </Button>
+          )}
           <Button
             variant="primary"
             onClick={accept}
             disabled={
-              loading || !canAccept || !selectedGroupSlug || !selectedRole
+              loading || !canAccept || !selectedGroupSlug || !selectedRole || !selectedSubgroup
             }
             className="flex-1 bg-green-900 hover:bg-green/800"
           >

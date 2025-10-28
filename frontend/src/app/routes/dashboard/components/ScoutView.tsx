@@ -17,8 +17,6 @@ const Dashboard = () => {
   const dispatch = useAppDispatch();
   const { members, loading, error } = useAppSelector((state) => state.members);
   const { user } = useAuth0();
-
-  // Importamos la función isActive del hook
   const { isActive } = useMemberStatusDialog();
 
   useEffect(() => {

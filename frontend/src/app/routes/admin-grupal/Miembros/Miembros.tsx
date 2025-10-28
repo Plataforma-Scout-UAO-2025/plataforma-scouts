@@ -3,8 +3,8 @@ import BranchCount from "./components/BranchCount";
 import MembersFilter from "./components/MembersFilter";
 import MembersTable from "./components/MembersTable";
 import { useNavigate } from "react-router-dom";
-import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
 import { useMemberFilters } from "@/hooks/useMemberFilters";
+import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 
 const Miembros = () => {
   const {
@@ -25,12 +25,14 @@ const Miembros = () => {
     handleNextPage,
     branchMembers,
     branchTotalMemberCount,
+    loading,
+    error,
   } = useMemberFilters({ itemsPerPage: 10 });
-
-  const { loading, error } = useTenantMembersByStatus({
-    status: "APPROVED",
-  });
   const navigate = useNavigate();
+
+  if (loading) {
+    return <FullScreenLoader message="Cargando..." />;
+  }
 
   return (
     <div className="mx-4">

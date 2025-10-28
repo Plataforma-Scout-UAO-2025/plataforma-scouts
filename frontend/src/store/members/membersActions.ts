@@ -270,18 +270,36 @@ export const updateMemberByDtoAction = createAsyncThunk<
   }
 });
 
+// Lista los datos escolares de un miembro
 export const fetchSchoolDataMemberAction = createAsyncThunk<
-  { memberId: number; schoolData: SchoolData },
+  { memberId: number; schoolData: SchoolData | null },
   number,
   { rejectValue: string | string[] }
 >("member/fetchSchoolData", async (id, { rejectWithValue }) => {
   try {
     const schoolData = await getSchoolDataByMemberId(id);
+    
+    if (!schoolData || Object.keys(schoolData).length === 0) {
+      return { memberId: id, schoolData: null };
+    }
+    
+    const { institution, course, calendar, shift } = schoolData;
+    const hasAnyValue = institution || course || calendar || shift;
+    
+    if (!hasAnyValue) {
+      return { memberId: id, schoolData: null };
+    }
+    
     return { memberId: id, schoolData };
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
+    
+    if (axiosError.response?.status === 404) {
+      return { memberId: id, schoolData: null };
+    }
+    
     const errorData = axiosError.response?.data as { error: string };
     const errorMessage = errorData?.error || "Error al obtener los datos escolares del miembro";
     return rejectWithValue(errorMessage);
- }
+  }
 });
