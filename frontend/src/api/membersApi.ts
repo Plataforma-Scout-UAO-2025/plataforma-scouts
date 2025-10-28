@@ -4,6 +4,7 @@ import type {
   CreateMemberWithSchoolRequest,
   CreateAuth0Request,
   CreateAuth0Response,
+  SchoolData,
 } from "@/types/enrollment.type";
 
 // Crear un nuevo miembro
@@ -130,5 +131,13 @@ export const assignSubgroupAndSection = async (data: {
   sectionId?: number | string;
 }) => {
   const response = await api.put(`/members/assign_subgroup_and_section`, data);
+  return response.data;
+};
+
+// Obtener datos escolares de un miembro
+export const getSchoolDataByMemberId = async (id: string | number | bigint) => {
+  const response = await api.get<SchoolData>("/members/list_schoolData_by_memberId", {
+    params: { id },
+  });
   return response.data;
 };

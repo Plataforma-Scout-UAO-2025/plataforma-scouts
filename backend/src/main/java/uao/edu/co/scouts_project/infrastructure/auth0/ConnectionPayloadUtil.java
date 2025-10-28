@@ -17,7 +17,7 @@ final class ConnectionPayloadUtil {
         if (slug == null || slug.isBlank()) {
             throw new IllegalArgumentException("slug no puede ser nulo o vacío");
         }
-        String s = slug.toLowerCase(Locale.ROOT);
+        String s = slug.replace('_', '-');
         return "uep-" + s; // realms = name
     }
 
