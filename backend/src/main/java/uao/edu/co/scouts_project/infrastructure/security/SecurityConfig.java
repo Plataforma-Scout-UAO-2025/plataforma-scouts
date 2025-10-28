@@ -32,6 +32,8 @@ public class SecurityConfig {
 
                                                 .requestMatchers("/api/v1/sec/roles").authenticated()
                                                 .requestMatchers("/api/v1/sec/org_id").authenticated()
+                                                .requestMatchers("/api/v1/sec/admin/auth0/connections/*").denyAll()
+                                                .requestMatchers("/api/v1/sec/admin/auth0/organizations/*/connections/*").denyAll()
 
                                                 .requestMatchers("/api/v1/mock/scouts/list")
                                                 .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
@@ -90,6 +92,12 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/auth0/scouts")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
+
+                                                // Cambio de rol: reglas específicas por endpoint
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role")
+                                                .hasAnyRole(ADMIN_GRUPO.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role-global")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
 
                                                 // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia
                                                 // organización
