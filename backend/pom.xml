@@ -208,15 +208,15 @@
 						<exclude>**/domain/port/**</exclude>
 						
 						<!-- Test/Mock Controllers (development only) -->
-						<exclude>**/web/controller/MockTestAuthzController.class</exclude>
+						<exclude>**/web/controller/**</exclude>
 						<exclude>**/common/controller/TestController.class</exclude>
 						
 						<!-- Repository Interfaces (Spring Data JPA auto-implemented) -->
 						<exclude>**/repository/**</exclude>
 
 						<!-- Security pilot -->
-						<exclude>**/uao/edu/co/scouts_project/infrastructure/auth0/**</exclude>
 						<exclude>**/uao/edu/co/scouts_project/infrastructure/cache/**</exclude>
+						<exclude>**/uao/edu/co/scouts_project/web/controller/**</exclude>
 
 						
 
