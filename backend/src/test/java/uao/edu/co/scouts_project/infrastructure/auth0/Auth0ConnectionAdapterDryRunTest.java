@@ -21,7 +21,7 @@ class Auth0ConnectionAdapterDryRunTest {
         ReflectionTestUtils.setField(svc, "dryRun", true);
 
         String id = svc.createOrUpdateAuth0DbConnection("SlugX");
-        assertEquals("uep-slugx", id); // pseudo-id = name
+        assertEquals("uep-SlugX", id); // pseudo-id = name
     }
 
     @Test
