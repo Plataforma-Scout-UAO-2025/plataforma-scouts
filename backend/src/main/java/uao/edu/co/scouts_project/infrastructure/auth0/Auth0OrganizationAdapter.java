@@ -5,7 +5,6 @@ import com.auth0.exception.APIException;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.organizations.Organization;
 import com.auth0.json.mgmt.organizations.Branding;
-import com.auth0.json.mgmt.organizations.EnabledConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
