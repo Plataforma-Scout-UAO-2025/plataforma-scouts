@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,14 +31,9 @@ public class CreateUserWithRoleCommandDTO {
     private String username;
 
     @Schema(
-        description = "Rol a asignar al usuario. Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN",
-        allowableValues = {"SCOUT", "ACUDIENTE", "TESORERO", "SCOUTER", "COMITE_ADMIN"},
+        description = "Rol a asignar al usuario. El servicio validará si el rol es permitido para este endpoint.",
         example = "SCOUT"
     )
     @NotNull(message = "role es obligatorio")
-    @Pattern(
-        regexp = "^(SCOUT|ACUDIENTE|TESORERO|SCOUTER|COMITE_ADMIN)$",
-        message = "Rol inválido. Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-    )
     private String role;
 }
