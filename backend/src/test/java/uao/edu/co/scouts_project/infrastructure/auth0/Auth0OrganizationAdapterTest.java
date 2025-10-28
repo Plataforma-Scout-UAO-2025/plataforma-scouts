@@ -1,136 +1,182 @@
 package uao.edu.co.scouts_project.infrastructure.auth0;
 
 import com.auth0.client.mgmt.ManagementAPI;
-import com.auth0.client.mgmt.OrganizationsEntity;
+import com.auth0.exception.APIException;
+import com.auth0.exception.Auth0Exception;
+import com.auth0.json.mgmt.organizations.EnabledConnection;
 import com.auth0.json.mgmt.organizations.Organization;
 import com.auth0.net.Request;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import com.auth0.exception.APIException;
+import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-class Auth0OrganizationAdapterTest {
+public class Auth0OrganizationAdapterTest {
 
-    @Test
-    void createOrganization_happyPath_returnsCreatedId_andBuildsPayload() throws Exception {
-        // Mocks de SDK
-        ManagementAPI api = mock(ManagementAPI.class);
-        OrganizationsEntity orgs = mock(OrganizationsEntity.class);
-        @SuppressWarnings("unchecked")
-        Request<Organization> request = (Request<Organization>) mock(Request.class);
+    private Auth0ManagementClientProvider provider;
+    private ManagementAPI managementAPI;
+    private com.auth0.client.mgmt.OrganizationsEntity organizationsEntity;
+    private Auth0OrganizationAdapter adapter;
 
-        Organization created = mock(Organization.class);
-        when(created.getId()).thenReturn("org_123");
-
-        when(api.organizations()).thenReturn(orgs);
-        ArgumentCaptor<Organization> captor = ArgumentCaptor.forClass(Organization.class);
-        when(orgs.create(captor.capture())).thenReturn(request);
-        when(request.execute()).thenReturn(created);
-
-        // Adapter con api() sobreescrito para inyectar el mock
-        Auth0OrganizationAdapter adapter = new Auth0OrganizationAdapter(new Auth0ManagementClientProvider("d","i","s","a")) {
-            @Override
-            protected ManagementAPI api() {
-                return api;
-            }
-        };
-
-        String id = adapter.createOrganization("Visionarios-113", "https://example.com/logo.png");
-        assertEquals("org_123", id);
-
-        // Verificar payload construido
-        Organization sent = captor.getValue();
-        assertNotNull(sent);
-        assertEquals("api-visionarios113", sent.getName());
-        assertEquals("Visionarios-113", sent.getDisplayName());
-        assertNotNull(sent.getBranding());
-        assertEquals("https://example.com/logo.png", sent.getBranding().getLogoUrl());
+    @BeforeEach
+    void setUp() throws Auth0Exception {
+        provider = mock(Auth0ManagementClientProvider.class);
+        managementAPI = mock(ManagementAPI.class);
+        organizationsEntity = mock(com.auth0.client.mgmt.OrganizationsEntity.class);
+        when(provider.getManagementAPI()).thenReturn(managementAPI);
+        when(managementAPI.organizations()).thenReturn(organizationsEntity);
+        adapter = new Auth0OrganizationAdapter(provider);
     }
 
     @Test
-    void createOrganization_conflict409_throwsAlreadyExists() throws Exception {
-        ManagementAPI api = mock(ManagementAPI.class);
-        OrganizationsEntity orgs = mock(OrganizationsEntity.class);
+    void enableConnection_success_add() throws Auth0Exception {
+        String orgId = "org_123";
+        String connId = "conn_456";
+
+        // GET org OK
         @SuppressWarnings("unchecked")
-        Request<Organization> request = (Request<Organization>) mock(Request.class);
+        Request<Organization> getReq = mock(Request.class);
+        when(organizationsEntity.get(eq(orgId))).thenReturn(getReq);
+        when(getReq.execute()).thenReturn(new Organization());
 
-        when(api.organizations()).thenReturn(orgs);
-        when(orgs.create(any(Organization.class))).thenReturn(request);
+        // ADD enabled connection OK
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        Request addReq = mock(Request.class);
+        when(organizationsEntity.addConnection(eq(orgId), any(EnabledConnection.class))).thenReturn((Request) addReq);
+        when(addReq.execute()).thenReturn(null);
 
-        APIException conflict = mock(APIException.class);
-        when(conflict.getStatusCode()).thenReturn(409);
-        when(conflict.getMessage()).thenReturn("conflict");
-        when(request.execute()).thenThrow(conflict);
+        String result = adapter.enableConnectionForOrganization(orgId, connId);
+        assertEquals(connId, result);
 
-        Auth0OrganizationAdapter adapter = new Auth0OrganizationAdapter(new Auth0ManagementClientProvider("d","i","s","a")) {
-            @Override
-            protected ManagementAPI api() {
-                return api;
-            }
-        };
-
-        assertThrows(uao.edu.co.scouts_project.domain.exception.auth0.OrganizationAlreadyExistsException.class,
-                () -> adapter.createOrganization("Visionarios-113", null));
+        // Capturar payload para validar flags
+        ArgumentCaptor<EnabledConnection> captor = ArgumentCaptor.forClass(EnabledConnection.class);
+        verify(organizationsEntity).addConnection(eq(orgId), captor.capture());
+        EnabledConnection payload = captor.getValue();
+        assertEquals(connId, payload.getConnectionId());
+        assertTrue(payload.isAssignMembershipOnLogin());
+        assertInstanceOf(EnabledConnectionPayload.class, payload);
+        EnabledConnectionPayload ext = (EnabledConnectionPayload) payload;
+        assertEquals(Boolean.TRUE, ext.getIsSignupEnabled());
+        assertEquals(Boolean.TRUE, ext.getShowAsButton());
     }
 
     @Test
-    void createOrganization_retry429_thenSuccess() throws Exception {
-        ManagementAPI api = mock(ManagementAPI.class);
-        OrganizationsEntity orgs = mock(OrganizationsEntity.class);
+    void enableConnection_orgNotFound_throwsResourceNotFound() throws Auth0Exception {
+        String orgId = "org_missing";
+        String connId = "conn_456";
+
         @SuppressWarnings("unchecked")
-        Request<Organization> request = (Request<Organization>) mock(Request.class);
+        Request<Organization> getReq = mock(Request.class);
+        when(organizationsEntity.get(eq(orgId))).thenReturn(getReq);
 
-        when(api.organizations()).thenReturn(orgs);
-        when(orgs.create(any(Organization.class))).thenReturn(request);
+        APIException api404 = mock(APIException.class);
+        when(api404.getStatusCode()).thenReturn(404);
+        when(api404.getMessage()).thenReturn("Not Found");
+        when(getReq.execute()).thenThrow(api404);
 
-        APIException tooMany = mock(APIException.class);
-        when(tooMany.getStatusCode()).thenReturn(429);
-        when(tooMany.getMessage()).thenReturn("rate limited");
-
-        Organization created = mock(Organization.class);
-        when(created.getId()).thenReturn("org_retry");
-
-        // primera llamada 429, segunda éxito
-        when(request.execute()).thenThrow(tooMany).thenReturn(created);
-
-        Auth0OrganizationAdapter adapter = new Auth0OrganizationAdapter(new Auth0ManagementClientProvider("d","i","s","a")) {
-            @Override
-            protected ManagementAPI api() {
-                return api;
-            }
-        };
-
-        String id = adapter.createOrganization("Visionarios-113", null);
-        assertEquals("org_retry", id);
+        assertThrows(ResourceNotFoundException.class, () -> adapter.enableConnectionForOrganization(orgId, connId));
+        verify(organizationsEntity, never()).addConnection(anyString(), any());
     }
 
     @Test
-    void createOrganization_retry5xx_exhaustsAndThrowsGateway() throws Exception {
-        ManagementAPI api = mock(ManagementAPI.class);
-        OrganizationsEntity orgs = mock(OrganizationsEntity.class);
+    void enableConnection_connectionNotFound_throwsResourceNotFound() throws Auth0Exception {
+        String orgId = "org_123";
+        String connId = "conn_missing";
+
+        // GET org OK
         @SuppressWarnings("unchecked")
-        Request<Organization> request = (Request<Organization>) mock(Request.class);
+        Request<Organization> getReq = mock(Request.class);
+        when(organizationsEntity.get(eq(orgId))).thenReturn(getReq);
+        when(getReq.execute()).thenReturn(new Organization());
 
-        when(api.organizations()).thenReturn(orgs);
-        when(orgs.create(any(Organization.class))).thenReturn(request);
+        // ADD 404
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        Request addReq = mock(Request.class);
+        when(organizationsEntity.addConnection(eq(orgId), any(EnabledConnection.class))).thenReturn((Request) addReq);
+        APIException api404 = mock(APIException.class);
+        when(api404.getStatusCode()).thenReturn(404);
+        when(api404.getMessage()).thenReturn("Not Found");
+        when(addReq.execute()).thenThrow(api404);
 
-        APIException serverErr = mock(APIException.class);
-        when(serverErr.getStatusCode()).thenReturn(502);
-        when(serverErr.getMessage()).thenReturn("bad gateway");
+        assertThrows(ResourceNotFoundException.class, () -> adapter.enableConnectionForOrganization(orgId, connId));
+    }
 
-        // siempre falla (el adaptador reintentará y finalmente envolverá en Auth0GatewayException)
-        when(request.execute()).thenThrow(serverErr);
+    @Test
+    void enableConnection_alreadyEnabled_updatesFlagsAndSucceeds() throws Auth0Exception {
+        String orgId = "org_123";
+        String connId = "conn_456";
 
-        Auth0OrganizationAdapter adapter = new Auth0OrganizationAdapter(new Auth0ManagementClientProvider("d","i","s","a")) {
-            @Override
-            protected ManagementAPI api() {
-                return api;
-            }
-        };
+        // GET org OK
+        @SuppressWarnings("unchecked")
+        Request<Organization> getReq = mock(Request.class);
+        when(organizationsEntity.get(eq(orgId))).thenReturn(getReq);
+        when(getReq.execute()).thenReturn(new Organization());
 
-        assertThrows(uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException.class,
-                () -> adapter.createOrganization("Visionarios-113", null));
+        // ADD 409
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        Request addReq = mock(Request.class);
+        when(organizationsEntity.addConnection(eq(orgId), any(EnabledConnection.class))).thenReturn((Request) addReq);
+        APIException api409 = mock(APIException.class);
+        when(api409.getStatusCode()).thenReturn(409);
+        when(api409.getMessage()).thenReturn("Conflict");
+        when(addReq.execute()).thenThrow(api409);
+
+        // UPDATE OK
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        Request updateReq = mock(Request.class);
+        when(organizationsEntity.updateConnection(eq(orgId), eq(connId), any(EnabledConnection.class))).thenReturn((Request) updateReq);
+        when(updateReq.execute()).thenReturn(null);
+
+        String result = adapter.enableConnectionForOrganization(orgId, connId);
+        assertEquals(connId, result);
+
+        ArgumentCaptor<EnabledConnection> updateCaptor = ArgumentCaptor.forClass(EnabledConnection.class);
+        verify(organizationsEntity).updateConnection(eq(orgId), eq(connId), updateCaptor.capture());
+        EnabledConnection updatePayload = updateCaptor.getValue();
+        assertNull(updatePayload.getConnectionId()); // no se establece en update
+        assertTrue(updatePayload.isAssignMembershipOnLogin());
+        assertTrue(updatePayload instanceof EnabledConnectionPayload);
+        EnabledConnectionPayload ext = (EnabledConnectionPayload) updatePayload;
+        assertEquals(Boolean.TRUE, ext.getIsSignupEnabled());
+        assertEquals(Boolean.TRUE, ext.getShowAsButton());
+    }
+
+    @Test
+    void enableConnection_retryOn429_thenSuccess() throws Auth0Exception {
+        String orgId = "org_123";
+        String connId = "conn_456";
+
+        // GET org OK
+        @SuppressWarnings("unchecked")
+        Request<Organization> getReq = mock(Request.class);
+        when(organizationsEntity.get(eq(orgId))).thenReturn(getReq);
+        when(getReq.execute()).thenReturn(new Organization());
+
+        // ADD first 429, then 200
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        Request addReq = mock(Request.class);
+        when(organizationsEntity.addConnection(eq(orgId), any(EnabledConnection.class))).thenReturn((Request) addReq);
+        APIException api429 = mock(APIException.class);
+        when(api429.getStatusCode()).thenReturn(429);
+        when(api429.getMessage()).thenReturn("Too Many Requests");
+        when(addReq.execute()).thenThrow(api429).thenReturn(null);
+
+        String result = adapter.enableConnectionForOrganization(orgId, connId);
+        assertEquals(connId, result);
+
+        verify(organizationsEntity, atLeastOnce()).addConnection(eq(orgId), any(EnabledConnection.class));
+        verify(addReq, times(2)).execute();
+    }
+
+    @Test
+    void enableConnection_invalidInputs_throwIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> adapter.enableConnectionForOrganization(" ", "conn"));
+        assertThrows(IllegalArgumentException.class, () -> adapter.enableConnectionForOrganization("org", ""));
+        assertThrows(IllegalArgumentException.class, () -> adapter.enableConnectionForOrganization(null, "conn"));
+        assertThrows(IllegalArgumentException.class, () -> adapter.enableConnectionForOrganization("org", null));
     }
 }
