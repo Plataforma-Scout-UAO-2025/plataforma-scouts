@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
 import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
-import uao.edu.co.scouts_project.infrastructure.auth0.Auth0ConnectionsService;
 
 import java.util.List;
 import java.util.Map;
@@ -19,15 +19,14 @@ import java.util.Map;
 public class SecurityUtils {
 
     private final PermissionQueryPort permissionQueryPort;
-    private final Auth0ConnectionsService auth0ConnectionsService;
+    private final ConnectionQueryPort connectionQueryPort;
 
     @Value("${auth0.connections.admin-endpoint.enabled:false}")
     private boolean adminEndpointEnabled;
 
-    public SecurityUtils(PermissionQueryPort permissionQueryPort,
-                         Auth0ConnectionsService auth0ConnectionsService) {
+    public SecurityUtils(PermissionQueryPort permissionQueryPort, ConnectionQueryPort connectionQueryPort) {
         this.permissionQueryPort = permissionQueryPort;
-        this.auth0ConnectionsService = auth0ConnectionsService;
+        this.connectionQueryPort = connectionQueryPort;
     }
 
     @GetMapping("/roles")
@@ -60,7 +59,7 @@ public class SecurityUtils {
         }
         // Esta es la manera como se debe de usar el servicio en flujos de negocio reales, nunca usar este endpoint.
         // Retorna el id (tipo String) de la conexión creada o actualizada para habilitar su posterior uso.
-        String id = auth0ConnectionsService.createOrUpdateAuth0DbConnection(slug);
+        String id = connectionQueryPort.createOrUpdateAuth0DbConnection(slug);
         return Map.of(
                 "slug", slug,
                 "resultId", id
