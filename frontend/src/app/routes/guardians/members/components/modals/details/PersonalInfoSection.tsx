@@ -28,7 +28,7 @@ export default function PersonalInfoSection({ member }: PersonalInfoSectionProps
   const displayAge = memberRec.age || getAge(birthDate);
 
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200">
+    <div className="p-6 rounded-lg border border-gray-200">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
         Información Personal
       </h3>

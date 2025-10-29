@@ -143,10 +143,6 @@ const GuardianProfilePage: React.FC = () => {
       };
     });
 
-  console.log("Guardian ID:", guardianId);
-  console.log("Members in charge:", membersInCharge);
-  console.log("Selected member:", selectedMember);
-
   return (
     <div className="min-h-screen bg-[#fffaf3]">
       <div className="flex flex-col min-h-screen">

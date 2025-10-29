@@ -26,7 +26,7 @@ export default function MemberContactForm({
         <div className="space-y-2">
           <Label htmlFor="documentType">Tipo de Documento</Label>
           <Select value={documentType || ''} onValueChange={onDocumentTypeChange}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-white border">
               <SelectValue placeholder="Seleccione tipo de documento" />
             </SelectTrigger>
             <SelectContent>
