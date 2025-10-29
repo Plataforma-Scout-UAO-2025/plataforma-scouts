@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import type { SchoolData } from "@/types/enrollment.type";
 import {
   fetchMemberAction,
   fetchMembersAction,
@@ -9,8 +10,10 @@ import {
   createScoutAuth0Action,
   fetchMembersWithBranchAction,
   fetchMembersByStatusAction,
+  fetchSchoolDataMemberAction,
   updateMemberStatusAction,
 } from "./membersActions";
+
 import type { Member } from "@/types/member.type";
 
 interface MembersState {
@@ -19,6 +22,9 @@ interface MembersState {
   loading: boolean;
   error: string | null;
   message: string;
+  schoolDataByMember: Record<number, SchoolData | null>;
+  loadingSchoolData: boolean;
+  errorSchoolData: string | null;
 }
 
 const initialState: MembersState = {
@@ -27,6 +33,9 @@ const initialState: MembersState = {
   loading: false,
   error: null,
   message: "",
+  schoolDataByMember: {},
+  loadingSchoolData: false,
+  errorSchoolData: null,
 };
 
 const membersSlice = createSlice({
@@ -36,12 +45,6 @@ const membersSlice = createSlice({
     clearNotification(state) {
       state.message = "";
       state.error = null;
-    },
-    clearMembers(state) {
-      state.members = [];
-      state.member = null;
-      state.error = null;
-      state.message = "";
     },
   },
   extraReducers: (builder) => {
@@ -181,8 +184,20 @@ const membersSlice = createSlice({
       state.loading = false;
       state.error = action.payload?.error as string;
     });
+    builder.addCase(fetchSchoolDataMemberAction.pending, (state) => {
+      state.loadingSchoolData = true;
+      state.errorSchoolData = null;
+    });
+    builder.addCase(fetchSchoolDataMemberAction.fulfilled, (state, action) => {
+      state.loadingSchoolData = false;
+      state.schoolDataByMember[action.payload.memberId] = action.payload.schoolData;
+    });
+    builder.addCase(fetchSchoolDataMemberAction.rejected, (state, action) => {
+      state.loadingSchoolData = false;
+      state.errorSchoolData = action.payload as string;
+    });
   },
 });
 
-export const { clearNotification, clearMembers } = membersSlice.actions;
+export const { clearNotification } = membersSlice.actions;
 export default membersSlice.reducer;

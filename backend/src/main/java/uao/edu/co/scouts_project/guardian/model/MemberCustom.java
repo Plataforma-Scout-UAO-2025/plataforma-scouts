@@ -20,6 +20,7 @@ import uao.edu.co.scouts_project.member.model.Member;
 @Builder
 public class MemberCustom {
 
+    private Long memberId;
     private String firstName;
     private String lastName;
     private String identification;
@@ -29,10 +30,12 @@ public class MemberCustom {
     private String gender;
     private String phone;
     private LocalDate birthDate;
+    private String address;
 
-    public MemberCustom(String firstName, String lastName, String identification,
+    public MemberCustom(Long memberId, String firstName, String lastName, String identification,
             DocumentType documentType, Integer age, String gender,
-            String phone, LocalDate birthDate) {
+            String phone, LocalDate birthDate, String address) {
+        this.memberId = memberId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.identification = identification;
@@ -41,6 +44,7 @@ public class MemberCustom {
         this.gender = gender;
         this.phone = phone;
         this.birthDate = birthDate;
+        this.address = address;
         this.emergencyContacts = null;
     }
 

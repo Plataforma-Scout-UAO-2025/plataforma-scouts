@@ -5,6 +5,7 @@ import membersReducer from "./members/membersSlice";
 import groupsReducer from "./groups/groupsSlice";
 import organigramaReducer from "./organigrama/organigramaSlice";
 import organigramaCacheReducer from "./organigrama/organigramaCache.slice";
+import guardiansReducer from "./guardians/guardiansSlice";
 
 // Configurar store
 export const store = configureStore({
@@ -13,6 +14,7 @@ export const store = configureStore({
     groups: groupsReducer,
     organigrama: organigramaReducer,
     organigramaCache: organigramaCacheReducer,
+    guardians: guardiansReducer
     // Aquí puedes agregar otros reducers cuando los necesites
   },
 });
