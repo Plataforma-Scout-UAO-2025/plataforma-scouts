@@ -39,6 +39,16 @@ public class GroupStatisticsService {
         return new GroupStatisticsDTO(activeGroups);
     }
 
+    /**
+     * Versión global: obtiene estadísticas de grupos sin filtrar por tenant.
+     */
+    @Transactional(readOnly = true)
+    public GroupStatisticsDTO getGroupStatistics() {
+        Long activeGroupsLong = groupRepository.countByIsActiveTrue();
+        long activeGroups = (activeGroupsLong == null) ? 0L : activeGroupsLong;
+        return new GroupStatisticsDTO(activeGroups);
+    }
+
     @Transactional(readOnly = true)
     public InactiveGroupStatisticsDTO getInactiveGroupStatistics(String tenantId) {
         // Validar que el tenant existe: lanzar 404 si no existe
@@ -51,6 +61,16 @@ public class GroupStatisticsService {
         return new uao.edu.co.scouts_project.statistics.dto.InactiveGroupStatisticsDTO(inactiveGroups);
     }
 
+    /**
+     * Versión global: obtiene el número total de grupos inactivos en la plataforma.
+     */
+    @Transactional(readOnly = true)
+    public InactiveGroupStatisticsDTO getInactiveGroupStatistics() {
+        Long inactiveGroupsLong = groupRepository.countByIsActiveFalse();
+        long inactiveGroups = (inactiveGroupsLong == null) ? 0L : inactiveGroupsLong;
+        return new InactiveGroupStatisticsDTO(inactiveGroups);
+    }
+
     @Transactional(readOnly = true)
     public List<GroupMembersDTO> getMembersByGroup(String tenantId) {
         // Validar que el tenant existe: lanzar 404 si no existe
@@ -59,6 +79,14 @@ public class GroupStatisticsService {
 
         // Obtener el conteo de miembros por grupo
         return memberRepository.countMembersByGroup(tenantId);
+    }
+
+    /**
+     * Versión global: cantidad de miembros por grupo sin filtrar por tenant.
+     */
+    @Transactional(readOnly = true)
+    public List<GroupMembersDTO> getMembersByGroup() {
+        return memberRepository.countMembersByGroupAll();
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +104,26 @@ public class GroupStatisticsService {
             Long groupId = (Long) row[0];
             Long count = (Long) row[1];
             // Buscar nombre del grupo (si existe)
+            var groupOpt = groupRepository.findById(groupId);
+            String groupName = groupOpt.map(g -> g.getName()).orElse("<Desconocido>");
+            result.add(new GroupMembersCountDTO(groupId, groupName, count == null ? 0L : count));
+        }
+
+        return result;
+    }
+
+    /**
+     * Versión global: top N grupos con más miembros en toda la plataforma.
+     */
+    @Transactional(readOnly = true)
+    public List<GroupMembersCountDTO> getTopGroupsByMembers(int limit) {
+        List<Object[]> rows = memberRepository.countMembersByGroupIdAll();
+        List<GroupMembersCountDTO> result = new ArrayList<>();
+
+        for (Object[] row : rows) {
+            if (result.size() >= limit) break;
+            Long groupId = (Long) row[0];
+            Long count = (Long) row[1];
             var groupOpt = groupRepository.findById(groupId);
             String groupName = groupOpt.map(g -> g.getName()).orElse("<Desconocido>");
             result.add(new GroupMembersCountDTO(groupId, groupName, count == null ? 0L : count));
