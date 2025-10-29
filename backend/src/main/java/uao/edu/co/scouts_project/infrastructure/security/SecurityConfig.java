@@ -46,6 +46,10 @@ public class SecurityConfig {
 
                                                 // Operaciones CRUD en tenants
 
+                                                // Exponer públicamente el endpoint para resolver org_id por slug
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/slug/**")
+                                                .permitAll()
+
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
