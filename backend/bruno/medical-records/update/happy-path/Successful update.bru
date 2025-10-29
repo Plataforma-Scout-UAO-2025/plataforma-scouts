@@ -1,0 +1,110 @@
+meta {
+  name: Successful update
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseurl}}/medical_record/update_record/21
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
+body:json {
+  {
+    "blood_type": "O+", // valor a actualizar
+    "eps": "Sura",
+    "allergies": "Piña",
+    "chronic_diseases": "Diabetes",
+    "physical_restrictions": "Requiere una silla de ruedas",
+    "surgical_history": "Apendicectomía",
+    "vaccines_detail": [{
+      "name": "COVID-19 (Pfizer)",
+      "applied_at": "2022-04-23T18:25:43.511Z"
+    }],
+    "medications_detail": [{
+      "name": "Aspirina",
+      "frequency": "2 veces al día"
+    }]
+  }
+  
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Validar mensaje de exito", function () {
+    expect(res.body.message).to.equal("Actualización realizada con exito.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Nombre:** Actualizado exitoso
+  
+  **Endpoint:** /api/v1/medical_record/update_record/{id}
+  
+  **HU relacionadas:** HU-INN-2.1
+  
+  **Descripción:** Comprobar que el endpoint de actualizado de registros medicos recibe y responde correctamente a una petición con valores válidos y con la sesión iniciada.
+  
+  **Respuesta esperada:** Retorna el código 200 y un body con un mensaje de exito.
+  
+  **Estructura del body de entrada:**
+  
+  ```
+  req.body {
+  
+    "blood_type": string,
+  
+    "eps": string,
+    
+    "allergies": string,
+    
+    "chronic_diseases": string,
+    
+    "physical_restrictions": string,
+    
+    "surgical_history": string,
+    
+    "vaccines_detail": [{
+      "name": string,
+      "applied_at": string
+    }],
+  
+    "medications_detail": [{
+      "name": string,
+      "dose": string,
+      "frequency": string
+    }]
+    
+  }
+  ```
+  
+  **Estructura del body de salida:**
+  
+  ```
+  res.body {
+  
+    "message": string,
+  
+  }
+  ```
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-01
+  
+}

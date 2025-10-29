@@ -33,6 +33,13 @@ public class TenantService {
         return toDTO(tenant);
     }
     
+    @Transactional(readOnly = true)
+    public String getTenantIdBySlug(String slug) {
+        Tenant tenant = tenantRepository.findBySlug(slug)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found with slug: " + slug));
+        return tenant.getTenantId();
+    }
+
     @Transactional
     public TenantDTO createTenant(TenantDTO dto) {
         if (tenantRepository.existsBySlug(dto.slug())) {

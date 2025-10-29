@@ -41,6 +41,7 @@ import MembersInCharge from "./app/routes/guardians/members/components/views/Mem
 import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
 import ReporteView from "./app/routes/financiero/Reportes/components/ReporteView";
 
+import LoginSlug from "./app/routes/LoginSlug";
 function App() {
   useAuth0ApiWrapper();
 
@@ -50,6 +51,7 @@ function App() {
         <Routes>
           {/* 🔹 Login & Registro */}
           <Route path="/" element={<Home />} />
+          <Route path="/login/:slug" element={<LoginSlug />} />
 
           {/* 🔹 Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
@@ -84,7 +86,7 @@ function App() {
             {/* Rutas para acudiente */}
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO, RawRole.COMITE_ADMIN]}><EstadoCuenta /></ProtectedRoute>} />
             <Route path="grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.COMITE_ADMIN]}><Grupos /></ProtectedRoute>} />
-            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.SCOUTER]}><MedicalRecordsView /></ProtectedRoute>} />
+            <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.ACUDIENTE, RawRole.SCOUT]}><MedicalRecordsView /></ProtectedRoute>} />
 
             {/* Rutas para Guardianes*/}
             <Route path="guardians/members" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><MembersInCharge /></ProtectedRoute>} />
@@ -103,3 +105,4 @@ function App() {
 }
 
 export default App;
+
