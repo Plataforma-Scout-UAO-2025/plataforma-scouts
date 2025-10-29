@@ -23,10 +23,11 @@ export const getGroups = async () => {
 
 // Actualizar perfil de usuario
 export const updateGroup = async (
-  id: string,
+  tenantId: string,
+  groupSlug: string,
   updates: Partial<UpdateGroupDTO>,
 ) => {
-  const response = await api.put(`/groups/update_group_by_id/${id}`, updates);
+  const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/update`, updates);
   return response.data;
 };
 

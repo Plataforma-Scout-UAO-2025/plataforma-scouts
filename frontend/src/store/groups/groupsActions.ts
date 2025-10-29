@@ -41,11 +41,12 @@ export const fetchGroupsAction = createAsyncThunk(
 // Actualizar datos de un grupo
 export const updateGroupAction = createAsyncThunk<
   { message: string },
-  { uid: string; updates: Partial<UpdateGroupDTO> },
+  { tenantId: string; groupSlug: string; updates: Partial<UpdateGroupDTO> },
   { rejectValue: { error: string } }
->("group/update", async ({ uid, updates }, { rejectWithValue }) => {
+>("group/update", async ({ tenantId, groupSlug, updates }, { rejectWithValue }) => {
   try {
-    const response = await updateGroup(uid, updates);
+    console.log("Updating group with data:", { tenantId, groupSlug, updates });
+    const response = await updateGroup(tenantId, groupSlug, updates);
     return response;
   } catch (error: unknown) {
     const axiosError = error as AxiosError;

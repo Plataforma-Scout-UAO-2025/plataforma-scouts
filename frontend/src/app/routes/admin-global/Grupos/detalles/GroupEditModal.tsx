@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/store/store";
 import {
   Dialog,
   DialogContent,
@@ -5,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button, Input, Label } from "@/components/ui";
-import { useEffect, useState } from "react";
 import {
   Select,
   SelectTrigger,
@@ -13,7 +15,8 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui";
-import type { GroupResponseDTO as Group } from "@/types/group.type";
+import { updateGroupAction } from "@/store/groups/groupsActions";
+import type { GroupResponseDTO as Group, UpdateGroupDTO } from "@/types/group.type";
 
 interface GroupEditModalProps {
   open: boolean;
@@ -29,6 +32,7 @@ export default function GroupEditModal({
   onSave,
 }: GroupEditModalProps) {
   const [form, setForm] = useState<Partial<Group>>({});
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (group) {
@@ -53,11 +57,49 @@ export default function GroupEditModal({
     onOpenChange(false);
   };
 
-  const handleSave = () => {
-    if (onSave && form) {
-      onSave(form as Group);
+  // derive tenant and slug from the passed group
+  const tenantId = group.tenant_id;
+  const groupSlug = group.slug;
+
+  const buildUpdates = (): Partial<UpdateGroupDTO> => {
+    const u: Partial<UpdateGroupDTO> = {};
+    if (typeof form.name !== "undefined" && form.name !== group.name) u.name = form.name as string;
+    if (typeof form.email !== "undefined" && form.email !== group.email) u.email = form.email as string;
+    if (typeof form.phone !== "undefined" && form.phone !== group.phone) u.phone = form.phone as string;
+    if (typeof form.district !== "undefined" && form.district !== group.district) u.district = form.district as string;
+    if (typeof form.isActive !== "undefined" && form.isActive !== group.isActive) u.isActive = form.isActive as boolean;
+    return u;
+  };
+
+  const handleSave = async () => {
+    const updates = buildUpdates();
+
+    if (!tenantId || !groupSlug) {
+      console.error("Cannot update group: missing tenantId or groupSlug", { tenantId, groupSlug });
+      return;
     }
-    onOpenChange(false);
+
+    if (Object.keys(updates).length === 0) {
+      onOpenChange(false);
+      return;
+    }
+
+    try {
+      console.debug("Dispatching updateGroupAction", { tenantId, groupSlug, updates });
+      const action = await dispatch(updateGroupAction({ tenantId, groupSlug, updates }));
+      console.debug("updateGroupAction result", action);
+      console.log("Group update action:", action);
+
+      if (updateGroupAction.fulfilled.match(action)) {
+        const merged: Group = { ...(group as Group), ...(form as Partial<Group>) };
+        if (onSave) onSave(merged);
+        onOpenChange(false);
+      } else {
+        console.error("Update rejected", action);
+      }
+    } catch (err) {
+      console.error("Error dispatching updateGroupAction", err);
+    }
   };
 
   return (
