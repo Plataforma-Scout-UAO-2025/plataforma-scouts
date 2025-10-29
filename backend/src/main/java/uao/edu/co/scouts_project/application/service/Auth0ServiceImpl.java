@@ -4,6 +4,9 @@ package uao.edu.co.scouts_project.application.service;
 // import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import kotlin.NotImplementedError;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -394,17 +397,15 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
         // - [No implementado] Create Member (MemberService) Asignar al ADMIN_GLOBAL a
         // ese Grupo en BD
-
         // MemberDto superUserMember = new MemberDTO(null, createdSuperUser.getId(),
         // orgId, null, null, "Cesar", "Navia",
         // 100, Role.ADMIN_GLOBAL, DocumentType.CC, "canavia@uao.edu.co", null,
         // null, null, null, null, null, null, null, null, null, null, true, null,
         // Status.APPROVED,
         // LocalDate.now(), null, LocalDate.now(), LocalDate.now());
+        throw new NotImplementedError();
 
         // memberServiceImp.create_member(superUserMember);
-
-        return "Todo bien";
 
     }
 
