@@ -5,17 +5,21 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/guardian/:id/members
+  url: {{baseurl}}/guardian/:id/members
   body: none
-  auth: inherit
+  auth: bearer
 }
 
 params:path {
-  id: 305
+  id: 68
 }
 
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlR6Y2w1THVlaE5aNGs0WUllc3ZueiJ9.eyJodHRwczovL3Njb3V0cy1wbGF0Zm9ybS1iYWNrZW5kLy9yb2xlcyI6W10sImh0dHBzOi8vc2NvdXRzLXBsYXRmb3JtLWJhY2tlbmQvY29ubmVjdGlvbnMiOiJ1cGUtb3JnLXBvdnNqdWZGM1RFUDFEWjciLCJpc3MiOiJodHRwczovL2xvZ2luLnBsYXRhZm9ybWFzY291dC5vcmcvIiwic3ViIjoiYXV0aDB8NjhlZmQyZGNhYjIzOWQ4MzYwYjY0NWI5IiwiYXVkIjpbImh0dHBzOi8vc2NvdXRzLXBsYXRmb3JtLWJhY2tlbmQvIiwiaHR0cHM6Ly9kZXYtcGVzaHp5NGcxNGp2ZnlrdS51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNzYxNzEzMzE3LCJleHAiOjE3NjE3OTk3MTcsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJvcmdfaWQiOiJvcmdfcG92c2p1ZkYzVEVQMURaNyIsImF6cCI6IkUxZnFudG4wcnlUVHlsWGF6SzMwYTVFcEpqem1JZzdmIn0.QsJpa1SdLqB7O7KxnASJ2mzJoVHf98Vq9xra40RarBcVbKibD_KWsv3kqhTdvHeN2ZBZBH9YFn0DU064alkURgmePK7X-SxTLOpXyIK1MO6H4FgNQAlvfUF5jQl7y2_sTwGA9oBvWLVpZ8Hsl8UbMc1BOB0oW1zsQiNY10Kb_QdlwTNRbVpLUgyt2r7mFf_yIUBhOTNQl7ULNfUSG7HMWVICo0V5Lb-HCU7E7Oionp3I7MzywDlDEHlDWI3LqGSTNv-Kplzx07Q2ObkTM2v2saicrw5VXd3Q2SUntmz3fcGQoJaVLGA3Jugcb3ZHP8fnrVSNaPRq3E7LetwGg79QjQ
 }
 
 body:json {

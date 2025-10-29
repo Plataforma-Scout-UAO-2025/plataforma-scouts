@@ -14,19 +14,6 @@ export default function ScoutInfoSection({ member }: ScoutInfoSectionProps) {
       .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return "No especificado";
-    try {
-      return new Date(dateString).toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   const getStatusBadge = () => {
     const isActive = member.is_active;
     if (isActive) {
@@ -63,18 +50,6 @@ export default function ScoutInfoSection({ member }: ScoutInfoSectionProps) {
         <div>
           <label className="text-sm font-medium text-gray-500">Estado</label>
           <div>{getStatusBadge()}</div>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Fecha de aceptación</label>
-          <p className="text-gray-900">{formatDate(member.acceptanceDate)}</p>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Parentesco</label>
-          <p className="text-gray-900">{member.relationship || "No especificado"}</p>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Fecha de creación</label>
-          <p className="text-gray-900">{formatDate(member.createdAt)}</p>
         </div>
       </div>
     </div>

@@ -7,16 +7,20 @@ meta {
 get {
   url: {{baseurl}}/guardian/:id
   body: none
-  auth: inherit
+  auth: bearer
 }
 
 params:path {
-  id: 305
+  id: 68
 }
 
 headers {
   Content-Type: application/json
-  Authorization: 
+  ~Authorization: 
+}
+
+auth:bearer {
+  token: E1fqntn0ryTTylXazK30a5EpJjzmIg7f
 }
 
 body:json {
@@ -39,5 +43,4 @@ body:json {
 
 settings {
   encodeUrl: false
-  timeout: 0
 }

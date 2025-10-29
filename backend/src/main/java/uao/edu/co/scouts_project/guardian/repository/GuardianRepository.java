@@ -15,7 +15,7 @@ import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 @Repository
 public interface GuardianRepository extends JpaRepository<Member, Long> {
     @Query("SELECT new uao.edu.co.scouts_project.guardian.model.MemberCustom(" +
-            "m.memberId, m.firstName, m.lastName, m.identification, m.documentType, m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive) "
+            "m.memberId, m.firstName, m.lastName, m.identification, m.documentType, m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive, m.email, m.role) "
             +
             "FROM Member m WHERE m.guardianId = :guardianId")
     List<MemberCustom> findMembersInChargeOf(@Param("guardianId") Long guardianId);

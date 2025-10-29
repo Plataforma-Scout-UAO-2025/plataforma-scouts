@@ -28,17 +28,11 @@ const MembersInCharge = () => {
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
 
   const { user } = useAuth0();
-  console.log("Usuario completo:", user);
-  console.log("user.sub:", user?.sub);
+
 
   
   const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
-  console.log("Guardian ID calculado:", guardianId);
   const { members, loading, error, refetch } = useMembersInChargeOf(guardianId);
-  
-    // TEMPORAL: Ver estructura real de los datos
-  console.log("Miembros cargados:", members);
-  console.log("Primer miembro:", members[0]);
   
 
   const navigate = useNavigate();
@@ -51,7 +45,6 @@ const MembersInCharge = () => {
 
   const handleEditMember = async (member: UpdateMember) => {
     try {
-      // Cast seguro al tipo auxiliar que incluye snake_case
       const memberData = member as MemberUpdate;
       const id = memberData.member_id ?? memberData.memberId;
 
@@ -80,7 +73,6 @@ const MembersInCharge = () => {
         return;
       }
 
-      // Obtener el ID del miembro de diferentes posibles campos
       const extendedMember = member as ExtendedMemberInfo;
       const memberId = extendedMember.memberId || 
                           extendedMember.member_id || 
@@ -93,12 +85,10 @@ const MembersInCharge = () => {
 
       console.log('Removing member from guardian:', { guardianId, memberId });
       
-      // Llamar al endpoint para remover el miembro del guardian
       await removeMemberFromGuardian(guardianId, memberId);
       
       toast.success('Miembro removido exitosamente del guardian');
       
-      // Recargar la lista de miembros
       if (refetch) {
         await refetch();
       }
@@ -106,7 +96,7 @@ const MembersInCharge = () => {
     } catch (error) {
       console.error('Error removing member from guardian:', error);
       toast.error('Error al remover el miembro del guardian');
-      throw error; // Re-lanzar para que el modal maneje el estado de loading
+      throw error;
     }
   };
 

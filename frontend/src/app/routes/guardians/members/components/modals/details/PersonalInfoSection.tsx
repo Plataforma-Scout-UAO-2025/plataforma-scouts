@@ -5,36 +5,8 @@ interface PersonalInfoSectionProps {
 }
 
 export default function PersonalInfoSection({ member }: PersonalInfoSectionProps) {
-  const formatDocumentType = (docType?: string): string => {
-    const types: Record<string, string> = {
-      CC: "Cédula de Ciudadanía",
-      TI: "Tarjeta de Identidad",
-      CE: "Cédula de Extranjería",
-      RC: "Registro Civil",
-      PA: "Pasaporte",
-      PEP: "Permiso Especial de Permanencia",
-      PPT: "Permiso por Protección Temporal",
-      NIT: "Número de Identificación Tributaria",
-      NUIP: "Número Único de Identificación Personal",
-      PASSPORT: "Pasaporte"
-    };
-    return types[docType || ""] || docType || "No especificado";
-  };
 
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return "No especificado";
-    try {
-      return new Date(dateString).toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
-  };
 
-  // Función para obtener edad a partir de birth_date (igual que en la tabla)
   const getAge = (birthDate?: string): string => {
     if (!birthDate) return "N/A";
     
@@ -77,7 +49,7 @@ export default function PersonalInfoSection({ member }: PersonalInfoSectionProps
         </div>
         <div>
           <label className="text-sm font-medium text-gray-500">Tipo de documento</label>
-          <p className="text-gray-900">{formatDocumentType(member.documentType)}</p>
+          <p className="text-gray-900">{member.document_type || "No especificado"}</p>
         </div>
         <div>
           <label className="text-sm font-medium text-gray-500">Email</label>
@@ -93,7 +65,7 @@ export default function PersonalInfoSection({ member }: PersonalInfoSectionProps
         </div>
         <div>
           <label className="text-sm font-medium text-gray-500">Fecha de nacimiento</label>
-          <p className="text-gray-900">{formatDate(member.birthDate)}</p>
+          <p className="text-gray-900">{birthDate || "No especificado"}</p>
         </div>
         <div className="md:col-span-2">
           <label className="text-sm font-medium text-gray-500">Dirección</label>
