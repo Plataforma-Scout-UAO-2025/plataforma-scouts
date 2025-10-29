@@ -34,7 +34,7 @@ public class GuardianMapper {
                 .build();
     }
 
-    // Convert Member entity to GuardianWithMemberDTO usually for returning guardian info with members they are in charge of (TODO: this have to be implemented in the service layer)
+    // Convert Member entity to GuardianWithMemberDTO usually for returning guardian info with members they are in charge of
     public static GuardianWithMembersDTO toDTO(Member entity, List<MemberDTO> membersInCharge) {
         return GuardianWithMembersDTO.builder()
                 .userId(entity.getUserId())
@@ -53,7 +53,7 @@ public class GuardianMapper {
                 .relationship(entity.getRelationship())
                 .status(entity.getStatus())
                 .acceptanceDate(entity.getAcceptanceDate())
-                .members(membersInCharge) // TODO: We need to create a domain model in our entity so it bring us a list of members based on guardianId, in other words, the member a guardian is taking care of, then we map it to List <MemberDTO>
+                .members(membersInCharge)
                 .build();
     }
 
@@ -104,19 +104,26 @@ public class GuardianMapper {
                 .gender(member.getGender())
                 .phone(member.getPhone())
                 .birthDate(member.getBirthDate())
+                .address(member.getAddress())
                 .role(member.getRole())
+                .isActive(member.getIsActive())
                 .build();
     }
 
     public static MemberDTO toMemberDTO(MemberCustom memberCustom) {
-        return MemberDTO.builder()
-                .memberId(memberCustom.getMemberId())
-                .firstName(memberCustom.getFirstName())
-                .lastName(memberCustom.getLastName())
-                .gender(memberCustom.getGender())
-                .phone(memberCustom.getPhone())
-                .birthDate(memberCustom.getBirthDate())
-                .address(memberCustom.getAddress())
-                .build();
-    }
+    return MemberDTO.builder()
+            .memberId(memberCustom.getMemberId())
+            .firstName(memberCustom.getFirstName())
+            .lastName(memberCustom.getLastName())
+            .identification(memberCustom.getIdentification())        
+            .documentType(memberCustom.getDocumentType())
+            .email(memberCustom.getEmail())           
+            .role(memberCustom.getRole())             
+            .gender(memberCustom.getGender())
+            .phone(memberCustom.getPhone())
+            .birthDate(memberCustom.getBirthDate())
+            .address(memberCustom.getAddress())
+            .isActive(memberCustom.getIsActive())
+            .build();
+}
 }

@@ -4,79 +4,105 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import type { Member } from '../../types/member.type';
-import { memberFormSchema, type MemberFormData } from '../../schemas/MemberForm.schema';
-import PersonalInfoForm from '../forms/PersonalInfoForm';
-import HealthInfoForm from '../forms/HealthInfoForm';
-import EmergencyContactsForm from '../forms/EmergencyContactsForm';
+import type { UpdateMember } from '@/types/member.type';
+import { updateMember } from '@/api/membersApi';
 import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
+import { editMemberSchema, type EditMemberFormData } from '../../schemas/MemberForm.schema';
+import MemberContactForm from './MemberContactForm';
+//import EmergencyContactsList from './emergencyContact/EmergencyContactList';
+
+interface MemberUpdate extends UpdateMember {
+  member_id?: number;
+  first_name?: string;
+  last_name?: string;
+  document_type?: string;
+  is_active?: boolean;
+  emergency_contacts?: Array<{ name: string; relationship: string; phone: string }>;
+}
 
 interface EditMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  miembro: Member | null;
-  onSave: (data: MemberFormData) => void;
+  miembro: UpdateMember | null;
+  onSuccess?: () => void; 
 }
 
-export default function EditarMiembroModal({
+export default function EditMemberModal({
   isOpen,
   onClose,
   miembro,
-  onSave,
+  onSuccess,
 }: EditMemberModalProps) {
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<MemberFormData>({
-    resolver: zodResolver(memberFormSchema)
+  } = useForm<EditMemberFormData>({
+    resolver: zodResolver(editMemberSchema)
   });
 
-  const { emergencyContacts, setEmergencyContacts, addEmergencyContact, removeEmergencyContact, updateEmergencyContact } = useEmergencyContacts();
+  const { setEmergencyContacts } = useEmergencyContacts();
+  
+  const documentType = watch('documentType');
 
-  // Pre-llenar el formulario cuando se abre con un miembro
   useEffect(() => {
     if (miembro && isOpen) {
+      const memberData = miembro as MemberUpdate;
+      const docType = memberData.document_type ?? memberData.documentType;      
       reset({
-        firstName: miembro.firstName,
-        lastName: miembro.lastName,
-        email: miembro.email,
-        documentType: miembro.documentType,
-        identification: miembro.identification,
-        gender: miembro.gender,
-        birthDate: miembro.birthDate,
-        phone: miembro.phone,
-        address: miembro.address,
-        role: miembro.role || '',
-        acceptanceDate: miembro.acceptanceDate,
-        isActive: miembro.isActive,
-        weight: miembro.weight || '',
-        height: miembro.height || '',
-        hobbies: miembro.hobbies || '',
-        sports: miembro.sports || '',
-        instruments: miembro.instruments || '',
+        phone: memberData.phone ?? '',
+        documentType: docType as EditMemberFormData['documentType'],
+        address: memberData.address ?? '',
       });
 
-      // Convertir contactos de emergencia al formato correcto
-      if (miembro.emergencyContacts && miembro.emergencyContacts.length > 0) {
-        const convertedContacts = miembro.emergencyContacts.map(contact => ({
-          name: contact.fullName,
-          relationship: contact.relationship,
-          phone: contact.phone
-        }));
-        setEmergencyContacts(convertedContacts);
+      if (memberData.emergency_contacts && memberData.emergency_contacts.length > 0) {
+        setEmergencyContacts(memberData.emergency_contacts);
+      } else if (memberData.emergencyContacts && memberData.emergencyContacts.length > 0) {
+        setEmergencyContacts(memberData.emergencyContacts);
+      } else {
+        setEmergencyContacts([{ name: '', relationship: '', phone: '' }]);
       }
     }
   }, [miembro, isOpen, reset, setEmergencyContacts]);
 
-  const onSubmit = async (data: MemberFormData) => {
+  const onSubmit = async (data: EditMemberFormData) => {
     try {
-      onSave(data);
+      const memberData = miembro as MemberUpdate;
+      const id = memberData?.member_id ?? memberData?.memberId;
+
+      if (!id) {
+        toast.error("No se encontró el ID del miembro");
+        return;
+      }
+      const updateData = {
+      phone: data.phone,
+      document_type: data.documentType,
+      address: data.address,
+    };
+      console.log('📤 Datos que se enviarán al backend:', updateData);
+
+      await updateMember(String(id), updateData); 
+      /*await updateMember(String(id), {
+        phone: data.phone,
+        documentType: data.documentType,
+        address: data.address,
+        //emergencyContacts: emergencyContacts.filter(contact => 
+        //  contact.name && contact.relationship && contact.phone
+        //),
+      });
+      */
+
       toast.success('Miembro actualizado correctamente');
-      onClose();
+      handleClose();
+      
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
+      console.error('Error al actualizar el miembro:', error);
       toast.error('Error al actualizar el miembro: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
@@ -87,42 +113,51 @@ export default function EditarMiembroModal({
     onClose();
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-[#1a4134]">
-            Editar Miembro
-          </DialogTitle>
-          <DialogDescription>
-            Actualiza la información del miembro seleccionado.
-          </DialogDescription>
-        </DialogHeader>
+  const memberData = miembro as MemberUpdate;
+  const memberName = `${memberData?.first_name ?? memberData?.firstName ?? ''} ${memberData?.last_name ?? memberData?.lastName ?? ''}`.trim();
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <PersonalInfoForm register={register} errors={errors} setValue={setValue} />
-          <HealthInfoForm register={register} />
-          <EmergencyContactsForm
-            emergencyContacts={emergencyContacts}
-            onAdd={addEmergencyContact}
-            onRemove={removeEmergencyContact}
-            onUpdate={updateEmergencyContact}
-          />
+return (
+  <Dialog open={isOpen} onOpenChange={handleClose}>
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="text-2xl font-bold text-[#1a4134]">
+          Editar Información de Contacto
+        </DialogTitle>
+        <DialogDescription>
+          Actualiza los datos de contacto de <strong>{memberName || 'el miembro'}</strong>
+        </DialogDescription>
+      </DialogHeader>
 
-          <DialogFooter className="space-x-2">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-[#1a4134] hover:bg-[#29765C] text-white"
-            >
-              {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <MemberContactForm
+          register={register}
+          errors={errors}
+          documentType={documentType}
+          onDocumentTypeChange={(value) => setValue('documentType', value as NonNullable<EditMemberFormData['documentType']>)}
+        />
+        {/* 
+        <EmergencyContactsList
+          contacts={emergencyContacts}
+          onAdd={addEmergencyContact}
+          onUpdate={updateEmergencyContact}
+          onRemove={removeEmergencyContact}
+        />
+        */}
+
+        <DialogFooter className="space-x-2">
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button 
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-[#1a4134] hover:bg-[#29765C] text-white"
+          >
+            {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>
+);
 }
