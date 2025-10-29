@@ -1,0 +1,46 @@
+meta {
+  name: Filter Members by Status - Centinelas 113
+  type: http
+  seq: 6
+}
+
+get {
+  url: https://api.plataformascout.org/api/v1/members/list_members_by_status?status=APPROVED
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: {{token_centinelas}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response is an array", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array");
+  });
+  
+  test("All members have status APPROVED", function() {
+    const body = res.getBody();
+    if (body.length > 0) {
+      const allInactive = body.every(member => member.status === "INACTIVE");
+      expect(allInactive).to.equal(true);
+    }
+  });
+}
+
+docs {
+  Nombre: Obtener filtrado de miembros por estado (Centinelas 113)
+  Endpoint: https://api.plataformascout.org/api/v1/members/list_members_by_status?status=APPROVED
+  HU relacionada: HU-ING-1.3 (Criterio 3)
+  Descripción: Verifica que el administrador del grupo Centinelas 113 pueda aplicar un filtro por estado en la lista de miembros.
+  Respuesta esperada: Status 200 y arreglo de objetos donde todos los miembros tengan el estado solicitado.
+  tenant_id: org_6B3k4dao2Wf6eGxa
+  Responsable: Kelvin Martínez
+  Última Actualización: 2025-10-27
+}

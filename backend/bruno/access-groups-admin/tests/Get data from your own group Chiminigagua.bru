@@ -1,0 +1,46 @@
+meta {
+  name: Get Group By Slug - Own Group (Chiminigagua 803)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseurl}}api/v1/tenants/org_povsjufF3TEP1DZ7/groups/grupo-scout-chiminigagua-803
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: {{token_centinelas}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response contains expected group", function() {
+    const body = res.getBody();
+    // El controlador devuelve un objeto GroupResponseDTO
+    expect(body).to.have.property('slug', 'grupo-scout-chiminigagua-803');
+    expect(body).to.have.property('slug', 'grupo-scout-chiminigagua-803');
+  });
+
+  test("Response has required fields", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('groud_id);
+    expect(body).to.have.property('name');
+    expect(body).to.have.property('identifier_number');
+  });
+}
+
+docs {
+  Nombre: Obtener datos de grupo propio (Chiminigagua 803)
+  Endpoint: /api/v1/tenants/{tenantId}/groups/{groupSlug}
+  HU relacionada: HU-ING-1.3 (Criterio 1)
+  Descripción: Valida que el administrador del grupo Chiminigagua 803 pueda obtener los datos de su propio grupo.
+  Respuesta esperada: Status 200 y objeto GroupResponseDTO con slug 'grupo-scout-chiminigagua-803', tenant_id 'org_povsjufF3TEP1DZ7' y propiedades basicas del grupo.
+  Responsable: Kelvin Martinez
+  Última Actualización: 2025-10-27
+}
