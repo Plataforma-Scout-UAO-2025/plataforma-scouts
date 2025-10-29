@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -19,6 +19,9 @@ export default function ConfirmDeleteModal({ open, type, name, onClose, onConfir
           <DialogTitle className="text-primary text-2xl font-extrabold">
             Confirmar Eliminación de {label}
           </DialogTitle>
+          <DialogDescription>
+            Esta acción no se puede deshacer. Se eliminará permanentemente el {label.toLowerCase()} seleccionado.
+          </DialogDescription>
         </DialogHeader>
 
         <p className="text-accent-foreground mb-6 text-sm">
