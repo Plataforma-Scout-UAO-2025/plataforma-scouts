@@ -519,6 +519,115 @@ public class GuardianMapperTest {
     }
 
     @Nested
+    @DisplayName("toGuardianDTO Tests")
+    class ToGuardianDTOTests {
+
+        @Test
+        @DisplayName("Should convert Member to GuardianCreateDTO with memberId and address")
+        void shouldConvertMemberToGuardianDTOWithMemberIdAndAddress() {
+            // Act
+            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
+
+            // Assert
+            assertNotNull(result);
+            assertNotNull(result.getMemberId());
+            assertEquals(1L, result.getMemberId());
+            assertEquals("guardian-123", result.getUserId());
+            assertEquals("tenant-1", result.getTenantId());
+            assertEquals("John", result.getFirstName());
+            assertEquals("Doe", result.getLastName());
+            assertEquals(35, result.getAge());
+            assertEquals("1234567890", result.getIdentification());
+            assertEquals(DocumentType.CC, result.getDocumentType());
+            assertEquals("3001234567", result.getPhone());
+            assertTrue(result.getIsActive());
+            assertEquals("Father", result.getRelationship());
+            assertEquals(Status.APPROVED, result.getStatus());
+            assertEquals("123 Main St", result.getAddress());
+            assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
+            assertNotNull(result.getRol());
+            assertEquals("ACUDIENTE", result.getRol());
+        }
+
+        @Test
+        @DisplayName("Should include memberId field when converting with toGuardianDTO")
+        void shouldIncludeMemberIdField() {
+            // Act
+            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
+
+            // Assert
+            assertNotNull(result.getMemberId());
+            assertEquals(guardianMember.getMemberId(), result.getMemberId());
+        }
+
+        @Test
+        @DisplayName("Should include address field when converting with toGuardianDTO")
+        void shouldIncludeAddressField() {
+            // Arrange
+            guardianMember.setAddress("456 Oak Avenue");
+
+            // Act
+            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
+
+            // Assert
+            assertNotNull(result.getAddress());
+            assertEquals("456 Oak Avenue", result.getAddress());
+        }
+
+        @Test
+        @DisplayName("Should handle null address in toGuardianDTO")
+        void shouldHandleNullAddress() {
+            // Arrange
+            guardianMember.setAddress(null);
+
+            // Act
+            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
+
+            // Assert
+            assertNull(result.getAddress());
+        }
+
+        @Test
+        @DisplayName("Should preserve all fields including memberId and address")
+        void shouldPreserveAllFieldsIncludingMemberIdAndAddress() {
+            // Arrange
+            guardianMember.setAddress("789 Pine Street");
+
+            // Act
+            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
+
+            // Assert
+            assertEquals(guardianMember.getMemberId(), result.getMemberId());
+            assertEquals(guardianMember.getUserId(), result.getUserId());
+            assertEquals(guardianMember.getTenantId(), result.getTenantId());
+            assertEquals(guardianMember.getFirstName(), result.getFirstName());
+            assertEquals(guardianMember.getLastName(), result.getLastName());
+            assertEquals(guardianMember.getAge(), result.getAge());
+            assertEquals(guardianMember.getIdentification(), result.getIdentification());
+            assertEquals(guardianMember.getDocumentType(), result.getDocumentType());
+            assertEquals(guardianMember.getPhone(), result.getPhone());
+            assertEquals(guardianMember.getIsActive(), result.getIsActive());
+            assertEquals(guardianMember.getRelationship(), result.getRelationship());
+            assertEquals(guardianMember.getStatus(), result.getStatus());
+            assertEquals(guardianMember.getAddress(), result.getAddress());
+            assertEquals(guardianMember.getAcceptanceDate(), result.getAcceptanceDate());
+            assertEquals(guardianMember.getRole(), result.getRol());
+        }
+
+        @Test
+        @DisplayName("Should differentiate from toGuardianCreateDTO by including memberId")
+        void shouldDifferentiateFromToGuardianCreateDTO() {
+            // Act
+            GuardianCreateDTO resultWithId = GuardianMapper.toGuardianDTO(guardianMember);
+            GuardianCreateDTO resultWithoutId = GuardianMapper.toGuardianCreateDTO(guardianMember);
+
+            // Assert
+            assertNotNull(resultWithId.getMemberId(), "toGuardianDTO should include memberId");
+            assertNull(resultWithoutId.getMemberId(), "toGuardianCreateDTO should not include memberId");
+        }
+    }
+
+    @Nested
     @DisplayName("Edge Cases and Null Handling Tests")
     class EdgeCasesTests {
 

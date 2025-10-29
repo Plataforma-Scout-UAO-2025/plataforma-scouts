@@ -13,7 +13,7 @@ export default function HealthInfoForm({ register }: HealthInfoFormProps) {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-[#1a4134]">Información de Salud</h3>
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid git stat grid-cols-2 gap-4">
         {/* Peso */}
         <div>
           <Label htmlFor="weight">Peso</Label>

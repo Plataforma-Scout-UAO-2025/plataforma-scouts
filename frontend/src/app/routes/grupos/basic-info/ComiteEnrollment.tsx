@@ -4,6 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import PersonalDataForm from "./components/PersonalDataForm";
 import SuccessModal from "./components/SuccessModal";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
+import { UserExistsDialog } from "./components/UserExistsDialog";
+import { ErrorDialog } from "./components/ErrorDialog";
 
 function ComiteAdminEnrollment() {
   const navigate = useNavigate();
@@ -15,10 +17,16 @@ function ComiteAdminEnrollment() {
     totalPaginas,
     progreso,
     showModal,
+    showUserExistsDialog,
+    setShowUserExistsDialog,
+    showAuth0ErrorDialog,
+    setShowAuth0ErrorDialog,
+    errorMessage,
     loadingSubmit,
+    errors,
     handlePersonalChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "COMITE_ADMIN", totalPaginas: 1 }); 
+  } = useRoleEnrollment({ role: "COMITE_ADMIN", totalPaginas: 1 });
 
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
@@ -40,6 +48,7 @@ function ComiteAdminEnrollment() {
           datos={datosPersonales}
           handleChange={handlePersonalChange}
           setDatos={setDatosPersonales}
+          errors={errors}
         />
 
         <div className="col-span-full flex justify-between mt-6">
@@ -50,12 +59,7 @@ function ComiteAdminEnrollment() {
           >
             Cancelar
           </Button>
-
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={loadingSubmit}
-          >
+          <Button type="submit" variant="primary" disabled={loadingSubmit}>
             {loadingSubmit
               ? "Enviando..."
               : pagina === totalPaginas
@@ -69,6 +73,19 @@ function ComiteAdminEnrollment() {
       <SuccessModal
         open={showModal}
         onClose={() => navigate("/app/miembros")}
+      />
+
+      <UserExistsDialog
+        open={showUserExistsDialog}
+        onOpenChange={setShowUserExistsDialog}
+        identification={datosPersonales.identification}
+      />
+
+      <ErrorDialog
+        open={showAuth0ErrorDialog}
+        onOpenChange={setShowAuth0ErrorDialog}
+        title="Error en el registro"
+        description={errorMessage}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Eye, Edit2, Trash2, ChevronDown, Users, Plus } from 'lucide-react';
 import {
   Accordion,
@@ -27,28 +27,6 @@ export default function RamaList({
   onDeleteSubrama,
 }: RamaListProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  useEffect(() => {
-    if (expandedItems.length === 0 && ramas && ramas.length > 0) {
-      const first = ramas[0];
-      const firstId = [
-        first?.sectionId,
-        (first as unknown as Record<string, unknown>)?.['section_id'],
-        first?.id,
-        (first as unknown as Record<string, unknown>)?.['ramaId'],
-      ]
-        .map((candidate) =>
-          typeof candidate === 'string'
-            ? candidate.trim()
-            : candidate !== undefined && candidate !== null
-              ? String(candidate)
-              : ''
-        )
-        .find((candidate) => candidate.length > 0);
-
-      if (firstId) setExpandedItems([firstId]);
-    }
-  
-  }, [ramas, expandedItems.length]);
   const navigate = useNavigate();
 
   const handleToggleExpansion = (ramaId: string) => {

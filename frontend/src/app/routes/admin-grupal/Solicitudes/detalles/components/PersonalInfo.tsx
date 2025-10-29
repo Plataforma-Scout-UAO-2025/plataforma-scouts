@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 import type { Member } from "@/types/member.type";
 
-export default function PersonalInfo({ member }: { member: Member }) {
+export default function PersonalInfo({ member }: { member: Member}) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-primary border-b-2 border-primary pb-2">
@@ -10,18 +10,18 @@ export default function PersonalInfo({ member }: { member: Member }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {(
           [
-            ["Nombres *", member.first_name || "Sin información"],
-            ["Apellidos *", member.last_name || "Sin información"],
+            ["Nombres *", member.firstName || member.first_name || "Sin información"],
+            ["Apellidos *", member.lastName || member.last_name ||"Sin información"],
             ["Correo electrónico *", member.email || "Sin información"],
-            ["Tipo de documento *", member.document_type || "Sin información"],
+            ["Tipo de documento *", member.document_type || member.documentType ||"Sin información"],
             [
               "Número de documento *",
               member.identification || "Sin información",
             ],
             [
               "Fecha de nacimiento *",
-              member.birth_date
-                ? new Date(member.birth_date).toLocaleDateString("es-CO")
+              member.birth_date || member.birthDate
+                ? new Date(member.birth_date ?? member.birthDate!).toLocaleDateString("es-CO")
                 : "Sin información",
             ],
             ["Género *", member.gender || "Sin información"],
