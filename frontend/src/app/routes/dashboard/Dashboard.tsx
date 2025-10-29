@@ -8,31 +8,15 @@ import ComiteAdminView from "./components/ComiteAdminView";
 import ScouterView from "./components/ScouterView";
 import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import TesoreroView from "./components/TesoreroView";
-import { useEffect } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
-  const { getAccessTokenSilently } = useAuth0();
 
- useEffect(() => {
-    const obtenerToken = async () => {
-      try {
-        const accessToken = await getAccessTokenSilently();
-        console.log("Access Token:", accessToken);
-      } catch (error) {
-        console.error("Error al obtener el token:", error);
-      }
-    };
 
-    obtenerToken();
-  }, [getAccessTokenSilently]);
-  
   if (status === "loading" || status === "idle") {
     return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;
   }
 
- 
 
   // Solo se renderiza Y ejecuta el componente correspondiente al rol del usuario
   switch (currentUserRole) {
