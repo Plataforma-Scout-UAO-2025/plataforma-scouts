@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Trash, User } from "lucide-react";
+import { Pencil, ToggleLeft, User } from "lucide-react";
 import type { Member as MemberType } from "@/types/member.type";
 import MemberInfoModal from "../detalles/memberInfoModal";
 import EditMemberModal from "../../../grupos/basic-info/EditMemberModal";
@@ -143,10 +143,10 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                     <Button
                       variant="iconbutton"
                       size="icon"
-                      className="text-destructive hover:text-destructive-hover"
+                      className="text-red-800 hover:text-green-800"
                       onClick={() => handleDeleteClick(member)}
                     >
-                      <Trash />
+                      <ToggleLeft />
                     </Button>
                   </TableCell>
                 </TableRow>
