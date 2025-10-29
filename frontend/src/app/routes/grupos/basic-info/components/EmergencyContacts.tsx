@@ -32,6 +32,21 @@ export default function EmergencyContacts({
     }
   }, [datos, setDatos, onContactChange]);
 
+  // Verificar si el último contacto está completo
+  const isLastContactComplete = () => {
+    const contacts = datos.emergency_contacts ?? [];
+    if (contacts.length === 0) return true;
+    
+    const lastContact = contacts[contacts.length - 1];
+    return (
+      lastContact.name?.trim() !== "" &&
+      lastContact.relationship?.trim() !== "" &&
+      lastContact.phone?.trim() !== ""
+    );
+  };
+
+  const canAddNewContact = isLastContactComplete();
+
   const handleChange = (i: number, field: string, value: string) => {
     let sanitizedValue = value;
 
@@ -56,6 +71,8 @@ export default function EmergencyContacts({
   };
 
   const addContact = () => {
+    if (!canAddNewContact) return;
+    
     setDatos((prev) => {
       const newData = {
         ...prev,
@@ -226,14 +243,27 @@ export default function EmergencyContacts({
           </div>
         );
       })}
+      
       <Button
         type="button"
         variant="primary"
         onClick={addContact}
         className="w-full"
+        disabled={!canAddNewContact}
+        title={
+          !canAddNewContact
+            ? "Completa todos los campos del contacto actual antes de agregar uno nuevo"
+            : "Agregar nuevo contacto de emergencia"
+        }
       >
         + Agregar contacto
       </Button>
+      
+      {!canAddNewContact && (datos.emergency_contacts ?? []).length > 0 && (
+        <p className="text-xs text-red-600">
+          Complete todos los campos del contacto actual antes de agregar uno nuevo
+        </p>
+      )}
     </div>
   );
 }
