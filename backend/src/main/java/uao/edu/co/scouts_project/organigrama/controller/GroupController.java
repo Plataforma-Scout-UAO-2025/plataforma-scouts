@@ -116,11 +116,17 @@ public class GroupController {
                         @ApiResponse(responseCode = "200", description = "Grupo actualizado correctamente"),
                         @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
         })
-        @PatchMapping("/{groupSlug}")
+        @PatchMapping("/{groupSlug}/update")
         public GroupResponseDTO updateGroup(
                         @Parameter(description = "Tenant ID", example = "org-001") @PathVariable String tenantId,
                         @Parameter(description = "Slug del grupo", example = "grupo-803") @PathVariable String groupSlug,
                         @Valid @RequestBody UpdatingGroupDTO dto) {
+                return groupService.updateGroup(tenantId, groupSlug, dto);
+        }
+
+        @PutMapping("/{groupSlug}")
+        public GroupResponseDTO updateGroup(@PathVariable String tenantId, @PathVariable String groupSlug,
+                        @Valid @RequestBody GroupDTO dto) {
                 return groupService.updateGroup(tenantId, groupSlug, dto);
         }
 

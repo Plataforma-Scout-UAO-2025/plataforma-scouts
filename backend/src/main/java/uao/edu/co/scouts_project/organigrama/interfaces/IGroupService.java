@@ -21,6 +21,8 @@ public interface IGroupService {
 
     GroupResponseDTO updateGroup(String tenantId, String groupSlug, UpdatingGroupDTO dto);
 
+    GroupResponseDTO updateGroup(String tenantId, String groupSlug, GroupDTO dto);
+
     GroupResponseDTO[] getAllGroups();
 
     List<GroupResponseDTO> getGroupsByTenant(String tenantId);
