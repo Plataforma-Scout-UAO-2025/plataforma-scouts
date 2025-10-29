@@ -4,7 +4,6 @@ import {
   fetchGroupsAction,
   updateGroupAction,
   createGroupAction,
-  fetchMembersCountByGroupAction,
 } from "./groupsActions";
 import type { GroupResponseDTO as Group } from "@/types/group.type";
 
@@ -92,31 +91,6 @@ const groupsSlice = createSlice({
       if (action.payload.newGroup) {
         state.groups.push(action.payload.newGroup);
       }
-    });
-    builder.addCase(createGroupAction.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload?.error as string;
-      builder.addCase(fetchMembersCountByGroupAction.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      });
-      builder.addCase(
-        fetchMembersCountByGroupAction.fulfilled,
-        (state, action) => {
-          state.loading = false;
-          // Convert Record<string, number>[] into [string, number][]
-          state.memberCounts = (action.payload as Record<string, number>[]).map(
-            (item) => Object.entries(item)[0] as [string, number]
-          );
-        }
-      );
-      builder.addCase(
-        fetchMembersCountByGroupAction.rejected,
-        (state, action) => {
-          state.loading = false;
-          state.error = action.payload as string;
-        }
-      );
     });
   },
 });
