@@ -69,7 +69,6 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
         nivel.nombre,
         "—",
         "—",
-        "—", // Periodo (Año)
         nivel.descripcion || "—", // Descripción
       ]);
     } else {
@@ -89,7 +88,6 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
         return a.nombre.localeCompare(b.nombre, 'es');
       });
       sorted.forEach((cargo) => {
-        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
         // Calcular titulares a partir de miembros asociados al cargo
         let titulares = cargo.titular || "";
         if (members && members.length > 0) {
@@ -109,7 +107,6 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
           nivel.nombre,
           cargo.nombre,
           titulares || "—",
-          periodo, // Periodo (Año)
           cargo.descripcion || "—", // Descripción
         ]);
       });
@@ -117,9 +114,7 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
   });
 
   autoTable(doc, {
-    head: [
-      ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"], // Columnas requeridas
-    ],
+    head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: tableData,
     startY: 35,
     theme: "striped",
@@ -144,7 +139,7 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
    📊 Exportación a CSV
    ============================================================ */
 function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
-  const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
+  const header = ["Nivel", "Cargo", "Titular", "Descripción"];
   const rows: string[][] = [];
   const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
@@ -182,7 +177,7 @@ function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
 
   data.niveles.forEach((nivel) => {
     if (nivel.cargos.length === 0) {
-      rows.push([nivel.nombre, "—", "—", String(data.anio), nivel.descripcion || "—"]);
+      rows.push([nivel.nombre, "—", "—", nivel.descripcion || "—"]);
     } else {
       const nName = normalize(nivel.nombre);
       const isJef = nName.includes("comite de jefatura");
@@ -200,7 +195,6 @@ function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
         return a.nombre.localeCompare(b.nombre, 'es');
       });
       sorted.forEach((cargo) => {
-        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
         // Calcular titulares desde miembros asignados
         let titulares = cargo.titular || "";
         if (members && members.length > 0) {
@@ -220,7 +214,6 @@ function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
           nivel.nombre,
           cargo.nombre,
           titulares || "—",
-          periodo, // Periodo (Año)
           cargo.descripcion || "—", // Descripción
         ]);
       });

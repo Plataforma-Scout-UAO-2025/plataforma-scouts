@@ -146,7 +146,7 @@ export async function exportBranchesCSV(
 }
 
 export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []) {
-  const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
+  const header = ["Nivel", "Cargo", "Titular", "Descripción"];
   const rows: string[][] = [];
   const stripAccents = (s: string) =>
     s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -175,7 +175,6 @@ export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []
         nivel.nombre,
         "—",
         "—",
-        String(data.anio ?? "—"),
         nivel.descripcion || "—",
       ]);
     } else {
@@ -197,7 +196,6 @@ export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []
         return a.nombre.localeCompare(b.nombre, "es");
       });
       sorted.forEach((c) => {
-        const periodo = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
         // Calcular titulares a partir de miembros vinculados al cargo (subgrupo)
         let titulares = c.titular || "";
         const cargoIdNum = toNumberSafe((c as unknown as { id?: unknown }).id);
@@ -215,7 +213,6 @@ export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []
           nivel.nombre,
           c.nombre,
           titulares || "—",
-          periodo,
           c.descripcion || "—",
         ]);
       });
@@ -384,7 +381,7 @@ export async function exportOrgChartCombinedPDF(
   ].map(normalize2);
   levels.niveles.forEach((nivel) => {
     if (!nivel.cargos || nivel.cargos.length === 0) {
-      levelsBody.push([nivel.nombre, "—", "—", "—", nivel.descripcion || "—"]);
+      levelsBody.push([nivel.nombre, "—", "—", nivel.descripcion || "—"]);
     } else {
       const nName = normalize2(nivel.nombre);
       const isJef = nName.includes("comite de jefatura");
@@ -404,7 +401,6 @@ export async function exportOrgChartCombinedPDF(
         return a.nombre.localeCompare(b.nombre, "es");
       });
       sorted.forEach((c) => {
-        const period = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
         // Calcular titulares desde miembros asignados al cargo (mostrar TODOS los miembros asignados)
         let titulares = c.titular || "";
         const cargoIdNum = toNumberSafe((c as unknown as { id?: unknown }).id);
@@ -417,7 +413,6 @@ export async function exportOrgChartCombinedPDF(
           nivel.nombre,
           c.nombre,
           titulares || "—",
-          period,
           c.descripcion || "—",
         ]);
       });
@@ -426,7 +421,7 @@ export async function exportOrgChartCombinedPDF(
 
   autoTable(doc, {
     startY: y + 10,
-    head: [["Nivel", "Cargo", "Titular", "Periodo", "Descripción"]],
+    head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: levelsBody,
     margin: { left: x, right: x },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
