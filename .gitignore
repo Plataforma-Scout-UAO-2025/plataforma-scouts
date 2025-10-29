@@ -23,8 +23,6 @@ target/
 # Env files
 .env
 .env.local
-<<<<<<< HEAD
-=======
 .env.production
 .env.development
 .env.qa
@@ -49,7 +47,6 @@ keystore.*
 qa-testing.*
 test-upload.html
 postman_collection.json
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
 
 
 ### STS ###
@@ -84,8 +81,4 @@ build/
 plataforma-scouts.code-workspace
 
 ### supabase
-<<<<<<< HEAD
-supabase/seeds/
-=======
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
 supabase/.temp/

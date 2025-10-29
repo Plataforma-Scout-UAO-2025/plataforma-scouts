@@ -35,6 +35,7 @@ plataforma-scouts/
 ├── frontend/                    # React frontend
 ├── supabase/                    # Database configuration
 │   ├── migrations/              # SQL migration files
+      └── config.toml
 │     └── README.md
 └── README.md
 ```
