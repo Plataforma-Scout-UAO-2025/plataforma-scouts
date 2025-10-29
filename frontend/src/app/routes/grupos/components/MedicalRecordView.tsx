@@ -5,7 +5,7 @@ import type { MedicalRecord } from '../../../../types/medical-record.type';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
 import MedicalRecordsFilter from './MedicalRecordFilter';
-import type { MedicalDB, MedicalFormData } from '@/types/medical-form.type';
+import type { MedicalDB } from '@/types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
 import type { Member } from '@/types/member.type';
 import { getMedicalRecordsByTenantApi } from '@/api/medicalApi';
@@ -92,17 +92,10 @@ export default function MedicalRecordsView() {
             });
 
             setRecords(adaptedRecords);
-        } catch (err: any) {
+        } catch (err) {
             console.error('Error fetching medical records:', err);
+            setError('Error al cargar los registros médicos');
 
-            if (err.response?.status === 403) {
-                setError('No tienes permisos para acceder a esta información');
-            } else if (err.response?.status === 404) {
-                setError('No se encontró información médica');
-                setRecords([]);
-            } else {
-                setError('Error al cargar los registros médicos');
-            }
         } finally {
             setIsLoading(false);
         }
@@ -145,7 +138,7 @@ export default function MedicalRecordsView() {
         setShowForm(true);
     };
 
-    const handleFormSubmit = async (_formData: MedicalFormData) => {
+    const handleFormSubmit = async () => {
         try {
             setShowForm(false);
             setEditingRecord(null);
