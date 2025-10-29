@@ -1,5 +1,5 @@
 import api from "./axios";
-import type { GroupResponseDTO as Group, UpdateGroupDTO } from "@/types/group.type";
+import type { GroupResponseDTO as Group, UpdateGroupDTO, GroupMembersDTO, TopGroupByMembersDTO } from "@/types/group.type";
 
 // Crear un nuevo grupo
 export const createGroup = async (data: Group) => {
@@ -47,7 +47,30 @@ export const updateMemberByDto = async (
 
 // Obtener conteo de miembros por grupo
 export const getMembersCountByGroup = async () => {
-  const response = await api.get<Record<string, number>[]>("/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups/members-count");
-  console.log("Response from getMembersCountByGroup:", response);
+  const response = await api.get<GroupMembersDTO[]>("/statistics/groups/members-count");
   return response.data;
 };
+
+// Obtener conteo total de miembros
+export const getTotalMembersCount = async () => {
+  const response = await api.get<{ total_members_count: number }>("/statistics/members/total");
+  return response.data;
+}
+
+// Obtener conteo de grupos activos
+export const getActiveGroupsCount = async () => {
+  const response = await api.get<{ active_groups_count: number }>("/statistics/groups");
+  return response.data;
+}
+
+// Obtener conteo de grupos inactivos
+export const getInactiveGroupsCount = async () => {
+  const response = await api.get<{ inactive_groups_count: number }>("/statistics/groups/inactive");
+  return response.data;
+}
+
+// Obtener grupos con más miembros
+export const getTopGroupsByMembers = async () => {
+  const response = await api.get<TopGroupByMembersDTO[]>("/statistics/groups/most-members");
+  return response.data;
+}
