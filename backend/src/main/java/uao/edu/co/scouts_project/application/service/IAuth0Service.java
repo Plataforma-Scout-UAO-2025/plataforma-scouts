@@ -6,10 +6,15 @@ import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.common.ResponseDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 
 import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Contrato del servicio de alto nivel para operaciones de administración contra
@@ -40,6 +45,11 @@ public interface IAuth0Service {
 
     void assignRole(String userId, String roleId);
 
-    void changeUserRole(UserAuth0ChangeRoleDTO request);        // ADMIN_GRUPO (no admin roles)
-    void changeUserRoleGlobal(UserAuth0ChangeRoleDTO request);  // ADMIN_GLOBAL (any role, optional org validation)
+    void changeUserRole(UserAuth0ChangeRoleDTO request); // ADMIN_GRUPO (no admin roles)
+
+    void changeUserRoleGlobal(UserAuth0ChangeRoleDTO request); // ADMIN_GLOBAL (any role, optional org validation)
+
+    String createTenant(CreateGroupDTO group, MultipartFile logoFile);
+
+
 }
