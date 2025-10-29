@@ -78,12 +78,11 @@ export default function NivelesPage() {
   // Cargar miembros al montar el componente
   useEffect(() => {
     if (members.length === 0) {
-      // Cargar con endpoint público (list_members). Si falla o queda corto, intentamos con detalles.
+      // Preferir endpoint enriquecido (incluye relaciones subgroup/section); si falla, usar público
       (async () => {
-        const action = await dispatch(fetchMembersAction());
-        if (fetchMembersAction.rejected.match(action)) {
-          // Mejor esfuerzo: intentar con detalles (puede estar prohibido en algunos roles)
-          await dispatch(fetchMembersWithBranchAction());
+        const enriched = await dispatch(fetchMembersWithBranchAction());
+        if (fetchMembersWithBranchAction.rejected.match(enriched)) {
+          await dispatch(fetchMembersAction());
         }
       })();
     }
@@ -217,10 +216,10 @@ export default function NivelesPage() {
         if (assignSubgroupAndSectionAction.fulfilled.match(resultAction)) {
           setShowSuccess(true);
           // Refrescar miembros desde el backend para que el listado por cargo se actualice
-          // Preferir el endpoint público; si falla, intentamos con detalles
-          const r = await dispatch(fetchMembersAction());
-          if (fetchMembersAction.rejected.match(r)) {
-            await dispatch(fetchMembersWithBranchAction());
+          // Preferir endpoint enriquecido (relaciones actualizadas); fallback al público si falla
+          const r1 = await dispatch(fetchMembersWithBranchAction());
+          if (fetchMembersWithBranchAction.rejected.match(r1)) {
+            await dispatch(fetchMembersAction());
           }
           setMembersRefreshKey((k) => k + 1);
         } else {
