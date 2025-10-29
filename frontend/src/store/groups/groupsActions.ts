@@ -1,6 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getGroup, getGroups, updateGroup, createGroup } from "@/api/groupsApi";
+import {
+  getGroup,
+  getGroups,
+  updateGroup,
+  createGroup,
+  getMembersCountByGroup,
+} from "@/api/groupsApi";
 import type {
   GroupResponseDTO as Group,
   UpdateGroupDTO,
@@ -75,3 +81,22 @@ export const createGroupAction = createAsyncThunk<
     return rejectWithValue({ error: errorMessage });
   }
 });
+
+// Stats de grupos
+
+// Obtener conteo de miembros por grupo
+export const fetchMembersCountByGroupAction = createAsyncThunk(
+  "groups/membersCount",
+  async (_, { rejectWithValue }) => {
+    try {
+      const membersCount = await getMembersCountByGroup();
+      return membersCount;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage =
+        errorData?.error || "Error al obtener el conteo de miembros por grupo";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);

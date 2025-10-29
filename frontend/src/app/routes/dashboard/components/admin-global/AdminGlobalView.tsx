@@ -1,19 +1,16 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import HeaderCard from "./HeaderCard";
-import GroupsDistribution from "./GroupsDistribution";
-
-// Mocked loading state and data
-const groupMemberCount: Record<string, number> = {
-  "Grupo A": 50,
-  "Grupo B": 30,
-  "Grupo C": 20,
-};
+//import GroupsDistribution from "./GroupsDistribution";
+import { useGroupsStats } from "@/hooks/useGroupsStats";
 
 const loading = false;
 
 const AdminGlobalView = () => {
   const { user } = useAuth0();
+  const { groups } = useGroupsStats();
+
+  console.log("Groups in AdminGlobalView:", groups);
 
   if (loading) {
     return <FullScreenLoader message="Cargando..." />;
@@ -33,11 +30,7 @@ const AdminGlobalView = () => {
         <HeaderCard />
       </section>
       <section className="my-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          <GroupsDistribution
-            groupMembers={Object.entries(groupMemberCount || {})}
-          />
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"></div>
       </section>
     </div>
   );

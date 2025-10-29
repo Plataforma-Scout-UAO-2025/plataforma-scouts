@@ -42,12 +42,11 @@ export const updateMemberByDto = async (
   return response.data;
 };
 
-// Asignar subgrupo y sección a un miembro
-export const assignSubgroupAndSection = async (data: {
-  memberId: number | string;
-  subGroupId?: number | string;
-  sectionId?: number | string;
-}) => {
-  const response = await api.put(`/members/assign_subgroup_and_section`, data);
+// Stats de grupos
+
+// Obtener conteo de miembros por grupo
+export const getMembersCountByGroup = async () => {
+  const response = await api.get<Record<string, number>[]>("/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups/members-count");
+  console.log("Response from getMembersCountByGroup:", response);
   return response.data;
 };

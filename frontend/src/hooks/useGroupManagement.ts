@@ -32,10 +32,15 @@ export const useGroupManagement = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleCreateGroup = (setIsCreateModalOpen: (open: boolean) => void) => {
+    setIsCreateModalOpen(true);
+  }
+
   return {
     isActive,
     handleViewInfo,
     handleAdminGroup,
     handleEditClick,
+    handleCreateGroup,
   };
 };

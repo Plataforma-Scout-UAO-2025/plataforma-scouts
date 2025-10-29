@@ -5,42 +5,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button, Input, Label } from "@/components/ui";
-import { useEffect, useState } from "react";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui";
+import { useState } from "react";
 import type { GroupResponseDTO as Group } from "@/types/group.type";
 
-interface GroupEditModalProps {
+interface CreateGroupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  group: Group | null;
   onSave?: (updated: Group) => void;
 }
 
-export default function GroupEditModal({
+export default function CreateGroupModal({
   open,
   onOpenChange,
-  group,
   onSave,
-}: GroupEditModalProps) {
-  const [form, setForm] = useState<Partial<Group>>({});
-
-  useEffect(() => {
-    if (group) {
-      setForm({
-        ...group,
-      });
-    } else {
-      setForm({});
-    }
-  }, [group]);
-
-  if (!group) return null;
+}: CreateGroupModalProps) {
+  const [form, setForm] = useState<Partial<Group>>({ isActive: true });
 
   const updateField = <K extends keyof Group>(
     key: K,
@@ -60,12 +39,14 @@ export default function GroupEditModal({
     onOpenChange(false);
   };
 
+  console.log(form);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">
-            Editar Grupo
+            Crear Grupo
           </DialogTitle>
         </DialogHeader>
 
@@ -133,28 +114,6 @@ export default function GroupEditModal({
                   updateField("district" as keyof Group, e.target.value)
                 }
               />
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="w-full">
-                <label className="text-sm text-gray-500">Estado</label>
-                <div className="mt-2">
-                  <Select
-                    value={String(!!form.isActive)}
-                    onValueChange={(val) =>
-                      updateField("isActive" as keyof Group, val === "true")
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Activo</SelectItem>
-                      <SelectItem value="false">Inactivo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
           </div>
         </div>
