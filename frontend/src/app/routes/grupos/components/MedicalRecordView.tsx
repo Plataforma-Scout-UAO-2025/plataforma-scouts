@@ -10,6 +10,9 @@ import { useTenant } from '@/hooks/useTenant';
 import type { Member } from '@/types/member.type';
 import { getMedicalRecordsByTenantApi } from '@/api/medicalApi';
 import { getMembers } from '@/api/membersApi';
+import { useAuth0 } from '@auth0/auth0-react';
+import { AlertCircle } from 'lucide-react';
+import { useRoleContext } from '@/hooks/useRoleContext';
 
 export default function MedicalRecordsView() {
     const [records, setRecords] = useState<MedicalRecord[]>([]);
@@ -24,31 +27,48 @@ export default function MedicalRecordsView() {
     const [allergiesFilter, setAllergiesFilter] = useState("");
 
     const tenantId = useTenant();
+    const { user } = useAuth0();
+    const { currentUserRole } = useRoleContext();
+
+    // Verificar si el usuario es Scout
+    const isScout = currentUserRole === 'Scout' || currentUserRole === 'SCOUT' || currentUserRole === 'scout';
 
     const fetchMedicalRecords = useCallback(async () => {
-        if (!tenantId) return;
+        if (!tenantId || !user) return;
+
+        // Si es Scout, no hacer nada
+        if (isScout) {
+            setIsLoading(false);
+            return;
+        }
 
         try {
             setIsLoading(true);
             setError(null);
+
+            // Solo para líderes/admin: obtener todos los registros
             const response = await getMedicalRecordsByTenantApi(tenantId);
 
-            const membersResponse = await getMembers();
+            // Obtener información de todos los miembros
             const membersMap = new Map<string, string>();
-
+            const membersResponse = await getMembers();
             membersResponse.forEach((member: Member) => {
                 if (member.status === 'APPROVED' && member.is_active) {
-                    membersMap.set(member.member_id?.toString() || "", `${member.first_name} ${member.last_name}`);
+                    membersMap.set(
+                        member.member_id?.toString() || "",
+                        `${member.first_name} ${member.last_name}`
+                    );
                 }
             });
 
+            // Adaptar registros médicos
             const adaptedRecords: MedicalRecord[] = response.content.map((record: MedicalDB) => {
-                const memberId = record.member_id;
-                const memberName = membersMap.get(memberId.toString()) || `Miembro ${memberId}`;
+                const recordMemberId = record.member_id;
+                const memberName = membersMap.get(recordMemberId.toString()) || `Miembro ${recordMemberId}`;
 
                 return {
                     id: record.id,
-                    member_id: memberId,
+                    member_id: recordMemberId,
                     member_name: memberName,
                     blood_type: record.blood_type,
                     eps: record.eps,
@@ -57,28 +77,36 @@ export default function MedicalRecordsView() {
                     physical_restrictions: record.physical_restrictions,
                     surgical_history: record.surgical_history,
                     active: record.active,
-                    vaccines_detail: record.vaccines_detail.map((vaccine) => ({
+                    vaccines_detail: record.vaccines_detail?.map((vaccine) => ({
                         name: vaccine.name,
                         applied_at: vaccine.applied_at
-                    })),
-                    medications_detail: record.medications_detail.map((med) => ({
+                    })) || [],
+                    medications_detail: record.medications_detail?.map((med) => ({
                         name: med.name,
                         dose: med.dose,
                         frequency: med.frequency
-                    })),
+                    })) || [],
                     created_at: record.created_at,
                     updated_at: record.updated_at
                 };
             });
 
             setRecords(adaptedRecords);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error fetching medical records:', err);
-            setError('Error al cargar los registros médicos');
+
+            if (err.response?.status === 403) {
+                setError('No tienes permisos para acceder a esta información');
+            } else if (err.response?.status === 404) {
+                setError('No se encontró información médica');
+                setRecords([]);
+            } else {
+                setError('Error al cargar los registros médicos');
+            }
         } finally {
             setIsLoading(false);
         }
-    }, [tenantId]);
+    }, [tenantId, user, isScout]);
 
     useEffect(() => {
         fetchMedicalRecords();
@@ -117,37 +145,13 @@ export default function MedicalRecordsView() {
         setShowForm(true);
     };
 
-    
-    const handleFormSubmit = async (formData: MedicalFormData) => {
+    const handleFormSubmit = async (_formData: MedicalFormData) => {
         try {
-            if (editingRecord) {
-                setRecords(prev => prev.map(record =>
-                    record.id === editingRecord.id
-                        ? {
-                            ...record,
-                            ...formData,
-                            updated_at: new Date().toISOString()
-                        }
-                        : record
-                ));
-            } else {
-                const newRecord: MedicalRecord = {
-                    ...formData,
-                    id: Date.now(),
-                    member_id: 0,
-                    member_name: 'Nuevo Integrante',
-                    active: true,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                };
-                setRecords(prev => [...prev, newRecord]);
-            }
-
+            await fetchMedicalRecords();
             setShowForm(false);
             setEditingRecord(null);
         } catch (err) {
-            console.error('Error saving medical record:', err);
-            alert('Error al guardar el registro médico');
+            console.error('Error refreshing medical records:', err);
         }
     };
 
@@ -155,6 +159,35 @@ export default function MedicalRecordsView() {
         setShowForm(false);
         setEditingRecord(null);
     };
+
+    // Si es Scout, mostrar mensaje de acceso denegado
+    if (isScout) {
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold">Registros Médicos</h1>
+                        <p className="text-muted-foreground">
+                            Gestión de información médica
+                        </p>
+                    </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
+                    <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold text-amber-900 mb-2">
+                        Acceso Restringido
+                    </h2>
+                    <p className="text-amber-800 mb-4">
+                        Esta sección está disponible solo para líderes y administradores del grupo.
+                    </p>
+                    <p className="text-sm text-amber-700">
+                        Para consultar o actualizar tu información médica, contacta a tu jefe de grupo o líder de rama.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     if (showForm) {
         return (
