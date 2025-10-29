@@ -24,22 +24,25 @@ export function isGroupActive(group: BackendCompatGroup): boolean {
     return group.status.toUpperCase() === "ACTIVE";
   }
   
+  // Acceso directo al objeto para evitar problemas de tipos
+  const groupData = group as Record<string, unknown>;
+  
   // Fallback a isActive boolean
-  if (typeof group.isActive === "boolean") {
-    return group.isActive;
+  const isActiveValue = groupData.isActive;
+  if (typeof isActiveValue === "boolean") {
+    return isActiveValue;
   }
   
   // Fallback para otros formatos de isActive
-  const value = group.isActive;
-  if (typeof value === "string") {
-    return value === "ACTIVE" || value.toLowerCase() === "true";
+  if (typeof isActiveValue === "string") {
+    return isActiveValue.toUpperCase() === "ACTIVE" || isActiveValue.toLowerCase() === "true";
   }
-  if (typeof value === "number") {
-    return value === 1;
+  if (typeof isActiveValue === "number") {
+    return isActiveValue === 1;
   }
   
   // Fallback adicional para is_active (snake_case del backend)
-  const isActiveSnake = (group as Record<string, unknown>).is_active;
+  const isActiveSnake = groupData.is_active;
   if (isActiveSnake !== undefined) {
     if (typeof isActiveSnake === "string") {
       return isActiveSnake.toUpperCase() === "ACTIVE";
@@ -47,7 +50,7 @@ export function isGroupActive(group: BackendCompatGroup): boolean {
     return Boolean(isActiveSnake);
   }
   
-  return Boolean(value);
+  return Boolean(isActiveValue);
 }
 
 /**

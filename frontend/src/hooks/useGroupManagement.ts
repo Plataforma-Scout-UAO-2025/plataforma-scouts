@@ -9,6 +9,8 @@ interface GroupStatus {
   is_active?: boolean | string | number;
   isActive?: boolean | string | number;
   status?: string;
+  name?: string;
+  [key: string]: unknown;
 }
 
 export const useGroupManagement = () => {
@@ -22,9 +24,9 @@ export const useGroupManagement = () => {
     }
   }, [dispatch, groups]);
 
-  // Usar la función utilitaria compartida
+  // Usar la función utilitaria compartida con type assertion
   const isActive = (group: GroupStatus): boolean => {
-    return isGroupActive(group);
+    return isGroupActive(group as Group & Record<string, unknown>);
   };
 
   const handleViewInfo = (

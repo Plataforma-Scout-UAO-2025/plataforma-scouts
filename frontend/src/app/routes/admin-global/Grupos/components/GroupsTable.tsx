@@ -80,7 +80,7 @@ const GroupsTable = () => {
                 <TableRow key={group.groupId ?? `group-${idx}`}>
                   <TableCell className="font-medium">{group.name}</TableCell>
                   <TableCell>
-                    {isActive(group) ? (
+                    {isActive(group as Group & Record<string, unknown>) ? (
                       <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
                         Activo
                       </span>
