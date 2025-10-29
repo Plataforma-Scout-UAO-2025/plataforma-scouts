@@ -110,6 +110,8 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
 
 
 
+    @Query("SELECT m.memberId FROM Member m WHERE m.userId = :userId")
+    Optional<Long> findMemberIdByUserId(@Param("userId") String userId);
     /**
      * Actualiza la sección (section_id) del subgrupo asociado a un miembro.
      * @param memberId ID del miembro cuyo subgrupo se usará para la actualización.
@@ -130,8 +132,6 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
             @Param("memberId") Long memberId,
             @Param("newSectionId") Long newSectionId
     );
-
-
 
 
 }

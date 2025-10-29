@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import uao.edu.co.scouts_project.finanzas.fees.data.TestData;
 import uao.edu.co.scouts_project.finanzas.fees.dto.CuotaDto;
@@ -53,7 +55,7 @@ class FeesControllerTest {
   @BeforeEach
   void setup() {
     om = new ObjectMapper();
-    om.registerModule(new JavaTimeModule());                  // Soporte java.time.*
+    om.registerModule(new JavaTimeModule());                    // Soporte java.time.*
     om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // "yyyy-MM-dd" en vez de epoch
 
     mvc = MockMvcBuilders.standaloneSetup(controller)
@@ -148,20 +150,18 @@ class FeesControllerTest {
 
   @Test
   void patch_updates_and_returns200() throws Exception {
-    // Construye un CuotaDto válido usando el constructor canónico del record
     var dto = new CuotaDto(
-        123L,                          // feePlanId (o el primer field de tu record)
-        new BigDecimal("100000"),      // amount
-        "Nombre cuota",                // name
-        "Descripción",                 // description
-        "SECTION",                     // scope
-        "MONTHLY",                     // periodicity
-        java.time.LocalDate.of(2025,10,1),  // startDate
-        java.time.LocalDate.of(2025,12,31), // endDate
-        JsonNodeFactory.instance.arrayNode() // associatedTo (json)
+        123L,
+        new BigDecimal("100000"),
+        "Nombre cuota",
+        "Descripción",
+        "SECTION",
+        "MONTHLY",
+        java.time.LocalDate.of(2025,10,1),
+        java.time.LocalDate.of(2025,12,31),
+        JsonNodeFactory.instance.arrayNode()
     );
 
-    // Cuando el servicio patch sea llamado, devuelve un CuotaDto (puede ser el mismo u otro)
     when(feeService.patch(
             org.mockito.ArgumentMatchers.eq(123L),
             org.mockito.ArgumentMatchers.any(CuotaDto.class),
@@ -173,7 +173,6 @@ class FeesControllerTest {
             .content(om.writeValueAsString(dto)))
         .andExpect(status().isOk());
 
-    // Verifica que se llamó al servicio con los parámetros correctos
     org.mockito.Mockito.verify(feeService)
         .patch(org.mockito.ArgumentMatchers.eq(123L),
               org.mockito.ArgumentMatchers.any(CuotaDto.class),
@@ -190,4 +189,47 @@ class FeesControllerTest {
                       org.mockito.ArgumentMatchers.eq("org_TENANT"));
   }
 
+  // ============================
+  // NUEVOS TESTS PARA COBERTURA
+  // ============================
+
+  @Test
+  void delete_returns404_whenFeePlanNotFound() throws Exception {
+    // Simula que el servicio lanza NoSuchElementException -> controller devuelve 404
+    org.mockito.Mockito.doThrow(new NoSuchElementException("FeePlan not found for this tenant"))
+        .when(feeService).deleteFeePlan(999L, "org_TENANT");
+
+    mvc.perform(delete("/api/v1/finanzas/fees/{tenantId}/{feePlanId}", "org_TENANT", 999L))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void delete_returns409_withBody_whenServiceThrowsResponseStatus() throws Exception {
+    // Simula que el servicio lanza 409; lo captura el @ExceptionHandler local del controller
+    org.mockito.Mockito.doThrow(new ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "No se puede eliminar la cuota (FeePlan) porque existen pagos asociados en sus cuotas (installments)."
+    )).when(feeService).deleteFeePlan(123L, "org_TENANT");
+
+    mvc.perform(delete("/api/v1/finanzas/fees/{tenantId}/{feePlanId}", "org_TENANT", 123L))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.status").value(409))
+        .andExpect(jsonPath("$.error").value("CONFLICT"))
+        .andExpect(jsonPath("$.message").value(
+            "No se puede eliminar la cuota (FeePlan) porque existen pagos asociados en sus cuotas (installments)."
+        ));
+  }
+
+  @Test
+  void delete_returns500_withBody_whenUnexpectedException() throws Exception {
+    // Simula error inesperado: el controller lo envuelve en ResponseStatusException(500)
+    org.mockito.Mockito.doThrow(new RuntimeException("boom"))
+        .when(feeService).deleteFeePlan(321L, "org_TENANT");
+
+    mvc.perform(delete("/api/v1/finanzas/fees/{tenantId}/{feePlanId}", "org_TENANT", 321L))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.status").value(500))
+        .andExpect(jsonPath("$.error").value("INTERNAL_SERVER_ERROR"))
+        .andExpect(jsonPath("$.message").value("boom"));
+  }
 }
