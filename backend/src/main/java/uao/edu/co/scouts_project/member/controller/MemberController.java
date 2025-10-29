@@ -268,11 +268,11 @@ public class MemberController {
      * Actualiza toda la información de un miembro existente.
      *
      * @param memberId        ID del miembro
-     * @param memberUpdateDto DTO con los nuevos datos
+     * @param updateDto DTO con los nuevos datos
      * @return miembro actualizado o 404 si no existe
      */
     @PutMapping("/update_member_by_id/{id}")
-    public ResponseEntity<MemberDto> update_member_by_id(
+    public ResponseEntity<UpdateMemberDto> update_member_by_id(
             @PathVariable("id") Long memberId,
             @Valid @RequestBody UpdateMemberDto updateDto) {
 
@@ -280,7 +280,7 @@ public class MemberController {
 
         Member miembroActualizado = memberservice.update_member_by_id(memberId, memberUpdate);
 
-        return ResponseEntity.ok(MemberMapper.toDto(miembroActualizado));
+        return ResponseEntity.ok(UpdateMemberMapper.toDto(miembroActualizado));
     }
 
     /**

@@ -34,7 +34,7 @@ public class GuardianServiceImpl implements GuardianService {
         Member member = memberRepository.findValidGuardianById(id)
                 .orElseThrow(() -> new MemberNotFoundException("Member with ID " + id + " not found"));
 
-        return GuardianMapper.toGuardianCreateDTO(member);
+        return GuardianMapper.toGuardianDTO(member);
     }
 
     @Override
@@ -58,6 +58,7 @@ public class GuardianServiceImpl implements GuardianService {
         GuardianCreateDTO guardian = this.findGuardianById(guardianId);
 
         return GuardianWithMembersDTO.builder()
+                .memberId(guardianId)
                 .userId(guardian.getUserId())
                 .tenantId(guardian.getTenantId())
                 .subgroup(guardian.getSubgroup())

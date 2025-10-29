@@ -12,16 +12,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
-import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
-import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
-import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
+import uao.edu.co.scouts_project.domain.dto.common.ResponseDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
+import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
+import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,12 +32,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.*;
+
 @RestController
 @RequestMapping("/api/v1/auth0")
 @Tag(name = "Auth0 Management", description = "Endpoints para interactuar con Auth0 Management API")
 public class Auth0Controller {
 
-    // Logger can be added if needed
     private final IAuth0Service auth0Service;
 
     public Auth0Controller(IAuth0Service auth0Service) {
@@ -84,157 +87,6 @@ public class Auth0Controller {
         }
     }
 
-    // @GetMapping("/users/{userId}")
-    // @Operation(summary = "Obtiene un usuario por su ID en Auth0", responses = {
-    //         @ApiResponse(responseCode = "200", description = "Usuario encontrado", content = @Content(schema = @Schema(implementation = UserSummaryDTO.class))),
-    //         @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
-    //         @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
-    // })
-    // public ResponseEntity<Object> getUserById(@PathVariable @NotNull String userId) {
-    //     try {
-    //         UserSummaryDTO user = auth0Service.getUserById(userId);
-    //         return ResponseEntity.ok(user);
-    //     } catch (ResourceNotFoundException ex) {
-    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
-    //     } catch (Auth0GatewayException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(gatewayErrorBody(ex, "Fallo obteniendo usuario"));
-    //     }
-    // }
-
-    // @PostMapping("/users/{userId}/roles")
-    // @Operation(summary = "Asigna un rol a un usuario usando el ID de Auth0 directamente", responses = {
-    //         @ApiResponse(responseCode = "200", description = "Rol asignado correctamente"),
-    //         @ApiResponse(responseCode = "400", description = "Solicitud inválida (parámetros requeridos o inválidos)"),
-    //         @ApiResponse(responseCode = "404", description = "Usuario o rol no encontrado"),
-    //         @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
-    // })
-    // public ResponseEntity<Object> assignRoleToUser(
-    //         @PathVariable @NotNull String userId,
-    //         @RequestParam @NotNull String roleId) {
-    //     if (roleId == null || roleId.isBlank()) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "roleId es obligatorio"));
-    //     }
-    //     try {
-    //         auth0Service.assignRole(userId, roleId);
-    //         Map<String, Object> body = Map.of(
-    //                 "message", "Rol asignado correctamente",
-    //                 "userId", userId,
-    //                 "roleId", roleId);
-    //         return ResponseEntity.ok(body);
-    //     } catch (ResourceNotFoundException ex) {
-    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
-    //     } catch (IllegalArgumentException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
-    //     } catch (Auth0GatewayException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(gatewayErrorBody(ex, "Fallo asignando rol"));
-    //     }
-    // }
-
-    // @PostMapping("/users/{userId}/roles/by-name")
-    // @Operation(summary = "Asigna un rol a un usuario usando el nombre del rol (ej: ACUDIENTE, ADMIN_GRUPO)", responses = {
-    //         @ApiResponse(responseCode = "200", description = "Rol asignado correctamente"),
-    //         @ApiResponse(responseCode = "400", description = "Solicitud inválida (rol no existe)"),
-    //         @ApiResponse(responseCode = "403", description = "No autorizado para asignar este rol"),
-    //         @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
-    //         @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
-    // })
-    // public ResponseEntity<Object> assignRoleByName(
-    //         @PathVariable(required = true) String userId,
-    //         @RequestParam(required = true) String roleName) {
-    //     if (roleName == null || roleName.isBlank()) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "roleName es obligatorio"));
-    //     }
-    //     try {
-    //         Role role = Role.valueOf(roleName.toUpperCase());
-    //         auth0Service.assignRole(userId, role);
-    //         Map<String, Object> body = Map.of(
-    //                 "message", "Rol asignado correctamente",
-    //                 "userId", userId,
-    //                 "roleName", roleName);
-    //         return ResponseEntity.ok(body);
-    //     } catch (IllegalArgumentException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-    //                 .body(Map.of("message", "Rol inválido: " + roleName + ". Roles válidos: " +
-    //                         java.util.Arrays.toString(Role.values())));
-    //     } catch (UnauthorizedRoleAssignmentException ex) {
-    //         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", ex.getMessage()));
-    //     } catch (ResourceNotFoundException ex) {
-    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
-    //     } catch (Auth0GatewayException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(gatewayErrorBody(ex, "Fallo asignando rol"));
-    //     }
-    // }
-
-    // @PostMapping("/organizations/{organizationId}/members")
-    // @Operation(summary = "Asocia un usuario a una organización específica en Auth0 (requiere especificar organizationId)", responses = {
-    //         @ApiResponse(responseCode = "200", description = "Usuario asociado a la organización"),
-    //         @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
-    //         @ApiResponse(responseCode = "404", description = "Organización o usuario no encontrado"),
-    //         @ApiResponse(responseCode = "409", description = "El usuario ya pertenece a la organización"),
-    //         @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
-    // })
-    // public ResponseEntity<Object> addUserToOrganization(
-    //         @PathVariable(required = true) String organizationId,
-    //         @RequestParam(required = true) String userId) {
-    //     if (userId == null || userId.isBlank()) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "userId es obligatorio"));
-    //     }
-    //     try {
-    //         auth0Service.addUserToOrganization(organizationId, userId);
-    //         Map<String, Object> body = Map.of(
-    //                 "message", "Usuario agregado a la organización",
-    //                 "organizationId", organizationId,
-    //                 "userId", userId);
-    //         return ResponseEntity.ok(body);
-    //     } catch (UserAlreadyMemberException ex) {
-    //         Map<String, Object> body = Map.of(
-    //                 "message", "El usuario ya pertenece a la organización",
-    //                 "organizationId", organizationId,
-    //                 "userId", userId);
-    //         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-    //     } catch (ResourceNotFoundException ex) {
-    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
-    //     } catch (IllegalArgumentException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
-    //     } catch (Auth0GatewayException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-    //                 .body(gatewayErrorBody(ex, "Fallo agregando usuario a organización"));
-    //     }
-    // }
-
-    // @PostMapping("/organizations/own/members")
-    // @Operation(summary = "Asocia un usuario a la organización propia del usuario autenticado (usa org_id del JWT)", responses = {
-    //         @ApiResponse(responseCode = "200", description = "Usuario asociado a la organización propia"),
-    //         @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
-    //         @ApiResponse(responseCode = "404", description = "Organización o usuario no encontrado"),
-    //         @ApiResponse(responseCode = "409", description = "El usuario ya pertenece a la organización"),
-    //         @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
-    // })
-    // public ResponseEntity<Object> addUserToOwnOrganization(@RequestParam(required = true) String userId) {
-    //     if (userId == null || userId.isBlank()) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "userId es obligatorio"));
-    //     }
-    //     try {
-    //         auth0Service.addUserToOwnOrganization(userId);
-    //         Map<String, Object> body = Map.of(
-    //                 "message", "Usuario agregado a tu organización exitosamente",
-    //                 "userId", userId);
-    //         return ResponseEntity.ok(body);
-    //     } catch (UserAlreadyMemberException ex) {
-    //         Map<String, Object> body = Map.of(
-    //                 "message", "El usuario ya pertenece a la organización",
-    //                 "userId", userId);
-    //         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-    //     } catch (ResourceNotFoundException ex) {
-    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
-    //     } catch (IllegalArgumentException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
-    //     } catch (Auth0GatewayException ex) {
-    //         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-    //                 .body(gatewayErrorBody(ex, "Fallo agregando usuario a organización propia"));
-    //     }
-    // }
-
     @PostMapping("/users")
     @Operation(summary = "Crea un nuevo usuario en Auth0 con email, password y username", responses = {
             @ApiResponse(responseCode = "200", description = "Usuario creado", content = @Content(schema = @Schema(implementation = CreatedUserDTO.class))),
@@ -254,9 +106,11 @@ public class Auth0Controller {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
         } catch (Auth0GatewayException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(gatewayErrorBody(ex, "Fallo creando usuario"));
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(gatewayErrorBody(ex, "Fallo creando usuario"));
         }
     }
+
 
     @PostMapping("/scouts")
     @Operation(summary = "Crea un usuario Scout completo: crea en Auth0, asocia a tu organización y asigna rol SCOUT", responses = {
@@ -353,54 +207,191 @@ public class Auth0Controller {
         description = "Datos para crear el usuario con rol específico", 
         content = @Content(schema = @Schema(implementation = CreateUserWithRoleCommandDTO.class))
     )
-    public ResponseEntity<Object> createUserWithRole(
+    public ResponseEntity<ResponseDTO<CreatedUserDTO>> createUserWithRole(
             @Valid @org.springframework.web.bind.annotation.RequestBody CreateUserWithRoleCommandDTO request,
             BindingResult bindingResult) {
         try {
             // Validar errores de binding
             if (bindingResult.hasErrors()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationErrorBody(bindingResult));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseDTO.<CreatedUserDTO>builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .message("Solicitud inválida")
+                        .build()
+                );
             }
 
             // Crear usuario con rol
             CreatedUserDTO createdUser = auth0Service.createUserWithRole(request);
 
-            // Preparar respuesta exitosa
-            Map<String, Object> body = Map.of(
-                    "message", "Usuario creado exitosamente",
-                    "userId", createdUser.getId(),
-                    "email", createdUser.getEmail(),
-                    "username", createdUser.getUsername(),
-                    "role", request.getRole(),
-                    "user", createdUser
+            return ResponseEntity.ok(
+                ResponseDTO.<CreatedUserDTO>builder()
+                    .status(HttpStatus.OK.value())
+                    .message("Usuario creado exitosamente")
+                    .data(createdUser)
+                    .build()
             );
-            return ResponseEntity.ok(body);
 
         } catch (UserAlreadyMemberException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("message", "El usuario ya pertenece a la organización"));
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ResponseDTO.<CreatedUserDTO>builder()
+                        .status(HttpStatus.CONFLICT.value())
+                        .message("El usuario ya pertenece a la organización")
+                        .build());
                     
         } catch (UnauthorizedRoleAssignmentException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of(
-                        "message", ex.getMessage(),
-                        "allowedRoles", "SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-                    ));
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ResponseDTO.<CreatedUserDTO>builder()
+                        .status(HttpStatus.FORBIDDEN.value())
+                        .message(ex.getMessage())
+                        .build());
                     
         } catch (ResourceNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ResponseDTO.<CreatedUserDTO>builder()
+                        .status(HttpStatus.NOT_FOUND.value())
+                        .message(ex.getMessage())
+                        .build());
                     
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(
-                        "message", ex.getMessage(),
-                        "allowedRoles", "SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN"
-                    ));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ResponseDTO.<CreatedUserDTO>builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .message(ex.getMessage())
+                        .build());
                     
         } catch (Auth0GatewayException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(gatewayErrorBody(ex, "Fallo creando usuario con rol"));
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+            .body(ResponseDTO.<CreatedUserDTO>builder()
+                        .status(HttpStatus.BAD_GATEWAY.value())
+                        .message("Fallo creando usuario con rol")
+                        .build());
+        }
+    }
+
+    // --- Change role (Group Admin) ---
+    @PutMapping("/change-role")
+    @PreAuthorize("hasRole('ADMIN_GRUPO')")
+    @Operation(
+        summary = "Cambia el rol único de un usuario (solo roles no administrativos)",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Rol cambiado",
+                content = @Content(schema = @Schema(implementation = ResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "403", description = "Rol no permitido / Usuario fuera de alcance"),
+            @ApiResponse(responseCode = "404", description = "Usuario o rol no encontrado"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+        }
+    )
+    public ResponseEntity<ResponseDTO<Void>> changeUserRole(
+            @Valid @org.springframework.web.bind.annotation.RequestBody UserAuth0ChangeRoleDTO request,
+            BindingResult bindingResult) {
+        try {
+            if (bindingResult.hasErrors()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseDTO.<Void>builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .message("Solicitud inválida")
+                        .build()
+                );
+            }
+
+            auth0Service.changeUserRole(request);
+
+            return ResponseEntity.ok(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.OK.value())
+                    .message("Rol cambiado exitosamente")
+                    .build()
+            );
+        } catch (UnauthorizedRoleAssignmentException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.FORBIDDEN.value())
+                    .message(ex.getMessage())
+                    .build()
+            );
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.NOT_FOUND.value())
+                    .message(ex.getMessage())
+                    .build()
+            );
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.BAD_REQUEST.value())
+                    .message(ex.getMessage())
+                    .build()
+            );
+        } catch (Auth0GatewayException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.BAD_GATEWAY.value())
+                    .message("Fallo cambiando rol en Auth0")
+                    .build()
+            );
+        }
+    }
+
+    // --- Change role (Global Admin) ---
+    @PutMapping("/change-role-global")
+    @PreAuthorize("hasRole('ADMIN_GLOBAL')")
+    @Operation(
+        summary = "Cambia el rol único de un usuario (cualquier rol). Puede validar contra una organización específica",
+        requestBody = @RequestBody(required = true, content = @Content(schema = @Schema(implementation = UserAuth0ChangeRoleDTO.class))),
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Rol cambiado",
+                content = @Content(schema = @Schema(implementation = ResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "404", description = "Usuario o rol no encontrado"),
+            @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+        }
+    )
+    public ResponseEntity<ResponseDTO<Void>> changeUserRoleGlobal(
+            @Valid @org.springframework.web.bind.annotation.RequestBody UserAuth0ChangeRoleDTO request,
+            BindingResult bindingResult) {
+        try {
+            if (bindingResult.hasErrors()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseDTO.<Void>builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .message("Solicitud inválida")
+                        .build()
+                );
+            }
+
+            // organizationId (opcional) viene en el body. El servicio validará membresía si se envía.
+            auth0Service.changeUserRoleGlobal(request);
+
+            return ResponseEntity.ok(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.OK.value())
+                    .message("Rol cambiado exitosamente")
+                    .build()
+            );
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.NOT_FOUND.value())
+                    .message(ex.getMessage())
+                    .build()
+            );
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.BAD_REQUEST.value())
+                    .message(ex.getMessage())
+                    .build()
+            );
+        } catch (Auth0GatewayException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
+                ResponseDTO.<Void>builder()
+                    .status(HttpStatus.BAD_GATEWAY.value())
+                    .message("Fallo cambiando rol en Auth0")
+                    .build()
+            );
         }
     }
 

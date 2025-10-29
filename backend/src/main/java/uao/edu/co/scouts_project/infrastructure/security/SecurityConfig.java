@@ -32,6 +32,8 @@ public class SecurityConfig {
 
                                                 .requestMatchers("/api/v1/sec/roles").authenticated()
                                                 .requestMatchers("/api/v1/sec/org_id").authenticated()
+                                                .requestMatchers("/api/v1/sec/admin/auth0/connections/*").denyAll()
+                                                .requestMatchers("/api/v1/sec/admin/auth0/organizations/*/connections/*").denyAll()
 
                                                 .requestMatchers("/api/v1/mock/scouts/list")
                                                 .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
@@ -91,6 +93,12 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
 
+                                                // Cambio de rol: reglas específicas por endpoint
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role")
+                                                .hasAnyRole(ADMIN_GRUPO.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role-global")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
+
                                                 // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia
                                                 // organización
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
@@ -122,17 +130,15 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/members/create_member_with_school")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_members")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_members_by_subgroup")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_members_by_status")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_subGroup_by_memberId")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_schoolData_by_memberId")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
-                                                .requestMatchers("/api/v1/members/list_members_with_details")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), SCOUT.name())
                                                 .requestMatchers("/api/v1/members/update_member_status/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/update_member_by_id/**")
@@ -144,8 +150,6 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/auth0/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                                                // //
-                                                // // Datos básicos de miembros
 
                                                 // Guardians
 
