@@ -16,7 +16,7 @@ export default function Home() {
               <ul className="flex items-center gap-4">
                 <li>
                   <Button
-                    variant="secondary"
+                    variant="link"
                     className={"text-accent"}
                     onClick={() => {
                       const section = document.querySelector("#nuestros-grupos");
@@ -30,6 +30,8 @@ export default function Home() {
                 </li>
               </ul>
             </nav>
+
+            <LoginButton variant="outline" organization="">Iniciar sesión</LoginButton>
           </div>
         </div>
       </header>
