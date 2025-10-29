@@ -147,9 +147,9 @@ export default function MedicalRecordsView() {
 
     const handleFormSubmit = async (_formData: MedicalFormData) => {
         try {
-            await fetchMedicalRecords();
             setShowForm(false);
             setEditingRecord(null);
+            await fetchMedicalRecords();
         } catch (err) {
             console.error('Error refreshing medical records:', err);
         }
