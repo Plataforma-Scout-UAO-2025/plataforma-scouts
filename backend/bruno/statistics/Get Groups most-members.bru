@@ -1,0 +1,39 @@
+meta {
+  name: Get Groups most-members
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://localhost:8080/api/v1/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups/most-members
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: org_6B3k4dao2Wf6eGxa
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Validar que la respuesta es un arreglo", function () {
+    expect(Array.isArray(res.body)).to.be.true;
+  });
+
+  test("Validar estructura de elementos", function () {
+    if (res.body.length > 0) {
+      expect(res.body[0]).to.have.property('group_id');
+      expect(res.body[0]).to.have.property('group_name');
+      expect(res.body[0]).to.have.property('members_count');
+    }
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+

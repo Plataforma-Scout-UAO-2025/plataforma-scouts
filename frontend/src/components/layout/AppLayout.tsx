@@ -170,7 +170,7 @@ const ScoutItems: MenuItem[] = [
     id: "inscripcion",
     label: "Inscripcion",
     icon: <Pencil />,
-    href: "/app/inscripcion",
+    href: "/app/grupos/utils/ScoutEnrollmentInfo",
   },
 ];
 
