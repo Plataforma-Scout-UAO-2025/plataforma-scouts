@@ -1,0 +1,31 @@
+meta {
+  name: Get Total Members
+  type: http
+  seq: 10
+}
+
+get {
+  url: http://localhost:8080/api/v1/statistics/members/total
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Validar campo total_members_count", function () {
+    expect(res.body.total_members_count).to.be.a('number');
+    expect(res.body.total_members_count).to.be.at.least(0);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+

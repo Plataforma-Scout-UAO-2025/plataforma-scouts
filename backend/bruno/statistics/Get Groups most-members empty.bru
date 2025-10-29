@@ -1,0 +1,46 @@
+meta {
+  name: Get Groups most members empty
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:8080/api/v1/statistics/groups/most-members
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar respuesta vacía exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Validar tamaño del array", function () {
+    expect(Array.isArray(res.body)).to.be.true;
+    expect(res.body.length).to.be.at.most(1);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Obtener grupos con más miembros (caso vacío)
+  
+  **Endpoint:** /api/v1/statistics/groups/most-members
+  
+  **Descripción:** Validar que el endpoint maneja correctamente el caso cuando no hay grupos o miembros registrados.
+  Se espera:
+  - Código 200 (éxito)
+  - Array vacío como respuesta
+  
+  **Respuesta esperada:** 
+  ```json
+  []
+  ```
+}

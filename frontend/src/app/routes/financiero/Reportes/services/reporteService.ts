@@ -195,7 +195,11 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
           }
         });
 
-        currentY = (pdf as any).lastAutoTable.finalY + 15;
+        type JsPDFWithAutoTable = InstanceType<typeof jsPDF> & {
+          lastAutoTable?: { finalY: number };
+          getNumberOfPages: () => number;
+        };
+        currentY = (((pdf as JsPDFWithAutoTable).lastAutoTable?.finalY) ?? currentY) + 15;
 
         // Resumen financiero con tabla
         pdf.setFontSize(11);
@@ -236,7 +240,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
           }
         });
 
-        currentY = (pdf as any).lastAutoTable.finalY + 15;
+        currentY = (((pdf as JsPDFWithAutoTable).lastAutoTable?.finalY) ?? currentY) + 15;
 
         // Detalle de pagos con tabla
         pdf.setFontSize(11);
@@ -301,7 +305,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         });
 
         // Footer en todas las páginas
-        const pageCount = (pdf as any).getNumberOfPages();
+        const pageCount = (pdf as JsPDFWithAutoTable).getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
           pdf.setPage(i);
           pdf.setFontSize(8);
