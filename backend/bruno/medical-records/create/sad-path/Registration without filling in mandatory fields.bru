@@ -1,0 +1,63 @@
+meta {
+  name: Registration without filling in mandatory fields
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseurl}}/medical_record/create_record/21
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
+body:json {
+  {
+    "blood_type": "", // Campo obligatorio sin llenar
+    "eps": "Sura",
+    "allergies": "Piña",
+    "chronic_diseases": "Diabetes",
+    "physical_restrictions": "Requiere una silla de ruedas",
+    "surgical_history": "Apendicectomía",
+    "vaccines_detail": [],
+    "medications_detail": []
+  }
+  
+}
+
+tests {
+  test("Validar petición fallida", function () {
+    expect(res.status).to.equal(400);
+  });
+  
+  test("Validar mensaje de error", function () {
+    expect(res.body.message).to.equal("ERROR: datos inválidos.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Nombre:** Registro sin campos obligatorios
+  
+  **Endpoint:** /api/v1/medical_record/create_record/{id}
+  
+  **HU relacionadas:** HU-INN-1.1
+  
+  **Descripción:** Comprobar que el endpoint de creación de registros medicos recibe y responde correctamente a una petición sin algunos de los campos obligatorios.
+  
+  **Respuesta esperada:** Retorna el código 400 (bad request) y un mensaje de error.
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-08
+  
+}

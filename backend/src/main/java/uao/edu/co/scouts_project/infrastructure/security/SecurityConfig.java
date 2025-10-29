@@ -46,6 +46,10 @@ public class SecurityConfig {
 
                                                 // Operaciones CRUD en tenants
 
+                                                // Exponer públicamente el endpoint para resolver org_id por slug
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/slug/**")
+                                                .permitAll()
+
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
@@ -142,6 +146,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/members/update_member_status/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/update_member_by_id/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/update_role/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/assign_subgroup_and_section/")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
