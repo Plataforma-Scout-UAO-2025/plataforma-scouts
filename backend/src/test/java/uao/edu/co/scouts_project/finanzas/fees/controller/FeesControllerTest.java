@@ -7,8 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -129,4 +131,63 @@ class FeesControllerTest {
         .content("{}"))
       .andExpect(status().isBadRequest());
   }
+
+  @Test
+  void post_create_returns409_whenUniqueConstraintViolation() throws Exception {
+    when(feeService.create(any()))
+        .thenThrow(new org.springframework.dao.DataIntegrityViolationException("uq_installment_per_account_concept_date"));
+
+    mvc.perform(post("/api/v1/finanzas/fees")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{}"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error").value("unique_constraint_violation"))
+        .andExpect(jsonPath("$.constraint").value("uq_installment_per_account_concept_date"))
+        .andExpect(jsonPath("$.message").value("Ya existe una cuota para este account, concepto y fecha"));
+  }
+
+  @Test
+  void patch_updates_and_returns200() throws Exception {
+    // Construye un CuotaDto válido usando el constructor canónico del record
+    var dto = new CuotaDto(
+        123L,                          // feePlanId (o el primer field de tu record)
+        new BigDecimal("100000"),      // amount
+        "Nombre cuota",                // name
+        "Descripción",                 // description
+        "SECTION",                     // scope
+        "MONTHLY",                     // periodicity
+        java.time.LocalDate.of(2025,10,1),  // startDate
+        java.time.LocalDate.of(2025,12,31), // endDate
+        JsonNodeFactory.instance.arrayNode() // associatedTo (json)
+    );
+
+    // Cuando el servicio patch sea llamado, devuelve un CuotaDto (puede ser el mismo u otro)
+    when(feeService.patch(
+            org.mockito.ArgumentMatchers.eq(123L),
+            org.mockito.ArgumentMatchers.any(CuotaDto.class),
+            org.mockito.ArgumentMatchers.eq("org_TENANT")))
+        .thenReturn(dto);
+
+    mvc.perform(patch("/api/v1/finanzas/fees/{tenantId}/{feePlanId}", "org_TENANT", 123L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(om.writeValueAsString(dto)))
+        .andExpect(status().isOk());
+
+    // Verifica que se llamó al servicio con los parámetros correctos
+    org.mockito.Mockito.verify(feeService)
+        .patch(org.mockito.ArgumentMatchers.eq(123L),
+              org.mockito.ArgumentMatchers.any(CuotaDto.class),
+              org.mockito.ArgumentMatchers.eq("org_TENANT"));
+  }
+
+  @Test
+  void delete_removes_and_returns204() throws Exception {
+    mvc.perform(delete("/api/v1/finanzas/fees/{tenantId}/{feePlanId}", "org_TENANT", 777L))
+        .andExpect(status().isNoContent());
+
+    org.mockito.Mockito.verify(feeService)
+        .deleteFeePlan(org.mockito.ArgumentMatchers.eq(777L),
+                      org.mockito.ArgumentMatchers.eq("org_TENANT"));
+  }
+
 }
