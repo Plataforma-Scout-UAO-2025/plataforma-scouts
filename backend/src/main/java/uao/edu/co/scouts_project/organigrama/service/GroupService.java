@@ -82,13 +82,11 @@ public class GroupService implements IGroupService {
     public GroupResponseDTO createGroup(String tenantId, GroupDTO dto) {
         ensureTenantExists(tenantId);
 
-        // Solo un grupo por tenant
+        // Solo un grupo por tenant: no se permite más de un grupo por tenant
         if (groupRepository.existsByTenantId(dto.tenantId())) {
-            throw new IllegalArgumentException("Ya existe un grupo para el tenant: " + dto.tenantId());
+            throw new IllegalArgumentException("No se puede crear más de un grupo para el tenant: " + dto.tenantId());
         }
-
         validateSlugFormat(dto.slug());
-        ensureSlugIsUnique(dto.slug());
 
         Group group;
         try {
@@ -135,6 +133,7 @@ public class GroupService implements IGroupService {
         }
     }
 
+    @Override
     public void ensureSlugIsUnique(String slug) {
         if (groupRepository.existsBySlug(slug)) {
             throw new IllegalArgumentException("El slug '" + slug + "' ya está en uso en otro grupo.");
@@ -226,6 +225,7 @@ public class GroupService implements IGroupService {
         groupRepository.delete(group);
     }
 
+    @Override
     @Transactional
     public void deleteLogoImage(String tenantId, String groupSlug) {
         ensureTenantExists(tenantId);
@@ -239,6 +239,7 @@ public class GroupService implements IGroupService {
         }
     }
 
+    @Override
     @Transactional
     public void deleteScarfImage(String tenantId, String groupSlug) {
         ensureTenantExists(tenantId);
@@ -252,6 +253,7 @@ public class GroupService implements IGroupService {
         }
     }
 
+    @Override
     @Transactional
     public void updateLogo(String tenantId, String groupSlug, UUID logoObjectId) {
         ensureTenantExists(tenantId);
@@ -266,6 +268,7 @@ public class GroupService implements IGroupService {
         groupRepository.save(group);
     }
 
+    @Override
     @Transactional
     public void updateScarf(String tenantId, String groupSlug, UUID scarfObjectId) {
         ensureTenantExists(tenantId);
@@ -368,8 +371,17 @@ public class GroupService implements IGroupService {
 
     @Override
     public String deleteGroup(Long groupId) {
-        groupRepository.deleteById(groupId);
-        return "Grupo eliminado con éxito.";
+        Group group = groupRepository.findById(groupId).orElse(null);
+        if (group != null) {
+            if (group.getLogoObjectId() != null) {
+                storageService.deleteFileByObjectId(group.getLogoObjectId());
+            }
+            if (group.getScarfObjectId() != null) {
+                storageService.deleteFileByObjectId(group.getScarfObjectId());
+            }
+            groupRepository.deleteById(groupId);
+        }
+        return "Grupo con ID: " + groupId + " ha sido eliminado.";
     }
 
     @Transactional

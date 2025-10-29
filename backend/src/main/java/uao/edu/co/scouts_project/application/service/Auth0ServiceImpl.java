@@ -53,6 +53,12 @@ public class Auth0ServiceImpl implements IAuth0Service {
     @Value("${SUPERUSER_PASSWORD}")
     private String SUPERUSERPASSWORD;
 
+    @Value("${SUPERUSER_EMAIL}")
+    private String SUPERUSEREMAIL;
+
+    @Value("${SUPERUSER_USERNAME}")
+    private String SUPERUSER_USERNAME;
+
     private final Auth0AdminAdapter auth0AdminAdapter;
 
     private final Auth0AdminPort adminPort;
@@ -344,9 +350,9 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
         // Creamos DTO
         CreateUserWithRoleCommandDTO superUser = new CreateUserWithRoleCommandDTO(
-                "canavia@uao.edu.co",
+                SUPERUSEREMAIL,
                 SUPERUSERPASSWORD,
-                "canavia",
+                SUPERUSER_USERNAME,
                 Role.ADMIN_GLOBAL);
 
         // Servicio de Auth0 crea el Usuario.

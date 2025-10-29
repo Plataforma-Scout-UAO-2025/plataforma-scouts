@@ -19,11 +19,11 @@ import lombok.NoArgsConstructor;
 public class UpdatingGroupDTO {
 
     @JsonProperty("slug")
-    @Schema(description = "Slug único del grupo", example = "grupo-exploradores", required = true)
+    @Schema(description = "Slug único del grupo", example = "grupo-exploradores")
     private String slug;
 
     @JsonProperty("name")
-    @Schema(description = "Nombre oficial del grupo", example = "Grupo Exploradores del Sur", required = true)
+    @Schema(description = "Nombre oficial del grupo", example = "Grupo Exploradores del Sur")
     private String name;
 
     @JsonProperty("district")

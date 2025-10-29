@@ -17,7 +17,6 @@ import java.util.Map;
 @Data
 @Entity
 @Table(name = "groups")
-@AllArgsConstructor
 public class Group {
     
     @Id
