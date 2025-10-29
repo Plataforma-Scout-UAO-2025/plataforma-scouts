@@ -61,10 +61,16 @@ public class StatisticsController {
             // default top 5
             var result = groupStatisticsService.getTopGroupsByMembers(tenantId, 5);
             return ResponseEntity.ok(result);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity
+                .status(e.getStatusCode())
+                .body(Map.of("message", e.getReason()));
         } catch (Exception e) {
+            // Cubre errores no esperados
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Ha ocurrido un error interno en el servidor"));
+  
         }
     }
 
@@ -98,7 +104,14 @@ public class StatisticsController {
 
             GroupStatisticsDTO result = groupStatisticsService.getGroupStatistics(tenantId);
             return ResponseEntity.ok(result);
+        } catch (ResponseStatusException e) {
+            // ✅ Mantiene el código y mensaje originales lanzados por el servicio
+            return ResponseEntity
+                .status(e.getStatusCode())
+                .body(Map.of("message", e.getReason()));
+
         } catch (Exception e) {
+            // ✅ Cubre errores no esperados
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Ha ocurrido un error interno en el servidor"));
@@ -174,6 +187,11 @@ public class StatisticsController {
 
             var result = groupStatisticsService.getInactiveGroupStatistics(tenantId);
             return ResponseEntity.ok(result);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity
+                .status(e.getStatusCode())
+                .body(Map.of("message", e.getReason()));
+
         } catch (Exception e) {
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

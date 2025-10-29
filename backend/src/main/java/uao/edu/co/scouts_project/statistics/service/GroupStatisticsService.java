@@ -10,7 +10,9 @@ import uao.edu.co.scouts_project.member.repository.IMemberRepository;
 import uao.edu.co.scouts_project.statistics.dto.GroupMembersCountDTO;
 import uao.edu.co.scouts_project.statistics.dto.GroupStatisticsDTO;
 import uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO;
+import uao.edu.co.scouts_project.statistics.dto.InactiveGroupStatisticsDTO;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class GroupStatisticsService {
@@ -38,7 +40,7 @@ public class GroupStatisticsService {
     }
 
     @Transactional(readOnly = true)
-    public uao.edu.co.scouts_project.statistics.dto.InactiveGroupStatisticsDTO getInactiveGroupStatistics(String tenantId) {
+    public InactiveGroupStatisticsDTO getInactiveGroupStatistics(String tenantId) {
         // Validar que el tenant existe: lanzar 404 si no existe
         tenantRepository.findById(tenantId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no encontrado"));
@@ -60,14 +62,14 @@ public class GroupStatisticsService {
     }
 
     @Transactional(readOnly = true)
-    public java.util.List<GroupMembersCountDTO> getTopGroupsByMembers(String tenantId, int limit) {
+    public List<GroupMembersCountDTO> getTopGroupsByMembers(String tenantId, int limit) {
         // Validar tenant
         tenantRepository.findById(tenantId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no encontrado"));
 
         // Obtener conteo de miembros por groupId (descendente)
-        java.util.List<Object[]> rows = memberRepository.countMembersByGroupIdByTenant(tenantId);
-        java.util.List<GroupMembersCountDTO> result = new java.util.ArrayList<>();
+        List<Object[]> rows = memberRepository.countMembersByGroupIdByTenant(tenantId);
+        List<GroupMembersCountDTO> result = new ArrayList<>();
 
         for (Object[] row : rows) {
             if (result.size() >= limit) break;
@@ -75,7 +77,7 @@ public class GroupStatisticsService {
             Long count = (Long) row[1];
             // Buscar nombre del grupo (si existe)
             var groupOpt = groupRepository.findById(groupId);
-            String groupName = groupOpt.map(g -> g.getName()).orElse("<unknown>");
+            String groupName = groupOpt.map(g -> g.getName()).orElse("<Desconocido>");
             result.add(new GroupMembersCountDTO(groupId, groupName, count == null ? 0L : count));
         }
 

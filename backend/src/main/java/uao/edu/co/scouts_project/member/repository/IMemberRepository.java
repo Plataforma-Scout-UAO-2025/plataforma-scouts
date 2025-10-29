@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
+import uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +59,7 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
            "JOIN Group g ON g.groupId = s.groupId " +
            "WHERE g.tenantId = :tenantId " +
            "GROUP BY g.groupId, g.name")
-    List<uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO> countMembersByGroup(@Param("tenantId") String tenantId);
+    List<GroupMembersDTO> countMembersByGroup(@Param("tenantId") String tenantId);
 
     /**
      * Recupera todos los miembros de un tenant con información completa de subgrupo y sección.
