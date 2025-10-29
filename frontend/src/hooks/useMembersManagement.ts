@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { fetchMembersWithBranchAction } from "@/store/members/membersActions";
 import { useMember } from "./useMember";
@@ -7,9 +7,13 @@ export const useMembersManagement = () => {
   const dispatch = useAppDispatch();
   const { members, loading, error } = useMember();
 
-  useEffect(() => {
+  const fetchMembers = useCallback(() => {
     dispatch(fetchMembersWithBranchAction());
   }, [dispatch]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
 
   const scoutMembers = members.filter(
     (member) => member.role?.toUpperCase() === "SCOUT"
@@ -79,5 +83,6 @@ export const useMembersManagement = () => {
 
     loading,
     error,
+    refreshMembers: fetchMembers,
   };
 };

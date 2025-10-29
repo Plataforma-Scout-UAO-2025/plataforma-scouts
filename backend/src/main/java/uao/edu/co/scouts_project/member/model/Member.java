@@ -51,28 +51,23 @@ public class Member {
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
 
+    @Column(name= "guardian_id")
     private Integer guardianId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subgroup_id")
     private Subgroup subgroup;
 
-    @NotNull
-    @Column(name = "first_name", nullable = false)
+    @Column(name = "first_name")
     private String firstName;
 
-    @NotNull
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name")
     private String lastName;
 
     private Integer age;
 
-    @NotNull
-    @Column(nullable = false)
     private String role;
 
-    @NotNull
-    @Column(nullable = false)
     private String identification;
 
     @Column(name = "document_type")
@@ -107,17 +102,16 @@ public class Member {
     @Column(name = "acceptance_date")
     private LocalDate acceptanceDate;
 
-
     @Type(JsonType.class)
     @Column(name = "emergency_contacts", columnDefinition = "jsonb")
     private List<EmergencyContact> emergencyContacts;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @EqualsAndHashCode
