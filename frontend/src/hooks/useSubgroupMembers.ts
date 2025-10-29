@@ -1,8 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/store/store';
 import { fetchSubgroupMembersAction } from '@/store/organigrama/organigramaActions';
 import type { Member } from '@/types/member.type';
+import { fetchMembersWithBranchAction } from '@/store/members/membersActions';
 
 // Member helpers
 export const getMemberFullName = (member: Member & Record<string, unknown>): string => {
@@ -39,12 +40,65 @@ interface UseSubgroupMembersReturn {
 
 export const useSubgroupMembers = (subgroupId?: number): UseSubgroupMembersReturn => {
   const dispatch = useDispatch<AppDispatch>();
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const triedGlobalFetchRef = useRef(false);
   
   // Get members data from Redux store
   const subgroupData = useSelector((state: RootState) => {
     if (!subgroupId) return { members: [], loading: false, error: null };
     return state.organigrama.subgroupMembers[subgroupId] || { members: [], loading: false, error: null };
   });
+
+  // Global members (used for fallback when subgroup endpoint is forbidden for SCOUTER)
+  const allMembers = useSelector((state: RootState) => state.members.members);
+
+  // Helper to get subgroup id from Member with different shapes
+  const toNumberSafe = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const getMemberSubgroupId = (m: Member): number | undefined => {
+    return (
+      toNumberSafe((m as any).subgroup_id) ??
+      toNumberSafe(m.subgroup?.subgroupId) ??
+      toNumberSafe((m.subgroup as any)?.subgroup_id)
+    );
+  };
+
+  // Derive fallback members by filtering global members by subgroupId
+  const derivedMembers = useMemo<Member[]>(() => {
+    const sgNum = toNumberSafe(subgroupId);
+    if (!sgNum || !Array.isArray(allMembers) || allMembers.length === 0) return [];
+    return allMembers.filter((m) => getMemberSubgroupId(m) === sgNum);
+  }, [allMembers, subgroupId]);
+
+  // If subgroup response is empty or errored (e.g., 403), try to fetch global members once
+  useEffect(() => {
+    if (!subgroupId) return;
+    const noSubgroupMembers = !subgroupData.members || subgroupData.members.length === 0;
+    const hasError = Boolean(subgroupData.error);
+    const needFallback = noSubgroupMembers || hasError;
+    if (!needFallback) return;
+
+    // If we already have global members, no need to fetch
+    if (Array.isArray(allMembers) && allMembers.length > 0) return;
+    if (triedGlobalFetchRef.current) return;
+
+    triedGlobalFetchRef.current = true;
+    setFallbackLoading(true);
+    (async () => {
+      try {
+        // Prefer the enriched endpoint that includes relationships
+        const action = await dispatch(fetchMembersWithBranchAction());
+        if (fetchMembersWithBranchAction.rejected.match(action)) {
+          // swallow error, UI will still show derived members if any
+        }
+      } finally {
+        setFallbackLoading(false);
+      }
+    })();
+  }, [subgroupId, subgroupData.members, subgroupData.error, allMembers, dispatch]);
 
   // Function to fetch members using Redux action
   const fetchMembers = useCallback(async (targetSubgroupId: number): Promise<Member[]> => {
@@ -63,9 +117,12 @@ export const useSubgroupMembers = (subgroupId?: number): UseSubgroupMembersRetur
   }, [dispatch]);
 
   return {
-    members: subgroupData.members,
-    loading: subgroupData.loading,
-    error: subgroupData.error,
+    // Prefer server subgroup members; fallback to derived ones if missing/forbidden
+    members: (subgroupData.members && subgroupData.members.length > 0)
+      ? subgroupData.members
+      : derivedMembers,
+    loading: subgroupData.loading || fallbackLoading,
+    error: (derivedMembers && derivedMembers.length > 0) ? null : subgroupData.error,
     fetchMembers,
   };
 };
