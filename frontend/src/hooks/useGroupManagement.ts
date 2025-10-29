@@ -2,28 +2,29 @@ import type { GroupResponseDTO as Group } from "@/types/group.type";
 import { useEffect } from "react";
 import { useAppDispatch } from "./useAppDispatch";
 import { fetchGroupsAction } from "@/store/groups/groupsActions";
+import { isGroupActive } from "@/utils/groupStatus";
+import { useGroup } from "./useGroup";
 
 interface GroupStatus {
   is_active?: boolean | string | number;
   isActive?: boolean | string | number;
+  status?: string;
 }
 
 export const useGroupManagement = () => {
   const dispatch = useAppDispatch();
+  const { groups } = useGroup();
 
   useEffect(() => {
-    dispatch(fetchGroupsAction());
-  }, [dispatch]);
+    // Solo fetch si no hay grupos cargados
+    if (!groups || groups.length === 0) {
+      dispatch(fetchGroupsAction());
+    }
+  }, [dispatch, groups]);
 
+  // Usar la función utilitaria compartida
   const isActive = (group: GroupStatus): boolean => {
-    const value = group.isActive;
-    if (typeof value === "string") {
-      return value.toLowerCase() === "activo" || value.toLowerCase() === "true";
-    }
-    if (typeof value === "number") {
-      return value === 1;
-    }
-    return Boolean(value);
+    return isGroupActive(group);
   };
 
   const handleViewInfo = (

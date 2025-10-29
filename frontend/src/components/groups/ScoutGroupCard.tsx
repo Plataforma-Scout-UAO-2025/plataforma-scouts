@@ -4,6 +4,7 @@ import RegisterButton from "../auth/RegisterButton"
 import type { GroupResponseDTO } from "@/types/group.type"
 import { FaFacebook, FaGlobe, FaInstagram, FaTwitter, FaYoutube, FaExternalLinkAlt} from "react-icons/fa"
 import { Calendar, Mail, MapPin, Phone } from "lucide-react"
+import { memo, useMemo, useState } from "react"
 
 interface ScoutGroupCardProps {
   group: GroupResponseDTO
@@ -11,7 +12,6 @@ interface ScoutGroupCardProps {
 
 const getSocialIcon = (platform: string) => {
   const platformLower = platform.toLowerCase();
-  console.log(`Getting icon for platform: ${platformLower}`);
   
   switch (platformLower) {
     case 'instagram':
@@ -31,82 +31,111 @@ const getSocialIcon = (platform: string) => {
   }
 };
 
-export function ScoutGroupCard({ group }: ScoutGroupCardProps) {
-  console.log("Rendering ScoutGroupCard for group:", group);
+export const ScoutGroupCard = memo(function ScoutGroupCard({ group }: ScoutGroupCardProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
-  const groupData = group as any;
-  const groupId = groupData.group_id || group.groupId || group.slug || "unknown";
-  const name = group.name || `Grupo ${groupId}`;
-  const description = group.mission || group.vision || group.history || "";
-  
-  const socialLinks = groupData.social_links || group.socialLinks;
-  
-  console.log("Social links found:", socialLinks);
+  // Memoizar datos computados
+  const groupData = useMemo(() => {
+    const data = group as any;
+    return {
+      groupId: data.group_id || group.groupId || group.slug || "unknown",
+      name: group.name || `Grupo ${data.group_id || group.groupId || group.slug || "unknown"}`,
+      description: group.mission || group.vision || group.history || "",
+      socialLinks: data.social_links || group.socialLinks,
+      logoUrl: data.logo_object_url || group.logoObjectId || "/Kids.png",
+      foundedDate: data.founded_in || group.foundedIn
+    };
+  }, [group]);
+
+  // Memoizar fecha formateada
+  const formattedFoundedDate = useMemo(() => {
+    if (!groupData.foundedDate) return null;
+    try {
+      return new Date(groupData.foundedDate).toLocaleDateString();
+    } catch {
+      return groupData.foundedDate;
+    }
+  }, [groupData.foundedDate]);
+
+  // Memoizar redes sociales
+  const socialLinksEntries = useMemo(() => {
+    if (!groupData.socialLinks || typeof groupData.socialLinks !== 'object') return [];
+    return Object.entries(groupData.socialLinks);
+  }, [groupData.socialLinks]);
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
-      
-        <div className="aspect-video overflow-hidden">
+      <div className="aspect-video overflow-hidden bg-gray-100">
+        {!imageError ? (
           <img
-            src={groupData.logo_object_url || group.logoObjectId || "/Kids.png"}
-            alt={name}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            src={groupData.logoUrl}
+            alt={groupData.name}
+            className={`w-full h-full object-cover transition-all duration-500 ${
+              imageLoaded ? 'hover:scale-105 opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+            loading="lazy"
           />
-        </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+            <span className="text-gray-500 text-sm">Sin imagen</span>
+          </div>
+        )}
+      </div>
 
       <CardHeader>
-        <CardTitle className="text-xl text-balance">{name}</CardTitle>
+        <CardTitle className="text-xl text-balance">{groupData.name}</CardTitle>
         {group.motto && (
           <CardDescription className="text-sm italic text-primary">"{group.motto}"</CardDescription>
         )}
-        {description && (
-          <CardDescription className="text-pretty">{description}</CardDescription>
+        {groupData.description && (
+          <CardDescription className="text-pretty">{groupData.description}</CardDescription>
         )}
       </CardHeader>
 
       <CardContent className="space-y-2">
-        
         {group.district && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{group.district}</span>
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{group.district}</span>
           </div>
         )}
         
         {group.address && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{group.address}</span>
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{group.address}</span>
           </div>
         )}
         
         {group.phone && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Phone className="w-4 h-4" />
-            <span>{group.phone}</span>
+            <Phone className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{group.phone}</span>
           </div>
         )}
         
         {group.email && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Mail className="w-4 h-4" />
-            <span>{group.email}</span>
+            <Mail className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{group.email}</span>
           </div>
         )}
         
-        {(groupData.founded_in || group.foundedIn) && (
+        {formattedFoundedDate && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="w-4 h-4" />
-            <span>Fundado: {new Date(groupData.founded_in || group.foundedIn).toLocaleDateString()}</span>
+            <Calendar className="w-4 h-4 flex-shrink-0" />
+            <span>Fundado: {formattedFoundedDate}</span>
           </div>
         )}
         
-        {socialLinks && Object.keys(socialLinks).length > 0 && (
+        {socialLinksEntries.length > 0 && (
           <div className="pt-2">
             <div className="text-sm font-medium text-muted-foreground mb-2">Redes sociales:</div>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(socialLinks).map(([platform, url]) => (
-                console.log(`Rendering social link for platform: ${platform}, url: ${url}`),
+              {socialLinksEntries.map(([platform, url]) => (
                 <a
                   key={platform}
                   href={String(url)}
@@ -116,7 +145,7 @@ export function ScoutGroupCard({ group }: ScoutGroupCardProps) {
                   title={`${platform}: ${url}`}
                 >
                   {getSocialIcon(platform)}
-                  <span className="capitalize">{platform}</span>
+                  <span className="capitalize truncate max-w-20">{platform}</span>
                 </a>
               ))}
             </div>
@@ -140,4 +169,4 @@ export function ScoutGroupCard({ group }: ScoutGroupCardProps) {
       </CardFooter>
     </Card>
   )
-}
+})
