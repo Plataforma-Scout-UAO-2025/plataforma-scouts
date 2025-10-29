@@ -1,5 +1,4 @@
 import type { GroupResponseDTO as Group } from "@/types/group.type";
-import { useGroup } from "./useGroup";
 import { useEffect } from "react";
 import { useAppDispatch } from "./useAppDispatch";
 import { fetchGroupsAction } from "@/store/groups/groupsActions";
@@ -10,14 +9,11 @@ interface GroupStatus {
 }
 
 export const useGroupManagement = () => {
-  const { groups } = useGroup();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(fetchGroupsAction());
   }, [dispatch]);
-
-  console.log("Groups in useGroupManagement:", groups);
 
   const isActive = (group: GroupStatus): boolean => {
     const value = group.isActive;

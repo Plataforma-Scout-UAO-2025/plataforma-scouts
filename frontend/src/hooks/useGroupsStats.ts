@@ -4,7 +4,7 @@ import { fetchActiveGroupsCountAction, fetchInactiveGroupsCountAction, fetchMemb
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 
 export const useGroupsStats = () => {
-  const { groups, memberCounts, totalMembersCount, activeGroupsCount, inactiveGroupsCount } = useGroup();
+  const { groups, memberCounts, totalMembersCount, activeGroupsCount, inactiveGroupsCount, loading } = useGroup();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -13,6 +13,6 @@ export const useGroupsStats = () => {
     dispatch(fetchActiveGroupsCountAction());
     dispatch(fetchInactiveGroupsCountAction()); 
   }, [dispatch]);
-  
-  return { groups, memberCounts, totalMembersCount, activeGroupsCount, inactiveGroupsCount };
+
+  return { groups, memberCounts, totalMembersCount, activeGroupsCount, inactiveGroupsCount, loading };
 };
