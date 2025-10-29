@@ -6,6 +6,42 @@ import { getGroupBySlug } from '@/api/organigramaApi';
 
 type Opts = { tenantId?: string; groupSlug?: string };
 
+// Función para filtrar solo ramas scout
+const filterScoutBranches = (ramas: Rama[]): Rama[] => {
+  const normalize = (s: string) => String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
+
+  return ramas.filter((rama) => {
+    const n = normalize(String(rama.name || rama.nombre || ''));
+    return ordenRamas.some(orden => n.startsWith(orden));
+  });
+};
+
+// Función para ordenar ramas según el orden scout
+const sortRamas = (ramas: Rama[]): Rama[] => {
+  const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
+  
+  return ramas.sort((a, b) => {
+    const nameA = String(a.name || a.nombre || '').toLowerCase();
+    const nameB = String(b.name || b.nombre || '').toLowerCase();
+    
+    const indexA = ordenRamas.findIndex(orden => nameA.includes(orden));
+    const indexB = ordenRamas.findIndex(orden => nameB.includes(orden));
+    
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB;
+    }
+    
+    if (indexA !== -1) return -1;
+    if (indexB !== -1) return 1;
+    
+    return nameA.localeCompare(nameB);
+  });
+};
+
 export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
   const exportPDF = useCallback(async () => {
     console.log(' [useOrganigramaExport] Iniciando exportación PDF');
@@ -45,7 +81,11 @@ export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
       console.warn(' [useOrganigramaExport] No se proporcionaron tenantId/groupSlug, usando datos locales para PDF');
     }
 
-    console.log(' [useOrganigramaExport] Generando PDF con', data.length, 'ramas');
+    // Aplicar filtrado y ordenamiento
+    data = filterScoutBranches(data);
+    data = sortRamas(data);
+
+    console.log(' [useOrganigramaExport] Generando PDF con', data.length, 'ramas filtradas');
     await exportarOrganigramaPDF(data, { colorHex: '#1A4134', groupName });
   }, [ramas, opts]);
 
@@ -80,7 +120,11 @@ export function useOrganigramaExport(ramas: Rama[], opts?: Opts) {
       console.warn(' [useOrganigramaExport] No se proporcionaron tenantId/groupSlug, usando datos locales para CSV');
     }
     
-    console.log(' [useOrganigramaExport] Generando CSV con', data.length, 'ramas');
+    // Aplicar filtrado y ordenamiento
+    data = filterScoutBranches(data);
+    data = sortRamas(data);
+
+    console.log(' [useOrganigramaExport] Generando CSV con', data.length, 'ramas filtradas');
     await exportarOrganigramaCSV(data);
   }, [ramas, opts]);
 

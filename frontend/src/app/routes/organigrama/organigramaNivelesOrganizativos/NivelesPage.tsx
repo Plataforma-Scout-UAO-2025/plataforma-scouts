@@ -7,7 +7,7 @@ import LevelAccordion from "./components/LevelAccordion";
 import { useNiveles } from "./hooks/useNiveles";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { updateMemberAction, fetchMembersAction } from "@/store/members/membersActions";
+import { fetchMembersAction, fetchMembersWithBranchAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
 import type { RootState, AppDispatch } from "@/store/store";
 // Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
@@ -19,11 +19,12 @@ import CreateNivelModal from "./components/CreateNivelModal";
 import EditNivelModal from "./components/EditNivelModal";
 import CreateCargoModal from "./components/CreateCargoModal";
 import EditCargoModal from "./components/EditCargoModal";
+import AddMemberModal from "./components/AddMemberModal";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import SuccessModal from "./components/SuccessModal";
 
 import type { Nivel, Cargo } from "./types/niveles.types";
-import type { UpdateMember } from "@/types/member.type";
+ 
 
 export default function NivelesPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,6 +50,10 @@ export default function NivelesPage() {
   const [openEditCargo, setOpenEditCargo] = useState(false);
   const [cargoToEdit, setCargoToEdit] = useState<Cargo | null>(null);
 
+  // Modal para agregar miembros al cargo
+  const [openAddMember, setOpenAddMember] = useState(false);
+  const [cargoToAssign, setCargoToAssign] = useState<Cargo | null>(null);
+
   const [openDelete, setOpenDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     type: "nivel" | "cargo";
@@ -73,7 +78,13 @@ export default function NivelesPage() {
   // Cargar miembros al montar el componente
   useEffect(() => {
     if (members.length === 0) {
-      dispatch(fetchMembersAction());
+      // Preferir endpoint enriquecido (incluye relaciones subgroup/section); si falla, usar público
+      (async () => {
+        const enriched = await dispatch(fetchMembersWithBranchAction());
+        if (fetchMembersWithBranchAction.rejected.match(enriched)) {
+          await dispatch(fetchMembersAction());
+        }
+      })();
     }
   }, [dispatch, members.length]);
 
@@ -142,49 +153,21 @@ export default function NivelesPage() {
     setOpenEditCargo(true);
   };
 
-  const handleSaveEditCargo = (cargo: Cargo, assignMemberId?: string) => {
+  const handleOpenAddMember = (nivel: Nivel, cargo: Cargo) => {
+    setNivelActual(nivel);
+    setCargoToAssign(cargo);
+    setOpenAddMember(true);
+  };
+
+  const handleSaveEditCargo = (cargo: Cargo) => {
     if (!nivelActual) return;
     (async () => {
       try {
         await updateCargo(nivelActual.id, cargo);
-        // Si se seleccionó un miembro para asignar a este cargo, persistimos la asignación
-        if (assignMemberId) {
-          // Normalizar a número el id de subgrupo (cargo)
-          let subgroupNumId = Number(cargo.id);
-          if (!Number.isFinite(subgroupNumId)) {
-            const parsed = parseInt(String(cargo.id), 10);
-            if (Number.isFinite(parsed)) subgroupNumId = parsed;
-          }
-          if (Number.isFinite(subgroupNumId)) {
-            // También enviamos la sección padre (nivel) para máxima compatibilidad con backend
-            let sectionNumId = Number(nivelActual.id);
-            if (!Number.isFinite(sectionNumId)) {
-              const parsedSec = parseInt(String(nivelActual.id), 10);
-              if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
-            }
-            await dispatch(updateMemberAction({
-              uid: assignMemberId,
-              updates: {
-                subgroupId: subgroupNumId,
-                subgroup_id: subgroupNumId,
-                isActive: true,
-                ...(Number.isFinite(sectionNumId) && {
-                  // Campos adicionales para compatibilidad con backend
-                  sectionId: sectionNumId,
-                  section_id: sectionNumId,
-                } as { sectionId: number; section_id: number }),
-              } as Partial<UpdateMember> & { sectionId?: number; section_id?: number },
-            }));
-            // Forzar recarga de miembros listados por cargo
-            setMembersRefreshKey((k) => k + 1);
-          } else {
-            console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargo.id);
-          }
-        }
         setOpenEditCargo(false);
         setShowSuccess(true);
       } catch (e) {
-        console.error('Error actualizando cargo o asignando miembro', e);
+        console.error('Error actualizando cargo', e);
       }
     })();
   };
@@ -197,6 +180,59 @@ export default function NivelesPage() {
       nivelId: nivel.id,
     });
     setOpenDelete(true);
+  };
+
+  const handleAssignMemberToCargo = async (memberId: string) => {
+    if (!nivelActual || !cargoToAssign) return;
+    try {
+      // Normalizar a número el id de subgrupo (cargo)
+      let subgroupNumId = Number(cargoToAssign.id);
+      if (!Number.isFinite(subgroupNumId)) {
+        const parsed = parseInt(String(cargoToAssign.id), 10);
+        if (Number.isFinite(parsed)) subgroupNumId = parsed;
+      }
+      if (Number.isFinite(subgroupNumId)) {
+        // También enviamos la sección padre (nivel) para máxima compatibilidad con backend
+        let sectionNumId = Number(nivelActual.id);
+        if (!Number.isFinite(sectionNumId)) {
+          const parsedSec = parseInt(String(nivelActual.id), 10);
+          if (Number.isFinite(parsedSec)) sectionNumId = parsedSec;
+        }
+        // Usar endpoint dedicado con permisos adecuados
+        // Preparar memberId (número si es posible)
+        const memberIdNum = Number(memberId);
+        const memberIdToSend: number | string = Number.isFinite(memberIdNum)
+          ? memberIdNum
+          : memberId;
+
+        const resultAction = await dispatch(
+          assignSubgroupAndSectionAction({
+            memberId: memberIdToSend,
+            subGroupId: subgroupNumId,
+            sectionId: Number.isFinite(sectionNumId) ? sectionNumId : undefined,
+          })
+        );
+        // Mostrar éxito solo si la acción se resolvió correctamente
+        if (assignSubgroupAndSectionAction.fulfilled.match(resultAction)) {
+          setShowSuccess(true);
+          // Refrescar miembros desde el backend para que el listado por cargo se actualice
+          // Preferir endpoint enriquecido (relaciones actualizadas); fallback al público si falla
+          const r1 = await dispatch(fetchMembersWithBranchAction());
+          if (fetchMembersWithBranchAction.rejected.match(r1)) {
+            await dispatch(fetchMembersAction());
+          }
+          setMembersRefreshKey((k) => k + 1);
+        } else {
+          console.error("Error al asignar subgrupo/sección: ", resultAction);
+        }
+      } else {
+        console.warn("No se pudo parsear el id del cargo para asignación de miembro", cargoToAssign.id);
+      }
+      } catch (e) {
+      console.error('Error asignando miembro al cargo', e);
+    } finally {
+      setOpenAddMember(false);
+    }
   };
 
   const confirmDelete = async () => {
@@ -227,10 +263,10 @@ export default function NivelesPage() {
       {/* CABECERA */}
       <header className="flex flex-col gap-2 mb-6">
         <h1 className="text-3xl font-extrabold text-primary">
-          Niveles Organizativos
+          Gestión de Niveles Organizativos
         </h1>
         <p className="text-accent-foreground">
-          Administra la estructura organizativa del grupo scout
+          Administra la estructura organizativa de tu grupo scout
         </p>
       </header>
 
@@ -252,7 +288,7 @@ export default function NivelesPage() {
             <Plus className="h-4 w-4 mr-2" />
             Crear Nuevo Nivel
           </Button>
-          <ExportMenu data={data} />
+          <ExportMenu data={data} members={members} />
         </div>
       </div>
 
@@ -321,6 +357,7 @@ export default function NivelesPage() {
                 setNivelActual(nivel);
                 handleEditCargo(cargo);
               }}
+              onAddMember={(cargo) => handleOpenAddMember(nivel, cargo)}
               onDeleteCargo={(cargo) => handleDeleteCargo(cargo, nivel)}
             />
           ))}
@@ -350,7 +387,6 @@ export default function NivelesPage() {
         onClose={() => setOpenCreateCargo(false)}
         onSave={handleCreateCargo}
         initialNombre={initialCargoNombre}
-        members={members}
       />
 
       {/* Editar Cargo */}
@@ -359,6 +395,14 @@ export default function NivelesPage() {
         cargo={cargoToEdit}
         onClose={() => setOpenEditCargo(false)}
         onSave={handleSaveEditCargo}
+      />
+
+      {/* Agregar miembro al Cargo */}
+      <AddMemberModal
+        open={openAddMember}
+        cargo={cargoToAssign}
+        onClose={() => setOpenAddMember(false)}
+        onAssign={handleAssignMemberToCargo}
         members={members}
       />
 
