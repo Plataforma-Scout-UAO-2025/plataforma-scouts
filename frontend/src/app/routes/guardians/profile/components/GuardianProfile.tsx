@@ -171,7 +171,8 @@ const GuardianProfilePage: React.FC = () => {
             is_active={guardianApiData?.is_active || false} 
           />
           
-          <ProfileInfoCard 
+          <ProfileInfoCard
+            address={guardianApiData?.address || ''} 
             first_name={guardianApiData?.first_name || ''} 
             last_name={guardianApiData?.last_name || ''} 
             identification={guardianApiData?.identification || ''} 
