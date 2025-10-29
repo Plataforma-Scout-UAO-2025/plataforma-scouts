@@ -30,7 +30,6 @@ export const CompleteDataForm = ({ onSubmit, isSubmitting }: CompleteDataFormPro
     },
   });
 
-  // Auto-calculate age from birth date
   useAgeCalculation(form);
 
   const handleSubmit = async (data: CompleteDataFormData) => {

@@ -13,12 +13,14 @@ import {
   createMemberWithSchool,
   createMemberAuth0,
   createScoutAuth0,
+  getSchoolDataByMemberId,
 } from "@/api/membersApi";
 import type { Member, UpdateMember } from "@/types/member.type";
 import type {
   CreateMemberWithSchoolRequest,
   CreateAuth0Request,
   CreateAuth0Response,
+  SchoolData,
 } from "@/types/enrollment.type";
 
 // Obtener datos de un miembro desde Firestore
@@ -50,7 +52,7 @@ export const fetchMembersAction = createAsyncThunk(
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Obtener miembros por estado
@@ -70,7 +72,7 @@ export const fetchMembersByStatusAction = createAsyncThunk<
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Obtener miembros con su respectiva rama
@@ -86,7 +88,7 @@ export const fetchMembersWithBranchAction = createAsyncThunk(
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Actualizar estado de un miembro
@@ -101,7 +103,7 @@ export const updateMemberStatusAction = createAsyncThunk<
       id,
       status,
     }: { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
-    { rejectWithValue },
+    { rejectWithValue }
   ) => {
     try {
       const response = await updateMemberStatus(id, status);
@@ -113,7 +115,7 @@ export const updateMemberStatusAction = createAsyncThunk<
         errorData?.error || "Error al actualizar el estado del miembro";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Actualizar datos de un miembro en Firestore
@@ -176,7 +178,7 @@ export const createMemberWithSchoolDataAction = createAsyncThunk<
         errorData?.error || "Error al crear el miembro con datos escolares";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Crear miembro en Auth0
@@ -197,7 +199,7 @@ export const createMemberAuth0Action = createAsyncThunk<
         errorData?.error || "Error al crear el miembro en Auth0";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Crear scout en Auth0
@@ -218,7 +220,7 @@ export const createScoutAuth0Action = createAsyncThunk<
         errorData?.error || "Error al crear el scout en Auth0";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Asignar subgrupo y sección a un miembro (backend endpoint separado)
@@ -247,7 +249,7 @@ export const assignSubgroupAndSectionAction = createAsyncThunk<
         errorData?.error || "Error al asignar subgrupo y sección";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Actualizar miembro enviando un DTO completo (usado cuando backend valida campos obligatorios)
@@ -265,5 +267,39 @@ export const updateMemberByDtoAction = createAsyncThunk<
     const errorMessage =
       errorData?.error || "Error al actualizar el miembro (DTO)";
     return rejectWithValue({ error: errorMessage });
+  }
+});
+
+// Lista los datos escolares de un miembro
+export const fetchSchoolDataMemberAction = createAsyncThunk<
+  { memberId: number; schoolData: SchoolData | null },
+  number,
+  { rejectValue: string | string[] }
+>("member/fetchSchoolData", async (id, { rejectWithValue }) => {
+  try {
+    const schoolData = await getSchoolDataByMemberId(id);
+    
+    if (!schoolData || Object.keys(schoolData).length === 0) {
+      return { memberId: id, schoolData: null };
+    }
+    
+    const { institution, course, calendar, shift } = schoolData;
+    const hasAnyValue = institution || course || calendar || shift;
+    
+    if (!hasAnyValue) {
+      return { memberId: id, schoolData: null };
+    }
+    
+    return { memberId: id, schoolData };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    
+    if (axiosError.response?.status === 404) {
+      return { memberId: id, schoolData: null };
+    }
+    
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage = errorData?.error || "Error al obtener los datos escolares del miembro";
+    return rejectWithValue(errorMessage);
   }
 });

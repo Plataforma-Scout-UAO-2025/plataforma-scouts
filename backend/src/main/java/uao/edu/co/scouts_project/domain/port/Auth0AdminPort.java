@@ -50,11 +50,12 @@ public interface Auth0AdminPort {
 
     void assignRole(String userId, String roleId);
 
-    /**
-     * Verifica si un usuario tiene roles asignados en Auth0.
-     * 
-     * @param userId ID del usuario en Auth0
-     * @return true si el usuario tiene al menos un rol asignado, false en caso contrario
-     */
     boolean userHasRoles(String userId);
+
+    // --- Added: role management helpers for "single role" change ---
+    /** List Auth0 role ids currently assigned to the user. */
+    List<String> getUserRoleIds(String userId);
+
+    /** Remove all/selected roles from a user. */
+    void removeRoles(String userId, List<String> roleIds);
 }

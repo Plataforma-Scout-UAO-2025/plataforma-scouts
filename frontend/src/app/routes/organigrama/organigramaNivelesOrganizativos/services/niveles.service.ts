@@ -1,132 +1,93 @@
-import { loadAll, saveAll } from "./niveles.storage";
-import { nivelesMock2024, nivelesMock2025 } from "./niveles.mocks";
 import type { OrganigramaNiveles, Nivel, Cargo } from "../types/niveles.types";
+import {
+  getSections,
+  getSubgroups,
+  createSection,
+  updateSection,
+  deleteSection,
+  createSubgroup,
+  updateSubgroup,
+  deleteSubgroup,
+} from "@/api/organigramaApi";
+import type { Section } from "@/types/section-simple.type";
+import type { Subgroup } from "@/types/subgroup-simple.type";
 
-/* ============================================================
-   🔹 Inicialización de datos (seed)
-   ============================================================ */
-function ensureSeed() {
-  const all = loadAll();
-  if (!all["2025"]) all["2025"] = nivelesMock2025;
-  if (!all["2024"]) all["2024"] = nivelesMock2024;
-  saveAll(all);
-}
-
-ensureSeed();
-
-/**
- * Forzar reseed: limpia el storage y vuelve a sembrar los mocks definidos.
- * Útil en desarrollo cuando los mocks cambian y ya existen datos en localStorage.
- */
-export function resetSeed() {
-  // limpiar todos los datos guardados y resembrar
-  try {
-    // Import lazy para evitar ciclos en tiempo de módulo
-    // usar la función clearAll exportada desde storage
-    try {
-      // dynamic import para evitar el require
-      // (se hace de forma async vía then para mantener API sync-like)
-      import("./niveles.storage")
-        .then((storage) => {
-          const maybeClear = (storage as unknown as Record<string, unknown>)['clearAll'];
-          if (typeof maybeClear === 'function') {
-            try {
-              (maybeClear as (...args: unknown[]) => unknown)();
-            } catch (errClear) {
-              console.debug('resetSeed: clearAll failed', errClear);
-            }
-          }
-        })
-  .catch(() => {
-          // fallback trying global
-          try {
-            const maybeGlobal = (globalThis as unknown as Record<string, unknown> | undefined) ?? undefined;
-            const globalClear = maybeGlobal && maybeGlobal['clearAll'];
-            if (typeof globalClear === 'function') {
-              try { (globalClear as (...args: unknown[]) => unknown)(); } catch (errClear) { console.debug('resetSeed: global clearAll failed', errClear); }
-            }
-          } catch (_errFallback) {
-            console.debug('resetSeed: dynamic import and fallback both failed', _errFallback);
-          }
-        });
-    } catch (err) {
-      // handled by dynamic import fallback above; log for visibility
-      console.debug('resetSeed: unexpected error in resetSeed', err);
-    }
-  } catch (err) {
-    // Si require falla, intentamos llamar a la función directamente (caso tests/ESM)
-    console.debug('resetSeed: outer require catch (ignored) -', err);
-  }
-
-  ensureSeed();
-}
+// Nota: el almacenamiento local funciona ahora como "overrides" locales sobre los datos del backend.
+// resetSeed ya no aplica: datos provienen del backend
+export function resetSeed() { /* noop */ }
 
 /* ============================================================
    🔹 Obtener datos por año
    ============================================================ */
-export async function getByAnio(anio: number): Promise<OrganigramaNiveles> {
-  const all = loadAll();
+export async function getByAnio(anio: number, tenantId?: string, groupSlug?: string): Promise<OrganigramaNiveles> {
+  // Datos desde backend usando secciones/subgrupos
+  if (!(tenantId && groupSlug)) return { anio, niveles: [] };
 
-  // Si ya existen datos en storage
-  if (all[String(anio)]) return structuredClone(all[String(anio)]);
+  const sections = await getSections(tenantId, groupSlug);
+  const normalize = (s: string) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  // Consideramos "niveles organizativos" a nombres que contengan estas palabras clave
+  const isOrganizationalLevel = (name: string) => {
+    const n = normalize(name);
+    return n.includes('comit') || n.includes('asamblea') || n.includes('corte') || n.includes('consejo');
+  };
+  const organizationalSections = (sections || []).filter((s: Section) => isOrganizationalLevel(String(s.name || '')));
 
-  // Si no existen, cargamos los mocks para 2024 y 2025
-  let dataToSave: OrganigramaNiveles;
-  if (anio === 2025) dataToSave = nivelesMock2025;
-  else if (anio === 2024) dataToSave = nivelesMock2024;
-  else dataToSave = { anio, niveles: [] }; // Estructura vacía para otros años
-
-  all[String(anio)] = dataToSave;
-  saveAll(all);
-
-  return structuredClone(dataToSave);
+  const niveles: Nivel[] = [];
+  for (const s of organizationalSections) {
+    const subgroups = await getSubgroups(s.sectionId, tenantId, groupSlug);
+    const cargos: Cargo[] = (subgroups || []).map((sg: Subgroup) => ({
+      id: String(sg.subgroupId ?? sg.id),
+      nombre: String(sg.name || ''),
+      visible: true,
+      descripcion: sg.description ?? undefined,
+    }));
+    niveles.push({
+      id: String(s.sectionId ?? s.id),
+      nombre: String(s.name || ''),
+      visible: true,
+      descripcion: s.description ?? undefined,
+      cargos,
+    });
+  }
+  return { anio, niveles };
 }
 
 /* ============================================================
    🔹 CRUD Niveles
    ============================================================ */
-export async function upsertNivel(anio: number, nivel: Nivel): Promise<void> {
-  const all = loadAll();
-  const data: OrganigramaNiveles = all[String(anio)] || { anio, niveles: [] };
-  const idx = data.niveles.findIndex(n => n.id === nivel.id);
-  if (idx >= 0) data.niveles[idx] = nivel;
-  else data.niveles.push(nivel);
-  all[String(anio)] = data;
-  saveAll(all);
+export async function createNivel(tenantId: string, groupSlug: string, nombre: string, descripcion?: string): Promise<void> {
+  // Respetar el nombre tal como lo ingresa el usuario (sin prefijos automáticos)
+  await createSection({ name: nombre, description: descripcion ?? undefined } as Omit<Section, 'id' | 'sectionId' | 'groupId' | 'createdAt' | 'updatedAt'>, tenantId, groupSlug);
 }
 
-export async function deleteNivel(anio: number, nivelId: string): Promise<void> {
-  const all = loadAll();
-  const data: OrganigramaNiveles = all[String(anio)];
-  if (!data) return;
-  data.niveles = data.niveles.filter(n => n.id !== nivelId);
-  all[String(anio)] = data;
-  saveAll(all);
+export async function upsertNivel(_anio: number, nivel: Nivel, tenantId?: string, groupSlug?: string): Promise<void> {
+  // Para compatibilidad: si tenemos tenant/grupo, actualizamos sección; si no, no-op
+  if (tenantId && groupSlug) {
+    await updateSection(nivel.id, { name: nivel.nombre, description: nivel.descripcion ?? undefined } as Partial<Section>, tenantId, groupSlug);
+  }
+}
+
+export async function deleteNivel(_anio: number, nivelId: string, tenantId?: string, groupSlug?: string): Promise<void> {
+  if (tenantId && groupSlug) {
+    await deleteSection(nivelId, tenantId, groupSlug);
+  }
 }
 
 /* ============================================================
    🔹 CRUD Cargos
    ============================================================ */
-export async function upsertCargo(anio: number, nivelId: string, cargo: Cargo): Promise<void> {
-  const all = loadAll();
-  const data: OrganigramaNiveles = all[String(anio)];
-  if (!data) return;
-  const nivel = data.niveles.find(n => n.id === nivelId);
-  if (!nivel) return;
-  const idx = nivel.cargos.findIndex(c => c.id === cargo.id);
-  if (idx >= 0) nivel.cargos[idx] = cargo;
-  else nivel.cargos.push(cargo);
-  all[String(anio)] = data;
-  saveAll(all);
+export async function createCargo(tenantId: string, groupSlug: string, nivelId: string, nombre: string, descripcion?: string): Promise<void> {
+  await createSubgroup(nivelId, { name: nombre, description: descripcion ?? undefined } as Omit<Subgroup, 'id' | 'subgroupId' | 'tenantId' | 'groupId' | 'sectionId' | 'createdAt' | 'updatedAt'>, tenantId, groupSlug);
 }
 
-export async function deleteCargo(anio: number, nivelId: string, cargoId: string): Promise<void> {
-  const all = loadAll();
-  const data: OrganigramaNiveles = all[String(anio)];
-  if (!data) return;
-  const nivel = data.niveles.find(n => n.id === nivelId);
-  if (!nivel) return;
-  nivel.cargos = nivel.cargos.filter(c => c.id !== cargoId);
-  all[String(anio)] = data;
-  saveAll(all);
+export async function upsertCargo(_anio: number, nivelId: string, cargo: Cargo, tenantId?: string, groupSlug?: string): Promise<void> {
+  if (tenantId && groupSlug) {
+    await updateSubgroup(nivelId, cargo.id, { name: cargo.nombre, description: cargo.descripcion ?? undefined } as Partial<Subgroup>, tenantId, groupSlug);
+  }
+}
+
+export async function deleteCargo(_anio: number, nivelId: string, cargoId: string, tenantId?: string, groupSlug?: string): Promise<void> {
+  if (tenantId && groupSlug) {
+    await deleteSubgroup(nivelId, cargoId, tenantId, groupSlug);
+  }
 }

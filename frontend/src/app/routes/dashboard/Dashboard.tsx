@@ -4,16 +4,19 @@ import AdminGlobalView from "./components/AdminGlobalView";
 import AdminGrupoView from "./components/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
 import ScoutView from "./components/ScoutView";
-import FullScreenLoader from "@/components/common/FullScreenLoader";
+import ComiteAdminView from "./components/ComiteAdminView";
+import ScouterView from "./components/ScouterView";
+import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import TesoreroView from "./components/TesoreroView";
-
 
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
 
+
   if (status === "loading" || status === "idle") {
     return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;
   }
+
 
   // Solo se renderiza Y ejecuta el componente correspondiente al rol del usuario
   switch (currentUserRole) {
@@ -28,6 +31,12 @@ export default function Dashboard() {
 
     case RawRole.SCOUT:
       return <ScoutView />;
+
+    case RawRole.COMITE_ADMIN:
+      return <ComiteAdminView />;
+
+    case RawRole.SCOUTER:
+      return <ScouterView />;
 
     case RawRole.TESORERO:
       return <TesoreroView />;
