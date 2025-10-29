@@ -307,13 +307,6 @@ public class Auth0ServiceImpl implements IAuth0Service {
         // // 1. Obtener el Grupo y el Slug [Creado por el ADMIN_GLOBAL]
         String slug = group.getSlug();
 
-        // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
-        // de forma: $'uep-{tenant.slug}'
-        logger.info("Se creará la conexión a la BD de Auth0 con el slug: " + slug);
-
-        String conId = connectionQueryPort.createOrUpdateAuth0DbConnection(slug);
-
-        logger.info("OK: Conexión creada con ÉXITO.");
         // - [Listo] Create la Organization en Auth0 UNIENDO LA CONEXIÓN de la BD de
         // Auth0 (con el identificador 'con_id' )
 
@@ -334,6 +327,14 @@ public class Auth0ServiceImpl implements IAuth0Service {
         String orgId = organizationQueryPort.createOrganization(displayName, logoUrl);
 
         logger.info("OK: Organización creada con ÉXITO.");
+
+        // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
+        // de forma: $'uep-{tenant.slug}'
+        logger.info("Se creará la conexión a la BD de Auth0 con el UEP-{orgId}: " + orgId);
+
+        String conId = connectionQueryPort.createOrUpdateAuth0DbConnection(orgId);
+
+        logger.info("OK: Conexión creada con ÉXITO.");
 
         // - Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
         // de conexión de dicha organization
