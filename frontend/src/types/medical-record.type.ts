@@ -7,6 +7,20 @@ export interface MedicalRecord extends MedicalDB {
 export interface MedicalRecordsTableProps {
   records: MedicalRecord[];
   onEdit: (record: MedicalRecord) => void;
-  onDelete: (id: number) => void;
   isLoading?: boolean;
+}
+
+export type SortColumn = 'member_name' | 'blood_type' | 'eps' | 'allergies' | 'vaccines' | 'medications' | 'updated_at';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortConfig {
+  column: SortColumn;
+  direction: SortDirection;
+}
+
+export interface PaginationConfig {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
 }

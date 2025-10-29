@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import type { MedicalRecord } from '../../../../types/medical-record.type';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
+import MedicalRecordsFilter from './MedicalRecordFilter';
 import type { MedicalDB, MedicalFormData } from '@/types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
 import type { Member } from '@/types/member.type';
@@ -17,18 +18,21 @@ export default function MedicalRecordsView() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const [searchFilter, setSearchFilter] = useState("");
+    const [bloodTypeFilter, setBloodTypeFilter] = useState("");
+    const [epsFilter, setEpsFilter] = useState("");
+    const [allergiesFilter, setAllergiesFilter] = useState("");
+
     const tenantId = useTenant();
 
-    // Busca esta función y reemplázala:
     const fetchMedicalRecords = useCallback(async () => {
         if (!tenantId) return;
 
         try {
             setIsLoading(true);
             setError(null);
-            const response = await getMedicalRecordsByTenantApi(tenantId)
+            const response = await getMedicalRecordsByTenantApi(tenantId);
 
-            // PRIMERO: Cargar los miembros para tener los nombres
             const membersResponse = await getMembers();
             const membersMap = new Map<string, string>();
 
@@ -45,7 +49,7 @@ export default function MedicalRecordsView() {
                 return {
                     id: record.id,
                     member_id: memberId,
-                    member_name: memberName, // ¡AQUÍ ESTÁ EL NOMBRE REAL!
+                    member_name: memberName,
                     blood_type: record.blood_type,
                     eps: record.eps,
                     allergies: record.allergies,
@@ -80,6 +84,29 @@ export default function MedicalRecordsView() {
         fetchMedicalRecords();
     }, [fetchMedicalRecords]);
 
+    const hasAllergies = (allergies: string) => {
+        return allergies && allergies.trim().length > 0;
+    };
+
+    const filteredRecords = useMemo(() => {
+        return records.filter((record) => {
+            const matchesSearch = !searchFilter ||
+                record.member_name.toLowerCase().includes(searchFilter.toLowerCase());
+
+            const matchesBloodType = !bloodTypeFilter ||
+                record.blood_type === bloodTypeFilter;
+
+            const matchesEps = !epsFilter ||
+                record.eps === epsFilter;
+
+            const matchesAllergies = !allergiesFilter ||
+                (allergiesFilter === "yes" && hasAllergies(record.allergies)) ||
+                (allergiesFilter === "no" && !hasAllergies(record.allergies));
+
+            return matchesSearch && matchesBloodType && matchesEps && matchesAllergies;
+        });
+    }, [records, searchFilter, bloodTypeFilter, epsFilter, allergiesFilter]);
+
     const handleCreate = () => {
         setEditingRecord(null);
         setShowForm(true);
@@ -90,19 +117,7 @@ export default function MedicalRecordsView() {
         setShowForm(true);
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Está seguro de que desea eliminar este registro médico?')) {
-            return;
-        }
-
-        try {
-            setRecords(prev => prev.filter(record => record.id !== id));
-        } catch (err) {
-            console.error('Error deleting medical record:', err);
-            alert('Error al eliminar el registro médico');
-        }
-    };
-
+    
     const handleFormSubmit = async (formData: MedicalFormData) => {
         try {
             if (editingRecord) {
@@ -188,10 +203,21 @@ export default function MedicalRecordsView() {
                 </Button>
             </div>
 
-            <MedicalRecordsTable
+            <MedicalRecordsFilter
+                searchFilter={searchFilter}
+                setSearchFilter={setSearchFilter}
+                bloodTypeFilter={bloodTypeFilter}
+                setBloodTypeFilter={setBloodTypeFilter}
+                epsFilter={epsFilter}
+                setEpsFilter={setEpsFilter}
+                allergiesFilter={allergiesFilter}
+                setAllergiesFilter={setAllergiesFilter}
                 records={records}
+            />
+
+            <MedicalRecordsTable
+                records={filteredRecords}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
                 isLoading={isLoading}
             />
         </div>
