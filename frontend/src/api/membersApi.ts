@@ -141,3 +141,13 @@ export const getSchoolDataByMemberId = async (id: string | number | bigint) => {
   });
   return response.data;
 };
+
+// Cambiar rol de usuario en Auth0 (backend controller /api/v1/auth0/change-role)
+export const changeAuth0UserRole = async (data: {
+  user_id: string;
+  newRole: string;
+  organizationId?: string;
+}) => {
+  const response = await api.put(`/auth0/change-role`, data);
+  return response.data;
+};

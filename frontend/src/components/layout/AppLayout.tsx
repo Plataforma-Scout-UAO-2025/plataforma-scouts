@@ -176,6 +176,12 @@ const acudienteItems: MenuItem[] = [
     icon: <DollarSign />,
     href: "/app/financiero/estado-cuenta",
   },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
+  },
 ];
 
 const ScoutItems: MenuItem[] = [
@@ -190,6 +196,12 @@ const ScoutItems: MenuItem[] = [
     label: "Inscripcion",
     icon: <Pencil />,
     href: "/app/grupos/utils/ScoutEnrollmentInfo",
+  },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
   },
 ];
 
