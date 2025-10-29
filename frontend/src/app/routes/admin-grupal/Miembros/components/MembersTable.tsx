@@ -18,13 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Trash, User } from "lucide-react";
+import { Pencil, ToggleLeft, User } from "lucide-react";
 import type { Member as MemberType } from "@/types/member.type";
 import MemberInfoModal from "../detalles/memberInfoModal";
+import EditMemberModal from "../../../grupos/basic-info/EditMemberModal";
 import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
 
 interface MembersTableProps {
   filteredMembers: MemberType[];
+  onRefresh?: () => void;
 }
 
 interface Member {
@@ -32,7 +34,7 @@ interface Member {
   isActive?: boolean | string | number;
 }
 
-const MembersTable = ({ filteredMembers }: MembersTableProps) => {
+const MembersTable = ({ filteredMembers, onRefresh }: MembersTableProps) => {
   const getIsActive = (member: Member): boolean => {
     const value = member.is_active ?? member.isActive;
     if (typeof value === "string") {
@@ -64,9 +66,18 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
   const [selectedMemberForInfo, setSelectedMemberForInfo] =
     useState<MemberType | null>(null);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMemberForEdit, setSelectedMemberForEdit] =
+    useState<MemberType | null>(null);
+
   const handleViewInfo = (member: MemberType) => {
     setSelectedMemberForInfo(member);
     setIsInfoModalOpen(true);
+  };
+
+  const handleEdit = (member: MemberType) => {
+    setSelectedMemberForEdit(member);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -126,16 +137,17 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                       variant="iconbutton"
                       size="icon"
                       className="text-secondary hover:text-blue-800"
+                      onClick={() => handleEdit(member)}
                     >
                       <Pencil />
                     </Button>
                     <Button
                       variant="iconbutton"
                       size="icon"
-                      className="text-destructive hover:text-destructive-hover"
+                      className="text-red-800 hover:text-green-800"
                       onClick={() => handleDeleteClick(member)}
                     >
-                      <Trash />
+                      <ToggleLeft />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -166,13 +178,11 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
               Esta acción cambiará el estado de{" "}
               <strong>
                 {selectedMember
-                  ? `${
-                      (selectedMember as MemberType).firstName ??
-                      (selectedMember as MemberType).first_name
-                    } ${
-                      (selectedMember as MemberType).lastName ??
-                      (selectedMember as MemberType).last_name
-                    }`
+                  ? `${(selectedMember as MemberType).firstName ??
+                  (selectedMember as MemberType).first_name
+                  } ${(selectedMember as MemberType).lastName ??
+                  (selectedMember as MemberType).last_name
+                  }`
                   : ""}
               </strong>{" "}
               a{" "}
@@ -200,6 +210,16 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         open={isInfoModalOpen}
         onOpenChange={setIsInfoModalOpen}
         member={selectedMemberForInfo}
+      />
+
+      {/* Modal de edición del miembro */}
+      <EditMemberModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        member={selectedMemberForEdit}
+        onSuccess={() => {
+          onRefresh?.();
+        }}
       />
     </div>
   );

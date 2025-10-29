@@ -8,7 +8,7 @@ import { UserExistsDialog } from "./components/UserExistsDialog";
 import { ErrorDialog } from "./components/ErrorDialog";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 
-function TreasurerEnrollment() {
+function GuardianEnrollment() {
   const navigate = useNavigate();
 
   const {
@@ -28,7 +28,7 @@ function TreasurerEnrollment() {
     errors,
     handlePersonalChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "TESORERO", totalPaginas: 2 });
+  } = useRoleEnrollment({ role: "ACUDIENTE", totalPaginas: 2 });
 
   const handleConsentChange = (value: string) => {
     setDatosPersonales((prev) => ({
@@ -69,7 +69,7 @@ function TreasurerEnrollment() {
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
       <h1 className="text-2xl font-bold text-primary mb-6 text-center md:text-left">
-        Inscripción de Tesorero
+        Inscripción de Acudiente
       </h1>
 
       {/* Barra de progreso */}
@@ -136,4 +136,4 @@ function TreasurerEnrollment() {
   );
 }
 
-export default TreasurerEnrollment;
+export default GuardianEnrollment;

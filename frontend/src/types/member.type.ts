@@ -45,6 +45,7 @@ export interface Member {
   instruments?: string;
   acceptance_date?: string;
   emergency_contacts?: EmergencyContact[];
+  emergencyContacts?: EmergencyContact[];
   created_at?: string;
   updated_at?: string;
   subgroup?: {
@@ -146,6 +147,7 @@ export interface CreateMember {
 
 export interface UpdateMember {
   memberId?: number;
+  member_id?: number;
   firstName?: string;
   lastName?: string;
   subgroupId?: number;
@@ -154,10 +156,12 @@ export interface UpdateMember {
   userId?: string;
   tenantId?: string;
   guardianId?: number;
+  guardian_id?: number;
   relationship?: string;
   role?: role;
   status?: string;
   isActive?: boolean;
+  is_active?: boolean;
   identification?: string;
   documentType?: string;
   email?: string;
@@ -172,9 +176,55 @@ export interface UpdateMember {
   instruments?: string;
   acceptanceDate?: Date;
   emergencyContacts?: EmergencyContact[];
+  emergency_contacts?: EmergencyContact[];
   createdAt?: string;
   updatedAt?: string;
   branch?: Section[];
+  subgroup?: {
+    name?: string;
+    description?: string | null;
+    subgroupId?: number;
+    tenantId?: string;
+    groupId?: number;
+    sectionId?: number;
+    photoPrincipal?: string | null;
+    isActive?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    // Variante snake_case
+    subgroup_id?: number;
+    tenant_id?: string;
+    group_id?: number;
+    section_id?: number;
+    photo_principal?: string | null;
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    branch?: string;
+    // Se incluye `section` anidado como objeto que también puede venir en camelCase o snake_case
+    section?: {
+      name?: string;
+      description?: string | null;
+      sectionId?: number;
+      tenantId?: string;
+      groupId?: number;
+      iconObjectId?: string | null;
+      photoPrincipal?: string | null;
+      galleryObjectIds?: string[];
+      createdAt?: string;
+      updatedAt?: string;
+
+      // snake_case
+      section_id?: number;
+      tenant_id?: string;
+      group_id?: number;
+      icon_object_id?: string | null;
+      photo_principal?: string | null;
+      gallery_object_ids?: string[];
+      created_at?: string;
+      updated_at?: string;
+    };
+  };
 }
 
 export interface EmergencyContact {
