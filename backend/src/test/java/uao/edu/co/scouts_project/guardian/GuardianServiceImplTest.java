@@ -129,6 +129,7 @@ class GuadianServiceImplTest {
                 .age(10)
                 .gender("FEMALE")
                 .phone("3009876543")
+                .isActive(true)
                 .birthDate(LocalDate.of(2013, 5, 15))
                 .build();
     }

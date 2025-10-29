@@ -5,19 +5,18 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
 import GuardianMembersTable from "../tables/GuardianMembersTable";
 import MemberDetailsSheet from "../modals/MemberDetailsSheet";
+import { toast } from "sonner";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 
 const MembersInCharge = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
 
-  // Agregar esta línea que faltaba
   const { user } = useAuth0();
   console.log("Usuario completo:", user);
   console.log("user.sub:", user?.sub);
 
   
-  // Pasar el guardianId al hook y eliminar dispatch duplicado
   const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
   console.log("Guardian ID calculado:", guardianId);
   const { members, loading, error } = useMembersInChargeOf(guardianId);
@@ -26,6 +25,25 @@ const MembersInCharge = () => {
   const handleViewMember = (member: MemberBasicInfo) => {
     setSelectedMember(member);
     setIsDetailsModalOpen(true);
+  };
+
+  const handleDeleteMember = async (member: MemberBasicInfo) => {
+    try {
+      // Aquí implementarías la llamada al servicio para eliminar
+      // await memberService.deleteMember(member.memberId);
+      
+      // Por ahora, simular la eliminación
+      console.log('Deleting member:', member);
+      toast.success('Miembro eliminado exitosamente');
+      
+      // Aquí deberías recargar la lista de miembros
+      // o actualizar el estado para quitar el miembro eliminado
+      
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast.error('Error al eliminar el miembro');
+      throw error; // Re-lanzar para que el modal maneje el estado de loading
+    }
   };
 
   if (loading) {
@@ -55,6 +73,7 @@ const MembersInCharge = () => {
             <GuardianMembersTable 
               filteredMembers={members} 
               onViewMember={handleViewMember}
+              onDeleteMember={handleDeleteMember}
             />
           )}
 

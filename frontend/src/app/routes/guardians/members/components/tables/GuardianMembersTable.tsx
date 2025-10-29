@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,6 +10,7 @@ import {
 } from "@/components/ui/index";
 import { Pencil, Trash, User } from "lucide-react";
 import type { MemberBasicInfo } from "@/types/guardian.type";
+import DeleteMemberModal from "../modals/DeleteMemberModal";
 
 interface GuardianMembersTableProps {
   filteredMembers: MemberBasicInfo[];
@@ -36,6 +38,10 @@ const GuardianMembersTable = ({
   onEditMember, 
   onDeleteMember 
 }: GuardianMembersTableProps) => {
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<MemberBasicInfo | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const isActive = (member: Member): boolean => {
     const value = member.is_active ?? member.isActive;
@@ -70,6 +76,33 @@ const GuardianMembersTable = ({
     if (gender === "Masculino") return "M";
     if (gender === "Femenino") return "F";
     return gender.charAt(0).toUpperCase();
+  };
+
+  const handleDeleteClick = (member: MemberBasicInfo) => {
+    setMemberToDelete(member);
+    setIsDeleteModalOpen(true);
+  };
+  
+
+  const handleConfirmDelete = async () => {
+    if (memberToDelete && onDeleteMember) {
+      setIsDeleting(true);
+      try {
+        await onDeleteMember(memberToDelete);
+        setIsDeleteModalOpen(false);
+        setMemberToDelete(null);
+      } catch (error) {
+        console.error('Error deleting member:', error);
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  };
+
+  // Cancelar eliminación
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setMemberToDelete(null);
   };
 
   return (
@@ -171,7 +204,7 @@ const GuardianMembersTable = ({
                       variant="iconbutton"
                       size="icon"
                       className="text-destructive hover:text-destructive-hover"
-                      onClick={() => onDeleteMember?.(member)}
+                      onClick={() => handleDeleteClick(member)}
                       title="Eliminar miembro"
                     >
                       <Trash />
@@ -191,6 +224,13 @@ const GuardianMembersTable = ({
           )}
         </TableBody>
       </Table>
+      <DeleteMemberModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        member={memberToDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };
