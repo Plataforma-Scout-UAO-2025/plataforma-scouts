@@ -53,24 +53,45 @@ public interface ReportsReadRepository extends JpaRepository<Installment, Long> 
   // ---------- 2) Summary (income/pending/overdue por estado del installment) ----------
   @Query(value = """
       SELECT
-        COALESCE(SUM(CASE WHEN i.status = 'PAID'    THEN i.amount ELSE 0 END), 0) AS income,
-        COALESCE(SUM(CASE WHEN i.status = 'PENDING' THEN i.amount ELSE 0 END), 0) AS pending,
-        COALESCE(SUM(CASE WHEN i.status = 'OVERDUE' THEN i.amount ELSE 0 END), 0) AS overdue
+        -- Ingresos (suma de pagos realizados en el rango)
+        COALESCE(SUM(
+          CASE
+            WHEN (p->>'paid_at') IS NOT NULL
+                AND (p->>'paid_at')::date BETWEEN :start AND :end
+            THEN i.amount
+            ELSE 0
+          END
+        ), 0) AS income,
+
+        -- Pendientes: por estado y due_date en el rango
+        COALESCE(SUM(
+          CASE WHEN i.status = 'PENDING'
+                    AND i.due_date BETWEEN :start AND :end
+              THEN i.amount ELSE 0 END
+        ), 0) AS pending,
+
+        -- En mora: por estado y due_date en el rango
+        COALESCE(SUM(
+          CASE WHEN i.status = 'OVERDUE'
+                    AND i.due_date BETWEEN :start AND :end
+              THEN i.amount ELSE 0 END
+        ), 0) AS overdue
+
       FROM installment i
       JOIN account  a ON a.account_id  = i.account_id
       JOIN member   m ON m.member_id   = a.member_id
       JOIN subgroup s ON s.subgroup_id = m.subgroup_id
+      LEFT JOIN LATERAL jsonb_array_elements(COALESCE(i.payments, '[]'::jsonb)) p ON TRUE
       WHERE
         i.tenant_id = :tenantId
         AND a.tenant_id = :tenantId
         AND m.tenant_id = :tenantId
         AND s.tenant_id = :tenantId
-        AND i.due_date BETWEEN :start AND :end
         AND (
           (:scope = 'MEMBER'   AND m.member_id::text    = :id)
           OR (:scope = 'SUBGROUP' AND m.subgroup_id::text = :id)
           OR (:scope = 'SECTION'  AND s.section_id::text  = :id)
-        )
+        );
       """, nativeQuery = true)
   ReportSummaryRow summarizeByStatus(
       @Param("tenantId") String tenantId,
