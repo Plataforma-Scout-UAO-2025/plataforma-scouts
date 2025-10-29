@@ -57,7 +57,7 @@ function App() {
             <Route path="organigrama/ramas-y-subramas" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><Organigrama /></ProtectedRoute>} />
             <Route path="organigrama/rama/:id" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><RamaDetail /></ProtectedRoute>} />
             <Route path="organigrama/subrama/:id" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><SubramaDetail /></ProtectedRoute>} />
-            <Route path="organigrama/niveles-organizativos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><NivelesPage /></ProtectedRoute>} />
+            <Route path="organigrama/niveles-organizativos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.DEV_SUPPORT]}><NivelesPage /></ProtectedRoute>} />
             <Route path="organigrama/resumen" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.DEV_SUPPORT]}><OrgChartSummary /></ProtectedRoute>} />
 
             {/* ===================== GRUPOS ===================== */}
