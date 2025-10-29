@@ -145,7 +145,7 @@ export async function exportBranchesCSV(
   download("organigrama_ramas.csv", csv);
 }
 
-export function exportLevelsCSV(data: OrganigramaNiveles) {
+export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []) {
   const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
   const rows: string[][] = [];
   const stripAccents = (s: string) =>
@@ -198,10 +198,23 @@ export function exportLevelsCSV(data: OrganigramaNiveles) {
       });
       sorted.forEach((c) => {
         const periodo = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
+        // Calcular titulares a partir de miembros vinculados al cargo (subgrupo)
+        let titulares = c.titular || "";
+        const cargoIdNum = toNumberSafe((c as unknown as { id?: unknown }).id);
+        if (cargoIdNum !== undefined && members && members.length > 0) {
+          const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
+          const names = assigned.map((m) => {
+            const name = (m as any).firstName || (m as any).first_name || "";
+            const last = (m as any).lastName || (m as any).last_name || "";
+            const display = `${String(name).trim()} ${String(last).trim()}`.trim();
+            return display.length > 0 ? display : "Miembro";
+          });
+          if (names.length > 0) titulares = names.join(", ");
+        }
         rows.push([
           nivel.nombre,
           c.nombre,
-          c.titular || "—",
+          titulares || "—",
           periodo,
           c.descripcion || "—",
         ]);
@@ -392,10 +405,18 @@ export async function exportOrgChartCombinedPDF(
       });
       sorted.forEach((c) => {
         const period = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
+        // Calcular titulares desde miembros asignados al cargo (mostrar TODOS los miembros asignados)
+        let titulares = c.titular || "";
+        const cargoIdNum = toNumberSafe((c as unknown as { id?: unknown }).id);
+        if (cargoIdNum !== undefined && members && members.length > 0) {
+          const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
+          const names = assigned.map((m) => fullName(m)).filter(Boolean);
+          if (names.length > 0) titulares = names.join(", ");
+        }
         levelsBody.push([
           nivel.nombre,
           c.nombre,
-          c.titular || "—",
+          titulares || "—",
           period,
           c.descripcion || "—",
         ]);

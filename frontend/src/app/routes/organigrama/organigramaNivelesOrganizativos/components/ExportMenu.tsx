@@ -8,15 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import type { OrganigramaNiveles } from "../types/niveles.types";
 import type { Member } from "@/types/member.type";
+import { getGroupBySlug } from "@/api/organigramaApi";
+import { useTenantParams } from "../../organigramaRamas_Subramas/hooks/useTenantParams";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 /* ============================================================
    📄 Exportación a PDF
    ============================================================ */
-function exportPDF(data: OrganigramaNiveles, members?: Member[]) {
+function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: string) {
   const doc = new jsPDF();
-  const title = `Organigrama de Niveles - ${data.anio}`;
+  const title = `Conformación de Niveles Organizativos${groupName ? ` - ${groupName}` : ""}`;
   const fecha = new Date().toLocaleDateString("es-CO");
 
   doc.setFont("helvetica", "bold");
@@ -246,6 +248,23 @@ function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
    📦 Componente ExportMenu
    ============================================================ */
 export default function ExportMenu({ data, members }: { data: OrganigramaNiveles; members?: Member[] }) {
+  const { tenantId, groupSlug } = useTenantParams();
+
+  const handleExportPDF = async () => {
+    let groupName: string | undefined = undefined;
+    try {
+      // Usar los mismos parámetros que en el módulo de ramas/subramas
+      if (tenantId && groupSlug) {
+        const groupInfo = await getGroupBySlug(tenantId, groupSlug);
+        groupName = groupInfo?.name || undefined;
+      }
+    } catch (e) {
+      console.warn('[ExportMenu] No se pudo obtener el nombre del grupo para el título del PDF', e);
+    }
+
+    exportPDF(data, members, groupName);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -260,7 +279,7 @@ export default function ExportMenu({ data, members }: { data: OrganigramaNiveles
         className="w-64 border border-border bg-card text-foreground shadow-md rounded-lg"
       >
         <DropdownMenuItem
-          onClick={() => exportPDF(data, members)}
+          onClick={handleExportPDF}
           className="hover:bg-accent hover:text-primary transition-colors"
         >
           Exportar organigrama en PDF
