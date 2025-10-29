@@ -17,8 +17,7 @@ export const getGroup = async (id: string | number | bigint) => {
 
 // Obtener de todos los grupos
 export const getGroups = async () => {
-  const tenantId = "org_povsjufF3TEP1DZ7";
-  const response = await api.get<Group[]>(`/tenants/${tenantId}/groups/getAll`);
+  const response = await api.get<Group[]>("/groups/list_groups");
   return response.data;
 };
 
@@ -40,5 +39,14 @@ export const updateMemberByDto = async (
     `/members/update_member_by_id/${id}`,
     memberDto,
   );
+  return response.data;
+};
+
+// Stats de grupos
+
+// Obtener conteo de miembros por grupo
+export const getMembersCountByGroup = async () => {
+  const response = await api.get<Record<string, number>[]>("/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups/members-count");
+  console.log("Response from getMembersCountByGroup:", response);
   return response.data;
 };
