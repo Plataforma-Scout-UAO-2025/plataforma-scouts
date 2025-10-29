@@ -7,83 +7,66 @@ import { toast } from 'sonner';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoCard from './ProfileInfoCard';
 import MembersInChargeCard from './MembersInChargeCard';
+import GroupInfoCard from './GroupInfoCard';
 import EditProfileModal from './EditProfileModal';
 import MemberDetailsSheet from '../../members/components/modals/MemberDetailsSheet';
 import { guardianService } from '../../services/guardianService';
-import type { Member } from '../../members/types/member.type';
-import type { GuardianWithMembers, UpdateGuardianDTO, MemberBasicInfo } from '@/types/guardianTypes';
-import { FullScreenLoader } from '@/components/common/FullScreenLoader';
-import { getErrorStatus } from '@/lib/errorUtils';
+import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
+import type { UpdateGuardianDTO, Guardian, MemberBasicInfo } from '@/types/guardian.type';
+import FullScreenLoader from '@/components/common/FullScreenLoader';
+
+// Interfaz para manejar diferentes formatos de ID en miembros
+interface ExtendedMemberInfo extends MemberBasicInfo {
+  user_id?: string | number;
+  member_id?: string | number;
+}
 
 const GuardianProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth0();
   
-  const [isLoading, setIsLoading] = useState(true);
+  // Estados para modales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
-  const [guardianData, setGuardianData] = useState<GuardianWithMembers | null>(null);
-  const [membersInCharge, setMembersInCharge] = useState<MemberBasicInfo[]>([]);
+  const [guardianApiData, setGuardianApiData] = useState<Guardian | null>(null);
 
-  // ⚠️ IMPORTANTE: guardianId está hardcodeado temporalmente
-  // TODO: Obtener el guardianId del usuario actual logueado
-  // Opciones:
-  // 1. Crear endpoint: GET /api/v1/guardian/by-user-id/{userId}
-  // 2. Incluir guardianId en el token JWT de Auth0
-  // 3. Llamar a un endpoint que mapee userId -> guardianId
-
-    const guardianId = 309;
-    const { user } = useAuth0();
-    
-
+  // Obtener guardianId de Auth0
+  const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  
+  // Usar el hook optimizado para obtener miembros a cargo
+  const { members: membersInCharge, loading, error } = useMembersInChargeOf(guardianId);
+  
   useEffect(() => {
-    const fetchGuardianData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Obtener datos del guardian con sus miembros
-        const guardianWithMembers = await guardianService.getGuardianWithMembers(guardianId);
-        
-        if (guardianWithMembers) {
-          setGuardianData(guardianWithMembers);
-          
-          // Obtener lista completa de miembros a cargo
-          const members = await guardianService.getMembersInChargeOf(guardianId);
-          setMembersInCharge(members || []);
-        }
-      } catch (error: unknown) {
-        console.error('Error al cargar datos del guardian:', error);
-        
-        // Mensaje específico según el tipo de error
-        const status = getErrorStatus(error);
-        if (status === 404) {
-          toast.error(`Guardian con ID ${guardianId} no encontrado. Por favor contacta al administrador.`);
-        } else if (status === 401 || status === 403) {
-          toast.error('No tienes permisos para ver este perfil');
-        } else {
-          toast.error('No se pudieron cargar los datos del perfil. Intenta nuevamente.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchGuardianData();
+    if (guardianId) {
+      guardianService.getGuardianById(guardianId)
+        .then((response) => {
+          setGuardianApiData(response);
+        })
+        .catch((err) => {
+          console.error("Error al obtener datos del acudiente:", err);
+        });
+    }
   }, [guardianId]);
 
   const handleEditProfile = async (data: unknown) => {
     try {
-      // El modal devuelve strings, necesitamos convertirlos al formato correcto
+      if (!guardianId) {
+        toast.error('No se pudo identificar el guardian');
+        return;
+      }
       const updateData: UpdateGuardianDTO = {
         ...(data as Record<string, unknown>),
         documentType: (data as Record<string, unknown>).documentType as UpdateGuardianDTO['documentType']
       };
       
       await guardianService.updateData(guardianId, updateData);
-
-      setGuardianData(prev => prev ? { ...prev, ...updateData } : null);
       toast.success('Perfil actualizado exitosamente');
       setIsEditModalOpen(false);
+      
+      // Recargar datos del guardian después de la actualización
+      const updatedGuardian = await guardianService.getGuardianById(guardianId);
+      setGuardianApiData(updatedGuardian);
     } catch (error) {
       console.error('Error al actualizar perfil:', error);
       toast.error('No se pudo actualizar el perfil');
@@ -91,75 +74,78 @@ const GuardianProfilePage: React.FC = () => {
   };
 
   const handleViewMemberProfile = (id: number) => {
-    const member = membersInCharge.find(m => m.userId === id.toString());
+    const member = membersInCharge.find(m => {
+      const extendedMember = m as ExtendedMemberInfo;
+      const memberId = extendedMember.memberId || extendedMember.user_id || extendedMember.member_id;
+      return memberId === id.toString() || 
+             memberId === id || 
+             parseInt(String(memberId)) === id;
+    });
+    
     if (member) {
-      // Mapeo de DocumentType
-      const mapDocumentType = (docType?: string): Member['documentType'] => {
-        if (docType === 'PASSPORT') return 'PA';
-        return (docType as Member['documentType']) || 'CC';
-      };
-      
-      // Convertir MemberBasicInfo a Member para compatibilidad
-      const memberData: Member = {
-        id: parseInt(member.userId || '0'),
-        firstName: member.firstName || '',
-        lastName: member.lastName || '',
-        identification: member.identification || '',
-        documentType: mapDocumentType(member.documentType),
-        phone: member.phone || '',
-        isActive: member.isActive || false,
-        birthDate: member.birthDate || '',
-        age: member.age,
-        gender: (member.gender as Member['gender']) || 'OTHER',
-        city: '', // No disponible en MemberBasicInfo
-        rama: member.subgroup?.name || '', // No disponible en MemberBasicInfo
-        role: '', // No disponible en MemberBasicInfo
-        email: '', // No disponible en MemberBasicInfo
-        address: '', // No disponible en MemberBasicInfo
-        acceptanceDate: '', // No disponible en MemberBasicInfo
-        createdAt: '', // No disponible en MemberBasicInfo
-        emergencyContacts: (member.emergencyContacts || []).map(ec => ({
-          id: 0,
-          fullName: ec.name || '',
-          relationship: (ec.relationship as Member['emergencyContacts'][0]['relationship']) || 'Otro',
-          phone: ec.phone || ''
-        }))
-      };
-      setSelectedMember(memberData);
+      setSelectedMember(member);
       setIsDetailsSheetOpen(true);
     } else {
       toast.error('No se encontró información del miembro');
     }
   };
 
-  const handleEditMember = (member: Member) => {
-    console.log('Editing member:', member);
-    setIsDetailsSheetOpen(false);
-    toast.info('Funcionalidad de edición en desarrollo');
-  };
-
-  if (isLoading) {
+  // Manejo de estados de carga y error
+  if (loading) {
     return <FullScreenLoader message="Cargando perfil..." />;
   }
 
-  if (!guardianData) {
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#fffaf3] flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={() => navigate('/app/dashboard')}>
+            Volver al inicio
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!guardianId) {
     return (
       <div className="min-h-screen bg-[#fffaf3] flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-[#1a4134] mb-4">No se encontró el perfil</h2>
+          <p className="text-gray-600 mb-4">No se pudo obtener la información de autenticación</p>
           <Button onClick={() => navigate('/app/dashboard')}>Volver al inicio</Button>
         </div>
       </div>
     );
   }
 
-  const miembrosACargo = guardianData.members?.map(member => ({
-    id: parseInt(member.userId || '0'),
-    fullName: `${member.firstName || ''} ${member.lastName || ''}`,
-    rama: member.subgroup?.name || 'Sin asignar',
-    parentesco: member.relationship || 'No especificado',
-    isActive: member.isActive || false
-  })) || [];
+  // Mapear miembros a cargo para el componente
+  const miembrosACargo = membersInCharge
+    .filter(member =>
+      member.first_name &&
+      member.last_name &&
+      member.first_name.trim() !== "" &&
+      member.last_name.trim() !== ""
+    )
+    .map(member => {
+      // Manejar diferentes formatos de ID
+      const extendedMember = member as ExtendedMemberInfo;
+      const memberId = extendedMember.memberId || extendedMember.user_id || extendedMember.member_id;
+      
+      return {
+        id: typeof memberId === 'string' ? parseInt(memberId) || 0 : memberId || 0,
+        fullName: `${member.first_name ?? ''} ${member.last_name ?? ''}`,
+        rama: member.subgroup?.name ?? 'Sin asignar',
+        parentesco: member.relationship ?? 'No especificado',
+        isActive: member.is_active ?? false
+      };
+    });
+
+  console.log("Guardian ID:", guardianId);
+  console.log("Members in charge:", membersInCharge);
+  console.log("Selected member:", selectedMember);
 
   return (
     <div className="min-h-screen bg-[#fffaf3]">
@@ -176,57 +162,59 @@ const GuardianProfilePage: React.FC = () => {
             Editar Perfil
           </Button>
         </div>
+        
         <div className="flex-1 p-6">
           <ProfileHeader 
-            firstName={guardianData.firstName ?? user?.nickname ?? ''} 
-            lastName={guardianData.lastName ?? user?.middle_name ??''} 
-            grupo={guardianData.subgroup?.name ?? ''} 
-            isActive={guardianData.isActive || false} 
+            first_name={guardianApiData?.first_name || ''} 
+            last_name={guardianApiData?.last_name || ''} 
+            grupo={guardianApiData?.rol || ''} 
+            is_active={guardianApiData?.is_active || false} 
           />
+          
           <ProfileInfoCard 
-            firstName={guardianData.firstName ?? user?.nickname ?? ''} 
-            lastName={guardianData?.lastName ?? user?.middle_name ?? ''} 
-            identification={guardianData.identification || ''} 
-            documentType={guardianData.documentType || 'CC'} 
-            email={user?.email ?? 'N/A'} 
-            emailAlt={undefined} 
-            phone={guardianData.phone || ''} 
-            phoneAlt={undefined} 
-            address={'N/A'} 
+            first_name={guardianApiData?.first_name || ''} 
+            last_name={guardianApiData?.last_name || ''} 
+            identification={guardianApiData?.identification || ''} 
+            documentType={guardianApiData?.document_type || 'CC'} 
+            email={user?.email || 'N/A'} 
+            phone={guardianApiData?.phone || ''} 
           />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 items-start">
             <MembersInChargeCard 
               miembrosACargo={miembrosACargo} 
-              grupo={guardianData.subgroup?.name || 'Sin grupo'} 
-              role={'Acudiente'} 
-              joinDate={guardianData.acceptanceDate || ''} 
-              isActive={guardianData.isActive || false} 
               onViewMember={handleViewMemberProfile} 
             />
+            <GroupInfoCard
+              role={'Acudiente'}
+              joinDate={guardianApiData?.acceptance_date || ''}
+              isActive={guardianApiData?.is_active || false}
+            />            
           </div>
         </div>
       </div>
+      
       <EditProfileModal 
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleEditProfile} 
         initialData={{
-          firstName: guardianData.firstName ?? user?.nickname ?? '',
-          lastName: guardianData.lastName || '',
-          identification: guardianData.identification || '',
-          documentType: guardianData.documentType || 'CC',
+          firstName: guardianApiData?.first_name ?? user?.nickname ?? '',
+          lastName: guardianApiData?.last_name || '',
+          identification: guardianApiData?.identification || '',
+          documentType: guardianApiData?.document_type || 'CC',
           email: user?.email ?? 'N/A',
           emailAlt: undefined,
-          phone: guardianData.phone || '',
+          phone: guardianApiData?.phone || '',
           phoneAlt: undefined,
           address: 'N/A'
         }} 
       />
+      
       <MemberDetailsSheet 
-        isOpen={isDetailsSheetOpen}
-        onClose={() => setIsDetailsSheetOpen(false)}
-        miembro={selectedMember}
-        onEdit={handleEditMember}
+        open={isDetailsSheetOpen}
+        onOpenChange={setIsDetailsSheetOpen}
+        member={selectedMember}
       />
     </div>
   );

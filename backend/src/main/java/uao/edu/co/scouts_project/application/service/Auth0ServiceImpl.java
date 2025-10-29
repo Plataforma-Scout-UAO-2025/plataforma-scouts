@@ -375,27 +375,10 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
         // - Crear el Group en BD con el tenant_id (GroupService).
         CreatingGroupDTO newGroup = new CreatingGroupDTO(
-                orgId, // tenantId
-                slug, // slug
-                group.getName(), // name
-                group.getDistrict(), // district
-                group.getIdentifierNumber(), // identifierNumber
-                group.getAddress(), // address
-                null, // phone
-                group.getEmail(), // email
-                null, // foundedIn
-                null, // motto
-                null, // mission
-                null, // vision
-                null, // history
-                null, // logoObjectId
-                null, // scarfObjectId
-                null, // socialLinks
-                null, // config
-                true, // isActive
-                null // status
-        );
-
+                orgId, slug, group.getName(), group.getDistrict(), group.getIdentifierNumber(),
+                group.getAddress(), null, group.getEmail(), null, null,
+                null, null, null, null, null, null,
+                null, true, null);
         logger.info("Se creará un grupo en BD.");
 
         groupService.createGroup(newGroup);
@@ -405,10 +388,12 @@ public class Auth0ServiceImpl implements IAuth0Service {
         // - [No implementado] Create Member (MemberService) Asignar al ADMIN_GLOBAL a
         // ese Grupo en BD
 
-        // MemberDto superUserMember = new MemberDTO(null, createdSuperUser.getId(), orgId, null, null, "Cesar", "Navia",
-        //         100, Role.ADMIN_GLOBAL, DocumentType.CC, "canavia@uao.edu.co", null,
-        //         null, null, null, null, null, null, null, null, null, null, true, null, Status.APPROVED,
-        //         LocalDate.now(), null, LocalDate.now(), LocalDate.now());
+        // MemberDto superUserMember = new MemberDTO(null, createdSuperUser.getId(),
+        // orgId, null, null, "Cesar", "Navia",
+        // 100, Role.ADMIN_GLOBAL, DocumentType.CC, "canavia@uao.edu.co", null,
+        // null, null, null, null, null, null, null, null, null, null, true, null,
+        // Status.APPROVED,
+        // LocalDate.now(), null, LocalDate.now(), LocalDate.now());
 
         // memberServiceImp.create_member(superUserMember);
 

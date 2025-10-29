@@ -1,43 +1,39 @@
-import { Phone } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import type { Member } from '../../../types/member.type';
+import type { MemberBasicInfo } from "@/types/guardian.type";
 
 interface EmergencyContactsSectionProps {
-  miembro: Member;
+  member: MemberBasicInfo;
 }
 
-export default function EmergencyContactsSection({ miembro }: EmergencyContactsSectionProps) {
+export default function EmergencyContactsSection({ member }: EmergencyContactsSectionProps) {
+  // Solo renderizar si hay contactos de emergencia
+  if (!member.emergencyContacts || member.emergencyContacts.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <Phone className="h-5 w-5 text-[#1a4134]" />
-        <h4 className="text-lg font-semibold text-[#1a4134]">Contactos de Emergencia</h4>
-      </div>
-      <div className="space-y-3 pl-7">
-        {miembro.emergencyContacts && miembro.emergencyContacts.length > 0 ? (
-          miembro.emergencyContacts.map((contacto, index) => (
-            <Card key={index} className="border-gray-200">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Nombre</p>
-                    <p className="text-base font-medium">{contacto.fullName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Relación</p>
-                    <p className="text-base">{contacto.relationship}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-sm font-medium text-gray-600">Teléfono</p>
-                    <p className="text-base">{contacto.phone}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <p className="text-base text-gray-500">No hay contactos de emergencia registrados</p>
-        )}
+    <div className="bg-white p-6 rounded-lg border border-gray-200">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        Contactos de Emergencia
+      </h3>
+      <div className="space-y-4">
+        {member.emergencyContacts.map((contact, index) => (
+          <div key={index} className="p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Nombre</label>
+                <p className="text-gray-900">{contact.name || "No especificado"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                <p className="text-gray-900">{contact.phone || "No especificado"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Parentesco</label>
+                <p className="text-gray-900">{contact.relationship || "No especificado"}</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

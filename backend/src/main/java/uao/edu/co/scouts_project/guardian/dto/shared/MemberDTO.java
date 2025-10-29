@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class MemberDTO {
+    private Long memberId;
     private String userId;
     private String tenantId;
     private SubgroupDTO subgroup;

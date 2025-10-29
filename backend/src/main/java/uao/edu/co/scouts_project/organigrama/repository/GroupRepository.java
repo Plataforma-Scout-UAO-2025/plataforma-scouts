@@ -8,7 +8,7 @@ import uao.edu.co.scouts_project.organigrama.model.Group;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+    @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
     Optional<Group> findByTenantIdAndSlug(String tenantId, String slug);
 
@@ -27,4 +27,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     boolean existsBySlug(String slug);
 
+    Long countByIsActiveTrue();
+    Long countByTenantIdAndIsActiveTrue(String tenantId);
+    Long countByTenantIdAndIsActiveFalse(String tenantId);
 }
