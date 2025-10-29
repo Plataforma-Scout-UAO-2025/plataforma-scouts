@@ -17,6 +17,7 @@ import uao.edu.co.scouts_project.statistics.dto.GroupStatisticsDTO;
 import uao.edu.co.scouts_project.statistics.dto.InactiveGroupStatisticsDTO;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -122,5 +123,54 @@ class GroupStatisticsServiceTest {
         assertEquals("Grupo Test", result.get(0).groupName());
         assertEquals("<Desconocido>", result.get(1).groupName());
         assertEquals(10L, result.get(0).membersCount());
+    }
+
+    @Test
+    void getTopGroupsByMembers_shouldThrowNotFound_whenTenantDoesNotExist() {
+        String tenantId = "missing";
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> groupStatisticsService.getTopGroupsByMembers(tenantId, 5));
+    }
+
+    @Test
+    void getTopGroupsByMembers_shouldHandleNullCount_values() {
+        String tenantId = "tenant-1";
+        Tenant tenant = new Tenant();
+        tenant.setTenantId(tenantId);
+
+    List<Object[]> rows = new ArrayList<>();
+    rows.add(new Object[]{1L, null});
+        Group g1 = new Group();
+        g1.setGroupId(1L);
+        g1.setName("G1");
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(memberRepository.countMembersByGroupIdByTenant(tenantId)).thenReturn(rows);
+        when(groupRepository.findById(1L)).thenReturn(Optional.of(g1));
+
+        List<GroupMembersCountDTO> result = groupStatisticsService.getTopGroupsByMembers(tenantId, 5);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(0L, result.get(0).membersCount());
+    }
+
+    @Test
+    void getTopGroupsByMembers_shouldRespectLimit_parameter() {
+        String tenantId = "tenant-1";
+        Tenant tenant = new Tenant();
+        tenant.setTenantId(tenantId);
+
+        List<Object[]> rows = List.of(new Object[]{1L, 10L}, new Object[]{2L, 9L}, new Object[]{3L, 8L});
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(memberRepository.countMembersByGroupIdByTenant(tenantId)).thenReturn(rows);
+        when(groupRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        List<GroupMembersCountDTO> result = groupStatisticsService.getTopGroupsByMembers(tenantId, 2);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
     }
 }

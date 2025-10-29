@@ -83,4 +83,44 @@ class StatisticsControllerTest {
         ResponseEntity<?> resp = statisticsController.getInactiveGroupStatistics("t1", null);
         assertEquals(HttpStatus.UNAUTHORIZED, resp.getStatusCode());
     }
+
+    @Test
+    void getTopGroupsByMembers_shouldReturnInternalServerOnUnexpectedException() {
+        when(groupStatisticsService.getTopGroupsByMembers("t1", 5)).thenThrow(new RuntimeException("boom"));
+
+        ResponseEntity<?> resp = statisticsController.getTopGroupsByMembers("t1", "t1");
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStatusCode());
+        assertTrue(((Map<?, ?>) resp.getBody()).get("message").toString().contains("Ha ocurrido un error interno"));
+    }
+
+    @Test
+    void getGroupStatistics_shouldReturnInternalServerOnUnexpectedException() {
+        when(groupStatisticsService.getGroupStatistics("t1")).thenThrow(new RuntimeException("boom"));
+
+        ResponseEntity<?> resp = statisticsController.getGroupStatistics("t1", "t1");
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStatusCode());
+        assertTrue(((Map<?, ?>) resp.getBody()).get("message").toString().contains("Ha ocurrido un error interno"));
+    }
+
+    @Test
+    void getMembersByGroup_shouldReturnInternalServerOnUnexpectedException() {
+        when(groupStatisticsService.getMembersByGroup("t1")).thenThrow(new RuntimeException("boom"));
+
+        ResponseEntity<Object> resp = statisticsController.getMembersByGroup("t1", "t1");
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStatusCode());
+        assertTrue(((Map<?, ?>) resp.getBody()).get("message").toString().contains("Ha ocurrido un error interno"));
+    }
+
+    @Test
+    void getInactiveGroupStatistics_shouldReturnInternalServerOnUnexpectedException() {
+        when(groupStatisticsService.getInactiveGroupStatistics("t1")).thenThrow(new RuntimeException("boom"));
+
+        ResponseEntity<?> resp = statisticsController.getInactiveGroupStatistics("t1", "t1");
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStatusCode());
+        assertTrue(((Map<?, ?>) resp.getBody()).get("message").toString().contains("Ha ocurrido un error interno"));
+    }
 }
