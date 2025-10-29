@@ -28,7 +28,7 @@ tests {
   test("All members have status APPROVED", function() {
     const body = res.getBody();
     if (body.length > 0) {
-      const allInactive = body.every(member => member.status === "INACTIVE");
+      const allInactive = body.every(member => member.status === "APPROVED");
       expect(allInactive).to.equal(true);
     }
   });
