@@ -1,12 +1,6 @@
 # Supabase Database Setup Guide
 
-<<<<<<< HEAD
-**Last Updated**: September 26, 2025  
-**Version**: 1.0.1  
-**Maintainer**: DBA
-=======
-**Last Updated**: October 11, 2025 | **Version**: 1.0.3 | **Maintainer**: DBA
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
+**Last Updated**: October 29, 2025 | **Version**: 1.0.4 | **Maintainer**: DBA
 
 This README provides comprehensive instructions for setting up and deploying the Supabase database migrations for the Scout Management System.
 
@@ -15,27 +9,19 @@ This README provides comprehensive instructions for setting up and deploying the
 Before setting up the database, ensure you have:
 
 1. **Supabase CLI installed (either using npm, pnpm or manually installing binaries)**:
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    ```bash
-   # Via npm (recommended)
-   npm install -g @supabase/supabase-cli
+   # Via pnpm (recommended)
+   pnpm install -g @supabase/supabase-cli
    
-   # Or using npx (no global install)
-   npx supabase --help
+   # Or using pnpx (no global install)
+   pnpx supabase --help
 
    # Or manually download and install binaries eventually
    ```
 
 2. **Supabase Project**:
-<<<<<<< HEAD
-   - Note your project reference ID from dashboard URL: `https://supabase.com/dashboard/project/<project-id>`
-   - Save your database password
-=======
    - Ask for your project crededntials with your DBA team
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
 
 3. **Git Repository Access**:
    - Clone this repository
@@ -43,22 +29,13 @@ Before setting up the database, ensure you have:
 
 ## Project Structure
 
-<<<<<<< HEAD
-```
-=======
 ```text
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
 plataforma-scouts/
 ├── backend/                     # Java Spring Boot backend
 ├── frontend/                    # React frontend
 ├── supabase/                    # Database configuration
 │   ├── migrations/              # SQL migration files
-<<<<<<< HEAD
-│   ├── config.toml             # Supabase configuration
-│   ├── .env.example            # Environment variables template
-=======
 │     └── README.md
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
 └── README.md
 ```
 
@@ -67,37 +44,25 @@ plataforma-scouts/
 ### Local Development
 
 1. **Navigate to project directory**:
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    ```bash
    cd plataforma-scouts/supabase
    ```
 
 2. **Initialize Supabase (if not already done)**:
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    ```bash
    supabase init
    ```
 
 3. **Start local Supabase**:
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    ```bash
    supabase start
    ```
 
 4. **Apply migrations locally**:
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    ```bash
    supabase db reset
    ```
@@ -120,46 +85,30 @@ plataforma-scouts/
 #### Direct Migration Push (Recommended)
 
 1. **Login to Supabase CLI**:
-<<<<<<< HEAD
-   ```bash
-=======
 
    ```bash
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    supabase login
    ```
 
 2. **Link to your production project**:
-<<<<<<< HEAD
-   ```bash
-=======
 
    ```bash
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    supabase link --project-ref YOUR_PROJECT_REF
    ```
 
 3. **Push all migrations**:
-<<<<<<< HEAD
-   ```bash
-=======
 
    ```bash
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    supabase db push
    ```
 
 4. **Push configuration**:
-<<<<<<< HEAD
-   ```bash
-=======
 
    ```bash
 
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
    supabase config push
    ```
 
@@ -191,8 +140,4 @@ For issues or questions:
 1. Check the [Supabase Documentation](https://supabase.com/docs)
 2. Review migration files for comments and explanations
 3. Create an issue in the project repository
-<<<<<<< HEAD
-4. or contact the DBAs/lead team instead, lol ;)
-=======
 4. or contact the DBAs/lead team instead ;)
->>>>>>> 2b446187717f2e0f8b16599a5b3c47c4be4c7078
