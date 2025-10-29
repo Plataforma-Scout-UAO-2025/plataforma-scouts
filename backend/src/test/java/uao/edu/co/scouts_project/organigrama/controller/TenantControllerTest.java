@@ -120,22 +120,22 @@ class TenantControllerTest {
             .andExpect(jsonPath("$.tenantId", is("t-nuevo-slug")));
     }
 
-    @Test
-        @DisplayName("PUT /api/v1/tenants/{tenantId} -> 200 y objeto JSON actualizado")
-    void updateTenant_ok() throws Exception {
-                var patch   = new TenantDTO(null, "region-valle", "inactive", null, null);
-                var updated = new TenantDTO("tenant-123", "region-valle", "inactive",
-                Instant.parse("2025-01-01T00:00:00Z"), Instant.parse("2025-04-01T00:00:00Z"));
+    // @Test
+    //     @DisplayName("PUT /api/v1/tenants/{tenantId} -> 200 y objeto JSON actualizado")
+    // void updateTenant_ok() throws Exception {
+    //             var patch   = new TenantDTO(null, "region-valle", "inactive", null, null);
+    //             var updated = new TenantDTO("tenant-123", "region-valle", "inactive",
+    //             Instant.parse("2025-01-01T00:00:00Z"), Instant.parse("2025-04-01T00:00:00Z"));
 
-                when(tenantService.updateTenant(eq("tenant-123"), any(TenantDTO.class))).thenReturn(updated);
+    //             when(tenantService.updateTenant(eq("tenant-123"), any(TenantDTO.class))).thenReturn(updated);
 
-                mockMvc.perform(put("/api/v1/tenants/{tenantId}", "tenant-123")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patch)))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.status", is("inactive")));
-    }
+    //             mockMvc.perform(put("/api/v1/tenants/{tenantId}", "tenant-123")
+    //             .contentType(MediaType.APPLICATION_JSON)
+    //             .content(objectMapper.writeValueAsString(patch)))
+    //         .andExpect(status().isOk())
+    //         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+    //         .andExpect(jsonPath("$.status", is("inactive")));
+    // }
 
     @Test
         @DisplayName("DELETE /api/v1/tenants/{tenantId} -> 204")

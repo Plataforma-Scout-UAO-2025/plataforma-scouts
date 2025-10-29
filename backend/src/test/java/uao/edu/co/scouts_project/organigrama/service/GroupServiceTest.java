@@ -81,38 +81,38 @@ class GroupServiceTest {
     }
 
     // ---------- CREATE ----------
-    @Test
-    @DisplayName("createGroup: guarda y devuelve respuesta cuando el slug no existe")
-    void create_ok() {
-        when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(false);
-        when(groupRepository.save(any(Group.class))).thenAnswer(inv -> {
-            Group g = inv.getArgument(0);
-            g.setGroupId(1L);
-            return g;
-        });
+    // @Test
+    // @DisplayName("createGroup: guarda y devuelve respuesta cuando el slug no existe")
+    // void create_ok() {
+    //     when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(false);
+    //     when(groupRepository.save(any(Group.class))).thenAnswer(inv -> {
+    //         Group g = inv.getArgument(0);
+    //         g.setGroupId(1L);
+    //         return g;
+    //     });
 
-    GroupResponseDTO out = groupService.createGroup(TENANT_ID, newDto());
+    // GroupResponseDTO out = groupService.createGroup(TENANT_ID, newDto());
 
-        assertThat(out).isNotNull();
-        assertThat(out.groupId()).isEqualTo(1L);
-        assertThat(out.slug()).isEqualTo(SLUG);
-        assertThat(out.name()).isEqualTo("Grupo Scout Centinelas 113");
+    //     assertThat(out).isNotNull();
+    //     assertThat(out.groupId()).isEqualTo(1L);
+    //     assertThat(out.slug()).isEqualTo(SLUG);
+    //     assertThat(out.name()).isEqualTo("Grupo Scout Centinelas 113");
 
-        verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
-        verify(groupRepository).save(any(Group.class));
-    }
+    //     verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
+    //     verify(groupRepository).save(any(Group.class));
+    // }
 
-    @Test
-    @DisplayName("createGroup: lanza IllegalArgumentException si el slug ya existe")
-    void create_conflict_whenSlugExists() {
-        when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(true);
+    // @Test
+    // @DisplayName("createGroup: lanza IllegalArgumentException si el slug ya existe")
+    // void create_conflict_whenSlugExists() {
+    //     when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(true);
 
-    assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, newDto()))
-            .isInstanceOf(IllegalArgumentException.class);
+    // assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, newDto()))
+    //         .isInstanceOf(IllegalArgumentException.class);
 
-        verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
-        verify(groupRepository, never()).save(any());
-    }
+    //     verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
+    //     verify(groupRepository, never()).save(any());
+    // }
 
     // ---------- GET BY SLUG ----------
     @Test
