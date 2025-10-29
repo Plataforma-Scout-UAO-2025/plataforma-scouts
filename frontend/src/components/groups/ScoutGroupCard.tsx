@@ -37,14 +37,21 @@ export const ScoutGroupCard = memo(function ScoutGroupCard({ group }: ScoutGroup
   
   // Memoizar datos computados
   const groupData = useMemo(() => {
-    const data = group as any;
+    // Acceso compatible con backend (snake_case y camelCase)
+    const backendData = group as GroupResponseDTO & {
+      group_id?: number;
+      social_links?: Record<string, unknown>;
+      logo_object_url?: string;
+      founded_in?: string;
+    };
+    
     return {
-      groupId: data.group_id || group.groupId || group.slug || "unknown",
-      name: group.name || `Grupo ${data.group_id || group.groupId || group.slug || "unknown"}`,
+      groupId: backendData.group_id || group.groupId || group.slug || "unknown",
+      name: group.name || `Grupo ${backendData.group_id || group.groupId || group.slug || "unknown"}`,
       description: group.mission || group.vision || group.history || "",
-      socialLinks: data.social_links || group.socialLinks,
-      logoUrl: data.logo_object_url || group.logoObjectId || "/Kids.png",
-      foundedDate: data.founded_in || group.foundedIn
+      socialLinks: backendData.social_links || group.socialLinks,
+      logoUrl: backendData.logo_object_url || group.logoObjectId || "/Kids.png",
+      foundedDate: backendData.founded_in || group.foundedIn
     };
   }, [group]);
 

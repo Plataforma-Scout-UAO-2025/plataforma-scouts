@@ -35,6 +35,9 @@ export default function GroupInfoModal({
   // Early return después de todos los hooks
   if (!group) return null;
 
+  // Helper para convertir a tipo compatible
+  const asCompatibleGroup = (group: Group) => group as Group & Record<string, unknown>;
+
   // Función para obtener el icono de red social
   const getSocialIcon = (platform: string) => {
     const lowerPlatform = platform.toLowerCase();
@@ -46,7 +49,14 @@ export default function GroupInfoModal({
   };
 
   // Acceso híbrido a los datos para compatibilidad con backend
-  const groupData = group as any;
+  const groupData = group as Group & {
+    tenant_id?: string;
+    identifier_number?: string;
+    founded_in?: string;
+    logo_object_id?: string;
+    scarf_object_id?: string;
+    social_links?: Record<string, unknown>;
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,8 +116,8 @@ export default function GroupInfoModal({
             
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-600 mb-2">Estado</p>
-              <Badge className={`${getGroupStatusClasses(group)} px-3 py-1`}>
-                {getGroupStatusText(group)}
+              <Badge className={`${getGroupStatusClasses(asCompatibleGroup(group))} px-3 py-1`}>
+                {getGroupStatusText(asCompatibleGroup(group))}
               </Badge>
             </div>
           </div>
