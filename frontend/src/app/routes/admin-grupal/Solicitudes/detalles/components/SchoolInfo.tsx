@@ -11,11 +11,11 @@ interface SchoolInfoProps {
 export default function SchoolInfo({ memberId }: SchoolInfoProps) {
   const dispatch = useAppDispatch();
   
-  const { schoolData, loading, error } = useAppSelector((state) => ({
-    schoolData: state.members.schoolDataByMember?.[Number(memberId)] || null,
-    loading: state.members.loadingSchoolData,
-    error: state.members.errorSchoolData,
-  }));
+  const schoolData = useAppSelector((state) => 
+    state.members.schoolDataByMember?.[Number(memberId)] || null
+  );
+  const loading = useAppSelector((state) => state.members.loadingSchoolData);
+  const error = useAppSelector((state) => state.members.errorSchoolData);
 
   useEffect(() => {
     if (!memberId) {
@@ -42,13 +42,15 @@ export default function SchoolInfo({ memberId }: SchoolInfoProps) {
 
   if (!schoolData) {
     return (
-      <div className="border rounded-lg p-6 bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold text-primary border-b-2 border-primary pb-2">
           Información Escolar
         </h3>
-        <p className="text-sm text-gray-600">
-          Este miembro no tiene datos escolares registrados.
-        </p>
+        <div className="border rounded-lg p-6 bg-gray-50">
+          <p className="text-sm text-gray-600">
+          Este miembro no tiene datos escolares registrados.          </p>
+        </div>
+        
       </div>
     );
   }

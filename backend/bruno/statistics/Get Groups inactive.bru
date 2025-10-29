@@ -1,0 +1,47 @@
+meta {
+  name: Get Groups inactive
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:8080/api/v1/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups/inactive
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: org_6B3k4dao2Wf6eGxa
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Validar campo inactive_groups_count", function () {
+    expect(res.body.inactive_groups_count).to.be.a('number');
+    expect(res.body.inactive_groups_count).to.be.at.least(0);
+  });
+
+  test("Validar estructura del response", function () {
+    expect(res.body).to.have.property('inactive_groups_count');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Obtener estadísticas de grupos inactivos (caso exitoso)
+  
+  **Endpoint:** /api/v1/tenants/{tenantId}/statistics/groups/inactive
+  
+  **Descripción:** Validar que el endpoint retorna correctamente el conteo de grupos inactivos para un tenant.
+  Se envía el header X-Tenant-Id correcto y se espera:
+  - Código 200
+  - Campo inactive_groups_count numérico >= 0
+  - Estructura JSON correcta
+}

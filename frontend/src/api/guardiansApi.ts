@@ -6,7 +6,7 @@ import type {
   UpdateGuardianDTO, 
   MemberBasicInfo, 
   GuardianCreateResponse 
-} from "@/types/guardianTypes";
+} from "@/types/guardian.type";
 
 // Crear un nuevo guardian
 export const createGuardian = async (data: CreateGuardianDTO) => {

@@ -60,10 +60,8 @@ const RequestsTable = ({
             <TableHead className="pl-4 font-bold text-primary">Id</TableHead>
             <TableHead className="font-bold text-primary">Nombres</TableHead>
             <TableHead className="font-bold text-primary">Apellidos</TableHead>
-            <TableHead className="font-bold text-primary">
-              Identificación
-            </TableHead>
-            <TableHead className="font-bold text-primary">Ciudad</TableHead>
+            <TableHead className="font-bold text-primary">Correo</TableHead>
+            <TableHead className="font-bold text-primary">Teléfono</TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
             <TableHead className="text-center font-bold text-primary">
               Acciones
@@ -85,8 +83,9 @@ const RequestsTable = ({
                 </TableCell>
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
-                <TableCell>{member.identification}</TableCell>
-                <TableCell>{member.address || "Sin dirección"}</TableCell>
+
+                <TableCell>{member.email || "Sin correo"}</TableCell>
+                <TableCell>{member.phone || "Sin telefono"}</TableCell>
                 <TableCell>
                   <span className="inline-block px-2 py-1 rounded-lg border border-yellow-300 bg-yellow-100 text-yellow-800 font-semibold">
                     {statusLabels[member.status ?? "Pendiente"]}
