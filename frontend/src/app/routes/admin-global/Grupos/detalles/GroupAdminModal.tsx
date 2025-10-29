@@ -266,7 +266,7 @@ export default function GroupAdminModal({
                   }))
                 }
               >
-                <SelectTrigger className="w-full mt-1">
+                <SelectTrigger className="w-full mt-1 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
