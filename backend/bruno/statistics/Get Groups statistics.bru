@@ -5,14 +5,13 @@ meta {
 }
 
 get {
-  url: http://localhost:8080/api/v1/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups
+  url: http://localhost:8080/api/v1/statistics/groups
   body: none
   auth: inherit
 }
 
 headers {
   Content-Type: application/json
-  X-Tenant-Id: org_6B3k4dao2Wf6eGxa
 }
 
 tests {
@@ -37,12 +36,12 @@ settings {
 docs {
   **Nombre:** Obtener estadísticas de grupos (caso exitoso)
   
-  **Endpoint:** /api/v1/tenants/{tenantId}/statistics/groups
+  **Endpoint:** /api/v1/statistics/groups
   
   **HU relacionadas:** HU-STATS-1.1
   
-  **Descripción:** Validar que el endpoint retorna correctamente el conteo de grupos activos para un tenant.
-  Se envía el header X-Tenant-Id correcto y se espera:
+  **Descripción:** Validar que el endpoint retorna correctamente el conteo de grupos activos en la plataforma.
+  Se espera:
   - Código 200
   - Campo active_groups_count numérico >= 0
   - Estructura JSON correcta
