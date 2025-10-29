@@ -39,6 +39,7 @@ import GuardianEnrollment from "./app/routes/grupos/basic-info/GuardianEnrollmen
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
 import MembersInCharge from "./app/routes/guardians/members/components/views/MembersInCharge";
 import WelcomeAddMember from "@/app/routes/guardians/members/components/views/WelcomeAddMember.tsx";
+import LoginSlug from "./app/routes/LoginSlug";
 function App() {
   useAuth0ApiWrapper();
 
@@ -48,6 +49,7 @@ function App() {
         <Routes>
           {/* 🔹 Login & Registro */}
           <Route path="/" element={<Home />} />
+          <Route path="/login/:slug" element={<LoginSlug />} />
 
           {/* 🔹 Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
@@ -100,3 +102,4 @@ function App() {
 }
 
 export default App;
+
