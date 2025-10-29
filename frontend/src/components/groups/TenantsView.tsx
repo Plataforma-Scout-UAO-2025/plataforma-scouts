@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { ScoutGroupCard } from "./ScoutGroupCard";
-import { getTenants } from "@/api/tenantsApi";
-import type { Tenant } from "@/api/tenantsApi";
+import { getGroups } from "@/api/groupsApi";
+import type { GroupResponseDTO } from "@/types/group.type";
 
 export function TenantsView() {
-  const [tenants, setTenants] = useState<Tenant[] | null>(null);
+  const [groups, setGroups] = useState<GroupResponseDTO[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,10 +14,10 @@ export function TenantsView() {
       setLoading(true);
       setError(null);
       try {
-        const data = await getTenants();
-        if (mounted) setTenants(data);
+        const data = await getGroups();
+        if (mounted) setGroups(data);
       } catch (err: any) {
-        console.error("Failed to load tenants", err);
+        console.error("Failed to load groups", err);
         if (mounted) setError(err?.message || String(err));
       } finally {
         if (mounted) setLoading(false);
@@ -54,14 +54,14 @@ export function TenantsView() {
           </div>
         )}
         
-        {!loading && !error && tenants && tenants.length === 0 && (
+        {!loading && !error && groups && groups.length === 0 && (
           <div className="col-span-full text-center py-8">
             <div className="text-muted-foreground">No hay grupos disponibles.</div>
           </div>
         )}
         
-        {!loading && !error && tenants && tenants.map((tenant) => (
-          <ScoutGroupCard key={tenant.tenant_id || tenant.id || tenant.slug} tenant={tenant} />
+        {!loading && !error && groups && groups.map((group) => (
+          <ScoutGroupCard key={group.groupId || group.slug} group={group} />
         ))}
       </div>
     </section>

@@ -16,9 +16,9 @@ export const getGroup = async (id: string | number | bigint) => {
 };
 
 // Obtener de todos los grupos
-export const getGroups = async () => {
-  const response = await api.get<Group[]>("/groups/list_groups");
-  return response.data;
+export const getGroups = async (): Promise<Group[]> => {
+  const res = await api.get<Group[]>("/tenants/A/groups/getAll");
+  return res.data || [];
 };
 
 // Actualizar perfil de usuario
@@ -50,3 +50,4 @@ export const getMembersCountByGroup = async () => {
   console.log("Response from getMembersCountByGroup:", response);
   return response.data;
 };
+

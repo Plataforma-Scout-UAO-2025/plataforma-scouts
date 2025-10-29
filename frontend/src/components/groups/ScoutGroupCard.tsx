@@ -1,17 +1,17 @@
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import LoginButton from "@/components/auth/LoginButton"
 import RegisterButton from "../auth/RegisterButton"
-import type { Tenant } from "@/api/tenantsApi"
+import type { GroupResponseDTO } from "@/types/group.type"
 
 interface ScoutGroupCardProps {
-  tenant: Tenant
+  group: GroupResponseDTO
 }
 
-export function ScoutGroupCard({ tenant }: ScoutGroupCardProps) {
+export function ScoutGroupCard({ group }: ScoutGroupCardProps) {
   const defaultImage = "/Kids.png";
-  const tenantId = tenant.tenant_id || tenant.id || tenant.slug || "unknown";
-  const name = tenant.name || tenant.slug || `Grupo ${tenantId}`;
-  const description = tenant.description || "";
+  const groupId = group.groupId || group.slug || "unknown";
+  const name = group.name || `Grupo ${groupId}`;
+  const description = group.mission || group.vision || group.history || "";
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -32,7 +32,7 @@ export function ScoutGroupCard({ tenant }: ScoutGroupCardProps) {
 
       <CardFooter className="flex justify-between gap-2">
         <LoginButton 
-          organization={tenantId}
+          organization={group.tenant_id}
           className="flex-1"
           variant="secondary"
         >
@@ -40,7 +40,7 @@ export function ScoutGroupCard({ tenant }: ScoutGroupCardProps) {
         </LoginButton>
 
         <RegisterButton className="flex-1" 
-          organization={tenantId}>
+          organization={group.tenant_id}>
           Registrarse
         </RegisterButton>
       </CardFooter>
