@@ -1,5 +1,3 @@
-// Types para API de Guardianes (Acudientes)
-
 export type DocumentType = "CC" | "TI" | "CE" | "PASSPORT" | "RC" | "PA" | "PEP" | "PPT" | "NIT" | "NUIP";
 export type Status = "PENDING" | "ACCEPTED" | "NOT_ACCEPTED" | "ACTIVE" | "INACTIVE";
 
@@ -58,6 +56,7 @@ export interface Guardian {
   is_active: boolean
   status: "APPROVED" | "PENDING" | "REJECTED" | string
   acceptance_date: string
+  address: string
 }
 
 export interface GuardianWithMembers {
