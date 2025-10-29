@@ -17,11 +17,12 @@ import { useGroupManagement } from "@/hooks/useGroupManagement";
 
 const groups = [
   {
+    tenant_id: "1234",
     groupId: 1,
-    slug: "centinelas-113",
-    name: "Centinelas 113",
+    slug: "mi-palabra",
+    name: "Grupo Scout Exploradores 202",
     district: "Distrito Central",
-    email: "centinelas113@example.com",
+    email: "grupo-scout-exploradores-202@example.com",
     phone: "+1234567890",
     address: "Calle Falsa 123, Ciudad Scout",
     foundedIn: "1990-05-15",

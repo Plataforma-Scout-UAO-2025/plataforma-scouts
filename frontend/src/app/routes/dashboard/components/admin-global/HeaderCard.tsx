@@ -1,25 +1,27 @@
 import { Boxes, Users } from "lucide-react";
 
-const HeaderCard = () => {
+type HeaderCardProps = {
+  total_members_count: number;
+  active_groups_count: number;
+  inactive_groups_count: number;
+};
+
+const HeaderCard = ({ total_members_count, active_groups_count, inactive_groups_count }: HeaderCardProps) => {
+  const total_groups = active_groups_count + inactive_groups_count;
   const cards = [
     {
       icon: Boxes,
       label: "Total grupos",
-      value: "5",
-      label2: "4 activos",
+      value: total_groups.toString(),
+      label2: `${active_groups_count} activos`,
+      label3: `${inactive_groups_count} inactivos`,
     },
     {
       icon: Users,
       label: "Número de miembros",
       label2: "Miembros registrados",
-      value: "120",
-    },
-    {
-      icon: Users,
-      label: "Número de miembros",
-      label2: "Miembros registrados",
-      value: "120",
-    },
+      value: total_members_count.toString(),
+    }
   ];
 
   return (
@@ -27,10 +29,10 @@ const HeaderCard = () => {
       {cards.map((item, index) => (
         <div
           key={index}
-          className={`border rounded-xl shadow-sm p-3 flex items-center w-1/3`}
+          className={`mb-4 border rounded-xl shadow-sm p-3 flex items-center`}
         >
           <div className="p-4 w-full">
-            <div className="pb-4 flex justify-between">
+            <div className="flex justify-between">
               <p className="text-md md:text-xl text-text font-bold pr-12">
                 {item.label}
               </p>
@@ -41,6 +43,11 @@ const HeaderCard = () => {
               {item.label2 && (
                 <p className="text-sm md:text-base text-accent-foreground font-normal">
                   {item.label2}
+                </p>
+              )}
+              {item.label3 !== undefined && inactive_groups_count > 0 && (
+                <p className="text-sm md:text-base text-accent-foreground font-normal">
+                  {item.label3} 
                 </p>
               )}
             </div>

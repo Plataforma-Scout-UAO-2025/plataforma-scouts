@@ -5,16 +5,23 @@ import {
   updateGroupAction,
   createGroupAction,
   fetchMembersCountByGroupAction,
+  fetchTotalMembersCountAction,
+  fetchActiveGroupsCountAction,
+  fetchInactiveGroupsCountAction,
+  fetchTopGroupsByMembersAction,
 } from "./groupsActions";
-import type { GroupResponseDTO as Group } from "@/types/group.type";
-
+import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO } from "@/types/group.type";
 interface GroupsState {
   groups: Group[];
   group?: Group | null;
   loading: boolean;
   error: string | null;
   message: string;
-  memberCounts: [string, number][];
+  memberCounts: GroupMembersDTO[];
+  totalMembersCount: number;
+  activeGroupsCount: number;
+  inactiveGroupsCount: number;
+  topGroupsByMembers: TopGroupByMembersDTO[];
 }
 const initialState: GroupsState = {
   groups: [],
@@ -23,7 +30,12 @@ const initialState: GroupsState = {
   error: null,
   message: "",
   memberCounts: [],
+  totalMembersCount: 0,
+  activeGroupsCount: 0,
+  inactiveGroupsCount: 0,
+  topGroupsByMembers: [],
 };
+
 
 const groupsSlice = createSlice({
   name: "groups",
@@ -93,33 +105,82 @@ const groupsSlice = createSlice({
         state.groups.push(action.payload.newGroup);
       }
     });
-    builder.addCase(createGroupAction.rejected, (state, action) => {
+
+    // Stats de grupos
+    builder.addCase(fetchMembersCountByGroupAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(
+      fetchMembersCountByGroupAction.fulfilled,
+      (state, action) => {
+        state.loading = false;
+        state.memberCounts = action.payload as GroupMembersDTO[];
+      }
+    );
+    builder.addCase(
+      fetchMembersCountByGroupAction.rejected,
+      (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      }
+    );
+
+    // Total de miembros
+    builder.addCase(fetchTotalMembersCountAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchTotalMembersCountAction.fulfilled, (state, action) => {
       state.loading = false;
-      state.error = action.payload?.error as string;
-      builder.addCase(fetchMembersCountByGroupAction.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      });
-      builder.addCase(
-        fetchMembersCountByGroupAction.fulfilled,
-        (state, action) => {
-          state.loading = false;
-          // Convert Record<string, number>[] into [string, number][]
-          state.memberCounts = (action.payload as Record<string, number>[]).map(
-            (item) => Object.entries(item)[0] as [string, number]
-          );
-        }
-      );
-      builder.addCase(
-        fetchMembersCountByGroupAction.rejected,
-        (state, action) => {
-          state.loading = false;
-          state.error = action.payload as string;
-        }
-      );
+      state.totalMembersCount = action.payload;
+    });
+    builder.addCase(fetchTotalMembersCountAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // Grupos activos
+    builder.addCase(fetchActiveGroupsCountAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchActiveGroupsCountAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.activeGroupsCount = action.payload;
+    });
+    builder.addCase(fetchActiveGroupsCountAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // Grupos inactivos
+    builder.addCase(fetchInactiveGroupsCountAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchInactiveGroupsCountAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.inactiveGroupsCount = action.payload;
+    });
+    builder.addCase(fetchInactiveGroupsCountAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // Grupos con más miembros
+    builder.addCase(fetchTopGroupsByMembersAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchTopGroupsByMembersAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.topGroupsByMembers = action.payload;
+    });
+    builder.addCase(fetchTopGroupsByMembersAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
     });
   },
-});
-
-export const { clearNotification, clearGroups } = groupsSlice.actions;
+});export const { clearNotification, clearGroups } = groupsSlice.actions;
 export default groupsSlice.reducer;

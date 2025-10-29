@@ -1,36 +1,40 @@
+import type { GroupMembersDTO } from "@/types/group.type";
 
 interface GroupsDistributionProps {
-  groupMembers: [string, number][];
+  memberCounts: GroupMembersDTO[];
 }
 
-const GroupsDistribution = ({ groupMembers }: GroupsDistributionProps) => {
-  const total = groupMembers.reduce((sum, [, count]) => sum + count, 0);
+const GroupsDistribution = ({ memberCounts }: GroupsDistributionProps) => {
   return (
     <div className="border rounded-xl shadow-sm p-6">
       <div className="flex items-center gap-2 mb-4">
         <div>
-          <p className="text-xl font-bold text-text">Distribución por Rama</p>
+          <p className="text-xl font-bold text-text">Distribución por Grupo</p>
           <p className="text-accent-foreground text-sm">
-            Scouts en cada rama del grupo
+            Miembros en cada grupo
           </p>
         </div>
       </div>
 
       <div className="space-y-4">
-        {groupMembers.length === 0 ? (
+        {memberCounts.length === 0 ? (
           <p className="text-accent-foreground text-center py-4">
-            No hay datos de ramas disponibles
+            No hay datos de grupos disponibles
           </p>
         ) : (
-          groupMembers.map(([grupo, cantidad]) => {
-            const porcentaje = Math.round((cantidad / total) * 100);
+          memberCounts.map((memberCount) => {
+            const totalMembers = memberCounts.reduce(
+              (total, group) => total + group.member_count,
+              0
+            );
+            const porcentaje = Math.round((memberCount.member_count / totalMembers) * 100);
 
             return (
-              <div key={grupo} className="space-y-2">
+              <div key={memberCount.group_name} className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-text font-medium">{grupo}</span>
+                  <span className="text-text font-medium">{memberCount.group_name}</span>
                   <span className="text-primary font-bold">
-                    {cantidad} scout{cantidad !== 1 ? "s" : ""}
+                    {memberCount.member_count} Miembro{memberCount.member_count !== 1 ? "s" : ""}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">

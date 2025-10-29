@@ -1,16 +1,18 @@
 import { useEffect } from "react";
 import { useGroup } from "./useGroup";
-import { fetchMembersCountByGroupAction } from "@/store/groups/groupsActions";
-import { useAppDispatch } from "./useAppDispatch";
+import { fetchActiveGroupsCountAction, fetchInactiveGroupsCountAction, fetchMembersCountByGroupAction, fetchTotalMembersCountAction } from "@/store/groups/groupsActions";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
 
 export const useGroupsStats = () => {
-  const { groups } = useGroup();
+  const { groups, memberCounts, totalMembersCount, activeGroupsCount, inactiveGroupsCount } = useGroup();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(fetchMembersCountByGroupAction());
+    dispatch(fetchTotalMembersCountAction());
+    dispatch(fetchActiveGroupsCountAction());
+    dispatch(fetchInactiveGroupsCountAction()); 
   }, [dispatch]);
-
-  console.log("Groups from useGroupsStats:", groups);
-  return { groups };
+  
+  return { groups, memberCounts, totalMembersCount, activeGroupsCount, inactiveGroupsCount };
 };

@@ -33,6 +33,7 @@ import TreasurerEnrollment from "./app/routes/grupos/basic-info/TreasurerEnrollm
 import ScouterEnrollment from "./app/routes/grupos/basic-info/ScouterEnrollment";
 import ComiteAdminEnrollment from "./app/routes/grupos/basic-info/ComiteEnrollment";
 import ScoutEnrollmentInfo from "./app/routes/grupos/basic-info/ScoutEnrollmentInfo";
+import GuardianEnrollment from "./app/routes/grupos/basic-info/GuardianEnrollment";
 
 // Guardianes
 import GuardianProfile from "./app/routes/guardians/profile/components/GuardianProfile";
@@ -81,6 +82,7 @@ function App() {
             <Route path="inscripcion/tesorero" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.TESORERO]}><TreasurerEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/scouter" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER]}><ScouterEnrollment /></ProtectedRoute>} />
             <Route path="inscripcion/comite-admin" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.COMITE_ADMIN]}><ComiteAdminEnrollment /></ProtectedRoute>} />
+            <Route path="inscripcion/acudiente" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE]}><GuardianEnrollment /></ProtectedRoute>} />
 
             {/* Rutas para admin global */}
             <Route path="admin-global/grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL]}><AdminGlobalGroups /></ProtectedRoute>} />

@@ -1,4 +1,8 @@
 import type { GroupResponseDTO as Group } from "@/types/group.type";
+import { useGroup } from "./useGroup";
+import { useEffect } from "react";
+import { useAppDispatch } from "./useAppDispatch";
+import { fetchGroupsAction } from "@/store/groups/groupsActions";
 
 interface GroupStatus {
   is_active?: boolean | string | number;
@@ -6,6 +10,15 @@ interface GroupStatus {
 }
 
 export const useGroupManagement = () => {
+  const { groups } = useGroup();
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchGroupsAction());
+  }, [dispatch]);
+
+  console.log("Groups in useGroupManagement:", groups);
+
   const isActive = (group: GroupStatus): boolean => {
     const value = group.isActive;
     if (typeof value === "string") {
@@ -17,24 +30,36 @@ export const useGroupManagement = () => {
     return Boolean(value);
   };
 
-  const handleViewInfo = (group: Group, setIsInfoModalOpen: (open: boolean) => void, setSelectedGroupInfo: (group: Group | null) => void) => {
+  const handleViewInfo = (
+    group: Group,
+    setIsInfoModalOpen: (open: boolean) => void,
+    setSelectedGroupInfo: (group: Group | null) => void
+  ) => {
     setSelectedGroupInfo(group);
     setIsInfoModalOpen(true);
   };
 
-  const handleAdminGroup = (group: Group, setIsAdminGroupOpen: (open: boolean) => void, setSelectedGroupAdmin: (group: Group | null) => void) => {
+  const handleAdminGroup = (
+    group: Group,
+    setIsAdminGroupOpen: (open: boolean) => void,
+    setSelectedGroupAdmin: (group: Group | null) => void
+  ) => {
     setSelectedGroupAdmin(group);
     setIsAdminGroupOpen(true);
-  }
+  };
 
-  const handleEditClick = (group: Group, setIsEditModalOpen: (open: boolean) => void, setSelectedGroupEdit: (group: Group | null) => void) => {
+  const handleEditClick = (
+    group: Group,
+    setIsEditModalOpen: (open: boolean) => void,
+    setSelectedGroupEdit: (group: Group | null) => void
+  ) => {
     setSelectedGroupEdit(group);
     setIsEditModalOpen(true);
   };
 
   const handleCreateGroup = (setIsCreateModalOpen: (open: boolean) => void) => {
     setIsCreateModalOpen(true);
-  }
+  };
 
   return {
     isActive,

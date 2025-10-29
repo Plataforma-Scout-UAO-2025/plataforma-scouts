@@ -79,3 +79,15 @@ export interface TenantDTO {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface GroupMembersDTO {
+  group_id: number;
+  group_name: string;
+  member_count: number;
+}
+
+export interface TopGroupByMembersDTO {
+  group_id: number;
+  group_name: string;
+  members_count: number;
+}

@@ -3,12 +3,19 @@ import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import HeaderCard from "./HeaderCard";
 //import GroupsDistribution from "./GroupsDistribution";
 import { useGroupsStats } from "@/hooks/useGroupsStats";
+import GroupsDistribution from "./GroupsDistribution";
 
 const loading = false;
 
 const AdminGlobalView = () => {
   const { user } = useAuth0();
-  const { groups } = useGroupsStats();
+  const {
+    groups,
+    memberCounts,
+    totalMembersCount,
+    activeGroupsCount,
+    inactiveGroupsCount,
+  } = useGroupsStats();
 
   console.log("Groups in AdminGlobalView:", groups);
 
@@ -26,11 +33,19 @@ const AdminGlobalView = () => {
           Gestiona los grupos de la plataforma desde aquí
         </p>
       </header>
-      <section className="my-2 flex gap-6">
-        <HeaderCard />
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section className="my-8">
+        <HeaderCard
+          total_members_count={totalMembersCount}
+          active_groups_count={activeGroupsCount}
+          inactive_groups_count={inactiveGroupsCount}
+        />
       </section>
       <section className="my-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+        <div className="grid grid-cols-1 gap-6">
+          <GroupsDistribution memberCounts={memberCounts} />
+        </div>
+      </section>
       </section>
     </div>
   );
