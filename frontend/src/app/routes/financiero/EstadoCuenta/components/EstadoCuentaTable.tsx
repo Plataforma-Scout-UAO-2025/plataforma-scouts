@@ -149,10 +149,17 @@ const cuotasColumns: ColumnDef<CuotasEstado>[] = [
     accessorKey: "paid_at",
     header: "Fecha de Pago",
     cell: ({ row }) => {
-      const fecha = row.getValue("paid_at") as Date | null;
+      const fecha = row.getValue("paid_at") as Date | string | null;
+      if (!fecha) return <div>-</div>;
+      
+      // Si es string, crear fecha sin conversión de zona horaria
+      const date = typeof fecha === 'string' 
+        ? new Date(fecha + 'T00:00:00') // Agregar hora para evitar conversión UTC
+        : fecha;
+        
       return (
         <div>
-          {fecha ? new Date(fecha).toLocaleDateString("es-CO") : "-"}
+          {date.toLocaleDateString("es-CO")}
         </div>
       );
     },

@@ -28,6 +28,23 @@ public interface IInstallmentRepository extends JpaRepository<Installment, Long>
     )
     int deleteEmptyPaymentsByConcept(@org.springframework.data.repository.query.Param("conceptId") Long conceptId);
 
+    @Query(
+        value = """
+            select exists (
+                select 1
+                from installment i
+                where i.concept_id = :conceptId
+                and coalesce(jsonb_array_length(i.payments), 0) > 0
+            )
+            """,
+        nativeQuery = true
+    )
+    boolean existsAnyPaymentByConcept(@Param("conceptId") Long conceptId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "delete from installment where concept_id = :conceptId", nativeQuery = true)
+    int deleteAllByConcept(@Param("conceptId") Long conceptId);    
+
     @org.springframework.data.jpa.repository.Query(
         value = """
             SELECT COUNT(*) 
@@ -59,15 +76,15 @@ public interface IInstallmentRepository extends JpaRepository<Installment, Long>
      * que aún no estén marcadas OVERDUE. Devuelve filas afectadas.
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query(
-        value = """
-            UPDATE installment i
-               SET status = 'OVERDUE'
-             WHERE i.tenant_id = :tenantId
-               AND i.status <> 'OVERDUE'
-               AND i.balance > 0
-               AND i.due_date < CURRENT_DATE
-            """,
+    @Query(value = """
+        UPDATE installment i
+        SET status = 'OVERDUE'
+        WHERE i.tenant_id = :tenantId
+        AND i.status NOT IN ('OVERDUE', 'PAID')
+        AND i.balance > 0
+        AND i.due_date < CURRENT_DATE
+        AND COALESCE(jsonb_array_length(i.payments), 0) = 0
+        """,
         nativeQuery = true
     )
     int markPastDueAsOverdue(@Param("tenantId") String tenantId);

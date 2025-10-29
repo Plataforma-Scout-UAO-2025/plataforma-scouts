@@ -308,7 +308,7 @@ public interface IPaymentsReadRepository extends JpaRepository<Installment, Long
       i.due_date                            as dueDate,
       i.amount                              as amount,
       i.status                              as status,
-      (p->>'paid_at')::timestamptz          as paidAt,
+      (p->>'paid_at')::date                 as paidAt,
       (p->>'method')                        as method,
       (p->>'reference')                     as reference,
       nullif(regexp_replace(p->>'payer_member_id','[^0-9]','','g'),'')::bigint as payerMemberId
@@ -317,7 +317,7 @@ public interface IPaymentsReadRepository extends JpaRepository<Installment, Long
     join public.account   a on a.account_id   = i.account_id and a.tenant_id = i.tenant_id
     cross join lateral jsonb_array_elements(i.payments) p
     where i.tenant_id = :tenantId
-    order by (p->>'paid_at')::timestamptz desc nulls last, i.installment_id desc
+    order by (p->>'paid_at')::date desc nulls last, i.installment_id desc
     limit 10
   """, nativeQuery = true)
   List<RecentPaymentProjection> findRecentPaymentsByTenant(@Param("tenantId") String tenantId);

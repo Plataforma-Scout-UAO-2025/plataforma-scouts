@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -281,12 +283,6 @@ public class FeeServiceImpl implements IFeeService {
   // DELETE
   // ---------------------------------------------------------------------
 
-  /**
-   * Elimina un FeePlan y realiza las operaciones relacionadas:
-   * - Borra los installments vacíos (sin pagos) mediante una query dedicada.
-   * - Elimina el FeePlan principal.
-   * - Si ya no existen installments para su Concept, elimina también el Concept asociado.
-   */
   @Transactional
   public void deleteFeePlan(@NonNull Long feePlanId, @NonNull String tenantId) {
     FeePlan fp = feePlanRepo.findByFeePlanIdAndConcept_TenantId(feePlanId, tenantId)
@@ -294,17 +290,25 @@ public class FeeServiceImpl implements IFeeService {
 
     Concept concept = fp.getConcept();
 
-    // Borra únicamente installments vacíos (payments = []) vinculados al concepto
-    installmentRepo.deleteEmptyPaymentsByConcept(concept.getConceptId());
+    // 1) Verifica si existe AL MENOS un installment con pagos
+    boolean hasAnyPayment = installmentRepo.existsAnyPaymentByConcept(concept.getConceptId());
+    if (hasAnyPayment) {
+      // 409 Conflict: estado actual del recurso impide la operación
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "No se puede eliminar la cuota (FeePlan) porque existen pagos asociados en sus cuotas (installments)."
+      );
+    }
+
+    // 2) Si no hay pagos, puedes borrar TODOS los installments del concepto y luego el fee plan
+    installmentRepo.deleteAllByConcept(concept.getConceptId());
 
     // Elimina el fee plan y fuerza el flush para respetar el orden (evita violar la FK)
     feePlanRepo.delete(fp);
-    feePlanRepo.flush(); // <--- IMPORTANTE
+    feePlanRepo.flush();
 
-    // Comprueba que no queden más fee plans referenciando el mismo concepto
+    // 3) Limpieza del Concept si ya no está referenciado
     long feePlansLeft = feePlanRepo.countByConcept_ConceptId(concept.getConceptId());
-
-    // Cuenta los installments restantes del concepto (por seguridad)
     long installmentsLeft = installmentRepo.countAllByConcept(concept.getConceptId());
 
     if (feePlansLeft == 0 && installmentsLeft == 0) {
