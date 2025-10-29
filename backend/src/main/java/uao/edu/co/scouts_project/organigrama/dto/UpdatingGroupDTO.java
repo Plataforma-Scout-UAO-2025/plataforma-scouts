@@ -1,36 +1,27 @@
 package uao.edu.co.scouts_project.organigrama.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Datos requeridos para crear un grupo scout (en formato snake_case)")
-public class CreatingGroupDTO {
+@NoArgsConstructor
+public class UpdatingGroupDTO {
 
-    @NotBlank
-    @JsonProperty("tenant_id")
-    @Schema(description = "Identificador del tenant", example = "tenant-001", required = true)
-    private String tenantId;
-
-    @NotBlank
     @JsonProperty("slug")
     @Schema(description = "Slug único del grupo", example = "grupo-exploradores", required = true)
     private String slug;
 
-    @NotBlank
     @JsonProperty("name")
     @Schema(description = "Nombre oficial del grupo", example = "Grupo Exploradores del Sur", required = true)
     private String name;
@@ -48,7 +39,6 @@ public class CreatingGroupDTO {
     private String phone;
 
     @Email
-    @NotBlank
     @JsonProperty("email")
     private String email;
 
@@ -85,4 +75,5 @@ public class CreatingGroupDTO {
     @JsonProperty("status")
     @Schema(description = "Estado del grupo", example = "ACTIVE")
     private String status;
+
 }

@@ -1,7 +1,8 @@
+
 package uao.edu.co.scouts_project.organigrama.service;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory; 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.organigrama.dto.CreatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.interfaces.IMapper;
 import uao.edu.co.scouts_project.organigrama.model.Group;
@@ -69,16 +71,6 @@ public class GroupService implements IGroupService {
                 .collect(Collectors.toList());
     }
 
-    public boolean validateSlug(String slug) {
-        // Validar formato
-        if (slug == null || !SLUG_PATTERN.matcher(slug).matches()) {
-            return false;
-        }
-
-        // Validar unicidad global
-        return !groupRepository.existsBySlug(slug);
-    }
-
     @Transactional(readOnly = true)
     public GroupResponseDTO getGroupBySlug(String tenantId, String groupSlug) {
         ensureTenantExists(tenantId);
@@ -86,34 +78,17 @@ public class GroupService implements IGroupService {
         return toResponseDTO(group); // La versión simple es suficiente para un solo objeto
     }
 
-    public GroupResponseDTO createGroup(CreatingGroupDTO dto) {
-        if (!validateSlug(dto.getSlug())) {
-            throw new IllegalArgumentException(
-                    dto.getSlug() + " Slug no válido, debe de seguir el patrón: " + SLUG_PATTERN.pattern());
-        }
-
-        Group entity;
-        try {
-            entity = groupMapper.toEntity(dto);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Error al crear el grupo: " + e.getMessage(), e);
-        }
-        groupRepository.save(entity);
-        return toResponseDTO(entity);
-    }
-
     @Transactional
     public GroupResponseDTO createGroup(String tenantId, GroupDTO dto) {
         ensureTenantExists(tenantId);
 
-        if (groupRepository.existsBySlug(dto.slug())) {
-            throw new IllegalArgumentException("Grupo con Slug '" + dto.slug() + "' ya existe ");
+        // Solo un grupo por tenant
+        if (groupRepository.existsByTenantId(dto.tenantId())) {
+            throw new IllegalArgumentException("Ya existe un grupo para el tenant: " + dto.tenantId());
         }
 
-        if (!validateSlug(dto.slug())) {
-            throw new IllegalArgumentException(
-                    dto.slug() + " Slug no válido, debe de seguir el patrón: " + SLUG_PATTERN.pattern());
-        }
+        validateSlugFormat(dto.slug());
+        ensureSlugIsUnique(dto.slug());
 
         Group group;
         try {
@@ -125,6 +100,45 @@ public class GroupService implements IGroupService {
 
         Group saved = groupRepository.save(group);
         return toResponseDTO(saved);
+    }
+
+    @Transactional
+    public GroupResponseDTO createGroup(CreatingGroupDTO dto) {
+        ensureTenantExists(dto.getTenantId());
+
+        // Solo un grupo por tenant
+        if (groupRepository.existsByTenantId(dto.getTenantId())) {
+            throw new IllegalArgumentException("Ya existe un grupo para el tenant: " + dto.getTenantId());
+        }
+
+        validateSlugFormat(dto.getSlug());
+        ensureSlugIsUnique(dto.getSlug());
+
+        Group entity;
+        try {
+            entity = groupMapper.toEntity(dto);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error al crear el grupo: " + e.getMessage(), e);
+        }
+
+        groupRepository.save(entity);
+        return toResponseDTO(entity);
+    }
+
+    public void validateSlugFormat(String slug) {
+        if (slug == null || slug.trim().isEmpty()) {
+            throw new IllegalArgumentException("El slug no puede estar vacío.");
+        }
+        if (!SLUG_PATTERN.matcher(slug).matches()) {
+            throw new IllegalArgumentException(
+                    "Slug inválido. Solo minúsculas, números y guiones medios. Ej: 'grupo-exploradores'");
+        }
+    }
+
+    public void ensureSlugIsUnique(String slug) {
+        if (groupRepository.existsBySlug(slug)) {
+            throw new IllegalArgumentException("El slug '" + slug + "' ya está en uso en otro grupo.");
+        }
     }
 
     @Transactional
@@ -141,6 +155,63 @@ public class GroupService implements IGroupService {
 
         mapDtoToEntity(dto, group);
         Group updated = groupRepository.save(group);
+        return toResponseDTO(updated);
+    }
+
+    @Transactional
+    public GroupResponseDTO updateGroup(String tenantId, String slug, UpdatingGroupDTO dto) {
+        ensureTenantExists(tenantId);
+
+        // 1. Buscar el grupo actual
+        Group existing = findGroupOrThrow(tenantId, slug);
+
+        // 2. Validar slug (si cambia)
+        if (dto.getSlug() != null && !dto.getSlug().equals(existing.getSlug())) {
+            validateSlugFormat(dto.getSlug());
+            ensureSlugIsUnique(dto.getSlug());
+            existing.setSlug(dto.getSlug());
+        }
+
+        // 3. Mapear campos no nulos desde el DTO hacia la entidad
+        if (dto.getName() != null)
+            existing.setName(dto.getName());
+        if (dto.getDistrict() != null)
+            existing.setDistrict(dto.getDistrict());
+        if (dto.getIdentifierNumber() != null)
+            existing.setIdentifierNumber(dto.getIdentifierNumber());
+        if (dto.getAddress() != null)
+            existing.setAddress(dto.getAddress());
+        if (dto.getPhone() != null)
+            existing.setPhone(dto.getPhone());
+        if (dto.getEmail() != null)
+            existing.setEmail(dto.getEmail());
+        if (dto.getFoundedIn() != null)
+            existing.setFoundedIn(dto.getFoundedIn());
+        if (dto.getMotto() != null)
+            existing.setMotto(dto.getMotto());
+        if (dto.getMission() != null)
+            existing.setMission(dto.getMission());
+        if (dto.getVision() != null)
+            existing.setVision(dto.getVision());
+        if (dto.getHistory() != null)
+            existing.setHistory(dto.getHistory());
+        if (dto.getLogoObjectId() != null)
+            existing.setLogoObjectId(dto.getLogoObjectId());
+        if (dto.getScarfObjectId() != null)
+            existing.setScarfObjectId(dto.getScarfObjectId());
+        if (dto.getSocialLinks() != null)
+            existing.setSocialLinks(dto.getSocialLinks());
+        if (dto.getConfig() != null)
+            existing.setConfig(dto.getConfig());
+        if (dto.getIsActive() != null)
+            existing.setIsActive(dto.getIsActive());
+        if (dto.getStatus() != null)
+            existing.setStatus(dto.getStatus());
+
+        // 4. Guardar los cambios
+        Group updated = groupRepository.save(existing);
+
+        // 5. Retornar DTO de respuesta con URLs y demás
         return toResponseDTO(updated);
     }
 
@@ -287,4 +358,28 @@ public class GroupService implements IGroupService {
         Map<UUID, String> urlMap = storageService.getPublicUrlsFromObjectIds(ids);
         return toResponseDTO(group, urlMap);
     }
+
+    @Override
+    public GroupResponseDTO[] getAllGroups() {
+        return groupRepository.findAll().stream()
+                .map(this::toResponseDTO)
+                .toArray(GroupResponseDTO[]::new);
+    }
+
+    @Override
+    public String deleteGroup(Long groupId) {
+        groupRepository.deleteById(groupId);
+        return "Grupo eliminado con éxito.";
+    }
+
+    @Transactional
+    @Override
+    public GroupResponseDTO updateGroupActiveStatus(String tenantId, String groupSlug, Boolean isActive) {
+        ensureTenantExists(tenantId);
+        Group group = findGroupOrThrow(tenantId, groupSlug);
+        group.setIsActive(isActive);
+        groupRepository.save(group);
+        return toResponseDTO(group);
+    }
+
 }
