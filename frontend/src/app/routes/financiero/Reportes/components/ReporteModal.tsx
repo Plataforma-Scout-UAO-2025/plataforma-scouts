@@ -45,25 +45,25 @@ export default function ReporteModal({
 }: ReporteModalProps) {
   const [scope, setScope] = useState<"SCOUT" | "SUBGROUP" | "SECTION">("SECTION");
   const [associatedTo, setAssociatedTo] = useState<{ id: string; name: string } | null>(null);
-  const [fechaInicio, setFechaInicio] = useState<Date>();
-  const [fechaFin, setFechaFin] = useState<Date>();
+  const [fechaInicio, setFechaInicio] = useState<Date | undefined>(undefined);
+  const [fechaFin, setFechaFin] = useState<Date | undefined>(undefined);
   
   // Estados para los datos
   const [members, setMembers] = useState<MemberType[]>([]);
   const [subgroups, setSubgroups] = useState<SubgroupType[]>([]);
   const [sections, setSections] = useState<SectionType[]>([]);
 
-  const {tenantId} = useTenant();
+  const tenantId = useTenant();
 
-  // Inicializar fechas por defecto cuando se abre el modal
+  // Cargar datos cuando se abre el modal
   useEffect(() => {
-    if (open) {
-      const hoy = new Date();
-      const haceUnMes = subMonths(hoy, 1);
+    if (!open) return;
 
-      setFechaInicio(haceUnMes);
-      setFechaFin(hoy);
-    }
+    // Reinicializar fechas cada vez que se abre el modal
+    const hoy = new Date();
+    const haceUnMes = subMonths(hoy, 1);
+    setFechaInicio(haceUnMes);
+    setFechaFin(hoy);
 
     // Cargar todos los datos necesarios
     async function fetchData() {
@@ -100,20 +100,21 @@ export default function ReporteModal({
 
   const handleGenerarReporte = () => {
     if (!fechaInicio || !fechaFin) {
+      toast.error("Debes seleccionar las fechas de inicio y fin");
       return;
     }
 
-    // Validar que se haya seleccionado un asociado
-    if (!associatedTo) {
+    // Validar que se haya seleccionado un asociado cuando no es SECTION
+    if (scope !== "SECTION" && !associatedTo) {
       toast.error("Debes seleccionar un asociado para este alcance");
       return;
     }
 
     const filtros: FiltrosReporte = {
-      scope,
-      associated_to: associatedTo || undefined,
-      fechaInicio: format(fechaInicio, "yyyy-MM-dd"),
-      fechaFin: format(fechaFin, "yyyy-MM-dd"),
+      id: associatedTo?.id || "",
+      generated_for: scope === "SCOUT" ? "MEMBER" : scope === "SUBGROUP" ? "SUBGROUP" : "SECTION",
+      start_date: fechaInicio ? format(fechaInicio, "yyyy-MM-dd") : "",
+      end_date: fechaFin ? format(fechaFin, "yyyy-MM-dd") : "",
     };
 
     onGenerarReporte(filtros);
@@ -123,7 +124,11 @@ export default function ReporteModal({
   const resetForm = () => {
     setScope("SECTION");
     setAssociatedTo(null);
-    // No resetear las fechas ya que se inicializan automáticamente cuando se abre el modal
+    // Reinicializar fechas también
+    const hoy = new Date();
+    const haceUnMes = subMonths(hoy, 1);
+    setFechaInicio(haceUnMes);
+    setFechaFin(hoy);
   };
 
   const isFormValid = fechaInicio && fechaFin && (scope === "SECTION" || associatedTo !== null);
@@ -137,9 +142,9 @@ export default function ReporteModal({
   // Función para manejar el cambio del asociado
   const handleAssociatedToChange = (value: string) => {
     if (scope === "SCOUT") {
-      const member = members.find(m => m.member_id.toString() === value);
+      const member = members.find(m => m.member_id?.toString() === value);
       if (member) {
-        setAssociatedTo({ id: member.member_id.toString(), name: `${member.first_name} ${member.last_name}` });
+        setAssociatedTo({ id: member.member_id!.toString(), name: `${member.first_name} ${member.last_name}` });
       }
     } else if (scope === "SUBGROUP") {
       const subgroup = subgroups.find(s => s.id.toString() === value);
@@ -212,10 +217,10 @@ export default function ReporteModal({
               <SelectContent>
                 {scope === "SCOUT" && members.map((member) => (
                   <SelectItem
-                    key={member.member_id}
-                    value={member.member_id.toString()}
+                    key={member.member_id?.toString() || ""}
+                    value={member.member_id?.toString() || ""}
                   >
-                    {member.member_id} - {member.first_name} {member.last_name}
+                    {member.member_id?.toString() || ""} - {member.first_name} {member.last_name}
                   </SelectItem>
                 ))}
                 {scope === "SUBGROUP" && subgroups.map((subgroup) => (
@@ -262,6 +267,7 @@ export default function ReporteModal({
                   selected={fechaInicio}
                   onSelect={setFechaInicio}
                   locale={es}
+                  required
                 />
               </PopoverContent>
             </Popover>
@@ -294,6 +300,7 @@ export default function ReporteModal({
                   disabled={(date) =>
                     fechaInicio ? date < fechaInicio : false
                   }
+                  required
                 />
               </PopoverContent>
             </Popover>

@@ -1,152 +1,18 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { Grupo, FiltrosReporte, FinancialReport, ReportPayments } from "@/types/reporte-financiero.type";
+import type { FiltrosReporte, FinancialReport } from "@/types/reporte-financiero.type";
+import api from "@/api/axios";
 
-// Datos mock de grupos
-export const GRUPOS_MOCK: Grupo[] = [
-  {
-    id: "1",
-    nombre: "Manada Kuna",
-    edadMinima: 7,
-    edadMaxima: 11,
-    miembrosActivos: 15
-  },
-  {
-    id: "2",
-    nombre: "Tropa Paez",
-    edadMinima: 11,
-    edadMaxima: 15,
-    miembrosActivos: 20
-  },
-  {
-    id: "3",
-    nombre: "Clan Muisca",
-    edadMinima: 15,
-    edadMaxima: 18,
-    miembrosActivos: 10
+// Función para generar reporte desde el backend real
+export const generarReporteReal = async (filtros: FiltrosReporte, tenantId: string): Promise<FinancialReport> => {
+  try {
+    const response = await api.post(`finanzas/reports/${tenantId}`, filtros);
+    return response.data;
+  } catch (error) {
+    console.error('Error al generar reporte desde el backend:', error);
+    throw error;
   }
-];
-
-// Nombres y apellidos para generar datos mock
-const NOMBRES = [
-  "Juan", "María", "Carlos", "Ana", "Luis", "Carmen", "Pedro", "Laura", 
-  "José", "Isabel", "Miguel", "Elena", "David", "Patricia", "Alberto",
-  "Rosa", "Fernando", "Lucía", "Roberto", "Cristina", "Manuel", "Sara"
-];
-
-const APELLIDOS = [
-  "García", "Rodríguez", "González", "Fernández", "López", "Martínez",
-  "Sánchez", "Pérez", "Gómez", "Martín", "Jiménez", "Ruiz", "Hernández",
-  "Díaz", "Moreno", "Álvarez", "Muñoz", "Romero", "Alonso", "Gutiérrez"
-];
-
-// Función para generar un número aleatorio entre min y max
-const random = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-// Función para obtener un elemento aleatorio de un array
-const randomItem = <T>(array: T[]): T => {
-  return array[random(0, array.length - 1)];
-};
-
-// Función para generar una fecha aleatoria en un rango
-const randomDate = (start: Date, end: Date): Date => {
-  const startTime = start.getTime();
-  const endTime = end.getTime();
-  const randomTime = startTime + Math.random() * (endTime - startTime);
-  return new Date(randomTime);
-};
-
-// Función para generar pagos mock
-const generarPagosMock = (cantidad: number, fechaInicio: Date, fechaFin: Date): ReportPayments[] => {
-  const pagos: ReportPayments[] = [];
-  
-  for (let i = 0; i < cantidad; i++) {
-    const nombre = randomItem(NOMBRES);
-    const apellido = randomItem(APELLIDOS);
-    const monto = random(40000, 80000); // Montos entre $40,000 y $80,000
-    
-    // Determinar estado con probabilidades realistas
-    const estadoRandom = Math.random();
-    let paidAt: Date | null = null;
-    
-    if (estadoRandom < 0.6) { // 60% pagado
-      paidAt = randomDate(fechaInicio, fechaFin);
-    } else if (estadoRandom < 0.8) { // 20% pendiente
-      // Sin pago
-      paidAt = null;
-    } else { // 20% vencido
-      // Pagado pero hace mucho tiempo
-      const fechaVencida = new Date();
-      fechaVencida.setDate(fechaVencida.getDate() - random(1, 45));
-      paidAt = fechaVencida;
-    }
-    
-    pagos.push({
-      payment_id: `payment-${i + 1}`,
-      first_name: nombre,
-      last_name: apellido,
-      amount: monto,
-      paid_at: paidAt
-    });
-  }
-  
-  return pagos;
-};
-
-// Función principal para generar el reporte
-export const generarReporteMock = (filtros: FiltrosReporte): Promise<FinancialReport> => {
-  return new Promise((resolve) => {
-    // Simular delay de API
-    setTimeout(() => {
-      const fechaInicio = new Date(filtros.fechaInicio);
-      const fechaFin = new Date(filtros.fechaFin);
-      
-      // Generar una cantidad de pagos basada en el alcance
-      let cantidadMiembros = 15; // Default
-      let scopeName = filtros.scope.toLowerCase();
-      
-      if (filtros.associated_to) {
-        // Si hay un asociado específico, usar una cantidad menor
-        cantidadMiembros = 8;
-      }
-      
-      // Generar pagos mock
-      const pagos = generarPagosMock(cantidadMiembros, fechaInicio, fechaFin);
-      
-      // Calcular resumen financiero
-      const incomes = pagos.filter(p => p.paid_at !== null).reduce((sum, p) => sum + p.amount, 0);
-      const pending = pagos.filter(p => p.paid_at === null).length * 50000; // Estimado
-      const overdue = Math.floor(pending * 0.3); // 30% vencidos
-      
-      const members_ok = pagos.filter(p => p.paid_at !== null).length;
-      const members_overdue = pagos.filter(p => p.paid_at === null).length;
-      const total = pagos.length;
-      const percentage = total > 0 ? (members_ok / total) * 100 : 0;
-      
-      const reporte: FinancialReport = {
-        financial_summary: {
-          incomes,
-          pending,
-          overdue
-        },
-        members_ok,
-        members_overdue,
-        percentage,
-        payments: pagos,
-        metadata: {
-          generated_for: scopeName, // Alcance del reporte
-          start_date: fechaInicio,
-          end_date: fechaFin,
-          generated_date: new Date()
-        }
-      };
-      
-      resolve(reporte);
-    }, 1000); // Simular 1 segundo de delay
-  });
 };
 
 // Función para exportar reporte a Excel
@@ -159,27 +25,27 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
 
         // Hoja 1: Resumen del Reporte
         const resumenData = [
-          ['REPORTE DE PAGOS - ' + reporte.metadata.generated_for.toUpperCase()],
+          ['REPORTE DE PAGOS - ' + (reporte.scope?.toUpperCase() || 'GENERAL')],
           [''],
           ['Información del Reporte'],
-          ['Alcance', reporte.metadata.generated_for],
+          ['Alcance', reporte.scope || 'General'],
           ['Total Pagos', reporte.payments.length],
           [''],
           ['Periodo del Reporte'],
-          ['Fecha de Inicio', reporte.metadata.start_date.toISOString().split('T')[0]],
-          ['Fecha de Fin', reporte.metadata.end_date.toISOString().split('T')[0]],
-          ['Generado el', reporte.metadata.generated_date.toLocaleString('es-CO')],
+          ['Fecha de Inicio', reporte.start_date || 'N/A'],
+          ['Fecha de Fin', reporte.end_date || 'N/A'],
+          ['Generado el', new Date().toLocaleString('es-CO')],
           [''],
           ['Resumen Financiero'],
-          ['Total Ingresos', reporte.financial_summary.incomes],
+          ['Total Ingresos', reporte.financial_summary.income],
           ['Total Pendiente', reporte.financial_summary.pending],
           ['Total Vencido', reporte.financial_summary.overdue],
           [''],
           ['Resumen de Miembros'],
-          ['Miembros Cumplidos', reporte.members_ok],
-          ['Miembros Atrasados', reporte.members_overdue],
-          ['Total Miembros', reporte.payments.length],
-          ['% Cumplimiento', `${reporte.percentage.toFixed(1)}%`],
+          ['Miembros Cumplidos', reporte.members_ok !== null ? reporte.members_ok : 'N/A'],
+          ['Miembros Atrasados', reporte.members_overdue !== null ? reporte.members_overdue : 'N/A'],
+          ['Total pagos', reporte.payments.length],
+          ['% Cumplimiento', reporte.percentage !== null ? `${reporte.percentage.toFixed(1)}%` : 'N/A'],
         ];
 
         const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
@@ -201,13 +67,13 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
         ];
 
         // Función para determinar el estado del pago
-        const getEstadoPago = (paidAt: Date | null) => {
-          if (paidAt !== null) {
+        const getEstadoPago = (paidAt: string | null) => {
+          if (paidAt !== null && paidAt !== "") {
             return 'Pagado';
           }
           // Verificar si está vencido comparando con la fecha de fin
           const ahora = new Date();
-          if (ahora > reporte.metadata.end_date) {
+          if (ahora > new Date(reporte.end_date)) {
             return 'Vencido';
           }
           return 'Pendiente';
@@ -219,7 +85,7 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
           pago.last_name,
           pago.amount,
           getEstadoPago(pago.paid_at),
-          pago.paid_at ? pago.paid_at.toISOString().split('T')[0] : 'Sin pagos'
+          pago.paid_at ? pago.paid_at : 'Sin pagos'
         ]);
 
         const wsPagos = XLSX.utils.aoa_to_sheet([pagosHeaders, ...pagosData]);
@@ -239,7 +105,7 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
         XLSX.utils.book_append_sheet(wb, wsPagos, 'Detalle Pagos');
 
         // Generar nombre del archivo
-        const fileName = `reporte-pagos-${reporte.metadata.generated_for.toLowerCase()}-${reporte.metadata.start_date.toISOString().split('T')[0]}-${reporte.metadata.end_date.toISOString().split('T')[0]}.xlsx`;
+        const fileName = `reporte-pagos-${reporte.scope?.toLowerCase() || 'general'}-${reporte.start_date || 'na'}-${reporte.end_date || 'na'}.xlsx`;
 
         // Exportar archivo
         XLSX.writeFile(wb, fileName);
@@ -271,12 +137,12 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         }).format(amount);
 
         // Función para determinar el estado del pago en PDF
-        const getEstadoPagoPDF = (paidAt: Date | null) => {
-          if (paidAt !== null) {
+        const getEstadoPagoPDF = (paidAt: string | null) => {
+          if (paidAt !== null && paidAt !== "") {
             return 'Pagado';
           }
           const ahora = new Date();
-          if (ahora > reporte.metadata.end_date) {
+          if (ahora > new Date(reporte.end_date)) {
             return 'Vencido';
           }
           return 'Pendiente';
@@ -292,7 +158,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         pdf.text('REPORTE FINANCIERO DE PAGOS', 105, 15, { align: 'center' });
         
         pdf.setFontSize(12);
-        pdf.text(reporte.metadata.generated_for.toUpperCase(), 105, 23, { align: 'center' });
+        pdf.text(reporte.scope?.toUpperCase() || 'GENERAL', 105, 23, { align: 'center' });
 
         let currentY = 40;
 
@@ -308,10 +174,10 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
         const infoData = [
-          ['Alcance:', reporte.metadata.generated_for],
-          ['Fecha de Inicio:', reporte.metadata.start_date.toLocaleDateString('es-CO')],
-          ['Fecha de Fin:', reporte.metadata.end_date.toLocaleDateString('es-CO')],
-          ['Generado el:', reporte.metadata.generated_date.toLocaleString('es-CO')],
+          ['Alcance:', reporte.scope || 'General'],
+          ['Fecha de Inicio:', reporte.start_date ? new Date(reporte.start_date).toLocaleDateString('es-CO') : 'N/A'],
+          ['Fecha de Fin:', reporte.end_date ? new Date(reporte.end_date).toLocaleDateString('es-CO') : 'N/A'],
+          ['Generado el:', new Date().toLocaleString('es-CO')],
         ];
 
         autoTable(pdf, {
@@ -338,12 +204,12 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         currentY += 8;
 
         const resumenData = [
-          ['Total Ingresos', formatCurrency(reporte.financial_summary.incomes)],
+          ['Total Ingresos', formatCurrency(reporte.financial_summary.income)],
           ['Total Pendiente', formatCurrency(reporte.financial_summary.pending)],
           ['Total Vencido', formatCurrency(reporte.financial_summary.overdue)],
-          ['Miembros Cumplidos', reporte.members_ok.toString()],
-          ['Miembros Atrasados', reporte.members_overdue.toString()],
-          ['% Cumplimiento', `${reporte.percentage.toFixed(1)}%`],
+          ['Miembros Cumplidos', reporte.members_ok !== null ? reporte.members_ok.toString() : 'N/A'],
+          ['Miembros Atrasados', reporte.members_overdue !== null ? reporte.members_overdue.toString() : 'N/A'],
+          ['% Cumplimiento', reporte.percentage !== null ? `${reporte.percentage.toFixed(1)}%` : 'N/A'],
         ];
 
         autoTable(pdf, {
@@ -381,7 +247,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         // Preparar datos de la tabla
         const pagosData = reporte.payments.map(pago => {
           const estado = getEstadoPagoPDF(pago.paid_at);
-          const fechaPago = pago.paid_at ? pago.paid_at.toLocaleDateString('es-CO') : 'Sin pagos';
+          const fechaPago = pago.paid_at ? new Date(pago.paid_at).toLocaleDateString('es-CO') : 'Sin pagos';
           return [
             `${pago.first_name} ${pago.last_name}`,
             formatCurrency(pago.amount),
@@ -455,7 +321,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         }
 
         // Generar nombre del archivo
-        const fileName = `reporte-pagos-${reporte.metadata.generated_for.toLowerCase()}-${reporte.metadata.start_date.toISOString().split('T')[0]}-${reporte.metadata.end_date.toISOString().split('T')[0]}.pdf`;
+        const fileName = `reporte-pagos-${reporte.scope?.toLowerCase() || 'general'}-${reporte.start_date || 'na'}-${reporte.end_date || 'na'}.pdf`;
 
         // Descargar PDF
         pdf.save(fileName);

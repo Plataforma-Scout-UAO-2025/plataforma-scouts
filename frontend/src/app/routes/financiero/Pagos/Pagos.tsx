@@ -35,19 +35,14 @@ export default function Pagos() {
   const handleGenerarReporte = (filtros: FiltrosReporte) => {
     // Crear URL con parámetros para navegar a reportes
     const params = new URLSearchParams({
-      scope: filtros.scope,
-      fechaInicio: filtros.fechaInicio,
-      fechaFin: filtros.fechaFin
+      scope: filtros.generated_for === "MEMBER" ? "SCOUT" : filtros.generated_for === "SUBGROUP" ? "SUBGROUP" : "SECTION",
+      associatedToId: filtros.id,
+      start_date: filtros.start_date,
+      end_date: filtros.end_date
     });
     
-    // Agregar parámetros de asociado si existe
-    if (filtros.associated_to) {
-      params.append('associatedToId', filtros.associated_to.id);
-      params.append('associatedToName', filtros.associated_to.name);
-    }
-    
     // Navegar a la página de reportes con los parámetros
-    navigate(`/app/financiero/reportes?${params.toString()}`);
+    navigate(`/app/financiero/pagos/reportes?${params.toString()}`);
   };
 
   const handleAbrirModal = () => {

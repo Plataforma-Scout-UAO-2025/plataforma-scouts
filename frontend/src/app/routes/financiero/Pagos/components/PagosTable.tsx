@@ -33,7 +33,7 @@ import {
 import type { PaymentRecord } from "@/types/pago.type";
 import { columns } from "./PagosTableColumns";
 import { FileText } from "lucide-react";
-import type { FiltrosReporte } from "../../Reportes/types/reporte.type";
+import type { FiltrosReporte } from "@/types/reporte-financiero.type";
 
 export default function PagosTable({
   pagos = [],

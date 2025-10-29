@@ -5,13 +5,13 @@ import { Separator } from "@/components/ui";
 import { Download, Users, DollarSign, Clock, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { FinancialReport } from "@/types/reporte-financiero.type";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
+import { exportarReporteExcel, exportarReportePDF, generarReporteReal } from "../services/reporteService";
+import type { FinancialReport, FiltrosReporte } from "@/types/reporte-financiero.type";
 
-interface ReporteViewProps {
-  reporte: FinancialReport;
-  onExportarPDF?: () => void;
-  onExportarExcel?: () => void;
-}
+// sin props; este componente lee parámetros desde la URL y carga el reporte
 
 const getEstadoColor = (estado: "PAID" | "PENDING" | "OVERDUE"): string => {
   switch (estado) {
@@ -48,8 +48,8 @@ const getEstadoTexto = (estado: "PAID" | "PENDING" | "OVERDUE"): string => {
   }
 };
 
-const getEstadoDelPago = (paidAt: Date | null, endDate: Date): "PAID" | "PENDING" | "OVERDUE" => {
-  if (paidAt !== null) {
+const getEstadoDelPago = (paidAt: string | null, endDate: Date): "PAID" | "PENDING" | "OVERDUE" => {
+  if (paidAt !== null && paidAt !== "") {
     return "PAID";
   }
   
@@ -70,19 +70,115 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-export default function ReporteView({ reporte, onExportarPDF, onExportarExcel }: ReporteViewProps) {
-  const fechaInicio = format(new Date(reporte.metadata.start_date), "dd/MM/yyyy", { locale: es });
-  const fechaFin = format(new Date(reporte.metadata.end_date), "dd/MM/yyyy", { locale: es });
-  const fechaGeneracion = format(new Date(reporte.metadata.generated_date), "dd/MM/yyyy 'a las' HH:mm", { locale: es });
+export default function ReporteView() {
+  const tenantId = useTenant();
+  const [reporte, setReporte] = useState<FinancialReport | null>(null);
+  const [cargando, setCargando] = useState<boolean>(false);
+  const [exportandoPDF, setExportandoPDF] = useState<boolean>(false);
+  const [exportandoExcel, setExportandoExcel] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const scope = urlParams.get("scope");
+    const associatedToId = urlParams.get("associatedToId");
+    const start_date = urlParams.get("start_date") || urlParams.get("fechaInicio");
+    const end_date = urlParams.get("end_date") || urlParams.get("fechaFin");
+
+    if (!scope || !start_date || !end_date) {
+      setError("Parámetros de reporte inválidos o faltantes");
+      return;
+    }
+
+    if (!tenantId) {
+      setError("No se pudo obtener el ID del grupo");
+      return;
+    }
+
+    const filtros: FiltrosReporte = {
+      id: associatedToId || "",
+      generated_for: scope === "SCOUT" ? "MEMBER" : scope === "SUBGROUP" ? "SUBGROUP" : "SECTION",
+      start_date,
+      end_date,
+    };
+
+    const cargar = async () => {
+      setCargando(true);
+      setError(null);
+      try {
+        const data = await generarReporteReal(filtros, tenantId);
+        setReporte(data);
+      } catch (e) {
+        console.error(e);
+        setError("Error al generar el reporte");
+        toast.error("Error al generar el reporte");
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargar();
+  }, [tenantId]);
+
+  const fechaInicio = reporte?.start_date ? format(new Date(reporte.start_date), "dd/MM/yyyy", { locale: es }) : "N/A";
+  const fechaFin = reporte?.end_date ? format(new Date(reporte.end_date), "dd/MM/yyyy", { locale: es }) : "N/A";
+  const fechaGeneracion = format(new Date(), "dd/MM/yyyy 'a las' HH:mm", { locale: es });
+
+  const handleExportarPDF = async () => {
+    if (!reporte) return;
+    setExportandoPDF(true);
+    try {
+      await exportarReportePDF(reporte);
+      toast.success("Reporte exportado a PDF exitosamente");
+    } catch (e) {
+      console.error(e);
+      toast.error("Error al exportar el reporte a PDF");
+    } finally {
+      setExportandoPDF(false);
+    }
+  };
+
+  const handleExportarExcel = async () => {
+    if (!reporte) return;
+    setExportandoExcel(true);
+    try {
+      await exportarReporteExcel(reporte);
+      toast.success("Reporte exportado a Excel exitosamente");
+    } catch (e) {
+      console.error(e);
+      toast.error("Error al exportar el reporte a Excel");
+    } finally {
+      setExportandoExcel(false);
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (cargando || !reporte) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center space-x-2">
+          <Download className="h-6 w-6 animate-spin" />
+          <span className="text-lg">Generando reporte...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header del Reporte */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-primary">
-            Reporte de Pagos - {reporte.metadata.generated_for}
-          </h2>
           <p className="text-muted-foreground">
             Periodo: {fechaInicio} - {fechaFin}
           </p>
@@ -92,7 +188,8 @@ export default function ReporteView({ reporte, onExportarPDF, onExportarExcel }:
         </div>
         <div className="flex gap-2">
           <Button 
-            onClick={onExportarExcel} 
+            onClick={handleExportarExcel}
+            disabled={exportandoExcel}
             variant="outline"
             className="flex items-center gap-2"
           >
@@ -100,7 +197,8 @@ export default function ReporteView({ reporte, onExportarPDF, onExportarExcel }:
             Exportar Excel
           </Button>
           <Button 
-            onClick={onExportarPDF} 
+            onClick={handleExportarPDF}
+            disabled={exportandoPDF}
             className="flex items-center gap-2"
           >
             <Download className="h-4 w-4" />
@@ -118,7 +216,7 @@ export default function ReporteView({ reporte, onExportarPDF, onExportarExcel }:
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(reporte.financial_summary.incomes)}
+              {formatCurrency(reporte.financial_summary.income)}
             </div>
           </CardContent>
         </Card>
@@ -154,10 +252,13 @@ export default function ReporteView({ reporte, onExportarPDF, onExportarExcel }:
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {reporte.percentage.toFixed(1)}%
+              {reporte.percentage !== null ? `${reporte.percentage.toFixed(1)}%` : "N/A"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {reporte.members_ok} de {reporte.members_overdue} miembros
+              {reporte.members_ok !== null && reporte.members_overdue !== null 
+                ? `${reporte.members_ok} de ${reporte.members_overdue} miembros`
+                : "Información no disponible"
+              }
             </p>
           </CardContent>
         </Card>
@@ -166,22 +267,22 @@ export default function ReporteView({ reporte, onExportarPDF, onExportarExcel }:
       {/* Detalle de Miembros */}
       <Card>
         <CardHeader>
-          <CardTitle>Detalle de Pagos por Miembro</CardTitle>
+          <CardTitle>Detalle de Pagos </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {reporte.payments.map((payment) => {
-              const estado = getEstadoDelPago(payment.paid_at, reporte.metadata.end_date);
+              const estado = getEstadoDelPago(payment.paid_at, new Date(reporte.end_date));
               return (
                 <div key={payment.payment_id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                       <span className="text-primary font-medium">
-                        {payment.first_name.charAt(0)}{payment.last_name.charAt(0)}
+                        {(payment.first_name || 'N').charAt(0)}{(payment.last_name || 'N').charAt(0)}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium">{payment.first_name} {payment.last_name}</p>
+                      <p className="font-medium">{payment.first_name || 'N/A'} {payment.last_name || 'N/A'}</p>
                       <div className="flex items-center gap-2">
                         {getEstadoIcon(estado)}
                         <Badge className={getEstadoColor(estado)}>
