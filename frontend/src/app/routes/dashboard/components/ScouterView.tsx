@@ -320,22 +320,6 @@ const ScouterView = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Proponer eventos (placeholder seguro) */}
-      <Card className="border border-primary/10 shadow-sm">
-        <CardHeader>
-          <CardTitle>Proponer evento</CardTitle>
-          <CardDescription>Formulario mínimo (próximamente conectado al backend)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input className="border rounded px-3 py-2" placeholder="Nombre del evento" disabled />
-            <input className="border rounded px-3 py-2" placeholder="Fecha (AAAA-MM-DD)" disabled />
-            <Button onClick={() => toast.info("Propuestas de eventos: en preparación")} disabled>Enviar propuesta</Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">Necesitamos exponer un endpoint de propuestas de eventos (POST /events/proposals). Cuando esté disponible lo conectamos aquí.</p>
-        </CardContent>
-      </Card>
     </div>
   );
 };

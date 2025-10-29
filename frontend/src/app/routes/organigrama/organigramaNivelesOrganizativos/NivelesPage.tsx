@@ -289,7 +289,7 @@ export default function NivelesPage() {
             <Plus className="h-4 w-4 mr-2" />
             Crear Nuevo Nivel
           </Button>
-          <ExportMenu data={data} />
+          <ExportMenu data={data} members={members} />
         </div>
       </div>
 
