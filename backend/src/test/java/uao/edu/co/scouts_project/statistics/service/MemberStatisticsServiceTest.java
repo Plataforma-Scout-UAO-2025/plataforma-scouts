@@ -35,4 +35,41 @@ class MemberStatisticsServiceTest {
         assertEquals(42L, dto.totalMembersCount());
         verify(memberRepository, times(1)).count();
     }
+
+    @Test
+    void getTotalMembers_shouldReturnZeroWhenNoMembers() {
+        when(memberRepository.count()).thenReturn(0L);
+
+        TotalMembersDTO result = memberStatisticsService.getTotalMembers();
+
+        assertNotNull(result);
+        assertEquals(0L, result.totalMembersCount());
+    }
+
+    @Test
+    void getTotalMembers_shouldHandleDatabaseError() {
+        when(memberRepository.count()).thenThrow(new RuntimeException("DB Error"));
+
+        assertThrows(RuntimeException.class, () -> memberStatisticsService.getTotalMembers());
+    }
+
+    @Test
+    void getTotalMembers_shouldNotReturnNegativeCount() {
+        when(memberRepository.count()).thenReturn(-1L);
+
+        TotalMembersDTO result = memberStatisticsService.getTotalMembers();
+
+        assertNotNull(result);
+        assertEquals(0L, result.totalMembersCount());
+    }
+
+    @Test
+    void getTotalMembers_shouldHandleLargeNumbers() {
+        when(memberRepository.count()).thenReturn(Long.MAX_VALUE);
+
+        TotalMembersDTO result = memberStatisticsService.getTotalMembers();
+
+        assertNotNull(result);
+        assertEquals(Long.MAX_VALUE, result.totalMembersCount());
+    }
 }
