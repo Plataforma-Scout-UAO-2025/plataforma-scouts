@@ -23,6 +23,7 @@ export interface MemberBasicInfo {
   role?: string;
   identification?: string;
   documentType?: DocumentType;
+  document_type?: DocumentType;
   email?: string;
   gender?: string;
   birthDate?: string;

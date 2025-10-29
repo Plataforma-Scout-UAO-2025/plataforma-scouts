@@ -111,15 +111,19 @@ public class GuardianMapper {
     }
 
     public static MemberDTO toMemberDTO(MemberCustom memberCustom) {
-        return MemberDTO.builder()
-                .memberId(memberCustom.getMemberId())
-                .firstName(memberCustom.getFirstName())
-                .lastName(memberCustom.getLastName())
-                .gender(memberCustom.getGender())
-                .phone(memberCustom.getPhone())
-                .birthDate(memberCustom.getBirthDate())
-                .address(memberCustom.getAddress())
-                .isActive(memberCustom.getIsActive())
-                .build();
-    }
+    return MemberDTO.builder()
+            .memberId(memberCustom.getMemberId())
+            .firstName(memberCustom.getFirstName())
+            .lastName(memberCustom.getLastName())
+            .identification(memberCustom.getIdentification())        
+            .documentType(memberCustom.getDocumentType())
+            .email(memberCustom.getEmail())           
+            .role(memberCustom.getRole())             
+            .gender(memberCustom.getGender())
+            .phone(memberCustom.getPhone())
+            .birthDate(memberCustom.getBirthDate())
+            .address(memberCustom.getAddress())
+            .isActive(memberCustom.getIsActive())
+            .build();
+}
 }
