@@ -267,10 +267,61 @@ public class MemberServiceImp implements IMemberService {
         return updatedMember;
     }
 
+    /**
+     * Actualiza el rol de un miembro solo si su rol en Auth0 ha cambiado.
+     * Compara el rol recibido con el rol almacenado en la base de datos.
+     * Si son diferentes, actualiza el rol en la BD.
+     *
+     * @param memberId ID del miembro cuyo rol se debe verificar y actualizar.
+     * @param newRole Nuevo rol obtenido desde Auth0 o el sistema externo.
+     * @return {@code true} si el rol fue actualizado, {@code false} si el rol era el mismo o el miembro no existe.
+     */
     @Override
     @Transactional
-    public Boolean update_role(String userId) {
-        return null;
+    public Boolean update_role(Long memberId, String newRole) {
+        if (memberId == null || memberId <= 0) {
+            log.warn("Invalid memberId provided for role update: {}", memberId);
+            throw new IllegalArgumentException("Member ID must be a positive number");
+        }
+
+        if (newRole == null || newRole.isBlank()) {
+            log.warn("Invalid role provided for memberId: {}", memberId);
+            throw new IllegalArgumentException("Role cannot be null or blank");
+        }
+
+        try {
+            Optional<Member> memberOpt = memberRepository.findById(memberId);
+
+            if (memberOpt.isEmpty()) {
+                log.warn("Member not found with memberId: {}", memberId);
+                return false;
+            }
+
+            Member member = memberOpt.get();
+            String currentRole = member.getRole();
+
+            // Normalizar roles para comparación (trim y mayúsculas)
+            String normalizedNewRole = newRole.trim().toUpperCase();
+            String normalizedCurrentRole = currentRole != null ? currentRole.trim().toUpperCase() : null;
+
+            // Comparar roles
+            if (normalizedCurrentRole != null && normalizedCurrentRole.equals(normalizedNewRole)) {
+                log.info("Member {} already has role {}. No update needed.", memberId, normalizedNewRole);
+                return false;
+            }
+
+            // Actualizar el rol
+            member.setRole(normalizedNewRole);
+            memberRepository.save(member);
+
+            log.info("Role updated successfully for memberId: {} from '{}' to '{}'",
+                    memberId, currentRole, normalizedNewRole);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error updating role for memberId: {}", memberId, e);
+            throw new RuntimeException("Error updating member role", e);
+        }
     }
 
 
