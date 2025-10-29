@@ -1,6 +1,7 @@
 package uao.edu.co.scouts_project.finanzas.reports.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -15,4 +16,7 @@ public class FinancialReport {
   private Integer members_overdue;  // NULL si scope=MEMBER
   private BigDecimal percentage;    // NULL si scope=MEMBER (0..100 con 2 dec)
   private List<ReportPayments> payments;
+  private LocalDate start_date;
+  private LocalDate end_date;
+  private String Scope;
 }

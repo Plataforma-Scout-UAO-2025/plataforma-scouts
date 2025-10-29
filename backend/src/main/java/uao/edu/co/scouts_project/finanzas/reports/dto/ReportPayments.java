@@ -13,7 +13,7 @@ import lombok.Setter;
 @Data @NoArgsConstructor @AllArgsConstructor @Builder @Getter @Setter
 public class ReportPayments {
   private String payment_id;
-  private String fisrt_name;
+  private String first_name;
   private String last_name;
   private BigDecimal amount;
   private LocalDate paid_at;

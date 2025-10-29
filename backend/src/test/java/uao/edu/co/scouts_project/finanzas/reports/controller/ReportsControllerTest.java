@@ -44,7 +44,7 @@ class ReportsControllerStandaloneTest {
         .percentage(new BigDecimal("70.00"))
         .payments(List.of(
             ReportPayments.builder()
-                .payment_id("p001").fisrt_name("Ana").last_name("Gómez")
+                .payment_id("p001").first_name("Ana").last_name("Gómez")
                 .amount(new BigDecimal("100000")).paid_at(LocalDate.of(2025,10,6))
                 .build()
         ))

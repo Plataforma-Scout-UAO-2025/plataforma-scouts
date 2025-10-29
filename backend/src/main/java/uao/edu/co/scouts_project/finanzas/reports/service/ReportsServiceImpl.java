@@ -34,7 +34,7 @@ public class ReportsServiceImpl implements ReportsService {
     var payments = paymentRows.stream()
         .map(r -> ReportPayments.builder()
             .payment_id(r.getPaymentId())
-            .fisrt_name(r.getFirstName())
+            .first_name(r.getFirstName())
             .last_name(r.getLastName())
             .amount(r.getAmount() == null ? BigDecimal.ZERO : r.getAmount())
             .paid_at(r.getPaidAt())
@@ -79,6 +79,9 @@ public class ReportsServiceImpl implements ReportsService {
         .members_overdue(membersOverdue)
         .percentage(percentage)
         .payments(payments)
+        .start_date(req.getStart_date())
+        .end_date(req.getEnd_date())
+        .Scope(scope)
         .build();
   }
 
