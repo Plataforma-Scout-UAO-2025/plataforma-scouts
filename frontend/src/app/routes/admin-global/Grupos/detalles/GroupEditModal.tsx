@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui";
-import { updateGroupAction } from "@/store/groups/groupsActions";
+import { updateGroupAction, fetchGroupsAction } from "@/store/groups/groupsActions";
 import { clearNotification } from "@/store/groups/groupsSlice";
 import type {
   GroupResponseDTO as Group,
@@ -108,6 +108,7 @@ export default function GroupEditModal({
       updateGroupAction({ tenantId, groupSlug, updates })
     );
     if (updateGroupAction.fulfilled.match(action)) {
+      await dispatch(fetchGroupsAction());
       if (onSave) onSave({ ...group, ...form });
       onOpenChange(false);
     }

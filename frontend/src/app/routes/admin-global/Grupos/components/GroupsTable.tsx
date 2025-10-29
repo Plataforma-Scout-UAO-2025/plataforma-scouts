@@ -17,6 +17,7 @@ import GroupInfoModal from "../detalles/GroupInfoModal";
 import GroupAdminModal from "../detalles/GroupAdminModal";
 import GroupEditModal from "../detalles/GroupEditModal";
 import { useGroupManagement } from "@/hooks/useGroupManagement";
+import FullScreenLoader from "@/components/common/FullScreenLoader";
 
 const GroupsTable = () => {
   const dispatch = useAppDispatch();
@@ -43,6 +44,10 @@ const GroupsTable = () => {
     if (!groups) return [];
     return [...groups].sort((a, b) => a.name.localeCompare(b.name));
   }, [groups]);
+
+  if (loading) {
+    return <FullScreenLoader message="Cargando..." />;
+  }
 
   return (
     <div>
