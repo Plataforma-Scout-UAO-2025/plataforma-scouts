@@ -67,7 +67,7 @@ public class GroupController {
                         @ApiResponse(responseCode = "200", description = "Grupos encontrados"),
                         @ApiResponse(responseCode = "404", description = "No se encontraron grupos")
         })
-        @GetMapping("/")
+        @GetMapping("/getAll")
         public GroupResponseDTO[] getAllGroups() {
                 return groupService.getAllGroups();
         }
