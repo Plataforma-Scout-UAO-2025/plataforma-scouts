@@ -54,7 +54,6 @@ const GuardianMembersTable = ({
     return Boolean(value);
   };
 
-  // Función para obtener edad a partir de birth_date
   const getAge = (birthDate?: string): string => {
     if (!birthDate) return "N/A";
     
