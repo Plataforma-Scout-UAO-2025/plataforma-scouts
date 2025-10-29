@@ -38,6 +38,11 @@ export const updateGuardian = async (id: number | string, data: UpdateGuardianDT
   return response.data;
 };
 
+export const getAvailableMembers = async (): Promise<MemberBasicInfo[]> => {
+  const response = await api.get<MemberBasicInfo[]>('/guardian/members/available-guardian');
+  return response.data;
+};
+
 // Agregar un miembro al guardian
 export const addMemberToGuardian = async (guardianId: number | string, memberId: number | string) => {
   const response = await api.post(`/guardian/${guardianId}/members/${memberId}`);

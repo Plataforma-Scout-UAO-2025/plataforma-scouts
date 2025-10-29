@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { emergencyContactSchema } from './EmergencyContact.schema';
 
 /**
  * Schema de validación para el formulario de miembros/scouts
@@ -39,7 +38,7 @@ export const memberFormSchema = z.object({
       }
       
       // Verificar si después del +57 hay exactamente 10 dígitos
-      const phoneNumber = cleanValue.substring(3); // Remover +57
+      const phoneNumber = cleanValue.substring(3);
       if (!/^\d{10}$/.test(phoneNumber)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -56,9 +55,16 @@ export const memberFormSchema = z.object({
   height: z.string().optional(),
   hobbies: z.string().optional(),
   sports: z.string().optional(),
-  instruments: z.string().optional(),
-  emergencyContacts: z.array(emergencyContactSchema).optional()
+  instruments: z.string().optional(),  
+});
+
+export const editMemberSchema = z.object({
+  documentType: z.enum(['CC', 'TI', 'RC', 'CE', 'PA', 'PEP', 'PPT', 'NIT', 'NUIP'], {
+    message: 'El tipo de documento es requerido'
+  }).optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),  
 });
 
 export type MemberFormData = z.infer<typeof memberFormSchema>;
-export type EmergencyContactData = z.infer<typeof emergencyContactSchema>;
+export type EditMemberFormData = z.infer<typeof editMemberSchema>;

@@ -143,10 +143,6 @@ const GuardianProfilePage: React.FC = () => {
       };
     });
 
-  console.log("Guardian ID:", guardianId);
-  console.log("Members in charge:", membersInCharge);
-  console.log("Selected member:", selectedMember);
-
   return (
     <div className="min-h-screen bg-[#fffaf3]">
       <div className="flex flex-col min-h-screen">
@@ -171,7 +167,8 @@ const GuardianProfilePage: React.FC = () => {
             is_active={guardianApiData?.is_active || false} 
           />
           
-          <ProfileInfoCard 
+          <ProfileInfoCard
+            address={guardianApiData?.address || ''} 
             first_name={guardianApiData?.first_name || ''} 
             last_name={guardianApiData?.last_name || ''} 
             identification={guardianApiData?.identification || ''} 
