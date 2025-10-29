@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { fetchMembersInChargeAction } from "@/store/guardians/guardiansActions";
 import { useGuardian } from "./useGuardian";
@@ -17,8 +17,8 @@ export const useMembersInChargeOf = (guardianId?: number) => {
   const dispatch = useAppDispatch();
   const guardianState = useGuardian() as GuardianState;
 
-  useEffect(() => {
-    // Solo hacer fetch si tenemos un guardianId válido
+  // Función para hacer fetch de los miembros
+  const fetchMembers = useCallback(() => {
     if (guardianId && guardianId > 0) {
       console.log("Fetching members for guardian ID:", guardianId);
       dispatch(fetchMembersInChargeAction(guardianId));
@@ -26,6 +26,17 @@ export const useMembersInChargeOf = (guardianId?: number) => {
       console.log("No guardian ID provided, skipping fetch");
     }
   }, [guardianId, dispatch]);
+
+  // Función refetch que devuelve una Promise para compatibilidad
+  const refetch = useCallback(async () => {
+    fetchMembers();
+    // Retornar una promise vacía para mantener compatibilidad
+    return Promise.resolve();
+  }, [fetchMembers]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
 
   const membersInCharge = guardianState.members || [];
 
@@ -37,6 +48,7 @@ export const useMembersInChargeOf = (guardianId?: number) => {
     members: membersInCharge,
     guardianId: guardianId,
     loading: guardianState.loading || false,
-    error: guardianState.error || null
+    error: guardianState.error || null,
+    refetch // Agregamos la función refetch
   };
 };

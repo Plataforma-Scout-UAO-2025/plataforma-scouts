@@ -5,21 +5,23 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
 import GuardianMembersTable from "../tables/GuardianMembersTable";
 import MemberDetailsSheet from "../modals/MemberDetailsSheet";
+import { removeMemberFromGuardian } from "@/api/guardiansApi";
 import { toast } from "sonner";
 import type { MemberBasicInfo } from "@/types/guardian.type";
+
+interface ExtendedMemberInfo extends MemberBasicInfo {
+  member_id?: string | number;
+  userId?: string | number;
+  id?: string | number;
+}
 
 const MembersInCharge = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
 
   const { user } = useAuth0();
-  console.log("Usuario completo:", user);
-  console.log("user.sub:", user?.sub);
-
-  
   const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
-  console.log("Guardian ID calculado:", guardianId);
-  const { members, loading, error } = useMembersInChargeOf(guardianId);
+  const { members, loading, error, refetch } = useMembersInChargeOf(guardianId);
   const navigate = useNavigate();
 
   const handleViewMember = (member: MemberBasicInfo) => {
@@ -29,19 +31,37 @@ const MembersInCharge = () => {
 
   const handleDeleteMember = async (member: MemberBasicInfo) => {
     try {
-      // Aquí implementarías la llamada al servicio para eliminar
-      // await memberService.deleteMember(member.memberId);
+      if (!guardianId) {
+        toast.error('No se pudo identificar el guardian');
+        return;
+      }
+
+      // Obtener el ID del miembro de diferentes posibles campos
+  const extendedMember = member as ExtendedMemberInfo;
+  const memberId = extendedMember.memberId || 
+                      extendedMember.member_id || 
+                      extendedMember.userId || 
+                      extendedMember.id;
+      if (!memberId) {
+        toast.error('No se pudo identificar el miembro');
+        return;
+      }
+
+      console.log('Removing member from guardian:', { guardianId, memberId });
       
-      // Por ahora, simular la eliminación
-      console.log('Deleting member:', member);
-      toast.success('Miembro eliminado exitosamente');
+      // Llamar al endpoint para remover el miembro del guardian
+      await removeMemberFromGuardian(guardianId, memberId);
       
-      // Aquí deberías recargar la lista de miembros
-      // o actualizar el estado para quitar el miembro eliminado
+      toast.success('Miembro removido exitosamente del guardian');
+      
+      // Recargar la lista de miembros
+      if (refetch) {
+        await refetch();
+      }
       
     } catch (error) {
-      console.error('Error deleting member:', error);
-      toast.error('Error al eliminar el miembro');
+      console.error('Error removing member from guardian:', error);
+      toast.error('Error al remover el miembro del guardian');
       throw error; // Re-lanzar para que el modal maneje el estado de loading
     }
   };
@@ -65,19 +85,13 @@ const MembersInCharge = () => {
           </p>
         </header>
 
-        {/* Tabla */}
         <section className="mt-6">
-          {loading && <p>Cargando miembros…</p>}
-          {error && <p className="text-red-600">{error}</p>}
-          {!loading && !error && (
-            <GuardianMembersTable 
-              filteredMembers={members} 
-              onViewMember={handleViewMember}
-              onDeleteMember={handleDeleteMember}
-            />
-          )}
+          <GuardianMembersTable 
+            filteredMembers={members} 
+            onViewMember={handleViewMember}
+            onDeleteMember={handleDeleteMember}
+          />
 
-          {/* Footer simple */}
           <section className="flex justify-between items-center mt-4">
             <div className="flex justify-start mt-3 gap-2">
               <Button
@@ -94,7 +108,6 @@ const MembersInCharge = () => {
         </section>
       </div>
 
-      {/* Modal de detalles del miembro */}
       <MemberDetailsSheet
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
