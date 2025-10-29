@@ -9,13 +9,8 @@ import { removeMemberFromGuardian } from "@/api/guardiansApi";
 import { toast } from "sonner";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
-import { updateMember } from "@/api/membersApi";
+import EditMemberModal from "../modals/EditMemberModal";
 
-interface MemberUpdate extends UpdateMember {
-  member_id?: number;
-  first_name?: string;
-  last_name?: string;
-}
 
 interface ExtendedMemberInfo extends MemberBasicInfo {
   member_id?: string | number;
@@ -25,7 +20,9 @@ interface ExtendedMemberInfo extends MemberBasicInfo {
 
 const MembersInCharge = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
+  const [memberToEdit, setMemberToEdit] = useState<UpdateMember | null>(null);
 
   const { user } = useAuth0();
   console.log("Usuario completo:", user);
@@ -49,27 +46,15 @@ const MembersInCharge = () => {
   };
 
 
-  const handleEditMember = async (member: UpdateMember) => {
-    try {
-      // Cast seguro al tipo auxiliar que incluye snake_case
-      const memberData = member as MemberUpdate;
-      const id = memberData.member_id ?? memberData.memberId;
+    const handleEditMember = (member: UpdateMember) => {
+    setMemberToEdit(member);
+    setIsEditModalOpen(true);
+  };
 
-      if (!id) {
-        toast.error("No se encontró el ID del miembro");
-        return;
-      }
-
-      const currentPhone = member.phone ?? "";
-      const newPhone = window.prompt("Nuevo teléfono del miembro:", currentPhone);
-      if (newPhone == null || newPhone === currentPhone) return;
-
-      await updateMember(String(id), { phone: newPhone });
-
-      toast.success("Miembro actualizado");
-    } catch (e) {
-      console.error(e);
-      toast.error("No se pudo actualizar el miembro");
+  const handleEditSuccess = async () => {
+    // Refrescar la lista después de editar
+    if (refetch) {
+      await refetch();
     }
   };
 
@@ -106,7 +91,7 @@ const MembersInCharge = () => {
     } catch (error) {
       console.error('Error removing member from guardian:', error);
       toast.error('Error al remover el miembro del guardian');
-      throw error; // Re-lanzar para que el modal maneje el estado de loading
+      throw error;
     }
   };
 
@@ -159,6 +144,12 @@ const MembersInCharge = () => {
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
         member={selectedMember}
+      />
+      <EditMemberModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        miembro={memberToEdit}
+        onSuccess={handleEditSuccess}
       />
     </>
   );

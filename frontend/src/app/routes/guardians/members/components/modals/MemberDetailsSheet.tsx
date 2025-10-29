@@ -8,7 +8,6 @@ import type { MemberBasicInfo } from "@/types/guardian.type";
 import PersonalInfoSection from "./details/PersonalInfoSection";
 import PhysicalInfoSection from "./details/PhysicalInfoSection";
 import InterestsSection from "./details/InterestsSection";
-import EmergencyContactsSection from "./details/EmergencyContactsSection";
 import ScoutInfoSection from "./details/ScoutInfoSection";
 
 interface MemberDetailsSheetProps {
@@ -37,7 +36,6 @@ export default function MemberDetailsSheet({
           <PersonalInfoSection member={member} />
           <PhysicalInfoSection member={member} />
           <InterestsSection member={member} />
-          <EmergencyContactsSection member={member} />
           <ScoutInfoSection member={member} />
         </div>
       </DialogContent>
