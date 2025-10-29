@@ -154,6 +154,8 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/update_member_by_id/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/update_role/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/assign_subgroup_and_section/")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
 
@@ -161,8 +163,6 @@ public class SecurityConfig {
                                     .requestMatchers("/api/v1/auth0/**")
                                     .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                                                // //
-                                                // // Datos básicos de miembros
 
                                     // Guardians
 
@@ -198,6 +198,10 @@ public class SecurityConfig {
                                     // Pagos
                                     .requestMatchers(HttpMethod.GET,"/api/v1/finanzas/payments/status/*/*")
                                     .hasAnyRole(ACUDIENTE.name())
+                                                //
+                                                // Pagos
+                                                .requestMatchers(HttpMethod.GET,"/api/v1/finanzas/payments/status/guardian/*")
+                                                .hasAnyRole(ACUDIENTE.name())
 
                                     .requestMatchers("/api/v1/finanzas/payments/**")
                                     .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())

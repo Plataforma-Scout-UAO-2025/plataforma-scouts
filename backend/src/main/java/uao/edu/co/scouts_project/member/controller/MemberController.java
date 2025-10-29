@@ -42,6 +42,7 @@ import java.util.*;
  *   GET     → /list_members_with_details — Listar miembros con detalles
  *   PUT     → /update_member_status/{id}?status={status} — Actualizar estado
  *   PUT     → /update_member_by_id/{id} — Actualizar información completa
+ *   PUT     → /update_role — Actualizar role con base al rol de Auth0
  *   PUT     → /assign_subgroup_and_section — Asigna la seccion y el sub grupo a un miembro
  */
 @Slf4j
@@ -282,6 +283,30 @@ public class MemberController {
 
         return ResponseEntity.ok(UpdateMemberMapper.toDto(miembroActualizado));
     }
+
+    @PutMapping("/update_role")
+    public ResponseEntity<Map<String, String>> updateMemberRole(
+            @Valid @RequestBody UpdateRoleDto request) {
+
+        boolean updated = memberservice.update_role(
+                request.getMemberId(),
+                request.getNewRole()
+        );
+
+        if (updated) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "Rol actualizado correctamente",
+                    "memberId", request.getMemberId().toString(),
+                    "newRole", request.getNewRole()
+            ));
+        } else {
+            return ResponseEntity.ok(Map.of(
+                    "message", "El rol ya estaba actualizado o el miembro no existe",
+                    "memberId", request.getMemberId().toString()
+            ));
+        }
+    }
+
 
     /**
      * Asigna un subgrupo y una sección a un miembro dentro de una transacción.

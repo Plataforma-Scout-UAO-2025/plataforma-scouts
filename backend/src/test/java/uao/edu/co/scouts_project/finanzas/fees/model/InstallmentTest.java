@@ -7,6 +7,8 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+
 import org.junit.jupiter.api.Test;
 
 class InstallmentTest {
@@ -30,5 +32,67 @@ class InstallmentTest {
     assertThat(inst.getTenantId()).isEqualTo("org_T");
     assertThat(inst.getPayments()).isSameAs(arr);
   }
+
+    @Test
+    void prePersist_inicializa_campos_nulos() {
+      Installment i = Installment.builder()
+          .tenantId("org_SCOUT")
+          .accountId(1L)
+          .conceptId(2L)
+          .dueDate(LocalDate.of(2025, 10, 30))
+          .amount(new BigDecimal("120000"))
+          .payments(null)
+          .status(null)
+          .balance(null)
+          .build();
+
+      i.prePersist();
+
+      assertThat(i.getPayments()).isNotNull();
+      assertThat(i.getPayments().isArray()).isTrue();
+      assertThat(i.getPayments().size()).isZero();
+
+      assertThat(i.getStatus()).isEqualTo("PENDING");
+      assertThat(i.getBalance()).isEqualByComparingTo("120000");
+    }
+
+    @Test
+    void prePersist_no_modifica_valores_existentes() {
+      var payments = JsonNodeFactory.instance.arrayNode().add("dummy");
+      Installment i = Installment.builder()
+          .tenantId("org_SCOUT")
+          .accountId(1L)
+          .conceptId(2L)
+          .dueDate(LocalDate.of(2025, 10, 30))
+          .amount(new BigDecimal("120000"))
+          .payments(payments)
+          .status("PAID")
+          .balance(new BigDecimal("50000"))
+          .build();
+
+      i.prePersist();
+
+      assertThat(i.getPayments()).isSameAs(payments); // no lo reemplazó
+      assertThat(i.getStatus()).isEqualTo("PAID");
+      assertThat(i.getBalance()).isEqualByComparingTo("50000");
+    }
+
+    @Test
+    void constructor_simplificado_asigna_balance_igual_a_amount() {
+      Installment i = new Installment(1L, 2L, LocalDate.of(2025, 10, 20), new BigDecimal("80000"));
+
+      // Antes del prePersist, status es null (porque no usaste el builder)
+      assertThat(i.getStatus()).isNull();
+
+      // El balance sí se setea por el constructor
+      assertThat(i.getBalance()).isEqualByComparingTo(i.getAmount());
+
+      // Simula el ciclo JPA
+      i.prePersist();
+
+      // Ahora sí: status PENDING por la lógica de @PrePersist
+      assertThat(i.getStatus()).isEqualTo("PENDING");
+    }
+    
 }
 

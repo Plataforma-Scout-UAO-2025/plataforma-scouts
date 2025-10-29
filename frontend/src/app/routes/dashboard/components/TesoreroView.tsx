@@ -21,7 +21,6 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import api from "@/api/axios";
@@ -290,7 +289,7 @@ const ultimosPagosColumns: ColumnDef<InstallmentPayment>[] = [
     accessorKey: "due_date",
     header: "Fecha de vencimiento",
     cell: ({ row }) =>
-      row.original.due_date ? format(row.original.due_date, "dd/MM/yyyy") : "-",
+      row.original.due_date ? row.original.due_date.toString() : "-",
   },
   {
     accessorKey: "amount",
@@ -331,7 +330,7 @@ const ultimosPagosColumns: ColumnDef<InstallmentPayment>[] = [
     accessorKey: "paid_at",
     header: "Fecha de pago",
     cell: ({ row }) =>
-      row.original.paid_at ? format(row.original.paid_at, "dd/MM/yyyy") : "-",
+      row.original.paid_at ? row.original.paid_at.toString() : "-",
   },
   {
     accessorKey: "method",
@@ -431,9 +430,9 @@ const UltimosPagosTable = ({ data }: UltimosPagosTableProps) => {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-md border max-h-96 overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-background z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -529,9 +528,9 @@ const MiembrosMoraTable = ({ data }: MiembrosMoraTableProps) => {
         <CardTitle>Miembros en mora</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-md border max-h-96 overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-background z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
