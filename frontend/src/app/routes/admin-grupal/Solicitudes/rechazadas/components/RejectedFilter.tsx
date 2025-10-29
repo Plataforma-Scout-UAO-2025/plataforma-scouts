@@ -1,82 +1,47 @@
-import { useMemo, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  Button,
-  Input,
-} from "@/components/ui/index";
-import { ChevronDown, ChevronUp, BrushCleaning } from "lucide-react";
-import { useTenantMembersByStatus } from "@/hooks/useTenantMembersByStatus";
+import { useState } from "react";
+import { Button, Input } from "@/components/ui/index";
+import { BrushCleaning } from "lucide-react";
 
 interface RejectedFilterProps {
   searchFilter: string;
   setSearchFilter: (value: string) => void;
-  cityFilter: string;
-  setCityFilter: (value: string) => void;
+  phoneFilter: string;
+  setPhoneFilter: (value: string) => void;
 }
 
 const RejectedFilter = ({
   searchFilter,
   setSearchFilter,
-  cityFilter,
-  setCityFilter,
+  phoneFilter,
+  setPhoneFilter,
 }: RejectedFilterProps) => {
-  const [isActive, setIsActive] = useState(false);
-  const members = useTenantMembersByStatus({ status: "REJECTED" }).members;
-  const cities = useMemo(() => {
-    const uniqueCities = [
-      ...new Set(members.map((m) => m.address?.split(",")[0]).filter(Boolean)),
-    ];
-    return uniqueCities.sort();
-  }, [members]);
-
   return (
-    <>
-      <div className="flex w-2/3 gap-4">
-        <Input
-          type="text"
-          placeholder="Buscar..."
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
-          className="w-2/3 flex h-auto border-primary"
-        />
-        <DropdownMenu onOpenChange={setIsActive}>
-          <DropdownMenuTrigger className="w-3/5 py-1 px-2 text-sm border border-primary rounded-md justify-between flex items-center">
-            {cityFilter || "Seleccionar dirección..."}{" "}
-            {isActive ? <ChevronUp /> : <ChevronDown />}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="py-1 px-2 text-sm border border-primary bg-background rounded-md">
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={() => setCityFilter("")}
-            >
-              Todas las direcciones
-            </DropdownMenuItem>
-            {cities.map((city) => (
-              <DropdownMenuItem
-                key={city}
-                className="cursor-pointer"
-                onSelect={() => setCityFilter(city ?? "")}
-              >
-                {city}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button
-          variant="primary"
-          className="w-1/6 flex h-auto px-3"
-          onClick={() => {
-            setSearchFilter("");
-            setCityFilter("");
-          }}
-        >
-          <BrushCleaning /> Limpiar
-        </Button>
-      </div>
-    </>
+    <div className="flex w-full gap-4">
+      <Input
+        type="text"
+        placeholder="Buscar nombre, correo o ID..."
+        value={searchFilter}
+        onChange={(e) => setSearchFilter(e.target.value)}
+        className="w-1/2 flex h-auto border-primary"
+      />
+      <Input
+        type="text"
+        placeholder="Buscar teléfono..."
+        value={phoneFilter}
+        onChange={(e) => setPhoneFilter(e.target.value)}
+        className="w-1/2 flex h-auto border-primary"
+      />
+      <Button
+        variant="primary"
+        className="flex h-auto px-3"
+        onClick={() => {
+          setSearchFilter("");
+          setPhoneFilter("");
+        }}
+      >
+        <BrushCleaning /> Limpiar
+      </Button>
+    </div>
   );
 };
 

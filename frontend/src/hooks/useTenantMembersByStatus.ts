@@ -6,18 +6,14 @@ import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useMember } from "@/hooks/useMember";
 import { fetchMembersByStatusAction } from "@/store/members/membersActions";
 
-/**
- * Hook que obtiene los miembros del tenant actual filtrados por estado, con paginación y filtros.
- * @param status Estado de los miembros ("APPROVED", "PENDING", "REJECTED").
- */
 type Status = "APPROVED" | "PENDING" | "REJECTED";
 
 interface Options {
   status: Status;
   pageSize?: number;
   search?: string;
-  city?: string;
   branch?: string;
+  phoneFilter?: string;
 }
 
 interface Return {
@@ -36,8 +32,8 @@ export function useTenantMembersByStatus({
   status,
   pageSize = 10,
   search = "",
-  city = "",
   branch = "",
+  phoneFilter = "",
 }: Options): Return {
   const dispatch = useAppDispatch();
   const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
@@ -61,26 +57,27 @@ export function useTenantMembersByStatus({
 
   const filtered: Member[] = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const cityTerm = city.trim().toLowerCase();
     const branchTerm = branch.trim().toLowerCase();
+    const termPhone = phoneFilter.trim().toLowerCase();
 
     return tenantMembers.filter((m: Member) => {
       const bySearch =
         term === "" ||
         m.first_name?.toLowerCase().includes(term) ||
         m.last_name?.toLowerCase().includes(term) ||
-        m.identification?.toLowerCase().includes(term);
+        m.identification?.toLowerCase().includes(term) ||
+        m.email?.toLowerCase().includes(term);
 
-      const byCity = cityTerm === "" || m.address?.toLowerCase().includes(cityTerm);
+      const byPhone = termPhone === "" || m.phone?.toLowerCase().includes(termPhone);
 
       const byBranch =
         branchTerm === "" ||
         (Array.isArray(m.branch) &&
           m.branch.some((b: Subgroup) => b.name.toLowerCase().includes(branchTerm)));
 
-      return bySearch && byCity && byBranch;
+      return bySearch && byPhone && byBranch;
     });
-  }, [tenantMembers, search, city, branch]);
+  }, [tenantMembers, search, phoneFilter, branch]);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -91,11 +88,10 @@ export function useTenantMembersByStatus({
 
   useEffect(() => {
     setPage(1);
-  }, [status, search, city, branch, pageSize, orgId]);
+  }, [status, search, branch, phoneFilter, pageSize, orgId]);
 
   useEffect(() => {
     if (safePage !== page) setPage(safePage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safePage]);
 
   const refetch = useCallback(() => setRev((v) => v + 1), []);

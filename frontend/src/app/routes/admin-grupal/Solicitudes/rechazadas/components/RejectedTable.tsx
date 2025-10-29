@@ -54,10 +54,8 @@ const RejectedTable = ({ filteredMembers, onViewMember, loading, }: RejectedTabl
             <TableHead className="pl-4 font-bold text-primary">Id</TableHead>
             <TableHead className="font-bold text-primary">Nombres</TableHead>
             <TableHead className="font-bold text-primary">Apellidos</TableHead>
-            <TableHead className="font-bold text-primary">
-              Identificación
-            </TableHead>
-            <TableHead className="font-bold text-primary">Dirección</TableHead>
+            <TableHead className="font-bold text-primary">Correo</TableHead>
+            <TableHead className="font-bold text-primary">Teléfono</TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
             <TableHead className="text-right"></TableHead>
           </TableRow>
@@ -77,8 +75,8 @@ const RejectedTable = ({ filteredMembers, onViewMember, loading, }: RejectedTabl
                 </TableCell>
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
-                <TableCell>{member.identification}</TableCell>
-                <TableCell>{member.address || "Sin dirección"}</TableCell>
+                <TableCell>{member.email || "Sin correo"}</TableCell>
+                <TableCell>{member.phone || "Sin telefono"}</TableCell>
                 <TableCell>
                   <span className="inline-block px-2 py-1 rounded-lg border border-red-300 bg-red-100 text-red-800 font-semibold">
                     {statusLabels[member.status ?? "Rechazado"]}
