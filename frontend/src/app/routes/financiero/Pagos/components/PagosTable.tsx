@@ -32,11 +32,15 @@ import {
 } from "@/components/ui/table";
 import type { PaymentRecord } from "@/types/pago.type";
 import { columns } from "./PagosTableColumns";
+import { FileText } from "lucide-react";
+import type { FiltrosReporte } from "@/types/reporte-financiero.type";
 
 export default function PagosTable({
   pagos = [],
+  onGenerarReporte,
 }: {
   pagos?: PaymentRecord[];
+  onGenerarReporte?: (filtros: FiltrosReporte) => void;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -56,11 +60,13 @@ export default function PagosTable({
     let filtered = pagos;
 
     if (selectedSubgroup && selectedSubgroup !== "all") {
-      filtered = filtered.filter(pago => pago.subgroup.id === selectedSubgroup);
+      filtered = filtered.filter(
+        (pago) => pago.subgroup.id === selectedSubgroup
+      );
     }
 
     if (selectedSection && selectedSection !== "all") {
-      filtered = filtered.filter(pago => pago.section.id === selectedSection);
+      filtered = filtered.filter((pago) => pago.section.id === selectedSection);
     }
 
     return filtered;
@@ -78,7 +84,22 @@ export default function PagosTable({
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
+    globalFilterFn: (row, _, value) => {
+      // Función para normalizar texto eliminando tildes y acentos
+      const normalizeText = (text: string) => {
+        return text
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+      };
+      
+      // Función personalizada para buscar en nombre y apellido combinados
+      const searchValue = normalizeText(value);
+      const fullName = normalizeText(`${row.original.first_name} ${row.original.last_name}`);
+      const memberId = row.original.member_id?.toString().toLowerCase() || '';
+      
+      return fullName.includes(searchValue) || memberId.includes(searchValue);
+    },
     state: {
       sorting,
       columnFilters,
@@ -88,27 +109,28 @@ export default function PagosTable({
     },
   });
 
-
   const uniqueSubgroups = React.useMemo(() => {
-    return Array.from(new Set(pagos.map(pago => pago.subgroup.id)))
-      .map(subgroupId => {
-        const pago = pagos.find(p => p.subgroup.id === subgroupId);
+    return Array.from(new Set(pagos.map((pago) => pago.subgroup.id))).map(
+      (subgroupId) => {
+        const pago = pagos.find((p) => p.subgroup.id === subgroupId);
         return {
           id: subgroupId,
-          name: pago?.subgroup.name || subgroupId
+          name: pago?.subgroup.name || subgroupId,
         };
-      });
+      }
+    );
   }, [pagos]);
 
   const uniqueSections = React.useMemo(() => {
-    return Array.from(new Set(pagos.map(pago => pago.section.id)))
-      .map(sectionId => {
-        const pago = pagos.find(p => p.section.id === sectionId);
+    return Array.from(new Set(pagos.map((pago) => pago.section.id))).map(
+      (sectionId) => {
+        const pago = pagos.find((p) => p.section.id === sectionId);
         return {
           id: sectionId,
-          name: pago?.section.name || sectionId
+          name: pago?.section.name || sectionId,
         };
-      });
+      }
+    );
   }, [pagos]);
 
   return (
@@ -116,16 +138,13 @@ export default function PagosTable({
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <Input
-            placeholder="Buscar por nombre o ID..."
+            placeholder="Buscar por nombre, apellido o ID..."
             value={globalFilter ?? ""}
             onChange={(event) => setGlobalFilter(event.target.value)}
             className="max-w-sm"
           />
 
-          <Select
-            value={selectedSubgroup}
-            onValueChange={setSelectedSubgroup}
-          >
+          <Select value={selectedSubgroup} onValueChange={setSelectedSubgroup}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar por subgrupo" />
             </SelectTrigger>
@@ -139,10 +158,7 @@ export default function PagosTable({
             </SelectContent>
           </Select>
 
-          <Select
-            value={selectedSection}
-            onValueChange={setSelectedSection}
-          >
+          <Select value={selectedSection} onValueChange={setSelectedSection}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar por sección" />
             </SelectTrigger>
@@ -155,9 +171,14 @@ export default function PagosTable({
               ))}
             </SelectContent>
           </Select>
-
-
         </div>
+        <Button 
+          variant="primary" 
+          onClick={() => onGenerarReporte && onGenerarReporte({} as FiltrosReporte)}
+        >
+          <FileText className="text-white" />
+          Reporte Financiero Consolidado
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>

@@ -18,8 +18,8 @@ public class DashboardServiceImpl implements DashboardService {
     private final IPaymentsReadRepository paymentRepo;
 
         @Transactional
-        void normalizeOverdues(String tenantId) {
-        installmentRepo.markPastDueAsOverdue(tenantId /*, InstallmentStatus.OVERDUE*/);
+        public void normalizeOverdues(String tenantId) {
+        installmentRepo.markPastDueAsOverdue(tenantId);
         }
 
         @Transactional(readOnly = true)

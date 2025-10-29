@@ -1,0 +1,111 @@
+meta {
+  name: Successful registration
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}/medical_record/create_record/21
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
+body:json {
+  {
+    "blood_type": "AB+",
+    "eps": "Sura",
+    "allergies": "Piña",
+    "chronic_diseases": "Diabetes",
+    "physical_restrictions": "Requiere una silla de ruedas",
+    "surgical_history": "Apendicectomía",
+    "vaccines_detail": [{
+      "name": "COVID-19 (Pfizer)",
+      "applied_at": "2022-04-23T18:25:43.511Z"
+    }],
+    "medications_detail": [{
+      "name": "Aspirina",
+      "dose": "50 mg",
+      "frequency": "2 veces al día"
+    }]
+  }
+  
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Validar mensaje de exito", function () {
+    expect(res.body.message).to.equal("Registro generado con exito.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Nombre:** Registro exitoso
+  
+  **Endpoint:** /api/v1/medical_record/create_record/{id}
+  
+  **HU relacionadas:** HU-INN-1.1
+  
+  **Descripción:** Comprobar que el endpoint de creación de registros medicos recibe y responde correctamente a una petición con todos los campos mencionados, con valores válidos y con la sesión iniciada.
+  
+  **Respuesta esperada:** Retorna el código 200 y un body con un mensaje de exito.
+  
+  **Estructura del body de entrada:**
+  
+  ```
+  req.body {
+  
+    "blood_type": string,
+  
+    "eps": string,
+    
+    "allergies": string,
+    
+    "chronic_diseases": string,
+    
+    "physical_restrictions": string,
+    
+    "surgical_history": string,
+    
+    "vaccines_detail": [{
+      "name": string,
+      "applied_at": string
+    }],
+  
+    "medications_detail": [{
+      "name": string,
+      "dose": string,
+      "frequency": string
+    }]
+    
+  }
+  ```
+  
+  **Estructura del body de salida:**
+  
+  ```
+  res.body {
+  
+    "message": string,
+  
+  }
+  ```
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-08
+  
+}

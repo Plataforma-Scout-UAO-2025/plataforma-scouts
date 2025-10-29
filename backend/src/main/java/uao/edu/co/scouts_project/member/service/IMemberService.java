@@ -76,10 +76,10 @@ public interface IMemberService {
     /**
      * Actualiza el rol de un miembro solo si su rol en Auth0 ha cambiado
      *
-     * @param userId  ID del miembro a actualizar.
+     * @param memberId  ID del miembro a actualizar.
      * @return {@code true} si la actualización fue exitosa, {@code false} en caso contrario.
      */
-    Boolean update_role(String userId);
+    Boolean update_role(Long memberId, String newRole);
 
     /**
      * Asigna un miembro a un subGrupo existente
