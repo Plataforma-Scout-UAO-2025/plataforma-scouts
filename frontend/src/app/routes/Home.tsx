@@ -1,30 +1,8 @@
 import LoginButton from "@/components/auth/LoginButton";
-import { ScoutGroupCard } from "@/components/groups/ScoutGroupCard";
+import { TenantsView } from "@/components/groups/TenantsView";
 import { Button } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Mountain, Target, Users } from "lucide-react";
-
-// Mock data for scout groups (tenants)
-const scoutGroups = [
-  {
-    id: "1",
-    name: "Grupo Centinelas 113",
-    description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Earum rem aperiam pariatur eius ipsam odio, animi unde iure. Facilis explicabo modi delectus sunt ipsum eos omnis velit, reiciendis deserunt debitis.",
-    location: "Cali, Colombia",
-    members: 0,
-    image: "https://tse2.mm.bing.net/th/id/OIP.4AM4EoXHb3icWCCTZga-NwHaEK?cb=12&rs=1&pid=ImgDetMain&o=7&rm=3",
-    org_id: "org_6B3k4dao2Wf6eGxa"
-  },
-  {
-    id: "2",
-    name: "Grupo 803 Chiminigagua",
-    description: "Lorem, ipsum dolor sit amet consectetur adipisicing elit. In quas quisquam minus, soluta velit nobis ut nisi dolor dicta aspernatur harum nostrum, quasi illo maiores, voluptates laboriosam sed deserunt. Quasi.",
-    location: "Cali, Colombia",
-    members: 0,
-    image: "https://tse2.mm.bing.net/th/id/OIP.AC1zOa3q0naPOsrlyoORrwHaDV?cb=12&rs=1&pid=ImgDetMain&o=7&rm=3",
-    org_id: "org_povsjufF3TEP1DZ7"
-  },
-]
 
 export default function Home() {
   return (
@@ -174,21 +152,7 @@ export default function Home() {
           </section>
         </div>
 
-        <section id="nuestros-grupos" className="container mx-auto px-4 py-16">
-        <div className="text-center space-y-4 mb-12">
-          <h2 className="text-3xl font-bold tracking-tight text-balance md:text-4xl">Nuestros Grupos Scout</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Conoce los grupos scouts que forman parte de nuestra organización. Cada uno es un espacio único para crecer
-            y vivir la experiencia scout.
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {scoutGroups.map((group) => (
-            <ScoutGroupCard key={group.id} group={group} />
-          ))}
-        </div>
-      </section>
+        <TenantsView />
 
       </main>
 
