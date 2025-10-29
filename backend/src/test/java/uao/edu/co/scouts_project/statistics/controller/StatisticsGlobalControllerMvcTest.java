@@ -10,6 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import uao.edu.co.scouts_project.statistics.dto.TotalMembersDTO;
 import uao.edu.co.scouts_project.statistics.service.MemberStatisticsService;
+import uao.edu.co.scouts_project.statistics.service.GroupStatisticsService;
 import uao.edu.co.scouts_project.common.tenant.TenantFilter;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -28,6 +29,9 @@ class StatisticsGlobalControllerMvcTest {
 
     @MockitoBean
     MemberStatisticsService memberStatisticsService;
+    
+    @MockitoBean
+    GroupStatisticsService groupStatisticsService;
 
     @MockitoBean
     TenantFilter tenantFilter;

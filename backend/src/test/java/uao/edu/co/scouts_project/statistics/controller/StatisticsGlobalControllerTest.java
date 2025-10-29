@@ -48,3 +48,4 @@ class StatisticsGlobalControllerTest {
         assertTrue(((Map<?, ?>) resp.getBody()).get("message").toString().contains("Ha ocurrido un error interno"));
     }
 }
+

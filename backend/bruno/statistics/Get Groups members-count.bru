@@ -5,14 +5,13 @@ meta {
 }
 
 get {
-  url: http://localhost:8080/api/v1/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups/members-count
+  url: http://localhost:8080/api/v1/statistics/groups/members-count
   body: none
   auth: inherit
 }
 
 headers {
   Content-Type: application/json
-  X-Tenant-Id: org_6B3k4dao2Wf6eGxa
 }
 
 tests {
@@ -24,11 +23,11 @@ tests {
     expect(res.body).to.be.an('array');
     if (res.body.length > 0) {
       const firstItem = res.body[0];
-      expect(firstItem).to.have.property('groupId');
-      expect(firstItem).to.have.property('groupName');
-      expect(firstItem).to.have.property('memberCount');
-      expect(firstItem.memberCount).to.be.a('number');
-      expect(firstItem.memberCount).to.be.at.least(0);
+      expect(firstItem).to.have.property('group_id');
+      expect(firstItem).to.have.property('group_name');
+      expect(firstItem).to.have.property('member_count');
+      expect(firstItem.member_count).to.be.a('number');
+      expect(firstItem.member_count).to.be.at.least(0);
     }
   });
 }
@@ -40,10 +39,10 @@ settings {
 docs {
   **Nombre:** Obtener cantidad de miembros por grupo (caso exitoso)
   
-  **Endpoint:** /api/v1/tenants/{tenantId}/statistics/groups/members-count
+  **Endpoint:** /api/v1/statistics/groups/members-count
   
-  **Descripción:** Validar que el endpoint retorna correctamente el conteo de miembros por grupo para un tenant.
-  Se envía el header X-Tenant-Id correcto y se espera:
+  **Descripción:** Validar que el endpoint retorna correctamente el conteo de miembros por grupo en toda la plataforma.
+  Se espera:
   - Código 200
   - Array de objetos con groupId, groupName y memberCount
   - memberCount debe ser numérico >= 0
