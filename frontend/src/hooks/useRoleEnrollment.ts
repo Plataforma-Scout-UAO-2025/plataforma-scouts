@@ -102,7 +102,7 @@ export function useRoleEnrollment({
         return newData;
       });
     },
-    [validation]
+    [validation],
   );
 
   const validateCurrentPage = useCallback((): boolean => {
@@ -132,7 +132,7 @@ export function useRoleEnrollment({
     try {
       if (!datosPersonales.username || !datosPersonales.password) {
         setErrorMessage(
-          "El nombre de usuario y la contraseña son obligatorios"
+          "El nombre de usuario y la contraseña son obligatorios",
         );
         setShowAuth0ErrorDialog(true);
         return;
@@ -144,7 +144,7 @@ export function useRoleEnrollment({
           password: datosPersonales.password,
           username: datosPersonales.username,
           role: role,
-        })
+        }),
       );
 
       if (createMemberAuth0Action.rejected.match(auth0Result)) {
@@ -187,8 +187,22 @@ export function useRoleEnrollment({
           tenantId: tenant,
           role,
         },
-        normalizedUserRole
+        normalizedUserRole,
       );
+
+      // Guardar el userId devuelto por Auth0 en el miembro antes de persistirlo en la BD
+      try {
+        const created = auth0Result.payload as { userId?: string };
+        if (created?.userId) {
+          // soportar camelCase y snake_case en el payload del DTO
+          const md = memberData as Record<string, unknown>;
+          md["userId"] = created.userId;
+          md["user_id"] = created.userId;
+        }
+      } catch (e) {
+        // No fatal: si no viene userId, seguirá el flujo pero no podremos sincronizar rol en Auth0
+        console.warn("No se pudo extraer userId del resultado de Auth0:", e);
+      }
 
       const memberResult = await dispatch(createMemberAction(memberData));
 
@@ -257,12 +271,18 @@ export function useRoleEnrollment({
       }
       await enviarDatos();
     },
-    [pagina, totalPaginas, validateCurrentPage, scrollToFirstError, enviarDatos]
+    [
+      pagina,
+      totalPaginas,
+      validateCurrentPage,
+      scrollToFirstError,
+      enviarDatos,
+    ],
   );
 
   const progreso = useMemo(
     () => (pagina / totalPaginas) * 100,
-    [pagina, totalPaginas]
+    [pagina, totalPaginas],
   );
 
   return {

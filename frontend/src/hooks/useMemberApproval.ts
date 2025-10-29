@@ -168,24 +168,51 @@ export function useMemberApproval({
               ).unwrap();
             }
           } catch (err) {
-            const anyErr = err as {
-              isAxiosError?: boolean;
-              message?: string;
-              response?: { status?: number; data?: unknown } | undefined;
-            };
-            if (anyErr?.isAxiosError) {
-              console.error("Axios error changing role in Auth0:", {
-                message: anyErr.message,
-                status: anyErr.response?.status,
-                data: anyErr.response?.data,
-              });
-            } else {
-              console.error("Error cambiando rol en Auth0:", err);
+            try {
+              type ErrLike = {
+                isAxiosError?: boolean;
+                message?: string;
+                response?: { status?: number; data?: unknown };
+                error?: string;
+              };
+
+              const e = err as ErrLike;
+
+              // Caso axios
+              if (e?.isAxiosError) {
+                console.error("Axios error changing role in Auth0:", {
+                  message: e.message,
+                  status: e.response?.status,
+                  data: e.response?.data,
+                });
+                const data =
+                  (e.response?.data as Record<string, unknown> | undefined) ??
+                  undefined;
+                const serverMsg =
+                  (data && String(data["message"] || data["error"])) ||
+                  undefined;
+                toast.error(
+                  `Error asignando rol en Auth0: ${serverMsg ?? e.message}`,
+                );
+              } else if (e && typeof e === "object") {
+                // Caso createAsyncThunk rejectWithValue -> suele ser { error: string }
+                console.error("Error changing role (rejected action):", e);
+                const errMsg = e.error || e.message || JSON.stringify(e);
+                toast.error(`Error asignando rol en Auth0: ${errMsg}`);
+              } else {
+                console.error("Error cambiando rol en Auth0:", err);
+                toast.error("Error asignando rol en Auth0. Revisa los logs.");
+              }
+            } catch (logErr) {
+              console.error(
+                "Error procesando el error de cambio de rol:",
+                logErr,
+                err,
+              );
+              toast.error("Error asignando rol en Auth0. Revisa los logs.");
             }
-            // Notificamos y abortamos el flujo: no aprobamos el estado si falla la sincronización con Auth0
-            toast.error(
-              "Error asignando rol en Auth0. La solicitud NO fue aprobada. Revisa los logs.",
-            );
+
+            // Se aborta el flujo para no aprobar si no se sincroniza el rol
             throw err;
           }
         } else {
@@ -199,7 +226,7 @@ export function useMemberApproval({
         }
       }
 
-      // 3) Si todo lo anterior salió bien, finalmente marcamos como APPROVED
+      // Si todo lo anterior salio bien, finalmente marcamos como APPROVED
       await dispatch(
         updateMemberStatusAction({
           id: memberId,
