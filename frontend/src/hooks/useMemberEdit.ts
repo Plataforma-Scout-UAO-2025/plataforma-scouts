@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { Member, UpdateMember, EmergencyContact } from "@/types/member.type";
 import { useAppDispatch } from "./useAppDispatch";
-import { updateMemberAction, fetchMembersByStatusAction } from "@/store/members/membersActions";
+import { updateMemberAction, fetchMembersWithBranchAction } from "@/store/members/membersActions";
 import { toast } from "sonner";
 
 type AnyMember = Member | UpdateMember;
@@ -50,50 +50,49 @@ export function useMemberEdit({
 
   const memberId = getMemberId(member);
 
-  const initEdit = useCallback(() => {
-    if (!member) {
-      setEditedData({});
-      return;
-    }
+ const initEdit = useCallback((targetMember?: AnyMember | null) => {
+  const m = targetMember ?? member;
+  if (!m) {
+    setEditedData({});
+    return;
+  }
 
-    const initialData: Partial<UpdateMember> = {
-      firstName: getMemberField(member, "firstName", "first_name"),
-      lastName: getMemberField(member, "lastName", "last_name"),
-      identification: getMemberField(member, "identification", "identification"),
-      documentType: getMemberField(member, "documentType", "document_type"),
-      email: getMemberField(member, "email", "email"),
-      phone: getMemberField(member, "phone", "phone"),
-      address: getMemberField(member, "address", "address"),
-      gender: getMemberField(member, "gender", "gender"),
-      weight: getMemberField(member, "weight", "weight"),
-      height: getMemberField(member, "height", "height"),
-      hobbies: getMemberField(member, "hobbies", "hobbies"),
-      sports: getMemberField(member, "sports", "sports"),
-      instruments: getMemberField(member, "instruments", "instruments"),
-    };
+  const initialData: Partial<UpdateMember> = {
+    firstName: getMemberField(m, "firstName", "first_name"),
+    lastName: getMemberField(m, "lastName", "last_name"),
+    identification: getMemberField(m, "identification", "identification"),
+    documentType: getMemberField(m, "documentType", "document_type"),
+    email: getMemberField(m, "email", "email"),
+    phone: getMemberField(m, "phone", "phone"),
+    address: getMemberField(m, "address", "address"),
+    gender: getMemberField(m, "gender", "gender"),
+    weight: getMemberField(m, "weight", "weight"),
+    height: getMemberField(m, "height", "height"),
+    hobbies: getMemberField(m, "hobbies", "hobbies"),
+    sports: getMemberField(m, "sports", "sports"),
+    instruments: getMemberField(m, "instruments", "instruments"),
+  };
 
-    const birthDate = (member as Member).birth_date ?? (member as UpdateMember).birthDate;
-    if (birthDate) {
-      initialData.birthDate = birthDate;
-    }
+  const birthDate = (m as Member).birth_date ?? (m as UpdateMember).birthDate;
+  if (birthDate) initialData.birthDate = birthDate;
 
-    const memberWithContacts = member as Member & { emergencyContacts?: EmergencyContact[] };
-    const emergencyContacts = memberWithContacts.emergency_contacts ?? 
-                             memberWithContacts.emergencyContacts ?? 
-                             [];
+  const memberWithContacts = m as Member & { emergencyContacts?: EmergencyContact[] };
+  const emergencyContacts =
+    memberWithContacts.emergency_contacts ??
+    memberWithContacts.emergencyContacts ??
+    [];
 
-    if (Array.isArray(emergencyContacts) && emergencyContacts.length > 0) {
-      initialData.emergencyContacts = emergencyContacts.map((contact: EmergencyContactRaw) => ({
+  initialData.emergencyContacts = Array.isArray(emergencyContacts)
+    ? emergencyContacts.map((contact: EmergencyContactRaw) => ({
         name: contact.name || "",
         relationship: contact.relationship || "",
         phone: contact.phone || "",
-      }));
-    } else {
-      initialData.emergencyContacts = [];
-    }
+      }))
+    : [];
 
-    setEditedData(initialData);
-  }, [member]);
+  setEditedData(initialData);
+}, [member]);
+
 
   const handleFieldChange = (
     field: keyof UpdateMember,
@@ -151,6 +150,7 @@ export function useMemberEdit({
       address: "Dirección",
       weight: "Peso",
       height: "Altura",
+      
     };
     
     for (const [field, label] of Object.entries(requiredFields)) {
@@ -232,7 +232,7 @@ export function useMemberEdit({
         `La información de ${firstName} ${lastName} fue actualizada exitosamente.`
       );
 
-      await dispatch(fetchMembersByStatusAction("APPROVED"));
+      await dispatch(fetchMembersWithBranchAction());
 
       onClose();
       onSuccess();

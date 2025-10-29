@@ -21,7 +21,7 @@ import {
 import { Pencil, Trash, User } from "lucide-react";
 import type { Member as MemberType } from "@/types/member.type";
 import MemberInfoModal from "../detalles/memberInfoModal";
-import EditMemberModal from "./EditMemberModal";
+import EditMemberModal from "../../../grupos/basic-info/EditMemberModal";
 import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
 
 interface MembersTableProps {
