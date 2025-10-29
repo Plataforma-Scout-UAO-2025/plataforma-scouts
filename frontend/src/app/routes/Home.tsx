@@ -1,5 +1,5 @@
 import LoginButton from "@/components/auth/LoginButton";
-import { TenantsView } from "@/components/groups/TenantsView";
+import { GroupsView } from "@/components/groups/GroupsView";
 import { Button } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Mountain, Target, Users } from "lucide-react";
@@ -16,7 +16,7 @@ export default function Home() {
               <ul className="flex items-center gap-4">
                 <li>
                   <Button
-                    variant="link"
+                    variant="secondary"
                     className={"text-accent"}
                     onClick={() => {
                       const section = document.querySelector("#nuestros-grupos");
@@ -30,8 +30,6 @@ export default function Home() {
                 </li>
               </ul>
             </nav>
-
-            <LoginButton variant="outline" organization="">Iniciar sesión</LoginButton>
           </div>
         </div>
       </header>
@@ -152,7 +150,7 @@ export default function Home() {
           </section>
         </div>
 
-        <TenantsView />
+        <GroupsView />
 
       </main>
 
