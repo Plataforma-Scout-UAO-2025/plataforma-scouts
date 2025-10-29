@@ -1,0 +1,69 @@
+meta {
+  name: Successful update at character limit
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseurl}}/medical_record/update_record/21
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: {{tenantId}}
+}
+
+body:json {
+  {
+    "blood_type": "O+", // valor a actualizar
+    "eps": "Salud Bólivar EPS SAS Salud Bólivar EPS SAS", // limite: 50
+    "allergies": "Piña,Perro,Gato,Polen,Abejas,Latex", // limite: 1000
+    "chronic_diseases": "Tiene diabetes, artritis, asma y enfermedades cardiovasculares.", // limite: 1000
+    "physical_restrictions": "Requiere una silla de ruedas y aparatos auditivos.", // limite: 1000
+    "surgical_history": "Apendicectomía, colecistectomía y cirugía de hernia.", // limite: 1000
+    "vaccines_detail": [{
+      "name": "Vacuna contra la fiebre amarilla Vacuna contra la", // limite: 50
+      "date": "2022-04-23T18:25:43.511Z"
+    }],
+    "medications_detail": [{
+      "name": "Aspirina Aspirina Aspirina Aspirina Aspirina", // limite: 50
+      "dose": "50 mg los primeros 3 días, luego 5 mg 50 mg los primeros 3 días, luego 5 mg 50 mg los primeros 3", // limite: 100
+      "frecuency": "2 veces al día hasta el 5 de noviembre del 2026 2 veces al día hasta el 5 de noviembre del 2026" // limite: 100
+    }]
+  }
+  
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("Validar mensaje de exito", function () {
+    expect(res.body.message).to.equal("Actualización realizada con exito.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Nombre:** Actualizado exitoso al limite de caracteres
+  
+  **Endpoint:** /api/v1/medical_record/update_record
+  
+  **HU relacionadas:** HU-INN-2.1
+  
+  **Descripción:** Comprobar que el endpoint de actualizado de registros medicos recibe y responde correctamente a una petición con campos válidos y valores al limite de lo máximo de caracteres permitidos.
+  
+  **Respuesta esperada:** Retorna el código 200 y un body con un mensaje de exito.
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-01
+}
