@@ -1,0 +1,52 @@
+meta {
+  name: Get Groups statistics - tenant mismatch
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:8080/api/v1/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: wrong_tenant_id
+}
+
+tests {
+  test("Validar código de error por tenant mismatch", function () {
+    expect(res.status).to.equal(403);
+  });
+
+  test("Validar mensaje de error", function () {
+    expect(res.body.message).to.equal("Tenant mismatch or no permissions");
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Obtener estadísticas de grupos - Tenant no coincide
+  
+  **Endpoint:** /api/v1/tenants/{tenantId}/statistics/groups
+  
+  **HU relacionadas:** HU-STATS-1.1
+  
+  **Descripción:** Validar que el endpoint requiere que el tenant del path coincida con el header.
+  Se envía un header X-Tenant-Id distinto al tenantId del path y se espera:
+  - Código 403 (Forbidden)
+  - Mensaje de error indicando el mismatch
+  
+  **Respuesta esperada:**
+  ```json
+  {
+    "message": "Tenant mismatch or no permissions"
+  }
+  ```
+  
+  **Última Actualización:** 2025-10-27
+}
