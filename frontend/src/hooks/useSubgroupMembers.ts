@@ -58,20 +58,20 @@ export const useSubgroupMembers = (subgroupId?: number): UseSubgroupMembersRetur
     const n = Number(v);
     return Number.isFinite(n) ? n : undefined;
   };
-  const getMemberSubgroupId = (m: Member): number | undefined => {
-    return (
-      toNumberSafe((m as any).subgroup_id) ??
-      toNumberSafe(m.subgroup?.subgroupId) ??
-      toNumberSafe((m.subgroup as any)?.subgroup_id)
-    );
-  };
+  const getMemberSubgroupId = useCallback((m: Member): number | undefined => {
+    // Soporta variantes camelCase y snake_case
+    const direct = m.subgroup_id;
+    const nestedCamel = m.subgroup?.subgroupId;
+    const nestedSnake = m.subgroup?.subgroup_id;
+    return toNumberSafe(direct ?? nestedCamel ?? nestedSnake);
+  }, []);
 
   // Derive fallback members by filtering global members by subgroupId
   const derivedMembers = useMemo<Member[]>(() => {
     const sgNum = toNumberSafe(subgroupId);
     if (!sgNum || !Array.isArray(allMembers) || allMembers.length === 0) return [];
     return allMembers.filter((m) => getMemberSubgroupId(m) === sgNum);
-  }, [allMembers, subgroupId]);
+  }, [allMembers, subgroupId, getMemberSubgroupId]);
 
   // If subgroup response is empty or errored (e.g., 403), try to fetch global members once
   useEffect(() => {

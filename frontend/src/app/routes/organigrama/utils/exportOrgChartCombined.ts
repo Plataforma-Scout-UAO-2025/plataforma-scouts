@@ -202,8 +202,8 @@ export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []
         if (cargoIdNum !== undefined && members && members.length > 0) {
           const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
           const names = assigned.map((m) => {
-            const name = (m as any).firstName || (m as any).first_name || "";
-            const last = (m as any).lastName || (m as any).last_name || "";
+            const name = m.firstName ?? m.first_name ?? "";
+            const last = m.lastName ?? m.last_name ?? "";
             const display = `${String(name).trim()} ${String(last).trim()}`.trim();
             return display.length > 0 ? display : "Miembro";
           });

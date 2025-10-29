@@ -439,7 +439,14 @@ export const getMembersBySubgroup = async (
       return [];
     } catch (error: unknown) {
       // Si el backend niega el acceso (ej. SCOUTER), intentamos un fallback más permisivo
-      const status = (error as any)?.response?.status ?? (error as any)?.status;
+      const getStatus = (err: unknown): number | undefined => {
+        if (typeof err === "object" && err !== null) {
+          const maybe = err as { response?: { status?: number }; status?: number };
+          return maybe.response?.status ?? maybe.status;
+        }
+        return undefined;
+      };
+      const status = getStatus(error);
       if (status === 401 || status === 403) {
         return null; // señal para usar fallback
       }

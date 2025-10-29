@@ -37,13 +37,8 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
     return Number.isFinite(n) ? n : undefined;
   };
   const getMemberSubgroupId = (m: Member): number | undefined => {
-    return (
-      // variante top-level
-      toNumberSafe((m as any).subgroup_id) ??
-      // variantes anidadas
-      toNumberSafe(m.subgroup?.subgroupId) ??
-      toNumberSafe((m.subgroup as any)?.subgroup_id)
-    );
+    // Soporta variantes camelCase y snake_case
+    return toNumberSafe(m.subgroup_id ?? m.subgroup?.subgroupId ?? m.subgroup?.subgroup_id);
   };
   const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
@@ -95,8 +90,8 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
           if (cargoIdNum !== undefined) {
             const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
             const names = assigned.map((m) => {
-              const name = (m as any).firstName || (m as any).first_name || "";
-              const last = (m as any).lastName || (m as any).last_name || "";
+              const name = m.firstName ?? m.first_name ?? "";
+              const last = m.lastName ?? m.last_name ?? "";
               const display = `${String(name).trim()} ${String(last).trim()}`.trim();
               return display.length > 0 ? display : "Miembro";
             });
@@ -166,13 +161,7 @@ function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
     return Number.isFinite(n) ? n : undefined;
   };
   const getMemberSubgroupId = (m: Member): number | undefined => {
-    return (
-      // variante top-level
-      toNumberSafe((m as any).subgroup_id) ??
-      // variantes anidadas
-      toNumberSafe(m.subgroup?.subgroupId) ??
-      toNumberSafe((m.subgroup as any)?.subgroup_id)
-    );
+    return toNumberSafe(m.subgroup_id ?? m.subgroup?.subgroupId ?? m.subgroup?.subgroup_id);
   };
 
   data.niveles.forEach((nivel) => {
@@ -202,8 +191,8 @@ function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
           if (cargoIdNum !== undefined) {
             const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
             const names = assigned.map((m) => {
-              const name = (m as any).firstName || (m as any).first_name || "";
-              const last = (m as any).lastName || (m as any).last_name || "";
+              const name = m.firstName ?? m.first_name ?? "";
+              const last = m.lastName ?? m.last_name ?? "";
               const display = `${String(name).trim()} ${String(last).trim()}`.trim();
               return display.length > 0 ? display : "Miembro";
             });
