@@ -68,4 +68,23 @@ class ReportsControllerStandaloneTest {
       .andExpect(jsonPath("$.percentage").value(70.00))
       .andExpect(jsonPath("$.payments[0].payment_id").value("p001"));
   }
+
+  @Test
+  void post_financial_devuelve_400_si_start_mayor_que_end() throws Exception {
+    String body = """
+      {
+        "start_date": "2025-11-01",
+        "end_date": "2025-10-01",
+        "generated_for": "SECTION",
+        "id": "3"
+      }
+      """;
+
+    mvc.perform(post("/api/v1/finanzas/reports/{tenantId}", "org_SCOUT")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isBadRequest())
+        .andExpect(status().reason("start_date > end_date"));
+  }
+
 }
