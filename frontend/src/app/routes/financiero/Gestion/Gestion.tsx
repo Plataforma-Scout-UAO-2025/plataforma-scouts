@@ -33,8 +33,8 @@ export default function Gestion() {
           associated_to: { id: string; name: string } | null;
         }) => ({
           ...cuota,
-          start_date: cuota.start_date as any, // Mantener como string
-          end_date: cuota.end_date as any, // Mantener como string
+          start_date: new Date(cuota.start_date),
+          end_date: cuota.end_date ? new Date(cuota.end_date) : undefined,
         }));
         setCuotas(cuotasData);
       } else if (response.status === 401) {

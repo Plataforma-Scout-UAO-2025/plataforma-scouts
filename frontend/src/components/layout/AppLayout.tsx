@@ -210,7 +210,7 @@ function SidebarAutoClose() {
     if (location.pathname === "/app/financiero/estado-cuenta") {
       setOpen(false);
     }
-  }, [location.pathname]);
+  }, [location.pathname, setOpen]);
 
   return null;
 }

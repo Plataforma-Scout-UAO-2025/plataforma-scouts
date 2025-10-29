@@ -1,6 +1,5 @@
 import CreatePagoModal from "./CreatePagoModal";
 import type { InstallmentPayment, PaymentStatus } from "@/types/pago.type";
-import { format } from "date-fns";
 import type { ColumnDef } from "@tanstack/react-table";
 
 const statusDict: Record<PaymentStatus, string> = {

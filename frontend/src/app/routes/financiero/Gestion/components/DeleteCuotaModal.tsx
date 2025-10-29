@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash } from "lucide-react";
 import type { Cuota } from "@/types/cuota.type";
-import { toast, type ExternalToast } from "sonner";
+import { toast } from "sonner";
 import api from "@/api/axios";
 import { useTenant } from "@/hooks/useTenant";
 import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
 
 interface DeleteCuotaModalProps {
   cuota: Cuota;
@@ -45,11 +46,12 @@ export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalP
         toast.error("No tienes permisos para realizar esta acción");
         navigate("/app/dashboard");
       } else {
-        toast.error("Error al eliminar la cuota:", response.data.message);
+        const backendMsg = (response.data as { message?: string } | undefined)?.message;
+        toast.error(backendMsg || "Error al eliminar la cuota");
       }
     } catch (error) {
-      toast.error("Error al eliminar la cuota:", error as ExternalToast);
-      console.error("Error al eliminar la cuota:", error);
+      const backendMsg = (error as AxiosError<{ message?: string }> )?.response?.data?.message;
+      toast.error(backendMsg || "Error al eliminar la cuota");
     } finally {
       setIsDeleting(false);
     }
