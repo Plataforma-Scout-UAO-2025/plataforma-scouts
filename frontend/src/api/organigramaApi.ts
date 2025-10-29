@@ -391,6 +391,7 @@ export const deleteGalleryImageById = async (
 
 // Miembros por subgrupo
 import type { Member } from "@/types/member.type";
+import { getMembersWithBranch } from "./membersApi";
 
 // Tipo para respuesta de miembros
 interface MembersResponse {
@@ -402,26 +403,71 @@ interface MembersResponse {
 export const getMembersBySubgroup = async (
   subgroupId: number
 ): Promise<Member[]> => {
-  try {
-    const response = await api.get(`/members/list_members_by_subgroup`, {
-      params: { id: subgroupId },
-    });
-    const data = response.data as unknown;
+  // Helper para leer subgroupId del miembro en múltiples formatos
+  const toNumberSafe = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const getMemberSubgroupId = (m: Member): number | undefined => {
+    const anyM = m as unknown as Record<string, unknown>;
+    return (
+      toNumberSafe(anyM["subgroup_id"]) ??
+      toNumberSafe((anyM["subgroup"] as Record<string, unknown> | undefined)?.["subgroupId"]) ??
+      toNumberSafe((anyM["subgroup"] as Record<string, unknown> | undefined)?.["subgroup_id"]) ??
+      toNumberSafe(anyM["subgroupId"]) // por si viene plano
+    );
+  };
 
-    if (Array.isArray(data)) {
-      return data as Member[];
-    }
-    if (
-      data &&
-      typeof data === "object" &&
-      Array.isArray((data as MembersResponse).members)
-    ) {
-      return (data as MembersResponse).members;
-    }
+  const tryPrimary = async (): Promise<Member[] | null> => {
+    try {
+      const response = await api.get(`/members/list_members_by_subgroup`, {
+        params: { id: subgroupId },
+      });
+      const data = response.data as unknown;
 
-    return [];
-  } catch (error) {
-    console.error("getMembersBySubgroup failed", { subgroupId, error });
-    return [];
-  }
+      if (Array.isArray(data)) {
+        return data as Member[];
+      }
+      if (
+        data &&
+        typeof data === "object" &&
+        Array.isArray((data as MembersResponse).members)
+      ) {
+        return (data as MembersResponse).members;
+      }
+      return [];
+    } catch (error: unknown) {
+      // Si el backend niega el acceso (ej. SCOUTER), intentamos un fallback más permisivo
+      const getStatus = (err: unknown): number | undefined => {
+        if (typeof err === "object" && err !== null) {
+          const maybe = err as { response?: { status?: number }; status?: number };
+          return maybe.response?.status ?? maybe.status;
+        }
+        return undefined;
+      };
+      const status = getStatus(error);
+      if (status === 401 || status === 403) {
+        return null; // señal para usar fallback
+      }
+      console.error("getMembersBySubgroup failed", { subgroupId, error });
+      return null;
+    }
+  };
+
+  // Fallback: usar lista de miembros con detalles y filtrar por subgroupId
+  const tryFallback = async (): Promise<Member[]> => {
+    try {
+      const all = await getMembersWithBranch();
+      return (all || []).filter((m) => getMemberSubgroupId(m) === subgroupId);
+    } catch (e) {
+      console.warn("Fallback getMembersWithBranch failed", e);
+      return [];
+    }
+  };
+
+  const primary = await tryPrimary();
+  if (primary && primary.length > 0) return primary;
+  // Si el primario falló o devolvió vacío, usar fallback
+  return await tryFallback();
 };

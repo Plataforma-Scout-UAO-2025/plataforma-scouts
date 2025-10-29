@@ -93,7 +93,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                 <TableRow key={member.memberId ?? `member-${idx}`}>
                   <TableCell className="w-1/6 truncate">{member.firstName}</TableCell>
                   <TableCell className="w-1/6 truncate">{member.lastName}</TableCell>
-                  <TableCell className="w-1/6 truncate">{member.age}</TableCell>
+                  <TableCell className="w-1/6 truncate">{member.age || "Sin Edad"}</TableCell>
                   <TableCell className="w-1/6 truncate">
                     {member.subgroup?.section?.name || "Sin Rama"}
                   </TableCell>
