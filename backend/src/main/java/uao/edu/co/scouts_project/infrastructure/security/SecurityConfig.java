@@ -48,6 +48,10 @@ public class SecurityConfig {
 
                                                 // Operaciones CRUD en tenants
 
+                                                // Exponer públicamente el endpoint para resolver org_id por slug
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/slug/**")
+                                                .permitAll()
+
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
@@ -57,11 +61,11 @@ public class SecurityConfig {
 
                                                 // Operaciones de consulta en grupos
 
-                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
-                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
-                                                                COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
-                                                                SCOUT.name())
+                                                // .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
+                                                // .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
+                                                //                 COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                                //                 SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
+                                                //                 SCOUT.name())
 
                                                 // Operaciones CRUD en grupos
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**")

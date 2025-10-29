@@ -3,6 +3,7 @@ package uao.edu.co.scouts_project.organigrama.controller;
 import uao.edu.co.scouts_project.organigrama.dto.TenantDTO;
 import uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
+import uao.edu.co.scouts_project.organigrama.dto.OrgIdDTO;
 import uao.edu.co.scouts_project.organigrama.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -49,6 +50,19 @@ public class TenantController {
     public TenantDTO getTenantById(
             @Parameter(description = "Identificador interno (tenant_id)", example = "tenant-001") @PathVariable String tenantId) {
         return tenantService.getTenantById(tenantId);
+    }
+    
+    @Operation(summary = "Obtener org_id por slug", description = "Retorna el org_id (tenant_id) asociado a un slug público. Útil para flujo de login/redirect en frontend.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Org_id retornado exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Tenant no encontrado para el slug")
+    })
+    @GetMapping("/slug/{slug}")
+    public OrgIdDTO getOrgIdBySlug(
+        @Parameter(description = "Slug público del tenant/organización", example = "plataformascouts")
+        @PathVariable String slug) {
+        String tenantId = tenantService.getTenantIdBySlug(slug);
+        return new OrgIdDTO(tenantId);
     }
 
     @Operation(summary = "Crear nuevo tenant", description = "Crea un nuevo tenant/organización en el sistema")

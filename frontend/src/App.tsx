@@ -43,6 +43,7 @@ import WelcomeAddMember from "@/app/routes/guardians/members/components/views/We
 // Admin global
 import AdminGlobalGroups from "./app/routes/admin-global/Grupos/Grupos";
 
+import LoginSlug from "./app/routes/LoginSlug";
 function App() {
   useAuth0ApiWrapper();
 
@@ -52,6 +53,7 @@ function App() {
         <Routes>
           {/* 🔹 Login & Registro */}
           <Route path="/" element={<Home />} />
+          <Route path="/login/:slug" element={<LoginSlug />} />
 
           {/* 🔹 Rutas internas con layout */}
           <Route path="/app" element={<AppLayout />}>
@@ -107,3 +109,4 @@ function App() {
 }
 
 export default App;
+

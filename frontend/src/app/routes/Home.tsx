@@ -1,5 +1,5 @@
 import LoginButton from "@/components/auth/LoginButton";
-import { TenantsView } from "@/components/groups/TenantsView";
+import { GroupsView } from "@/components/groups/GroupsView";
 import { Button } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Mountain, Target, Users } from "lucide-react";
@@ -152,7 +152,7 @@ export default function Home() {
           </section>
         </div>
 
-        <TenantsView />
+        <GroupsView />
 
       </main>
 

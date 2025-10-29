@@ -3,7 +3,7 @@ import { ScoutGroupCard } from "./ScoutGroupCard";
 import { getGroups } from "@/api/groupsApi";
 import type { GroupResponseDTO } from "@/types/group.type";
 
-export function TenantsView() {
+export function GroupsView() {
   const [groups, setGroups] = useState<GroupResponseDTO[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
