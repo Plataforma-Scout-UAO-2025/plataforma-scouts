@@ -219,7 +219,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         onOpenChange={setIsEditModalOpen}
         member={selectedMemberForEdit}
         onSuccess={() => {
-          // Callback opcional para refrescar datos después de editar
+          
         }}
       />
     </div>

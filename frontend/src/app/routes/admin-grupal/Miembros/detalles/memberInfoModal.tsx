@@ -24,7 +24,7 @@ import type { MemberBasicInfo } from "@/types/guardianTypes";
 interface MemberInfoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  member: Member;
+   member: Member | null; 
 }
 export default function MemberInfoModal({
   open,

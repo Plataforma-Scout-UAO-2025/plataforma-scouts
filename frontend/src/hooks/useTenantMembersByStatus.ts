@@ -92,7 +92,7 @@ export function useTenantMembersByStatus({
 
   useEffect(() => {
     if (safePage !== page) setPage(safePage);
-  }, [safePage]);
+  }, [safePage, page]);
 
   const refetch = useCallback(() => setRev((v) => v + 1), []);
 
