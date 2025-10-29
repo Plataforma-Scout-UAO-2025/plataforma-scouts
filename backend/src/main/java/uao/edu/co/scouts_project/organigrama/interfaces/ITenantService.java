@@ -17,5 +17,7 @@ public interface ITenantService {
 
     TenantDTO updateTenantInfo(String tenantId, TenantInfoDTO dto);
 
+    String getTenantIdBySlug(String slug);
+
     void deleteTenant(String tenantId);
 }
