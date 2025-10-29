@@ -327,6 +327,46 @@ public class MemberServiceImp implements IMemberService {
 
 
     /**
+     * Asigna un miembro a un subGrupo existente
+     * @param sectionId Id de la seccion a la cual sera asigando el miembro
+     * @param memberId  ID del miembro a actualizar.
+     * @param subGroupId Id del sub grupo que recibirá al miembro
+     * @return el estado booleano de la operación
+     */
+    @Override
+    @Transactional
+    public Boolean assignSubgroupAndSection(Long memberId, Long subGroupId, Long sectionId) {
+        try {
+            Optional<Member> memberOpt = memberRepository.findById(memberId);
+            Optional<Subgroup> subgroupOpt = subgroupRepository.findById(subGroupId);
+
+            if (memberOpt.isEmpty() || subgroupOpt.isEmpty()) {
+                log.warn("Miembro o subgrupo no encontrado: memberId={}, subGroupId={}", memberId, subGroupId);
+                return false;
+            }
+
+            Subgroup subgroup = subgroupOpt.get();
+            if (!Boolean.TRUE.equals(subgroup.getIsActive())) {
+                log.warn("⚠Intento de asignar subgrupo inactivo: {}", subGroupId);
+                return false;
+            }
+
+            Member member = memberOpt.get();
+            member.setSubgroup(subgroup);
+            memberRepository.save(member);
+            memberRepository.updateSectionByMember(memberId, sectionId);
+
+            log.info("Subgrupo {} y sección {} asignados correctamente al miembro {}", subGroupId, sectionId, memberId);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error al asignar subgrupo y sección al miembro {}", memberId, e);
+            throw e; // rollback automático
+        }
+    }
+
+
+    /**
      * Obtiene todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.
      * El tenantId se obtiene del JWT token (claim org_id) usando PermissionQueryPort.
      * Utiliza JOIN FETCH para evitar N+1 queries y obtener toda la información en consultas optimizadas.
