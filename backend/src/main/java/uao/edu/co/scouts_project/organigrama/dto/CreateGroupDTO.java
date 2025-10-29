@@ -12,19 +12,19 @@ import lombok.NoArgsConstructor;
 // DTO needed to create a Group, Tenant on Own System and Auth0
 public class CreateGroupDTO {
     @NotBlank
-    public String slug;
+    private String slug;
 
     @NotBlank
-    public String name;
+    private String name;
 
-    public String district;
-    public String identifierNumber;
-    public String address;
-    public String phone;
+    private String district;
+    private String identifierNumber;
+    private String address;
+    private String phone;
 
     @Email
-    public String email;
-    public Boolean isActive;
-    public String status;
+    private String email;
+    private Boolean isActive;
+    private String status;
 
 }
