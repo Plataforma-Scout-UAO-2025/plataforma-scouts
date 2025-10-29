@@ -104,7 +104,9 @@ public class GuardianMapper {
                 .gender(member.getGender())
                 .phone(member.getPhone())
                 .birthDate(member.getBirthDate())
+                .address(member.getAddress())
                 .role(member.getRole())
+                .isActive(member.getIsActive())
                 .build();
     }
 
@@ -117,6 +119,7 @@ public class GuardianMapper {
                 .phone(memberCustom.getPhone())
                 .birthDate(memberCustom.getBirthDate())
                 .address(memberCustom.getAddress())
+                .isActive(memberCustom.getIsActive())
                 .build();
     }
 }
