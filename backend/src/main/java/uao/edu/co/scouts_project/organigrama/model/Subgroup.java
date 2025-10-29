@@ -1,20 +1,24 @@
 package uao.edu.co.scouts_project.organigrama.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-
-// TODO: GALERÍA DE FOTOS - Imports temporalmente comentados
-// import org.hibernate.annotations.JdbcTypeCode;
-// import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "subgroup")
 @Builder
-@AllArgsConstructor
+@NoArgsConstructor
 public class Subgroup {
     
     @Id
@@ -44,25 +48,60 @@ public class Subgroup {
     // TODO: GALERÍA DE FOTOS - Funcionalidad temporalmente deshabilitada
     // @JdbcTypeCode(SqlTypes.ARRAY)
     // @Column(name = "gallery_object_id", columnDefinition = "uuid[]")
-    // private UUID[] galleryObjectIds = new UUID[0]; // Inicializar con array vacío
+    // private UUID[] galleryObjectIds; // Sin inicializar
     
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    private Boolean isActive;
     
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
     
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt = Instant.now();
+    private Instant updatedAt;
     
-    // Constructors
-    public Subgroup() {}
-    
+    // Explicit constructors with initialization logic
     public Subgroup(String tenantId, Long groupId, Long sectionId, String name) {
         this.tenantId = tenantId;
         this.groupId = groupId;
         this.sectionId = sectionId;
         this.name = name;
+        this.isActive = true;
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+    
+    public Subgroup(Long subgroupId, String tenantId, Long groupId, Long sectionId, 
+                    String name, String description, UUID photoPrincipal, 
+                    Boolean isActive, Instant createdAt, Instant updatedAt) {
+        this.subgroupId = subgroupId;
+        this.tenantId = tenantId;
+        this.groupId = groupId;
+        this.sectionId = sectionId;
+        this.name = name;
+        this.description = description;
+        this.photoPrincipal = photoPrincipal;
+        this.isActive = isActive != null ? isActive : true;
+        this.createdAt = createdAt != null ? createdAt : Instant.now();
+        this.updatedAt = updatedAt != null ? updatedAt : Instant.now();
+    }
+    
+    // JPA lifecycle hooks for default values
+    @PrePersist
+    protected void onCreate() {
+        if (isActive == null) {
+            isActive = true;
+        }
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = Instant.now();
+        }
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
     }
     
     // Getters and Setters
