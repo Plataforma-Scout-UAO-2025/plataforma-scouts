@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
+import uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +47,21 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
     List<Member> findBySubGroupId(@Param("subGroupId") Long subGroupId);
 
     /**
+     * Cuenta la cantidad de miembros por grupo para un tenant específico.
+     *
+     * @param tenantId ID del tenant para el cual se quiere contar los miembros por grupo
+     * @return Lista de objetos con el ID del grupo, nombre del grupo y cantidad de miembros
+     */
+    @Query("SELECT NEW uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO(" +
+           "g.groupId, g.name, COUNT(m)) " +
+           "FROM Member m " +
+           "JOIN m.subgroup s " +
+           "JOIN Group g ON g.groupId = s.groupId " +
+           "WHERE g.tenantId = :tenantId " +
+           "GROUP BY g.groupId, g.name")
+    List<GroupMembersDTO> countMembersByGroup(@Param("tenantId") String tenantId);
+
+    /**
      * Recupera todos los miembros de un tenant con información completa de subgrupo y sección.
      * Realiza LEFT JOIN FETCH para evitar lazy loading y obtener toda la información en una consulta.
      *
@@ -56,6 +72,9 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
            "LEFT JOIN FETCH m.subgroup sg " +
            "WHERE m.tenantId = :tenantId")
     List<Member> findMembersWithSubgroupByTenantId(@Param("tenantId") String tenantId);
+
+    @Query("SELECT sg.groupId, COUNT(m) FROM Member m JOIN m.subgroup sg WHERE m.tenantId = :tenantId GROUP BY sg.groupId ORDER BY COUNT(m) DESC")
+    List<Object[]> countMembersByGroupIdByTenant(@Param("tenantId") String tenantId);
 
 
     /**

@@ -2,10 +2,10 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import PersonalDataForm from "./components/PersonalDataForm";
+import DataTreatmentConsent from "./components/DataTreatmentConsent";
 import SuccessModal from "./components/SuccessModal";
 import { UserExistsDialog } from "./components/UserExistsDialog";
 import { ErrorDialog } from "./components/ErrorDialog";
-
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 
 function TreasurerEnrollment() {
@@ -15,6 +15,7 @@ function TreasurerEnrollment() {
     datosPersonales,
     setDatosPersonales,
     pagina,
+    setPagina,
     totalPaginas,
     progreso,
     showModal,
@@ -27,7 +28,43 @@ function TreasurerEnrollment() {
     errors,
     handlePersonalChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "TESORERO", totalPaginas: 1 });
+  } = useRoleEnrollment({ role: "TESORERO", totalPaginas: 2 });
+
+  const handleConsentChange = (value: string) => {
+    setDatosPersonales((prev) => ({
+      ...prev,
+      data_treatment_consent: value,
+    }));
+  };
+
+  const handleBack = () => {
+    if (pagina === 1) {
+      navigate("/app/miembros");
+    } else {
+      setPagina((prev) => Math.max(1, prev - 1));
+    }
+  };
+
+  const getCamposPagina = () => {
+    if (pagina === 1) {
+      return (
+        <PersonalDataForm
+          datos={datosPersonales}
+          handleChange={handlePersonalChange}
+          setDatos={setDatosPersonales}
+          errors={errors}
+        />
+      );
+    }
+
+    return (
+      <DataTreatmentConsent
+        value={datosPersonales.data_treatment_consent || ""}
+        onChange={handleConsentChange}
+        error={errors.data_treatment_consent}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
@@ -48,30 +85,31 @@ function TreasurerEnrollment() {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto bg-card shadow-md rounded-2xl p-6"
       >
-        {/* Sección de datos personales */}
-        <PersonalDataForm
-          datos={datosPersonales}
-          handleChange={handlePersonalChange}
-          setDatos={setDatosPersonales}
-          errors={errors}
-        />
+        {getCamposPagina()}
 
         {/* Controles inferiores */}
         <div className="col-span-full flex justify-between mt-6">
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/app/miembros")}
+            onClick={handleBack}
           >
-            Cancelar
+            {pagina === 1 ? "Cancelar" : "Atrás"}
           </Button>
 
-          <Button type="submit" variant="primary" disabled={loadingSubmit}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={
+              loadingSubmit ||
+              (pagina === 2 && datosPersonales.data_treatment_consent === "rejected")
+            }
+          >
             {loadingSubmit
               ? "Enviando..."
               : pagina === totalPaginas
-              ? "Finalizar inscripción"
-              : "Siguiente"}
+                ? "Finalizar inscripción"
+                : "Siguiente"}
           </Button>
         </div>
       </form>

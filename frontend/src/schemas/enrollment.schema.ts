@@ -132,31 +132,44 @@ export const personalDataBaseSchema = z
     path: ["confirm_password"],
   });
 
+export const dataConsentSchema = z.object({
+  data_treatment_consent: z
+    .string()
+    .min(1, "Debes seleccionar una opción")
+    .refine(
+      (value) => value === "accepted",
+      "Debes autorizar el tratamiento de datos para continuar"
+    ),
+});
+
 export const page1Schema = z.intersection(
   personalDataBaseSchema,
   emergencyContactsSchema
 );
 
-export const page2Schema = z.object({
-  hobbies: z
-    .string()
-    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, "Solo se permiten letras")
-    .min(2, "Debe tener al menos 2 caracteres")
-    .optional()
-    .or(z.literal("")),
-  sports: z
-    .string()
-    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, "Solo se permiten letras")
-    .min(2, "Debe tener al menos 2 caracteres")
-    .optional()
-    .or(z.literal("")),
-  instruments: z
-    .string()
-    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, "Solo se permiten letras")
-    .min(2, "Debe tener al menos 2 caracteres")
-    .optional()
-    .or(z.literal("")),
-});
+export const page2Schema = z.intersection(
+  z.object({
+    hobbies: z
+      .string()
+      .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, "Solo se permiten letras")
+      .min(2, "Debe tener al menos 2 caracteres")
+      .optional()
+      .or(z.literal("")),
+    sports: z
+      .string()
+      .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, "Solo se permiten letras")
+      .min(2, "Debe tener al menos 2 caracteres")
+      .optional()
+      .or(z.literal("")),
+    instruments: z
+      .string()
+      .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, "Solo se permiten letras")
+      .min(2, "Debe tener al menos 2 caracteres")
+      .optional()
+      .or(z.literal("")),
+  }),
+  dataConsentSchema
+);
 
 export const page3Schema = z.object({
   institution: z
@@ -178,6 +191,7 @@ export const fullEnrollmentSchema = z.intersection(
 
 export type EmergencyContact = z.infer<typeof emergencyContactSchema>;
 export type PersonalDataBase = z.infer<typeof personalDataBaseSchema>;
+export type DataConsent = z.infer<typeof dataConsentSchema>;
 export type Page1Data = z.infer<typeof page1Schema>;
 export type Page2Data = z.infer<typeof page2Schema>;
 export type Page3Data = z.infer<typeof page3Schema>;
