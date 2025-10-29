@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -10,65 +10,39 @@ import {
 } from "@/components/ui/index";
 import { Info, Pencil, UserPlus } from "lucide-react";
 import type { GroupResponseDTO as Group } from "@/types/group.type";
+import { useGroup } from "@/hooks/useGroup";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { fetchGroupsAction } from "@/store/groups/groupsActions";
 import GroupInfoModal from "../detalles/GroupInfoModal";
 import GroupAdminModal from "../detalles/GroupAdminModal";
 import GroupEditModal from "../detalles/GroupEditModal";
 import { useGroupManagement } from "@/hooks/useGroupManagement";
 
-const groups = [
-  {
-    tenant_id: "1234",
-    groupId: 1,
-    slug: "mi-palabra",
-    name: "Grupo Scout Exploradores 202",
-    district: "Distrito Central",
-    email: "grupo-scout-exploradores-202@example.com",
-    phone: "+1234567890",
-    address: "Calle Falsa 123, Ciudad Scout",
-    foundedIn: "1990-05-15",
-    mission: "Formar líderes comprometidos con la sociedad.",
-    vision: "Ser una comunidad scout ejemplar a nivel nacional.",
-    identifierNumber: "113",
-    isActive: true,
-  },
-  {
-    groupId: 2,
-    tenant_id: "24",
-    slug: "803-chiminigaguas",
-    name: "803 Chiminigaguas",
-    district: "Distrito Norte",
-    email: "803chiminigaguas@example.com",
-    phone: "+0987654321",
-    address: "Avenida Siempre Viva 742, Ciudad Scout",
-    foundedIn: "1985-09-20",
-    mission: "Fomentar el amor por la naturaleza y el servicio comunitario.",
-    vision: "Ser reconocidos por nuestra labor en la conservación ambiental.",
-    identifierNumber: "114",
-    isActive: false,
-  },
-];
-
 const GroupsTable = () => {
-  const {
-    isActive,
-    handleViewInfo,
-    handleAdminGroup,
-    handleEditClick,
-  } = useGroupManagement();
+  const dispatch = useAppDispatch();
+  const { groups, loading, error } = useGroup();
+  const { isActive, handleViewInfo, handleAdminGroup, handleEditClick } = useGroupManagement();
+  
+  // Estados para modales
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-  const [selectedGroupInfo, setSelectedGroupInfo] = useState<Group | null>(
-    null
-  );
+  const [selectedGroupInfo, setSelectedGroupInfo] = useState<Group | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedGroupEdit, setSelectedGroupEdit] = useState<Group | null>(
-    null
-  );
+  const [selectedGroupEdit, setSelectedGroupEdit] = useState<Group | null>(null);
   const [isAdminGroupOpen, setIsAdminGroupOpen] = useState(false);
-  const [selectedGroupAdmin, setSelectedGroupAdmin] = useState<Group | null>(
-    null
-  );
+  const [selectedGroupAdmin, setSelectedGroupAdmin] = useState<Group | null>(null);
 
-  const member = { name: "Juan Pérez" };
+  // Fetch grupos solo si no están cargados
+  useEffect(() => {
+    if (!groups || groups.length === 0) {
+      dispatch(fetchGroupsAction());
+    }
+  }, [dispatch, groups]);
+
+  // Memoizar grupos ordenados por nombre
+  const sortedGroups = useMemo(() => {
+    if (!groups) return [];
+    return [...groups].sort((a, b) => a.name.localeCompare(b.name));
+  }, [groups]);
 
   return (
     <div>
@@ -76,34 +50,31 @@ const GroupsTable = () => {
         <TableHeader className="text-primary">
           <TableRow>
             <TableHead className="font-bold text-primary">Nombre</TableHead>
-            <TableHead className="font-bold text-primary">
-              Número de Miembros
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Número de Ramas
-            </TableHead>
-            <TableHead className="font-bold text-primary">
-              Número de Subramas
-            </TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
-            <TableHead className="font-bold text-primary">
-              Lider de Grupo
-            </TableHead>
             <TableHead className="font-bold text-primary text-center">
               Acciones
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {groups.length > 0 ? (
-            groups.map((group, idx) => {
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-8">
+                <p className="text-muted-foreground text-lg">Cargando grupos...</p>
+              </TableCell>
+            </TableRow>
+          ) : error ? (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-8">
+                <p className="text-red-600 text-lg">Error cargando grupos: {error}</p>
+              </TableCell>
+            </TableRow>
+          ) : (
+            sortedGroups.map((group, idx) => {
               return (
                 <TableRow key={group.groupId ?? `group-${idx}`}>
-                  <TableCell className="w-1/6 truncate">{group.name}</TableCell>
-                  <TableCell className="w-1/6 truncate">120</TableCell>
-                  <TableCell className="w-1/6 truncate">5</TableCell>
-                  <TableCell className="w-1/6 truncate">10</TableCell>
-                  <TableCell className="w-1/6 truncate">
+                  <TableCell className="font-medium">{group.name}</TableCell>
+                  <TableCell>
                     {isActive(group) ? (
                       <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
                         Activo
@@ -113,9 +84,6 @@ const GroupsTable = () => {
                         Inactivo
                       </span>
                     )}
-                  </TableCell>
-                  <TableCell className="w-1/6 truncate">
-                    {member.name || "Sin líder asignado"}
                   </TableCell>
                   <TableCell className="text-center">
                     <Button
@@ -147,14 +115,6 @@ const GroupsTable = () => {
                 </TableRow>
               );
             })
-          ) : (
-            <TableRow key="no-members">
-              <TableCell colSpan={10} className="text-center py-8">
-                <p className="text-text text-lg">
-                  No se encontraron grupos que coincidan con los filtros.
-                </p>
-              </TableCell>
-            </TableRow>
           )}
         </TableBody>
       </Table>

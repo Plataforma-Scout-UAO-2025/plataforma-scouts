@@ -1,33 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { ScoutGroupCard } from "./ScoutGroupCard";
-import { getGroups } from "@/api/groupsApi";
-import type { GroupResponseDTO } from "@/types/group.type";
+import { useGroup } from "@/hooks/useGroup";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { fetchGroupsAction } from "@/store/groups/groupsActions";
+import { filterActiveGroups } from "@/utils/groupStatus";
 
 export function GroupsView() {
-  const [groups, setGroups] = useState<GroupResponseDTO[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { groups, loading, error } = useGroup();
 
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await getGroups();
-        if (mounted) setGroups(data);
-      } catch (err: any) {
-        console.error("Failed to load groups", err);
-        if (mounted) setError(err?.message || String(err));
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    // Solo hacer fetch si no hay grupos cargados
+    if (!groups || groups.length === 0) {
+      dispatch(fetchGroupsAction());
+    }
+  }, [dispatch, groups]);
+
+  // Memoizar grupos activos usando la utilidad
+  const activeGroups = useMemo(() => {
+    if (!groups) return [];
+    return filterActiveGroups(groups);
+  }, [groups]);
 
   return (
     <section id="nuestros-grupos" className="container mx-auto px-4 py-16">
@@ -54,14 +47,17 @@ export function GroupsView() {
           </div>
         )}
         
-        {!loading && !error && groups && groups.length === 0 && (
+        {!loading && !error && activeGroups.length === 0 && (
           <div className="col-span-full text-center py-8">
             <div className="text-muted-foreground">No hay grupos disponibles.</div>
           </div>
         )}
         
-        {!loading && !error && groups && groups.map((group) => (
-          <ScoutGroupCard key={group.groupId || group.slug} group={group} />
+        {!loading && !error && activeGroups.map((group) => (
+          <ScoutGroupCard 
+            key={`${group.groupId}-${group.slug}`} 
+            group={group} 
+          />
         ))}
       </div>
     </section>
