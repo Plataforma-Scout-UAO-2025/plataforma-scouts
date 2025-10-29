@@ -1,0 +1,50 @@
+meta {
+  name: listings of all not authorized
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseurl}}/medical_record/list_by_tenant
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Tenant-Id: aaa
+}
+
+tests {
+  test("Validar petición fallida", function () {
+    expect(res.status).to.equal(404);
+  });
+  
+  test("Validar mensaje de error", function () {
+    expect(res.body.message).to.equal("ERROR: usuarios no encontrados.");
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Nombre:** Listado no autorizado de todos
+  
+  **Endpoint:** /api/v1/medical_record/list_record/
+  
+  **HU relacionadas:** HU-INN-2.1 HU-INN-2.2
+  
+  **Descripción:** Comprobar que el endpoint de listado de registros medicos recibe y responde correctamente a una petición con valores válidos y por un miembro que tiene datos de sesión inválidos, o que no se encuentra autorizado/con permisos insuficientes.
+  
+  Es importante que, antes que cualquier otro error, siempre se muestren primero errores de autorización y autenticación, para evitar que se filtre información al exterior.
+  
+  **Respuesta esperada:** Retorna el código 404 (not found) y un mensaje de error.
+  
+  **Responsable:** Camilo Franco Moya
+  
+  **Última Actualización:** 2025-10-01
+}
