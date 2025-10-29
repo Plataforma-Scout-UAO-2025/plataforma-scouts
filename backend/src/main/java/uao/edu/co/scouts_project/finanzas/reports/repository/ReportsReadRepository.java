@@ -95,7 +95,7 @@ public interface ReportsReadRepository extends JpaRepository<Installment, Long> 
             OR (:scope = 'SECTION'  AND s.section_id::text  = :id)
           )
       ),
-      overdue_members AS (12
+      overdue_members AS (
         SELECT DISTINCT a.member_id
         FROM installment i
         JOIN account a ON a.account_id = i.account_id
