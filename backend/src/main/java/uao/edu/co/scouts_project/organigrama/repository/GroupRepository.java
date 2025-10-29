@@ -28,6 +28,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     boolean existsBySlug(String slug);
 
     Long countByIsActiveTrue();
+    Long countByIsActiveFalse();
     Long countByTenantIdAndIsActiveTrue(String tenantId);
     Long countByTenantIdAndIsActiveFalse(String tenantId);
 }

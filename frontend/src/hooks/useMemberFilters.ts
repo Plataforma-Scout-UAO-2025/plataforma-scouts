@@ -13,8 +13,15 @@ export const useMemberFilters = ({
   const [isActiveFilter, setIsActiveFilter] = useState<string>("");
   const [branchFilter, setBranchFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const { members, branchMembers, branchTotalMemberCount, loading, error } =
-    useMembersManagement();
+  
+  const { 
+    members, 
+    branchMembers, 
+    branchTotalMemberCount, 
+    loading, 
+    error,
+    refreshMembers,
+  } = useMembersManagement();
 
   const filteredMembers = useMemo(() => {
     if (!members || members.length === 0) return [];
@@ -128,5 +135,6 @@ export const useMemberFilters = ({
     // Loading
     loading,
     error,
+    refreshMembers,
   };
 };

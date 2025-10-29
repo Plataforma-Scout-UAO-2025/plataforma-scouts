@@ -208,6 +208,32 @@ class TenantServiceTest {
         verifyNoMoreInteractions(tenantRepository);
     }
 
+    @Test
+    @DisplayName("getTenantIdBySlug: retorna tenantId si existe")
+    void getTenantIdBySlug_ok() {
+        Tenant t = newTenantEntity("slug-login", "active");
+        when(tenantRepository.findBySlug("slug-login")).thenReturn(Optional.of(t));
+
+        String tenantId = tenantService.getTenantIdBySlug("slug-login");
+
+        assertThat(tenantId).isEqualTo(t.getTenantId());
+        verify(tenantRepository).findBySlug("slug-login");
+        verifyNoMoreInteractions(tenantRepository);
+    }
+
+    @Test
+    @DisplayName("getTenantIdBySlug: lanza IllegalArgumentException si no existe")
+    void getTenantIdBySlug_notFound() {
+        when(tenantRepository.findBySlug("no-such-slug")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> tenantService.getTenantIdBySlug("no-such-slug"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("not found");
+
+        verify(tenantRepository).findBySlug("no-such-slug");
+        verifyNoMoreInteractions(tenantRepository);
+    }
+
     @Nested
     @DisplayName("deleteTenant")
     class DeleteTenantTests {

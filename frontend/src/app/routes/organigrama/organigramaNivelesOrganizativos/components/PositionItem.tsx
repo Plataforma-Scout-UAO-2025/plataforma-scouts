@@ -124,6 +124,7 @@ export default function PositionItem({ cargo, members = [], onEdit, onDelete, on
         cargoName={cargo.nombre}
         personName={personName}
         personDescription={personDescription}
+        members={members}
       />
     </>
   );

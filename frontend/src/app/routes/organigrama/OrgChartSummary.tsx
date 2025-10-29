@@ -3,10 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMembersAction } from "@/store/members/membersActions";
+import { fetchMembersAction, fetchMembersWithBranchAction } from "@/store/members/membersActions";
+import { fetchGroupAction } from "@/store/organigrama/organigramaActions";
 import type { RootState, AppDispatch } from "@/store/store";
 import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
-import { getRamasWithSubramas } from "./organigramaRamas_Subramas/services/rama.service";
+// Usar el mismo origen de datos/orden que la vista de Ramas y Subramas
+import useOrganigramaDataWithCache from "./organigramaRamas_Subramas/hooks/useOrganigramaDataWithCache";
 import { useNavigate } from "react-router-dom";
 import { useNiveles } from "./organigramaNivelesOrganizativos/hooks/useNiveles";
 import type { OrganigramaNiveles } from "./organigramaNivelesOrganizativos/types/niveles.types";
@@ -15,13 +17,7 @@ import { exportOrgChartCombinedPDF, exportLevelsCSV, exportBranchesCSV } from ".
 type BranchLite = { id: string | number; name: string; description?: string; minAge?: number; maxAge?: number; status?: string };
 type SubgroupLite = { id: string | number; name?: string; status?: string; leader?: string };
 
-// Helpers to avoid mixing committees (niveles) inside the branches list
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const isCommitteeName = (name: string) => {
-  const n = stripAccents(name).toLowerCase();
-  // Tratar estos nombres como niveles organizativos (excluir de Ramas)
-  return n.includes("comit") || n.includes("asamblea") || n.includes("corte") || n.includes("consejo");
-};
 const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
 
 // Fixed orders for specific committees
@@ -45,6 +41,7 @@ const PADRES_ORDER = [
 export default function OrgChartSummary() {
   const dispatch = useDispatch<AppDispatch>();
   const { members } = useSelector((state: RootState) => state.members);
+  const { group } = useSelector((state: RootState) => state.organigrama);
   
   const currentYear = new Date().getFullYear();
   // Get tenant/group first to use them for both ramas/subramas and niveles
@@ -68,27 +65,28 @@ export default function OrgChartSummary() {
     }
   }, [dispatch, members.length]);
 
+  // Cargar información del grupo para usar el nombre en el título del PDF
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setBranchesLoading(true);
-        setError(null);
-        if (!tenantId || !groupSlug) {
-          if (mounted) setBranches([]);
-          return;
-        }
+    if (tenantId && groupSlug && !group) {
+      dispatch(fetchGroupAction({ tenantId: String(tenantId), groupSlug }));
+    }
+  }, [dispatch, tenantId, groupSlug, group]);
 
-        const ramas = await getRamasWithSubramas(String(tenantId), groupSlug);
+  // Reutilizar el mismo hook que la vista de Ramas/Subramas para asegurar el mismo set y orden
+  const { ramas, isFetching: ramasFetching, isLoading: ramasLoading } = useOrganigramaDataWithCache(
+    tenantId ? String(tenantId) : undefined,
+    groupSlug
+  );
 
-        // Exclude committees from the Ramas/Subramas panel to prevent mixing with niveles
-        const onlyRamas = (ramas || []).filter((r) => {
-          const rec = r as unknown as Record<string, unknown>;
-          const rawName = String(rec['name'] ?? rec['nombre'] ?? '');
-          return !isCommitteeName(rawName);
-        });
-
-        const result = onlyRamas.map((r) => {
+  // Mapear a la estructura simplificada cuando cambien las ramas
+  useEffect(() => {
+    setError(null);
+    setBranchesLoading(true);
+    try {
+      if (!ramas || ramas.length === 0) {
+        setBranches([]);
+      } else {
+        const mapped = ramas.map((r) => {
           const rec = r as unknown as Record<string, unknown>;
           const section: BranchLite = {
             id: (rec['sectionId'] ?? rec['id'] ?? '') as string | number,
@@ -96,8 +94,8 @@ export default function OrgChartSummary() {
             description:
               typeof r['description'] === 'string'
                 ? String(r['description'])
-                : typeof r['descripcion'] === 'string'
-                ? String(r['descripcion'])
+                : typeof (rec['descripcion']) === 'string'
+                ? String(rec['descripcion'])
                 : undefined,
             minAge:
               typeof rec['minAge'] === 'number'
@@ -111,9 +109,8 @@ export default function OrgChartSummary() {
                 : typeof rec['edadMax'] === 'number'
                 ? (rec['edadMax'] as number)
                 : undefined,
-            status: typeof r['status'] === 'string' ? String(r['status']) : undefined,
+            status: typeof rec['status'] === 'string' ? String(rec['status']) : undefined,
           };
-
           const subsRaw = (rec['subgroups'] ?? rec['subramas'] ?? []) as unknown;
           const subgroups: SubgroupLite[] = Array.isArray(subsRaw)
             ? (subsRaw as unknown[]).map((sg) => {
@@ -124,9 +121,7 @@ export default function OrgChartSummary() {
                   name: String(sgRec['name'] ?? sgRec['nombre'] ?? ''),
                   status:
                     typeof sgRec['isActive'] === 'boolean'
-                      ? sgRec['isActive']
-                        ? 'active'
-                        : 'inactive'
+                      ? (sgRec['isActive'] ? 'active' : 'inactive')
                       : typeof sgRec['status'] === 'string'
                       ? String(sgRec['status'])
                       : undefined,
@@ -139,30 +134,43 @@ export default function OrgChartSummary() {
                 };
               })
             : [];
-
           return { section, subgroups };
         });
-
-        if (mounted) setBranches(result);
-      } catch (e) {
-        const err = e as { message?: string } | undefined;
-        if (mounted) setError(err?.message || "No se pudo cargar ramas y subramas.");
-      } finally {
-        if (mounted) setBranchesLoading(false);
+        setBranches(mapped);
       }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [anio, tenantId, groupSlug]);
+    } catch (e) {
+      const err = e as { message?: string } | undefined;
+      setError(err?.message || 'No se pudo procesar ramas y subramas.');
+    } finally {
+      setBranchesLoading(false);
+    }
+  }, [ramas]);
 
   const [exportingBranches, setExportingBranches] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
 
+  // Asegurar miembros cargados antes de exportar
+  const ensureMembersLoaded = async (): Promise<typeof members> => {
+    if (members && members.length > 0) return members;
+    try {
+      const action = await dispatch(fetchMembersAction());
+      const payload = (action as unknown as { payload?: unknown }).payload;
+      if (Array.isArray(payload)) return payload as typeof members;
+      // Fallback: intentar con endpoint enriquecido (incluye relaciones)
+      const action2 = await dispatch(fetchMembersWithBranchAction());
+      const payload2 = (action2 as unknown as { payload?: unknown }).payload;
+      if (Array.isArray(payload2)) return payload2 as typeof members;
+    } catch {
+      // ignore
+    }
+    return members;
+  };
+
   const onExportPDF = async () => {
     try {
       setExportingPDF(true);
-      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, members, { year: anio });
+      const mem = await ensureMembersLoaded();
+      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, mem, { year: anio, groupName: group?.name || undefined });
     } finally {
       setExportingPDF(false);
     }
@@ -170,12 +178,16 @@ export default function OrgChartSummary() {
   const onExportCSVBranches = async () => {
     try {
       setExportingBranches(true);
-      await exportBranchesCSV(branches, members);
+      const mem = await ensureMembersLoaded();
+      await exportBranchesCSV(branches, mem);
     } finally {
       setExportingBranches(false);
     }
   };
-  const onExportCSVLevels = () => exportLevelsCSV(nivelesData as OrganigramaNiveles);
+  const onExportCSVLevels = async () => {
+    const mem = await ensureMembersLoaded();
+    exportLevelsCSV(nivelesData as OrganigramaNiveles, mem);
+  };
 
   return (
     <div className="min-h-screen bg-background px-6 md:px-8 py-6">
@@ -227,7 +239,7 @@ export default function OrgChartSummary() {
         {/* Branches & Subgroups */}
         <Card className="p-4 bg-card border-border border">
           <h2 className="text-xl font-bold text-primary mb-3">Ramas y Subramas</h2>
-          {branchesLoading ? (
+          {branchesLoading || ramasFetching || ramasLoading ? (
             <div className="text-sm text-muted-foreground">Cargando ramas…</div>
           ) : (
             <div className="space-y-3">

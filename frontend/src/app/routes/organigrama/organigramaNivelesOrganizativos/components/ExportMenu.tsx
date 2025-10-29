@@ -7,15 +7,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import type { OrganigramaNiveles } from "../types/niveles.types";
+import type { Member } from "@/types/member.type";
+import { getGroupBySlug } from "@/api/organigramaApi";
+import { useTenantParams } from "../../organigramaRamas_Subramas/hooks/useTenantParams";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 /* ============================================================
    📄 Exportación a PDF
    ============================================================ */
-function exportPDF(data: OrganigramaNiveles) {
+function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: string) {
   const doc = new jsPDF();
-  const title = `Organigrama de Niveles - ${data.anio}`;
+  const title = `Conformación de Niveles Organizativos${groupName ? ` - ${groupName}` : ""}`;
   const fecha = new Date().toLocaleDateString("es-CO");
 
   doc.setFont("helvetica", "bold");
@@ -27,6 +30,16 @@ function exportPDF(data: OrganigramaNiveles) {
   doc.text(`Generado el ${fecha}`, 14, 27);
 
   const tableData: (string | number)[][] = [];
+  // Helpers para mapear miembros -> cargo (subgroup)
+  const toNumberSafe = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const getMemberSubgroupId = (m: Member): number | undefined => {
+    // Soporta variantes camelCase y snake_case
+    return toNumberSafe(m.subgroup_id ?? m.subgroup?.subgroupId ?? m.subgroup?.subgroup_id);
+  };
   const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
   const JEFATURA_ORDER = [
@@ -51,7 +64,6 @@ function exportPDF(data: OrganigramaNiveles) {
         nivel.nombre,
         "—",
         "—",
-        "—", // Periodo (Año)
         nivel.descripcion || "—", // Descripción
       ]);
     } else {
@@ -71,12 +83,25 @@ function exportPDF(data: OrganigramaNiveles) {
         return a.nombre.localeCompare(b.nombre, 'es');
       });
       sorted.forEach((cargo) => {
-        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
+        // Calcular titulares a partir de miembros asociados al cargo
+        let titulares = cargo.titular || "";
+        if (members && members.length > 0) {
+          const cargoIdNum = toNumberSafe(cargo.id);
+          if (cargoIdNum !== undefined) {
+            const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
+            const names = assigned.map((m) => {
+              const name = m.firstName ?? m.first_name ?? "";
+              const last = m.lastName ?? m.last_name ?? "";
+              const display = `${String(name).trim()} ${String(last).trim()}`.trim();
+              return display.length > 0 ? display : "Miembro";
+            });
+            if (names.length > 0) titulares = names.join(", ");
+          }
+        }
         tableData.push([
           nivel.nombre,
           cargo.nombre,
-          cargo.titular || "—",
-          periodo, // Periodo (Año)
+          titulares || "—",
           cargo.descripcion || "—", // Descripción
         ]);
       });
@@ -84,9 +109,7 @@ function exportPDF(data: OrganigramaNiveles) {
   });
 
   autoTable(doc, {
-    head: [
-      ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"], // Columnas requeridas
-    ],
+    head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: tableData,
     startY: 35,
     theme: "striped",
@@ -110,8 +133,8 @@ function exportPDF(data: OrganigramaNiveles) {
 /* ============================================================
    📊 Exportación a CSV
    ============================================================ */
-function exportCSV(data: OrganigramaNiveles) {
-  const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
+function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
+  const header = ["Nivel", "Cargo", "Titular", "Descripción"];
   const rows: string[][] = [];
   const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
@@ -131,9 +154,19 @@ function exportCSV(data: OrganigramaNiveles) {
     "Vocal",
   ].map(normalize);
 
+  // Helpers para mapear miembros -> cargo (subgroup)
+  const toNumberSafe = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const getMemberSubgroupId = (m: Member): number | undefined => {
+    return toNumberSafe(m.subgroup_id ?? m.subgroup?.subgroupId ?? m.subgroup?.subgroup_id);
+  };
+
   data.niveles.forEach((nivel) => {
     if (nivel.cargos.length === 0) {
-      rows.push([nivel.nombre, "—", "—", String(data.anio), nivel.descripcion || "—"]);
+      rows.push([nivel.nombre, "—", "—", nivel.descripcion || "—"]);
     } else {
       const nName = normalize(nivel.nombre);
       const isJef = nName.includes("comite de jefatura");
@@ -151,12 +184,25 @@ function exportCSV(data: OrganigramaNiveles) {
         return a.nombre.localeCompare(b.nombre, 'es');
       });
       sorted.forEach((cargo) => {
-        const periodo = cargo.inicio && cargo.fin ? `${cargo.inicio}-${cargo.fin}` : "—";
+        // Calcular titulares desde miembros asignados
+        let titulares = cargo.titular || "";
+        if (members && members.length > 0) {
+          const cargoIdNum = toNumberSafe(cargo.id);
+          if (cargoIdNum !== undefined) {
+            const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
+            const names = assigned.map((m) => {
+              const name = m.firstName ?? m.first_name ?? "";
+              const last = m.lastName ?? m.last_name ?? "";
+              const display = `${String(name).trim()} ${String(last).trim()}`.trim();
+              return display.length > 0 ? display : "Miembro";
+            });
+            if (names.length > 0) titulares = names.join(", ");
+          }
+        }
         rows.push([
           nivel.nombre,
           cargo.nombre,
-          cargo.titular || "—",
-          periodo, // Periodo (Año)
+          titulares || "—",
           cargo.descripcion || "—", // Descripción
         ]);
       });
@@ -183,7 +229,24 @@ function exportCSV(data: OrganigramaNiveles) {
 /* ============================================================
    📦 Componente ExportMenu
    ============================================================ */
-export default function ExportMenu({ data }: { data: OrganigramaNiveles }) {
+export default function ExportMenu({ data, members }: { data: OrganigramaNiveles; members?: Member[] }) {
+  const { tenantId, groupSlug } = useTenantParams();
+
+  const handleExportPDF = async () => {
+    let groupName: string | undefined = undefined;
+    try {
+      // Usar los mismos parámetros que en el módulo de ramas/subramas
+      if (tenantId && groupSlug) {
+        const groupInfo = await getGroupBySlug(tenantId, groupSlug);
+        groupName = groupInfo?.name || undefined;
+      }
+    } catch (e) {
+      console.warn('[ExportMenu] No se pudo obtener el nombre del grupo para el título del PDF', e);
+    }
+
+    exportPDF(data, members, groupName);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -198,14 +261,14 @@ export default function ExportMenu({ data }: { data: OrganigramaNiveles }) {
         className="w-64 border border-border bg-card text-foreground shadow-md rounded-lg"
       >
         <DropdownMenuItem
-          onClick={() => exportPDF(data)}
+          onClick={handleExportPDF}
           className="hover:bg-accent hover:text-primary transition-colors"
         >
           Exportar organigrama en PDF
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          onClick={() => exportCSV(data)}
+          onClick={() => exportCSV(data, members)}
           className="hover:bg-accent hover:text-primary transition-colors"
         >
           Exportar organigrama en CSV
