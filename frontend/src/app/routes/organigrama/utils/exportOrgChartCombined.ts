@@ -1,15 +1,30 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { OrganigramaNiveles } from "../organigramaNivelesOrganizativos/types/niveles.types";
-import { getMembersBySubgroup } from "@/api/organigramaApi";
 import type { Member } from "@/types/member.type";
 
-type BranchLite = { id: string | number; name: string; description?: string; minAge?: number; maxAge?: number; status?: string };
-type SubgroupLite = { id: string | number; name?: string; status?: string; leader?: string };
+type BranchLite = {
+  id: string | number;
+  name: string;
+  description?: string;
+  minAge?: number;
+  maxAge?: number;
+  status?: string;
+};
+type SubgroupLite = {
+  id: string | number;
+  name?: string;
+  status?: string;
+  leader?: string;
+};
 
 type SimpleBranches = Array<{ section: BranchLite; subgroups: SubgroupLite[] }>;
 
-function download(filename: string, content: string, type = "text/csv;charset=utf-8;") {
+function download(
+  filename: string,
+  content: string,
+  type = "text/csv;charset=utf-8;"
+) {
   const blob = new Blob(["\uFEFF" + content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -21,7 +36,44 @@ function download(filename: string, content: string, type = "text/csv;charset=ut
   URL.revokeObjectURL(url);
 }
 
-export async function exportBranchesCSV(branches: SimpleBranches) {
+// Helpers para resolver IDs de subgrupo desde diferentes formatos
+function toNumberSafe(v: unknown): number | undefined {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const s = String(v).trim();
+  if (s.length === 0) return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function getMemberSubgroupId(member: Member): number | undefined {
+  const direct = member.subgroup_id;
+  const nested = member.subgroup?.subgroup_id ?? member.subgroup?.subgroupId;
+  return toNumberSafe(direct ?? nested);
+}
+
+// Business rules aligned with RamaDetail view
+function isMemberActiveAndApproved(member: Member): boolean {
+  const isActive = member.is_active ?? member.isActive;
+  const status = member.status;
+  const active = typeof isActive === "boolean" ? isActive : true;
+  return active && status === "APPROVED";
+}
+
+function isMemberScouter(member: Member): boolean {
+  return member.role === "SCOUTER";
+}
+
+function fullName(member: Member): string {
+  const fn = member.firstName ?? member.first_name ?? "";
+  const ln = member.lastName ?? member.last_name ?? "";
+  return `${String(fn).trim()} ${String(ln).trim()}`.trim();
+}
+
+export async function exportBranchesCSV(
+  branches: SimpleBranches,
+  members: Member[] = []
+) {
   const header = [
     "Rama",
     "Descripción",
@@ -32,54 +84,57 @@ export async function exportBranchesCSV(branches: SimpleBranches) {
   const rows: string[][] = [];
 
   for (const { section, subgroups } of branches) {
-    const uniqueLeaders = Array.from(
-      new Set((subgroups || []).map((sg) => sg.leader).filter(Boolean) as string[])
-    );
-    const jefeRama = uniqueLeaders.join(", ");
-    const desc = (section.description && String(section.description).trim())
-      ? String(section.description)
-      : (typeof section.minAge === 'number' && typeof section.maxAge === 'number' && section.minAge > 0 && section.maxAge > 0
-          ? `${section.minAge}-${section.maxAge} años`
-          : '—');
+    // Nota: el jefe de rama se calculará por subrama a partir de los miembros (rol SCOUTER)
+    const jefeRama = ""; // a nivel de fila de rama sin subramas no es determinable
+    const desc =
+      section.description && String(section.description).trim()
+        ? String(section.description)
+        : typeof section.minAge === "number" &&
+          typeof section.maxAge === "number" &&
+          section.minAge > 0 &&
+          section.maxAge > 0
+        ? `${section.minAge}-${section.maxAge} años`
+        : "—";
 
     if (!subgroups || subgroups.length === 0) {
-      rows.push([
-        section.name,
-        desc,
-        "— (Sin subramas)",
-        "",
-        jefeRama || "",
-      ]);
+      rows.push([section.name, desc, "— (Sin subramas)", "", jefeRama || ""]);
     } else {
       for (const sg of subgroups) {
         const nameFull = sg.name || "Subrama";
 
         // Obtener miembros de la subrama
-        let integrantes = '';
+        let integrantes = "";
+        let jefeNames = "";
         try {
           const subgroupId = sg.id;
-          if (subgroupId) {
-            const members = await getMembersBySubgroup(Number(subgroupId));
-            if (members && members.length > 0) {
-              integrantes = members.map((m: Record<string, unknown>) => {
-                const firstName = m.firstName ?? m.first_name ?? '';
-                const lastName = m.lastName ?? m.last_name ?? '';
-                return `${firstName} ${lastName}`.trim();
-              }).filter(Boolean).join(', ');
+          if (subgroupId && members.length > 0) {
+            // Filtrar miembros que pertenecen a este subgrupo
+            const sgNum = toNumberSafe(subgroupId);
+            const subgroupMembers = members.filter((member) => {
+              const mSgId = getMemberSubgroupId(member);
+              return mSgId !== undefined && sgNum !== undefined && mSgId === sgNum;
+            });
+
+            if (subgroupMembers.length > 0) {
+              const activos = subgroupMembers.filter(isMemberActiveAndApproved);
+              const jefes = activos.filter(isMemberScouter);
+              const scouts = activos.filter((m) => !isMemberScouter(m));
+
+              jefeNames = jefes.map(fullName).filter(Boolean).join(", ");
+              integrantes = scouts.map(fullName).filter(Boolean).join(", ");
             }
           }
         } catch (error) {
-          console.warn(' [Export CSV OrgChart] Error obteniendo miembros para subrama:', sg.name ?? sg.id, error);
+          console.warn(
+            " [Export CSV OrgChart] Error procesando miembros para subrama:",
+            sg.name ?? sg.id,
+            error
+          );
           // Fallback vacío
         }
 
-        rows.push([
-          section.name,
-          desc,
-          nameFull,
-          integrantes,
-          jefeRama || "",
-        ]);
+        // Usar los jefes calculados; si no hay datos, intentar respaldarse con sg.leader
+        rows.push([section.name, desc, nameFull, integrantes, jefeNames || sg.leader || ""]);
       }
     }
   }
@@ -90,16 +145,76 @@ export async function exportBranchesCSV(branches: SimpleBranches) {
   download("organigrama_ramas.csv", csv);
 }
 
-export function exportLevelsCSV(data: OrganigramaNiveles) {
-  const header = ["Nivel", "Cargo", "Titular", "Periodo", "Descripción"];
+export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []) {
+  const header = ["Nivel", "Cargo", "Titular", "Descripción"];
   const rows: string[][] = [];
+  const stripAccents = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalize = (s: string) =>
+    stripAccents(String(s || ""))
+      .toLowerCase()
+      .trim();
+  const JEFATURA_ORDER = [
+    "Jefe de Región",
+    "Sub Jefe de Región",
+    "Jefe de Grupo",
+    "Sub Jefe de Grupo",
+    "Jefe de Rama",
+    "Sub Jefe de Subrama",
+  ].map(normalize);
+  const PADRES_ORDER = [
+    "Presidente",
+    "Vicepresidente",
+    "Secretario",
+    "Tesorero",
+    "Vocal",
+  ].map(normalize);
   data.niveles.forEach((nivel) => {
     if (!nivel.cargos || nivel.cargos.length === 0) {
-      rows.push([nivel.nombre, "—", "—", String(data.anio ?? "—"), nivel.descripcion || "—"]);
+      rows.push([
+        nivel.nombre,
+        "—",
+        "—",
+        nivel.descripcion || "—",
+      ]);
     } else {
-      nivel.cargos.forEach((c) => {
-        const periodo = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
-        rows.push([nivel.nombre, c.nombre, c.titular || "—", periodo, c.descripcion || "—"]);
+      const nName = normalize(nivel.nombre);
+      const isJef = nName.includes("comite de jefatura");
+      const isPad = nName.includes("comite de padres");
+      const priority = isJef ? JEFATURA_ORDER : isPad ? PADRES_ORDER : null;
+      const sorted = [...nivel.cargos].sort((a, b) => {
+        if (priority) {
+          const ai = priority.indexOf(normalize(a.nombre));
+          const bi = priority.indexOf(normalize(b.nombre));
+          const aIn = ai !== -1;
+          const bIn = bi !== -1;
+          if (aIn && bIn) return ai - bi;
+          if (aIn) return -1;
+          if (bIn) return 1;
+          return a.nombre.localeCompare(b.nombre, "es");
+        }
+        return a.nombre.localeCompare(b.nombre, "es");
+      });
+      sorted.forEach((c) => {
+        // Calcular titulares a partir de miembros vinculados al cargo (subgrupo)
+        let titulares = c.titular || "";
+        const cargoIdNum = toNumberSafe((c as unknown as { id?: unknown }).id);
+        if (cargoIdNum !== undefined && members && members.length > 0) {
+          const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
+          const names = assigned.map((m) => {
+            const name = m.firstName ?? m.first_name ?? "";
+            const last = m.lastName ?? m.last_name ?? "";
+            const display = `${String(name).trim()} ${String(last).trim()}`.trim();
+            return display.length > 0 ? display : "Miembro";
+          });
+          if (names.length > 0) titulares = names.join(", ");
+        }
+        rows.push([
+          nivel.nombre,
+          c.nombre,
+          titulares || "—",
+          c.descripcion || "—",
+        ]);
       });
     }
   });
@@ -113,7 +228,8 @@ export function exportLevelsCSV(data: OrganigramaNiveles) {
 export async function exportOrgChartCombinedPDF(
   branches: SimpleBranches,
   levels: OrganigramaNiveles,
-  opts?: { year?: number }
+  members: Member[] = [],
+  opts?: { year?: number; groupName?: string }
 ) {
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
   const x = 40;
@@ -123,13 +239,28 @@ export async function exportOrgChartCombinedPDF(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(26, 65, 52);
-  const title = `Organigrama Completo${opts?.year ? ` – ${opts.year}` : ""}`;
+  const titleBase = `Estructura de Ramas, Subramas y Niveles Organizativos`;
+  const normalize = (s?: string) =>
+    (s ?? "")
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  const hasGrupoScoutPrefix = (name?: string) => normalize(name).startsWith("grupo scout");
+  const groupDisplay = opts?.groupName
+    ? hasGrupoScoutPrefix(opts.groupName)
+      ? opts.groupName
+      : `Grupo Scout ${opts.groupName}`
+    : "";
+  // Nota: Se omite el año en el título según solicitud
+  const title = `${titleBase}${groupDisplay ? ` - ${groupDisplay}` : ""}`;
   doc.text(title, x, y);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text(`Generado: ${new Date().toLocaleString('es-CO')}`, x, y + 16);
+  doc.text(`Generado: ${new Date().toLocaleString("es-CO")}`, x, y + 16);
 
   y += 36;
   doc.setFont("helvetica", "bold");
@@ -139,19 +270,23 @@ export async function exportOrgChartCombinedPDF(
 
   const branchesBody: string[][] = [];
   for (const { section, subgroups } of branches) {
-    const uniqueLeaders = Array.from(new Set((subgroups || []).map((s) => s.leader).filter(Boolean) as string[]));
-    const jefeRama = uniqueLeaders.join(", ");
-    const desc = (section.description && String(section.description).trim())
-      ? String(section.description)
-      : (typeof section.minAge === 'number' && typeof section.maxAge === 'number' && section.minAge > 0 && section.maxAge > 0
-          ? `${section.minAge}-${section.maxAge} años`
-          : '—');
+    // Igual que en CSV, los jefes se calculan por subrama usando los miembros
+    const jefeRama = "";
+    const desc =
+      section.description && String(section.description).trim()
+        ? String(section.description)
+        : typeof section.minAge === "number" &&
+          typeof section.maxAge === "number" &&
+          section.minAge > 0 &&
+          section.maxAge > 0
+        ? `${section.minAge}-${section.maxAge} años`
+        : "—";
     if (!subgroups || subgroups.length === 0) {
       branchesBody.push([
         section.name,
         desc,
-        '— (Sin subramas)',
-        '',
+        "— (Sin subramas)",
+        "",
         jefeRama || "",
       ]);
     } else {
@@ -159,21 +294,33 @@ export async function exportOrgChartCombinedPDF(
         const nameFull = sg.name || "Subrama";
 
         // Obtener miembros de la subrama
-        let integrantes = '';
+        let integrantes = "";
+        let jefeNames = "";
         try {
           const subgroupId = sg.id;
-          if (subgroupId) {
-            const members = await getMembersBySubgroup(Number(subgroupId));
-            if (members && members.length > 0) {
-              integrantes = members.map((m: Member) => {
-                const firstName = m.first_name ?? '';
-                const lastName = m.last_name ?? '';
-                return `${firstName} ${lastName}`.trim();
-              }).filter(Boolean).join(', ');
+          if (subgroupId && members.length > 0) {
+            // Filtrar miembros que pertenecen a este subgrupo
+            const sgNum = toNumberSafe(subgroupId);
+            const subgroupMembers = members.filter((member) => {
+              const mSgId = getMemberSubgroupId(member);
+              return mSgId !== undefined && sgNum !== undefined && mSgId === sgNum;
+            });
+
+            if (subgroupMembers.length > 0) {
+              const activos = subgroupMembers.filter(isMemberActiveAndApproved);
+              const jefes = activos.filter(isMemberScouter);
+              const scouts = activos.filter((m) => !isMemberScouter(m));
+
+              jefeNames = jefes.map(fullName).filter(Boolean).join(", ");
+              integrantes = scouts.map(fullName).filter(Boolean).join(", ");
             }
           }
         } catch (error) {
-          console.warn(' [Export PDF OrgChart] Error obteniendo miembros para subrama:', sg.name ?? sg.id, error);
+          console.warn(
+            " [Export PDF OrgChart] Error procesando miembros para subrama:",
+            sg.name ?? sg.id,
+            error
+          );
           // Fallback vacío
         }
 
@@ -182,7 +329,7 @@ export async function exportOrgChartCombinedPDF(
           desc,
           nameFull,
           integrantes,
-          jefeRama || "",
+          jefeNames || sg.leader || "",
         ]);
       }
     }
@@ -195,13 +342,6 @@ export async function exportOrgChartCombinedPDF(
     margin: { left: x, right: x },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
-    columnStyles: {
-      0: { cellWidth: 200 }, // Rama
-      1: { cellWidth: 230 }, // Descripción 
-      2: { cellWidth: 200 }, // NombreSubrama
-      3: { cellWidth: 200 }, // Integrantes
-      4: { cellWidth: 200 }, // JefeRama
-    },
   });
 
   const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
@@ -218,20 +358,70 @@ export async function exportOrgChartCombinedPDF(
   doc.text("Niveles Organizativos", x, y);
 
   const levelsBody: (string | number)[][] = [];
+  const stripAccents2 = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalize2 = (s: string) =>
+    stripAccents2(String(s || ""))
+      .toLowerCase()
+      .trim();
+  const JEFATURA_ORDER2 = [
+    "Jefe de Región",
+    "Sub Jefe de Región",
+    "Jefe de Grupo",
+    "Sub Jefe de Grupo",
+    "Jefe de Rama",
+    "Sub Jefe de Subrama",
+  ].map(normalize2);
+  const PADRES_ORDER2 = [
+    "Presidente",
+    "Vicepresidente",
+    "Secretario",
+    "Tesorero",
+    "Vocal",
+  ].map(normalize2);
   levels.niveles.forEach((nivel) => {
     if (!nivel.cargos || nivel.cargos.length === 0) {
-      levelsBody.push([nivel.nombre, "—", "—", "—", nivel.descripcion || "—"]);
+      levelsBody.push([nivel.nombre, "—", "—", nivel.descripcion || "—"]);
     } else {
-      nivel.cargos.forEach((c) => {
-        const period = c.inicio && c.fin ? `${c.inicio}-${c.fin}` : "—";
-        levelsBody.push([nivel.nombre, c.nombre, c.titular || "—", period, c.descripcion || "—"]);
+      const nName = normalize2(nivel.nombre);
+      const isJef = nName.includes("comite de jefatura");
+      const isPad = nName.includes("comite de padres");
+      const priority = isJef ? JEFATURA_ORDER2 : isPad ? PADRES_ORDER2 : null;
+      const sorted = [...nivel.cargos].sort((a, b) => {
+        if (priority) {
+          const ai = priority.indexOf(normalize2(a.nombre));
+          const bi = priority.indexOf(normalize2(b.nombre));
+          const aIn = ai !== -1;
+          const bIn = bi !== -1;
+          if (aIn && bIn) return ai - bi;
+          if (aIn) return -1;
+          if (bIn) return 1;
+          return a.nombre.localeCompare(b.nombre, "es");
+        }
+        return a.nombre.localeCompare(b.nombre, "es");
+      });
+      sorted.forEach((c) => {
+        // Calcular titulares desde miembros asignados al cargo (mostrar TODOS los miembros asignados)
+        let titulares = c.titular || "";
+        const cargoIdNum = toNumberSafe((c as unknown as { id?: unknown }).id);
+        if (cargoIdNum !== undefined && members && members.length > 0) {
+          const assigned = members.filter((m) => getMemberSubgroupId(m) === cargoIdNum);
+          const names = assigned.map((m) => fullName(m)).filter(Boolean);
+          if (names.length > 0) titulares = names.join(", ");
+        }
+        levelsBody.push([
+          nivel.nombre,
+          c.nombre,
+          titulares || "—",
+          c.descripcion || "—",
+        ]);
       });
     }
   });
 
   autoTable(doc, {
     startY: y + 10,
-    head: [["Nivel", "Cargo", "Titular", "Periodo", "Descripción"]],
+    head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: levelsBody,
     margin: { left: x, right: x },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },

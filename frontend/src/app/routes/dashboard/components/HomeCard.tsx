@@ -32,13 +32,7 @@ const HomeCard = ({ stats }: HomeCardProps) => {
       label: "Nuevos Miembros",
       label2: "este mes",
       value: stats.nuevosEsteMes.toString(),
-    }/*,
-    {
-      icon: CircleDollarSign,
-      label: "Ingresos Mensuales",
-      label2: "próximamente",
-      value: "$0",
-    },*/
+    }
   ];
 
   return (

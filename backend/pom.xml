@@ -50,11 +50,6 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.hibernate.validator</groupId>
-			<artifactId>hibernate-validator</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.5</version>
@@ -213,7 +208,7 @@
 						<exclude>**/domain/port/**</exclude>
 						
 						<!-- Test/Mock Controllers (development only) -->
-						<exclude>**/web/controller/MockTestAuthzController.class</exclude>
+						<exclude>**/web/controller/**</exclude>
 						<exclude>**/common/controller/TestController.class</exclude>
 						
 						<!-- Repository Interfaces (Spring Data JPA auto-implemented) -->

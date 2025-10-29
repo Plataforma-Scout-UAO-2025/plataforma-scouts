@@ -1,52 +1,44 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useMemo, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { Member } from "@/types/member.type";
+import { useState, useEffect } from "react";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSave: (nombre: string, titular: string, descripcion?: string) => void;
-  members?: Member[];
+  /** Valor inicial opcional para el campo nombre */
+  initialNombre?: string;
 }
 
-export default function CreateCargoModal({ open, onClose, onSave, members = [] }: Props) {
+export default function CreateCargoModal({ open, onClose, onSave, initialNombre }: Props) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-
-  const memberOptions = useMemo(() => {
-    return (members || [])
-      .map((m) => {
-        const rec = m as unknown as Record<string, unknown>;
-        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
-        const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
-        const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");
-        return memberId ? { id: String(memberId), name: `${firstName} ${lastName}`.trim() } : null;
-      })
-      .filter((x): x is { id: string; name: string } => x !== null);
-  }, [members]);
 
   const handleSave = () => {
     if (!nombre.trim()) return;
-    if (!selectedMemberId) return;
-    const selected = memberOptions.find((m) => m.id === selectedMemberId);
-    if (!selected) return;
-    const titularValue = selected.name;
-    onSave(nombre, titularValue, descripcion);
+    // Ya no asignamos persona aquí; titular vacío
+    onSave(nombre, "", descripcion);
     setNombre("");
     setDescripcion("");
-    setSelectedMemberId(null);
   };
+
+  // Precargar nombre cuando se abre el modal si se proporcionó initialNombre
+  // No sobreescribimos si el usuario ya ha tipeado un valor
+  useEffect(() => {
+    if (open) {
+      if (initialNombre && !nombre) {
+        setNombre(initialNombre);
+      }
+    } else {
+      // Limpiar campos al cerrar
+      setNombre("");
+      setDescripcion("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialNombre]);
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -55,6 +47,9 @@ export default function CreateCargoModal({ open, onClose, onSave, members = [] }
           <DialogTitle className="text-primary text-2xl font-extrabold">
             Crear Nuevo Cargo
           </DialogTitle>
+          <DialogDescription>
+            Define el nombre y una descripción opcional para el cargo dentro del nivel organizativo.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
@@ -67,33 +62,6 @@ export default function CreateCargoModal({ open, onClose, onSave, members = [] }
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Persona Asignada
-            </label>
-            {memberOptions.length > 0 ? (
-              <Select
-                value={selectedMemberId ?? undefined}
-                onValueChange={(v) => setSelectedMemberId(v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un miembro" />
-                </SelectTrigger>
-                <SelectContent>
-                  {memberOptions.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                No hay miembros disponibles para asignar.
-              </div>
-            )}
           </div>
 
           <div>

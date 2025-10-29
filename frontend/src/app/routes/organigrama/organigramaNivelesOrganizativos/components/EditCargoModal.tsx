@@ -1,59 +1,33 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Cargo } from "../types/niveles.types";
-import type { Member } from "@/types/member.type";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Props {
   open: boolean;
   cargo: Cargo | null;
   onClose: () => void;
+  // Devuelve el cargo editado (sin asignación de miembro)
   onSave: (cargo: Cargo) => void;
-  members?: Member[];
 }
 
-export default function EditCargoModal({ open, cargo, onClose, onSave, members = [] }: Props) {
+export default function EditCargoModal({ open, cargo, onClose, onSave }: Props) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-
-  const memberOptions = useMemo(() => {
-    return (members || [])
-      .map((m) => {
-        const rec = m as unknown as Record<string, unknown>;
-        const memberId = rec['memberId'] ?? rec['member_id'] ?? rec['id'];
-        const firstName = String(rec['firstName'] ?? rec['first_name'] ?? "");
-        const lastName = String(rec['lastName'] ?? rec['last_name'] ?? "");
-        return memberId ? { id: String(memberId), name: `${firstName} ${lastName}`.trim() } : null;
-      })
-      .filter((x): x is { id: string; name: string } => x !== null);
-  }, [members]);
 
   useEffect(() => {
     if (cargo) {
       setNombre(cargo.nombre);
       setDescripcion(cargo.descripcion || "");
-      setSelectedMemberId(null);
     }
   }, [cargo]);
 
   const handleSave = () => {
     if (!cargo) return;
-    let titularValue = cargo.titular || "";
-    if (selectedMemberId) {
-      const selected = memberOptions.find((m) => m.id === selectedMemberId);
-      if (selected) titularValue = selected.name;
-    }
-    onSave({ ...cargo, nombre, titular: titularValue, descripcion });
+    // Ya no gestionamos asignación de persona desde este modal
+    onSave({ ...cargo, nombre, descripcion });
   };
 
   return (
@@ -63,6 +37,9 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
           <DialogTitle className="text-primary text-2xl font-extrabold">
             Editar Cargo
           </DialogTitle>
+          <DialogDescription>
+            Actualiza el nombre y la descripción del cargo. La asignación de miembros se realiza en el modal dedicado.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
@@ -73,32 +50,7 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
             <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Persona Asignada
-            </label>
-            {memberOptions.length > 0 ? (
-              <Select
-                value={selectedMemberId ?? undefined}
-                onValueChange={(v) => setSelectedMemberId(v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un miembro" />
-                </SelectTrigger>
-                <SelectContent>
-                  {memberOptions.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                No hay miembros disponibles para asignar.
-              </div>
-            )}
-          </div>
+          {/* Campo de asignación de persona removido. Usar AddMemberModal para asignar miembros. */}
 
           <div>
             <label className="block text-sm font-medium mb-1 text-foreground">

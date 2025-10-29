@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Branch as Rama } from "../types/frontend";
 import * as organigramaService from "../services";
 import { getSection } from '@/api/organigramaApi';
@@ -14,6 +16,9 @@ import { toast } from "sonner";
 import { useTenantParams } from "../hooks/useTenantParams";
 import FotoModal from "../components/FotoModal";
 import { extractObjectIdFromUrl, resolveGalleryItem } from "../services";
+import { useRamaMembers } from "@/hooks/useRamaMembers";
+import { getMemberFullName } from "@/hooks/useSubgroupMembers";
+import type { Member } from "@/types/member.type";
 
 
 export default function RamaDetail() {
@@ -88,8 +93,8 @@ export default function RamaDetail() {
     }
   }, [id, tenantId, groupSlug]);
 
-  // Hook de acciones (incluye acciones de galería)
-  const { addGalleryImage, replaceGalleryImage, removeGalleryImage, isLoadingGallery } = useOrganigramaActions({
+  // Hook de acciones (incluye acciones de galería y foto principal)
+  const { addGalleryImage, replaceGalleryImage, isLoadingGallery, uploadPhotoPrincipal, deletePhotoPrincipal } = useOrganigramaActions({
     tenantId,
     groupSlug,
     loadRamas: fetchRama,
@@ -123,9 +128,12 @@ export default function RamaDetail() {
   const [galeriaObjetivo, setGaleriaObjetivo] = useState<string>("");
   const [galeriaObjetivoId, setGaleriaObjetivoId] = useState<string | null>(null);
 
+  // Hook para obtener miembros de todas las subramas
+  const { subramasWithMembers, loading: membersLoading, error: membersError } = useRamaMembers(rama?.subramas);
+
   const openIconModal = () => {
     if (!rama) return;
-    const url = getIconUrl(rama);
+    const url = iconPreview || getIconUrl(rama);
     if (!url) return;
     setFotoTipo("icono");
     setFotoSeleccionada(url);
@@ -179,15 +187,15 @@ export default function RamaDetail() {
         }, controller.signal);
     } else if (fotoTipo === "principal") {
   const sectionId = String(rama.sectionId ?? (rama as unknown as Record<string, unknown>)['section_id'] ?? rama.id);
-  await organigramaService.uploadSectionMainImage(tenantId, groupSlug, sectionId, file, (fileName, percent) => {
-          setCurrentUploadingFile(fileName);
+  await uploadPhotoPrincipal(sectionId, file, (percent) => {
+          setCurrentUploadingFile(file.name);
           const display = percent >= 100 ? 99 : Math.floor(percent);
           setUploadPercent(display);
           if (percent >= 100 && !uploadCompleteAnnounced) {
             setUploadCompleteAnnounced(true);
             toast('Subida completada. Procesando en servidor...');
           }
-        }, controller.signal);
+        });
       } else if (fotoTipo === "galeria") {
         let targetId = galeriaObjetivoId ?? null;
         if (!targetId) {
@@ -251,9 +259,7 @@ export default function RamaDetail() {
       setUploading(false);
       setUploadPercent(0);
       setCurrentUploadingFile(null);
-      if (fotoTipo === 'icono' && iconPreview && rama) {
-        setIconPreview(getIconUrl(rama) || null);
-      }
+      // iconPreview ya se limpió antes del refetch
     }
   };
 
@@ -270,7 +276,7 @@ export default function RamaDetail() {
         await organigramaService.removeSectionIcon(tenantId, groupSlug, sectionId);
       } else if (fotoTipo === "principal") {
         const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
-        await organigramaService.removeSectionMainImage(tenantId, groupSlug, sectionId);
+        await deletePhotoPrincipal(sectionId);
       } else if (fotoTipo === "galeria") {
         const sectionId = String(rama.section_id ?? rama.sectionId ?? rama.id);
         let resolvedObjectId = galeriaObjetivoId ?? null;
@@ -303,10 +309,8 @@ export default function RamaDetail() {
             toast.success('Imagen eliminada físicamente del servidor.');
           }
         } catch (deleteErr) {
-          console.warn(' [RamaDetail] DELETE físico falló, intentando fallback con PATCH remove:', deleteErr);
-          // Fallback: usar PATCH remove si DELETE falla
-          await removeGalleryImage(sectionId, finalTarget, false);
-          toast.warning('Imagen desvinculada de la galería. La eliminación física pudo fallar.');
+          console.error(' [RamaDetail] Error eliminando imagen físicamente:', deleteErr);
+          toast.error('Error eliminando la imagen. Inténtalo de nuevo.');
         }
       }
 
@@ -325,6 +329,16 @@ export default function RamaDetail() {
 
   const getIconUrl = (rama: Rama): string => {
     const iconUrl = rama.iconUrl ?? rama.icono;
+    
+    // DEBUG: Log temporal para diagnosticar el problema
+    console.log('🔍 [DEBUG] getIconUrl called:', {
+      ramaName: rama.name ?? rama.nombre,
+      iconUrl: iconUrl,
+      ramaIconUrl: rama.iconUrl,
+      ramaIcono: rama.icono,
+      hasIconUrl: !!iconUrl
+    });
+    
     if (iconUrl && iconUrl.startsWith('http')) return fixSupabaseUrl(iconUrl);
     if (iconUrl && iconUrl.startsWith('data:')) return iconUrl;
     console.log(' [RamaDetail] No hay icono disponible para rama:', rama.name ?? rama.nombre);
@@ -538,7 +552,7 @@ export default function RamaDetail() {
       setIconPreview(previousIcon);
       toast.error('Error subiendo el ícono');
     } finally {
-  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for icon preview', _err); }
+      // NO revocar el preview aquí - se revocará cuando se reemplace o al desmontar
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -563,13 +577,11 @@ export default function RamaDetail() {
       return;
     }
 
-  await organigramaService.uploadSectionMainImage(
-    tenantId,
-    groupSlug,
-  String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
+  await uploadPhotoPrincipal(
+    String((rama as unknown as Record<string, unknown>)['section_id'] ?? rama.sectionId ?? rama.id),
         file,
-        (fileName: string, percent: number) => {
-          setCurrentUploadingFile(fileName);
+        (percent: number) => {
+          setCurrentUploadingFile(file.name);
           const display = percent >= 100 ? 99 : Math.floor(percent);
           setUploadPercent(display);
           if (percent >= 100 && !uploadCompleteAnnounced) {
@@ -579,8 +591,25 @@ export default function RamaDetail() {
         }
       );
 
-  const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
-        if (updatedRama) {
+      if (iconPreview && iconPreview.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(iconPreview);
+        } catch (err) {
+          console.warn('Could not revoke icon preview blob URL:', err);
+        }
+      }
+      setIconPreview(null);
+
+      console.log('🔍 [DEBUG] About to fetch updated rama...');
+      const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
+      console.log('🔍 [DEBUG] Received updatedRama:', {
+        hasUpdatedRama: !!updatedRama,
+        updatedRamaIconUrl: updatedRama?.iconUrl,
+        updatedRamaName: updatedRama?.name
+      });
+      
+      if (updatedRama) {
+        console.log('🔍 [DEBUG] About to setRama with updated data...');
         setRama(updatedRama);
         const mainImageUrl = getMainImageUrl(updatedRama);
         setImagenPrincipal(`${mainImageUrl}?v=${Date.now()}`);
@@ -593,7 +622,7 @@ export default function RamaDetail() {
       setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
     } finally {
-  try { URL.revokeObjectURL(preview); } catch (_err) { console.warn('Could not revoke object URL for main image preview', _err); }
+      // NO revocar el preview aquí - se revocará cuando se reemplace o al desmontar
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -625,17 +654,13 @@ export default function RamaDetail() {
   toast.success('Galería actualizada correctamente');
       setImageRefreshToken(Date.now());
 
-      for (const p of previews) {
-  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview', _err); }
-      }
+      // NO revocar los previews aquí - se revocarán cuando se reemplacen o al desmontar
       setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
       console.error(' [RamaDetail] Error subiendo galería:', err);
       const addedPreviews = galleryLocalPreviews.slice(-files.length);
       setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
-      for (const p of addedPreviews) {
-  try { URL.revokeObjectURL(p); } catch (_err) { console.warn('Could not revoke object URL for gallery preview (error case)', _err); }
-      }
+      // NO revocar los previews aquí - se revocarán cuando se reemplacen o al desmontar
       setGalleryLocalPreviews(prev => prev.slice(0, -files.length));
       toast.error('Error subiendo la galería');
     }
@@ -650,19 +675,109 @@ export default function RamaDetail() {
     void fetchRama();
   }, [tenantId, groupSlug, fetchRama]);
 
+  
+  useEffect(() => {
+    return () => {
+      if (imagenPrincipal && imagenPrincipal.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(imagenPrincipal);
+        } catch (err) {
+          console.warn('Could not revoke main image preview blob URL:', err);
+        }
+      }
+    };
+  }, [imagenPrincipal]);
 
-  if (isFetching) {
-    return <p className="text-center mt-6 text-muted-foreground">Cargando contexto del tenant...</p>;
+  useEffect(() => {
+    return () => {
+      galleryLocalPreviews.forEach(preview => {
+        if (preview && preview.startsWith('blob:')) {
+          try {
+            URL.revokeObjectURL(preview);
+          } catch (err) {
+            console.warn('Could not revoke gallery preview blob URL:', err);
+          }
+        }
+      });
+    };
+  }, [galleryLocalPreviews]);
+
+
+  // Mostrar skeleton hasta que todo esté completamente cargado
+  if (isFetching || loading || !rama) {
+    return (
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-8 w-64" /> {/* Título */}
+            <div className="relative">
+              <Skeleton className="w-[200px] h-[124px] rounded-lg" /> {/* Ícono */}
+            </div>
+          </div>
+        </div>
+
+        {/* Información Principal skeleton */}
+        <Card className="p-4 space-y-4 bg-card text-card-foreground border border-border">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" /> {/* Título sección */}
+            <Skeleton className="h-8 w-28" /> {/* Botón Añadir Foto */}
+          </div>
+          <Skeleton className="h-[450px] w-full rounded-lg" /> {/* Imagen principal */}
+          
+          <div className="pt-4">
+            <Skeleton className="h-5 w-24 mb-2" /> {/* Título Descripción */}
+            <Skeleton className="h-4 w-full" /> {/* Descripción */}
+          </div>
+
+          {/* Subramas skeleton */}
+          <div className="pt-4">
+            <Skeleton className="h-5 w-20 mb-2" /> {/* Título Subramas */}
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={`subrama-${i}`} className="w-[255px] h-[40px] rounded-[8px]" />
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* Integrantes skeleton */}
+        <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
+          <Skeleton className="h-6 w-32" /> {/* Título Integrantes */}
+          
+          <div className="space-y-4">
+            {/* Acordeón skeleton */}
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={`acordeon-${i}`} className="border rounded-lg">
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-40" /> {/* Nombre subrama */}
+                    <div className="flex gap-2">
+                      <Skeleton className="h-4 w-16" /> {/* Conteo jefes */}
+                      <Skeleton className="h-4 w-16" /> {/* Conteo scouts */}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Galería skeleton */}
+        <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" /> {/* Título Galería */}
+            <Skeleton className="h-8 w-28" /> {/* Botón Añadir Fotos */}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={`galeria-${i}`} className="aspect-square rounded-lg" />
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
   }
-
-  if (loading) return <p className="text-center mt-6 text-muted-foreground">Cargando detalles...</p>;
-  if (!rama) return (
-    <div className="text-center mt-6 space-y-4">
-      <p className="text-foreground">No se encontró la rama con id: {id}</p>
-  <p className="text-sm text-muted-foreground">Tenant: {tenantId ?? 'N/A'} | Group: {groupSlug ?? 'N/A'}</p>
-      <Button variant="outline" onClick={() => navigate(-1)} className="border border-secondary text-secondary hover:bg-accent">Volver</Button>
-    </div>
-  );
 
   return (
     <div className="space-y-6">
@@ -689,7 +804,7 @@ export default function RamaDetail() {
       )}
       <div className="space-y-3">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-primary">Detalles de {rama?.name ?? getLegacyString(rama, 'nombre') ?? ''} – {String(rama?.year ?? getLegacyNumber(rama, 'año') ?? '')}</h1>
+          <h1 className="text-2xl font-bold text-primary">Detalles de {rama?.name ?? getLegacyString(rama, 'nombre') ?? ''}</h1>
           <div className="relative">
             <div className="w-[200px] h-[124px] rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent transition-colors" onClick={openIconModal}>
               {rama && (iconPreview || getIconUrl(rama)) ? (
@@ -740,7 +855,11 @@ export default function RamaDetail() {
           )}
         </div>
         <input ref={mainImageInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="hidden" aria-label="Subir imagen principal" />
-  <p className="text-sm text-muted-foreground">{rama.description ?? getLegacyString(rama, 'descripcion') ?? 'Sin descripción'}</p>
+        
+        <div className="pt-4">
+          <h3 className="text-md font-semibold text-primary mb-2">Descripción</h3>
+          <p className="text-sm text-muted-foreground">{rama.description ?? getLegacyString(rama, 'descripcion') ?? 'Sin descripción'}</p>
+        </div>
 
         {/* Subramas embebidas dentro de la Card de Información Principal (según Figma) */}
         {rama.subramas && rama.subramas.length > 0 && (
@@ -765,18 +884,87 @@ export default function RamaDetail() {
       </Card>
 
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">
-  <h2 className="text-lg font-semibold text-primary">Integrantes en {String(rama.year ?? getLegacyNumber(rama, 'año') ?? '')}</h2>
-        <div className="flex flex-wrap gap-2">
-            {["Roberto Restrepo","Carlos Camargo","Ana Aguillón","Mario Mora"].map((name, idx)=>(
-            <Badge
-              key={idx}
-              variant="outline"
-              className="w-[255px] h-[40px] rounded-[8px] flex items-center justify-center text-sm border-[1px] border-[var(--primary)]"
-            >
-              {name}
-            </Badge>
-          ))}
-        </div>
+        <h2 className="text-lg font-semibold text-primary">Integrantes</h2>
+        
+        {membersLoading ? (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">Cargando integrantes...</p>
+          </div>
+        ) : membersError ? (
+          <div className="text-center py-4">
+            <p className="text-destructive">{membersError}</p>
+          </div>
+        ) : subramasWithMembers.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">No hay subramas disponibles</p>
+          </div>
+        ) : (
+          <Accordion type="multiple" className="w-full">
+            {subramasWithMembers.map((subrama) => (
+              <AccordionItem key={subrama.subgroupId} value={`subrama-${subrama.subgroupId}`}>
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <span className="font-medium">{subrama.name}</span>
+                    <div className="flex gap-2 text-sm text-muted-foreground">
+                      <span>{subrama.jefes.length} jefe{subrama.jefes.length !== 1 ? 's' : ''}</span>
+                      <span>•</span>
+                      <span>{subrama.scouts.length} scout{subrama.scouts.length !== 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4">
+                  {subrama.loading ? (
+                    <p className="text-muted-foreground text-sm">Cargando miembros...</p>
+                  ) : subrama.error ? (
+                    <p className="text-destructive text-sm">{subrama.error}</p>
+                  ) : (
+                    <>
+                      {/* Jefes de Rama - Scouters */}
+                      <div>
+                        <h4 className="font-medium text-sm text-primary mb-2">Jefe de rama - Scouter</h4>
+                        {subrama.jefes.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {subrama.jefes.map((jefe, idx) => (
+                              <Badge
+                                key={`jefe-${subrama.subgroupId}-${idx}`}
+                                variant="default"
+                                className="bg-primary text-primary-foreground"
+                              >
+                                {getMemberFullName(jefe as Member & Record<string, unknown>)}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground text-sm">Sin jefe asignado</p>
+                        )}
+                      </div>
+
+                      {/* Integrantes Scouts Activos */}
+                      <div>
+                        <h4 className="font-medium text-sm text-primary mb-2">Integrantes scouts activos</h4>
+                        {subrama.scouts.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {subrama.scouts.map((scout, idx) => (
+                              <Badge
+                                key={`scout-${subrama.subgroupId}-${idx}`}
+                                variant="outline"
+                                className="border-primary text-primary"
+                              >
+                                {getMemberFullName(scout as Member & Record<string, unknown>)}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground text-sm">Sin scouts activos</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
       </Card>
 
       <Card className="p-4 space-y-3 bg-card text-card-foreground border border-border">

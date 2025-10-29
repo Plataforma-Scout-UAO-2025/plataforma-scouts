@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AssignSubgroupDto {
+public class AssignSubgroupAndSectionDto {
 
     @NotNull(message = "El ID del miembro es requerido")
     @JsonProperty("memberId")
@@ -18,4 +18,8 @@ public class AssignSubgroupDto {
     @NotNull(message = "El ID del subgrupo es requerido")
     @JsonProperty("subGroupId")
     private Long subGroupId;
+
+    @NotNull(message = "El ID del subgrupo es requerido")
+    @JsonProperty("sectionId")
+    private Long sectionId;
 }

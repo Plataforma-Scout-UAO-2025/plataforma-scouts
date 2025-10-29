@@ -1,0 +1,38 @@
+meta {
+  name: Get Groups inactive missing header
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:8080/api/v1/tenants/org_6B3k4dao2Wf6eGxa/statistics/groups/inactive
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar código de error por falta de header", function () {
+    expect(res.status).to.equal(401);
+  });
+
+  test("Validar mensaje de error", function () {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message).to.equal('Missing X-Tenant-Id header');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Obtener estadísticas de grupos inactivos (falta header)
+  
+  **Endpoint:** /api/v1/tenants/{tenantId}/statistics/groups/inactive
+  
+  **Descripción:** Validar que el endpoint retorna 401 si no se envía el header X-Tenant-Id.
+}

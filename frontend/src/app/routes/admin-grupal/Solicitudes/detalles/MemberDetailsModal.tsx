@@ -11,9 +11,13 @@ import PersonalInfo from "./components/PersonalInfo";
 import EmergencyContacts from "./components/EmergencyContacts";
 import Interests from "./components/Interests";
 import AssignmentSelectors from "./components/AssignmentSelectors";
+import SchoolInfo from "./components/SchoolInfo";
 import MemberStatusBar from "./components/MemberStatusBar";
 import { useOrgStructure } from "@/hooks/useOrgStructure";
 import { useMemberApproval } from "@/hooks/useMemberApproval";
+import { listRoles } from "@/api/membersApi";
+import type { RoleSummary } from "@/api/membersApi";
+import { useState, useEffect } from "react";
 
 interface MemberDetailsModalProps {
   open: boolean;
@@ -21,7 +25,8 @@ interface MemberDetailsModalProps {
   member: Member | null;
   orgId: string;
   onSuccess: () => void;
-  onReject: () => void;
+  onReject?: () => void;
+  showRejectButton?: boolean;
 }
 
 export default function MemberDetailsModal({
@@ -31,6 +36,7 @@ export default function MemberDetailsModal({
   orgId,
   onSuccess,
   onReject,
+  showRejectButton = true
 }: MemberDetailsModalProps) {
   const {
     groups,
@@ -45,15 +51,44 @@ export default function MemberDetailsModal({
     resetSelections,
   } = useOrgStructure({ orgId, open });
 
+  const [roles, setRoles] = useState<RoleSummary[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+  const [rolesError, setRolesError] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>("");
+
   const handleClose = () => {
     resetSelections();
+    setSelectedRole("");
     onOpenChange(false);
   };
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchRoles = async () => {
+      if (!open) return;
+      setRolesLoading(true);
+      setRolesError(null);
+      try {
+        const data = await listRoles();
+        if (mounted) setRoles(data);
+      } catch {
+        if (mounted) setRolesError("No fue posible cargar los roles");
+      } finally {
+        if (mounted) setRolesLoading(false);
+      }
+    };
+
+    fetchRoles();
+    return () => {
+      mounted = false;
+    };
+  }, [open]);
 
   const { loading, canAccept, accept } = useMemberApproval({
     member,
     selectedSection,
     selectedSubgroup,
+    selectedRole,
     onSuccess,
     onClose: handleClose,
   });
@@ -78,6 +113,7 @@ export default function MemberDetailsModal({
             <PersonalInfo member={member} />
             <EmergencyContacts member={member} />
             <Interests member={member} />
+            <SchoolInfo memberId={member.member_id} />
             <AssignmentSelectors
               groups={groups}
               sections={sections}
@@ -88,25 +124,34 @@ export default function MemberDetailsModal({
               setSelectedSection={setSelectedSection}
               selectedSubgroup={selectedSubgroup}
               setSelectedSubgroup={setSelectedSubgroup}
+              roles={roles}
+              rolesLoading={rolesLoading}
+              rolesError={rolesError}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
             />
             <MemberStatusBar member={member} />
           </div>
         )}
 
         <DialogFooter className="flex gap-2 sm:gap-2 mt-6 border-t pt-4">
-          <Button
-            variant="destructive"
-            onClick={onReject}
-            disabled={loading}
-            className="flex-1"
-          >
-            Rechazar Solicitud
-          </Button>
+          {showRejectButton && (
+            <Button
+              variant="destructive"
+              onClick={onReject}
+              disabled={loading}
+              className="flex-1"
+            >
+              Rechazar Solicitud
+            </Button>
+          )}
           <Button
             variant="primary"
             onClick={accept}
-            disabled={loading || !canAccept || !selectedGroupSlug}
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            disabled={
+              loading || !canAccept || !selectedGroupSlug || !selectedRole || !selectedSubgroup
+            }
+            className="flex-1 bg-green-900 hover:bg-green/800"
           >
             {loading ? "Procesando..." : "Aceptar Solicitud"}
           </Button>

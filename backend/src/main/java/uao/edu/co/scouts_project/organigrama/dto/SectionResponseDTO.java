@@ -10,7 +10,9 @@ public record SectionResponseDTO(
     Long groupId,
     String name,
     String description,
+    UUID iconObjectId,
     String iconObjectUrl,
+    UUID photoPrincipalId,
     String photoPrincipalUrl,
 
     // (Legacy) — se mantiene por compatibilidad temporal con el FE antiguo
