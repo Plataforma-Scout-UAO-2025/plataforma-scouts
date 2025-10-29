@@ -12,6 +12,7 @@ import {
   fetchMembersByStatusAction,
   fetchSchoolDataMemberAction,
   updateMemberStatusAction,
+  changeAuth0UserRoleAction,
 } from "./membersActions";
 
 import type { Member } from "@/types/member.type";
@@ -195,6 +196,19 @@ const membersSlice = createSlice({
     builder.addCase(fetchSchoolDataMemberAction.rejected, (state, action) => {
       state.loadingSchoolData = false;
       state.errorSchoolData = action.payload as string;
+    });
+    builder.addCase(changeAuth0UserRoleAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(changeAuth0UserRoleAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message || "Rol cambiado exitosamente en Auth0";
+    });
+    builder.addCase(changeAuth0UserRoleAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
     });
   },
 });
