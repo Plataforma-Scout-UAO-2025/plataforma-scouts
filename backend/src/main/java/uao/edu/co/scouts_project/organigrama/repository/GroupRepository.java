@@ -8,11 +8,15 @@ import uao.edu.co.scouts_project.organigrama.model.Group;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+    @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
     Optional<Group> findByTenantIdAndSlug(String tenantId, String slug);
     List<Group> findByTenantIdAndIsActive(String tenantId, Boolean isActive);
     List<Group> findByTenantId(String tenantId);
     boolean existsByTenantIdAndSlug(String tenantId, String slug);
     boolean existsByTenantIdAndIdentifierNumber(String tenantId, String identifierNumber);
+    Long countByIsActiveTrue();
+    Long countByIsActiveFalse();
+    Long countByTenantIdAndIsActiveTrue(String tenantId);
+    Long countByTenantIdAndIsActiveFalse(String tenantId);
 }
