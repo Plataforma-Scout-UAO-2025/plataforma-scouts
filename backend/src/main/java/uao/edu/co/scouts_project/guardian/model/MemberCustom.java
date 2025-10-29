@@ -32,7 +32,7 @@ public class MemberCustom {
     private LocalDate birthDate;
     private String address;
     private Boolean isActive;
-    private String email;  
+    private String email;
     private String role;
 
     public MemberCustom(Long memberId, String firstName, String lastName, String identification,

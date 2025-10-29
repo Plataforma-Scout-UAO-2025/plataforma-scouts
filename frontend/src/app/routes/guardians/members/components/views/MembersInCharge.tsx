@@ -5,11 +5,13 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
 import GuardianMembersTable from "../tables/GuardianMembersTable";
 import MemberDetailsSheet from "../modals/MemberDetailsSheet";
-import { removeMemberFromGuardian } from "@/api/guardiansApi";
+import SelectMemberModal from "../modals/SelectMemberModal"; // AGREGAR ESTE IMPORT
+import { removeMemberFromGuardian, addMemberToGuardian } from "@/api/guardiansApi"; // AGREGAR addMemberToGuardian
 import { toast } from "sonner";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
 import { updateMember } from "@/api/membersApi";
+import { Plus } from "lucide-react"; // AGREGAR ESTE IMPORT
 
 interface MemberUpdate extends UpdateMember {
   member_id?: number;
@@ -25,16 +27,15 @@ interface ExtendedMemberInfo extends MemberBasicInfo {
 
 const MembersInCharge = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false); // AGREGAR ESTE ESTADO
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
+  const [isAdding, setIsAdding] = useState(false); // AGREGAR ESTE ESTADO
 
   const { user } = useAuth0();
-
-
   
   const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
   const { members, loading, error, refetch } = useMembersInChargeOf(guardianId);
   
-
   const navigate = useNavigate();
 
   const handleViewMember = (member: MemberBasicInfo) => {
@@ -42,6 +43,40 @@ const MembersInCharge = () => {
     setIsDetailsModalOpen(true);
   };
 
+  // AGREGAR ESTA FUNCIÓN
+  const handleAddMembers = async (memberIds: number[]) => {
+    if (!guardianId) {
+      toast.error('No se pudo identificar el guardian');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      let successCount = 0;
+      
+      for (const memberId of memberIds) {
+        try {
+          await addMemberToGuardian(guardianId, memberId);
+          successCount++;
+        } catch (error) {
+          console.error(`Error añadiendo miembro ${memberId}:`, error);
+        }
+      }
+      
+      if (successCount > 0) {
+        toast.success(`${successCount} miembro(s) añadido(s) exitosamente`);
+        if (refetch) {
+          await refetch();
+        }
+      }
+      
+    } catch (error) {
+      toast.error('Error al añadir los miembros');
+      throw error;
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   const handleEditMember = async (member: UpdateMember) => {
     try {
@@ -117,6 +152,15 @@ const MembersInCharge = () => {
           <p className="text-5xl font-bold text-primary">
             Miembros a Cargo
           </p>
+          {/* AGREGAR ESTE BOTÓN */}
+          <Button
+            variant="primary"
+            onClick={() => setIsSelectModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Añadir Miembro
+          </Button>
         </header>
 
         <section className="mt-6">
@@ -149,6 +193,14 @@ const MembersInCharge = () => {
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
         member={selectedMember}
+      />
+
+      {/* AGREGAR ESTE MODAL */}
+      <SelectMemberModal
+        isOpen={isSelectModalOpen}
+        onClose={() => setIsSelectModalOpen(false)}
+        onConfirm={handleAddMembers}
+        isAdding={isAdding}
       />
     </>
   );

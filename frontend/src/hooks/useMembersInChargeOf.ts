@@ -11,7 +11,6 @@ export const useMembersInChargeOf = (guardianId?: number) => {
   const fetchMembers = useCallback(() => {
     if (guardianId && guardianId > 0) {
       dispatch(fetchMembersInChargeAction(guardianId));
-    } else {
     }
   }, [guardianId, dispatch]);
 
@@ -25,6 +24,8 @@ export const useMembersInChargeOf = (guardianId?: number) => {
   }, [fetchMembers]);
 
   const membersInCharge = guardianState.members || [];
+
+  
 
   return {
     members: membersInCharge,
