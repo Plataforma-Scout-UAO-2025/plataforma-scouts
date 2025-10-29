@@ -6,6 +6,7 @@ import {
   updateMemberAction,
   assignSubgroupAndSectionAction,
   updateMemberByDtoAction,
+  changeAuth0UserRoleAction,
 } from "@/store/members/membersActions";
 import { toast } from "sonner";
 
@@ -69,7 +70,7 @@ export function useMemberApproval({
 
   function getMemberField(
     keyCamel: keyof UpdateMember,
-    keySnake: keyof Member
+    keySnake: keyof Member,
   ): string {
     if (!member) return "";
 
@@ -92,39 +93,54 @@ export function useMemberApproval({
     try {
       setLoading(true);
 
-      await dispatch(
-        updateMemberStatusAction({
-          id: memberId,
-          status: "APPROVED",
-        })
-      ).unwrap();
-
       if (selectedSubgroup || selectedSection) {
         await dispatch(
           assignSubgroupAndSectionAction({
             memberId,
             subGroupId: selectedSubgroup ? Number(selectedSubgroup) : undefined,
             sectionId: selectedSection ? Number(selectedSection) : undefined,
-          })
+          }),
         ).unwrap();
       }
 
       const updates: Partial<UpdateMember> = {};
-
       if (selectedRole) {
         updates.role = selectedRole as UpdateMember["role"];
       }
 
       if (Object.keys(updates).length > 0) {
         if (updates.role) {
+          const missing: string[] = [];
+          const firstName = getMemberField("firstName", "first_name");
+          const lastName = getMemberField("lastName", "last_name");
+          const tenantId = getMemberField("tenantId", "tenant_id");
+          const identification = getMemberField(
+            "identification",
+            "identification",
+          );
+          const documentType = getMemberField("documentType", "document_type");
+
+          if (!firstName) missing.push("firstName");
+          if (!lastName) missing.push("lastName");
+          if (!tenantId) missing.push("tenantId");
+          if (!identification) missing.push("identification");
+          if (!documentType) missing.push("documentType");
+
+          if (missing.length > 0) {
+            toast.error(
+              `No se puede asignar el rol: faltan campos requeridos (${missing.join(", ")}). Corrige los datos antes de aceptar.`,
+            );
+            setLoading(false);
+            return;
+          }
+
           const memberDto: Record<string, unknown> = {
             memberId: memberId,
-            firstName: getMemberField("firstName", "first_name"),
-            lastName: getMemberField("lastName", "last_name"),
-            tenantId: getMemberField("tenantId", "tenant_id"),
-            identification: getMemberField("identification", "identification"),
-            documentType: getMemberField("documentType", "document_type"),
-            status: "APPROVED",
+            firstName,
+            lastName,
+            tenantId,
+            identification,
+            documentType,
             role: updates.role,
           };
 
@@ -132,17 +148,80 @@ export function useMemberApproval({
             updateMemberByDtoAction({
               uid: String(memberId),
               memberDto,
-            })
+            }),
           ).unwrap();
+
+          try {
+            const auth0UserId = getMemberField("userId", "user_id");
+            if (auth0UserId) {
+              await dispatch(
+                changeAuth0UserRoleAction({
+                  user_id: String(auth0UserId),
+                  newRole: updates.role as string,
+                }),
+              ).unwrap();
+            }
+          } catch (err) {
+            try {
+              type ErrLike = {
+                isAxiosError?: boolean;
+                message?: string;
+                response?: { status?: number; data?: unknown };
+                error?: string;
+              };
+
+              const e = err as ErrLike;
+
+              if (e?.isAxiosError) {
+                console.error("Axios error changing role in Auth0:", {
+                  message: e.message,
+                  status: e.response?.status,
+                  data: e.response?.data,
+                });
+                const data =
+                  (e.response?.data as Record<string, unknown> | undefined) ??
+                  undefined;
+                const serverMsg =
+                  (data && String(data["message"] || data["error"])) ||
+                  undefined;
+                toast.error(
+                  `Error asignando rol en Auth0: ${serverMsg ?? e.message}`,
+                );
+              } else if (e && typeof e === "object") {
+                console.error("Error changing role (rejected action):", e);
+                const errMsg = e.error || e.message || JSON.stringify(e);
+                toast.error(`Error asignando rol en Auth0: ${errMsg}`);
+              } else {
+                console.error("Error cambiando rol en Auth0:", err);
+                toast.error("Error asignando rol en Auth0. Revisa los logs.");
+              }
+            } catch (logErr) {
+              console.error(
+                "Error procesando el error de cambio de rol:",
+                logErr,
+                err,
+              );
+              toast.error("Error asignando rol en Auth0. Revisa los logs.");
+            }
+
+            throw err;
+          }
         } else {
           await dispatch(
             updateMemberAction({
               uid: String(memberId),
               updates,
-            })
+            }),
           ).unwrap();
         }
       }
+
+      await dispatch(
+        updateMemberStatusAction({
+          id: memberId,
+          status: "APPROVED",
+        }),
+      ).unwrap();
 
       const updateMemberData = member as UpdateMember;
       const regularMemberData = member as Member;
@@ -153,15 +232,39 @@ export function useMemberApproval({
         updateMemberData.lastName ?? regularMemberData.last_name ?? "";
 
       toast.success(
-        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`
+        `La solicitud de ${firstName} ${lastName} fue aprobada exitosamente.`,
       );
 
       onClose();
       onSuccess();
-    } catch (e) {
-      console.error("Error al aceptar solicitud:", e);
+    } catch (e: unknown) {
+      // Mejor logging de errores (axios)
+      try {
+        const errAny = e as {
+          isAxiosError?: boolean;
+          message?: string;
+          response?:
+            | { status?: number; data?: unknown; headers?: unknown }
+            | undefined;
+          config?: unknown;
+        };
+        if (errAny?.isAxiosError) {
+          console.error("Axios error accepting request:", {
+            message: errAny.message,
+            status: errAny.response?.status,
+            data: errAny.response?.data,
+            headers: errAny.response?.headers,
+            config: errAny.config,
+          });
+        } else {
+          console.error("Error al aceptar solicitud:", e);
+        }
+      } catch (logErr) {
+        console.error("Error logging exception in useMemberApproval:", logErr);
+      }
+
       toast.error(
-        "Ocurrió un error al procesar la solicitud. Intenta nuevamente."
+        "Ocurrió un error al procesar la solicitud. Intenta nuevamente.",
       );
     } finally {
       setLoading(false);
