@@ -85,6 +85,30 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT sg.groupId, COUNT(m) FROM Member m JOIN m.subgroup sg WHERE m.tenantId = :tenantId GROUP BY sg.groupId ORDER BY COUNT(m) DESC")
     List<Object[]> countMembersByGroupIdByTenant(@Param("tenantId") String tenantId);
 
+    /**
+     * Cuenta la cantidad de miembros por grupo a nivel global (sin filtrar por tenant).
+     * @return Lista de objetos {groupId, count} ordenada descendentemente por count
+     */
+    @Query("SELECT sg.groupId, COUNT(m) FROM Member m JOIN m.subgroup sg GROUP BY sg.groupId ORDER BY COUNT(m) DESC")
+    List<Object[]> countMembersByGroupIdAll();
+
+    /**
+     * Cuenta la cantidad de miembros por grupo a nivel global y devuelve DTOs con nombre del grupo.
+     * @return Lista de GroupMembersDTO
+     */
+    @Query("""
+        SELECT NEW uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO(
+            g.groupId, g.name, COUNT(m)
+        )
+        FROM Group g
+        LEFT JOIN Subgroup s ON s.groupId = g.groupId
+        LEFT JOIN Member m ON m.subgroup = s
+        GROUP BY g.groupId, g.name
+        ORDER BY COUNT(m) DESC
+    """)
+    List<GroupMembersDTO> countMembersByGroupAll();
+
+
 
     /**
      * Actualiza la sección (section_id) del subgrupo asociado a un miembro.
