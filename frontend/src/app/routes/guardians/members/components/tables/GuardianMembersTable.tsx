@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/index";
 import { Pencil, Trash, User } from "lucide-react";
 import type { MemberBasicInfo } from "@/types/guardian.type";
+import type { UpdateMember } from "@/types/member.type";
 import DeleteMemberModal from "../modals/DeleteMemberModal";
 
 interface GuardianMembersTableProps {
   filteredMembers: MemberBasicInfo[];
   onViewMember?: (member: MemberBasicInfo) => void;
-  onEditMember?: (member: MemberBasicInfo) => void;
+  onEditMember?: (member: UpdateMember) => void;
   onDeleteMember?: (member: MemberBasicInfo) => void;
 }
 
@@ -194,7 +195,7 @@ const GuardianMembersTable = ({
                       variant="iconbutton"
                       size="icon"
                       className="text-secondary hover:text-blue-800"
-                      onClick={() => onEditMember?.(member)}
+                      onClick={() => onEditMember?.(member as UpdateMember)}
                       title="Editar miembro"
                     >
                       <Pencil />

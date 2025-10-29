@@ -8,6 +8,14 @@ import MemberDetailsSheet from "../modals/MemberDetailsSheet";
 import { removeMemberFromGuardian } from "@/api/guardiansApi";
 import { toast } from "sonner";
 import type { MemberBasicInfo } from "@/types/guardian.type";
+import type { UpdateMember } from "@/types/member.type";
+import { updateMember } from "@/api/membersApi";
+
+interface MemberUpdate extends UpdateMember {
+  member_id?: number;
+  first_name?: string;
+  last_name?: string;
+}
 
 interface ExtendedMemberInfo extends MemberBasicInfo {
   member_id?: string | number;
@@ -20,13 +28,49 @@ const MembersInCharge = () => {
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
 
   const { user } = useAuth0();
+  console.log("Usuario completo:", user);
+  console.log("user.sub:", user?.sub);
+
+  
   const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  console.log("Guardian ID calculado:", guardianId);
   const { members, loading, error, refetch } = useMembersInChargeOf(guardianId);
+  
+    // TEMPORAL: Ver estructura real de los datos
+  console.log("Miembros cargados:", members);
+  console.log("Primer miembro:", members[0]);
+  
+
   const navigate = useNavigate();
 
   const handleViewMember = (member: MemberBasicInfo) => {
     setSelectedMember(member);
     setIsDetailsModalOpen(true);
+  };
+
+
+  const handleEditMember = async (member: UpdateMember) => {
+    try {
+      // Cast seguro al tipo auxiliar que incluye snake_case
+      const memberData = member as MemberUpdate;
+      const id = memberData.member_id ?? memberData.memberId;
+
+      if (!id) {
+        toast.error("No se encontró el ID del miembro");
+        return;
+      }
+
+      const currentPhone = member.phone ?? "";
+      const newPhone = window.prompt("Nuevo teléfono del miembro:", currentPhone);
+      if (newPhone == null || newPhone === currentPhone) return;
+
+      await updateMember(String(id), { phone: newPhone });
+
+      toast.success("Miembro actualizado");
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo actualizar el miembro");
+    }
   };
 
   const handleDeleteMember = async (member: MemberBasicInfo) => {
@@ -37,11 +81,11 @@ const MembersInCharge = () => {
       }
 
       // Obtener el ID del miembro de diferentes posibles campos
-  const extendedMember = member as ExtendedMemberInfo;
-  const memberId = extendedMember.memberId || 
-                      extendedMember.member_id || 
-                      extendedMember.userId || 
-                      extendedMember.id;
+      const extendedMember = member as ExtendedMemberInfo;
+      const memberId = extendedMember.memberId || 
+                          extendedMember.member_id || 
+                          extendedMember.userId || 
+                          extendedMember.id;
       if (!memberId) {
         toast.error('No se pudo identificar el miembro');
         return;
@@ -86,11 +130,14 @@ const MembersInCharge = () => {
         </header>
 
         <section className="mt-6">
-          <GuardianMembersTable 
-            filteredMembers={members} 
-            onViewMember={handleViewMember}
-            onDeleteMember={handleDeleteMember}
-          />
+          {!loading && !error && (
+            <GuardianMembersTable 
+              filteredMembers={members} 
+              onViewMember={handleViewMember}
+              onDeleteMember={handleDeleteMember}
+              onEditMember={handleEditMember}
+            />
+          )}
 
           <section className="flex justify-between items-center mt-4">
             <div className="flex justify-start mt-3 gap-2">
