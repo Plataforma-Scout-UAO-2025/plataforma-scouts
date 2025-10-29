@@ -143,6 +143,8 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/update_member_by_id/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/update_role/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/assign_subgroup_and_section/")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
 
