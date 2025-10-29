@@ -37,21 +37,17 @@ export function useOrganigramaDataWithCache(tenantId?: string, groupSlug?: strin
     return selectRamasCache(tenantId, groupSlug)(state);
   }, [tenantId, groupSlug, store]);
 
-  // Función para filtrar niveles organizativos
-  const filterOrganizationalLevels = useCallback((ramas: Rama[]): Rama[] => {
+  // Función para filtrar solo ramas scout
+  const filterScoutBranches = useCallback((ramas: Rama[]): Rama[] => {
     const normalize = (s: string) => String(s || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
+    const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
 
     return ramas.filter((rama) => {
       const n = normalize(String(rama.name || rama.nombre || ''));
-      return !(
-        n.includes('comit') ||
-        n.includes('asamblea') ||
-        n.includes('corte') ||
-        n.includes('consejo')
-      );
+      return ordenRamas.some(orden => n.startsWith(orden));
     });
   }, []);
 
@@ -134,7 +130,7 @@ export function useOrganigramaDataWithCache(tenantId?: string, groupSlug?: strin
             );
             
             // Procesar datos
-            let processedRamas = filterOrganizationalLevels(data);
+            let processedRamas = filterScoutBranches(data);
             processedRamas = sortRamas(processedRamas);
             
             // Guardar en cache de Redux
@@ -177,7 +173,7 @@ export function useOrganigramaDataWithCache(tenantId?: string, groupSlug?: strin
       setCachedRamas, 
       invalidateCache, 
       cleanExpiredCache,
-      filterOrganizationalLevels,
+      filterScoutBranches,
       sortRamas
     ]
   );

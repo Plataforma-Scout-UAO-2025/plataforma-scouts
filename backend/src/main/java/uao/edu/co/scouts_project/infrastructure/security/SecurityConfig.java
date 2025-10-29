@@ -32,6 +32,8 @@ public class SecurityConfig {
 
                                                 .requestMatchers("/api/v1/sec/roles").authenticated()
                                                 .requestMatchers("/api/v1/sec/org_id").authenticated()
+                                                .requestMatchers("/api/v1/sec/admin/auth0/connections/*").denyAll()
+                                                .requestMatchers("/api/v1/sec/admin/auth0/organizations/*/connections/*").denyAll()
 
                                                 .requestMatchers("/api/v1/mock/scouts/list")
                                                 .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
@@ -43,6 +45,10 @@ public class SecurityConfig {
                                                 // Organigrama
 
                                                 // Operaciones CRUD en tenants
+
+                                                // Exponer públicamente el endpoint para resolver org_id por slug
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/slug/**")
+                                                .permitAll()
 
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
@@ -91,6 +97,12 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
 
+                                                // Cambio de rol: reglas específicas por endpoint
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role")
+                                                .hasAnyRole(ADMIN_GRUPO.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role-global")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
+
                                                 // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia
                                                 // organización
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
@@ -134,6 +146,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/members/update_member_status/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/update_member_by_id/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .requestMatchers("/api/v1/members/update_role/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/assign_subgroup_and_section/")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())

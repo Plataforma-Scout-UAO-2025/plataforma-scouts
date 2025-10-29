@@ -1,0 +1,50 @@
+meta {
+  name: Get Groups members-count
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:8080/api/v1/statistics/groups/members-count
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Validar estructura de cada elemento en el array", function () {
+    expect(res.body).to.be.an('array');
+    if (res.body.length > 0) {
+      const firstItem = res.body[0];
+      expect(firstItem).to.have.property('group_id');
+      expect(firstItem).to.have.property('group_name');
+      expect(firstItem).to.have.property('member_count');
+      expect(firstItem.member_count).to.be.a('number');
+      expect(firstItem.member_count).to.be.at.least(0);
+    }
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Obtener cantidad de miembros por grupo (caso exitoso)
+  
+  **Endpoint:** /api/v1/statistics/groups/members-count
+  
+  **Descripción:** Validar que el endpoint retorna correctamente el conteo de miembros por grupo en toda la plataforma.
+  Se espera:
+  - Código 200
+  - Array de objetos con groupId, groupName y memberCount
+  - memberCount debe ser numérico >= 0
+  - Estructura JSON correcta
+}

@@ -1,0 +1,57 @@
+meta {
+  name: Get Groups statistics
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:8080/api/v1/statistics/groups
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Validar petición exitosa", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Validar campo active_groups_count", function () {
+    expect(res.body.active_groups_count).to.be.a('number');
+    expect(res.body.active_groups_count).to.be.at.least(0);
+  });
+
+  test("Validar estructura del response", function () {
+    expect(res.body).to.have.property('active_groups_count');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Nombre:** Obtener estadísticas de grupos (caso exitoso)
+  
+  **Endpoint:** /api/v1/statistics/groups
+  
+  **HU relacionadas:** HU-STATS-1.1
+  
+  **Descripción:** Validar que el endpoint retorna correctamente el conteo de grupos activos en la plataforma.
+  Se espera:
+  - Código 200
+  - Campo active_groups_count numérico >= 0
+  - Estructura JSON correcta
+  
+  **Respuesta esperada:** 
+  ```json
+  {
+    "active_groups_count": 5
+  }
+  ```
+  
+  **Última Actualización:** 2025-10-27
+}

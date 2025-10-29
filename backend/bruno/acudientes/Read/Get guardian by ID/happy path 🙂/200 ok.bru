@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseurl}}api/v1/guardian/:id
+  url: {{baseurl}}/guardian/:id
   body: none
   auth: inherit
 }
@@ -39,4 +39,5 @@ body:json {
 
 settings {
   encodeUrl: false
+  timeout: 0
 }
