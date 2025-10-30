@@ -58,4 +58,5 @@ public interface Auth0AdminPort {
 
     /** Remove all/selected roles from a user. */
     void removeRoles(String userId, List<String> roleIds);
+    
 }
