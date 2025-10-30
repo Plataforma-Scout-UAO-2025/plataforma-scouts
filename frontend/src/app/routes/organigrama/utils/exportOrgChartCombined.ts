@@ -74,6 +74,33 @@ export async function exportBranchesCSV(
   branches: SimpleBranches,
   members: Member[] = []
 ) {
+  // Filtra para incluir solo las 5 ramas canónicas (Cachorros, Manada, Webelos, Tropa, Clan)
+  const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalize = (s?: string) => stripAccents(String(s ?? "")).toLowerCase().trim();
+  const TOKENS = ["cachorros", "manada", "webelos", "tropa", "clan"] as const;
+  type Cat = typeof TOKENS[number];
+  const byCat: Record<Cat, SimpleBranches> = {
+    cachorros: [],
+    manada: [],
+    webelos: [],
+    tropa: [],
+    clan: [],
+  };
+  for (const b of branches) {
+    const n = normalize(b.section?.name);
+    const cat = TOKENS.find((t) => n.startsWith(t)) as Cat | undefined;
+    if (cat) byCat[cat].push(b);
+  }
+  const pickCanonical = (list: SimpleBranches, token: Cat) => {
+    if (!list || list.length === 0) return undefined;
+    const exact = list.find((b) => normalize(b.section?.name) === token);
+    return exact ?? list[0];
+  };
+  const filtered: SimpleBranches = [];
+  for (const t of TOKENS) {
+    const chosen = pickCanonical(byCat[t], t);
+    if (chosen) filtered.push(chosen);
+  }
   const header = [
     "Rama",
     "Descripción",
@@ -83,7 +110,7 @@ export async function exportBranchesCSV(
   ];
   const rows: string[][] = [];
 
-  for (const { section, subgroups } of branches) {
+  for (const { section, subgroups } of filtered) {
     // Nota: el jefe de rama se calculará por subrama a partir de los miembros (rol SCOUTER)
     const jefeRama = ""; // a nivel de fila de rama sin subramas no es determinable
     const desc =
@@ -183,9 +210,15 @@ export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []
       const isPad = nName.includes("comite de padres");
       const priority = isJef ? JEFATURA_ORDER : isPad ? PADRES_ORDER : null;
       const sorted = [...nivel.cargos].sort((a, b) => {
+        const SIN = "sin cargo";
+        const an = normalize(a.nombre);
+        const bn = normalize(b.nombre);
         if (priority) {
-          const ai = priority.indexOf(normalize(a.nombre));
-          const bi = priority.indexOf(normalize(b.nombre));
+          if (an === SIN && bn === SIN) return 0;
+          if (an === SIN) return 1;
+          if (bn === SIN) return -1;
+          const ai = priority.indexOf(an);
+          const bi = priority.indexOf(bn);
           const aIn = ai !== -1;
           const bIn = bi !== -1;
           if (aIn && bIn) return ai - bi;
@@ -193,6 +226,9 @@ export function exportLevelsCSV(data: OrganigramaNiveles, members: Member[] = []
           if (bIn) return 1;
           return a.nombre.localeCompare(b.nombre, "es");
         }
+        if (an === SIN && bn === SIN) return 0;
+        if (an === SIN) return 1;
+        if (bn === SIN) return -1;
         return a.nombre.localeCompare(b.nombre, "es");
       });
       sorted.forEach((c) => {
@@ -269,7 +305,28 @@ export async function exportOrgChartCombinedPDF(
   doc.text("Ramas y Subramas", x, y);
 
   const branchesBody: string[][] = [];
-  for (const { section, subgroups } of branches) {
+  // Mismo filtrado canónico para el PDF combinado
+  const stripAccentsB = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizeB = (s?: string) => stripAccentsB(String(s ?? "")).toLowerCase().trim();
+  const TOKENSB = ["cachorros", "manada", "webelos", "tropa", "clan"] as const;
+  type CatB = typeof TOKENSB[number];
+  const byCatB: Record<CatB, SimpleBranches> = { cachorros: [], manada: [], webelos: [], tropa: [], clan: [] };
+  for (const b of branches) {
+    const n = normalizeB(b.section?.name);
+    const cat = TOKENSB.find((t) => n.startsWith(t)) as CatB | undefined;
+    if (cat) byCatB[cat].push(b);
+  }
+  const pickCanonicalB = (list: SimpleBranches, token: CatB) => {
+    if (!list || list.length === 0) return undefined;
+    const exact = list.find((b) => normalizeB(b.section?.name) === token);
+    return exact ?? list[0];
+  };
+  const filteredBranches: SimpleBranches = [];
+  for (const t of TOKENSB) {
+    const chosen = pickCanonicalB(byCatB[t], t);
+    if (chosen) filteredBranches.push(chosen);
+  }
+  for (const { section, subgroups } of filteredBranches) {
     // Igual que en CSV, los jefes se calculan por subrama usando los miembros
     const jefeRama = "";
     const desc =
@@ -388,9 +445,15 @@ export async function exportOrgChartCombinedPDF(
       const isPad = nName.includes("comite de padres");
       const priority = isJef ? JEFATURA_ORDER2 : isPad ? PADRES_ORDER2 : null;
       const sorted = [...nivel.cargos].sort((a, b) => {
+        const SIN = "sin cargo";
+        const an = normalize2(a.nombre);
+        const bn = normalize2(b.nombre);
         if (priority) {
-          const ai = priority.indexOf(normalize2(a.nombre));
-          const bi = priority.indexOf(normalize2(b.nombre));
+          if (an === SIN && bn === SIN) return 0;
+          if (an === SIN) return 1;
+          if (bn === SIN) return -1;
+          const ai = priority.indexOf(an);
+          const bi = priority.indexOf(bn);
           const aIn = ai !== -1;
           const bIn = bi !== -1;
           if (aIn && bIn) return ai - bi;
@@ -398,6 +461,9 @@ export async function exportOrgChartCombinedPDF(
           if (bIn) return 1;
           return a.nombre.localeCompare(b.nombre, "es");
         }
+        if (an === SIN && bn === SIN) return 0;
+        if (an === SIN) return 1;
+        if (bn === SIN) return -1;
         return a.nombre.localeCompare(b.nombre, "es");
       });
       sorted.forEach((c) => {

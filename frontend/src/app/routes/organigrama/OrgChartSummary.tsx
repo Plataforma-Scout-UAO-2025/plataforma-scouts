@@ -292,9 +292,16 @@ export default function OrgChartSummary() {
                         const isPadres = nName.includes("comite de padres");
                         const priority = isJefatura ? JEFATURA_ORDER : isPadres ? PADRES_ORDER : null;
                         const sorted = [...nivel.cargos].sort((a, b) => {
+                          const SIN = 'sin cargo';
+                          const an = normalize(a.nombre);
+                          const bn = normalize(b.nombre);
                           if (priority) {
-                            const ai = priority.indexOf(normalize(a.nombre));
-                            const bi = priority.indexOf(normalize(b.nombre));
+                            // Regla global: 'Sin cargo' al final
+                            if (an === SIN && bn === SIN) return 0;
+                            if (an === SIN) return 1;
+                            if (bn === SIN) return -1;
+                            const ai = priority.indexOf(an);
+                            const bi = priority.indexOf(bn);
                             const aIn = ai !== -1;
                             const bIn = bi !== -1;
                             if (aIn && bIn) return ai - bi;
@@ -303,6 +310,9 @@ export default function OrgChartSummary() {
                             return a.nombre.localeCompare(b.nombre, "es");
                           }
                           // Default: alphabetical
+                          if (an === SIN && bn === SIN) return 0;
+                          if (an === SIN) return 1;
+                          if (bn === SIN) return -1;
                           return a.nombre.localeCompare(b.nombre, "es");
                         });
                         return sorted.map((c) => (
