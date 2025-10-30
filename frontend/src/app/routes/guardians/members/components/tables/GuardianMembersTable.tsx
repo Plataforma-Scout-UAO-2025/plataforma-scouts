@@ -106,35 +106,37 @@ const GuardianMembersTable = ({
   };
 
   return (
-    <div>
-      <Table className="text-sm">
+      <div className="w-full">
+      <Table className="text-sm w-full">
         <TableHeader className="text-primary">
           <TableRow>
-            <TableHead className="pl-4 font-bold text-primary">
+            <TableHead className="pl-4 font-bold text-primary text-center w-[8%]">
               ID
             </TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="font-bold text-primary text-center w-[12%]">
               Nombres
             </TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="font-bold text-primary text-center w-[12%]">
               Apellidos
             </TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="font-bold text-primary text-center w-[8%]">
               Edad
             </TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="font-bold text-primary text-center w-[8%]">
               Género
             </TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="font-bold text-primary text-center w-[12%]">
               Rama
             </TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="font-bold text-primary text-center w-[12%]">
               Parentesco
             </TableHead>
-            <TableHead className="font-bold text-primary">
+            <TableHead className="font-bold text-primary text-center w-[12%]">
               Estado
             </TableHead>
-            <TableHead className="text-right"></TableHead>
+            <TableHead className="font-bold text-primary text-center w-[16%]">
+              Acciones
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -150,28 +152,28 @@ const GuardianMembersTable = ({
 
               return (
                 <TableRow key={`member-${memberId}-${idx}`}>
-                  <TableCell className="pl-4 font-medium truncate">
+                  <TableCell className="pl-4 font-medium text-center">
                     {memberId}
                   </TableCell>
-                  <TableCell className="w-32 truncate">
+                  <TableCell className="text-center">
                     {firstName}
                   </TableCell>
-                  <TableCell className="w-32 truncate">
+                  <TableCell className="text-center">
                     {lastName}
                   </TableCell>
-                  <TableCell className="w-20 truncate">
+                  <TableCell className="text-center">
                     {memberRec.age || getAge(birthDate)}
                   </TableCell>
-                  <TableCell className="w-20 truncate">
+                  <TableCell className="text-center">
                     {formatGender(gender)}
                   </TableCell>
-                  <TableCell className="w-28 truncate">
+                  <TableCell className="text-center">
                     {member.subgroup?.name || "Sin rama"}
                   </TableCell>
-                  <TableCell className="w-32 truncate">
+                  <TableCell className="text-center">
                     {relationship}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {isActive(member) ? (
                       <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
                         Activo
@@ -182,7 +184,7 @@ const GuardianMembersTable = ({
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-center">
                     <Button 
                       variant="iconbutton" 
                       size="icon"
@@ -215,7 +217,7 @@ const GuardianMembersTable = ({
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={11} className="text-center py-8">
+              <TableCell colSpan={9} className="text-center py-8">
                 <p className="text-text text-lg">
                   No se encontraron miembros a cargo.
                 </p>
