@@ -51,5 +51,4 @@ public interface IAuth0Service {
 
     String createTenant(CreateGroupDTO group, MultipartFile logoFile);
 
-
 }

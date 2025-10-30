@@ -62,6 +62,10 @@ public class Auth0ServiceImpl implements IAuth0Service {
     @Value("${SUPERUSER_USERNAME}")
     private String SUPERUSER_USERNAME;
 
+    private List<Role> forbiddenRoles = Arrays.asList(Role.ADMIN_GLOBAL, Role.ADMIN_GRUPO, Role.DEV_SUPPORT);
+    private List<Role> allowedRoles = Arrays.asList(Role.SCOUT, Role.ACUDIENTE, Role.TESORERO, Role.SCOUTER,
+            Role.COMITE_ADMIN);
+
     private final Auth0AdminAdapter auth0AdminAdapter;
 
     private final Auth0AdminPort adminPort;
@@ -113,12 +117,6 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
     @Override
     public void assignRole(String userId, Role role) {
-        // Validar si el usuario ya tiene roles
-        boolean targetUserHasRoles = adminPort.userHasRoles(userId);
-
-        // Validar autorización para asignar este rol
-        roleAssignmentValidator.validateRoleAssignment(role, targetUserHasRoles);
-
         // Si pasa la validación, proceder con la asignación
         String auth0RoleId = roleMappingPort.getAuth0RoleId(role);
         adminPort.assignRole(userId, auth0RoleId);
@@ -159,40 +157,33 @@ public class Auth0ServiceImpl implements IAuth0Service {
         return adminPort.getUserInOrganization(organizationId, userId);
     }
 
+    public Boolean isRoleValid(Role role) {
+        // Validar que el rol NO sea administrativo
+        Boolean isGlobalAdmin = permissionQueryPort.getCurrentUserRoles().contains(Role.ADMIN_GLOBAL.toString());
+
+        if (!isGlobalAdmin) {
+
+            // si un Admin de Grupo u Acudiente va a asignar un rol que no está permitido:
+            if (forbiddenRoles.contains(role)) {
+                return false;
+            }
+
+        }
+
+        return true;
+    }
+
     @Override
     public CreatedUserDTO createUserWithRole(CreateUserWithRoleCommandDTO request) {
-        String roleName = request.getRole().toUpperCase();
+        String roleName = request.getRole().toUpperCase(); // Obtener el nombre del rol
 
-        // Convertir string a enum Role
-        Role role;
         try {
-            role = Role.valueOf(roleName);
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException(
-                    "Rol inválido: " + roleName + ". " +
-                            "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN");
-        }
+            Role role = Role.valueOf(roleName);
 
-        // Validar que el rol NO sea administrativo
-        List<Role> forbiddenRoles = Arrays.asList(Role.ADMIN_GLOBAL, Role.ADMIN_GRUPO, Role.DEV_SUPPORT);
-        if (forbiddenRoles.contains(role)) {
+if (!isRoleValid(role))
             throw new UnauthorizedRoleAssignmentException(
-                    "No está autorizado para asignar roles administrativos. " +
-                            "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN");
-        }
-
-        // Validar que el rol esté en la lista de permitidos
-        List<Role> allowedRoles = Arrays.asList(
-                Role.SCOUT,
-                Role.ACUDIENTE,
-                Role.TESORERO,
-                Role.SCOUTER,
-                Role.COMITE_ADMIN);
-        if (!allowedRoles.contains(role)) {
-            throw new UnauthorizedRoleAssignmentException(
-                    "El rol " + roleName + " no está permitido para este endpoint. " +
-                            "Roles permitidos: SCOUT, ACUDIENTE, TESORERO, SCOUTER, COMITE_ADMIN");
-        }
+                    "No está autorizado para asignar roles administrativos. \n" +
+                            "Roles: " + allowedRoles.toString());
 
         // Crear el comando base para crear usuario
         CreateUserCommandDTO createCommand = new CreateUserCommandDTO(
@@ -202,7 +193,7 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
         // Paso 1: Crear usuario en Auth0
         CreatedUserDTO createdUser = createUser(createCommand);
-        String userId = createdUser.getId();
+        String userId = createdUser.getId(); // Obtenemos el userId del usuario
 
         try {
             // Paso 2: Asociar a la organización del usuario autenticado (usa org_id del
@@ -210,7 +201,7 @@ public class Auth0ServiceImpl implements IAuth0Service {
             addUserToOwnOrganization(userId);
 
             // Paso 3: Asignar el rol especificado
-            assignRole(userId, role);
+            assignRole(userId, );
 
             return createdUser;
 
@@ -219,6 +210,22 @@ public class Auth0ServiceImpl implements IAuth0Service {
             // El usuario ya fue creado en Auth0
             throw ex;
         }
+
+
+        } catch (IllegalArgumentException ex) {
+            throw new Exception("El rol creado no existe.");
+        }
+
+    }
+
+    // TODO
+    public void addUserFromGroupAdmin() {
+        this.createUser(Create)
+    }
+
+    // TODO
+    public void addUserFromGlobalAdmin() {
+
     }
 
     // --- Added: change role (single-role) for group admin ---
@@ -359,7 +366,7 @@ public class Auth0ServiceImpl implements IAuth0Service {
                 Role.ADMIN_GLOBAL);
 
         // Servicio de Auth0 crea el Usuario.
-        CreatedUserDTO createdSuperUser = this.createUserWithRole(superUser);
+        this.createUserWithRole(superUser);
 
         logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
 
