@@ -101,14 +101,29 @@ export default function LevelAccordion({
     const nivelName = normalize(nivel.nombre);
     const isJefatura = nivelName.includes("comite de jefatura");
     const isPadres = nivelName.includes("comite de padres");
+    const SIN = normalize("Sin cargo");
     if (!isJefatura && !isPadres) {
       // Por defecto, orden alfabético sensible al español
-      return keys.sort((a, b) => a.localeCompare(b, "es"));
+      return keys.sort((a, b) => {
+        const an = normalize(a);
+        const bn = normalize(b);
+        if (an === SIN && bn === SIN) return 0;
+        if (an === SIN) return 1; // 'Sin cargo' siempre al final
+        if (bn === SIN) return -1;
+        return a.localeCompare(b, "es");
+      });
     }
     const priority = isJefatura ? jefaturaOrder : padresOrder;
     return keys.sort((a, b) => {
-      const ai = priority.indexOf(normalize(a));
-      const bi = priority.indexOf(normalize(b));
+      const an = normalize(a);
+      const bn = normalize(b);
+      // Regla global: 'Sin cargo' al final
+      if (an === SIN && bn === SIN) return 0;
+      if (an === SIN) return 1;
+      if (bn === SIN) return -1;
+
+      const ai = priority.indexOf(an);
+      const bi = priority.indexOf(bn);
       const aIn = ai !== -1;
       const bIn = bi !== -1;
       if (aIn && bIn) return ai - bi;
