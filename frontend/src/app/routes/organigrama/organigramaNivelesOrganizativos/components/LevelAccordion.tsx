@@ -18,6 +18,8 @@ interface Props {
   onDeleteCargo?: (cargo: Cargo) => void;
   /** Abrir modal para agregar miembro a un cargo */
   onAddMember?: (cargo: Cargo) => void;
+  /** Eliminar (desasignar) un miembro de un cargo */
+  onRemoveMember?: (cargo: Cargo, memberId: string) => void;
   /** Opcional: iniciar abierto o cerrado (por defecto: true) */
   defaultOpen?: boolean;
   /** Forzar recarga de miembros listados por cargo cuando cambie */
@@ -32,6 +34,7 @@ export default function LevelAccordion({
   onEditCargo,
   onDeleteCargo,
   onAddMember,
+  onRemoveMember,
   defaultOpen = true,
   refreshKey,
 }: Props) {
@@ -41,8 +44,8 @@ export default function LevelAccordion({
   const [open, setOpen] = useState<boolean>(defaultOpen);
   // Estado para sub-acordeones por rol: mapa roleName -> open
   const [groupsOpen, setGroupsOpen] = useState<Record<string, boolean>>({});
-  // Miembros por cargo (subgroupId -> nombres)
-  const [membersByCargo, setMembersByCargo] = useState<Record<string, string[]>>({});
+  // Miembros por cargo (subgroupId -> [{id, label}])
+  const [membersByCargo, setMembersByCargo] = useState<Record<string, { id: string; label: string }[]>>({});
 
   // Agrupar cargos por rol (nombre del cargo). useMemo para rendimiento.
   const cargosPorRol = useMemo(() => {
@@ -146,7 +149,7 @@ export default function LevelAccordion({
       return;
     }
 
-    const map: Record<string, string[]> = {};
+  const map: Record<string, { id: string; label: string }[]> = {};
     
     cargos.forEach((cargo) => {
       const cargoIdNum = toNumberSafe(cargo.id);
@@ -155,14 +158,15 @@ export default function LevelAccordion({
         return cargoIdNum !== undefined && sgId === cargoIdNum;
       });
 
-      const names = assigned.map((member: Member) => {
+      const detailed = assigned.map((member: Member) => {
+        const id = String(member.memberId ?? member.member_id ?? "");
         const name = member.firstName || member.first_name || "";
         const last = member.lastName || member.last_name || "";
-        const display = `${String(name).trim()} ${String(last).trim()}`.trim();
-        return display.length > 0 ? display : "Miembro";
+        const label = `${String(name).trim()} ${String(last).trim()}`.trim() || "Miembro";
+        return { id, label };
       });
 
-      map[String(cargo.id)] = names;
+      map[String(cargo.id)] = detailed;
     });
 
     setMembersByCargo(map);
@@ -296,11 +300,12 @@ export default function LevelAccordion({
                         <PositionItem
                           key={cargo.id}
                           cargo={cargo}
-                          members={membersByCargo[cargo.id] || []}
+                          membersDetailed={membersByCargo[cargo.id] || []}
                           onEdit={() => onEditCargo?.(cargo)}
                           onDelete={() => onDeleteCargo?.(cargo)}
                           // El botón interno "Agregar miembro al cargo" abre un modal propio
                           onAddMember={() => onAddMember?.(cargo)}
+                          onRemoveMember={(memberId) => onRemoveMember?.(cargo, memberId)}
                         />
                       ))}
                     </div>

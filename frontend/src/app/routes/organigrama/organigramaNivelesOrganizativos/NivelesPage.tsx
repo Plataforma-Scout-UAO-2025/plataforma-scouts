@@ -13,6 +13,8 @@ import type { RootState, AppDispatch } from "@/store/store";
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
 import useOrganigramaData from "../organigramaRamas_Subramas/hooks/useOrganigramaData";
 import RamaList from "../organigramaRamas_Subramas/components/RamaList";
+import { getSectionWithSubgroups, createSubgroup } from "@/api/organigramaApi";
+import type { Subgroup } from "@/types/subgroup-simple.type";
 
 // 🔹 Modales importados
 import CreateNivelModal from "./components/CreateNivelModal";
@@ -235,6 +237,62 @@ export default function NivelesPage() {
     }
   };
 
+  // Desasignar miembro de un cargo: lo movemos a un subgrupo "Sin cargo" dentro del mismo nivel (sección)
+  const handleRemoveMemberFromCargo = async (nivel: Nivel, cargo: Cargo, memberId: string) => {
+    try {
+      // 1) Asegurar existencia de subgrupo "Sin cargo" en la sección (nivel)
+      const sectionId = nivel.id;
+      // Nota: necesitamos tenantId y groupSlug del contexto
+      let sinCargoSubgroupId: number | undefined;
+      if (tenantId && groupSlug && sectionId) {
+        const { subgroups } = await getSectionWithSubgroups(sectionId, tenantId, groupSlug);
+        const found = (subgroups as Subgroup[] || []).find((sg) => String(sg.name || (sg as unknown as { nombre?: string }).nombre || "").toLowerCase() === "sin cargo");
+        if (found) {
+          sinCargoSubgroupId = Number(found.subgroupId ?? found.id);
+        } else {
+          // Crear subgrupo "Sin cargo"
+          const created = await createSubgroup(
+            sectionId,
+            { name: "Sin cargo", description: "Miembros no asignados" } as unknown as Omit<Subgroup, "id" | "subgroupId" | "tenantId" | "groupId" | "sectionId" | "createdAt" | "updatedAt">,
+            tenantId,
+            groupSlug
+          );
+          sinCargoSubgroupId = Number(created.subgroupId ?? created.id);
+        }
+      }
+
+      if (!sinCargoSubgroupId) {
+        console.warn("No fue posible determinar/crear el subgrupo 'Sin cargo'. Abortando desasignación.");
+        return;
+      }
+
+      // 2) Mover el miembro al subgrupo "Sin cargo" dentro de la misma sección
+      const memberIdNum = Number(memberId);
+      const memberIdToSend: number | string = Number.isFinite(memberIdNum) ? memberIdNum : memberId;
+
+      const result = await dispatch(
+        assignSubgroupAndSectionAction({
+          memberId: memberIdToSend,
+          subGroupId: sinCargoSubgroupId,
+          sectionId: Number.isFinite(Number(nivel.id)) ? Number(nivel.id) : undefined,
+        })
+      );
+      if (assignSubgroupAndSectionAction.fulfilled.match(result)) {
+        setShowSuccess(true);
+        // Refrescar lista de miembros (preferir enriquecido)
+        const r1 = await dispatch(fetchMembersWithBranchAction());
+        if (fetchMembersWithBranchAction.rejected.match(r1)) {
+          await dispatch(fetchMembersAction());
+        }
+        setMembersRefreshKey((k) => k + 1);
+      } else {
+        console.error("Error al desasignar miembro del cargo: ", result);
+      }
+    } catch (e) {
+      console.error("Fallo al desasignar miembro del cargo", e);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
@@ -359,6 +417,7 @@ export default function NivelesPage() {
               }}
               onAddMember={(cargo) => handleOpenAddMember(nivel, cargo)}
               onDeleteCargo={(cargo) => handleDeleteCargo(cargo, nivel)}
+              onRemoveMember={(cargo, memberId) => handleRemoveMemberFromCargo(nivel, cargo, memberId)}
             />
           ))}
         </div>
