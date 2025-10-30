@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { Eye, Trash2, Pencil, ChevronDown } from "lucide-react";
 import type { Nivel, Cargo } from "../types/niveles.types";
 import PositionItem from "./PositionItem";
+import LevelInfoModal from "./LevelInfoModal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMembersAction } from "@/store/members/membersActions";
 import type { RootState, AppDispatch } from "@/store/store";
@@ -42,16 +43,17 @@ export default function LevelAccordion({
   const { members } = useSelector((state: RootState) => state.members);
   
   const [open, setOpen] = useState<boolean>(defaultOpen);
+  const [openInfo, setOpenInfo] = useState<boolean>(false);
   // Estado para sub-acordeones por rol: mapa roleName -> open
   const [groupsOpen, setGroupsOpen] = useState<Record<string, boolean>>({});
   // Miembros por cargo (subgroupId -> [{id, label}])
   const [membersByCargo, setMembersByCargo] = useState<Record<string, { id: string; label: string }[]>>({});
 
-  // Agrupar cargos por rol (nombre del cargo) excluyendo el pseudo-cargo "Sin cargo". useMemo para rendimiento.
+  // Agrupar cargos por rol (nombre del cargo). useMemo para rendimiento.
   const cargosPorRol = useMemo(() => {
     const map: Record<string, typeof nivel.cargos> = {};
-    const filtered = (nivel.cargos || []).filter((c) => String(c.nombre || '').trim().toLowerCase() !== 'sin cargo');
-    filtered.forEach((c) => {
+    const all = nivel.cargos || [];
+    all.forEach((c) => {
       const key = c.nombre || "Sin rol";
       if (!map[key]) map[key] = [];
       map[key].push(c);
@@ -144,7 +146,7 @@ export default function LevelAccordion({
 
   // Procesar miembros para cada cargo del nivel
   useEffect(() => {
-    const cargos = (nivel.cargos || []).filter((c) => String(c.nombre || '').trim().toLowerCase() !== 'sin cargo');
+    const cargos = nivel.cargos || [];
     if (cargos.length === 0) {
       setMembersByCargo({});
       return;
@@ -210,19 +212,15 @@ export default function LevelAccordion({
 
         {/* Botones de acción del nivel */}
         <div className="flex items-center gap-2">
-          {/* Visibilidad */}
+          {/* Ver información del nivel */}
           <Button
             size="icon"
             variant="ghost"
             className="h-8 w-8 rounded-md border border-border hover:bg-accent hover:text-primary transition-colors"
-            onClick={() => onUpdate({ ...nivel, visible: !nivel.visible })}
-            aria-label={nivel.visible ? "Ocultar nivel" : "Mostrar nivel"}
+            onClick={() => setOpenInfo(true)}
+            aria-label="Ver información del nivel"
           >
-            {nivel.visible ? (
-              <Eye className="h-4 w-4 text-primary" />
-            ) : (
-              <EyeOff className="h-4 w-4 text-accent-foreground" />
-            )}
+            <Eye className="h-4 w-4 text-primary" />
           </Button>
 
           {/* Editar */}
@@ -328,6 +326,13 @@ export default function LevelAccordion({
           </div>
         </div>
       </div>
+      {/* Modal: Información del nivel */}
+      <LevelInfoModal
+        open={openInfo}
+        onClose={() => setOpenInfo(false)}
+        levelName={nivel.nombre}
+        cargos={orderedRoleKeys}
+      />
     </Card>
   );
 }
