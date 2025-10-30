@@ -178,11 +178,17 @@ export default function NivelesPage() {
   };
 
   const handleDeleteCargo = (cargo: Cargo, nivel: Nivel) => {
+    // Contar miembros asociados a este cargo (subgroup)
+    const cargoIdNum = toNumberSafe((cargo as unknown as { id?: unknown }).id);
+    const memberCount = cargoIdNum !== undefined && members && members.length > 0
+      ? members.reduce((acc, m) => acc + (getMemberSubgroupId(m) === cargoIdNum ? 1 : 0), 0)
+      : 0;
     setDeleteTarget({
       type: "cargo",
       id: cargo.id,
       name: cargo.nombre,
       nivelId: nivel.id,
+      memberCount,
     });
     setOpenDelete(true);
   };
@@ -331,9 +337,17 @@ export default function NivelesPage() {
     if (!deleteTarget) return;
 
     if (deleteTarget.type === "nivel") {
+      // Evitar eliminar si viene bloqueado por asociaciones
+      if ((deleteTarget.cargoCount || 0) + (deleteTarget.memberCount || 0) > 0) {
+        return;
+      }
       await removeNivel(deleteTarget.id);
     } else {
       // Eliminar cargo dentro del nivel
+      // Evitar eliminar si el cargo tiene miembros asociados
+      if ((deleteTarget.memberCount || 0) > 0) {
+        return;
+      }
       const nivel = data.niveles.find(
         (n) => n.id === deleteTarget.nivelId
       );
@@ -512,10 +526,13 @@ export default function NivelesPage() {
         warning={
           deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0
             ? `No se puede eliminar este nivel porque tiene ${deleteTarget?.cargoCount ?? 0} cargo(s) y ${deleteTarget?.memberCount ?? 0} miembro(s) asociados.`
+            : deleteTarget?.type === 'cargo' && (deleteTarget?.memberCount || 0) > 0
+            ? `No se puede eliminar este cargo porque tiene ${deleteTarget?.memberCount ?? 0} miembro(s) asociados.`
             : undefined
         }
         disableConfirm={
-          deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0
+          (deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0) ||
+          (deleteTarget?.type === 'cargo' && (deleteTarget?.memberCount || 0) > 0)
         }
       />
 
