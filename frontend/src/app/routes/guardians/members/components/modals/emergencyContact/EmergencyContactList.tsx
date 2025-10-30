@@ -24,7 +24,7 @@ export default function EmergencyContactsList({
   const safeContacts = Array.isArray(contacts) ? contacts : [];
 
   return (
-    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+    <div className="space-y-4 p-4 rounded-lg">
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-lg text-[#1a4134]">Contactos de Emergencia</h3>
         <Button

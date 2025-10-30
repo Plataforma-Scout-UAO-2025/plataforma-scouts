@@ -26,7 +26,7 @@ export default function EmergencyContactItem({
   onRemove
 }: EmergencyContactItemProps) {
   return (
-    <div className="space-y-4 p-4 bg-white rounded-lg border">
+    <div className="space-y-4 p-4 rounded-lg border">
       <div className="flex justify-between items-center">
         <h4 className="font-medium text-sm text-gray-700">Contacto {index + 1}</h4>
         {canRemove && (
@@ -67,7 +67,7 @@ export default function EmergencyContactItem({
               value={contact?.relationship || ''}
               onValueChange={(value) => onUpdate(index, 'relationship', value)}
             >
-              <SelectTrigger id={`emergency-relationship-${index}`}>
+              <SelectTrigger id={`emergency-relationship-${index}`} className="bg-white">
                 <SelectValue placeholder="Seleccione parentesco" />
               </SelectTrigger>
               <SelectContent>
