@@ -37,18 +37,43 @@ export function useOrganigramaDataWithCache(tenantId?: string, groupSlug?: strin
     return selectRamasCache(tenantId, groupSlug)(state);
   }, [tenantId, groupSlug, store]);
 
-  // Función para filtrar solo ramas scout
+  // Filtra solo ramas scout y devuelve 1 por categoría (cachorros/manada/webelos/tropa/clan),
+  // eligiendo la rama "canónica" más antigua (createdAt más antiguo). Esto evita mostrar
+  // ramas adicionales creadas desde niveles organizativos como "Cachorros Lobitos".
   const filterScoutBranches = useCallback((ramas: Rama[]): Rama[] => {
     const normalize = (s: string) => String(s || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-    const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
+      .toLowerCase()
+      .trim();
+    const categorias = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
 
-    return ramas.filter((rama) => {
+    // Agrupar por categoría detectada por prefijo
+    const groups: Record<string, Rama[]> = { cachorros: [], manada: [], webelos: [], tropa: [], clan: [] };
+    ramas.forEach((rama) => {
       const n = normalize(String(rama.name || rama.nombre || ''));
-      return ordenRamas.some(orden => n.startsWith(orden));
+      const cat = categorias.find((c) => n.startsWith(c));
+      if (cat) groups[cat].push(rama);
     });
+
+    // Elegir la rama más antigua por categoría
+    const pickOldest = (list: Rama[]): Rama | undefined => {
+      if (!list || list.length === 0) return undefined;
+      return list.reduce((oldest: Rama, cur: Rama) => {
+        const toTs = (d: string | undefined) => {
+          const ts = d ? Date.parse(d) : NaN;
+          return Number.isFinite(ts) ? ts : Number.MAX_SAFE_INTEGER;
+        };
+        return toTs(cur.createdAt) < toTs(oldest.createdAt) ? cur : oldest;
+      }, list[0]);
+    };
+
+    const result: Rama[] = [];
+    categorias.forEach((cat) => {
+      const chosen = pickOldest(groups[cat]);
+      if (chosen) result.push(chosen);
+    });
+    return result;
   }, []);
 
   // Función para ordenar ramas según el orden scout
@@ -129,7 +154,7 @@ export function useOrganigramaDataWithCache(tenantId?: string, groupSlug?: strin
               { signal: ctrl.signal }
             );
             
-            // Procesar datos
+            // Procesar datos: quedarse solo con la rama canónica por categoría y ordenar
             let processedRamas = filterScoutBranches(data);
             processedRamas = sortRamas(processedRamas);
             

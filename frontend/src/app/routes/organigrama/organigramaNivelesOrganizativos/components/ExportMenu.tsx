@@ -252,7 +252,7 @@ export default function ExportMenu({ data, members }: { data: OrganigramaNiveles
       <DropdownMenuTrigger asChild>
         <Button className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-lg px-4 py-2 flex items-center">
           <Download className="mr-2 h-4 w-4 text-primary-foreground" />
-          Exportar organigrama
+          Exportar Datos
         </Button>
       </DropdownMenuTrigger>
 
@@ -264,14 +264,14 @@ export default function ExportMenu({ data, members }: { data: OrganigramaNiveles
           onClick={handleExportPDF}
           className="hover:bg-accent hover:text-primary transition-colors"
         >
-          Exportar organigrama en PDF
+          Exportar en PDF
         </DropdownMenuItem>
 
         <DropdownMenuItem
           onClick={() => exportCSV(data, members)}
           className="hover:bg-accent hover:text-primary transition-colors"
         >
-          Exportar organigrama en CSV
+          Exportar en CSV
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

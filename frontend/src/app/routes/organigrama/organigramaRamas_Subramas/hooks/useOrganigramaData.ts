@@ -59,19 +59,44 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
               { signal: ctrl.signal }
             );
             
-            // Filtrar para mostrar solo ramas que comiencen con 'cachorros', 'manada', 'webelos', 'tropa', 'clan'
+            // Filtrar y quedarse con una rama por categoría: 'cachorros', 'manada', 'webelos', 'tropa', 'clan'
             const normalize = (s: string) => String(s || '')
               .normalize('NFD')
               .replace(/[\u0300-\u036f]/g, '')
-              .toLowerCase();
+              .toLowerCase()
+              .trim();
             const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
-            const ramasFiltradas = data.filter((rama) => {
+
+            // Agrupar por categoría detectada por prefijo
+            const groups: Record<string, typeof data> = {
+              cachorros: [], manada: [], webelos: [], tropa: [], clan: []
+            } as Record<string, typeof data>;
+            data.forEach((rama) => {
               const n = normalize(String(rama.name || rama.nombre || ''));
-              return ordenRamas.some(orden => n.startsWith(orden));
+              const cat = ordenRamas.find((c) => n.startsWith(c));
+              if (cat) (groups[cat] as typeof data).push(rama);
             });
-            
+
+            // Elegir la más antigua por categoría
+            const toTs = (d?: string) => {
+              const ts = d ? Date.parse(d) : NaN;
+              return Number.isFinite(ts) ? ts : Number.MAX_SAFE_INTEGER;
+            };
+            const pickOldest = (list: typeof data): typeof data[number] | undefined => {
+              if (!list || list.length === 0) return undefined;
+              return list.reduce((oldest, cur) => (
+                toTs((cur as any).createdAt) < toTs((oldest as any).createdAt) ? cur : oldest
+              ), list[0]);
+            };
+
+            const ramasCanon: typeof data = [];
+            ordenRamas.forEach((cat) => {
+              const chosen = pickOldest(groups[cat]);
+              if (chosen) ramasCanon.push(chosen);
+            });
+
             // Ordenar ramas según el orden específico de secciones scout
-            const ramasOrdenadas = ramasFiltradas.sort((a, b) => {
+            const ramasOrdenadas = ramasCanon.sort((a, b) => {
               const nameA = String(a.name || a.nombre || '').toLowerCase();
               const nameB = String(b.name || b.nombre || '').toLowerCase();
               
