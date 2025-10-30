@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui";
 import {
   AlertDialog,
@@ -12,10 +13,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash } from "lucide-react";
 import type { Cuota } from "@/types/cuota.type";
-import { toast, type ExternalToast } from "sonner";
+import { toast } from "sonner";
 import api from "@/api/axios";
 import { useTenant } from "@/hooks/useTenant";
 import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
 
 interface DeleteCuotaModalProps {
   cuota: Cuota;
@@ -23,11 +25,16 @@ interface DeleteCuotaModalProps {
 }
 
 export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
   const tenantId = useTenant();
   const navigate = useNavigate();
 
   const handleDelete = async () => {
+    if (isDeleting) return; // Prevenir doble envío
+    
+    setIsDeleting(true);
     console.log("Eliminando cuota:", cuota.fee_id);
+    
     try{
       const response = await api.delete(
         `finanzas/fees/${tenantId}/${cuota.fee_id}`
@@ -39,11 +46,14 @@ export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalP
         toast.error("No tienes permisos para realizar esta acción");
         navigate("/app/dashboard");
       } else {
-        toast.error("Error al eliminar la cuota:", response.data.message);
+        const backendMsg = (response.data as { message?: string } | undefined)?.message;
+        toast.error(backendMsg || "Error al eliminar la cuota");
       }
     } catch (error) {
-      toast.error("Error al eliminar la cuota:", error as ExternalToast);
-      console.error("Error al eliminar la cuota:", error);
+      const backendMsg = (error as AxiosError<{ message?: string }> )?.response?.data?.message;
+      toast.error(backendMsg || "Error al eliminar la cuota");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -64,13 +74,14 @@ export default function DeleteCuotaModal({ cuota, onRefresh }: DeleteCuotaModalP
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
-            <Button variant="secondary">Cancelar</Button>
+            <Button variant="secondary" disabled={isDeleting}>Cancelar</Button>
           </AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleDelete}
-            className="bg-destructive text-white hover:bg-destructive/90"
+            disabled={isDeleting}
+            className="bg-destructive text-white hover:bg-destructive/90 disabled:opacity-50"
           >
-            Eliminar cuota
+            {isDeleting ? "Eliminando..." : "Eliminar cuota"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

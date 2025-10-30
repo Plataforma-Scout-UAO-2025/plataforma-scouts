@@ -20,7 +20,7 @@ export default function Gestion() {
       );
 
       if (response.status === 200) {
-        // Transformar las fechas de string a Date objects
+        // Mantener las fechas como strings del backend
         const cuotasData: Cuota[] = response.data.map((cuota: {
           fee_id: string;
           amount: number;

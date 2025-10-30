@@ -13,7 +13,7 @@ export default function ProfileHeader({ first_name, last_name, grupo, is_active 
 const initials = `${(first_name ?? '').charAt(0)}${(last_name ?? '').charAt(0)}`;
 
   return (
-    <Card className="mb-6">
+  <Card className="mb-6">
       <CardContent className="p-8">
         <div className="flex items-start gap-6">
           <Avatar className="w-32 h-32">

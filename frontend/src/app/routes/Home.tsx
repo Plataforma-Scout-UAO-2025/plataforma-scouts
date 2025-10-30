@@ -1,4 +1,6 @@
 import LoginButton from "@/components/auth/LoginButton";
+import { GroupsView } from "@/components/groups/GroupsView";
+import { Button } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Mountain, Target, Users } from "lucide-react";
 
@@ -9,19 +11,27 @@ export default function Home() {
         <div className="container mx-auto px-4 flex items-center justify-between">
           <img src="/logo.jpg" alt="Logo" className="h-10 w-auto" />
 
-          <div>
-            <LoginButton
-              organization="org_6B3k4dao2Wf6eGxa"
-              className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
-            >
-              Grupo Centinelas 113
-            </LoginButton>
-            <LoginButton
-              organization="org_povsjufF3TEP1DZ7"
-              className="border-secondary text-secondary hover:bg-secondary hover:text-white bg-transparent"
-            >
-              Grupo Chiminigagua 803
-            </LoginButton>
+          <div className="flex items-center gap-4">
+            <nav>
+              <ul className="flex items-center gap-4">
+                <li>
+                  <Button
+                    variant="link"
+                    className={"text-accent"}
+                    onClick={() => {
+                      const section = document.querySelector("#nuestros-grupos");
+                      if (section) {
+                        section.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                  >
+                    Grupos
+                  </Button>
+                </li>
+              </ul>
+            </nav>
+
+            <LoginButton variant="outline" organization="">Iniciar sesión</LoginButton>
           </div>
         </div>
       </header>
@@ -141,6 +151,9 @@ export default function Home() {
             </div>
           </section>
         </div>
+
+        <GroupsView />
+
       </main>
 
       <footer className="bg-primary py-6">

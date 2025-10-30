@@ -1,0 +1,50 @@
+meta {
+  name: Filter Members by Name - Centinelas 113
+  type: http
+  seq: 5
+}
+
+get {
+  url: https://api.plataformascout.org/api/v1/members/list_members_with_details?firstName=Aleja
+  body: none
+  auth: none
+}
+
+params:query {
+  firstName: Aleja
+}
+
+headers {
+  Accept: application/json
+  Authorization: {{token_centinelas}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response is an array", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array");
+  });
+  
+  test("Filtered results contain name Aleja", function() {
+    const body = res.getBody();
+    if (body.length > 0) {
+      const matches = body.every(member => member.firstName.toLowerCase().includes("aleja"));
+      expect(matches).to.equal(true);
+    }
+  });
+}
+
+docs {
+  Nombre: Obtener filtrado de miembros por nombre (Centinelas 113)
+  Endpoint: https://api.plataformascout.org/api/v1/members/list_members_with_details?firstName=Aleja
+  HU relacionada: HU-ING-1.3 (Criterio 3)
+  Descripción: Verifica que el administrador del grupo Centinelas 113 pueda aplicar un filtro por nombre en la lista de miembros, retornando únicamente aquellos cuyos nombres coincidan parcial o totalmente con el texto ingresado.
+  Respuesta esperada: Status 200 y arreglo de objetos que contienen en el campo "firstName" el texto "Aleja".
+  tenant_id: org_6B3k4dao2Wf6eGxa
+  Responsable: Kelvin Martínez
+  Última Actualización: 2025-10-28
+}

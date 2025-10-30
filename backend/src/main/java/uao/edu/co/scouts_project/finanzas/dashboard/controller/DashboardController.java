@@ -35,6 +35,7 @@ public ResponseEntity<DashboardFinancieroDto> getDashboardForTenant(
         @Parameter(name = "tenantId", in = ParameterIn.PATH, example = "org_6B3k4dao2Wf6eGxa")
         @PathVariable String tenantId
 ) {
+    service.normalizeOverdues(tenantId);
     var dto = service.getDashboardForTenant(tenantId);
     return ResponseEntity.ok(dto);
 }

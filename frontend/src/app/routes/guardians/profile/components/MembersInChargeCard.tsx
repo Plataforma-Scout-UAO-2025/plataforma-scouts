@@ -23,7 +23,7 @@ export default function MembersInChargeCard({
   return (
     <>
       {/* Miembros a Cargo */}
-      <Card>
+  <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-[#1a4134]" />
@@ -36,7 +36,7 @@ export default function MembersInChargeCard({
         <CardContent>
           <div className="space-y-3 ">
             {miembrosACargo.map((miembro) => (
-              <div key={`${miembro.id}-${miembro.fullName}`} className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={`${miembro.id}-${miembro.fullName}`} className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between p-3 rounded-lg border bg-background border-gray-200">
                 <div className="flex-1">
                   <p className="font-medium text-sm">{miembro.fullName}</p>
                   <div className="flex items-center gap-2 text-xs text-gray-600">

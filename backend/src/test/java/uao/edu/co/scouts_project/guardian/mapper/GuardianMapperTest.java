@@ -118,6 +118,7 @@ public class GuardianMapperTest {
                 .age(10)
                 .gender("FEMALE")
                 .phone("3009876543")
+                .isActive(true)
                 .birthDate(LocalDate.of(2013, 8, 10))
                 .build();
 

@@ -8,12 +8,20 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uao.edu.co.scouts_project.infrastructure.security.Role;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Schema(description = "Comando para crear un usuario con un rol específico")
 public class CreateUserWithRoleCommandDTO {
+
+    public CreateUserWithRoleCommandDTO(String email, String password, String username, Role role) {
+        this.email = email;
+        this.password = password;
+        this.username = username;
+        this.role = role.name();
+    }
 
     @Schema(description = "Correo electrónico del usuario", example = "usuario@example.com")
     @Email(message = "email debe ser un correo válido")
@@ -30,10 +38,7 @@ public class CreateUserWithRoleCommandDTO {
     @Size(min = 3, max = 50, message = "username debe tener entre 3 y 50 caracteres")
     private String username;
 
-    @Schema(
-        description = "Rol a asignar al usuario. El servicio validará si el rol es permitido para este endpoint.",
-        example = "SCOUT"
-    )
+    @Schema(description = "Rol a asignar al usuario. El servicio validará si el rol es permitido para este endpoint.", example = "SCOUT")
     @NotNull(message = "role es obligatorio")
     private String role;
 }

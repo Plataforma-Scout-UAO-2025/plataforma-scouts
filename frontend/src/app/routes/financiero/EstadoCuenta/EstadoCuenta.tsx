@@ -37,8 +37,8 @@ export default function EstadoCuenta() {
         let endpoint = `/finanzas/payments/status/${tenantId}`;
         
         if (!isTesoreroOrAdmin) {
-          // Para acudiente, agregar el ID (quemado a 83 por ahora)
-          endpoint += "/83";
+          // Para acudiente
+          endpoint = `/finanzas/payments/status/guardian/${tenantId}`
         }
 
         const response = await api.get<EstadoCuenta>(endpoint);

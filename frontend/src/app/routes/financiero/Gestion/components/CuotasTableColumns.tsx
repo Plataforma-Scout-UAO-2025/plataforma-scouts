@@ -4,6 +4,7 @@ import { ArrowUpDown } from "lucide-react";
 import { type Cuota } from "@/types/cuota.type";
 import EditCuotaModal from "./EditCuotaModal";
 import DeleteCuotaModal from "./DeleteCuotaModal";
+import { formatDate } from "@/lib/utils";
 
 // Traducciones para periodicidad
 const periodicityTranslations: Record<string, string> = {
@@ -82,18 +83,12 @@ export const getColumns = (onRefresh?: () => void): ColumnDef<Cuota>[] => [
     {
       accessorKey: "start_date",
       header: "Fecha inicio",
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("start_date"));
-        return <div>{date.toLocaleDateString("es-ES")}</div>;
-      },
+      cell: ({ row }) => <div>{formatDate(row.getValue("start_date"), false)}</div>,
     },
     {
       accessorKey: "end_date",
       header: "Fecha fin",
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("end_date"));
-        return <div>{date.toLocaleDateString("es-ES")}</div>;
-      },
+      cell: ({ row }) => <div>{formatDate(row.getValue("end_date"), false)}</div>,
     },
     {
       accessorKey: "member",
