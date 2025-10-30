@@ -15,6 +15,7 @@ import useOrganigramaData from "../organigramaRamas_Subramas/hooks/useOrganigram
 import RamaList from "../organigramaRamas_Subramas/components/RamaList";
 import { getSectionWithSubgroups, createSubgroup } from "@/api/organigramaApi";
 import type { Subgroup } from "@/types/subgroup-simple.type";
+import type { Member } from "@/types/member.type";
 
 // 🔹 Modales importados
 import CreateNivelModal from "./components/CreateNivelModal";
@@ -62,6 +63,8 @@ export default function NivelesPage() {
     id: string;
     name: string;
     nivelId?: string;
+    cargoCount?: number;
+    memberCount?: number;
   } | null>(null);
 
   const [showSuccess, setShowSuccess] = useState(false);
@@ -238,7 +241,7 @@ export default function NivelesPage() {
   };
 
   // Desasignar miembro de un cargo: lo movemos a un subgrupo "Sin cargo" dentro del mismo nivel (sección)
-  const handleRemoveMemberFromCargo = async (nivel: Nivel, cargo: Cargo, memberId: string) => {
+  const handleRemoveMemberFromCargo = async (nivel: Nivel, _cargo: Cargo, memberId: string) => {
     try {
       // 1) Asegurar existencia de subgrupo "Sin cargo" en la sección (nivel)
       const sectionId = nivel.id;
@@ -291,6 +294,37 @@ export default function NivelesPage() {
     } catch (e) {
       console.error("Fallo al desasignar miembro del cargo", e);
     }
+  };
+
+  // Helpers locales para advertencia al eliminar un nivel
+  const toNumberSafe = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const getMemberSubgroupId = (m: Member): number | undefined => {
+    return (
+      toNumberSafe(m?.subgroup_id) ??
+      toNumberSafe(m?.subgroup?.subgroupId) ??
+      toNumberSafe(m?.subgroup?.subgroup_id)
+    );
+  };
+  const computeLevelCounts = (nivel: Nivel) => {
+    const cargos = nivel.cargos || [];
+    const cargoCount = cargos.length;
+    let memberCount = 0;
+    if (cargoCount > 0 && members && members.length > 0) {
+      const cargoIds = cargos
+        .map((c) => toNumberSafe((c as unknown as { id?: unknown }).id))
+        .filter((id): id is number => typeof id === 'number');
+      if (cargoIds.length > 0) {
+        memberCount = members.reduce((acc, m) => {
+          const sg = getMemberSubgroupId(m);
+          return acc + (sg !== undefined && cargoIds.includes(sg) ? 1 : 0);
+        }, 0);
+      }
+    }
+    return { cargoCount, memberCount };
   };
 
   const confirmDelete = async () => {
@@ -400,10 +434,13 @@ export default function NivelesPage() {
                 setOpenEditNivel(true);
               }}
               onDelete={() => {
+                const { cargoCount, memberCount } = computeLevelCounts(nivel);
                 setDeleteTarget({
                   type: "nivel",
                   id: nivel.id,
                   name: nivel.nombre,
+                  cargoCount,
+                  memberCount,
                 });
                 setOpenDelete(true);
               }}
@@ -472,6 +509,14 @@ export default function NivelesPage() {
         name={deleteTarget?.name || ""}
         onClose={() => setOpenDelete(false)}
         onConfirm={confirmDelete}
+        warning={
+          deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0
+            ? `No se puede eliminar este nivel porque tiene ${deleteTarget?.cargoCount ?? 0} cargo(s) y ${deleteTarget?.memberCount ?? 0} miembro(s) asociados.`
+            : undefined
+        }
+        disableConfirm={
+          deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0
+        }
       />
 
       {/* Modal de éxito */}
