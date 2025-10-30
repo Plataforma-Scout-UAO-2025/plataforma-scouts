@@ -53,7 +53,7 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
   let lastError: unknown = null;
         while (attempt < 2) {
           try {
-            const data = await organigramaService.getRamasWithSubramas(
+            const data: Rama[] = await organigramaService.getRamasWithSubramas(
               tenantId,
               groupSlug,
               { signal: ctrl.signal }
@@ -65,16 +65,17 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
               .replace(/[\u0300-\u036f]/g, '')
               .toLowerCase()
               .trim();
-            const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
+            const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'] as const;
+            type Categoria = typeof ordenRamas[number];
 
             // Agrupar por categoría detectada por prefijo
-            const groups: Record<string, typeof data> = {
+            const groups: Record<Categoria, Rama[]> = {
               cachorros: [], manada: [], webelos: [], tropa: [], clan: []
-            } as Record<string, typeof data>;
-            data.forEach((rama) => {
+            };
+            data.forEach((rama: Rama) => {
               const n = normalize(String(rama.name || rama.nombre || ''));
               const cat = ordenRamas.find((c) => n.startsWith(c));
-              if (cat) (groups[cat] as typeof data).push(rama);
+              if (cat) groups[cat].push(rama);
             });
 
             // Elegir la más antigua por categoría
@@ -82,14 +83,14 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
               const ts = d ? Date.parse(d) : NaN;
               return Number.isFinite(ts) ? ts : Number.MAX_SAFE_INTEGER;
             };
-            const pickOldest = (list: typeof data): typeof data[number] | undefined => {
+            const pickOldest = (list: Rama[]): Rama | undefined => {
               if (!list || list.length === 0) return undefined;
-              return list.reduce((oldest, cur) => (
-                toTs((cur as any).createdAt) < toTs((oldest as any).createdAt) ? cur : oldest
+              return list.reduce((oldest: Rama, cur: Rama) => (
+                toTs(cur.createdAt) < toTs(oldest.createdAt) ? cur : oldest
               ), list[0]);
             };
 
-            const ramasCanon: typeof data = [];
+            const ramasCanon: Rama[] = [];
             ordenRamas.forEach((cat) => {
               const chosen = pickOldest(groups[cat]);
               if (chosen) ramasCanon.push(chosen);
