@@ -47,10 +47,11 @@ export default function LevelAccordion({
   // Miembros por cargo (subgroupId -> [{id, label}])
   const [membersByCargo, setMembersByCargo] = useState<Record<string, { id: string; label: string }[]>>({});
 
-  // Agrupar cargos por rol (nombre del cargo). useMemo para rendimiento.
+  // Agrupar cargos por rol (nombre del cargo) excluyendo el pseudo-cargo "Sin cargo". useMemo para rendimiento.
   const cargosPorRol = useMemo(() => {
     const map: Record<string, typeof nivel.cargos> = {};
-    nivel.cargos.forEach((c) => {
+    const filtered = (nivel.cargos || []).filter((c) => String(c.nombre || '').trim().toLowerCase() !== 'sin cargo');
+    filtered.forEach((c) => {
       const key = c.nombre || "Sin rol";
       if (!map[key]) map[key] = [];
       map[key].push(c);
@@ -143,7 +144,7 @@ export default function LevelAccordion({
 
   // Procesar miembros para cada cargo del nivel
   useEffect(() => {
-    const cargos = nivel.cargos || [];
+    const cargos = (nivel.cargos || []).filter((c) => String(c.nombre || '').trim().toLowerCase() !== 'sin cargo');
     if (cargos.length === 0) {
       setMembersByCargo({});
       return;

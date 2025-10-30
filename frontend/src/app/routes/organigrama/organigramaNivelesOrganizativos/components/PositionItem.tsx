@@ -66,19 +66,19 @@ export default function PositionItem({ cargo, membersDetailed = [], onEdit, onDe
           {membersDetailed.length > 0 ? (
             <ul className="ml-1 mt-2 text-xs text-muted-foreground space-y-1">
               {membersDetailed.map((m) => (
-                <li key={m.id} className="flex items-center gap-2">
-                  <span className="flex-1">• {m.label}</span>
+                <li key={m.id} className="flex items-center gap-1">
+                  <span className="truncate">• {m.label}</span>
                   <Button
                     size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 rounded-md border border-destructive text-destructive hover:bg-destructive/10"
+                    variant="destructive"
+                    className="h-6 w-6 rounded-md border border-border bg-transparent hover:bg-destructive/10 transition-colors"
                     aria-label="Quitar del cargo"
                     onClick={() => {
                       setSelectedMember(m);
                       setOpenRemove(true);
                     }}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 </li>
               ))}

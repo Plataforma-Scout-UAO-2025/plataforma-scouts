@@ -316,7 +316,7 @@ export default function NivelesPage() {
     );
   };
   const computeLevelCounts = (nivel: Nivel) => {
-    const cargos = nivel.cargos || [];
+    const cargos = (nivel.cargos || []).filter((c) => String((c as unknown as { nombre?: unknown }).nombre || '').trim().toLowerCase() !== 'sin cargo');
     const cargoCount = cargos.length;
     let memberCount = 0;
     if (cargoCount > 0 && members && members.length > 0) {
