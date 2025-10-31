@@ -65,7 +65,13 @@ export default function NivelesPage() {
     nivelId?: string;
     cargoCount?: number;
     memberCount?: number;
+    isSinCargo?: boolean;
   } | null>(null);
+  const isSinCargoName = (name?: unknown): boolean => {
+    if (name == null) return false;
+    const s = String(name).trim().toLowerCase();
+    return s === "sin cargo" || s === "sincargo" || s === "sin_cargo";
+  };
 
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -189,6 +195,7 @@ export default function NivelesPage() {
       name: cargo.nombre,
       nivelId: nivel.id,
       memberCount,
+      isSinCargo: isSinCargoName(cargo.nombre),
     });
     setOpenDelete(true);
   };
@@ -316,7 +323,8 @@ export default function NivelesPage() {
     );
   };
   const computeLevelCounts = (nivel: Nivel) => {
-    const cargos = nivel.cargos || [];
+    // Ignorar el cargo especial "Sin cargo" para fines de eliminación de nivel
+    const cargos = (nivel.cargos || []).filter((c) => !isSinCargoName((c as any)?.nombre ?? (c as any)?.name));
     const cargoCount = cargos.length;
     let memberCount = 0;
     if (cargoCount > 0 && members && members.length > 0) {
@@ -344,8 +352,9 @@ export default function NivelesPage() {
       await removeNivel(deleteTarget.id);
     } else {
       // Eliminar cargo dentro del nivel
-      // Evitar eliminar si el cargo tiene miembros asociados
-      if ((deleteTarget.memberCount || 0) > 0) {
+      // Evitar eliminar si el cargo tiene miembros asociados,
+      // excepto cuando es el cargo especial "Sin cargo" (permitido).
+      if (!deleteTarget.isSinCargo && (deleteTarget.memberCount || 0) > 0) {
         return;
       }
       const nivel = data.niveles.find(
@@ -526,13 +535,13 @@ export default function NivelesPage() {
         warning={
           deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0
             ? `No se puede eliminar este nivel porque tiene ${deleteTarget?.cargoCount ?? 0} cargo(s) y ${deleteTarget?.memberCount ?? 0} miembro(s) asociados.`
-            : deleteTarget?.type === 'cargo' && (deleteTarget?.memberCount || 0) > 0
+            : deleteTarget?.type === 'cargo' && !deleteTarget?.isSinCargo && (deleteTarget?.memberCount || 0) > 0
             ? `No se puede eliminar este cargo porque tiene ${deleteTarget?.memberCount ?? 0} miembro(s) asociados.`
             : undefined
         }
         disableConfirm={
           (deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0) ||
-          (deleteTarget?.type === 'cargo' && (deleteTarget?.memberCount || 0) > 0)
+          (deleteTarget?.type === 'cargo' && !deleteTarget?.isSinCargo && (deleteTarget?.memberCount || 0) > 0)
         }
       />
 
