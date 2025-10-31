@@ -25,22 +25,22 @@ export default function MemberContactForm({
         {/* Tipo de Documento */}
         <div className="space-y-2">
           <Label htmlFor="documentType">Tipo de Documento</Label>
-          <Select value={documentType || ''} onValueChange={onDocumentTypeChange}>
-            <SelectTrigger className="bg-white border">
-              <SelectValue placeholder="Seleccione tipo de documento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
-              <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
-              <SelectItem value="CE">Cédula de Extranjería</SelectItem>
-              <SelectItem value="RC">Registro Civil</SelectItem>
-              <SelectItem value="PA">Pasaporte</SelectItem>
-              <SelectItem value="PEP">PEP</SelectItem>
-              <SelectItem value="PPT">PPT</SelectItem>
-              <SelectItem value="NIT">NIT</SelectItem>
-              <SelectItem value="NUIP">NUIP</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={documentType || ''} onValueChange={onDocumentTypeChange}>
+              <SelectTrigger className="bg-white border w-full">
+                <SelectValue placeholder="Seleccione tipo de documento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
+                <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
+                <SelectItem value="CE">Cédula de Extranjería</SelectItem>
+                <SelectItem value="RC">Registro Civil</SelectItem>
+                <SelectItem value="PA">Pasaporte</SelectItem>
+                <SelectItem value="PEP">PEP</SelectItem>
+                <SelectItem value="PPT">PPT</SelectItem>
+                <SelectItem value="NIT">NIT</SelectItem>
+                <SelectItem value="NUIP">NUIP</SelectItem>
+              </SelectContent>
+            </Select>
           {errors.documentType && (
             <p className="text-sm text-red-600">{errors.documentType.message}</p>
           )}
@@ -49,12 +49,13 @@ export default function MemberContactForm({
         {/* Teléfono */}
         <div className="space-y-2">
           <Label htmlFor="phone">Teléfono</Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="Ej: +573001234567"
-            {...register('phone')}
-          />
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="Ej: +573001234567"
+              {...register('phone')}
+              className="w-full"
+            />
           {errors.phone && (
             <p className="text-sm text-red-600">{errors.phone.message}</p>
           )}
@@ -64,12 +65,13 @@ export default function MemberContactForm({
       {/* Dirección */}
       <div className="space-y-2">
         <Label htmlFor="address">Dirección</Label>
-        <Input
-          id="address"
-          type="text"
-          placeholder="Ej: Calle 123 #45-67"
-          {...register('address')}
-        />
+          <Input
+            id="address"
+            type="text"
+            placeholder="Ej: Calle 123 #45-67"
+            {...register('address')}
+            className="w-full"
+          />
         {errors.address && (
           <p className="text-sm text-red-600">{errors.address.message}</p>
         )}

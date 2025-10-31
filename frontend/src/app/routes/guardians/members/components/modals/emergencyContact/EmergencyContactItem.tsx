@@ -54,6 +54,7 @@ export default function EmergencyContactItem({
             placeholder="Nombre completo del contacto"
             value={contact?.name || ''}
             onChange={(e) => onUpdate(index, 'name', e.target.value)}
+              className="w-full"
           />
         </div>
 
@@ -63,36 +64,37 @@ export default function EmergencyContactItem({
             <Label htmlFor={`emergency-relationship-${index}`} className="text-sm font-medium">
               Parentesco <span className="text-red-500">*</span>
             </Label>
-            <Select
-              value={contact?.relationship || ''}
-              onValueChange={(value) => onUpdate(index, 'relationship', value)}
-            >
-              <SelectTrigger id={`emergency-relationship-${index}`} className="bg-white">
-                <SelectValue placeholder="Seleccione parentesco" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Padre">Padre</SelectItem>
-                <SelectItem value="Madre">Madre</SelectItem>
-                <SelectItem value="Tutor">Tutor</SelectItem>
-                <SelectItem value="Abuelo/a">Abuelo/a</SelectItem>
-                <SelectItem value="Tío/a">Tío/a</SelectItem>
-                <SelectItem value="Hermano/a">Hermano/a</SelectItem>
-                <SelectItem value="Otro">Otro</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={contact?.relationship || ''}
+                onValueChange={(value) => onUpdate(index, 'relationship', value)}
+              >
+                <SelectTrigger id={`emergency-relationship-${index}`} className="bg-white w-full">
+                  <SelectValue placeholder="Seleccione parentesco" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Padre">Padre</SelectItem>
+                  <SelectItem value="Madre">Madre</SelectItem>
+                  <SelectItem value="Tutor">Tutor</SelectItem>
+                  <SelectItem value="Abuelo/a">Abuelo/a</SelectItem>
+                  <SelectItem value="Tío/a">Tío/a</SelectItem>
+                  <SelectItem value="Hermano/a">Hermano/a</SelectItem>
+                  <SelectItem value="Otro">Otro</SelectItem>
+                </SelectContent>
+              </Select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor={`emergency-phone-${index}`} className="text-sm font-medium">
               Teléfono <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id={`emergency-phone-${index}`}
-              type="tel"
-              placeholder="+573001234567"
-              value={contact?.phone || ''}
-              onChange={(e) => onUpdate(index, 'phone', e.target.value)}
-            />
+              <Input
+                id={`emergency-phone-${index}`}
+                type="tel"
+                placeholder="+573001234567"
+                value={contact?.phone || ''}
+                onChange={(e) => onUpdate(index, 'phone', e.target.value)}
+                className="w-full"
+              />
           </div>
         </div>
       </div>
