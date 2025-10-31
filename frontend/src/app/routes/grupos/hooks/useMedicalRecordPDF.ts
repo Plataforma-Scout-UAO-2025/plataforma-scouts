@@ -274,7 +274,7 @@ export const generateMedicalRecordPDF = async (record: MedicalRecord): Promise<B
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...primaryColor);
       doc.text(
-        "",
+        "KNUT",
         pageWidth - margin,
         pageHeight - 25,
         { align: 'right' }
@@ -557,7 +557,7 @@ const addRecordToDocument = (doc: jsPDFWithAutoTable, record: MedicalRecord) => 
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...primaryColor);
-  doc.text("Kanut", pageWidth - margin, pageHeight - 25, { align: 'right' });
+  doc.text("KNUT", pageWidth - margin, pageHeight - 25, { align: 'right' });
 };
 
 /**
