@@ -86,17 +86,8 @@ export default function EditMemberModal({
         contact.name && contact.relationship && contact.phone
       ),
     };
-      console.log('📤 Datos que se enviarán al backend:', updateData);
-
       await updateMember(String(id), updateData); 
-      //await updateMember(String(id), {
-      //  ...updateData,
-      //  emergencyContacts: emergencyContacts.filter(contact =>
-      //    contact.name && contact.relationship && contact.phone
-      //  ),
-      //});
       
-
       toast.success('Miembro actualizado correctamente');
       handleClose();
       
