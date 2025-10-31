@@ -59,55 +59,39 @@ export function useOrganigramaData(tenantId?: string, groupSlug?: string) {
               { signal: ctrl.signal }
             );
             
-            // Filtrar y quedarse con una rama por categoría: 'cachorros', 'manada', 'webelos', 'tropa', 'clan'
+            // Filtrar ramas que empiecen con categorías scout tradicionales
+            // Muestra TODAS las ramas de cada categoría (no solo una por categoría)
             const normalize = (s: string) => String(s || '')
               .normalize('NFD')
               .replace(/[\u0300-\u036f]/g, '')
               .toLowerCase()
               .trim();
             const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'] as const;
-            type Categoria = typeof ordenRamas[number];
 
-            // Agrupar por categoría detectada por prefijo
-            const groups: Record<Categoria, Rama[]> = {
-              cachorros: [], manada: [], webelos: [], tropa: [], clan: []
-            };
-            data.forEach((rama: Rama) => {
+            // Filtrar ramas que empiecen con alguna categoría scout
+            const ramasCanon: Rama[] = data.filter((rama: Rama) => {
               const n = normalize(String(rama.name || rama.nombre || ''));
-              const cat = ordenRamas.find((c) => n.startsWith(c));
-              if (cat) groups[cat].push(rama);
-            });
-
-            // Elegir la más antigua por categoría
-            const toTs = (d?: string) => {
-              const ts = d ? Date.parse(d) : NaN;
-              return Number.isFinite(ts) ? ts : Number.MAX_SAFE_INTEGER;
-            };
-            const pickOldest = (list: Rama[]): Rama | undefined => {
-              if (!list || list.length === 0) return undefined;
-              return list.reduce((oldest: Rama, cur: Rama) => (
-                toTs(cur.createdAt) < toTs(oldest.createdAt) ? cur : oldest
-              ), list[0]);
-            };
-
-            const ramasCanon: Rama[] = [];
-            ordenRamas.forEach((cat) => {
-              const chosen = pickOldest(groups[cat]);
-              if (chosen) ramasCanon.push(chosen);
+              return ordenRamas.some((cat) => n.startsWith(cat));
             });
 
             // Ordenar ramas según el orden específico de secciones scout
+            // Primero por categoría (cachorros, manada, webelos, tropa, clan)
+            // Luego alfabéticamente dentro de cada categoría
             const ramasOrdenadas = ramasCanon.sort((a, b) => {
               const nameA = String(a.name || a.nombre || '').toLowerCase();
               const nameB = String(b.name || b.nombre || '').toLowerCase();
               
               // Buscar el índice de cada rama en el orden definido
-              const indexA = ordenRamas.findIndex(orden => nameA.includes(orden));
-              const indexB = ordenRamas.findIndex(orden => nameB.includes(orden));
+              const indexA = ordenRamas.findIndex(orden => nameA.startsWith(orden));
+              const indexB = ordenRamas.findIndex(orden => nameB.startsWith(orden));
               
-              // Si ambas ramas están en el orden definido, ordenar por índice
+              // Si ambas ramas están en el orden definido, ordenar por índice de categoría
               if (indexA !== -1 && indexB !== -1) {
-                return indexA - indexB;
+                if (indexA !== indexB) {
+                  return indexA - indexB; // Diferentes categorías
+                }
+                // Misma categoría, ordenar alfabéticamente
+                return nameA.localeCompare(nameB);
               }
               
               // Si solo una está en el orden, la que está va primero

@@ -332,10 +332,8 @@ export const createRama = async (
 ): Promise<Rama> => {
   try {
     const backendData = mapFrontendCreateRamaToBackend(data);
-    const payload = {
-      ...backendData,
-      tenantId,
-    };
+    // No agregamos tenantId al payload, se pasa como parámetro separado
+    const payload = backendData;
 
     const backendRama = (await createSection(
       payload,

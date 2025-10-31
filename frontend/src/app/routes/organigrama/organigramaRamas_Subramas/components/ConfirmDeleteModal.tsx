@@ -17,6 +17,8 @@ interface ConfirmDeleteModalProps {
   title: string;
   message: string;
   onSuccess?: () => void;
+  warning?: string;
+  disableConfirm?: boolean;
 }
 
 export default function ConfirmDeleteModal({
@@ -26,6 +28,8 @@ export default function ConfirmDeleteModal({
   title,
   message,
   onSuccess,
+  warning,
+  disableConfirm = false,
 }: ConfirmDeleteModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const { error, handleError, clearError } = useApiError();
@@ -55,13 +59,20 @@ export default function ConfirmDeleteModal({
           <DialogTitle className="text-xl font-bold text-primary">{title}</DialogTitle>
         </DialogHeader>
 
-        <DialogDescription className="text-sm text-foreground mb-4">
+        <DialogDescription className="text-sm text-foreground mb-4 whitespace-pre-line">
           {message}
         </DialogDescription>
 
-        <div className="border border-primary rounded-md px-4 py-2 text-sm text-primary mb-6 bg-accent/40">
-          Esta acción es permanente y no se puede deshacer.
-        </div>
+        {/* Mostrar warning si existe */}
+        {warning ? (
+          <div className="border border-destructive rounded-md px-4 py-2 text-sm text-destructive mb-6 bg-destructive/10">
+            ⚠️ {warning}
+          </div>
+        ) : (
+          <div className="border border-primary rounded-md px-4 py-2 text-sm text-primary mb-6 bg-accent/40">
+            Esta acción es permanente y no se puede deshacer.
+          </div>
+        )}
 
         {/* Mostrar error si existe */}
         {error.hasError && (
@@ -80,9 +91,10 @@ export default function ConfirmDeleteModal({
             Cancelar
           </Button>
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary-hover"
+            className="bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleConfirm}
-            disabled={isDeleting}
+            disabled={isDeleting || disableConfirm}
+            title={disableConfirm ? "No se puede eliminar porque contiene subramas o miembros" : undefined}
           >
             {isDeleting ? (
               <>
