@@ -29,10 +29,10 @@ function ComiteAdminEnrollment() {
     handleSubmit,
   } = useRoleEnrollment({ role: "COMITE_ADMIN", totalPaginas: 2 });
 
-  const handleConsentChange = (value: string) => {
+  const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
       ...prev,
-      data_treatment_consent: value,
+      accept_treatment: value,
     }));
   };
 
@@ -50,7 +50,7 @@ function ComiteAdminEnrollment() {
 
     return (
       <DataTreatmentConsent
-        value={datosPersonales.data_treatment_consent || ""}
+        value={datosPersonales.accept_treatment}
         onChange={handleConsentChange}
         error={errors.data_treatment_consent}
       />
@@ -94,7 +94,7 @@ function ComiteAdminEnrollment() {
             variant="primary"
             disabled={
               loadingSubmit ||
-              (pagina === 2 && datosPersonales.data_treatment_consent === "rejected")
+              (pagina === 2 && datosPersonales.accept_treatment === false)
             }
           >
             {loadingSubmit
