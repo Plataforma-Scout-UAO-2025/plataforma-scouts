@@ -602,7 +602,12 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                             No hay integrantes disponibles de tu rama/subgrupo
                           </div>
                         ) : (
-                          members.map(member => (
+                          [...members]
+                            .sort((a, b) => {
+                              const nameA = `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim();
+                              const nameB = `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim();
+                              return nameA.localeCompare(nameB, "es", { sensitivity: "base" });
+                          }).map(member => (
                             <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
                               {member.first_name} {member.last_name} - ID {member.identification}
                             </SelectItem>
