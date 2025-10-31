@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.AvailableGuardianDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianCreateResponse;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
@@ -47,6 +48,12 @@ public class GuardianController {
         @PathVariable @NotNull Long id) {
         GuardianCreateDTO guardian = guardianService.findGuardianById(id);
         return ResponseEntity.ok(guardian);
+    }
+
+    @GetMapping("/list-available")
+    public ResponseEntity<List<AvailableGuardianDTO>> getAvailableGuardians() {
+        List<AvailableGuardianDTO> availableGuardians = guardianService.findAvailableGuardians();
+        return ResponseEntity.ok(availableGuardians);
     }
 
     @Operation(
