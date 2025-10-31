@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useApiError } from '../hooks/useApiError';
@@ -52,13 +51,8 @@ export default function ConfirmDeleteModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md w-full">
-        <DialogHeader className="flex items-center justify-between pb-4">
+        <DialogHeader className="pb-4">
           <DialogTitle className="text-xl font-bold text-primary">{title}</DialogTitle>
-          <DialogClose asChild>
-            <Button size="icon" variant="ghost" className="h-6 w-6 p-0">
-              <X className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          </DialogClose>
         </DialogHeader>
 
         <DialogDescription className="text-sm text-foreground mb-4">
