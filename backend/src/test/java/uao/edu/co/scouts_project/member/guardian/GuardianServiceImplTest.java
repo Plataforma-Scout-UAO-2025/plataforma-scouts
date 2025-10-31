@@ -1,4 +1,4 @@
-package uao.edu.co.scouts_project.guardian;
+package uao.edu.co.scouts_project.member.guardian;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,14 +28,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
-import uao.edu.co.scouts_project.guardian.dto.out.AvailableGuardianDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
-import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.AvailableGuardiansException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.GuardianNotFoundException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.MemberAlreadyAssignedException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.MemberNotFoundException;
-import uao.edu.co.scouts_project.guardian.model.AvailableGuardian;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
 import uao.edu.co.scouts_project.guardian.service.GuardianServiceImpl;
@@ -45,7 +42,7 @@ import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 
 @ExtendWith(MockitoExtension.class)
-class GuardianServiceImplTest {
+class GuadianServiceImplTest {
 
     @Mock
     private GuardianRepository guardianRepository;
@@ -233,116 +230,6 @@ class GuardianServiceImplTest {
             // Act & Assert
             assertThrows(MemberNotFoundException.class,
                     () -> guardianService.findGuardianWithMembers(999L));
-        }
-    }
-
-    @Nested
-    @DisplayName("findAvailableGuardians Tests")
-    class FindAvailableGuardiansTests {
-
-        @Test
-        @DisplayName("Should return list of available guardians")
-        void shouldReturnAvailableGuardians() {
-            // Arrange
-            AvailableGuardian guardian1 = AvailableGuardian.builder()
-                    .memberId(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .identification("1234567890")
-                    .build();
-
-            AvailableGuardian guardian2 = AvailableGuardian.builder()
-                    .memberId(2L)
-                    .firstName("Jane")
-                    .lastName("Smith")
-                    .identification("0987654321")
-                    .build();
-
-            List<AvailableGuardian> availableGuardians = Arrays.asList(guardian1, guardian2);
-            when(guardianRepository.findAvailableGuardians()).thenReturn(availableGuardians);
-
-            // Act
-            List<AvailableGuardianDTO> result = guardianService.findAvailableGuardians();
-
-            // Assert
-            assertNotNull(result);
-            assertEquals(2, result.size());
-
-            // Verify first guardian
-            assertEquals(1L, result.get(0).getMemberId());
-            assertEquals("John", result.get(0).getFirstName());
-            assertEquals("Doe", result.get(0).getLastName());
-            assertEquals("1234567890", result.get(0).getIdentification());
-
-            // Verify second guardian
-            assertEquals(2L, result.get(1).getMemberId());
-            assertEquals("Jane", result.get(1).getFirstName());
-            assertEquals("Smith", result.get(1).getLastName());
-            assertEquals("0987654321", result.get(1).getIdentification());
-
-            verify(guardianRepository, times(1)).findAvailableGuardians();
-        }
-
-        @Test
-        @DisplayName("Should return single available guardian")
-        void shouldReturnSingleAvailableGuardian() {
-            // Arrange
-            AvailableGuardian guardian = AvailableGuardian.builder()
-                    .memberId(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .identification("1234567890")
-                    .build();
-
-            when(guardianRepository.findAvailableGuardians()).thenReturn(Arrays.asList(guardian));
-
-            // Act
-            List<AvailableGuardianDTO> result = guardianService.findAvailableGuardians();
-
-            // Assert
-            assertNotNull(result);
-            assertEquals(1, result.size());
-            assertEquals("John", result.get(0).getFirstName());
-            verify(guardianRepository, times(1)).findAvailableGuardians();
-        }
-
-        @Test
-        @DisplayName("Should throw AvailableGuardiansException when no available guardians found")
-        void shouldThrowExceptionWhenNoAvailableGuardians() {
-            // Arrange
-            when(guardianRepository.findAvailableGuardians()).thenReturn(Collections.emptyList());
-
-            // Act & Assert
-            assertThrows(AvailableGuardiansException.class,
-                    () -> guardianService.findAvailableGuardians());
-            verify(guardianRepository, times(1)).findAvailableGuardians();
-        }
-
-        @Test
-        @DisplayName("Should correctly map all fields from AvailableGuardian to AvailableGuardianDTO")
-        void shouldMapAllFieldsCorrectly() {
-            // Arrange
-            AvailableGuardian guardian = AvailableGuardian.builder()
-                    .memberId(123L)
-                    .firstName("Carlos")
-                    .lastName("Rodriguez")
-                    .identification("1122334455")
-                    .build();
-
-            when(guardianRepository.findAvailableGuardians()).thenReturn(Arrays.asList(guardian));
-
-            // Act
-            List<AvailableGuardianDTO> result = guardianService.findAvailableGuardians();
-
-            // Assert
-            assertNotNull(result);
-            assertEquals(1, result.size());
-            AvailableGuardianDTO dto = result.get(0);
-
-            assertEquals(guardian.getMemberId(), dto.getMemberId());
-            assertEquals(guardian.getFirstName(), dto.getFirstName());
-            assertEquals(guardian.getLastName(), dto.getLastName());
-            assertEquals(guardian.getIdentification(), dto.getIdentification());
         }
     }
 
