@@ -116,6 +116,10 @@ public class MemberDto {
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
 
+    @NotBlank(message = "Tratamiento de datos obligatorio")
+    @JsonProperty("accept_treatment")
+    private Boolean acceptTreatment;
+
     @Data
     @Builder
     @AllArgsConstructor
