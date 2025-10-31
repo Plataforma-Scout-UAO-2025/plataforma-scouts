@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import uao.edu.co.scouts_project.member.model.Member;
+import uao.edu.co.scouts_project.guardian.model.AvailableGuardian;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 
 @Repository
@@ -20,10 +21,16 @@ public interface GuardianRepository extends JpaRepository<Member, Long> {
             "FROM Member m WHERE m.guardianId = :guardianId")
     List<MemberCustom> findMembersInChargeOf(@Param("guardianId") Long guardianId);
 
+    @Query("SELECT new uao.edu.co.scouts_project.guardian.model.AvailableGuardian(" +
+            "m.memberId, m.firstName, m.lastName, m.identification) " +
+            "FROM Member m WHERE m.role = 'ACUDIENTE' AND m.isActive = true AND m.memberId NOT IN " +
+            "(SELECT DISTINCT s.guardianId FROM Member s WHERE s.guardianId IS NOT NULL)")
+    List<AvailableGuardian> findAvailableGuardians();
+
     @Query("SELECT new uao.edu.co.scouts_project.guardian.model.MemberCustom(" +
-        "m.memberId, m.firstName, m.lastName, m.identification, m.documentType, " +
-        "m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive, m.email, m.role) " +
-        "FROM Member m WHERE m.guardianId IS NULL AND m.role = 'SCOUT'")
+            "m.memberId, m.firstName, m.lastName, m.identification, m.documentType, " +
+            "m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive, m.email, m.role) " +
+            "FROM Member m WHERE m.guardianId IS NULL AND m.role = 'SCOUT'")
     List<MemberCustom> findMembersWithoutGuardian();
 
     @Query("SELECT m FROM Member m WHERE m.memberId = :id AND m.role = 'ACUDIENTE'")
