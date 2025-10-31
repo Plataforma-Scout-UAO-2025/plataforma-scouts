@@ -5,12 +5,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.AvailableGuardianDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianCreateResponse;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.*;
 import uao.edu.co.scouts_project.guardian.mapper.GuardianMapper;
 import uao.edu.co.scouts_project.guardian.mapper.SubgroupMapper;
+import uao.edu.co.scouts_project.guardian.model.AvailableGuardian;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
 import uao.edu.co.scouts_project.member.model.Member;
@@ -76,6 +78,25 @@ public class GuardianServiceImpl implements GuardianService {
                 .members(membersInCharge)
                 .build();
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AvailableGuardianDTO> findAvailableGuardians() {
+        List<AvailableGuardian> availableGuardians = memberRepository.findAvailableGuardians();
+
+        if (availableGuardians.isEmpty()) {
+            throw new AvailableGuardiansException("No available guardians found");
+        }
+
+        return availableGuardians.stream()
+                .map(model -> AvailableGuardianDTO.builder()
+                    .memberId(model.getMemberId())
+                    .firstName(model.getFirstName())
+                    .lastName(model.getLastName())
+                    .identification(model.getIdentification())
+                    .build())
+                .toList();
     }
 
     @Override
@@ -167,4 +188,5 @@ public class GuardianServiceImpl implements GuardianService {
         existingGuardian.setPhone(dto.getPhone());
         existingGuardian.setRelationship(dto.getRelationship());
     }
+
 }
