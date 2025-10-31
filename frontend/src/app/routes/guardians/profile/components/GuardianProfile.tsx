@@ -146,7 +146,7 @@ const GuardianProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#fffaf3]">
       <div className="flex flex-col min-h-screen">
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate('/app/dashboard')} className="hover:bg-gray-100">
               <ArrowLeft className="h-5 w-5" />
