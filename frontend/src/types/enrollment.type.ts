@@ -13,7 +13,15 @@ export type DocumentType =
   | "";
 export type Gender = "Femenino" | "Masculino" | "";
 export type Shift = "Mañana" | "Tarde" | "Noche" | "Completa" | "";
-export type role = "SCOUT" | "ACUDIENTE" | "TESORERO" | "SCOUTER" | "COMITE_ADMIN" | "DEV_SUPPORT" | "ADMIN_GLOBAL" | "ADMIN_GRUPO";
+export type role =
+  | "SCOUT"
+  | "ACUDIENTE"
+  | "TESORERO"
+  | "SCOUTER"
+  | "COMITE_ADMIN"
+  | "DEV_SUPPORT"
+  | "ADMIN_GLOBAL"
+  | "ADMIN_GRUPO";
 
 export interface PersonalData {
   firstname: string;
@@ -37,6 +45,7 @@ export interface PersonalData {
   instruments?: string;
   tenantId: string;
   emergency_contacts?: EmergencyContact[];
+  data_treatment_consent?: string;
 }
 
 export interface SchoolData {

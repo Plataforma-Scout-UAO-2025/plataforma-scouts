@@ -1,4 +1,4 @@
-import { User, Phone, Mail, CreditCard } from 'lucide-react';
+import { User, Phone, Mail, CreditCard, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 
@@ -11,7 +11,7 @@ interface ProfileInfoCardProps {
   emailAlt?: string;
   phone: string;
   phoneAlt?: string;
-//  address: string;
+  address: string;
 }
 
 export default function ProfileInfoCard({
@@ -21,7 +21,7 @@ export default function ProfileInfoCard({
   documentType,
   email,
   phone,
-  //address
+  address
 }: ProfileInfoCardProps) {
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -71,14 +71,14 @@ export default function ProfileInfoCard({
             </Label>
             <p className="text-sm">{phone}</p>
           </div>
-          {/* <div>
+          <div>
             <Label className="text-sm font-medium text-gray-600 flex items-center gap-1">
               <MapPin className="h-3 w-3" />
               Dirección
             </Label>
             <p className="text-sm">{address}</p>
           </div> 
-          </div>*/}
+                    
         </CardContent>
       </Card>
 

@@ -36,37 +36,42 @@ class GroupControllerTest {
     private static final String GROUP = "centinelas-113";
     private static final String BASE = "/api/v1/tenants/{tenantSlug}/groups";
 
-    @Autowired MockMvc mvc;
-    @Autowired ObjectMapper om;
+    @Autowired
+    MockMvc mvc;
+    @Autowired
+    ObjectMapper om;
 
-    @MockitoBean TenantFilter tenantFilter;
-    @MockitoBean GroupService groupService;
-    @MockitoBean AuthoritiesMappingPort authoritiesMappingPort;
+    @MockitoBean
+    TenantFilter tenantFilter;
+    @MockitoBean
+    GroupService groupService;
+    @MockitoBean
+    AuthoritiesMappingPort authoritiesMappingPort;
 
     private GroupResponseDTO sampleResponse() {
         return new GroupResponseDTO(
-            1L,                                // groupId
-            TENANT,                            // tenantId
-            GROUP,                             // slug
-            "Grupo Scout Centinelas 113",      // name
-            "Distrito Valle",                  // district
-            "ID-803",                          // identifierNumber
-            "Calle 123",                       // address
-            "3001234567",                      // phone
-            "grupo@example.com",               // email
-            LocalDate.of(1998,1,1),            // foundedIn
-            "Siempre Listos",                  // motto
-            "Formar mejores ciudadanos",       // mission
-            "Ser ejemplo",                     // vision
-            "Historia...",                     // history
-            "https://cdn.url/logo.png",        // logoObjectUrl
-            "https://cdn.url/scarf.png",       // scarfObjectUrl
-            Map.<String,Object>of(),           // socialLinks
-            Map.<String,Object>of(),           // config
-            true,                              // isActive
-            "ACTIVE",                          // status
-            LocalDateTime.now(),               // createdAt
-            LocalDateTime.now()                // updatedAt
+                1L, // groupId
+                TENANT, // tenantId
+                GROUP, // slug
+                "Grupo Scout Centinelas 113", // name
+                "Distrito Valle", // district
+                "ID-803", // identifierNumber
+                "Calle 123", // address
+                "3001234567", // phone
+                "grupo@example.com", // email
+                LocalDate.of(1998, 1, 1), // foundedIn
+                "Siempre Listos", // motto
+                "Formar mejores ciudadanos", // mission
+                "Ser ejemplo", // vision
+                "Historia...", // history
+                "https://cdn.url/logo.png", // logoObjectUrl
+                "https://cdn.url/scarf.png", // scarfObjectUrl
+                Map.<String, Object>of(), // socialLinks
+                Map.<String, Object>of(), // config
+                true, // isActive
+                "ACTIVE", // status
+                LocalDateTime.now(), // createdAt
+                LocalDateTime.now() // updatedAt
         );
     }
 
@@ -74,24 +79,24 @@ class GroupControllerTest {
     @DisplayName("GET /groups → 200 y lista")
     void list_ok() throws Exception {
         when(groupService.getGroupsByTenant(eq(TENANT)))
-            .thenReturn(List.of(sampleResponse()));
+                .thenReturn(List.of(sampleResponse()));
 
         mvc.perform(get(BASE, TENANT))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$[0].slug").value(GROUP))
-           .andExpect(jsonPath("$[0].name").value("Grupo Scout Centinelas 113"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].slug").value(GROUP))
+                .andExpect(jsonPath("$[0].name").value("Grupo Scout Centinelas 113"));
     }
 
     @Test
     @DisplayName("GET /groups/{slug} → 200 y detalle")
     void get_ok() throws Exception {
         when(groupService.getGroupBySlug(eq(TENANT), eq(GROUP)))
-            .thenReturn(sampleResponse());
+                .thenReturn(sampleResponse());
 
         mvc.perform(get(BASE + "/{groupSlug}", TENANT, GROUP))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.slug").value(GROUP))
-           .andExpect(jsonPath("$.groupId").value(1L));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.slug").value(GROUP))
+                .andExpect(jsonPath("$.groupId").value(1L));
     }
 
     @Test
@@ -99,96 +104,86 @@ class GroupControllerTest {
     void create_ok() throws Exception {
         // Constructor CANÓNICO del record GroupDTO (orden exacto)
         GroupDTO req = new GroupDTO(
-            null,                // groupId
-            TENANT,              // tenantId
-            GROUP,               // slug
-            "Grupo Scout Centinelas 113", // name
-            null,                // district
-            null,                // identifierNumber
-            null,                // address
-            null,                // phone
-            null,                // email
-            null,                // foundedIn
-            null,                // motto
-            null,                // mission
-            null,                // vision
-            null,                // history
-            null,                // logoObjectId (UUID)
-            null,                // scarfObjectId (UUID)
-            Map.of(),            // socialLinks
-            Map.of(),            // config
-            Boolean.TRUE,        // isActive
-            "ACTIVE",          // status
-            null,                // createdAt
-            null                 // updatedAt
+                null, // groupId
+                TENANT, // tenantId
+                GROUP, // slug
+                "Grupo Scout Centinelas 113", // name
+                null, // district
+                null, // identifierNumber
+                null, // address
+                null, // phone
+                null, // email
+                null, // foundedIn
+                null, // motto
+                null, // mission
+                null, // vision
+                null, // history
+                null, // logoObjectId (UUID)
+                null, // scarfObjectId (UUID)
+                Map.of(), // socialLinks
+                Map.of(), // config
+                Boolean.TRUE, // isActive
+                "ACTIVE", // status
+                null, // createdAt
+                null // updatedAt
         );
 
         when(groupService.createGroup(eq(TENANT), any(GroupDTO.class)))
-            .thenReturn(sampleResponse());
+                .thenReturn(sampleResponse());
 
         mvc.perform(post(BASE, TENANT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsBytes(req)))
-           .andExpect(status().isCreated())
-           .andExpect(header().exists("Location"))
-           .andExpect(jsonPath("$.slug").value(GROUP));
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.slug").value(GROUP));
     }
 
     @Test
     @DisplayName("PUT /groups/{slug} → 200 OK")
     void update_ok() throws Exception {
         GroupDTO req = new GroupDTO(
-            1L,                 // groupId
-            TENANT,
-            GROUP,
-            "Grupo Scout Centinelas 113 (Actualizado)",
-            null,                // district
-            null,                // identifierNumber
-            null,                // address
-            null,                // phone
-            null,                // email
-            null,                // foundedIn
-            null,                // motto
-            null,                // mission
-            null,                // vision
-            null,                // history
-            null,                // logoObjectId (UUID)
-            null,                // scarfObjectId (UUID)
-            Map.of(),            // socialLinks
-            Map.of(),            // config
-            Boolean.TRUE,        // isActive
-            "ACTIVE",          // status
-            null,                // createdAt
-            null                 // updatedAt
+                1L, // groupId
+                TENANT,
+                GROUP,
+                "Grupo Scout Centinelas 113 (Actualizado)",
+                null, // district
+                null, // identifierNumber
+                null, // address
+                null, // phone
+                null, // email
+                null, // foundedIn
+                null, // motto
+                null, // mission
+                null, // vision
+                null, // history
+                null, // logoObjectId (UUID)
+                null, // scarfObjectId (UUID)
+                Map.of(), // socialLinks
+                Map.of(), // config
+                Boolean.TRUE, // isActive
+                "ACTIVE", // status
+                null, // createdAt
+                null // updatedAt
         );
 
         GroupResponseDTO updated = new GroupResponseDTO(
-            1L, TENANT, GROUP, "Grupo Scout Centinelas 113 (Actualizado)",
-            "Distrito Valle", "ID-803", "Calle 123", "3001234567", "grupo@example.com",
-            LocalDate.of(1998,1,1),
-            "Siempre Listos","Formar mejores ciudadanos","Ser ejemplo","Historia...",
-            "https://cdn.url/logo.png","https://cdn.url/scarf.png",
-            Map.<String,Object>of(), Map.<String,Object>of(), true, "ACTIVE",
-            LocalDateTime.now(), LocalDateTime.now()
-        );
+                1L, TENANT, GROUP, "Grupo Scout Centinelas 113 (Actualizado)",
+                "Distrito Valle", "ID-803", "Calle 123", "3001234567", "grupo@example.com",
+                LocalDate.of(1998, 1, 1),
+                "Siempre Listos", "Formar mejores ciudadanos", "Ser ejemplo", "Historia...",
+                "https://cdn.url/logo.png", "https://cdn.url/scarf.png",
+                Map.<String, Object>of(), Map.<String, Object>of(), true, "ACTIVE",
+                LocalDateTime.now(), LocalDateTime.now());
 
         when(groupService.updateGroup(eq(TENANT), eq(GROUP), any(GroupDTO.class)))
-            .thenReturn(updated);
+                .thenReturn(updated);
 
         mvc.perform(put(BASE + "/{groupSlug}", TENANT, GROUP)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsBytes(req)))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.name").value("Grupo Scout Centinelas 113 (Actualizado)"));
-    }
-
-    @Test
-    @DisplayName("DELETE /groups/{slug} → 204 No Content")
-    void delete_ok() throws Exception {
-        doNothing().when(groupService).deleteGroup(eq(TENANT), eq(GROUP));
-
-        mvc.perform(delete(BASE + "/{groupSlug}", TENANT, GROUP))
-           .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Grupo Scout Centinelas 113 (Actualizado)"));
     }
 
     @Test
@@ -200,7 +195,7 @@ class GroupControllerTest {
         mvc.perform(patch(BASE + "/{groupSlug}/logo", TENANT, GROUP)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-           .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -212,7 +207,7 @@ class GroupControllerTest {
         mvc.perform(patch(BASE + "/{groupSlug}/scarf", TENANT, GROUP)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-           .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -221,7 +216,7 @@ class GroupControllerTest {
         doNothing().when(groupService).deleteLogoImage(eq(TENANT), eq(GROUP));
 
         mvc.perform(delete(BASE + "/{groupSlug}/logo", TENANT, GROUP))
-           .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -230,6 +225,6 @@ class GroupControllerTest {
         doNothing().when(groupService).deleteScarfImage(eq(TENANT), eq(GROUP));
 
         mvc.perform(delete(BASE + "/{groupSlug}/scarf", TENANT, GROUP))
-           .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
     }
 }

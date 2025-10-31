@@ -15,6 +15,7 @@ import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
 import uao.edu.co.scouts_project.member.model.Member;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -98,6 +99,21 @@ public class GuardianServiceImpl implements GuardianService {
         updateGuardianFields(existingGuardian, guardianCreateDTO);
         memberRepository.save(existingGuardian);
 
+    }
+
+        // AGREGAR ESTE MÉTODO A LA CLASE GuardianServiceImpl:
+    @Override
+    @Transactional(readOnly = true)
+    public List<MemberDTO> findMembersWithoutGuardian() {
+        List<MemberCustom> membersCustom = this.memberRepository.findMembersWithoutGuardian();
+        
+        if (membersCustom.isEmpty()) {
+            return new ArrayList<>();
+        }
+    
+        return membersCustom.stream()
+                .map(GuardianMapper::toMemberDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

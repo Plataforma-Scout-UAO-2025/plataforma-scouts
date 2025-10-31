@@ -33,7 +33,9 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/sec/roles").authenticated()
                                                 .requestMatchers("/api/v1/sec/org_id").authenticated()
                                                 .requestMatchers("/api/v1/sec/admin/auth0/connections/*").denyAll()
-                                                .requestMatchers("/api/v1/sec/admin/auth0/organizations/*/connections/*").denyAll()
+                                                .requestMatchers(
+                                                                "/api/v1/sec/admin/auth0/organizations/*/connections/*")
+                                                .denyAll()
 
                                                 .requestMatchers("/api/v1/mock/scouts/list")
                                                 .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
@@ -46,14 +48,26 @@ public class SecurityConfig {
 
                                                 // Operaciones CRUD en tenants
 
+                                                // Exponer públicamente el endpoint para resolver org_id por slug
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/slug/**")
+                                                .permitAll()
+
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
                                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
-                                                // Operaciones CRUD en grupos
 
+                                                // Operaciones de consulta en grupos
+
+                                                // .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
+                                                // .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
+                                                //                 COMITE_ADMIN.name(), DEV_SUPPORT.name(),
+                                                //                 SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
+                                                //                 SCOUT.name())
+
+                                                // Operaciones CRUD en grupos
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**")
                                                 .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
                                                                 DEV_SUPPORT.name())
@@ -67,13 +81,6 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
                                                                 DEV_SUPPORT.name())
 
-                                                // Operaciones de consulta en grupos
-
-                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
-                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
-                                                                COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                                                SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
-                                                                SCOUT.name())
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*")
                                                 .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
                                                                 COMITE_ADMIN.name(), DEV_SUPPORT.name(),
@@ -130,7 +137,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/members/create_member_with_school")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_members")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ACUDIENTE.name())
                                                 .requestMatchers("/api/v1/members/list_members_by_subgroup")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/list_members_by_status")
@@ -142,6 +149,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/members/update_member_status/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/update_member_by_id/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ACUDIENTE.name())
+                                                .requestMatchers("/api/v1/members/update_role/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
                                                 .requestMatchers("/api/v1/members/assign_subgroup_and_section/")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
@@ -150,40 +159,44 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/auth0/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-
                                                 // Guardians
 
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                        DEV_SUPPORT.name())
+                                                                DEV_SUPPORT.name())
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                        DEV_SUPPORT.name())
+                                                                DEV_SUPPORT.name())
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                        DEV_SUPPORT.name())
+                                                                DEV_SUPPORT.name())
                                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                        DEV_SUPPORT.name())
+                                                                DEV_SUPPORT.name())
 
                                                 //
                                                 // ==== FICHAS MÉDICAS ====
 
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/medical_record/create_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name())
 
-                                                .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(), SCOUT.name())
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/v1/medical_record/list_record/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(),
+                                                                SCOUT.name())
 
-                                                .requestMatchers(HttpMethod.PUT, "/api/v1/medical_record/update_record/**")
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/api/v1/medical_record/update_record/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
 
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_by_tenant")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name())
 
                                                 //
                                                 // Pagos
-                                                .requestMatchers(HttpMethod.GET,"/api/v1/finanzas/payments/status/*/*")
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/finanzas/payments/status/*/*")
+                                                .hasAnyRole(ACUDIENTE.name())
+                                                .requestMatchers(HttpMethod.GET,"/api/v1/finanzas/payments/status/guardian/*")
                                                 .hasAnyRole(ACUDIENTE.name())
 
                                                 .requestMatchers("/api/v1/finanzas/payments/**")

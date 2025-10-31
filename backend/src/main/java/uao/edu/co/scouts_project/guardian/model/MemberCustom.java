@@ -31,10 +31,13 @@ public class MemberCustom {
     private String phone;
     private LocalDate birthDate;
     private String address;
+    private Boolean isActive;
+    private String email;
+    private String role;
 
     public MemberCustom(Long memberId, String firstName, String lastName, String identification,
             DocumentType documentType, Integer age, String gender,
-            String phone, LocalDate birthDate, String address) {
+            String phone, LocalDate birthDate, String address, Boolean isActive, String email, String role) {
         this.memberId = memberId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -45,6 +48,9 @@ public class MemberCustom {
         this.phone = phone;
         this.birthDate = birthDate;
         this.address = address;
+        this.isActive = isActive;
+        this.email = email;
+        this.role = role;
         this.emergencyContacts = null;
     }
 

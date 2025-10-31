@@ -29,23 +29,23 @@ const RejectedTable = ({ filteredMembers, onViewMember, loading, }: RejectedTabl
   };
 
   const handleView = async (member: Member) => {
-      if (typeof member.member_id !== "number") {
-        alert("El ID del miembro no es válido.");
-        return;
-      }
-      try {
-        setLoadingMemberId(member.member_id);
-        const result = await dispatch(
-          fetchMemberAction(member.member_id)
-        ).unwrap();
-        onViewMember(result);
-      } catch (err) {
-        console.error("Error al obtener detalles:", err);
-        alert("Error al cargar los detalles del miembro");
-      } finally {
-        setLoadingMemberId(null);
-      }
-    };
+    if (typeof member.member_id !== "number") {
+      alert("El ID del miembro no es válido.");
+      return;
+    }
+    try {
+      setLoadingMemberId(member.member_id);
+      const result = await dispatch(
+        fetchMemberAction(member.member_id)
+      ).unwrap();
+      onViewMember(result);
+    } catch (err) {
+      console.error("Error al obtener detalles:", err);
+      alert("Error al cargar los detalles del miembro");
+    } finally {
+      setLoadingMemberId(null);
+    }
+  };
   return (
     <div>
       <Table className="text-sm">
@@ -57,7 +57,7 @@ const RejectedTable = ({ filteredMembers, onViewMember, loading, }: RejectedTabl
             <TableHead className="font-bold text-primary">
               Identificación
             </TableHead>
-            <TableHead className="font-bold text-primary">Dirección</TableHead>
+            <TableHead className="font-bold text-primary">Edad</TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
             <TableHead className="text-right"></TableHead>
           </TableRow>
@@ -78,7 +78,7 @@ const RejectedTable = ({ filteredMembers, onViewMember, loading, }: RejectedTabl
                 <TableCell>{member.first_name}</TableCell>
                 <TableCell>{member.last_name}</TableCell>
                 <TableCell>{member.identification}</TableCell>
-                <TableCell>{member.address || "Sin dirección"}</TableCell>
+                <TableCell>{member.age}</TableCell>
                 <TableCell>
                   <span className="inline-block px-2 py-1 rounded-lg border border-red-300 bg-red-100 text-red-800 font-semibold">
                     {statusLabels[member.status ?? "Rechazado"]}

@@ -14,6 +14,7 @@ import {
   createMemberAuth0,
   createScoutAuth0,
   getSchoolDataByMemberId,
+  changeAuth0UserRole,
 } from "@/api/membersApi";
 import type { Member, UpdateMember } from "@/types/member.type";
 import type {
@@ -303,3 +304,26 @@ export const fetchSchoolDataMemberAction = createAsyncThunk<
     return rejectWithValue(errorMessage);
   }
 });
+
+// Cambiar rol de usuario en Auth0 (llamada al backend)
+export const changeAuth0UserRoleAction = createAsyncThunk<
+  { message?: string },
+  { user_id: string; newRole: string; organizationId?: string },
+  { rejectValue: { error: string } }
+>(
+  "member/changeAuth0UserRole",
+  async (
+    data: { user_id: string; newRole: string; organizationId?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await changeAuth0UserRole(data);
+      return response;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al cambiar rol en Auth0";
+      return rejectWithValue({ error: errorMessage });
+    }
+  },
+);

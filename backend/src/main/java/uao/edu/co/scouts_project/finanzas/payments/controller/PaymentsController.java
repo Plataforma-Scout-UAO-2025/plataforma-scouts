@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import uao.edu.co.scouts_project.finanzas.payments.dto.AppendPaymentDto;
 import uao.edu.co.scouts_project.finanzas.payments.dto.EstadoCuentaDto;
@@ -139,14 +140,15 @@ public class PaymentsController {
     )
     @ApiResponse(responseCode = "200", description = "OK",
         content = @Content(schema = @Schema(implementation = EstadoCuentaDto.class)))
-    @GetMapping("/status/{tenantId}/{guardianId}")
+    @GetMapping("/status/guardian/{tenantId}")
     public ResponseEntity<EstadoCuentaDto> getAccountStatusForGuardian(
             @Parameter(name = "tenantId", in = ParameterIn.PATH, example = "org_6B3k4dao2Wf6eGxa")
-            @PathVariable String tenantId,
-            @Parameter(name = "guardianId", in = ParameterIn.PATH, example = "83")
-            @PathVariable Long guardianId
+            @PathVariable String tenantId
     ) {
-        var list = service.listAccountStatusForGuardian(tenantId, guardianId); // siempre 1 elemento
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long guardianId = service.getGuardianIdFromUserId(userId);
+        System.out.println("Current Member ID: " + guardianId);
+        var list = service.listAccountStatusForGuardian(tenantId, guardianId);
         return ResponseEntity.ok(list.get(0));
     }
 
