@@ -279,7 +279,7 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
 
     console.log(' [ExportPDF] Generando tabla con autoTable...');
     const pageW = doc.internal.pageSize.getWidth();
-    // Precalcular dimensiones del pie de página (logo) y reservar margen
+    // Precalcular dimensiones del pie de página (logo); no reservaremos margen global
   const footerW = Math.min(120, pageW * 0.18);
     let footerH = 50;
     try {
@@ -298,7 +298,8 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       startY: y + 32,
       head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
       body,
-      margin: { left: x, right: x, bottom: Math.ceil(footerH + 24) },
+      // Usar un margen inferior pequeño para no reservar espacio en todas las páginas
+      margin: { left: x, right: x, bottom: 12 },
       styles: { 
         fontSize: 8, 
         cellPadding: 4, 
@@ -313,12 +314,12 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       },
     });
 
-    // Añadir pie de página con imagen KNUT en todas las páginas
+    // Pie de página solo en la última página; si no hay espacio, crear una nueva página
     try {
       const img = await loadImage(KNUT);
-      const pageCount: number = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } }).getNumberOfPages?.() ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal?.getNumberOfPages?.() ?? 1;
-      // Solo en la última página
-      const last = Math.max(1, pageCount);
+      const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } }).getNumberOfPages?.bind(doc) ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal) ?? (() => 1);
+      const last = Math.max(1, getPages());
+      const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
       doc.setPage(last);
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -328,7 +329,20 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       const h = w * ratio;
       const xImg = (pageWidth - w) / 2;
       const yImg = pageHeight - h - marginBottom;
-      (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", xImg, yImg, w, h, undefined, "FAST");
+      const finalY = anyDoc.lastAutoTable?.finalY ?? 0;
+      if (finalY && finalY > yImg - 4) {
+        // Sin espacio: crear una página más para el logo
+        doc.addPage();
+        const pw = doc.internal.pageSize.getWidth();
+        const ph = doc.internal.pageSize.getHeight();
+        const w2 = Math.min(footerW, pw * 0.18);
+        const h2 = w2 * ratio;
+        const x2 = (pw - w2) / 2;
+        const y2 = ph - h2 - marginBottom;
+        (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", x2, y2, w2, h2, undefined, "FAST");
+      } else {
+        (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", xImg, yImg, w, h, undefined, "FAST");
+      }
     } catch (e) {
       console.warn(" [ExportPDF] No se pudo agregar imagen de pie de página KNUT:", e);
     }

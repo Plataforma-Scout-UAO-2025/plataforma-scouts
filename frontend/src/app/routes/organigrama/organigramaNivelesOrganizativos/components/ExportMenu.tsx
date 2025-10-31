@@ -150,7 +150,7 @@ async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName
       });
     }
   });
-  // Precalcular tamaño del footer y reservar margen inferior
+  // Precalcular tamaño del footer (no reservamos margen global)
   let footerW = 110;
   let footerH = 45;
   try {
@@ -165,7 +165,9 @@ async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName
     head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: tableData,
     startY: 35,
-    margin: { bottom: Math.ceil(footerH + 18) },
+  // Importante: no reservar margen grande en todas las páginas;
+  // dejamos un margen pequeño y gestionamos el pie solo en la última página.
+  margin: { bottom: 12 },
     theme: "striped",
     styles: {
       fontSize: 9,
@@ -180,12 +182,13 @@ async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName
     alternateRowStyles: { fillColor: [237, 237, 237] }, // 🎨 --accent (#EDEDED)
   });
 
-  // Pie de página con imagen KNUT en todas las páginas
+  // Pie de página: solo en la última página y sin dejar espacio en las demás.
   try {
     const img = await loadImage(KNUT);
     const pageCount: number = getNumberOfPagesSafe(doc);
-    // Colocar el logo solo en la última página
+    // Colocar el logo solo en la última página; si no hay espacio, crear una nueva
     const last = Math.max(1, pageCount);
+    const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
     doc.setPage(last);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -195,8 +198,23 @@ async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName
     const h = w * ratio;
     const x = (pageWidth - w) / 2;
     const y = pageHeight - h - margin;
-    // Añadir imagen como PNG con tipado seguro
-    (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x, y, w, h, undefined, "FAST");
+
+    // Verificar posible solapamiento con el contenido del último autoTable
+    const finalY = anyDoc.lastAutoTable?.finalY ?? 0;
+    if (finalY && finalY > y - 4) {
+      // No hay espacio suficiente: agregar una página extra para el logo
+      doc.addPage();
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      const w2 = Math.min(footerW, pw * 0.28);
+      const h2 = w2 * ratio;
+      const x2 = (pw - w2) / 2;
+      const y2 = ph - h2 - margin;
+      (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x2, y2, w2, h2, undefined, "FAST");
+    } else {
+      // Hay espacio en la última página actual
+      (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x, y, w, h, undefined, "FAST");
+    }
   } catch (e) {
     console.warn("[Export PDF Niveles] No se pudo cargar la imagen de pie de página KNUT:", e);
   }
