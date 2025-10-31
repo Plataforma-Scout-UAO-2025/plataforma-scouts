@@ -77,33 +77,59 @@ class TenantServiceTest {
         verifyNoMoreInteractions(tenantRepository);
     }
 
-    // @Test
-    // @DisplayName("getTenantById: lanza IllegalArgumentException si no existe")
-    // void getTenantById_notFound() {
-    //     String missingTenantId = "t-nope";
-    //     when(tenantRepository.findById(missingTenantId)).thenReturn(Optional.empty());
+    @Test
+    @DisplayName("getTenantById: lanza IllegalArgumentException si no existe")
+    void getTenantById_notFound() {
+        String missingTenantId = "t-nope";
+        when(tenantRepository.findById(missingTenantId)).thenReturn(Optional.empty());
 
-    //     assertThatThrownBy(() -> tenantService.getTenantById(missingTenantId))
-    //         .isInstanceOf(IllegalArgumentException.class)
-    //         .hasMessageContaining("not found");
+        assertThatThrownBy(() -> tenantService.getTenantById(missingTenantId))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("no encontrado");
 
-    //     verify(tenantRepository).findById(missingTenantId);
-    //     verifyNoMoreInteractions(tenantRepository);
-    // }
+        verify(tenantRepository).findById(missingTenantId);
+        verifyNoMoreInteractions(tenantRepository);
+    }
 
-    // @Test
-    // @DisplayName("createTenant: lanza IllegalArgumentException si slug duplicado")
-    // void createTenant_duplicateSlug() {
-    //     TenantDTO incoming = new TenantDTO(null, "region-valle", "active", null, null);
-    //     when(tenantRepository.existsBySlug("region-valle")).thenReturn(true);
+    @Test
+    @DisplayName("getTenantIdBySlug: retorna id si existe")
+    void getTenantIdBySlug_ok() {
+        Tenant t = newTenantEntity("region-valle", "active");
+        when(tenantRepository.findBySlug("region-valle")).thenReturn(Optional.of(t));
 
-    //     assertThatThrownBy(() -> tenantService.createTenant(incoming))
-    //         .isInstanceOf(IllegalArgumentException.class)
-    //         .hasMessageContaining("already exists");
+        String tenantId = tenantService.getTenantIdBySlug("region-valle");
 
-    //     verify(tenantRepository).existsBySlug("region-valle");
-    //     verifyNoMoreInteractions(tenantRepository);
-    // }
+        assertThat(tenantId).isEqualTo("t-region-valle");
+        verify(tenantRepository).findBySlug("region-valle");
+        verifyNoMoreInteractions(tenantRepository);
+    }
+
+    @Test
+    @DisplayName("getTenantIdBySlug: lanza IllegalArgumentException si no existe")
+    void getTenantIdBySlug_notFound() {
+        when(tenantRepository.findBySlug("no-existe")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> tenantService.getTenantIdBySlug("no-existe"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Tenant not found with slug");
+
+        verify(tenantRepository).findBySlug("no-existe");
+        verifyNoMoreInteractions(tenantRepository);
+    }
+
+    @Test
+    @DisplayName("createTenant: lanza IllegalArgumentException si slug duplicado")
+    void createTenant_duplicateSlug() {
+        TenantDTO incoming = new TenantDTO(null, "region-valle", "active", null, null);
+        when(tenantRepository.existsBySlug("region-valle")).thenReturn(true);
+
+        assertThatThrownBy(() -> tenantService.createTenant(incoming))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("ya existe");
+
+        verify(tenantRepository).existsBySlug("region-valle");
+        verifyNoMoreInteractions(tenantRepository);
+    }
 
     @Test
     @DisplayName("createTenant: crea y retorna DTO si slug libre")
@@ -208,31 +234,7 @@ class TenantServiceTest {
         verifyNoMoreInteractions(tenantRepository);
     }
 
-    @Test
-    @DisplayName("getTenantIdBySlug: retorna tenantId si existe")
-    void getTenantIdBySlug_ok() {
-        Tenant t = newTenantEntity("slug-login", "active");
-        when(tenantRepository.findBySlug("slug-login")).thenReturn(Optional.of(t));
 
-        String tenantId = tenantService.getTenantIdBySlug("slug-login");
-
-        assertThat(tenantId).isEqualTo(t.getTenantId());
-        verify(tenantRepository).findBySlug("slug-login");
-        verifyNoMoreInteractions(tenantRepository);
-    }
-
-    @Test
-    @DisplayName("getTenantIdBySlug: lanza IllegalArgumentException si no existe")
-    void getTenantIdBySlug_notFound() {
-        when(tenantRepository.findBySlug("no-such-slug")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> tenantService.getTenantIdBySlug("no-such-slug"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("not found");
-
-        verify(tenantRepository).findBySlug("no-such-slug");
-        verifyNoMoreInteractions(tenantRepository);
-    }
 
     @Nested
     @DisplayName("deleteTenant")
@@ -260,6 +262,83 @@ class TenantServiceTest {
                 .hasMessageContaining("not found");
 
             verify(tenantRepository).findById("t-nope");
+            verifyNoMoreInteractions(tenantRepository);
+        }
+    }
+
+    @Nested
+    @DisplayName("createTenantInfo")
+    class CreateTenantInfoTests {
+        @Test
+        @DisplayName("crea y retorna DTO si slug libre")
+        void createInfo_ok() {
+            var info = new uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO();
+            info.setTenantId("t-info");
+            info.setSlug("info-slug");
+            info.setStatus("active");
+
+            when(tenantRepository.existsBySlug("info-slug")).thenReturn(false);
+
+            Tenant saved = newTenantEntity("info-slug", "active");
+            saved.setTenantId("t-info"); // Usa el id proporcionado
+            when(tenantRepository.save(any(Tenant.class))).thenReturn(saved);
+
+            TenantDTO out = tenantService.createTenantInfo(info);
+
+            assertThat(out.tenantId()).isEqualTo("t-info");
+            assertThat(out.slug()).isEqualTo("info-slug");
+            assertThat(out.status()).isEqualTo("active");
+
+            verify(tenantRepository).existsBySlug("info-slug");
+            verify(tenantRepository).save(any(Tenant.class));
+            verifyNoMoreInteractions(tenantRepository);
+        }
+
+        @Test
+        @DisplayName("lanza IllegalArgumentException si slug duplicado")
+        void createInfo_duplicateSlug() {
+            var info = new uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO();
+            info.setSlug("dup-info-slug");
+            info.setStatus("active");
+
+            when(tenantRepository.existsBySlug("dup-info-slug")).thenReturn(true);
+
+            assertThatThrownBy(() -> tenantService.createTenantInfo(info))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already exists");
+
+            verify(tenantRepository).existsBySlug("dup-info-slug");
+            verifyNoMoreInteractions(tenantRepository);
+        }
+
+        @Test
+        @DisplayName("usa estado por defecto cuando no se proporciona")
+        void createInfo_defaultStatus() {
+            var info = new uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO();
+            info.setSlug("default-info-slug");
+            // No establecemos status
+
+            when(tenantRepository.existsBySlug("default-info-slug")).thenReturn(false);
+            
+            when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> {
+                Tenant entity = invocation.getArgument(0, Tenant.class);
+                entity.setTenantId("t-" + entity.getSlug());
+                return entity;
+            });
+
+            TenantDTO out = tenantService.createTenantInfo(info);
+
+            ArgumentCaptor<Tenant> captor = ArgumentCaptor.forClass(Tenant.class);
+            verify(tenantRepository).save(captor.capture());
+
+            Tenant savedEntity = captor.getValue();
+            assertThat(savedEntity.getSlug()).isEqualTo("default-info-slug");
+            assertThat(savedEntity.getStatus()).isEqualTo("active");
+
+            assertThat(out.slug()).isEqualTo("default-info-slug");
+            assertThat(out.status()).isEqualTo("active");
+
+            verify(tenantRepository).existsBySlug("default-info-slug");
             verifyNoMoreInteractions(tenantRepository);
         }
     }

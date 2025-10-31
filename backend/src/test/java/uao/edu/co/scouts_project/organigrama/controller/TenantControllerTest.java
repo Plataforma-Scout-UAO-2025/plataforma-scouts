@@ -28,7 +28,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -118,6 +117,47 @@ class TenantControllerTest {
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.slug", is("nuevo-slug")))
             .andExpect(jsonPath("$.tenantId", is("t-nuevo-slug")));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/tenants -> 400 si slug duplicado (existsBySlug)")
+    void createTenant_duplicateSlug() throws Exception {
+    var incoming = new TenantDTO(null, "dup-slug", "active", null, null);
+
+    when(tenantService.createTenant(any(TenantDTO.class)))
+        .thenThrow(new IllegalArgumentException("Tenant con SLUG 'dup-slug' ya existe"));
+
+    mockMvc.perform(post("/api/v1/tenants")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(incoming)))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.message", containsString("ya existe")));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/tenants/create -> 201, Location header y JSON usando TenantInfoDTO")
+    void createTenantInfo_created() throws Exception {
+    // Payload matching TenantInfoDTO fields (tenant_id optional)
+    var info = new uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO();
+    info.setTenantId(null);
+    info.setSlug("info-nuevo-slug");
+    info.setStatus("active");
+
+    var created = new TenantDTO("t-info-nuevo-slug", "info-nuevo-slug", "active",
+        Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-03-01T00:00:00Z"));
+
+    when(tenantService.createTenantInfo(any(uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO.class)))
+        .thenReturn(created);
+
+    mockMvc.perform(post("/api/v1/tenants/create")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(info)))
+        .andExpect(status().isCreated())
+        .andExpect(header().string("Location", containsString("/api/v1/tenants/t-info-nuevo-slug")))
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.slug", is("info-nuevo-slug")))
+        .andExpect(jsonPath("$.tenantId", is("t-info-nuevo-slug")));
     }
 
     // @Test

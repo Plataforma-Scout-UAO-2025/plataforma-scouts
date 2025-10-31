@@ -1,0 +1,65 @@
+meta {
+  name: Create Group - Success
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/create
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "slug": "bruno-info-slugv06",
+    "name": "Grupo Scout de Prueba 1",
+    "tenant_id": "t-bruno-success-slugv04",
+    "status": "active",
+    "is_active": true,
+    "district": "Distrito de prueba",
+    "identifier_number": "001",
+    "address": "Dirección de prueba",
+    "phone": "1234567890",
+    "email": "grupo.prueba@scouts.org"
+  }
+}
+
+tests {
+  test("Validar creación exitosa", function() {
+    expect(res.status).to.equal(201);
+    expect(res.headers).to.have.property('location').that.contains('/api/v1/tenants/');
+    expect(res.body).to.have.property('slug');
+    expect(res.body).to.have.property('name');
+    expect(res.body).to.have.property('tenant_id');
+  });
+
+  test("Validar estructura del response", function() {
+    expect(res.body).to.have.property('slug');
+    expect(res.body).to.have.property('name');
+    expect(res.body).to.have.property('tenant_id');
+    expect(res.body).to.have.property('status');
+    expect(res.body).to.have.property('is_active');
+  });
+}
+
+docs {
+  **Nombre:** Crear grupo scout (caso exitoso)
+
+  **Endpoint:** `/api/v1/tenants/{tenantId}/groups`
+
+  **Descripción:** Crea un nuevo grupo scout asociado a un tenant.  
+  Se espera:
+  - Código **201 Created**
+  - Header **Location** con la ruta del grupo creado
+  - Cuerpo JSON con los campos `slug`, `name`, `tenantId`, `status`, `visible`
+}
+
+settings {
+  encodeUrl: true
+}

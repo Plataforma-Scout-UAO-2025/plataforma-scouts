@@ -1,0 +1,61 @@
+meta {
+  name: Create Group - Multiple Groups In Tenant
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/create
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "slug": "grupo-prueba-3",
+    "name": "Segundo Grupo Scout",
+    "tenant_id": "t-bruno-success-slugv04",
+    "status": "active",
+    "is_active": true,
+    "district": "Distrito de prueba 2",
+    "identifier_number": "005",
+    "address": "Dirección de prueba 2",
+    "phone": "1234567891",
+    "email": "grupo.segundo@scouts.org"
+  }
+}
+
+tests {
+  test("Validar creación adicional en el mismo tenant", function() {
+    expect(res.status).to.equal(201);
+    expect(res.headers).to.have.property('location').that.contains('/api/v1/tenants/');
+    expect(res.body).to.have.property('slug');
+    expect(res.body).to.have.property('name');
+    expect(res.body).to.have.property('tenant_id');
+  });
+
+  test("Validar estructura del response", function() {
+    expect(res.body).to.have.property('slug');
+    expect(res.body).to.have.property('name');
+    expect(res.body).to.have.property('tenant_id');
+    expect(res.body).to.have.property('status');
+    expect(res.body).to.have.property('is_active');
+  });
+}
+
+docs {
+  **Nombre:** Crear grupo - crear grupo adicional en tenant
+  
+  **Endpoint:** `/api/v1/tenants/{tenantId}/groups/create`
+  
+  **Descripción:** Validar que el endpoint permite crear múltiples grupos en un mismo tenant.
+  Se espera:
+  - Código 201 (Created)
+  - Respuesta con los datos del grupo creado
+  - Header Location con la URI del recurso
+}
