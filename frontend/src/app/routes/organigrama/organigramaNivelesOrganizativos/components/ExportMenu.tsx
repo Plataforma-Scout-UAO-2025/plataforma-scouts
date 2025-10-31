@@ -184,19 +184,19 @@ async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName
   try {
     const img = await loadImage(KNUT);
     const pageCount: number = getNumberOfPagesSafe(doc);
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 16; // margen inferior
-      const w = Math.min(footerW, pageWidth * 0.28);
-      const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
-      const h = w * ratio;
-      const x = (pageWidth - w) / 2;
-      const y = pageHeight - h - margin;
-  // Añadir imagen como PNG con tipado seguro
-  (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x, y, w, h, undefined, "FAST");
-    }
+    // Colocar el logo solo en la última página
+    const last = Math.max(1, pageCount);
+    doc.setPage(last);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 16; // margen inferior
+    const w = Math.min(footerW, pageWidth * 0.28);
+    const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
+    const h = w * ratio;
+    const x = (pageWidth - w) / 2;
+    const y = pageHeight - h - margin;
+    // Añadir imagen como PNG con tipado seguro
+    (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x, y, w, h, undefined, "FAST");
   } catch (e) {
     console.warn("[Export PDF Niveles] No se pudo cargar la imagen de pie de página KNUT:", e);
   }

@@ -517,18 +517,18 @@ export async function exportOrgChartCombinedPDF(
   try {
     const img = footerImg ?? await loadImage(KNUT);
     const pageCount: number = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } }).getNumberOfPages?.() ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal?.getNumberOfPages?.() ?? 1;
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 18;
-      const w = Math.min(footerW, pageWidth * 0.18);
-      const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
-      const h = w * ratio;
-      const xImg = (pageWidth - w) / 2;
-      const yImg = pageHeight - h - margin;
-  (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", xImg, yImg, w, h, undefined, "FAST");
-    }
+    // Solo en la última página
+    const last = Math.max(1, pageCount);
+    doc.setPage(last);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 18;
+    const w = Math.min(footerW, pageWidth * 0.18);
+    const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
+    const h = w * ratio;
+    const xImg = (pageWidth - w) / 2;
+    const yImg = pageHeight - h - margin;
+    (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", xImg, yImg, w, h, undefined, "FAST");
   } catch (e) {
     console.warn("[Export PDF OrgChart] No se pudo cargar la imagen de pie de página KNUT:", e);
   }
