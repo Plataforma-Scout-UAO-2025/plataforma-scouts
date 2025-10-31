@@ -2,6 +2,15 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { OrganigramaNiveles } from "../organigramaNivelesOrganizativos/types/niveles.types";
 import type { Member } from "@/types/member.type";
+import KNUT from "@/assets/KNUT.png";
+
+// Image loader to compute footer size
+const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => resolve(img);
+  img.onerror = reject;
+  img.src = src;
+});
 
 type BranchLite = {
   id: string | number;
@@ -270,6 +279,16 @@ export async function exportOrgChartCombinedPDF(
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
   const x = 40;
   let y = 50;
+  // Pre-calc footer dimensions for bottom margin reservation
+  const pageWidth0 = doc.internal.pageSize.getWidth();
+  const footerW = Math.min(140, pageWidth0 * 0.18);
+  let footerH = 56;
+  let footerImg: HTMLImageElement | undefined;
+  try {
+    footerImg = await loadImage(KNUT);
+    const ratio = footerImg.height > 0 ? footerImg.height / footerImg.width : 0.4;
+    footerH = footerW * ratio;
+  } catch { /* keep defaults */ }
 
   // Title
   doc.setFont("helvetica", "bold");
@@ -396,7 +415,7 @@ export async function exportOrgChartCombinedPDF(
     startY: y + 10,
     head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
     body: branchesBody,
-    margin: { left: x, right: x },
+    margin: { left: x, right: x, bottom: Math.ceil(footerH + 24) },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
   });
@@ -489,10 +508,30 @@ export async function exportOrgChartCombinedPDF(
     startY: y + 10,
     head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: levelsBody,
-    margin: { left: x, right: x },
+    margin: { left: x, right: x, bottom: Math.ceil(footerH + 24) },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
   });
+
+  // Pie de página con imagen KNUT en todas las páginas
+  try {
+    const img = footerImg ?? await loadImage(KNUT);
+    const pageCount: number = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } }).getNumberOfPages?.() ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal?.getNumberOfPages?.() ?? 1;
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 18;
+      const w = Math.min(footerW, pageWidth * 0.18);
+      const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
+      const h = w * ratio;
+      const xImg = (pageWidth - w) / 2;
+      const yImg = pageHeight - h - margin;
+  (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", xImg, yImg, w, h, undefined, "FAST");
+    }
+  } catch (e) {
+    console.warn("[Export PDF OrgChart] No se pudo cargar la imagen de pie de página KNUT:", e);
+  }
 
   doc.save(`organigrama_completo_${opts?.year ?? ""}.pdf`);
 }

@@ -12,11 +12,44 @@ import { getGroupBySlug } from "@/api/organigramaApi";
 import { useTenantParams } from "../../organigramaRamas_Subramas/hooks/useTenantParams";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import KNUT from "@/assets/KNUT.png";
 
 /* ============================================================
    📄 Exportación a PDF
    ============================================================ */
-function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: string) {
+// Util para cargar una imagen desde un URL (manejado por Vite) y esperar a que esté lista
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Typesafe helpers for jspdf quirks
+type JsPDFMaybePaged = jsPDF & {
+  getNumberOfPages?: () => number;
+  internal?: { getNumberOfPages?: () => number; pageSize: { getWidth: () => number; getHeight: () => number } };
+};
+type JsPDFWithAddImage = jsPDF & {
+  addImage: (
+    imageData: HTMLImageElement | string,
+    format: string,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    alias?: string,
+    compression?: "NONE" | "FAST" | "SLOW"
+  ) => jsPDF;
+};
+const getNumberOfPagesSafe = (doc: jsPDF): number => {
+  const d = doc as unknown as JsPDFMaybePaged;
+  return d.getNumberOfPages?.() ?? d.internal?.getNumberOfPages?.() ?? 1;
+};
+
+async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: string) {
   const doc = new jsPDF();
   const title = `Conformación de Niveles Organizativos${groupName ? ` - ${groupName}` : ""}`;
   const fecha = new Date().toLocaleDateString("es-CO");
@@ -117,11 +150,22 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
       });
     }
   });
+  // Precalcular tamaño del footer y reservar margen inferior
+  let footerW = 110;
+  let footerH = 45;
+  try {
+    const probe = await loadImage(KNUT);
+    const pageW = doc.internal.pageSize.getWidth();
+    footerW = Math.min(120, pageW * 0.28);
+    const ratio = probe.height > 0 ? probe.height / probe.width : 0.45;
+    footerH = footerW * ratio;
+  } catch {/* default sizes */}
 
   autoTable(doc, {
     head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: tableData,
     startY: 35,
+    margin: { bottom: Math.ceil(footerH + 18) },
     theme: "striped",
     styles: {
       fontSize: 9,
@@ -135,6 +179,27 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
     },
     alternateRowStyles: { fillColor: [237, 237, 237] }, // 🎨 --accent (#EDEDED)
   });
+
+  // Pie de página con imagen KNUT en todas las páginas
+  try {
+    const img = await loadImage(KNUT);
+    const pageCount: number = getNumberOfPagesSafe(doc);
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 16; // margen inferior
+      const w = Math.min(footerW, pageWidth * 0.28);
+      const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
+      const h = w * ratio;
+      const x = (pageWidth - w) / 2;
+      const y = pageHeight - h - margin;
+  // Añadir imagen como PNG con tipado seguro
+  (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x, y, w, h, undefined, "FAST");
+    }
+  } catch (e) {
+    console.warn("[Export PDF Niveles] No se pudo cargar la imagen de pie de página KNUT:", e);
+  }
 
   doc.save(`organigrama_niveles_${data.anio}.pdf`);
 }
@@ -263,7 +328,7 @@ export default function ExportMenu({ data, members }: { data: OrganigramaNiveles
       console.warn('[ExportMenu] No se pudo obtener el nombre del grupo para el título del PDF', e);
     }
 
-    exportPDF(data, members, groupName);
+    await exportPDF(data, members, groupName);
   };
 
   return (

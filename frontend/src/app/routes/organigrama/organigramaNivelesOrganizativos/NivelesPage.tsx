@@ -322,9 +322,14 @@ export default function NivelesPage() {
       toNumberSafe(m?.subgroup?.subgroup_id)
     );
   };
+  const getCargoName = (c: Cargo | { nombre?: string; name?: string }): string => {
+    const maybe = (c as { nombre?: string; name?: string });
+    return String(maybe.nombre ?? maybe.name ?? "");
+  };
+
   const computeLevelCounts = (nivel: Nivel) => {
     // Ignorar el cargo especial "Sin cargo" para fines de eliminación de nivel
-    const cargos = (nivel.cargos || []).filter((c) => !isSinCargoName((c as any)?.nombre ?? (c as any)?.name));
+    const cargos = (nivel.cargos || []).filter((c) => !isSinCargoName(getCargoName(c as Cargo)));
     const cargoCount = cargos.length;
     let memberCount = 0;
     if (cargoCount > 0 && members && members.length > 0) {
