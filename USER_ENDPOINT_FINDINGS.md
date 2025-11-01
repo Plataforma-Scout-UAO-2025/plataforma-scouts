@@ -106,17 +106,36 @@ Key endpoints:
 - Endpoints exist to CHANGE user roles (which accept userId as input but don't return user data)
 
 ### Recommendation:
-If you need to retrieve a user by user_id, you would need to:
-1. Add a new endpoint to `Auth0Controller`, such as:
-   ```java
-   @GetMapping("/users/{userId}")
-   public ResponseEntity<UserSummaryDTO> getUserById(@PathVariable String userId) {
-       UserSummaryDTO user = auth0Service.getUserById(userId);
-       return ResponseEntity.ok(user);
-   }
-   ```
+If you need to retrieve a user by user_id, the recommended approach is to **add a new endpoint** to `Auth0Controller`:
 
-2. Or use the existing `GET /api/v1/auth0/users` endpoint and filter the results on the client side.
+```java
+@GetMapping("/users/{userId}")
+@PreAuthorize("hasAnyRole('ADMIN_GRUPO', 'ADMIN_GLOBAL', 'DEV_SUPPORT')")
+@Operation(summary = "Obtiene un usuario por su user_id", responses = {
+        @ApiResponse(responseCode = "200", description = "Usuario encontrado"),
+        @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
+        @ApiResponse(responseCode = "502", description = "Error de integración con Auth0")
+})
+public ResponseEntity<UserSummaryDTO> getUserById(
+        @PathVariable @Parameter(description = "ID del usuario en Auth0") String userId) {
+    try {
+        UserSummaryDTO user = auth0Service.getUserById(userId);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(user);
+    } catch (ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    } catch (Auth0GatewayException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(null);
+    }
+}
+```
+
+**Note**: Using the existing `GET /api/v1/auth0/users` endpoint and filtering client-side is NOT recommended as it:
+- Is inefficient for large user bases
+- Exposes unnecessary user data
+- Increases network traffic and processing overhead
 
 ## Technologies Used
 - **Language**: Java
