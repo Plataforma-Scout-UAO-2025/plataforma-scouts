@@ -31,15 +31,13 @@ export interface BackendSubgroup {
 export interface CreateBranchBackendData {
   name: string;
   description?: string;
-  iconObjectId: string | null;
-  galleryObjectIds: string[];
+  // iconObjectId y galleryObjectIds se manejan por separado después de crear la sección
 }
 
 export interface UpdateBranchBackendData {
   name?: string;
   description?: string;
-  iconObjectId?: string | null;
-  galleryObjectIds?: string[];
+  // iconObjectId y galleryObjectIds se manejan por separado
 }
 
 export interface CreateSubgroupBackendData {
