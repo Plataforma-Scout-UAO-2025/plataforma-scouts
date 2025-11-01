@@ -229,35 +229,36 @@ export default function LevelAccordion({
         <div className="flex items-center gap-2">
           {/* Ver información del nivel */}
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-md border border-border hover:bg-accent hover:text-primary transition-colors"
+            size="sm"
+            variant="outline"
             onClick={() => setOpenInfo(true)}
+            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
             aria-label="Ver información del nivel"
           >
-            <Eye className="h-4 w-4 text-primary" />
+            <Eye className="h-4 w-4" />
           </Button>
 
           {/* Editar */}
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-md border border-border hover:bg-accent hover:text-primary transition-colors"
+            size="sm"
+            variant="outline"
             onClick={() => onUpdate(nivel)}
+            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
             aria-label="Editar nivel"
           >
-            <Pencil className="h-4 w-4 text-secondary" />
+            <Pencil className="h-4 w-4" />
           </Button>
 
           {/* Eliminar */}
           <Button
-            size="icon"
+            size="sm"
             variant="destructive"
-            className="h-8 w-8 rounded-md border border-border bg-transparent hover:bg-destructive/10 transition-colors"
             onClick={() => onDelete(nivel.id)}
+            className="h-8 w-8 p-0"
             aria-label="Eliminar nivel"
+            title="Eliminar nivel"
           >
-            <Trash2 className="h-4 w-4 text-destructive" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>

@@ -69,16 +69,16 @@ export default function PositionItem({ cargo, membersDetailed = [], onEdit, onDe
                 <li key={m.id} className="flex items-center gap-1">
                   <span className="truncate">• {m.label}</span>
                   <Button
-                    size="icon"
+                    size="sm"
                     variant="destructive"
-                    className="h-6 w-6 rounded-md border border-border bg-transparent hover:bg-destructive/10 transition-colors"
+                    className="h-7 w-7 p-0"
                     aria-label="Quitar del cargo"
                     onClick={() => {
                       setSelectedMember(m);
                       setOpenRemove(true);
                     }}
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </li>
               ))}
@@ -103,35 +103,35 @@ export default function PositionItem({ cargo, membersDetailed = [], onEdit, onDe
         <div className="flex items-center gap-2">
           {/* Ver información del cargo (icono de ojo) */}
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-md border border-border hover:bg-accent hover:text-primary transition-colors"
+            size="sm"
+            variant="outline"
             onClick={() => setOpenInfo(true)}
+            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
             aria-label="Ver información del cargo"
           >
-            <Eye className="h-4 w-4 text-primary" />
+            <Eye className="h-4 w-4" />
           </Button>
 
           {/* Editar */}
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-md border border-border hover:bg-accent hover:text-primary transition-colors"
+            size="sm"
+            variant="outline"
             onClick={() => onEdit?.(cargo)}
+            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
             aria-label="Editar cargo"
           >
-            <Pencil className="h-4 w-4 text-secondary" />
+            <Pencil className="h-4 w-4" />
           </Button>
 
           {/* Eliminar */}
           <Button
-            size="icon"
+            size="sm"
             variant="destructive"
-            className="h-8 w-8 rounded-md border border-border bg-transparent hover:bg-destructive/10 transition-colors"
             onClick={() => onDelete?.(cargo)}
+            className="h-8 w-8 p-0"
             aria-label="Eliminar cargo"
           >
-            <Trash2 className="h-4 w-4 text-destructive" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
