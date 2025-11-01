@@ -332,10 +332,11 @@ export const createRama = async (
 ): Promise<Rama> => {
   try {
     const backendData = mapFrontendCreateRamaToBackend(data);
+    
     const payload = {
-      ...backendData,
-      tenantId,
-    };
+      name: backendData.name,
+      description: backendData.description,
+    } as Parameters<typeof createSection>[0];
 
     const backendRama = (await createSection(
       payload,
@@ -347,8 +348,6 @@ export const createRama = async (
 
     if (data.iconFile && sectionId) {
       await uploadSectionIcon(tenantId, groupSlug, sectionId, data.iconFile);
-    } else {
-      // no icon to upload
     }
 
     if (data.galleryFiles && data.galleryFiles.length > 0 && sectionId) {

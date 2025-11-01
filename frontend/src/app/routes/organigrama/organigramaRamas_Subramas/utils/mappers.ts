@@ -5,15 +5,15 @@ import type {
   UpdateBranchData as UpdateRamaData,
   CreateSubgroupData as CreateSubramaData,
   UpdateSubgroupData as UpdateSubramaData,
-} from '../types/frontend';
-import type { Section as SectionDTO } from '@/types/section-simple.type';
-import type { Subgroup as SubgroupDTO } from '@/types/subgroup-simple.type';
+} from "../types/frontend";
+import type { Section as SectionDTO } from "@/types/section-simple.type";
+import type { Subgroup as SubgroupDTO } from "@/types/subgroup-simple.type";
 import type {
   CreateBranchBackendData as CreateRamaBackendData,
   UpdateBranchBackendData as UpdateRamaBackendData,
   CreateSubgroupBackendData as CreateSubramaBackendData,
   UpdateSubgroupBackendData as UpdateSubramaBackendData,
-} from '../types/backend';
+} from "../types/backend";
 
 type AnyRecord = Record<string, unknown>;
 
@@ -23,16 +23,16 @@ type GalleryItem = {
 };
 
 const toRecord = (value: unknown): AnyRecord =>
-  value && typeof value === 'object' ? (value as AnyRecord) : {};
+  value && typeof value === "object" ? (value as AnyRecord) : {};
 
 const pickString = (record: AnyRecord, keys: string[]): string | undefined => {
   for (const key of keys) {
     const value = record[key];
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       const trimmed = value.trim();
       if (trimmed.length > 0) return trimmed;
     }
-    if (typeof value === 'number' && Number.isFinite(value)) {
+    if (typeof value === "number" && Number.isFinite(value)) {
       return String(value);
     }
   }
@@ -40,15 +40,17 @@ const pickString = (record: AnyRecord, keys: string[]): string | undefined => {
 };
 
 const toBoolean = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'string') {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
     if (!normalized) return undefined;
-    if (['active', 'activa', 'true', '1', 'enabled'].includes(normalized)) return true;
-    if (['inactive', 'inactiva', 'false', '0', 'disabled'].includes(normalized)) return false;
+    if (["active", "activa", "true", "1", "enabled"].includes(normalized))
+      return true;
+    if (["inactive", "inactiva", "false", "0", "disabled"].includes(normalized))
+      return false;
     return undefined;
   }
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     if (Number.isNaN(value)) return undefined;
     if (value === 1) return true;
     if (value === 0) return false;
@@ -57,7 +59,12 @@ const toBoolean = (value: unknown): boolean | undefined => {
 };
 
 const resolveIsActiveFlag = (record: AnyRecord): boolean | undefined => {
-  const candidates = [record.isActive, record.is_active, record.status, record.estado];
+  const candidates = [
+    record.isActive,
+    record.is_active,
+    record.status,
+    record.estado,
+  ];
   for (const candidate of candidates) {
     const normalized = toBoolean(candidate);
     if (normalized !== undefined) return normalized;
@@ -65,28 +72,30 @@ const resolveIsActiveFlag = (record: AnyRecord): boolean | undefined => {
   return undefined;
 };
 
-const extractPhotoPrincipal = (record: AnyRecord): string | null | undefined => {
-  if ('photoPrincipal' in record) {
+const extractPhotoPrincipal = (
+  record: AnyRecord
+): string | null | undefined => {
+  if ("photoPrincipal" in record) {
     const value = record.photoPrincipal;
     if (value === null) return null;
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       const trimmed = value.trim();
       return trimmed.length > 0 ? trimmed : undefined;
     }
   }
 
   const candidateKeys = [
-    'photoPrincipalUrl',
-    'photoPrincipalObjectId',
-    'photo_principal_object_id',
-    'mainImageObjectId',
-    'imagenPrincipalObjectId',
+    "photoPrincipalUrl",
+    "photoPrincipalObjectId",
+    "photo_principal_object_id",
+    "mainImageObjectId",
+    "imagenPrincipalObjectId",
   ];
 
   for (const key of candidateKeys) {
     const candidate = record[key];
     if (candidate === null) return null;
-    if (typeof candidate === 'string') {
+    if (typeof candidate === "string") {
       const trimmed = candidate.trim();
       if (trimmed.length > 0) return trimmed;
     }
@@ -101,10 +110,10 @@ const extractGallery = (record: AnyRecord): GalleryItem[] | undefined => {
 
   const items = raw
     .map((entry) => {
-      if (!entry || typeof entry !== 'object') return undefined;
+      if (!entry || typeof entry !== "object") return undefined;
       const entryRecord = entry as AnyRecord;
-      const id = pickString(entryRecord, ['id', 'objectId', 'object_id']);
-      const url = pickString(entryRecord, ['url']);
+      const id = pickString(entryRecord, ["id", "objectId", "object_id"]);
+      const url = pickString(entryRecord, ["url"]);
       if (!id || !url) return undefined;
       return { id, url } satisfies GalleryItem;
     })
@@ -116,7 +125,9 @@ const extractGallery = (record: AnyRecord): GalleryItem[] | undefined => {
 const safeIsoDate = (value: string | undefined): string => {
   if (!value) return new Date().toISOString();
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+  return Number.isNaN(parsed.getTime())
+    ? new Date().toISOString()
+    : parsed.toISOString();
 };
 
 const deriveYear = (isoDate: string): number => {
@@ -128,8 +139,8 @@ const deriveYear = (isoDate: string): number => {
 export const mapBackendRamaToFrontend = (backendRama: SectionDTO): Rama => {
   const record = toRecord(backendRama);
 
-  const sectionId = String(record.sectionId || '');
-  const name = (record.name as string) ?? '';
+  const sectionId = String(record.sectionId || "");
+  const name = (record.name as string) ?? "";
   const description = record.description as string;
   const iconUrl = record.icon_object_url as string;
   const iconObjectId = record.icon_object_id as string;
@@ -153,7 +164,7 @@ export const mapBackendRamaToFrontend = (backendRama: SectionDTO): Rama => {
     minAge,
     maxAge,
     year: deriveYear(createdAt),
-    status: 'active',
+    status: "active",
     createdAt,
     galleryObjectIds,
     gallery,
@@ -163,12 +174,14 @@ export const mapBackendRamaToFrontend = (backendRama: SectionDTO): Rama => {
   return mappedRama;
 };
 
-export const mapBackendSubramaToFrontend = (backendSubrama: SubgroupDTO): Subrama => {
+export const mapBackendSubramaToFrontend = (
+  backendSubrama: SubgroupDTO
+): Subrama => {
   const record = toRecord(backendSubrama);
 
-  const subgroupId = String(record.subgroupId || '');
-  const sectionId = String(record.sectionId || '');
-  const name = (record.name as string) ?? '';
+  const subgroupId = String(record.subgroupId || "");
+  const sectionId = String(record.sectionId || "");
+  const name = (record.name as string) ?? "";
   const description = record.description as string;
   const iconUrl = record.icon_object_url as string;
   const iconObjectId = record.icon_object_id as string;
@@ -192,7 +205,7 @@ export const mapBackendSubramaToFrontend = (backendSubrama: SubgroupDTO): Subram
     mainImageObjectId,
     branchId: sectionId,
     leader,
-    status: isActive ? 'active' : 'inactive',
+    status: isActive ? "active" : "inactive",
     createdAt,
     memberCount,
     galleryObjectIds,
@@ -203,36 +216,36 @@ export const mapBackendSubramaToFrontend = (backendSubrama: SubgroupDTO): Subram
 };
 
 export const mapFrontendCreateRamaToBackend = (
-  frontendData: CreateRamaData,
+  frontendData: CreateRamaData
 ): CreateRamaBackendData => ({
   name: frontendData.name,
   description: frontendData.description,
-  iconObjectId: null,
-  galleryObjectIds: [],
+  // iconObjectId y galleryObjectIds se manejan por separado después de crear la sección
 });
 
 export const mapFrontendUpdateRamaToBackend = (
-  frontendData: UpdateRamaData,
+  frontendData: UpdateRamaData
 ): UpdateRamaBackendData => {
   const backendData: UpdateRamaBackendData = {};
 
   if (frontendData.name !== undefined) backendData.name = frontendData.name;
-  if (frontendData.description !== undefined) backendData.description = frontendData.description;
-  if (frontendData.iconFile !== undefined) backendData.iconObjectId = null;
-  if (frontendData.galleryFiles !== undefined) backendData.galleryObjectIds = [];
+  if (frontendData.description !== undefined)
+    backendData.description = frontendData.description;
+  // iconFile y galleryFiles se manejan por separado después de actualizar la sección
 
   return backendData;
 };
 
 export const mapFrontendCreateSubramaToBackend = (
-  frontendData: CreateSubramaData,
+  frontendData: CreateSubramaData
 ): CreateSubramaBackendData => {
   const record = frontendData as unknown as AnyRecord;
   const backendData: CreateSubramaBackendData = {
     name: frontendData.name,
   };
 
-  if (frontendData.description !== undefined) backendData.description = frontendData.description;
+  if (frontendData.description !== undefined)
+    backendData.description = frontendData.description;
 
   const photoPrincipal = extractPhotoPrincipal(record);
   if (photoPrincipal !== undefined) backendData.photoPrincipal = photoPrincipal;
@@ -244,14 +257,15 @@ export const mapFrontendCreateSubramaToBackend = (
 };
 
 export const mapFrontendUpdateSubramaToBackend = (
-  frontendData: UpdateSubramaData,
+  frontendData: UpdateSubramaData
 ): UpdateSubramaBackendData => {
   const backendData: UpdateSubramaBackendData = {};
 
   const record = frontendData as unknown as AnyRecord;
 
   if (frontendData.name !== undefined) backendData.name = frontendData.name;
-  if (frontendData.description !== undefined) backendData.description = frontendData.description;
+  if (frontendData.description !== undefined)
+    backendData.description = frontendData.description;
   const isActive = resolveIsActiveFlag(record);
   if (isActive !== undefined) backendData.isActive = isActive;
 
