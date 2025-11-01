@@ -333,7 +333,6 @@ export const createRama = async (
   try {
     const backendData = mapFrontendCreateRamaToBackend(data);
     
-    // Crear payload sin tenantId, que va como parámetro de ruta
     const payload = {
       name: backendData.name,
       description: backendData.description,
@@ -349,8 +348,6 @@ export const createRama = async (
 
     if (data.iconFile && sectionId) {
       await uploadSectionIcon(tenantId, groupSlug, sectionId, data.iconFile);
-    } else {
-      // no icon to upload
     }
 
     if (data.galleryFiles && data.galleryFiles.length > 0 && sectionId) {

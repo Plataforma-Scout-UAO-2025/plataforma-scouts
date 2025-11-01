@@ -66,7 +66,7 @@ export default function ConfirmDeleteModal({
         {/* Mostrar warning si existe */}
         {warning ? (
           <div className="border border-destructive rounded-md px-4 py-2 text-sm text-destructive mb-6 bg-destructive/10">
-            ⚠️ {warning}
+             {warning}
           </div>
         ) : (
           <div className="border border-primary rounded-md px-4 py-2 text-sm text-primary mb-6 bg-accent/40">

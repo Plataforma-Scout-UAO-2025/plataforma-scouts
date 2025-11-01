@@ -120,7 +120,7 @@ export default function Organigrama() {
       if (tenantId && groupSlug) {
         const force = opts?.force || false;
         if (force) {
-          console.log("🔄 [Component] Force refresh: invalidating cache");
+          console.log("[Component] Force refresh: invalidating cache");
           dispatch(invalidateRamasCache());
         }
         await dispatch(
@@ -141,7 +141,7 @@ export default function Organigrama() {
   useEffect(() => {
     if (tenantId && groupSlug && shouldFetchRamas) {
       console.log(
-        "🎯 [Component] Should fetch ramas, dispatching debounced fetch"
+        " [Component] Should fetch ramas, dispatching debounced fetch"
       );
       debouncedFetchRamas(tenantId, groupSlug);
     }
@@ -154,7 +154,7 @@ export default function Organigrama() {
   // Cargar miembros si no están disponibles
   useEffect(() => {
     if (members.length === 0) {
-      // Preferir endpoint enriquecido (incluye relaciones subgroup/section); si falla, usar público
+      
       (async () => {
         const enriched = await dispatch(fetchMembersWithBranchAction());
         if (fetchMembersWithBranchAction.rejected.match(enriched)) {
@@ -212,14 +212,11 @@ export default function Organigrama() {
   };
 
   const handleDeleteRama = (rama: Rama) => {
-    // Contar subramas y miembros
     const subgroups = rama.subgroups ?? rama.subramas ?? [];
     const subgroupCount = subgroups.length;
 
-    // Contar miembros totales en todas las subramas de esta rama
     let memberCount = 0;
     subgroups.forEach((subgroup) => {
-      // Usar el ID del subgrupo si está disponible
       if (subgroup.id) {
         memberCount += countMembersBySubgroup(subgroup.id);
       }
@@ -313,11 +310,9 @@ export default function Organigrama() {
 
         await deleteRama(deleteTarget.id);
       } else {
-        // Validar que la subrama no tenga miembros
         const hasMembers = (deleteTarget.memberCount ?? 0) > 0;
 
         if (hasMembers) {
-          // No permitir eliminación si tiene miembros
           handleError(
             new Error(
               `No se puede eliminar la subrama "${
@@ -343,7 +338,7 @@ export default function Organigrama() {
           }
           const fallbackSectionId = deleteTarget.id.split("-")[0];
           console.warn(
-            "⚠️ [Organigrama] sectionId no disponible en deleteTarget, usando fallback",
+            "[Organigrama] sectionId no disponible en deleteTarget, usando fallback",
             { fallbackSectionId }
           );
           await deleteSubrama(fallbackSectionId, deleteTarget.id);
