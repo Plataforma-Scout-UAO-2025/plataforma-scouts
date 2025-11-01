@@ -92,19 +92,24 @@ export default function MedicalRecordsView() {
 
                     currentMemberId = currentMember?.memberId
 
-                    medicalResponse = await getMedicalRecordApi(currentMemberId || 0, tenantId);
+                    try {
+                        medicalResponse = await getMedicalRecordApi(currentMemberId || 0, tenantId);
 
-                    membersMap.set(currentMemberId?.toString() || '', 
-                        `${user.given_name} ${user.middle_name} ${user.family_name}`)
+                        if (medicalResponse) {
+                            adaptedRecords = [addNameToMedicalRecord(medicalResponse, membersMap)];
+                            setRecords(adaptedRecords);
+                        } else {
+                            setRecords([]);
+                        }
+                    } catch (err: any) {
+                        if (err.response?.status === 500) {
+                            // Si el servidor devuelve error 500 por "no hay registro"
+                            setRecords([]);
+                        } else {
+                            throw err; // otros errores sí los dejamos fallar
+                        }
+                    }
 
-                    if (medicalResponse) {
-                        // Adaptar registros médicos
-                        adaptedRecords = [addNameToMedicalRecord(medicalResponse, membersMap)];
-                        setRecords(adaptedRecords);
-                    }
-                    else {
-                        setRecords([]);
-                    }
                     break;
 
                 case 'ACUDIENTE':
@@ -123,26 +128,25 @@ export default function MedicalRecordsView() {
                     );
 
                     scoutMembers = membersResponse.filter(
-                        (member: Member) => 
+                        (member: Member) =>
                             member.tenantId === tenantId);
 
                     if (currentMember?.subgroup?.section?.groupId) {
 
                         scoutMembers = scoutMembers.filter(
-                            (member: Member) => 
+                            (member: Member) =>
                                 member.subgroup?.section?.groupId === currentMember?.subgroup?.section?.groupId);
 
                         if (currentMember?.subgroup?.sectionId) {
                             scoutMembers = scoutMembers.filter(
-                                (member: Member) => 
+                                (member: Member) =>
                                     member.subgroup?.sectionId === currentMember?.subgroup?.sectionId);
                         }
                     }
 
                     scoutMembers.forEach((member: Member) => {
-                        if (member.role === 'SCOUT' && member.status === 'APPROVED' && 
-                                member.isActive)
-                        {
+                        if (member.role === 'SCOUT' && member.status === 'APPROVED' &&
+                            member.isActive) {
                             membersMap.set(
                                 member.memberId?.toString() || "",
                                 `${member.firstName} ${member.lastName}`
@@ -156,7 +160,7 @@ export default function MedicalRecordsView() {
                     );
 
                     // Adaptar registros médicos
-                    adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => {return addNameToMedicalRecord(record, membersMap)});
+                    adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => { return addNameToMedicalRecord(record, membersMap) });
                     setRecords(adaptedRecords);
                     break;
 
@@ -172,19 +176,18 @@ export default function MedicalRecordsView() {
                     );
 
                     scoutMembers = membersResponse.filter(
-                        (member: Member) => 
+                        (member: Member) =>
                             member.tenantId === tenantId);
 
                     if (currentMember?.subgroup?.section?.groupId) {
                         scoutMembers = scoutMembers.filter(
-                            (member: Member) => 
+                            (member: Member) =>
                                 member.subgroup?.section?.groupId === currentMember?.subgroup?.section?.groupId);
                     }
 
                     scoutMembers.forEach((member: Member) => {
                         if (member.role === 'SCOUT' && member.status === 'APPROVED' &&
-                                member.isActive)
-                        {
+                            member.isActive) {
                             membersMap.set(
                                 member.memberId?.toString() || "",
                                 `${member.firstName} ${member.lastName}`
@@ -198,7 +201,7 @@ export default function MedicalRecordsView() {
                     );
 
                     // Adaptar registros médicos
-                    adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => {return addNameToMedicalRecord(record, membersMap)});
+                    adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => { return addNameToMedicalRecord(record, membersMap) });
                     setRecords(adaptedRecords);
                     break;
             }
@@ -322,7 +325,7 @@ export default function MedicalRecordsView() {
     switch (currentUserRole) {
         case 'SCOUT':
             return (
-                 <div className="space-y-6">
+                <div className="space-y-6">
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="text-3xl font-bold">Registros Médicos</h1>
@@ -331,26 +334,28 @@ export default function MedicalRecordsView() {
                             </p>
                         </div>
                     </div>
-                    {!records[0] ?
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
-                                <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-4" />
-                                <h2 className="text-xl font-semibold text-amber-900 mb-2">
-                                    Atención
-                                </h2>
-                                <p className="text-amber-800 mb-4">
-                                    No tienes creado un registro de información médica todavía.
-                                </p>
-                                <p className="text-sm text-amber-700">
-                                    Para actualizar la información médica, contacta con el jefe de grupo o líder de rama a la que perteneces.
-                                </p>
-                            </div>
-                        :
+                    {isLoading ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-600">Cargando información médica...</p>
+                        </div>
+                    ) : !records[0] ? (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
+                            <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-4" />
+                            <h2 className="text-xl font-semibold text-amber-900 mb-2">Atención</h2>
+                            <p className="text-amber-800 mb-4">
+                                No tienes creado un registro de información médica todavía.
+                            </p>
+                            <p className="text-sm text-amber-700">
+                                Para actualizar la información médica, contacta con el jefe de grupo o líder de rama a la que perteneces.
+                            </p>
+                        </div>
+                    ) : (
                         <MedicalRecordInfo record={records[0]} />
-                    }
-                    
+                    )}
+
                 </div>
             );
-    
+
         case 'ACUDIENTE':
             return (
                 <div className="space-y-6">
