@@ -3,21 +3,17 @@ package uao.edu.co.scouts_project.web.controller;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
-import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
@@ -34,6 +30,7 @@ import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.CreatingGroupDTO;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -41,7 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.util.*;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/api/v1/auth0")
@@ -49,7 +46,6 @@ import java.util.*;
 public class Auth0Controller {
 
     private final IAuth0Service auth0Service;
-    private final Logger logger = org.slf4j.LoggerFactory.getLogger(Auth0Controller.class);
 
     public Auth0Controller(IAuth0Service auth0Service) {
         this.auth0Service = auth0Service;
@@ -324,30 +320,17 @@ public class Auth0Controller {
         }
     }
 
-    @Operation(summary = "Crea un nuevo Tenant y su organización en Auth0", description = "Crea la organización, conexión, usuario administrador, tenant y grupo asociado.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tenant creado exitosamente"),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos o faltantes"),
-            @ApiResponse(responseCode = "500", description = "Error interno en el proceso")
-    })
-    @PostMapping(value = "/tenants", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE }, produces = {
-            MediaType.APPLICATION_JSON_VALUE })
-    public ResponseEntity<?> createTenant(
-            @Parameter(description = "Datos del grupo base para el tenant", required = true) @RequestPart("group") CreateGroupDTO group,
-
-            @Parameter(description = "Logo del grupo o tenant", schema = @Schema(type = "string", format = "binary")) @RequestPart("logoFile") MultipartFile logoFile) {
-        logger.info("🔹 [Auth0Controller] Iniciando creación de tenant con slug: {}", group.getSlug());
-        try {
-            String result = auth0Service.createTenant(group, logoFile);
-            logger.info("✅ [Auth0Controller] Tenant creado exitosamente para slug: {}", group.getSlug());
-            return ResponseEntity.ok().body(result);
-        } catch (IllegalArgumentException e) {
-            logger.error("⚠️ Error de validación: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("❌ Error al crear tenant: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body("Error interno al crear el tenant");
-        }
+    @PostMapping(value = "/create-tenant", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN_GLOBAL')")
+    @Operation(summary = "Crear tenant y grupo base (solo JSON)", requestBody = @RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = CreateGroupDTO.class))))
+    public ResponseEntity<ResponseDTO<CreatingGroupDTO>> createTenantJson(
+            @Valid @org.springframework.web.bind.annotation.RequestBody CreateGroupDTO group) {
+        CreatingGroupDTO creatingGroup = auth0Service.createTenant(group);
+        return ResponseEntity.ok(ResponseDTO.<CreatingGroupDTO>builder()
+                .status(HttpStatus.OK.value())
+                .message("Tenant y grupo creados")
+                .data(creatingGroup)
+                .build());
     }
 
     // --- Change role (Global Admin) ---
