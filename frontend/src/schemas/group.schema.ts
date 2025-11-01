@@ -21,7 +21,7 @@ export const updateGroupSchema = z.object({
   
   phone: z
     .string()
-    .regex(/^[\d\s\+\-\(\)]+$/, "Formato de teléfono inválido")
+    .regex(/^[\d\s+() -]+$/, "Formato de teléfono inválido")
     .max(20, "El teléfono no puede exceder 20 caracteres")
     .optional()
     .or(z.literal("")),

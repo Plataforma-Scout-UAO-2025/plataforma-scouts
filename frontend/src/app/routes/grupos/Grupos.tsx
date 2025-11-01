@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -32,13 +32,13 @@ interface GroupData {
   logo_object_url?: string;
   scarf_object_url?: string;
   social_links?: Record<string, string>;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
   is_active?: boolean;
   status?: string;
 }
 
 // Utilidades de mapeo
-const mapGroupDataToForm = (groupData: any): UpdateGroupFormData => ({
+const mapGroupDataToForm = (groupData: Partial<GroupData>): UpdateGroupFormData => ({
   name: groupData.name || "",
   district: groupData.district || "",
   address: groupData.address || "",
@@ -111,17 +111,17 @@ function Grupos() {
     },
   });
 
-  const loadGroupData = async () => {
+  const loadGroupData = useCallback(async () => {
     if (!tenantId) return;
 
     try {
       setLoading(true);
       const groups = await getGroupsByTenant(tenantId);
-      
+
       if (groups && groups.length > 0) {
         const group = groups[0];
-        setOriginalGroupData(group);
-        const formData = mapGroupDataToForm(group);
+        setOriginalGroupData(group as GroupData);
+        const formData = mapGroupDataToForm(group as Partial<GroupData>);
         form.reset(formData);
       }
     } catch (error) {
@@ -130,7 +130,7 @@ function Grupos() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantId, form]);
 
   const handleSubmit = async (data: UpdateGroupFormData) => {
     if (!tenantId || !groupSlug) {
@@ -157,8 +157,8 @@ function Grupos() {
   };
 
   useEffect(() => {
-    loadGroupData();
-  }, [tenantId]);
+    void loadGroupData();
+  }, [loadGroupData]);
 
   if (loading) {
     return <FullScreenLoader />;
