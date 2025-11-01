@@ -9,4 +9,8 @@ public record GroupMembersCountDTO(
     @JsonProperty("group_name") String groupName,
     @JsonProperty("status") String status,
     @JsonProperty("members_count") Long membersCount
-) {}
+){
+    public GroupMembersCountDTO(Long groupId, String groupName, Long membersCount) {
+        this(groupId, groupName, null, membersCount);
+    }
+}
