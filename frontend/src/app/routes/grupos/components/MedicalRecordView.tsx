@@ -8,14 +8,15 @@ import MedicalRecordsFilter from './MedicalRecordFilter';
 import type { MedicalDB } from '@/types/medical-form.type';
 import { useTenant } from '@/hooks/useTenant';
 import type { Member } from '@/types/member.type';
-import { getMedicalRecordsByTenantApi } from '@/api/medicalApi';
-import { getMembers } from '@/api/membersApi';
+import { getMedicalRecordApi, getMedicalRecordsByTenantApi } from '@/api/medicalApi';
+import { getMembersWithBranch } from '@/api/membersApi';
 import { useAuth0 } from '@auth0/auth0-react';
 import { AlertCircle } from 'lucide-react';
 import { useRoleContext } from '@/hooks/useRoleContext';
 import { toast } from 'sonner';
 import { useMassExportPDF } from '../hooks/useMedicalRecordPDF';
 import { ExportConfirmationModal } from './ExportConfirmationModal';
+import { MedicalRecordInfo } from './MedicalRecordInfo';
 
 export default function MedicalRecordsView() {
     const [records, setRecords] = useState<MedicalRecord[]>([]);
@@ -26,8 +27,6 @@ export default function MedicalRecordsView() {
     const [isExporting, setIsExporting] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
 
-
-
     const [searchFilter, setSearchFilter] = useState("");
     const [bloodTypeFilter, setBloodTypeFilter] = useState("");
     const [epsFilter, setEpsFilter] = useState("");
@@ -37,68 +36,172 @@ export default function MedicalRecordsView() {
     const { user } = useAuth0();
     const { currentUserRole } = useRoleContext();
 
-    // Verificar si el usuario es Scout
-    const isScout = currentUserRole === 'Scout' || currentUserRole === 'SCOUT' || currentUserRole === 'scout';
+    const addNameToMedicalRecord = (record: MedicalDB, membersMap: Map<string, string>) => {
+        const recordMemberId = record.member_id;
+        const memberName = membersMap.get(recordMemberId.toString()) || `Miembro ${recordMemberId}`;
+
+        return {
+            id: record.id,
+            member_id: recordMemberId,
+            member_name: memberName,
+            blood_type: record.blood_type,
+            eps: record.eps,
+            allergies: record.allergies,
+            chronic_diseases: record.chronic_diseases,
+            physical_restrictions: record.physical_restrictions,
+            surgical_history: record.surgical_history,
+            active: record.active,
+            vaccines_detail: record.vaccines_detail?.map((vaccine) => ({
+                name: vaccine.name,
+                applied_at: vaccine.applied_at
+            })) || [],
+            medications_detail: record.medications_detail?.map((med) => ({
+                name: med.name,
+                dose: med.dose,
+                frequency: med.frequency
+            })) || [],
+            created_at: record.created_at,
+            updated_at: record.updated_at
+        };
+    }
 
     const fetchMedicalRecords = useCallback(async () => {
         if (!tenantId || !user) return;
-
-        // Si es Scout, no hacer nada
-        if (isScout) {
-            setIsLoading(false);
-            return;
-        }
 
         try {
             setIsLoading(true);
             setError(null);
 
-            // Solo para líderes/admin: obtener todos los registros
-            const response = await getMedicalRecordsByTenantApi(tenantId);
-
-            // Obtener información de todos los miembros
             const membersMap = new Map<string, string>();
-            const membersResponse = await getMembers();
-            membersResponse.forEach((member: Member) => {
-                if (member.status === 'APPROVED' && member.is_active) {
-                    membersMap.set(
-                        member.member_id?.toString() || "",
-                        `${member.first_name} ${member.last_name}`
+
+            let membersResponse: Member[] = [];
+            let medicalResponse;
+            let currentMember: Member | undefined;
+            let currentMemberId: number | undefined;
+
+            let scoutMembers: Member[] = [];
+            let filteredMedicalRecords: MedicalDB[] = [];
+            let adaptedRecords: MedicalRecord[] = [];
+
+            switch (currentUserRole) {
+                case 'SCOUT':
+                    membersResponse = await getMembersWithBranch();
+                    currentMember = membersResponse.find((member: Member) =>
+                        member.email?.toLowerCase() === user?.email?.toLowerCase()
                     );
-                }
-            });
 
-            // Adaptar registros médicos
-            const adaptedRecords: MedicalRecord[] = response.content.map((record: MedicalDB) => {
-                const recordMemberId = record.member_id;
-                const memberName = membersMap.get(recordMemberId.toString()) || `Miembro ${recordMemberId}`;
+                    currentMemberId = currentMember?.memberId
 
-                return {
-                    id: record.id,
-                    member_id: recordMemberId,
-                    member_name: memberName,
-                    blood_type: record.blood_type,
-                    eps: record.eps,
-                    allergies: record.allergies,
-                    chronic_diseases: record.chronic_diseases,
-                    physical_restrictions: record.physical_restrictions,
-                    surgical_history: record.surgical_history,
-                    active: record.active,
-                    vaccines_detail: record.vaccines_detail?.map((vaccine) => ({
-                        name: vaccine.name,
-                        applied_at: vaccine.applied_at
-                    })) || [],
-                    medications_detail: record.medications_detail?.map((med) => ({
-                        name: med.name,
-                        dose: med.dose,
-                        frequency: med.frequency
-                    })) || [],
-                    created_at: record.created_at,
-                    updated_at: record.updated_at
-                };
-            });
+                    medicalResponse = await getMedicalRecordApi(currentMemberId || 0, tenantId);
 
-            setRecords(adaptedRecords);
+                    membersMap.set(currentMemberId?.toString() || '', 
+                        `${user.given_name} ${user.middle_name} ${user.family_name}`)
+
+                    if (medicalResponse) {
+                        // Adaptar registros médicos
+                        adaptedRecords = [addNameToMedicalRecord(medicalResponse, membersMap)];
+                        setRecords(adaptedRecords);
+                    }
+                    else {
+                        setRecords([]);
+                    }
+                    break;
+
+                case 'ACUDIENTE':
+                    // Si es acudiente, no hacer nada
+                    break;
+
+                case 'SCOUTER':
+                    // Solo para líderes/admin: obtener todos los registros
+                    medicalResponse = await getMedicalRecordsByTenantApi(tenantId);
+
+                    // Obtener información de todos los miembros
+                    membersResponse = await getMembersWithBranch();
+
+                    currentMember = membersResponse.find((member: Member) =>
+                        member.email?.toLowerCase() === user?.email?.toLowerCase()
+                    );
+
+                    scoutMembers = membersResponse.filter(
+                        (member: Member) => 
+                            member.tenantId === tenantId);
+
+                    if (currentMember?.subgroup?.section?.groupId) {
+
+                        scoutMembers = scoutMembers.filter(
+                            (member: Member) => 
+                                member.subgroup?.section?.groupId === currentMember?.subgroup?.section?.groupId);
+
+                        if (currentMember?.subgroup?.sectionId) {
+                            scoutMembers = scoutMembers.filter(
+                                (member: Member) => 
+                                    member.subgroup?.sectionId === currentMember?.subgroup?.sectionId);
+                        }
+                    }
+
+                    scoutMembers.forEach((member: Member) => {
+                        if (member.role === 'SCOUT' && member.status === 'APPROVED' && 
+                                member.isActive)
+                        {
+                            membersMap.set(
+                                member.memberId?.toString() || "",
+                                `${member.firstName} ${member.lastName}`
+                            );
+                        }
+                    });
+
+                    filteredMedicalRecords = medicalResponse.content.filter(
+                        (record: MedicalDB) =>
+                            membersMap.has(record.member_id.toString())
+                    );
+
+                    // Adaptar registros médicos
+                    adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => {return addNameToMedicalRecord(record, membersMap)});
+                    setRecords(adaptedRecords);
+                    break;
+
+                case 'ADMIN_GRUPO':
+                    // Solo para líderes/admin: obtener todos los registros
+                    medicalResponse = await getMedicalRecordsByTenantApi(tenantId);
+
+                    // Obtener información de todos los miembros
+                    membersResponse = await getMembersWithBranch();
+
+                    currentMember = membersResponse.find((member: Member) =>
+                        member.email?.toLowerCase() === user?.email?.toLowerCase()
+                    );
+
+                    scoutMembers = membersResponse.filter(
+                        (member: Member) => 
+                            member.tenantId === tenantId);
+
+                    if (currentMember?.subgroup?.section?.groupId) {
+                        scoutMembers = scoutMembers.filter(
+                            (member: Member) => 
+                                member.subgroup?.section?.groupId === currentMember?.subgroup?.section?.groupId);
+                    }
+
+                    scoutMembers.forEach((member: Member) => {
+                        if (member.role === 'SCOUT' && member.status === 'APPROVED' &&
+                                member.isActive)
+                        {
+                            membersMap.set(
+                                member.memberId?.toString() || "",
+                                `${member.firstName} ${member.lastName}`
+                            );
+                        }
+                    });
+
+                    filteredMedicalRecords = medicalResponse.content.filter(
+                        (record: MedicalDB) =>
+                            membersMap.has(record.member_id.toString())
+                    );
+
+                    // Adaptar registros médicos
+                    adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => {return addNameToMedicalRecord(record, membersMap)});
+                    setRecords(adaptedRecords);
+                    break;
+            }
         } catch (err) {
             console.error('Error fetching medical records:', err);
             setError('Error al cargar los registros médicos');
@@ -106,7 +209,7 @@ export default function MedicalRecordsView() {
         } finally {
             setIsLoading(false);
         }
-    }, [tenantId, user, isScout]);
+    }, [tenantId, user, currentUserRole]);
 
     useEffect(() => {
         fetchMedicalRecords();
@@ -159,35 +262,6 @@ export default function MedicalRecordsView() {
         setShowForm(false);
         setEditingRecord(null);
     };
-
-    // Si es Scout, mostrar mensaje de acceso denegado
-    if (isScout) {
-        return (
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold">Registros Médicos</h1>
-                        <p className="text-muted-foreground">
-                            Gestión de información médica
-                        </p>
-                    </div>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
-                    <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-4" />
-                    <h2 className="text-xl font-semibold text-amber-900 mb-2">
-                        Acceso Restringido
-                    </h2>
-                    <p className="text-amber-800 mb-4">
-                        Esta sección está disponible solo para líderes y administradores del grupo.
-                    </p>
-                    <p className="text-sm text-amber-700">
-                        Para consultar o actualizar tu información médica, contacta a tu jefe de grupo o líder de rama.
-                    </p>
-                </div>
-            </div>
-        );
-    }
 
     if (showForm) {
         return (
@@ -245,61 +319,123 @@ export default function MedicalRecordsView() {
         }
     };
 
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold">Registros Médicos</h1>
-                    <p className="text-muted-foreground">
-                        Gestiona la información médica de los integrantes
-                    </p>
+    switch (currentUserRole) {
+        case 'SCOUT':
+            return (
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-3xl font-bold">Registros Médicos</h1>
+                            <p className="text-muted-foreground">
+                                Visualización de información médica
+                            </p>
+                        </div>
+                    </div>
+                    {!records[0] ?
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
+                                <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-4" />
+                                <h2 className="text-xl font-semibold text-amber-900 mb-2">
+                                    Atención
+                                </h2>
+                                <p className="text-amber-800 mb-4">
+                                    No tienes creado un registro de información médica todavía.
+                                </p>
+                                <p className="text-sm text-amber-700">
+                                    Para actualizar la información médica, contacta con el jefe de grupo o líder de rama a la que perteneces.
+                                </p>
+                            </div>
+                        :
+                        <MedicalRecordInfo record={records[0]} />
+                    }
+                    
                 </div>
-                <div className="flex gap-3">
-                    <Button
-                        onClick={() => setShowExportModal(true)}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                        disabled={isLoading || isExporting || filteredRecords.length === 0}
-                    >
-                        <Download className="h-4 w-4" />
-                        {isExporting ? 'Exportando...' : 'Exportar Todo'}
-                    </Button>
-                    <Button
-                        onClick={handleCreate}
-                        className="flex items-center gap-2"
-                        disabled={isLoading}
-                    >
-                        <Plus className="h-4 w-4" />
-                        Nuevo Registro
-                    </Button>
+            );
+    
+        case 'ACUDIENTE':
+            return (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-3xl font-bold">Registros Médicos</h1>
+                            <p className="text-muted-foreground">
+                                Gestión de información médica
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
+                        <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-4" />
+                        <h2 className="text-xl font-semibold text-amber-900 mb-2">
+                            Atención
+                        </h2>
+                        <p className="text-amber-800 mb-4">
+                            La edición de información médica es manejada por los jefes de grupo y lideres de rama.
+                        </p>
+                        <p className="text-sm text-amber-700">
+                            Para actualizar la información médica, contacta con el jefe de grupo o líder de rama a la que perteneces.
+                        </p>
+                    </div>
                 </div>
-            </div>
+            );
 
-            <MedicalRecordsFilter
-                searchFilter={searchFilter}
-                setSearchFilter={setSearchFilter}
-                bloodTypeFilter={bloodTypeFilter}
-                setBloodTypeFilter={setBloodTypeFilter}
-                epsFilter={epsFilter}
-                setEpsFilter={setEpsFilter}
-                allergiesFilter={allergiesFilter}
-                setAllergiesFilter={setAllergiesFilter}
-                records={records}
-            />
+        case 'SCOUTER':
+        case 'ADMIN_GRUPO':
+            return (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-3xl font-bold">Registros Médicos</h1>
+                            <p className="text-muted-foreground">
+                                Gestiona la información médica de los integrantes
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={() => setShowExportModal(true)}
+                                variant="outline"
+                                className="flex items-center gap-2"
+                                disabled={isLoading || isExporting || filteredRecords.length === 0}
+                            >
+                                <Download className="h-4 w-4" />
+                                {isExporting ? 'Exportando...' : 'Exportar Todo'}
+                            </Button>
+                            <Button
+                                onClick={handleCreate}
+                                className="flex items-center gap-2"
+                                disabled={isLoading}
+                            >
+                                <Plus className="h-4 w-4" />
+                                Nuevo Registro
+                            </Button>
+                        </div>
+                    </div>
 
-            <MedicalRecordsTable
-                records={filteredRecords}
-                onEdit={handleEdit}
-                isLoading={isLoading}
-            />
-            <ExportConfirmationModal
-                open={showExportModal}
-                onOpenChange={setShowExportModal}
-                onConfirm={handleMassExport}
-                recordCount={filteredRecords.length}
-                isExporting={isExporting}
-            />
-        </div>
+                    <MedicalRecordsFilter
+                        searchFilter={searchFilter}
+                        setSearchFilter={setSearchFilter}
+                        bloodTypeFilter={bloodTypeFilter}
+                        setBloodTypeFilter={setBloodTypeFilter}
+                        epsFilter={epsFilter}
+                        setEpsFilter={setEpsFilter}
+                        allergiesFilter={allergiesFilter}
+                        setAllergiesFilter={setAllergiesFilter}
+                        records={records}
+                    />
 
-    );
+                    <MedicalRecordsTable
+                        records={filteredRecords}
+                        onEdit={handleEdit}
+                        isLoading={isLoading}
+                    />
+                    <ExportConfirmationModal
+                        open={showExportModal}
+                        onOpenChange={setShowExportModal}
+                        onConfirm={handleMassExport}
+                        recordCount={filteredRecords.length}
+                        isExporting={isExporting}
+                    />
+                </div>
+
+            );
+    }
 }
