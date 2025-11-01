@@ -45,7 +45,7 @@ export interface PersonalData {
   instruments?: string;
   tenantId: string;
   emergency_contacts?: EmergencyContact[];
-  data_treatment_consent?: string;
+  accept_treatment?: boolean;
 }
 
 export interface SchoolData {

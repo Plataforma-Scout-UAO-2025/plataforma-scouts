@@ -8,7 +8,7 @@ export const createCuotaFormSchema = (isEditMode = false) =>
       description: z
         .string()
         .min(1, { message: "La descripción es requerida" }),
-      amount: z.number().min(0, { message: "El monto debe ser mayor a 0" }),
+      amount: z.number({ message: "El monto es requerido" }).gt(0, { message: "El monto debe ser mayor a 0" }),
       periodicity: z.enum(["SINGLE", "MONTH", "QUARTER", "YEAR"] as const),
       scope: z.enum(["ALL", "SCOUT", "SUBGROUP", "SECTION"] as const),
       start_date: z.date({ message: "La fecha de inicio es requerida" }),

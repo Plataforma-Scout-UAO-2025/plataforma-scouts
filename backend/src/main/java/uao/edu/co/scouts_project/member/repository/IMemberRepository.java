@@ -47,6 +47,15 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
     List<Member> findBySubGroupId(@Param("subGroupId") Long subGroupId);
 
     /**
+     * Busca un miembro por su userId (claim 'sub' en Auth0) para operaciones que
+     * sincronizan rol con Auth0.
+     *
+     * @param userId identificador del usuario en Auth0
+     * @return Optional con el miembro si existe
+     */
+    Optional<Member> findByUserId(@NotNull String userId);
+
+    /**
      * Cuenta la cantidad de miembros por grupo para un tenant específico.
      *
      * @param tenantId ID del tenant para el cual se quiere contar los miembros por grupo
@@ -101,6 +110,8 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
 
 
 
+    @Query("SELECT m.memberId FROM Member m WHERE m.userId = :userId")
+    Optional<Long> findMemberIdByUserId(@Param("userId") String userId);
     /**
      * Actualiza la sección (section_id) del subgrupo asociado a un miembro.
      * @param memberId ID del miembro cuyo subgrupo se usará para la actualización.
@@ -121,8 +132,6 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
             @Param("memberId") Long memberId,
             @Param("newSectionId") Long newSectionId
     );
-
-
 
 
 }

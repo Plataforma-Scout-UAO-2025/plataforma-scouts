@@ -63,6 +63,7 @@ export default function CreateCuotaForm({
   const navigate = useNavigate();
 
   const [showAssociatedToField, setShowAssociatedToField] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Traer los miembros, subgrupos y secciones del grupo
   const [subgroups, setSubgroups] = useState<Subgroup[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
@@ -107,7 +108,7 @@ export default function CreateCuotaForm({
     defaultValues: {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
-      amount: defaultValues?.amount || 0,
+      amount: defaultValues?.amount || undefined,
       periodicity: defaultValues?.periodicity || "MONTH",
       scope: defaultValues?.scope || "ALL",
       start_date: defaultValues?.start_date
@@ -154,6 +155,10 @@ export default function CreateCuotaForm({
   }, [periodicityValue, form]);
 
   async function onSubmit(values: CreateCuotaFormValues) {
+    if (isSubmitting) return; // Prevenir doble envío
+    
+    setIsSubmitting(true);
+    
     // Preparar los datos según el formato esperado por el backend
     const dataToSendCreate = {
       tenant_id: tenantId,
@@ -162,11 +167,11 @@ export default function CreateCuotaForm({
       amount: values.amount,
       periodicity: values.periodicity,
       scope: values.scope,
-      start_date: values.start_date.toISOString().split('T')[0], // Formato YYYY-MM-DD
+      start_date: values.start_date.toLocaleDateString('en-CA'), // Formato YYYY-MM-DD en zona horaria local
       // Si es SINGLE, usar la misma fecha de inicio como fecha de fin
       ...(values.periodicity === "SINGLE"
-        ? { end_date: values.start_date.toISOString().split('T')[0] }
-        : values.end_date && { end_date: values.end_date.toISOString().split('T')[0] }
+        ? { end_date: values.start_date.toLocaleDateString('en-CA') }
+        : values.end_date && { end_date: values.end_date.toLocaleDateString('en-CA') }
       ),
       associated_to: values.scope === "ALL" ? null : values.associated_to,
     };
@@ -199,6 +204,8 @@ export default function CreateCuotaForm({
       } catch (error) {
         toast.error("Error al actualizar la cuota:", error as ExternalToast);
         console.error("Error al actualizar la cuota:", error);
+      } finally {
+        setIsSubmitting(false);
       }
     } else {
       // Modo creación: crear nueva cuota
@@ -221,6 +228,8 @@ export default function CreateCuotaForm({
       } catch (error) {
         toast.error("Error al crear la cuota:", error as ExternalToast);
         console.error("Error al crear la cuota:", error);
+      } finally {
+        setIsSubmitting(false);
       }
     }
   }
@@ -275,8 +284,18 @@ export default function CreateCuotaForm({
                   <Input
                     type="number"
                     placeholder="12300"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    value={field.value || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") {
+                        field.onChange(undefined);
+                      } else {
+                        const numValue = Number(value);
+                        if (!isNaN(numValue)) {
+                          field.onChange(numValue);
+                        }
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -319,7 +338,7 @@ export default function CreateCuotaForm({
             name="start_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Fecha de inicio</FormLabel>
+                <FormLabel>{periodicityValue === 'SINGLE' ? 'Fecha límite' : 'Fecha de inicio'}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -543,11 +562,12 @@ export default function CreateCuotaForm({
             type="button"
             variant="secondary"
             onClick={() => setOpen(false)}
+            disabled={isSubmitting}
           >
             Cancelar
           </Button>
-          <Button type="submit" variant="primary">
-            {submitButtonText}
+          <Button type="submit" variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? "Procesando..." : submitButtonText}
           </Button>
         </div>
       </form>
