@@ -411,7 +411,7 @@ export default function Organigrama() {
         <Button
           variant="outline"
           onClick={() => navigate("/app/organigrama")}
-          className="border border-border bg-secondary text-white hover:opacity-90"
+          className="border border-border bg-secondary text-white hover:bg-secondary hover:opacity-100"
         >
           Anterior
         </Button>

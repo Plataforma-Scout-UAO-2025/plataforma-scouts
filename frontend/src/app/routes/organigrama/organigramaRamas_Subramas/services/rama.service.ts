@@ -332,11 +332,9 @@ export const createRama = async (
 ): Promise<Rama> => {
   try {
     const backendData = mapFrontendCreateRamaToBackend(data);
-    // Agregar tenantId al payload como lo requiere la API
-    const payload = {
-      ...backendData,
-      tenantId,
-    };
+    
+    const { tenantId: _, ...payloadWithoutTenantId } = backendData as any;
+    const payload = payloadWithoutTenantId;
 
     const backendRama = (await createSection(
       payload,
