@@ -95,6 +95,7 @@ export interface Member {
   };
   branch?: Section[];
   schoolData?: SchoolData;
+  accept_treatment?: boolean;
   }
 
 export interface CreateMember {
@@ -110,6 +111,7 @@ export interface CreateMember {
   birthDate?: Date;
   isActive?: boolean;
   emergencyContacts?: EmergencyContact[];
+  accept_treatment?: boolean;
   
   member_id?: number;
   first_name?: string;

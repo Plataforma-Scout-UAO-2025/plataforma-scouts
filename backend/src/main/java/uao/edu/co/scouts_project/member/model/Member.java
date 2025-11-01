@@ -114,6 +114,9 @@ public class Member {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name="accept_treatment")
+    private Boolean acceptTreatment;
+
     @EqualsAndHashCode
     @Getter
     @Setter

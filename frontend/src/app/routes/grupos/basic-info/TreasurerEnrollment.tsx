@@ -30,10 +30,10 @@ function TreasurerEnrollment() {
     handleSubmit,
   } = useRoleEnrollment({ role: "TESORERO", totalPaginas: 2 });
 
-  const handleConsentChange = (value: string) => {
+  const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
       ...prev,
-      data_treatment_consent: value,
+      accept_treatment: value,
     }));
   };
 
@@ -59,7 +59,7 @@ function TreasurerEnrollment() {
 
     return (
       <DataTreatmentConsent
-        value={datosPersonales.data_treatment_consent || ""}
+        value={datosPersonales.accept_treatment}
         onChange={handleConsentChange}
         error={errors.data_treatment_consent}
       />
@@ -102,7 +102,7 @@ function TreasurerEnrollment() {
             variant="primary"
             disabled={
               loadingSubmit ||
-              (pagina === 2 && datosPersonales.data_treatment_consent === "rejected")
+              (pagina === 2 && datosPersonales.accept_treatment === false)
             }
           >
             {loadingSubmit

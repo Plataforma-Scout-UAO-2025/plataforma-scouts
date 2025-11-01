@@ -10,8 +10,8 @@ import { AlertCircle, Info, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 interface DataTreatmentConsentProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: boolean | undefined;
+  onChange: (value: boolean) => void;
   error?: string;
 }
 
@@ -21,6 +21,12 @@ export default function DataTreatmentConsent({
   error,
 }: DataTreatmentConsentProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const stringValue = value === true ? "accepted" : value === false ? "rejected" : "";
+
+  const handleSelectChange = (val: string) => {
+    onChange(val === "accepted");
+  };
 
   return (
     <div className="col-span-full space-y-4 p-4 border rounded-lg bg-muted/30">
@@ -101,7 +107,7 @@ export default function DataTreatmentConsent({
         <Label htmlFor="data-consent" className="text-base font-semibold">
           ¿Autorizas el tratamiento de tus datos personales? *
         </Label>
-        <Select value={value} onValueChange={onChange}>
+        <Select value={stringValue} onValueChange={handleSelectChange}>
           <SelectTrigger
             id="data-consent"
             className={error ? "border-red-500 focus:border-red-500" : ""}
@@ -123,7 +129,7 @@ export default function DataTreatmentConsent({
             {error}
           </p>
         )}
-        {value === "rejected" && (
+        {value === false && (
           <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-700">
