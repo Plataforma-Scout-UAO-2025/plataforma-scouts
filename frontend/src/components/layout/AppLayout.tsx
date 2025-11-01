@@ -88,8 +88,8 @@ const adminGrupalItems: MenuItem[] = [
   },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
   {
-    id: "Administración del grupo",
-    label: "Admin del grupo",
+    id: "gestion-del-grupo",
+    label: "Gestión del grupo",
     icon: <Settings />,
     href: "/app/grupo",
   },

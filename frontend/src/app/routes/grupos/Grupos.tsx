@@ -2,14 +2,46 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Save, Loader2, Building2, Phone, Mail, MapPin, Users, Heart, Eye, History, Camera, Link } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  Building2,
+  Phone,
+  Mail,
+  MapPin,
+  Users,
+  Heart,
+  Eye,
+  History,
+  Camera,
+  Link,
+  CalendarDays,
+} from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { updateGroupSchema, type UpdateGroupFormData } from "@/schemas/group.schema";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  updateGroupSchema,
+  type UpdateGroupFormData,
+} from "@/schemas/group.schema";
 import { useTenantParams } from "@/app/routes/organigrama/organigramaRamas_Subramas/hooks/useTenantParams";
 import { getGroupsByTenant } from "@/api/organigramaApi";
 import { updateGroup } from "@/api/groupsApi";
@@ -38,7 +70,9 @@ interface GroupData {
 }
 
 // Utilidades de mapeo
-const mapGroupDataToForm = (groupData: Partial<GroupData>): UpdateGroupFormData => ({
+const mapGroupDataToForm = (
+  groupData: Partial<GroupData>
+): UpdateGroupFormData => ({
   name: groupData.name || "",
   district: groupData.district || "",
   address: groupData.address || "",
@@ -82,10 +116,24 @@ const mapFormDataToUpdate = (
   status: originalData?.status || "ACTIVE",
 });
 
+// Parse a YYYY-MM-DD string into a local Date (avoid UTC parsing issues)
+const parseYMDToDate = (s?: string) => {
+  if (!s) return undefined;
+  const parts = s.split("-");
+  if (parts.length !== 3) return undefined;
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const d = Number(parts[2]);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return undefined;
+  return new Date(y, m - 1, d);
+};
+
 function Grupos() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [originalGroupData, setOriginalGroupData] = useState<GroupData | null>(null);
+  const [originalGroupData, setOriginalGroupData] = useState<GroupData | null>(
+    null
+  );
   const { tenantId, groupSlug } = useTenantParams();
 
   const form = useForm<UpdateGroupFormData>({
@@ -140,14 +188,16 @@ function Grupos() {
 
     try {
       setSaving(true);
-      const updateData = mapFormDataToUpdate(data, originalGroupData || undefined);
-      
+      const updateData = mapFormDataToUpdate(
+        data,
+        originalGroupData || undefined
+      );
+
       await updateGroup(tenantId, groupSlug, updateData);
       toast.success("Información del grupo actualizada exitosamente");
-      
+
       // Recargar datos después de la actualización
       await loadGroupData();
-      
     } catch (error) {
       console.error("Error actualizando grupo:", error);
       toast.error("Error al actualizar la información del grupo");
@@ -198,9 +248,7 @@ function Grupos() {
                   <FormItem className="md:col-span-2">
                     <FormLabel>Nombre del Grupo *</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -214,9 +262,7 @@ function Grupos() {
                   <FormItem>
                     <FormLabel>Distrito</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -230,10 +276,41 @@ function Grupos() {
                   <FormItem>
                     <FormLabel>Fecha de Fundación</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="date"
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild className="bg-white">
+                          <Button
+                            variant="outline"
+                            className={`w-full justify-between text-left ${
+                              !field.value ? "text-muted-foreground" : ""
+                            }`}
+                          >
+                            <span>
+                              {field.value
+                                ? parseYMDToDate(
+                                    field.value
+                                  )!.toLocaleDateString()
+                                : "Selecciona una fecha"}
+                            </span>
+                            <CalendarDays className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              field.value
+                                ? parseYMDToDate(field.value)
+                                : undefined
+                            }
+                            onSelect={(date) => {
+                              const value = date
+                                ? date.toISOString().split("T")[0]
+                                : "";
+                              field.onChange(value);
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,9 +337,7 @@ function Grupos() {
                   <FormItem className="md:col-span-2">
                     <FormLabel>Dirección</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -279,9 +354,7 @@ function Grupos() {
                       <span>Teléfono</span>
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -298,10 +371,7 @@ function Grupos() {
                       <span>Email</span>
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="email"
-                      />
+                      <Input {...field} type="email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -328,9 +398,7 @@ function Grupos() {
                   <FormItem>
                     <FormLabel>Lema</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -350,6 +418,7 @@ function Grupos() {
                       <Textarea
                         {...field}
                         rows={4}
+                        className="resize-none bg-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -370,6 +439,7 @@ function Grupos() {
                       <Textarea
                         {...field}
                         rows={4}
+                        className="resize-none bg-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -390,6 +460,7 @@ function Grupos() {
                       <Textarea
                         {...field}
                         rows={6}
+                        className="resize-none bg-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -417,9 +488,7 @@ function Grupos() {
                   <FormItem>
                     <FormLabel>ID del Logo</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -433,9 +502,7 @@ function Grupos() {
                   <FormItem>
                     <FormLabel>ID de la Pañoleta</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -463,9 +530,7 @@ function Grupos() {
                     <FormItem>
                       <FormLabel>Instagram</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                        />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -479,9 +544,7 @@ function Grupos() {
                     <FormItem>
                       <FormLabel>Facebook</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                        />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -495,9 +558,7 @@ function Grupos() {
                     <FormItem>
                       <FormLabel>Sitio Web</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                        />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -508,11 +569,7 @@ function Grupos() {
           </Card>
 
           <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
+            <Button type="submit" disabled={saving} variant="primary">
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
