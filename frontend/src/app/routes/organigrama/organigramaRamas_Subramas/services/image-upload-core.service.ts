@@ -26,7 +26,6 @@ export const uploadSectionIcon = async (
     
   const uploadResponse = await uploadToStorage<UploadResponse>(formData);
     
-  // handled by organigramaClient
     
     const payload = { objectId: uploadResponse.objectId };
     console.info(' [ImageUploadCore] Enviando PATCH (icon) via client:', { payload });
@@ -127,7 +126,7 @@ export const removeSectionIcon = async (
   groupSlug: string,
   sectionId: string
 ): Promise<void> => {
-  console.log("🗑️ [ImageUploadService] Eliminando ícono de sección...");
+  console.log(" [ImageUploadService] Eliminando ícono de sección...");
   try {
     await deleteIcon(sectionId, tenantId, groupSlug);
     console.log(" Ícono eliminado correctamente");
