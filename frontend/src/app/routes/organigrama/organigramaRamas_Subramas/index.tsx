@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import RamaList from "./components/RamaList";
@@ -19,7 +19,6 @@ import type {
   UpdateSubgroupData,
 } from "./types/frontend";
 import { useTenantParams } from "./hooks/useTenantParams";
-import useOrganigramaDataWithCache from "./hooks/useOrganigramaDataWithCache";
 import useOrganigramaActions from "./hooks/useOrganigramaActions";
 import useOrganigramaExport from "./hooks/useOrganigramaExport";
 import { useApiError } from "./hooks/useApiError";
@@ -29,6 +28,14 @@ import {
   fetchMembersWithBranchAction,
   fetchMembersAction,
 } from "@/store/members/membersActions";
+import { fetchRamasWithSubramasAction } from "@/store/organigrama/organigramaActions";
+import { invalidateRamasCache } from "@/store/organigrama/organigramaSlice";
+import {
+  selectRamasWithCacheValidation,
+  selectShouldFetchRamas,
+  selectMemberCountBySubgroup,
+} from "@/store/organigrama/selectors";
+import { debounce } from "./utils/ramasProcessor";
 
 import {
   DropdownMenu,
@@ -69,38 +76,80 @@ export default function Organigrama() {
     error: tenantError,
   } = useTenantParams();
 
-  const {
-    ramas,
-    loadRamas,
-    isLoading: dataLoading,
-  } = useOrganigramaDataWithCache(tenantId, groupSlug);
+  // Redux state para ramas
+  const ramasState = useSelector(selectRamasWithCacheValidation);
+  const shouldFetchRamas = useSelector(selectShouldFetchRamas);
+  const getMemberCountBySubgroup = useSelector(selectMemberCountBySubgroup);
 
   // Obtener miembros del store de Redux
   const { members } = useSelector((state: RootState) => state.members);
 
   const { error, handleError, clearError } = useApiError();
 
-  // Helper para contar miembros por subgrupo
-  const countMembersBySubgroup = (subgroupId: string | number): number => {
-    if (!members || members.length === 0) return 0;
+  // Extraer datos del estado de ramas
+  const { ramas, isLoading: dataLoading, error: ramasError } = ramasState;
 
-    const subgroupIdNum = Number(subgroupId);
-    if (!Number.isFinite(subgroupIdNum)) return 0;
+  // Manejar errores de ramas
+  useEffect(() => {
+    if (ramasError) {
+      handleError(new Error(ramasError));
+    }
+  }, [ramasError, handleError]);
 
-    return members.filter((member) => {
-      const memberSubgroupId =
-        member.subgroup_id ??
-        member.subgroup?.subgroupId ??
-        member.subgroup?.subgroup_id;
-      return Number(memberSubgroupId) === subgroupIdNum;
-    }).length;
-  };
+  // Helper para contar miembros por subgrupo (usando selector optimizado)
+  const countMembersBySubgroup = useCallback(
+    (subgroupId: string | number): number => {
+      return getMemberCountBySubgroup(subgroupId);
+    },
+    [getMemberCountBySubgroup]
+  );
+
+  // Debounced fetch function para ramas
+  const debouncedFetchRamas = useMemo(
+    () =>
+      debounce((tenantId: string, groupSlug: string) => {
+        console.log("🔄 [Component] Dispatching fetchRamasWithSubramasAction");
+        dispatch(fetchRamasWithSubramasAction({ tenantId, groupSlug }));
+      }, 100),
+    [dispatch]
+  );
+
+  // Función para recargar ramas manualmente
+  const loadRamas = useCallback(
+    async (opts?: { force?: boolean }) => {
+      if (tenantId && groupSlug) {
+        const force = opts?.force || false;
+        if (force) {
+          console.log("🔄 [Component] Force refresh: invalidating cache");
+          dispatch(invalidateRamasCache());
+        }
+        await dispatch(
+          fetchRamasWithSubramasAction({ tenantId, groupSlug, force })
+        );
+      }
+    },
+    [dispatch, tenantId, groupSlug]
+  );
 
   useEffect(() => {
     if (tenantError) {
       handleError(new Error(tenantError));
     }
   }, [tenantError, handleError]);
+
+  // Cargar ramas con Redux
+  useEffect(() => {
+    if (tenantId && groupSlug && shouldFetchRamas) {
+      console.log(
+        "🎯 [Component] Should fetch ramas, dispatching debounced fetch"
+      );
+      debouncedFetchRamas(tenantId, groupSlug);
+    }
+
+    return () => {
+      debouncedFetchRamas.cancel();
+    };
+  }, [tenantId, groupSlug, shouldFetchRamas, debouncedFetchRamas]);
 
   // Cargar miembros si no están disponibles
   useEffect(() => {

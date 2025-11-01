@@ -11,7 +11,8 @@ import { fetchMembersAction, fetchMembersWithBranchAction, assignSubgroupAndSect
 import type { RootState, AppDispatch } from "@/store/store";
 // Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
-import useOrganigramaData from "../organigramaRamas_Subramas/hooks/useOrganigramaData";
+import { fetchRamasWithSubramasAction } from "@/store/organigrama/organigramaActions";
+import { selectRamas, selectRamasLoading } from "@/store/organigrama/selectors";
 import RamaList from "../organigramaRamas_Subramas/components/RamaList";
 import { getSectionWithSubgroups, createSubgroup } from "@/api/organigramaApi";
 import type { Subgroup } from "@/types/subgroup-simple.type";
@@ -34,9 +35,10 @@ export default function NivelesPage() {
   const { members, loading: membersLoading, error: membersError } = useSelector((state: RootState) => state.members);
   
   const currentYear = new Date().getFullYear();
-  // Hooks del submódulo de ramas: deben invocarse en el mismo orden siempre
+  // Hooks del submódulo de ramas: usar Redux para consistencia
   const { tenantId, groupSlug } = useTenantParams();
-  const { ramas } = useOrganigramaData(tenantId, groupSlug);
+  const ramas = useSelector(selectRamas);
+  const ramasLoading = useSelector(selectRamasLoading);
 
   const { anio, data, loading, addNivel, updateNivel, removeNivel, addCargo, updateCargo, removeCargo } =
     useNiveles(currentYear, tenantId, groupSlug);
@@ -98,6 +100,18 @@ export default function NivelesPage() {
       })();
     }
   }, [dispatch, members.length]);
+
+  // Cargar ramas con Redux si es necesario
+  useEffect(() => {
+    const shouldFetch = ramas.length === 0 && !ramasLoading;
+    if (tenantId && groupSlug && shouldFetch) {
+      console.log('🎯 [NivelesPage] Should fetch ramas, dispatching Redux action');
+      dispatch(fetchRamasWithSubramasAction({ 
+        tenantId: String(tenantId), 
+        groupSlug 
+      }));
+    }
+  }, [dispatch, tenantId, groupSlug, ramas.length, ramasLoading]);
 
   // ===== HANDLERS DE NIVELES =====
 
@@ -427,6 +441,7 @@ export default function NivelesPage() {
                 ramas={comiteRamas}
                 // Pasamos handlers: onCreateSubrama abre el modal Crear Cargo en este módulo
                 onEditRama={() => { console.info('editar rama (desde niveles)'); }}
+                onDeleteRama={() => { console.info('eliminar rama (desde niveles)'); }}
                 onCreateSubrama={(ramaId) => handleCreateCargoFromRama(ramaId)}
                 onEditSubrama={() => { console.info('editar subrama (desde niveles)'); }}
                 onDeleteSubrama={() => { console.info('eliminar subrama (desde niveles)'); }}
