@@ -82,10 +82,11 @@ public class GroupService implements IGroupService {
     public GroupResponseDTO createGroup(String tenantId, GroupDTO dto) {
         ensureTenantExists(tenantId);
 
-        // Solo un grupo por tenant: no se permite más de un grupo por tenant
-        if (groupRepository.existsByTenantId(dto.tenantId())) {
-            throw new IllegalArgumentException("No se puede crear más de un grupo para el tenant: " + dto.tenantId());
+        // Validar que no exista otro grupo con el mismo slug en el mismo tenant
+        if (groupRepository.existsByTenantIdAndSlug(tenantId, dto.slug())) {
+            throw new IllegalArgumentException("Ya existe un grupo con el slug '" + dto.slug() + "' en este tenant");
         }
+
         validateSlugFormat(dto.slug());
 
         Group group;
@@ -104,13 +105,12 @@ public class GroupService implements IGroupService {
     public GroupResponseDTO createGroup(CreatingGroupDTO dto) {
         ensureTenantExists(dto.getTenantId());
 
-        // Solo un grupo por tenant
-        if (groupRepository.existsByTenantId(dto.getTenantId())) {
-            throw new IllegalArgumentException("Ya existe un grupo para el tenant: " + dto.getTenantId());
+        // Validar que no exista otro grupo con el mismo slug en el mismo tenant
+        if (groupRepository.existsByTenantIdAndSlug(dto.getTenantId(), dto.getSlug())) {
+            throw new IllegalArgumentException("Ya existe un grupo con el slug '" + dto.getSlug() + "' en este tenant");
         }
 
         validateSlugFormat(dto.getSlug());
-        ensureSlugIsUnique(dto.getSlug());
 
         Group entity;
         try {
@@ -135,15 +135,21 @@ public class GroupService implements IGroupService {
 
     @Override
     public void ensureSlugIsUnique(String slug) {
-        if (groupRepository.existsBySlug(slug)) {
-            throw new IllegalArgumentException("El slug '" + slug + "' ya está en uso en otro grupo.");
-        }
+        throw new UnsupportedOperationException("ensureSlugIsUnique is not used; slug uniqueness is validated per tenant.");
     }
 
     @Transactional
     public GroupResponseDTO updateGroup(String tenantId, String groupSlug, GroupDTO dto) {
         ensureTenantExists(tenantId);
         Group group = findGroupOrThrow(tenantId, groupSlug);
+
+        // Validar que el slug y tenantId son inmutables
+        if (dto.slug() != null && !dto.slug().equals(groupSlug)) {
+            throw new IllegalArgumentException("El campo slug es inmutable");
+        }
+        if (dto.tenantId() != null && !dto.tenantId().equals(tenantId)) {
+            throw new IllegalArgumentException("El campo tenantId es inmutable");
+        }
 
         if (dto.logoObjectId() != null && !Objects.equals(dto.logoObjectId(), group.getLogoObjectId())) {
             storageService.deleteFileByObjectId(group.getLogoObjectId());
@@ -164,11 +170,9 @@ public class GroupService implements IGroupService {
         // 1. Buscar el grupo actual
         Group existing = findGroupOrThrow(tenantId, slug);
 
-        // 2. Validar slug (si cambia)
+        // 2. Validar slug (si cambia) - el slug es inmutable en los PATCH.
         if (dto.getSlug() != null && !dto.getSlug().equals(existing.getSlug())) {
-            validateSlugFormat(dto.getSlug());
-            ensureSlugIsUnique(dto.getSlug());
-            existing.setSlug(dto.getSlug());
+            throw new IllegalArgumentException("El campo slug es inmutable");
         }
 
         // 3. Mapear campos no nulos desde el DTO hacia la entidad
@@ -295,6 +299,9 @@ public class GroupService implements IGroupService {
     }
 
     private void mapDtoToEntity(GroupDTO dto, Group group) {
+        // El slug es inmutable y no debe actualizarse, incluso si viene null
+        // if (dto.slug() != null) group.setSlug(dto.slug());
+        
         if (dto.name() != null)
             group.setName(dto.name());
         if (dto.district() != null)
