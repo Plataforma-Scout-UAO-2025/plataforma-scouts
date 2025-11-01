@@ -333,8 +333,11 @@ export const createRama = async (
   try {
     const backendData = mapFrontendCreateRamaToBackend(data);
     
-    const { tenantId: _, ...payloadWithoutTenantId } = backendData as any;
-    const payload = payloadWithoutTenantId;
+    // Crear payload sin tenantId, que va como parámetro de ruta
+    const payload = {
+      name: backendData.name,
+      description: backendData.description,
+    } as Parameters<typeof createSection>[0];
 
     const backendRama = (await createSection(
       payload,
