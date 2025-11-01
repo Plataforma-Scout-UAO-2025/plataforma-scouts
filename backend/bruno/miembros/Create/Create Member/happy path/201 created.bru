@@ -1,0 +1,60 @@
+meta {
+  name: 201 created
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}/members/create_member
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "memberId": null,
+    "userId": "auth0|68efcd33b0f9e98d45be4cf2",
+    "tenantId": "org_6B3k4dao2Wf6eGxa",
+    "guardianId": 10,
+    "subgroup": {
+      "subgroupId": 8,
+      "tenantId": "org_6B3k4dao2Wf6eGxa",
+      "groupId": 1,
+      "sectionId": 5,
+      "name": "Patrulla Águilas",
+      "description": "Subgrupo demo",
+      "photoPrincipal": null,
+      "isActive": true
+    },
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "age": 12,
+    "role": "SCOUT",
+    "identification": "1020304050",
+    "documentType": "TI",
+    "email": "juan.perez@example.com",
+    "gender": "Masculino",
+    "birthDate": "2013-05-02",
+    "address": "Calle 1 # 2-3",
+    "phone": "3001234567",
+    "weight": "40",
+    "height": "1.45",
+    "hobbies": "Lectura",
+    "sports": "Fútbol",
+    "instruments": "Guitarra",
+    "isActive": true,
+    "relationship": "Hijo",
+    "status": "PENDING",
+    "acceptanceDate": null,
+    "emergencyContacts": [
+      { "name": "María Pérez", "relationship": "Madre", "phone": "3002345678" }
+    ],
+    "created_at": null,
+    "updated_at": null,
+    "accept_treatment": true
+  }
+}

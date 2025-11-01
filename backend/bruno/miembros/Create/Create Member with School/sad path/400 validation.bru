@@ -1,0 +1,33 @@
+meta {
+  name: 400 validation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}/members/create_member_with_school
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json 
+}
+
+body:json {
+  {
+    "member": {
+      "tenantId": "",
+      "firstName": "A",
+      "lastName": "B",
+      "age": -5,
+      "identification": "",
+      "documentType": "??",
+      "accept_treatment": false
+    },
+    "school": {
+      "tenant_id": "",
+      "institution": ""
+    }
+  }
+}
