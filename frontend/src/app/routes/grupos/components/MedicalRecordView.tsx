@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Download, Plus } from 'lucide-react';
 import type { MedicalRecord } from '../../../../types/medical-record.type';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
@@ -13,6 +13,9 @@ import { getMembers } from '@/api/membersApi';
 import { useAuth0 } from '@auth0/auth0-react';
 import { AlertCircle } from 'lucide-react';
 import { useRoleContext } from '@/hooks/useRoleContext';
+import { toast } from 'sonner';
+import { useMassExportPDF } from '../hooks/useMedicalRecordPDF';
+import { ExportConfirmationModal } from './ExportConfirmationModal';
 
 export default function MedicalRecordsView() {
     const [records, setRecords] = useState<MedicalRecord[]>([]);
@@ -20,12 +23,16 @@ export default function MedicalRecordsView() {
     const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isExporting, setIsExporting] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+
+
 
     const [searchFilter, setSearchFilter] = useState("");
     const [bloodTypeFilter, setBloodTypeFilter] = useState("");
     const [epsFilter, setEpsFilter] = useState("");
     const [allergiesFilter, setAllergiesFilter] = useState("");
-
+    const { exportAllToPDF } = useMassExportPDF();
     const tenantId = useTenant();
     const { user } = useAuth0();
     const { currentUserRole } = useRoleContext();
@@ -213,6 +220,30 @@ export default function MedicalRecordsView() {
             </div>
         );
     }
+    const handleMassExport = async () => {
+        if (filteredRecords.length === 0) {
+            toast.error("No hay registros médicos para exportar",);
+            return;
+        }
+
+        setIsExporting(true);
+
+        try {
+            await exportAllToPDF(filteredRecords);
+            toast.success(
+                `Se han exportado ${filteredRecords.length} registro(s) médico(s) a PDF`
+            );
+
+            setShowExportModal(false);
+
+        } catch (error) {
+            console.error('Error en exportación masiva:', error);
+            toast.error("No se pudo generar el PDF con los registros"
+            );
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -223,10 +254,25 @@ export default function MedicalRecordsView() {
                         Gestiona la información médica de los integrantes
                     </p>
                 </div>
-                <Button onClick={handleCreate} className="flex items-center gap-2" disabled={isLoading}>
-                    <Plus className="h-4 w-4" />
-                    Nuevo Registro
-                </Button>
+                <div className="flex gap-3">
+                    <Button
+                        onClick={() => setShowExportModal(true)}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        disabled={isLoading || isExporting || filteredRecords.length === 0}
+                    >
+                        <Download className="h-4 w-4" />
+                        {isExporting ? 'Exportando...' : 'Exportar Todo'}
+                    </Button>
+                    <Button
+                        onClick={handleCreate}
+                        className="flex items-center gap-2"
+                        disabled={isLoading}
+                    >
+                        <Plus className="h-4 w-4" />
+                        Nuevo Registro
+                    </Button>
+                </div>
             </div>
 
             <MedicalRecordsFilter
@@ -246,6 +292,14 @@ export default function MedicalRecordsView() {
                 onEdit={handleEdit}
                 isLoading={isLoading}
             />
+            <ExportConfirmationModal
+                open={showExportModal}
+                onOpenChange={setShowExportModal}
+                onConfirm={handleMassExport}
+                recordCount={filteredRecords.length}
+                isExporting={isExporting}
+            />
         </div>
+
     );
 }
