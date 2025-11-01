@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Plus } from 'lucide-react';
+import type { AxiosError } from 'axios'; 
 import type { MedicalRecord } from '../../../../types/medical-record.type';
 import MedicalWizardForm from '../medical-info/components/MedicalInfo';
 import MedicalRecordsTable from './MedicalRecordTable';
@@ -101,16 +102,17 @@ export default function MedicalRecordsView() {
                         } else {
                             setRecords([]);
                         }
-                    } catch (err: any) {
-                        if (err.response?.status === 500) {
-                            // Si el servidor devuelve error 500 por "no hay registro"
-                            setRecords([]);
+                    } catch (err: unknown) {
+                        if ((err as AxiosError).response?.status === 500) {
+                            // No hay registro médico todavía
+                            medicalResponse = null;
                         } else {
-                            throw err; // otros errores sí los dejamos fallar
+                            throw err;
                         }
                     }
 
                     break;
+
 
                 case 'ACUDIENTE':
                     // Si es acudiente, no hacer nada
