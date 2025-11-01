@@ -85,7 +85,7 @@ class GroupServiceTest {
     @Test
     @DisplayName("createGroup: guarda y devuelve respuesta cuando el slug no existe")
     void create_ok() {
-            when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(false);
+        when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(false);
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> {
             Group g = inv.getArgument(0);
             g.setGroupId(1L);

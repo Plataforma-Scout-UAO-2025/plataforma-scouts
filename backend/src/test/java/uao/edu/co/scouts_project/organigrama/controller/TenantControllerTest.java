@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO;
 
 // ⬇️ IMPORTA LAS NUEVAS ANOTACIONES (Spring Framework 6.2+)
 import org.springframework.test.context.ActiveProfiles;
@@ -122,32 +123,33 @@ class TenantControllerTest {
     @Test
     @DisplayName("POST /api/v1/tenants -> 400 si slug duplicado (existsBySlug)")
     void createTenant_duplicateSlug() throws Exception {
-    var incoming = new TenantDTO(null, "dup-slug", "active", null, null);
+        var incoming = new TenantDTO(null, "dup-slug", "active", null, null);
 
-    when(tenantService.createTenant(any(TenantDTO.class)))
-        .thenThrow(new IllegalArgumentException("Tenant con SLUG 'dup-slug' ya existe"));
+        when(tenantService.createTenant(any(TenantDTO.class)))
+            .thenThrow(new IllegalArgumentException("Tenant con SLUG 'dup-slug' ya existe"));
 
-    mockMvc.perform(post("/api/v1/tenants")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(incoming)))
-        .andExpect(status().isBadRequest())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.message", containsString("ya existe")));
-    }
+        mockMvc.perform(post("/api/v1/tenants")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(incoming)))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", containsString("ya existe")));
+        }
 
     @Test
     @DisplayName("POST /api/v1/tenants/create -> 201, Location header y JSON usando TenantInfoDTO")
     void createTenantInfo_created() throws Exception {
-    // Payload matching TenantInfoDTO fields (tenant_id optional)
-    var info = new uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO();
-    info.setTenantId(null);
-    info.setSlug("info-nuevo-slug");
-    info.setStatus("active");
+        // Payload matching TenantInfoDTO fields (tenant_id optional)
+        var info = new TenantInfoDTO();
+
+        info.setTenantId(null);
+        info.setSlug("info-nuevo-slug");
+        info.setStatus("active");
 
     var created = new TenantDTO("t-info-nuevo-slug", "info-nuevo-slug", "active",
         Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-03-01T00:00:00Z"));
 
-    when(tenantService.createTenantInfo(any(uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO.class)))
+    when(tenantService.createTenantInfo(any(TenantInfoDTO.class)))
         .thenReturn(created);
 
     mockMvc.perform(post("/api/v1/tenants/create")

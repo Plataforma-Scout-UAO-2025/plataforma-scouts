@@ -135,7 +135,7 @@ public class GroupService implements IGroupService {
 
     @Override
     public void ensureSlugIsUnique(String slug) {
-        // Este método no se utiliza ya que la unicidad del slug se valida por tenant
+        throw new UnsupportedOperationException("ensureSlugIsUnique is not used; slug uniqueness is validated per tenant.");
     }
 
     @Transactional
@@ -143,13 +143,13 @@ public class GroupService implements IGroupService {
         ensureTenantExists(tenantId);
         Group group = findGroupOrThrow(tenantId, groupSlug);
 
-            // Validar que el slug y tenantId son inmutables
-            if (dto.slug() != null && !dto.slug().equals(groupSlug)) {
-                throw new IllegalArgumentException("El campo slug es inmutable");
-            }
-            if (dto.tenantId() != null && !dto.tenantId().equals(tenantId)) {
-                throw new IllegalArgumentException("El campo tenantId es inmutable");
-            }
+        // Validar que el slug y tenantId son inmutables
+        if (dto.slug() != null && !dto.slug().equals(groupSlug)) {
+            throw new IllegalArgumentException("El campo slug es inmutable");
+        }
+        if (dto.tenantId() != null && !dto.tenantId().equals(tenantId)) {
+            throw new IllegalArgumentException("El campo tenantId es inmutable");
+        }
 
         if (dto.logoObjectId() != null && !Objects.equals(dto.logoObjectId(), group.getLogoObjectId())) {
             storageService.deleteFileByObjectId(group.getLogoObjectId());
