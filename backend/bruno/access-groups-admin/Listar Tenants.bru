@@ -1,0 +1,20 @@
+meta {
+  name: Listar Tenants
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseurl}}api/v1/tenants
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

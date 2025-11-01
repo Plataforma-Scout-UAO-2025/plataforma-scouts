@@ -20,7 +20,7 @@ export default function EmergencyContactsForm({
 }: EmergencyContactsFormProps) {
   const isLastContactComplete = () => {
     if (emergencyContacts.length === 0) return true;
-    
+
     const lastContact = emergencyContacts[emergencyContacts.length - 1];
     return (
       lastContact.name?.trim() !== "" &&
@@ -36,7 +36,7 @@ export default function EmergencyContactsForm({
       <h3 className="text-lg font-semibold text-primary border-b-2 border-primary pb-2">
         Contactos de Emergencia
       </h3>
-      
+
       {emergencyContacts.length === 0 ? (
         <p className="text-gray-500 mb-4">
           No hay contactos de emergencia agregados.
@@ -83,7 +83,7 @@ export default function EmergencyContactsForm({
               >
                 Eliminar Contacto
               </Button>
-              
+
               {idx === emergencyContacts.length - 1 && (
                 <Button
                   variant="outline"
@@ -103,7 +103,7 @@ export default function EmergencyContactsForm({
           </div>
         ))
       )}
-      
+
       {emergencyContacts.length === 0 && (
         <Button
           variant="outline"
@@ -115,7 +115,7 @@ export default function EmergencyContactsForm({
           + Agregar Primer Contacto
         </Button>
       )}
-      
+
       {!canAddNewContact && emergencyContacts.length > 0 && (
         <p className="text-xs text-red-600">
           Complete todos los campos del contacto actual antes de agregar uno nuevo

@@ -102,7 +102,6 @@ export default function PaymentsDetailTable({
             <SelectContent>
               <SelectItem value="all">Todos los estados</SelectItem>
               <SelectItem value="PENDING">Pendiente</SelectItem>
-              <SelectItem value="PARTIAL">Parcial</SelectItem>
               <SelectItem value="PAID">Pagado</SelectItem>
               <SelectItem value="OVERDUE">Vencido</SelectItem>
             </SelectContent>

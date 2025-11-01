@@ -52,17 +52,22 @@ public class GlobalExceptionHandler {
         ex.getMessage());
   }
 
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public Map<String, String> handleValidationExceptions(
-      MethodArgumentNotValidException ex) {
+  public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletRequest req) {
     Map<String, String> errors = new HashMap<>();
     ex.getBindingResult().getAllErrors().forEach((error) -> {
       String fieldName = ((FieldError) error).getField();
       String errorMessage = error.getDefaultMessage();
       errors.put(fieldName, errorMessage);
     });
-    return errors;
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put("timestamp", LocalDateTime.now());
+    body.put("status", 400);
+    body.put("error", "Bad Request");
+    body.put("message", "Error de validación en los datos enviados");
+    body.put("details", errors);
+    body.put("path", req.getRequestURI());
+    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(GuardianExceptions.MemberAlreadyAssignedException.class)

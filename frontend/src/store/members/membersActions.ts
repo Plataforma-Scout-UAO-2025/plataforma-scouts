@@ -13,8 +13,8 @@ import {
   createMemberWithSchool,
   createMemberAuth0,
   createScoutAuth0,
-  changeAuth0UserRole,
   getSchoolDataByMemberId,
+  changeAuth0UserRole,
 } from "@/api/membersApi";
 import type { Member, UpdateMember } from "@/types/member.type";
 import type {
@@ -53,7 +53,7 @@ export const fetchMembersAction = createAsyncThunk(
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Obtener miembros por estado
@@ -73,7 +73,7 @@ export const fetchMembersByStatusAction = createAsyncThunk<
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Obtener miembros con su respectiva rama
@@ -89,7 +89,7 @@ export const fetchMembersWithBranchAction = createAsyncThunk(
       const errorMessage = errorData?.error || "Error al obtener los miembros";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 // Actualizar estado de un miembro
@@ -104,7 +104,7 @@ export const updateMemberStatusAction = createAsyncThunk<
       id,
       status,
     }: { id: string | number; status: "PENDING" | "APPROVED" | "REJECTED" },
-    { rejectWithValue },
+    { rejectWithValue }
   ) => {
     try {
       const response = await updateMemberStatus(id, status);
@@ -116,7 +116,7 @@ export const updateMemberStatusAction = createAsyncThunk<
         errorData?.error || "Error al actualizar el estado del miembro";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Actualizar datos de un miembro en Firestore
@@ -143,7 +143,6 @@ export const createMemberAction = createAsyncThunk<
   { rejectValue: { error: string } }
 >("member/create", async (memberData: Member, { rejectWithValue }) => {
   try {
-    ;
     const response = await createMember(memberData);
 
     return {
@@ -180,7 +179,7 @@ export const createMemberWithSchoolDataAction = createAsyncThunk<
         errorData?.error || "Error al crear el miembro con datos escolares";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Crear miembro en Auth0
@@ -201,7 +200,7 @@ export const createMemberAuth0Action = createAsyncThunk<
         errorData?.error || "Error al crear el miembro en Auth0";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Crear scout en Auth0
@@ -222,30 +221,7 @@ export const createScoutAuth0Action = createAsyncThunk<
         errorData?.error || "Error al crear el scout en Auth0";
       return rejectWithValue({ error: errorMessage });
     }
-  },
-);
-
-// Cambiar rol de usuario en Auth0 (llamada al backend)
-export const changeAuth0UserRoleAction = createAsyncThunk<
-  { message?: string },
-  { user_id: string; newRole: string; organizationId?: string },
-  { rejectValue: { error: string } }
->(
-  "member/changeAuth0UserRole",
-  async (
-    data: { user_id: string; newRole: string; organizationId?: string },
-    { rejectWithValue },
-  ) => {
-    try {
-      const response = await changeAuth0UserRole(data);
-      return response;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const errorData = axiosError.response?.data as { error: string };
-      const errorMessage = errorData?.error || "Error al cambiar rol en Auth0";
-      return rejectWithValue({ error: errorMessage });
-    }
-  },
+  }
 );
 
 // Asignar subgrupo y sección a un miembro (backend endpoint separado)
@@ -274,7 +250,7 @@ export const assignSubgroupAndSectionAction = createAsyncThunk<
         errorData?.error || "Error al asignar subgrupo y sección";
       return rejectWithValue({ error: errorMessage });
     }
-  },
+  }
 );
 
 // Actualizar miembro enviando un DTO completo (usado cuando backend valida campos obligatorios)
@@ -303,29 +279,51 @@ export const fetchSchoolDataMemberAction = createAsyncThunk<
 >("member/fetchSchoolData", async (id, { rejectWithValue }) => {
   try {
     const schoolData = await getSchoolDataByMemberId(id);
-
+    
     if (!schoolData || Object.keys(schoolData).length === 0) {
       return { memberId: id, schoolData: null };
     }
-
+    
     const { institution, course, calendar, shift } = schoolData;
     const hasAnyValue = institution || course || calendar || shift;
-
+    
     if (!hasAnyValue) {
       return { memberId: id, schoolData: null };
     }
-
+    
     return { memberId: id, schoolData };
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
-
+    
     if (axiosError.response?.status === 404) {
       return { memberId: id, schoolData: null };
     }
-
+    
     const errorData = axiosError.response?.data as { error: string };
-    const errorMessage =
-      errorData?.error || "Error al obtener los datos escolares del miembro";
+    const errorMessage = errorData?.error || "Error al obtener los datos escolares del miembro";
     return rejectWithValue(errorMessage);
   }
 });
+
+// Cambiar rol de usuario en Auth0 (llamada al backend)
+export const changeAuth0UserRoleAction = createAsyncThunk<
+  { message?: string },
+  { user_id: string; newRole: string; organizationId?: string },
+  { rejectValue: { error: string } }
+>(
+  "member/changeAuth0UserRole",
+  async (
+    data: { user_id: string; newRole: string; organizationId?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await changeAuth0UserRole(data);
+      return response;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al cambiar rol en Auth0";
+      return rejectWithValue({ error: errorMessage });
+    }
+  },
+);

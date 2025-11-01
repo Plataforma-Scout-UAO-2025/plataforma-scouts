@@ -7,6 +7,8 @@ interface CargoInfoModalProps {
   cargoName: string;
   personName: string;
   personDescription?: string;
+  /** Nombres de los miembros asociados al cargo */
+  members?: string[];
 }
 
 export default function CargoInfoModal({
@@ -15,6 +17,7 @@ export default function CargoInfoModal({
   cargoName,
   personName,
   personDescription,
+  members = [],
 }: CargoInfoModalProps) {
   // Sin sección de foto, se simplifica el modal
 
@@ -30,9 +33,18 @@ export default function CargoInfoModal({
             <span className="font-semibold">Cargo:</span> {cargoName}
           </div>
 
-          {/* 2. Nombre de la persona asignada */}
+          {/* 2. Personas asignadas (lista de miembros asociados al cargo) */}
           <div>
-            <span className="font-semibold">Persona asignada:</span> {personName}
+            <span className="font-semibold">Personas asignadas:</span>
+            {Array.isArray(members) && members.length > 0 ? (
+              <ul className="list-disc ml-5 mt-2 text-sm text-muted-foreground space-y-1">
+                {members.map((m, idx) => (
+                  <li key={idx}>{m}</li>
+                ))}
+              </ul>
+            ) : (
+              <span className="ml-2">{personName || "Sin asignar"}</span>
+            )}
           </div>
 
           {/* 3. Descripción (debajo) */}

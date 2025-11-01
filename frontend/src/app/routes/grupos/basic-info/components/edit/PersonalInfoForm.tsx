@@ -9,7 +9,7 @@ interface PersonalInfoFormProps {
     firstName?: string;
     lastName?: string;
     identification?: string;
-    
+
   };
   loading: boolean;
   onFieldChange: (field: keyof UpdateMember, value: string) => void;

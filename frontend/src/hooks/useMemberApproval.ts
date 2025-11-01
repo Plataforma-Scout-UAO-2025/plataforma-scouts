@@ -93,7 +93,6 @@ export function useMemberApproval({
     try {
       setLoading(true);
 
-      // 1) Aplicar asignaciones de subgrupo / sección primero (si aplica)
       if (selectedSubgroup || selectedSection) {
         await dispatch(
           assignSubgroupAndSectionAction({
@@ -104,7 +103,6 @@ export function useMemberApproval({
         ).unwrap();
       }
 
-      // 2) Preparar actualizaciones (rol u otros)
       const updates: Partial<UpdateMember> = {};
       if (selectedRole) {
         updates.role = selectedRole as UpdateMember["role"];
@@ -112,7 +110,6 @@ export function useMemberApproval({
 
       if (Object.keys(updates).length > 0) {
         if (updates.role) {
-          // Validación local para evitar errores por datos faltantes en backend
           const missing: string[] = [];
           const firstName = getMemberField("firstName", "first_name");
           const lastName = getMemberField("lastName", "last_name");
@@ -144,11 +141,9 @@ export function useMemberApproval({
             tenantId,
             identification,
             documentType,
-            // status lo manejamos al final
             role: updates.role,
           };
 
-          // Actualizar perfil en BD
           await dispatch(
             updateMemberByDtoAction({
               uid: String(memberId),
@@ -156,7 +151,6 @@ export function useMemberApproval({
             }),
           ).unwrap();
 
-          // Intentar asignar el rol también en Auth0 si existe user_id
           try {
             const auth0UserId = getMemberField("userId", "user_id");
             if (auth0UserId) {
@@ -178,7 +172,6 @@ export function useMemberApproval({
 
               const e = err as ErrLike;
 
-              // Caso axios
               if (e?.isAxiosError) {
                 console.error("Axios error changing role in Auth0:", {
                   message: e.message,
@@ -195,7 +188,6 @@ export function useMemberApproval({
                   `Error asignando rol en Auth0: ${serverMsg ?? e.message}`,
                 );
               } else if (e && typeof e === "object") {
-                // Caso createAsyncThunk rejectWithValue -> suele ser { error: string }
                 console.error("Error changing role (rejected action):", e);
                 const errMsg = e.error || e.message || JSON.stringify(e);
                 toast.error(`Error asignando rol en Auth0: ${errMsg}`);
@@ -212,11 +204,9 @@ export function useMemberApproval({
               toast.error("Error asignando rol en Auth0. Revisa los logs.");
             }
 
-            // Se aborta el flujo para no aprobar si no se sincroniza el rol
             throw err;
           }
         } else {
-          // Actualizaciones que no son role
           await dispatch(
             updateMemberAction({
               uid: String(memberId),
@@ -226,7 +216,6 @@ export function useMemberApproval({
         }
       }
 
-      // Si todo lo anterior salio bien, finalmente marcamos como APPROVED
       await dispatch(
         updateMemberStatusAction({
           id: memberId,

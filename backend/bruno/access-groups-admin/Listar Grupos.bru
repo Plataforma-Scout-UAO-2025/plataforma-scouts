@@ -1,0 +1,21 @@
+meta {
+  name: Listar Grupos
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseurl}}api/v1/tenants/org_povsjufF3TEP1DZ7/groups
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: {{token_centinelas}}
+  Accept: application/json
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

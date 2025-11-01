@@ -15,6 +15,7 @@ import {
   SidebarTrigger,
   SidebarMenuSub,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -44,6 +45,7 @@ import FullScreenError from "@/components/common/FullScreenError";
 import { RawRole } from "@/roles/roles";
 import { setAuth0TokenProvider } from "@/api/axios";
 import { useEffect } from "react";
+import * as React from "react";
 
 type SubMenuItem = {
   id: string;
@@ -66,14 +68,14 @@ const adminGlobalItems: MenuItem[] = [
     id: "inicio",
     label: "Inicio",
     icon: <LineChart />,
-    href: "/app/dashboard-global",
+    href: "/app/dashboard",
   },
   {
-    id: "organigrama",
-    label: "Organigrama",
-    icon: <Network />,
-    href: "/app/organigrama",
-  },
+    id: "grupos",
+    label: "Grupos",
+    icon: <Users />,
+    href: "/app/admin-global/grupos",
+  }
 ];
 
 const adminGrupalItems: MenuItem[] = [
@@ -176,6 +178,12 @@ const acudienteItems: MenuItem[] = [
     icon: <DollarSign />,
     href: "/app/financiero/estado-cuenta",
   },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
+  },
 ];
 
 const ScoutItems: MenuItem[] = [
@@ -191,12 +199,34 @@ const ScoutItems: MenuItem[] = [
     icon: <Pencil />,
     href: "/app/grupos/utils/ScoutEnrollmentInfo",
   },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
+  },
 ];
 
 const bottomItems: MenuItem[] = [
   { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
 ];
+
+// Componente interno que maneja el cierre automático del sidebar
+function SidebarAutoClose() {
+  const location = useLocation();
+  const { setOpen } = useSidebar();
+
+  React.useEffect(() => {
+    // Cerrar el sidebar cuando se navega a estado de cuenta
+    if (location.pathname === "/app/financiero/estado-cuenta") {
+      setOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  return null;
+}
 
 function AppLayoutContent() {
   const location = useLocation();
@@ -206,12 +236,6 @@ function AppLayoutContent() {
 
   // Determinar qué menú mostrar según el rol del usuario
   const getMenuItems = (): MenuItem[] => {
-    const isAdminGlobalRoute = location.pathname.startsWith("/app/adminGlobal");
-
-    if (isAdminGlobalRoute) {
-      return adminGlobalItems;
-    }
-
     switch (currentUserRole) {
       case RawRole.ACUDIENTE:
         return acudienteItems;
@@ -224,8 +248,11 @@ function AppLayoutContent() {
       case RawRole.COMITE_ADMIN:
         return comiteItems;
       case RawRole.ADMIN_GRUPO:
-      default:
         return adminGrupalItems;
+      case RawRole.ADMIN_GLOBAL:
+        return adminGlobalItems;
+      default:
+        return ScoutItems;
     }
   };
 
@@ -277,8 +304,10 @@ function AppLayoutContent() {
 
   return (
     <SidebarProvider>
+      <SidebarAutoClose />
       <Sidebar
         className="bg-primary text-primary-foreground"
+
         collapsible="offcanvas"
       >
         {/* Header */}

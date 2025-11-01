@@ -2,18 +2,17 @@ import { Label } from "@/components/ui/label";
 import type { Member, EmergencyContact } from "@/types/member.type";
 
 export default function EmergencyContacts({ member }: { member: Member }) {
-  // Manejar ambas convenciones: snake_case y camelCase
-  const contacts: EmergencyContact[] = 
-    member.emergency_contacts || 
-    (member as { emergencyContacts?: EmergencyContact[] }).emergencyContacts || 
+  const contacts: EmergencyContact[] =
+    member.emergency_contacts ||
+    (member as { emergencyContacts?: EmergencyContact[] }).emergencyContacts ||
     [];
-  
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-primary border-b-2 border-primary pb-2">
         Contactos de emergencia
       </h2>
-      
+
       {contacts.length === 0 ? (
         <div className="border rounded-lg p-6 bg-gray-50">
           <p className="text-sm text-gray-600">

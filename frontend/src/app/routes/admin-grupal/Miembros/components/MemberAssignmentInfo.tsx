@@ -24,7 +24,7 @@ export default function MemberAssignmentInfo({ member }: Props) {
         Información de Asignación
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
+
         <div>
           <p className="text-xs text-gray-500 font-medium mb-1">Rama</p>
           <p className="text-sm font-semibold text-gray-900">{rama}</p>

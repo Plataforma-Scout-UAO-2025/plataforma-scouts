@@ -190,17 +190,14 @@ export function useRoleEnrollment({
         normalizedUserRole,
       );
 
-      // Guardar el userId devuelto por Auth0 en el miembro antes de persistirlo en la BD
       try {
         const created = auth0Result.payload as { userId?: string };
         if (created?.userId) {
-          // soportar camelCase y snake_case en el payload del DTO
           const md = memberData as Record<string, unknown>;
           md["userId"] = created.userId;
           md["user_id"] = created.userId;
         }
       } catch (e) {
-        // No fatal: si no viene userId, seguirá el flujo pero no podremos sincronizar rol en Auth0
         console.warn("No se pudo extraer userId del resultado de Auth0:", e);
       }
 

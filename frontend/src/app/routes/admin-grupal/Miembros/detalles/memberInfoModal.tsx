@@ -17,15 +17,16 @@ import SchoolInfo from "../../Solicitudes/detalles/components/SchoolInfo";
 import MembersInChargeCard from "../../../guardians/profile/components/MembersInChargeCard";
 import { useState, useEffect } from "react";
 import { getMembersInChargeOf } from "@/api/guardiansApi";
-import { getMembersWithBranch, getMembersByStatus } from "@/api/membersApi"; 
-import MemberAssignmentInfo from "@/app/routes/admin-grupal/Miembros/components/MemberAssignmentInfo"; 
-import type { MemberBasicInfo } from "@/types/guardianTypes";
+import { getMembersWithBranch, getMembersByStatus } from "@/api/membersApi";
+import MemberAssignmentInfo from "@/app/routes/admin-grupal/Miembros/components/MemberAssignmentInfo";
+import type { MemberBasicInfo } from "@/types/guardian.type";
 
 interface MemberInfoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-   member: Member | null; 
+  member: Member | null;
 }
+
 export default function MemberInfoModal({
   open,
   onOpenChange,
@@ -40,9 +41,8 @@ export default function MemberInfoModal({
   const isScout = member?.role?.toUpperCase() === "SCOUT";
   const isAcudiente = member?.role?.toUpperCase() === "ACUDIENTE";
   const handleClose = () => {
-    onOpenChange(false); 
+    onOpenChange(false);
   };
-  // Cargar datos combinados (rama + contactos)
   useEffect(() => {
     const fetchCombinedData = async () => {
       if (!open) {
@@ -55,13 +55,11 @@ export default function MemberInfoModal({
 
       setIsLoadingFullData(true);
       try {
-        // Obtener datos desde ambos endpoints
         const [membersWithBranch, membersWithStatus] = await Promise.all([
           getMembersWithBranch(),
           getMembersByStatus("APPROVED"),
         ]);
 
-        // Buscar coincidencias en ambos resultados
         const fromBranch = membersWithBranch.find(
           (m: Member) =>
             String(m.member_id ?? m.memberId) === String(targetMemberId),
@@ -71,7 +69,6 @@ export default function MemberInfoModal({
             String(m.member_id ?? m.memberId) === String(targetMemberId),
         );
 
-        // Combinar datos
         const merged = { ...fromBranch, ...fromStatus };
 
         setFullMemberData(merged || null);
@@ -114,11 +111,11 @@ export default function MemberInfoModal({
   };
 
   const miembrosACargo = membersInCharge.map((m) => ({
-    id: parseInt(m.userId || "0"),
-    fullName: `${m.firstName || ""} ${m.lastName || ""}`.trim(),
+    id: parseInt(m.memberId || "0"),
+    fullName: `${m.first_name || ""} ${m.last_name || ""}`.trim(),
     rama: m.subgroup?.name || "Sin rama",
     parentesco: m.relationship || "No especificado",
-    isActive: m.isActive ?? true,
+    isActive: m.is_active ?? true,
   }));
 
   if (!member) return null;
@@ -164,26 +161,21 @@ export default function MemberInfoModal({
                     <p className="text-gray-500">Cargando miembros a cargo...</p>
                   </div>
                 ) : (
-                   <MembersInChargeCard
+                  <MembersInChargeCard
                     miembrosACargo={miembrosACargo}
-                    grupo={displayMember.subgroup?.name || "Sin grupo"}
-                    role={displayMember.role || "Acudiente"}
-                    joinDate={displayMember.created_at || displayMember.acceptance_date || ""}
-                    isActive={displayMember.is_active ?? true}
                     onViewMember={handleViewMember}
                   />
-
                 )}
               </>
             )}
-             {displayMember.role === "SCOUTER" && (
+            {displayMember.role === "SCOUTER" && (
               <div className="p-4 bg-purple-50 rounded-md border border-purple-200">
                 <p className="text-sm text-purple-700">
                   Información específica de SCOUTER (próximamente)
                 </p>
               </div>
             )}
-              {displayMember.role === "TESORERO" && (
+            {displayMember.role === "TESORERO" && (
               <div className="p-4 bg-green-50 rounded-md border border-green-200">
                 <p className="text-sm text-green-700">
                   Información específica de TESORERO (próximamente)
@@ -191,7 +183,7 @@ export default function MemberInfoModal({
               </div>
             )}
           </div>
-          
+
         )}
         <DialogFooter>
           <Button variant="primary" onClick={handleClose}>

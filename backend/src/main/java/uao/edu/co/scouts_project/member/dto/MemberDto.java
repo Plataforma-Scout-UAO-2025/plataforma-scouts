@@ -108,6 +108,7 @@ public class MemberDto {
     private LocalDate acceptanceDate;
 
     @JsonProperty("emergencyContacts")
+    @Valid
     private List<EmergencyContactDto> emergencyContacts;
 
     @JsonProperty("created_at")
@@ -116,7 +117,7 @@ public class MemberDto {
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
 
-    @NotBlank(message = "Tratamiento de datos obligatorio")
+    @AssertTrue(message = "Tratamiento de datos obligatorio")
     @JsonProperty("accept_treatment")
     private Boolean acceptTreatment;
 
