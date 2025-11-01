@@ -62,7 +62,7 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
      * @return Lista de objetos con el ID del grupo, nombre del grupo y cantidad de miembros
      */
     @Query("SELECT NEW uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO(" +
-           "g.groupId, g.name, COUNT(m)) " +
+        "g.groupId, g.name, g.status, COUNT(m)) " +
            "FROM Member m " +
            "JOIN m.subgroup s " +
            "JOIN Group g ON g.groupId = s.groupId " +
@@ -98,7 +98,7 @@ public interface IMemberRepository extends JpaRepository<Member, Long> {
      */
     @Query("""
         SELECT NEW uao.edu.co.scouts_project.statistics.dto.GroupMembersDTO(
-            g.groupId, g.name, COUNT(m)
+            g.groupId, g.name, g.status, COUNT(m)
         )
         FROM Group g
         LEFT JOIN Subgroup s ON s.groupId = g.groupId

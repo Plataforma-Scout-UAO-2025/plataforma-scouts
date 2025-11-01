@@ -7,5 +7,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record GroupMembersCountDTO(
     @JsonProperty("group_id") Long groupId,
     @JsonProperty("group_name") String groupName,
+    @JsonProperty("status") String status,
     @JsonProperty("members_count") Long membersCount
 ) {}
