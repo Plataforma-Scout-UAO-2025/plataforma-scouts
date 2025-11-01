@@ -154,16 +154,23 @@ public class GuardianServiceImpl implements GuardianService {
     @Override
     @Transactional
     public void removeGuardianIdFromMember(Long guardianId, Long memberId) {
-
         boolean guardianExists = memberRepository.existsById(guardianId);
-
+    
         if (!guardianExists) {
             throw new GuardianNotFoundException("Guardian con ID " + guardianId + " no encontrado");
         }
-
+    
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException("Not found"));
-
+                .orElseThrow(() -> new MemberNotFoundException("Miembro con ID " + memberId + " no encontrado"));
+    
+        // AGREGAR: Validación de edad para permitir solo remover mayores de 18 años
+        if (member.getAge() == null || member.getAge() < 18) {
+            throw new IllegalArgumentException("Solo se pueden remover miembros mayores de 18 años. El miembro tiene " + 
+                                             (member.getAge() != null ? member.getAge() : "edad desconocida") + " años.");
+        }
+    
+        log.info("Removiendo miembro {} (edad: {} años) del guardian {}", memberId, member.getAge(), guardianId);
+        
         member.setGuardianId(null);
         memberRepository.save(member);
     }

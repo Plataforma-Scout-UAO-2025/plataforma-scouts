@@ -8,16 +8,18 @@ import {
   TableRow,
   Button,
 } from "@/components/ui/index";
-import { Pencil, Trash, User } from "lucide-react";
+import { Pencil, Trash, User, ArrowRightLeft} from "lucide-react";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
 import DeleteMemberModal from "../modals/DeleteMemberModal";
+import type { on } from "events";
 
 interface GuardianMembersTableProps {
   filteredMembers: MemberBasicInfo[];
   onViewMember?: (member: MemberBasicInfo) => void;
   onEditMember?: (member: UpdateMember) => void;
   onDeleteMember?: (member: MemberBasicInfo) => void;
+  onReassignGuardian?: (member: MemberBasicInfo) => void;
 }
 
 interface Member {
@@ -37,7 +39,8 @@ const GuardianMembersTable = ({
   filteredMembers, 
   onViewMember, 
   onEditMember, 
-  onDeleteMember 
+  onDeleteMember,
+  onReassignGuardian,
 }: GuardianMembersTableProps) => {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -201,6 +204,14 @@ const GuardianMembersTable = ({
                       title="Editar miembro"
                     >
                       <Pencil />
+                    </Button>
+                    <Button
+                      variant="iconbutton"
+                      size="icon"
+                      onClick={() => onReassignGuardian?.(member)}
+                      title="Reasignar acudiente"
+                    >
+                      <ArrowRightLeft />
                     </Button>
                     <Button
                       variant="iconbutton"
