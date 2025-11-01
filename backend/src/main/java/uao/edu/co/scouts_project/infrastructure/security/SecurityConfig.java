@@ -96,41 +96,41 @@ public class SecurityConfig {
                                                 // ==== Auth0 Management Endpoints ====
 
                                                 // // Crear Scout completo (usuario + organización + rol SCOUT)
-                                                // .requestMatchers(HttpMethod.POST, "/api/v1/auth0/scouts")
-                                                // .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
-                                                //                 ADMIN_GLOBAL.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/auth0/scouts")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
 
                                                 // // Cambio de rol: reglas específicas por endpoint
-                                                // .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role")
-                                                // .hasAnyRole(ADMIN_GRUPO.name())
-                                                // .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role-global")
-                                                // .hasAnyRole(ADMIN_GLOBAL.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role")
+                                                .hasAnyRole(ADMIN_GRUPO.name())
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/auth0/change-role-global")
+                                                .hasAnyRole(ADMIN_GLOBAL.name())
 
                                                 // // ACUDIENTE: Solo puede CREAR (POST) usuarios y asignarlos a su propia
                                                 // // organización
-                                                // .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
-                                                // .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
-                                                //                 ADMIN_GLOBAL.name())
-                                                // .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users/*/roles")
-                                                // .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
-                                                //                 ADMIN_GLOBAL.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/auth0/users/*/roles")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
 
-                                                // // Agregar a organización específica: Solo ADMINS
-                                                // .requestMatchers(HttpMethod.POST,
-                                                //                 "/api/v1/auth0/organizations/*/members")
-                                                // .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
+                                                // Agregar a organización específica: Solo ADMINS
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/v1/auth0/organizations/*/members")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                                                // // Agregar a organización propia (usa org_id del JWT): ACUDIENTE y
-                                                // // ADMINS
-                                                // .requestMatchers(HttpMethod.POST,
-                                                //                 "/api/v1/auth0/organizations/own/members")
-                                                // .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
-                                                //                 ADMIN_GLOBAL.name())
+                                                // Agregar a organización propia (usa org_id del JWT): ACUDIENTE y
+                                                // ADMINS
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/v1/auth0/organizations/own/members")
+                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                                                ADMIN_GLOBAL.name())
 
-                                                // // // SOLO ADMINS: Pueden CONSULTAR (GET)
-                                                // .requestMatchers(HttpMethod.GET, "/api/v1/auth0/**")
-                                                // .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
-                                                // //
+                                                // // SOLO ADMINS: Pueden CONSULTAR (GET)
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/auth0/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
+                                                //
                                                 // Datos básicos de miembros
                                                 .requestMatchers("/api/v1/members/create_member")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name())
