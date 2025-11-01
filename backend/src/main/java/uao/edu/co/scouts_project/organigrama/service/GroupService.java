@@ -135,7 +135,7 @@ public class GroupService implements IGroupService {
 
     @Override
     public void ensureSlugIsUnique(String slug) {
-        // Este método no se utiliza ya que la unicidad del slug se valida por tenant
+        throw new UnsupportedOperationException("ensureSlugIsUnique is not used; slug uniqueness is validated per tenant.");
     }
 
     @Transactional
