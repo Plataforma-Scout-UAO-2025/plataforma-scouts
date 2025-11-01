@@ -7,12 +7,11 @@ export const createGroup = async (data: Group) => {
   return response.data;
 };
 
-// Obtener grupo por ID
-export const getGroup = async (id: string | number | bigint) => {
-  const response = await api.get<Group>("/groups/list_group_by_id", {
-    params: { id },
-  });
-  return response.data;
+// Obtener grupo por tenantId (retorna el primer grupo del tenant)
+export const getGroup = async (tenantId: string) => {
+  const response = await api.get<Group[]>(`/tenants/${tenantId}/groups`);
+  // Cada tenant tiene solo un grupo según la lógica del backend
+  return response.data[0] || null;
 };
 
 // Obtener de todos los grupos

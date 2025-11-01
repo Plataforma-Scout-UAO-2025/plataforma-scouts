@@ -10,11 +10,11 @@ import type {
 // Obtener datos de un grupo
 export const fetchGroupAction = createAsyncThunk<
   Group,
-  number,
+  string,
   { rejectValue: string | string[] }
->("group/fetch", async (id, { rejectWithValue }) => {
+>("group/fetch", async (tenantId, { rejectWithValue }) => {
   try {
-    const group = await getGroup(id);
+    const group = await getGroup(tenantId);
     return group;
   } catch (error: unknown) {
     const axiosError = error as AxiosError;

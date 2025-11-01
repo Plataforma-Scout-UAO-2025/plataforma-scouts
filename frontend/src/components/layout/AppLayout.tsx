@@ -21,7 +21,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   LineChart,
   Boxes,
-  HelpCircle,
   LogOut,
   Users,
   ChevronRight,
@@ -30,6 +29,7 @@ import {
   Network,
   BriefcaseMedical,
   BarChart3,
+  Settings,
 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
@@ -46,6 +46,7 @@ import { RawRole } from "@/roles/roles";
 import { setAuth0TokenProvider } from "@/api/axios";
 import { useEffect } from "react";
 import * as React from "react";
+import { useGroupInfo } from "@/hooks/useGroupInfo";
 
 type SubMenuItem = {
   id: string;
@@ -86,6 +87,12 @@ const adminGrupalItems: MenuItem[] = [
     href: "/app/dashboard",
   },
   { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
+  {
+    id: "Administración del grupo",
+    label: "Admin del grupo",
+    icon: <Settings />,
+    href: "/app/grupo",
+  },
   {
     id: "solicitudes",
     label: "Solicitudes",
@@ -208,7 +215,6 @@ const ScoutItems: MenuItem[] = [
 ];
 
 const bottomItems: MenuItem[] = [
-  { id: "ayuda", label: "Ayuda", icon: <HelpCircle /> },
   { id: "logout", label: "Cerrar sesión", icon: <LogOut /> },
 ];
 
@@ -233,6 +239,7 @@ function AppLayoutContent() {
   const { user, logout, getAccessTokenSilently } = useAuth0();
   const { status, currentUserRole, currentUserRoleLabel, error, retry } =
     useRoleContext();
+  const { groupName, loading: groupLoading } = useGroupInfo();
 
   // Determinar qué menú mostrar según el rol del usuario
   const getMenuItems = (): MenuItem[] => {
@@ -436,7 +443,9 @@ function AppLayoutContent() {
       <SidebarInset className="flex flex-col h-screen">
         <header className="flex h-14 items-center gap-2 border-b px-4 flex-shrink-0">
           <SidebarTrigger />
-          <div className="font-medium">Área de trabajo</div>
+          <div className="font-medium">
+            {groupLoading ? "Cargando..." : groupName || "Sin Grupo Asignado"}
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-6">
           <Outlet />

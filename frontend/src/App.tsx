@@ -91,7 +91,7 @@ function App() {
 
             {/* Rutas para acudiente */}
             <Route path="financiero/estado-cuenta" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.TESORERO, RawRole.COMITE_ADMIN]}><EstadoCuenta /></ProtectedRoute>} />
-            <Route path="grupos" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.ACUDIENTE, RawRole.COMITE_ADMIN]}><Grupos /></ProtectedRoute>} />
+            <Route path="grupo" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO]}><Grupos /></ProtectedRoute>} />
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.ACUDIENTE, RawRole.SCOUT]}><MedicalRecordsView /></ProtectedRoute>} />
 
             {/* Rutas para Guardianes*/}

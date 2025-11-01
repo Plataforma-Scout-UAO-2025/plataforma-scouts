@@ -1,8 +1,535 @@
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { Save, Loader2, Building2, Phone, Mail, MapPin, Users, Heart, Eye, History, Camera, Link } from "lucide-react";
 
-const Grupos = () => {
-  return (
-    <div>Grupos</div>
-  )
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { updateGroupSchema, type UpdateGroupFormData } from "@/schemas/group.schema";
+import { useTenantParams } from "@/app/routes/organigrama/organigramaRamas_Subramas/hooks/useTenantParams";
+import { getGroupsByTenant } from "@/api/organigramaApi";
+import { updateGroup } from "@/api/groupsApi";
+import FullScreenLoader from "@/components/common/FullScreenLoader";
+
+// Tipos
+interface GroupData {
+  slug: string;
+  name: string;
+  district?: string;
+  identifier_number?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  founded_in?: string;
+  motto?: string;
+  mission?: string;
+  vision?: string;
+  history?: string;
+  logo_object_url?: string;
+  scarf_object_url?: string;
+  social_links?: Record<string, string>;
+  config?: Record<string, any>;
+  is_active?: boolean;
+  status?: string;
 }
 
-export default Grupos
+// Utilidades de mapeo
+const mapGroupDataToForm = (groupData: any): UpdateGroupFormData => ({
+  name: groupData.name || "",
+  district: groupData.district || "",
+  address: groupData.address || "",
+  phone: groupData.phone || "",
+  email: groupData.email || "",
+  founded_in: groupData.founded_in || "",
+  motto: groupData.motto || "",
+  mission: groupData.mission || "",
+  vision: groupData.vision || "",
+  history: groupData.history || "",
+  logo: groupData.logo_object_url || "",
+  scarf: groupData.scarf_object_url || "",
+  social_links: {
+    instagram: groupData.social_links?.instagram || "",
+    facebook: groupData.social_links?.facebook || "",
+    website: groupData.social_links?.website || "",
+  },
+});
+
+const mapFormDataToUpdate = (
+  formData: UpdateGroupFormData,
+  originalData?: GroupData
+) => ({
+  slug: originalData?.slug || "",
+  name: formData.name,
+  district: formData.district || "",
+  identifier_number: originalData?.identifier_number || "",
+  address: formData.address || "",
+  phone: formData.phone || "",
+  email: formData.email || "",
+  founded_in: formData.founded_in || "",
+  motto: formData.motto || "",
+  mission: formData.mission || "",
+  vision: formData.vision || "",
+  history: formData.history || "",
+  logo_object_id: formData.logo || null,
+  scarf_object_id: formData.scarf || null,
+  social_links: formData.social_links || {},
+  config: originalData?.config || {},
+  is_active: originalData?.is_active ?? true,
+  status: originalData?.status || "ACTIVE",
+});
+
+function Grupos() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [originalGroupData, setOriginalGroupData] = useState<GroupData | null>(null);
+  const { tenantId, groupSlug } = useTenantParams();
+
+  const form = useForm<UpdateGroupFormData>({
+    resolver: zodResolver(updateGroupSchema),
+    defaultValues: {
+      name: "",
+      district: "",
+      address: "",
+      phone: "",
+      email: "",
+      founded_in: "",
+      motto: "",
+      mission: "",
+      vision: "",
+      history: "",
+      logo: "",
+      scarf: "",
+      social_links: {
+        instagram: "",
+        facebook: "",
+        website: "",
+      },
+    },
+  });
+
+  const loadGroupData = async () => {
+    if (!tenantId) return;
+
+    try {
+      setLoading(true);
+      const groups = await getGroupsByTenant(tenantId);
+      
+      if (groups && groups.length > 0) {
+        const group = groups[0];
+        setOriginalGroupData(group);
+        const formData = mapGroupDataToForm(group);
+        form.reset(formData);
+      }
+    } catch (error) {
+      console.error("Error cargando datos del grupo:", error);
+      toast.error("Error al cargar los datos del grupo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (data: UpdateGroupFormData) => {
+    if (!tenantId || !groupSlug) {
+      toast.error("No se pudo identificar el grupo a actualizar");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const updateData = mapFormDataToUpdate(data, originalGroupData || undefined);
+      
+      await updateGroup(tenantId, groupSlug, updateData);
+      toast.success("Información del grupo actualizada exitosamente");
+      
+      // Recargar datos después de la actualización
+      await loadGroupData();
+      
+    } catch (error) {
+      console.error("Error actualizando grupo:", error);
+      toast.error("Error al actualizar la información del grupo");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    loadGroupData();
+  }, [tenantId]);
+
+  if (loading) {
+    return <FullScreenLoader />;
+  }
+
+  return (
+    <div className="container mx-auto py-8 px-4 space-y-8">
+      <div className="flex items-center space-x-3">
+        <Building2 className="h-8 w-8 text-blue-600" />
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Información del Grupo Scout
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Gestiona la información principal de tu grupo scout
+          </p>
+        </div>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Building2 className="h-5 w-5" />
+                <span>Información Básica</span>
+              </CardTitle>
+              <CardDescription>
+                Datos principales del grupo scout
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Nombre del Grupo *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Distrito</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="founded_in"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha de Fundación</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="date"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <MapPin className="h-5 w-5" />
+                <span>Información de Contacto</span>
+              </CardTitle>
+              <CardDescription>
+                Datos de contacto y ubicación del grupo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Dirección</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4" />
+                      <span>Teléfono</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4" />
+                      <span>Email</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Heart className="h-5 w-5" />
+                <span>Identidad del Grupo</span>
+              </CardTitle>
+              <CardDescription>
+                Misión, visión, historia y elementos distintivos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="motto"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lema</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="mission"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center space-x-2">
+                      <Users className="h-4 w-4" />
+                      <span>Misión</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={4}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="vision"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center space-x-2">
+                      <Eye className="h-4 w-4" />
+                      <span>Visión</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={4}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="history"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center space-x-2">
+                      <History className="h-4 w-4" />
+                      <span>Historia</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={6}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Camera className="h-5 w-5" />
+                <span>Elementos Visuales</span>
+              </CardTitle>
+              <CardDescription>
+                Logo, pañoleta y elementos gráficos distintivos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="logo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID del Logo</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="scarf"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID de la Pañoleta</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Link className="h-5 w-5" />
+                <span>Enlaces Sociales</span>
+              </CardTitle>
+              <CardDescription>
+                Redes sociales y sitios web del grupo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="social_links.instagram"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instagram</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="social_links.facebook"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Facebook</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="social_links.website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sitio Web</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Cambios
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
+
+export default Grupos;
