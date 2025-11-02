@@ -73,13 +73,23 @@ public class MemberServiceImp implements IMemberService {
                 throw new IllegalArgumentException("A member with identification " + miembro.getIdentification() + " already exists");
             }
 
-            String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-            log.info("Creating member - Authenticated user: {}", userId);
+            String authenticatedUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+            log.info("Creating member - Authenticated user: {}", authenticatedUserId);
+
             if (miembro.getStatus() == null) {
                 miembro.setStatus(Status.PENDING);
             }
 
-            miembro.setUserId(userId);
+            // Only set the userId from the authenticated principal when the incoming
+            // entity does NOT already provide a userId. The frontend should create the
+            // Auth0 user first and pass the returned Auth0 id (e.g. "auth0|...") in
+            // the DTO. Overwriting it unconditionally caused multiple members to be
+            // created with the actor's user id.
+            if (miembro.getUserId() == null || miembro.getUserId().isBlank()) {
+                miembro.setUserId(authenticatedUserId);
+            } else {
+                log.debug("Incoming member contains userId (will be used): {}", miembro.getUserId());
+            }
 
             Member savedMember = memberRepository.save(miembro);
             log.info("Member created successfully with ID: {}", savedMember.getMemberId());

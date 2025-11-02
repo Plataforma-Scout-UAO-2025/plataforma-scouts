@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { Member, UpdateMember, EmergencyContact } from "@/types/member.type";
 import { useAppDispatch } from "./useAppDispatch";
-import { updateMemberAction, fetchMembersWithBranchAction } from "@/store/members/membersActions";
+import { updateMemberAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
 import { toast } from "sonner";
 
 type AnyMember = Member | UpdateMember;
@@ -29,8 +29,11 @@ function getMemberField(
 
 interface UseMemberEditArgs {
   member: AnyMember | null;
+  selectedSection: string;
+  selectedSubgroup: string;
   onSuccess: () => void;
   onClose: () => void;
+  onRefresh?: () => void;
 }
 
 interface EmergencyContactRaw {
@@ -41,8 +44,11 @@ interface EmergencyContactRaw {
 
 export function useMemberEdit({
   member,
+  selectedSection,
+  selectedSubgroup,
   onSuccess,
   onClose,
+  onRefresh,
 }: UseMemberEditArgs) {
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
@@ -50,7 +56,7 @@ export function useMemberEdit({
 
   const memberId = getMemberId(member);
 
- const initEdit = useCallback((targetMember?: AnyMember | null) => {
+  const initEdit = useCallback((targetMember?: AnyMember | null) => {
   const m = targetMember ?? member;
   if (!m) {
     setEditedData({});
@@ -92,7 +98,6 @@ export function useMemberEdit({
 
   setEditedData(initialData);
 }, [member]);
-
 
   const handleFieldChange = (
     field: keyof UpdateMember,
@@ -150,7 +155,6 @@ export function useMemberEdit({
       address: "Dirección",
       weight: "Peso",
       height: "Altura",
-      
     };
     
     for (const [field, label] of Object.entries(requiredFields)) {
@@ -204,7 +208,7 @@ export function useMemberEdit({
       if (editedData.height) {
         updates.height = String(height);
       }
-
+      
       if (editedData.emergencyContacts && editedData.emergencyContacts.length > 0) {
         const validContacts = editedData.emergencyContacts.filter(
           contact => contact.name && contact.relationship && contact.phone
@@ -226,16 +230,29 @@ export function useMemberEdit({
 
       await dispatch(updateMemberAction(payload)).unwrap();
 
+      // Asignar subgrupo y sección si han cambiado
+      if (selectedSubgroup || selectedSection) {
+        await dispatch(
+          assignSubgroupAndSectionAction({
+            memberId,
+            subGroupId: selectedSubgroup ? Number(selectedSubgroup) : undefined,
+            sectionId: selectedSection ? Number(selectedSection) : undefined,
+          })
+        ).unwrap();
+      }
+
       const firstName = editedData.firstName || "";
       const lastName = editedData.lastName || "";
       toast.success(
         `La información de ${firstName} ${lastName} fue actualizada exitosamente.`
       );
 
-      await dispatch(fetchMembersWithBranchAction());
-
       onClose();
       onSuccess();
+      
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error("Error al actualizar miembro:", error);
       

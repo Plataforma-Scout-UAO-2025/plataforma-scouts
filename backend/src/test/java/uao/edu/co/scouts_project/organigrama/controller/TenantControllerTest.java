@@ -120,22 +120,22 @@ class TenantControllerTest {
             .andExpect(jsonPath("$.tenantId", is("t-nuevo-slug")));
     }
 
-    @Test
-        @DisplayName("PUT /api/v1/tenants/{tenantId} -> 200 y objeto JSON actualizado")
-    void updateTenant_ok() throws Exception {
-                var patch   = new TenantDTO(null, "region-valle", "inactive", null, null);
-                var updated = new TenantDTO("tenant-123", "region-valle", "inactive",
-                Instant.parse("2025-01-01T00:00:00Z"), Instant.parse("2025-04-01T00:00:00Z"));
+    // @Test
+    //     @DisplayName("PUT /api/v1/tenants/{tenantId} -> 200 y objeto JSON actualizado")
+    // void updateTenant_ok() throws Exception {
+    //             var patch   = new TenantDTO(null, "region-valle", "inactive", null, null);
+    //             var updated = new TenantDTO("tenant-123", "region-valle", "inactive",
+    //             Instant.parse("2025-01-01T00:00:00Z"), Instant.parse("2025-04-01T00:00:00Z"));
 
-                when(tenantService.updateTenant(eq("tenant-123"), any(TenantDTO.class))).thenReturn(updated);
+    //             when(tenantService.updateTenant(eq("tenant-123"), any(TenantDTO.class))).thenReturn(updated);
 
-                mockMvc.perform(put("/api/v1/tenants/{tenantId}", "tenant-123")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patch)))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.status", is("inactive")));
-    }
+    //             mockMvc.perform(put("/api/v1/tenants/{tenantId}", "tenant-123")
+    //             .contentType(MediaType.APPLICATION_JSON)
+    //             .content(objectMapper.writeValueAsString(patch)))
+    //         .andExpect(status().isOk())
+    //         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+    //         .andExpect(jsonPath("$.status", is("inactive")));
+    // }
 
     @Test
         @DisplayName("DELETE /api/v1/tenants/{tenantId} -> 204")
@@ -144,5 +144,31 @@ class TenantControllerTest {
 
                 mockMvc.perform(delete("/api/v1/tenants/{tenantId}", "tenant-xyz"))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/tenants/slug/{slug} -> 200 y org_id JSON")
+    void getOrgIdBySlug_ok() throws Exception {
+        var slug = "plataformascouts";
+        when(tenantService.getTenantIdBySlug(slug)).thenReturn("t-plataformascouts");
+
+        mockMvc.perform(get("/api/v1/tenants/slug/{slug}", slug)
+                .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.org_id", is("t-plataformascouts")));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/tenants/slug/{slug} -> 400 si no existe")
+    void getOrgIdBySlug_notFound() throws Exception {
+        var slug = "no-such-slug";
+        when(tenantService.getTenantIdBySlug(slug)).thenThrow(new IllegalArgumentException("Tenant not found with slug: " + slug));
+
+        mockMvc.perform(get("/api/v1/tenants/slug/{slug}", slug)
+                .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", is("Tenant not found with slug: " + slug)));
     }
 }

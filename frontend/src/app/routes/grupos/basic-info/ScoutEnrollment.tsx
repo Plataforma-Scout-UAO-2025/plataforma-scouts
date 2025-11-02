@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import PersonalDataForm from "./components/PersonalDataForm";
 import EmergencyContacts from "./components/EmergencyContacts";
 import InterestsForm from "./components/InterestsForm";
+import ScoutDataTreatmentConsent from "./components/Authorization";
 import SchoolDataForm from "./components/SchoolDataForm";
 import SchoolDialog from "./components/SchoolDialog";
 import SuccessModal from "./components/SuccessModal";
@@ -40,6 +41,13 @@ function ScoutEnrollment() {
     handleSchoolDialogResponse,
   } = useScoutEnrollment();
 
+  const handleConsentChange = (value: boolean) => {
+    setDatosPersonales((prev) => ({
+      ...prev,
+      accept_treatment: value,
+    }));
+  };
+
   const getCamposPagina = () => {
     if (pagina === 1)
       return (
@@ -60,11 +68,18 @@ function ScoutEnrollment() {
       );
     if (pagina === 2)
       return (
-        <InterestsForm
-          datos={datosPersonales}
-          handleChange={handlePersonalChange}
-          errors={errors}
-        />
+        <>
+          <InterestsForm
+            datos={datosPersonales}
+            handleChange={handlePersonalChange}
+            errors={errors}
+          />
+          <ScoutDataTreatmentConsent
+            value={datosPersonales.accept_treatment}
+            onChange={handleConsentChange}
+            error={errors.accept_treatment}
+          />
+        </>
       );
     return (
       <SchoolDataForm
@@ -105,12 +120,19 @@ function ScoutEnrollment() {
             {pagina > 1 ? "Atrás" : "Cancelar"}
           </Button>
 
-          <Button type="submit" variant="primary" disabled={loadingSubmit}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={
+              loadingSubmit ||
+              (pagina === 2 && datosPersonales.accept_treatment === false)
+            }
+          >
             {loadingSubmit
               ? "Enviando..."
               : pagina === totalPaginas
-              ? "Finalizar inscripción"
-              : "Siguiente"}
+                ? "Finalizar inscripción"
+                : "Siguiente"}
           </Button>
         </div>
       </form>

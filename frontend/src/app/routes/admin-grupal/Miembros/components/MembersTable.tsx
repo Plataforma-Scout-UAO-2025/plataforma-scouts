@@ -26,6 +26,7 @@ import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
 
 interface MembersTableProps {
   filteredMembers: MemberType[];
+  onRefresh?: () => void;
 }
 
 interface Member {
@@ -33,7 +34,7 @@ interface Member {
   isActive?: boolean | string | number;
 }
 
-const MembersTable = ({ filteredMembers }: MembersTableProps) => {
+const MembersTable = ({ filteredMembers, onRefresh }: MembersTableProps) => {
   const getIsActive = (member: Member): boolean => {
     const value = member.is_active ?? member.isActive;
     if (typeof value === "string") {
@@ -103,7 +104,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
                 <TableRow key={member.memberId ?? `member-${idx}`}>
                   <TableCell className="w-1/6 truncate">{member.firstName}</TableCell>
                   <TableCell className="w-1/6 truncate">{member.lastName}</TableCell>
-                  <TableCell className="w-1/6 truncate">{member.age}</TableCell>
+                  <TableCell className="w-1/6 truncate">{member.age || "Sin Edad"}</TableCell>
                   <TableCell className="w-1/6 truncate">
                     {member.subgroup?.section?.name || "Sin Rama"}
                   </TableCell>
@@ -177,13 +178,11 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
               Esta acción cambiará el estado de{" "}
               <strong>
                 {selectedMember
-                  ? `${
-                      (selectedMember as MemberType).firstName ??
-                      (selectedMember as MemberType).first_name
-                    } ${
-                      (selectedMember as MemberType).lastName ??
-                      (selectedMember as MemberType).last_name
-                    }`
+                  ? `${(selectedMember as MemberType).firstName ??
+                  (selectedMember as MemberType).first_name
+                  } ${(selectedMember as MemberType).lastName ??
+                  (selectedMember as MemberType).last_name
+                  }`
                   : ""}
               </strong>{" "}
               a{" "}
@@ -219,7 +218,7 @@ const MembersTable = ({ filteredMembers }: MembersTableProps) => {
         onOpenChange={setIsEditModalOpen}
         member={selectedMemberForEdit}
         onSuccess={() => {
-          
+          onRefresh?.();
         }}
       />
     </div>

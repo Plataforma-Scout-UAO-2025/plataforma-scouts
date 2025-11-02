@@ -13,8 +13,8 @@ import {
   createMemberWithSchool,
   createMemberAuth0,
   createScoutAuth0,
-  changeAuth0UserRole,
   getSchoolDataByMemberId,
+  changeAuth0UserRole,
 } from "@/api/membersApi";
 import type { Member, UpdateMember } from "@/types/member.type";
 import type {
@@ -143,7 +143,6 @@ export const createMemberAction = createAsyncThunk<
   { rejectValue: { error: string } }
 >("member/create", async (memberData: Member, { rejectWithValue }) => {
   try {
-    ;
     const response = await createMember(memberData);
 
     return {
@@ -183,71 +182,6 @@ export const createMemberWithSchoolDataAction = createAsyncThunk<
   },
 );
 
-// Crear miembro en Auth0
-export const createMemberAuth0Action = createAsyncThunk<
-  CreateAuth0Response,
-  CreateAuth0Request,
-  { rejectValue: { error: string } }
->(
-  "member/createAuth0",
-  async (data: CreateAuth0Request, { rejectWithValue }) => {
-    try {
-      const response = await createMemberAuth0(data);
-      return response;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const errorData = axiosError.response?.data as { error: string };
-      const errorMessage =
-        errorData?.error || "Error al crear el miembro en Auth0";
-      return rejectWithValue({ error: errorMessage });
-    }
-  },
-);
-
-// Crear scout en Auth0
-export const createScoutAuth0Action = createAsyncThunk<
-  CreateAuth0Response,
-  CreateAuth0Request,
-  { rejectValue: { error: string } }
->(
-  "member/createScoutAuth0",
-  async (data: CreateAuth0Request, { rejectWithValue }) => {
-    try {
-      const response = await createScoutAuth0(data);
-      return response;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const errorData = axiosError.response?.data as { error: string };
-      const errorMessage =
-        errorData?.error || "Error al crear el scout en Auth0";
-      return rejectWithValue({ error: errorMessage });
-    }
-  },
-);
-
-// Cambiar rol de usuario en Auth0 (llamada al backend)
-export const changeAuth0UserRoleAction = createAsyncThunk<
-  { message?: string },
-  { user_id: string; newRole: string; organizationId?: string },
-  { rejectValue: { error: string } }
->(
-  "member/changeAuth0UserRole",
-  async (
-    data: { user_id: string; newRole: string; organizationId?: string },
-    { rejectWithValue },
-  ) => {
-    try {
-      const response = await changeAuth0UserRole(data);
-      return response;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const errorData = axiosError.response?.data as { error: string };
-      const errorMessage = errorData?.error || "Error al cambiar rol en Auth0";
-      return rejectWithValue({ error: errorMessage });
-    }
-  },
-);
-
 // Asignar subgrupo y sección a un miembro (backend endpoint separado)
 export const assignSubgroupAndSectionAction = createAsyncThunk<
   { message: string },
@@ -276,24 +210,6 @@ export const assignSubgroupAndSectionAction = createAsyncThunk<
     }
   },
 );
-
-// Actualizar miembro enviando un DTO completo (usado cuando backend valida campos obligatorios)
-export const updateMemberByDtoAction = createAsyncThunk<
-  { message: string },
-  { uid: string; memberDto: Record<string, unknown> },
-  { rejectValue: { error: string } }
->("member/updateByDto", async ({ uid, memberDto }, { rejectWithValue }) => {
-  try {
-    const response = await updateMemberByDto(uid, memberDto);
-    return response;
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error: string };
-    const errorMessage =
-      errorData?.error || "Error al actualizar el miembro (DTO)";
-    return rejectWithValue({ error: errorMessage });
-  }
-});
 
 // Lista los datos escolares de un miembro
 export const fetchSchoolDataMemberAction = createAsyncThunk<
@@ -329,3 +245,113 @@ export const fetchSchoolDataMemberAction = createAsyncThunk<
     return rejectWithValue(errorMessage);
   }
 });
+
+// Crear miembro en Auth0
+export const createMemberAuth0Action = createAsyncThunk<
+  CreateAuth0Response,
+  CreateAuth0Request,
+  { rejectValue: { error: string } }
+>(
+  "member/createAuth0",
+  async (data: CreateAuth0Request, { rejectWithValue }) => {
+    try {
+      const response = await createMemberAuth0(data);
+
+      // Normalizar respuesta: preferimos data.id (backend) y rellenamos campos por conveniencia
+      const userId = response.data?.id ?? response.userId;
+
+      const normalized: CreateAuth0Response = {
+        status: response.status,
+        message: response.message,
+        data: response.data,
+        userId,
+        email: response.data?.email ?? response.email,
+        username: response.data?.username ?? response.username,
+        role: response.data?.role ?? response.role ?? data.role,
+      };
+
+      return normalized;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage =
+        errorData?.error || "Error al crear el miembro en Auth0";
+      return rejectWithValue({ error: errorMessage });
+    }
+  },
+);
+
+// Crear scout en Auth0
+export const createScoutAuth0Action = createAsyncThunk<
+  CreateAuth0Response,
+  CreateAuth0Request,
+  { rejectValue: { error: string } }
+>(
+  "member/createScoutAuth0",
+  async (data: CreateAuth0Request, { rejectWithValue }) => {
+    try {
+      const response = await createScoutAuth0(data);
+
+      const userId = response.data?.id ?? response.userId;
+
+      const normalized: CreateAuth0Response = {
+        status: response.status,
+        message: response.message,
+        data: response.data,
+        userId,
+        email: response.data?.email ?? response.email,
+        username: response.data?.username ?? response.username,
+        role: response.data?.role ?? response.role ?? data.role,
+      };
+
+      return normalized;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage =
+        errorData?.error || "Error al crear el scout en Auth0";
+      return rejectWithValue({ error: errorMessage });
+    }
+  },
+);
+
+// Actualizar miembro enviando un DTO completo (usado cuando backend valida campos obligatorios)
+export const updateMemberByDtoAction = createAsyncThunk<
+  { message: string },
+  { uid: string; memberDto: Record<string, unknown> },
+  { rejectValue: { error: string } }
+>("member/updateByDto", async ({ uid, memberDto }, { rejectWithValue }) => {
+  try {
+    const response = await updateMemberByDto(uid, memberDto);
+    return response;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error: string };
+    const errorMessage =
+      errorData?.error || "Error al actualizar el miembro (DTO)";
+    return rejectWithValue({ error: errorMessage });
+  }
+});
+
+// Cambiar rol de usuario en Auth0 (llamada al backend)
+export const changeAuth0UserRoleAction = createAsyncThunk<
+  { message?: string },
+  { user_id: string; newRole: string; organizationId?: string },
+  { rejectValue: { error: string } }
+>(
+  "member/changeAuth0UserRole",
+  async (
+    data: { user_id: string; newRole: string; organizationId?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await changeAuth0UserRole(data);
+      return response;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al cambiar rol en Auth0";
+      return rejectWithValue({ error: errorMessage });
+    }
+  },
+);

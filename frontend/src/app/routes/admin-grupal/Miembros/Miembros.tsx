@@ -27,6 +27,7 @@ const Miembros = () => {
     branchTotalMemberCount,
     loading,
     error,
+    refreshMembers,
   } = useMemberFilters({ itemsPerPage: 10 });
   const navigate = useNavigate();
 
@@ -67,7 +68,10 @@ const Miembros = () => {
         {loading && <p>Cargando miembros…</p>}
         {error && <p className="text-red-600">{error}</p>}
         {!loading && !error && (
-          <MembersTable filteredMembers={paginatedMembers} />
+          <MembersTable
+            filteredMembers={paginatedMembers}
+            onRefresh={refreshMembers}
+          />
         )}
 
         {/* Footer paginación */}

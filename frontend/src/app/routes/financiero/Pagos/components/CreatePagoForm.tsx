@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   CreatePagoFormSchema,
@@ -21,6 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import type { CreatePaymentDto } from "@/types/pago.type";
 import api from "@/api/axios";
 import { toast } from "sonner";
@@ -33,13 +44,13 @@ interface CreatePagoFormProps {
 }
 
 export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoFormProps) {
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const tenantId = useTenant();
 
   const form = useForm<CreatePagoFormValues>({
     resolver: zodResolver(CreatePagoFormSchema),
     defaultValues: {
-      paid_at: pago.paid_at || "",
+      paid_at: pago.paid_at ? new Date(pago.paid_at) : new Date(),
       method:
         (pago.method as
           | "PSE"
@@ -52,15 +63,17 @@ export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoF
   });
 
   async function onSubmit(values: CreatePagoFormValues) {
+    if (isSubmitting) return; // Prevenir doble envío
+    
+    setIsSubmitting(true);
 
     const data = {
       payment_id: crypto.randomUUID(),
       installment_id: pago.installment_id,
       payer_member_id: pago.payer_member_id,
       ...values,
+      paid_at: values.paid_at.toLocaleDateString('en-CA'), // Convertir Date a string YYYY-MM-DD en zona horaria local
     }
-
-
 
     try {
       const response = await api.post(`/finanzas/payments/${tenantId}/installments/${pago.installment_id}/payments`, data);
@@ -73,6 +86,8 @@ export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoF
       }
     } catch {
       toast.error("Error al crear el pago");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -89,9 +104,37 @@ export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoF
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Fecha de pago</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP", { locale: es })
+                        ) : (
+                          <span>Selecciona una fecha</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date(new Date().setHours(23, 59, 59, 999))
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -151,11 +194,12 @@ export default function CreatePagoForm({ setOpen, pago, onRefresh }: CreatePagoF
             type="button"
             variant="secondary"
             onClick={() => setOpen(false)}
+            disabled={isSubmitting}
           >
             Cancelar
           </Button>
-          <Button type="submit" variant="primary">
-            Pagar
+          <Button type="submit" variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? "Procesando..." : "Pagar"}
           </Button>
         </div>
       </form>

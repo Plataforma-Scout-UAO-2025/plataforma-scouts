@@ -11,6 +11,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { getMembers } from '@/api/membersApi';
 import { useAuth0 } from '@auth0/auth0-react';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface MedicalWizardFormProps {
   memberId?: number; // Hacerlo opcional para creación
@@ -42,32 +43,34 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<number>(memberId || 0);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
 
   // Cargar lista de miembros desde la API
   const loadMembers = useCallback(async () => {
     try {
       setIsLoadingMembers(true);
-      
+
       // Cargar miembros
       const response = await getMembers();
 
       // Filtrar solo miembros aprobados y activos
-      let scoutMembers = response.filter((member: Member) => 
-        member.role === 'SCOUT' && 
-        member.status === 'APPROVED' && 
+      let scoutMembers = response.filter((member: Member) =>
+        member.role === 'SCOUT' &&
+        member.status === 'APPROVED' &&
         member.is_active
       );
 
       // Filtrar por subgrupo del usuario actual (si tiene email)
       if (user?.email) {
         // Buscar el miembro actual por email
-        const currentMember = response.find((member: Member) => 
+        const currentMember = response.find((member: Member) =>
           member.email?.toLowerCase() === user.email?.toLowerCase()
         );
 
         // Si el usuario actual tiene un subgrupo asignado, filtrar por ese subgrupo
         if (currentMember?.subgroup_id) {
-          scoutMembers = scoutMembers.filter((member: Member) => 
+          scoutMembers = scoutMembers.filter((member: Member) =>
             member.subgroup_id === currentMember.subgroup_id
           );
         }
@@ -227,6 +230,30 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     }
   };
 
+  // Función para manejar cancelación con confirmación
+  const handleCancel = () => {
+    const hasData =
+      formData.blood_type ||
+      formData.eps ||
+      formData.allergies ||
+      formData.chronic_diseases ||
+      formData.physical_restrictions ||
+      formData.surgical_history ||
+      formData.vaccines_detail.length > 0 ||
+      formData.medications_detail.length > 0;
+
+    if (hasData) {
+      setShowCancelModal(true);
+    } else {
+      onCancel?.();
+    }
+  };
+
+  const handleConfirmCancel = () => {
+    setShowCancelModal(false);
+    onCancel?.();
+  };
+
   const addAlergiaComun = (alergia: string) => {
     setFormData(prev => {
       const currentAllergies = prev.allergies
@@ -257,6 +284,13 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     setFormData(prev => ({ ...prev, member_id: newMemberId }));
   };
 
+  // Función para verificar si una vacuna ya existe
+  const vaccineExists = (vaccineName: string): boolean => {
+    return formData.vaccines_detail.some(vaccine =>
+      vaccine.name.toLowerCase().trim() === vaccineName.toLowerCase().trim()
+    );
+  };
+
   const addVaccine = () => {
     setFormData(prev => ({
       ...prev,
@@ -281,6 +315,12 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   };
 
   const addCommonVaccine = (vaccineName: string) => {
+    // Verificar si la vacuna ya existe
+    if (vaccineExists(vaccineName)) {
+      toast.error(`La vacuna "${vaccineName}" ya está registrada`);
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       vaccines_detail: [...prev.vaccines_detail, {
@@ -361,7 +401,73 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     }
   };
 
+  // Función para validar vacunas antes de avanzar
+  const validateVaccines = (): boolean => {
+    if (formData.vaccines_detail.length === 0) {
+      return true; // No hay vacunas, está bien
+    }
+
+    // Verificar que todas las vacunas tengan nombre y fecha válida
+    const hasInvalidVaccines = formData.vaccines_detail.some(vaccine => {
+      const hasName = vaccine.name.trim().length > 0;
+      const vaccineDate = new Date(vaccine.applied_at);
+      const today = new Date();
+      const isFutureDate = vaccineDate > today;
+
+      return !hasName || isFutureDate;
+    });
+
+    if (hasInvalidVaccines) {
+      toast.error('Por favor complete todos los campos de vacunas y verifique que las fechas no sean futuras');
+      return false;
+    }
+
+    // Verificar duplicados
+    const vaccineNames = formData.vaccines_detail.map(v => v.name.toLowerCase().trim());
+    const hasDuplicates = new Set(vaccineNames).size !== vaccineNames.length;
+
+    if (hasDuplicates) {
+      toast.error('No puede haber vacunas duplicadas');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Función para validar medicamentos antes de avanzar
+  const validateMedications = (): boolean => {
+    if (formData.medications_detail.length === 0) {
+      return true; // No hay medicamentos, está bien
+    }
+
+    // Verificar que todos los medicamentos tengan nombre, dosis y frecuencia
+    const hasInvalidMedications = formData.medications_detail.some(med =>
+      !med.name.trim() || !med.dose.trim() || !med.frequency.trim()
+    );
+
+    if (hasInvalidMedications) {
+      toast.error('Por favor complete todos los campos de los medicamentos');
+      return false;
+    }
+
+    return true;
+  };
+
   const nextStep = () => {
+    // Validaciones específicas por paso
+    switch (currentStep) {
+      case 2: // Paso de vacunas
+        if (!validateVaccines()) {
+          return;
+        }
+        break;
+      case 3: // Paso de medicamentos
+        if (!validateMedications()) {
+          return;
+        }
+        break;
+    }
+
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -385,11 +491,26 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
       case 0:
         return formData.eps.trim() !== '' && formData.blood_type !== '';
       case 1:
-        return true;
+        return true; // Información médica es opcional
       case 2:
-        return true;
+        // Para vacunas, permitir avanzar solo si no hay vacunas o todas están completas
+        if (formData.vaccines_detail.length === 0) {
+          return true;
+        }
+        return formData.vaccines_detail.every(vaccine =>
+          vaccine.name.trim() !== '' &&
+          new Date(vaccine.applied_at) <= new Date() // Fecha no futura
+        );
       case 3:
-        return true;
+        // Para medicamentos, permitir avanzar solo si no hay medicamentos o todos están completos
+        if (formData.medications_detail.length === 0) {
+          return true;
+        }
+        return formData.medications_detail.every(med =>
+          med.name.trim() !== '' &&
+          med.dose.trim() !== '' &&
+          med.frequency.trim() !== ''
+        );
       default:
         return true;
     }
@@ -468,9 +589,9 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder={
-                          isLoadingMembers 
-                            ? "Cargando miembros..." 
-                            : members.length === 0 
+                          isLoadingMembers
+                            ? "Cargando miembros..."
+                            : members.length === 0
                               ? "No hay integrantes disponibles"
                               : "Seleccione un integrante"
                         } />
@@ -481,7 +602,12 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                             No hay integrantes disponibles de tu rama/subgrupo
                           </div>
                         ) : (
-                          members.map(member => (
+                          [...members]
+                            .sort((a, b) => {
+                              const nameA = `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim();
+                              const nameB = `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim();
+                              return nameA.localeCompare(nameB, "es", { sensitivity: "base" });
+                          }).map(member => (
                             <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
                               {member.first_name} {member.last_name} - ID {member.identification}
                             </SelectItem>
@@ -538,7 +664,6 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
             </div>
           )}
 
-          {/* El resto del componente se mantiene igual */}
           {currentStep === 1 && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Información Médica Detallada</h2>
@@ -648,42 +773,54 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
               </div>
 
               <div className="space-y-4">
-                {formData.vaccines_detail.map((vaccine, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <Label className="font-medium">Vacuna {index + 1}</Label>
-                      <button
-                        type="button"
-                        onClick={() => removeVaccine(index)}
-                        className="text-gray-500 hover:text-red-500 p-1"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="font-medium">Nombre *</Label>
-                        <input
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="Nombre de la vacuna"
-                          value={vaccine.name}
-                          onChange={(e) => updateVaccine(index, 'name', e.target.value)}
-                          maxLength={50}
-                        />
-                        <p className="text-xs text-gray-500">{vaccine.name.length}/50 caracteres</p>
+                {formData.vaccines_detail.map((vaccine, index) => {
+                  const vaccineDate = new Date(vaccine.applied_at);
+                  const today = new Date();
+                  const isFutureDate = vaccineDate > today;
+
+                  return (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <Label className="font-medium">Vacuna {index + 1}</Label>
+                        <button
+                          type="button"
+                          onClick={() => removeVaccine(index)}
+                          className="text-gray-500 hover:text-red-500 p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="font-medium">Fecha *</Label>
-                        <input
-                          type="datetime-local"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          value={vaccine.applied_at.slice(0, 16)}
-                          onChange={(e) => updateVaccine(index, 'applied_at', new Date(e.target.value).toISOString())}
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="font-medium">Nombre *</Label>
+                          <input
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${vaccine.name.trim() === '' ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                            placeholder="Nombre de la vacuna"
+                            value={vaccine.name}
+                            onChange={(e) => updateVaccine(index, 'name', e.target.value)}
+                            maxLength={50}
+                          />
+                          <p className="text-xs text-gray-500">{vaccine.name.length}/50 caracteres</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="font-medium">Fecha *</Label>
+                          <input
+                            type="datetime-local"
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${isFutureDate ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                            value={vaccine.applied_at.slice(0, 16)}
+                            onChange={(e) => updateVaccine(index, 'applied_at', new Date(e.target.value).toISOString())}
+                            max={new Date().toISOString().slice(0, 16)} // No permitir fechas futuras
+                          />
+                          {isFutureDate && (
+                            <p className="text-xs text-red-500">La fecha no puede ser futura</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <button
                   type="button"
@@ -704,55 +841,67 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                 Registre todos los medicamentos que toma actualmente el integrante.
               </p>
               <div className="space-y-4">
-                {formData.medications_detail.map((medication, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <Label className="font-medium">Medicamento {index + 1}</Label>
-                      <button
-                        type="button"
-                        onClick={() => removeMedication(index)}
-                        className="text-gray-500 hover:text-red-500 p-1"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                {formData.medications_detail.map((medication, index) => {
+                  const isIncomplete = !medication.name.trim() || !medication.dose.trim() || !medication.frequency.trim();
+
+                  return (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <Label className="font-medium">Medicamento {index + 1}</Label>
+                        <button
+                          type="button"
+                          onClick={() => removeMedication(index)}
+                          className="text-gray-500 hover:text-red-500 p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="space-y-2">
+                          <Label className="font-medium">Nombre *</Label>
+                          <input
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${!medication.name.trim() ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                            placeholder="Nombre del medicamento"
+                            value={medication.name}
+                            onChange={(e) => updateMedication(index, 'name', e.target.value)}
+                            maxLength={50}
+                          />
+                          <p className="text-xs text-gray-500">{medication.name.length}/50 caracteres</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="font-medium">Dosis *</Label>
+                          <input
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${!medication.dose.trim() ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                            placeholder="ej: 50 mg"
+                            value={medication.dose}
+                            onChange={(e) => updateMedication(index, 'dose', e.target.value)}
+                            maxLength={100}
+                          />
+                          <p className="text-xs text-gray-500">{medication.dose.length}/100 caracteres</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="font-medium">Frecuencia *</Label>
+                          <input
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${!medication.frequency.trim() ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                            placeholder="ej: 2 veces al día"
+                            value={medication.frequency}
+                            onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                            maxLength={100}
+                          />
+                          <p className="text-xs text-gray-500">{medication.frequency.length}/100 caracteres</p>
+                        </div>
+                      </div>
+                      {isIncomplete && (
+                        <p className="text-xs text-red-500 mt-2">
+                          Complete todos los campos del medicamento
+                        </p>
+                      )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="space-y-2">
-                        <Label className="font-medium">Nombre *</Label>
-                        <input
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="Nombre del medicamento"
-                          value={medication.name}
-                          onChange={(e) => updateMedication(index, 'name', e.target.value)}
-                          maxLength={50}
-                        />
-                        <p className="text-xs text-gray-500">{medication.name.length}/50 caracteres</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-medium">Dosis *</Label>
-                        <input
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="ej: 50 mg"
-                          value={medication.dose}
-                          onChange={(e) => updateMedication(index, 'dose', e.target.value)}
-                          maxLength={100}
-                        />
-                        <p className="text-xs text-gray-500">{medication.dose.length}/100 caracteres</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-medium">Frecuencia *</Label>
-                        <input
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="ej: 2 veces al día"
-                          value={medication.frequency}
-                          onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                          maxLength={100}
-                        />
-                        <p className="text-xs text-gray-500">{medication.frequency.length}/100 caracteres</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <button
                   type="button"
@@ -771,7 +920,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
               {onCancel && (
                 <button
                   type="button"
-                  onClick={onCancel}
+                  onClick={handleCancel}
                   className="border border-gray-300 px-6 py-2 rounded-md hover:bg-accent flex items-center"
                 >
                   <X className="h-4 w-4 mr-4" /> Cancelar
@@ -820,7 +969,18 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
             </div>
           </div>
         </div>
+        <ConfirmationModal
+          open={showCancelModal}
+          onOpenChange={setShowCancelModal}
+          onConfirm={handleConfirmCancel}
+          title="¿Cancelar registro médico?"
+          description="Se perderán todos los datos ingresados. ¿Está seguro de que desea cancelar?"
+          confirmText="Sí, cancelar"
+          cancelText="Continuar editando"
+          variant="destructive"
+        />
       </div>
+
     </div>
   );
 }

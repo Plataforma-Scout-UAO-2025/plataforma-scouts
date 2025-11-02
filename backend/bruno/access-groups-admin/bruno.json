@@ -1,0 +1,15 @@
+{
+  "type": "collection",
+  "version": "1",
+  "name": "Access Groups Admin",
+  "description": "Colección para pruebas de integración de la HU 1.3 - Acceso a grupos por Administrador de Grupo",
+  "envFile": "local.bru",
+  "folders": [
+    {
+      "name": "tests",
+      "path": "tests"
+    }
+  ]
+}
+
+

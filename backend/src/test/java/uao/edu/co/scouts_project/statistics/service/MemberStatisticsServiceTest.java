@@ -24,6 +24,7 @@ class MemberStatisticsServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
+    
     @Test
     void getTotalMembers_shouldReturnTotal() {
         when(memberRepository.count()).thenReturn(42L);

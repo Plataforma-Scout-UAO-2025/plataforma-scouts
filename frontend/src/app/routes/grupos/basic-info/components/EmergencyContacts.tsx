@@ -32,11 +32,10 @@ export default function EmergencyContacts({
     }
   }, [datos, setDatos, onContactChange]);
 
-  // Verificar si el último contacto está completo
   const isLastContactComplete = () => {
     const contacts = datos.emergency_contacts ?? [];
     if (contacts.length === 0) return true;
-    
+
     const lastContact = contacts[contacts.length - 1];
     return (
       lastContact.name?.trim() !== "" &&
@@ -72,7 +71,7 @@ export default function EmergencyContacts({
 
   const addContact = () => {
     if (!canAddNewContact) return;
-    
+
     setDatos((prev) => {
       const newData = {
         ...prev,
@@ -147,9 +146,8 @@ export default function EmergencyContacts({
         return (
           <div
             key={i}
-            className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border rounded-lg ${
-              hasError ? "bg-red-50 border-red-300" : "bg-muted/50"
-            }`}
+            className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 border rounded-lg ${hasError ? "bg-red-50 border-red-300" : "bg-muted/50"
+              }`}
           >
             <div>
               <Label>Nombre *</Label>
@@ -212,9 +210,8 @@ export default function EmergencyContacts({
                 required
               />
               <p
-                className={`text-xs mt-1 ${
-                  contactErrors.phone ? "text-red-600" : "text-muted-foreground"
-                }`}
+                className={`text-xs mt-1 ${contactErrors.phone ? "text-red-600" : "text-muted-foreground"
+                  }`}
               >
                 {c.phone.length}/10 dígitos
               </p>
@@ -243,7 +240,6 @@ export default function EmergencyContacts({
           </div>
         );
       })}
-      
       <Button
         type="button"
         variant="primary"
@@ -258,7 +254,6 @@ export default function EmergencyContacts({
       >
         + Agregar contacto
       </Button>
-      
       {!canAddNewContact && (datos.emergency_contacts ?? []).length > 0 && (
         <p className="text-xs text-red-600">
           Complete todos los campos del contacto actual antes de agregar uno nuevo

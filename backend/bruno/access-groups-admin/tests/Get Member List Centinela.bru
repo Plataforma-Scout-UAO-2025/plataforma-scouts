@@ -1,0 +1,49 @@
+meta {
+  name: Get Members List - Own Group (Centinelas 113)
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://api.plataformascout.org/api/v1/members/list_members_with_details
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: {{token_centinelas}}
+  X-Tenant-Id: org_6B3k4dao2Wf6eGxa 
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains a list", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array");
+  });
+  
+  test("Each member has required fields", function() {
+    const body = res.getBody();
+    if (body.length > 0) {
+      expect(body[0]).to.have.property("firstName");
+      expect(body[0]).to.have.property("lastName");
+      expect(body[0]).to.have.property("age");
+      expect(body[0]).to.have.property("role");
+      expect(body[0]).to.have.property("status");
+    }
+  });
+}
+
+docs {
+  Nombre: Obtener Listado de miembros del grupo (Centinelas 113)
+  Endpoint: https://api.plataformascout.org/api/v1/members/list_members_with_details
+  HU relacionada: HU-ING-1.3 (Criterio 2)
+  Descripción: Verifica que el administrador del grupo Centinelas 113 pueda listar correctamente los miembros pertenecientes a su grupo, mostrando su información.
+  Respuesta esperada: Status 200 y una lista de miembros con su información con campos mínimo requeridos.
+  Responsable: Kelvin Martínez
+  Última Actualización: 2025-10-27
+}

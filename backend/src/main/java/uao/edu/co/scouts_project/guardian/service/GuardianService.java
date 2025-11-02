@@ -13,6 +13,7 @@ public interface GuardianService {
     GuardianCreateDTO findGuardianById(Long id);
     GuardianWithMembersDTO findGuardianWithMembers(Long guardianId);
     List<MemberDTO> findMembersInChargeOf(Long guardianId);
+    List<MemberDTO> findMembersWithoutGuardian();
 
     // Writes
     GuardianCreateResponse saveGuardian(GuardianCreateDTO guardianCreateDTO);

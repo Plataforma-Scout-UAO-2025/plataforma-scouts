@@ -1,75 +1,33 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Cargo } from "../types/niveles.types";
-import type { Member } from "@/types/member.type";
-import { normalizeRawRole, RawRole, getRoleLabel } from "@/roles/roles";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Props {
   open: boolean;
   cargo: Cargo | null;
   onClose: () => void;
-  // Permite devolver el cargo editado y opcionalmente el miembro a asignar al cargo
-  onSave: (cargo: Cargo, assignMemberId?: string) => void;
-  members?: Member[];
+  // Devuelve el cargo editado (sin asignación de miembro)
+  onSave: (cargo: Cargo) => void;
 }
 
-export default function EditCargoModal({ open, cargo, onClose, onSave, members = [] }: Props) {
+export default function EditCargoModal({ open, cargo, onClose, onSave }: Props) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-
-  type MemberOption = { id: string; label: string; displayName: string };
-  const memberOptions: MemberOption[] = useMemo(() => {
-    return (members || [])
-      .map((m) => {
-        const rec = m as unknown as Record<string, unknown>;
-        const memberId = rec["memberId"] ?? rec["member_id"] ?? rec["id"];
-        const firstName = String(rec["firstName"] ?? rec["first_name"] ?? "");
-        const lastName = String(rec["lastName"] ?? rec["last_name"] ?? "");
-
-        const rawRoleSingle = rec["role"] as string | undefined;
-        const rawRolesList = Array.isArray(rec["roles"]) ? (rec["roles"] as string[]) : undefined;
-        const collected = rawRolesList ?? (rawRoleSingle ? [rawRoleSingle] : []);
-        const normalized = Array.from(new Set(collected.map((r) => normalizeRawRole(r))));
-        const withoutScout = normalized.filter((r) => r !== RawRole.SCOUT);
-
-        if (!memberId || withoutScout.length === 0) return null;
-
-        const rolesLabel = withoutScout.map((r) => getRoleLabel(r)).join(", ");
-        const displayName = `${firstName} ${lastName}`.trim();
-        const label = rolesLabel ? `${displayName} — ${rolesLabel}` : displayName;
-        return { id: String(memberId), label, displayName } as MemberOption;
-      })
-      .filter((x): x is MemberOption => x !== null);
-  }, [members]);
 
   useEffect(() => {
     if (cargo) {
       setNombre(cargo.nombre);
       setDescripcion(cargo.descripcion || "");
-      setSelectedMemberId(null);
     }
   }, [cargo]);
 
   const handleSave = () => {
     if (!cargo) return;
-    let titularValue = cargo.titular || "";
-    if (selectedMemberId) {
-      const selected = memberOptions.find((m) => m.id === selectedMemberId);
-      if (selected) titularValue = selected.displayName;
-    }
-    // Devolvemos también el memberId seleccionado para que el padre lo asigne al cargo
-    onSave({ ...cargo, nombre, titular: titularValue, descripcion }, selectedMemberId ?? undefined);
+    // Ya no gestionamos asignación de persona desde este modal
+    onSave({ ...cargo, nombre, descripcion });
   };
 
   return (
@@ -79,6 +37,9 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
           <DialogTitle className="text-primary text-2xl font-extrabold">
             Editar Cargo
           </DialogTitle>
+          <DialogDescription>
+            Actualiza el nombre y la descripción del cargo. La asignación de miembros se realiza en el modal dedicado.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
@@ -89,32 +50,7 @@ export default function EditCargoModal({ open, cargo, onClose, onSave, members =
             <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Persona Asignada
-            </label>
-            {memberOptions.length > 0 ? (
-              <Select
-                value={selectedMemberId ?? undefined}
-                onValueChange={(v) => setSelectedMemberId(v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un miembro" />
-                </SelectTrigger>
-                <SelectContent>
-                  {memberOptions.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                No hay miembros disponibles para asignar.
-              </div>
-            )}
-          </div>
+          {/* Campo de asignación de persona removido. Usar AddMemberModal para asignar miembros. */}
 
           <div>
             <label className="block text-sm font-medium mb-1 text-foreground">

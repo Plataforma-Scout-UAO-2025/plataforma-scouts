@@ -103,6 +103,17 @@ public class GuardianController {
     }
 
     @Operation(
+        summary = "Ver acudientes sin miembros",
+        description = "Listar miembros sin acudiente asignado."
+    )
+    @ApiResponse(responseCode = "200", description = "Lista de miembros sin acudiente retornada.")
+    @GetMapping("/members/available-guardian")
+    public ResponseEntity<List<MemberDTO>> getAvailableMembersForGuardian() {
+        List<MemberDTO> availableMembers = guardianService.findMembersWithoutGuardian();
+        return ResponseEntity.ok(availableMembers);
+    }
+
+    @Operation(
         summary = "Agregar miembro a acudiente",
         description = "Asigna un miembro (scout) existente a un acudiente."
     )

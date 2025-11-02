@@ -64,7 +64,6 @@ export default function AddMemberModal({
 
     console.log('✅ Validación pasó, guardando...');
     
-    // Mapear contactos de emergencia al formato correcto del schema
     const emergencyContactsFormatted = emergencyContacts
       .filter(contact => contact.name.trim() && contact.relationship.trim() && contact.phone.trim())
       .map(contact => ({
@@ -81,7 +80,6 @@ export default function AddMemberModal({
     console.log('Datos completos con contactos:', dataWithContacts);
     
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       const fullName = `${data.firstName} ${data.lastName}`;
@@ -92,7 +90,6 @@ export default function AddMemberModal({
       reset();
       setEmergencyContacts([{ name: '', relationship: '', phone: '' }]);
 
-      // Siempre mostrar la tarjeta de éxito
       setShowSuccessCard(true);
     } catch (error) {
       console.error('❌ Error al guardar:', error);

@@ -1,0 +1,52 @@
+meta {
+  name: Get Member Detail - Own Group (Centinelas 113)
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://api.plataformascout.org/api/v1/members/list_member_by_id?id=29
+  body: none
+  auth: none
+}
+
+params:query {
+  id: 29
+}
+
+headers {
+  Accept: application/json
+  Authorization: {{token_centinelas}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains expected fields", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("first_name");
+    expect(body).to.have.property("last_name");
+    expect(body).to.have.property("email");
+    expect(body).to.have.property("document_type");
+    expect(body).to.have.property("identification");
+    expect(body).to.have.property("birth_date");
+    expect(body).to.have.property("gender");
+    expect(body).to.have.property("phone");
+    expect(body).to.have.property("address");
+    expect(body).to.have.property("weight");
+    expect(body).to.have.property("height");
+    expect(body).to.have.property("status");
+  });
+}
+
+docs {
+  Nombre: Obtener detalles de un miembro del grupo (Centinelas 113)
+  Endpoint: https://api.plataformascout.org/api/v1/members/list_member_by_id?id=29
+  HU relacionada: HU-ING-1.3 (Criterio 2)
+  Descripción: Valida que el administrador del grupo Centinelas 113 pueda consultar los detalles de un miembro de su grupo.
+  Respuesta esperada: Status 200 y un objeto con los detalles del miembro. 
+  Responsable: Kelvin Martínez
+  Última Actualización: 2025-10-27
+}

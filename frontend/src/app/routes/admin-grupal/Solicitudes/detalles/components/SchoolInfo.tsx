@@ -5,13 +5,13 @@ import { fetchSchoolDataMemberAction } from "@/store/members/membersActions";
 import { Label } from "@/components/ui/label";
 
 interface SchoolInfoProps {
-  memberId?: number | string;  
+  memberId?: number | string;
 }
 
 export default function SchoolInfo({ memberId }: SchoolInfoProps) {
   const dispatch = useAppDispatch();
-  
-  const schoolData = useAppSelector((state) => 
+
+  const schoolData = useAppSelector((state) =>
     state.members.schoolDataByMember?.[Number(memberId)] || null
   );
   const loading = useAppSelector((state) => state.members.loadingSchoolData);
@@ -48,9 +48,9 @@ export default function SchoolInfo({ memberId }: SchoolInfoProps) {
         </h3>
         <div className="border rounded-lg p-6 bg-gray-50">
           <p className="text-sm text-gray-600">
-          Este miembro no tiene datos escolares registrados.          </p>
+            Este miembro no tiene datos escolares registrados.
+          </p>
         </div>
-        
       </div>
     );
   }
