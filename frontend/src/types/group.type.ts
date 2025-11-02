@@ -84,6 +84,7 @@ export interface GroupMembersDTO {
   group_id: number;
   group_name: string;
   member_count: number;
+  status?: string;
 }
 
 export interface TopGroupByMembersDTO {
