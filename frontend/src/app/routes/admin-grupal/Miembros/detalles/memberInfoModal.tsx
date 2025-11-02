@@ -17,9 +17,10 @@ import MembersInChargeCard from "../../../guardians/profile/components/MembersIn
 import { useState, useEffect } from "react";
 import { getMembersInChargeOf, getGuardianById } from "@/api/guardiansApi";
 import { getMembersWithBranch, getMembersByStatus } from "@/api/membersApi";
-
+import type { Guardian } from "@/types/guardian.type";
 import MemberAssignmentInfo from "@/app/routes/admin-grupal/Miembros/components/MemberAssignmentInfo";
 import GuardianInfo from "@/app/routes/admin-grupal/Miembros/components/GuardianInfo";
+
 import type { MemberBasicInfo } from "@/types/guardian.type";
 
 interface MemberInfoModalProps {
@@ -38,8 +39,7 @@ export default function MemberInfoModal({
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [fullMemberData, setFullMemberData] = useState<Member | null>(null);
   const [isLoadingFullData, setIsLoadingFullData] = useState(false);
-  const [guardianInfo, setGuardianInfo] = useState<any>(null);
-  const [loadingGuardian, setLoadingGuardian] = useState(false);
+  const [guardianInfo, setGuardianInfo] = useState<Guardian | null>(null);  const [loadingGuardian, setLoadingGuardian] = useState(false);
 
   const isScout = member?.role?.toUpperCase() === "SCOUT";
   const isAcudiente = member?.role?.toUpperCase() === "ACUDIENTE";

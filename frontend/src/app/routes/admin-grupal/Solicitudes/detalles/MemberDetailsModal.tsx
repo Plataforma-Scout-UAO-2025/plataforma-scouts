@@ -18,8 +18,7 @@ import { useMemberApproval } from "@/hooks/useMemberApproval";
 import { listRoles } from "@/api/membersApi";
 import type { RoleSummary } from "@/api/membersApi";
 import { useState, useEffect } from "react";
-import { guardianService } from "@/app/routes/guardians/services/guardianService";
-import type { Guardian } from "@/types/guardian.type";
+
 
 interface MemberDetailsModalProps {
   open: boolean;
