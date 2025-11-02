@@ -481,17 +481,34 @@ class GuardianServiceImplTest {
         @Test
         @DisplayName("Should remove guardian ID from member successfully")
         void shouldRemoveGuardianIdFromMember() {
-            // Arrange
-            regularMember.setGuardianId(1);
+            // Arrange - Create an adult member (18+ years old) for this test
+            Member adultMember = Member.builder()
+                    .memberId(3L)
+                    .userId("adult-member-789")
+                    .tenantId("tenant-1")
+                    .firstName("Adult")
+                    .lastName("Member")
+                    .age(20)
+                    .role("SCOUT")
+                    .identification("1112223334")
+                    .documentType(DocumentType.CC)
+                    .phone("3001112233")
+                    .isActive(true)
+                    .status(Status.APPROVED)
+                    .acceptanceDate(LocalDate.now())
+                    .guardianId(1)
+                    .subgroup(subgroup)
+                    .build();
+            
             when(guardianRepository.existsById(1L)).thenReturn(true);
-            when(guardianRepository.findById(2L)).thenReturn(Optional.of(regularMember));
-            when(guardianRepository.save(any(Member.class))).thenReturn(regularMember);
+            when(guardianRepository.findById(3L)).thenReturn(Optional.of(adultMember));
+            when(guardianRepository.save(any(Member.class))).thenReturn(adultMember);
 
             // Act & Assert
-            assertDoesNotThrow(() -> guardianService.removeGuardianIdFromMember(1L, 2L));
+            assertDoesNotThrow(() -> guardianService.removeGuardianIdFromMember(1L, 3L));
 
             verify(guardianRepository, times(1)).existsById(1L);
-            verify(guardianRepository, times(1)).findById(2L);
+            verify(guardianRepository, times(1)).findById(3L);
             verify(guardianRepository, times(1)).save(any(Member.class));
         }
 
