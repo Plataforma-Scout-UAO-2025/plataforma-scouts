@@ -188,12 +188,24 @@ public class GuardianServiceImpl implements GuardianService {
     }
 
     private void updateGuardianFields(Member existingGuardian, GuardianCreateDTO dto) {
-        existingGuardian.setFirstName(dto.getFirstName());
-        existingGuardian.setLastName(dto.getLastName());
-        existingGuardian.setAge(dto.getAge());
-        existingGuardian.setSubgroup(SubgroupMapper.toEntity(dto.getSubgroup()));
-        existingGuardian.setPhone(dto.getPhone());
-        existingGuardian.setRelationship(dto.getRelationship());
+        updateIfNotNull(dto.getFirstName(), existingGuardian::setFirstName);
+        updateIfNotNull(dto.getLastName(), existingGuardian::setLastName);
+        updateIfNotNull(dto.getAge(), existingGuardian::setAge);
+        updateIfNotNull(dto.getSubgroup(), subgroup -> existingGuardian.setSubgroup(SubgroupMapper.toEntity(subgroup)));
+        updateIfNotNull(dto.getPhone(), existingGuardian::setPhone);
+        updateIfNotNull(dto.getRelationship(), existingGuardian::setRelationship);
+        updateIfNotNull(dto.getIdentification(), existingGuardian::setIdentification);
+        updateIfNotNull(dto.getDocumentType(), existingGuardian::setDocumentType);
+        updateIfNotNull(dto.getAddress(), existingGuardian::setAddress);
+        updateIfNotNull(dto.getIsActive(), existingGuardian::setIsActive);
+        updateIfNotNull(dto.getStatus(), existingGuardian::setStatus);
+        updateIfNotNull(dto.getAcceptanceDate(), existingGuardian::setAcceptanceDate);
+    }
+
+    private <T> void updateIfNotNull(T value, java.util.function.Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
     }
 
 }

@@ -34,7 +34,7 @@ export default function StatsCards() {
                 </p>
               </div>
               
-              <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-accent/60 transition-colors">
+              <div className="flex items-center gap-4 p-3 rounded-lg">
                 <div className={`p-3 ${stat.color}`}>
                   <stat.icon className="w-5 h-5" />
                 </div>

@@ -194,7 +194,7 @@ const MembersInCharge = () => {
               onViewMember={handleViewMember}
               onDeleteMember={handleDeleteMember}
               onEditMember={handleEditMember}
-              onReassignGuardian={handleReassignGuardian} // AGREGAR ESTA PROP
+              onReassignGuardian={handleReassignGuardian}
             />
           )}
 

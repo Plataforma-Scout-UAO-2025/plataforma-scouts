@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useEffect } from 'react';
 
 const editProfileSchema = z.object({
   firstName: z.string().min(1, 'Los nombres son obligatorios'),
@@ -32,11 +33,21 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
   const {
     register,
     handleSubmit,
+    reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<EditProfileFormData>({
     resolver: zodResolver(editProfileSchema),
     defaultValues: initialData
   });
+
+  // Con este useeffect se puede resetear el formulario cada vez que se abre el modal
+  // (no carga valores por defecto, los jala de BD directamente)
+  useEffect(() => {
+    if (isOpen) {
+      reset(initialData);
+    }
+  }, [isOpen, initialData, reset]);
 
   const onSubmit = async (data: EditProfileFormData) => {
     onSave(data);
@@ -63,7 +74,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
               <Input
                 id="firstName"
                 {...register('firstName')}
-                className={errors.firstName ? 'border-red-500' : ''}
+                className={`w-full ${errors.firstName ? 'border-red-500' : ''}`}
               />
               {errors.firstName && (
                 <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>
@@ -74,7 +85,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
               <Input
                 id="lastName"
                 {...register('lastName')}
-                className={errors.lastName ? 'border-red-500' : ''}
+                className={`w-full ${errors.lastName ? 'border-red-500' : ''}`}
               />
               {errors.lastName && (
                 <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>
@@ -86,8 +97,11 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="documentType">Tipo de documento *</Label>
-              <Select defaultValue={initialData.documentType}>
-                <SelectTrigger>
+              <Select 
+                defaultValue={initialData.documentType}
+                onValueChange={(value) => setValue('documentType', value)}
+              >
+                <SelectTrigger className="bg-white w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,7 +119,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
               <Input
                 id="identification"
                 {...register('identification')}
-                className={errors.identification ? 'border-red-500' : ''}
+                className={`w-full ${errors.identification ? 'border-red-500' : ''}`}
               />
               {errors.identification && (
                 <p className="text-red-500 text-sm mt-1">{errors.identification.message}</p>
@@ -121,7 +135,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
                 id="email"
                 type="email"
                 {...register('email')}
-                className={errors.email ? 'border-red-500' : ''}
+                className={`w-full ${errors.email ? 'border-red-500' : ''}`}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
@@ -133,7 +147,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
                 id="emailAlt"
                 type="email"
                 {...register('emailAlt')}
-                className={errors.emailAlt ? 'border-red-500' : ''}
+                className={`w-full ${errors.emailAlt ? 'border-red-500' : ''}`}
               />
               {errors.emailAlt && (
                 <p className="text-red-500 text-sm mt-1">{errors.emailAlt.message}</p>
@@ -149,7 +163,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
                 id="phone"
                 type="tel"
                 {...register('phone')}
-                className={errors.phone ? 'border-red-500' : ''}
+                className={`w-full ${errors.phone ? 'border-red-500' : ''}`}
               />
               {errors.phone && (
                 <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
@@ -161,6 +175,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
                 id="phoneAlt"
                 type="tel"
                 {...register('phoneAlt')}
+                className="w-full"
               />
             </div>
           </div>
@@ -171,7 +186,7 @@ export default function EditProfileModal({ isOpen, onClose, onSave, initialData 
             <Input
               id="address"
               {...register('address')}
-              className={errors.address ? 'border-red-500' : ''}
+              className={`w-full ${errors.address ? 'border-red-500' : ''}`}
             />
             {errors.address && (
               <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>

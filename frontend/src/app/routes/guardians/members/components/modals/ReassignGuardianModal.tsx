@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -61,37 +61,9 @@ export default function ReassignGuardianModal({
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Cargar TODOS los guardianes cuando se abre el modal
-  useEffect(() => {
-    if (isOpen && member) {
-      loadAllGuardians();
-    }
-  }, [isOpen, member]);
-
-  // Filtrar guardianes por búsqueda
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredGuardians(allGuardians);
-    } else {
-      const filtered = allGuardians.filter((guardian) => {
-        const firstName = guardian.firstName || guardian.first_name || "";
-        const lastName = guardian.lastName || guardian.last_name || "";
-        const fullName = `${firstName} ${lastName}`.toLowerCase();
-        const identification = guardian.identification || "";
-        
-        return fullName.includes(searchTerm.toLowerCase()) ||
-               identification.includes(searchTerm);
-      });
-      setFilteredGuardians(filtered);
-    }
-  }, [searchTerm, allGuardians]);
-
-  const loadAllGuardians = async () => {
+  const loadAllGuardians = useCallback(async () => {
     setLoading(true);
-    try {
-      console.log("Cargando TODOS los guardianes del sistema...");
-      
-      
+    try {    
       const currentGuardianId = (member as ExtendedMemberInfo)?.guardianId;
       
       const mockGuardians: GuardianOption[] = [
@@ -147,16 +119,40 @@ export default function ReassignGuardianModal({
         }
       ];
       
-      console.log("Todos los guardianes cargados:", mockGuardians);
       setAllGuardians(mockGuardians);
       setFilteredGuardians(mockGuardians);
     } catch (error) {
-      console.error("Error loading all guardians:", error);
+      console.error("Error al cargar los guardianes:", error);
       toast.error("Error al cargar los guardianes");
     } finally {
       setLoading(false);
     }
-  };
+  }, [member]);
+
+  // Cargar TODOS los guardianes cuando se abre el modal
+  useEffect(() => {
+    if (isOpen && member) {
+      loadAllGuardians();
+    }
+  }, [isOpen, member, loadAllGuardians]);
+
+  // Filtrar guardianes por búsqueda
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredGuardians(allGuardians);
+    } else {
+      const filtered = allGuardians.filter((guardian) => {
+        const firstName = guardian.firstName || guardian.first_name || "";
+        const lastName = guardian.lastName || guardian.last_name || "";
+        const fullName = `${firstName} ${lastName}`.toLowerCase();
+        const identification = guardian.identification || "";
+        
+        return fullName.includes(searchTerm.toLowerCase()) ||
+               identification.includes(searchTerm);
+      });
+      setFilteredGuardians(filtered);
+    }
+  }, [searchTerm, allGuardians]);
 
   const handleGuardianSelect = (guardianId: number) => {
     // No permitir seleccionar el guardian actual
@@ -190,13 +186,6 @@ export default function ReassignGuardianModal({
       toast.error("No puedes reasignar al mismo guardian");
       return;
     }
-
-    console.log("Reasignando miembro:", { 
-      memberId, 
-      selectedGuardianId,
-      memberName: getMemberName(),
-      newGuardianName: getGuardianName(selectedGuardian!)
-    });
     
     try {
       await onConfirm(memberId, selectedGuardianId);

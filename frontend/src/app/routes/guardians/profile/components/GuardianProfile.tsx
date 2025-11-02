@@ -204,7 +204,7 @@ const GuardianProfilePage: React.FC = () => {
           emailAlt: undefined,
           phone: guardianApiData?.phone || '',
           phoneAlt: undefined,
-          address: 'N/A'
+          address: guardianApiData?.address || ''
         }} 
       />
       
