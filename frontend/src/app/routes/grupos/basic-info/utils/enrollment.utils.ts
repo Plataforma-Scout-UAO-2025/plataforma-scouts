@@ -51,5 +51,6 @@ export const transformData = (
     isActive: true,
     status,
     emergencyContacts,
+    accept_treatment: data.accept_treatment,
   };
 };

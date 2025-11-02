@@ -61,6 +61,7 @@ public class MemberMapper {
                 )
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
+                .acceptTreatment(member.getAcceptTreatment())
                 .build();
     }
 
@@ -115,6 +116,7 @@ public class MemberMapper {
         }
 
         member.setAcceptanceDate(dto.getAcceptanceDate());
+        member.setAcceptTreatment(dto.getAcceptTreatment());
 
         if (dto.getEmergencyContacts() != null) {
             member.setEmergencyContacts(

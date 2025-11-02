@@ -133,13 +133,11 @@ export const personalDataBaseSchema = z
   });
 
 export const dataConsentSchema = z.object({
-  data_treatment_consent: z
-    .string()
-    .min(1, "Debes seleccionar una opción")
-    .refine(
-      (value) => value === "accepted",
-      "Debes autorizar el tratamiento de datos para continuar"
-    ),
+  accept_treatment: z
+    .boolean()
+    .refine((value) => value === true, {
+      message: "Debes autorizar el tratamiento de datos para continuar",
+    }),
 });
 
 export const page1Schema = z.intersection(

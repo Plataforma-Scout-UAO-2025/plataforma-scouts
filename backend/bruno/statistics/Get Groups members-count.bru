@@ -25,6 +25,11 @@ tests {
       const firstItem = res.body[0];
       expect(firstItem).to.have.property('group_id');
       expect(firstItem).to.have.property('group_name');
+      expect(firstItem).to.have.property('status');
+      // status debe ser una cadena si está presente
+      if (firstItem.status !== null && firstItem.status !== undefined) {
+        expect(firstItem.status).to.be.a('string');
+      }
       expect(firstItem).to.have.property('member_count');
       expect(firstItem.member_count).to.be.a('number');
       expect(firstItem.member_count).to.be.at.least(0);
@@ -44,7 +49,7 @@ docs {
   **Descripción:** Validar que el endpoint retorna correctamente el conteo de miembros por grupo en toda la plataforma.
   Se espera:
   - Código 200
-  - Array de objetos con groupId, groupName y memberCount
+  - Array de objetos con groupId, groupName, status y memberCount
   - memberCount debe ser numérico >= 0
   - Estructura JSON correcta
 }

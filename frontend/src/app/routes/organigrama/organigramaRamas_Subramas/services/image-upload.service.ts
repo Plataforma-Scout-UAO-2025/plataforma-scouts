@@ -39,10 +39,9 @@ export const uploadSectionIcon = async (
       signal,
     });
 
-    // handled by organigramaClient wrappers below
 
     const payload = { objectId: uploadResponse.objectId };
-    console.info("🔄 [ImageUploadService] Enviando PATCH (icon) via client:", {
+    console.info(" [ImageUploadService] Enviando PATCH (icon) via client:", {
       payload,
     });
     await setIcon(sectionId, payload, tenantId, groupSlug);
@@ -77,7 +76,7 @@ export const uploadSectionMainImage = async (
     });
 
     console.info(
-      "🔄 [ImageUploadService] Usando Redux action para photo-principal:",
+      " [ImageUploadService] Usando Redux action para photo-principal:",
       { objectId: uploadResponse.objectId }
     );
     await dispatch(
@@ -143,7 +142,7 @@ export const uploadGalleryImages = async (
     console.log(
       " [ImageUploadService] Asociando galería usando endpoint PATCH específico..."
     );
-    const patchEndpoint = null; // handled by organigramaClient
+    const patchEndpoint = null;
 
     const galleryPayload = createAddsPayloadFromArray(objectIds);
 
@@ -184,7 +183,7 @@ export const uploadGalleryImages = async (
       );
 
       console.log(
-        "🔄 [ImageUploadService] Obteniendo datos actualizados de la rama después de agregar a galería..."
+        " [ImageUploadService] Obteniendo datos actualizados de la rama después de agregar a galería..."
       );
       const updatedRama = await getRamaByIdDirect(
         tenantId,
@@ -211,7 +210,7 @@ export const uploadGalleryImages = async (
       }
 
       console.warn(
-        "⚠️ [ImageUploadService] No se pudieron obtener URLs actualizadas, usando URLs del upload"
+        " [ImageUploadService] No se pudieron obtener URLs actualizadas, usando URLs del upload"
       );
       return urls;
     } catch (patchError) {
