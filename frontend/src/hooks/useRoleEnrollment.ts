@@ -195,7 +195,6 @@ export function useRoleEnrollment({
         if (created?.userId) {
           const md = memberData as Record<string, unknown>;
           md["userId"] = created.userId;
-          md["user_id"] = created.userId;
         }
       } catch (e) {
         console.warn("No se pudo extraer userId del resultado de Auth0:", e);

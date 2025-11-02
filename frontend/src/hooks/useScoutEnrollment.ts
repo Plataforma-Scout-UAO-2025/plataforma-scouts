@@ -141,7 +141,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return newData;
       });
     },
-    [pagina, page1Validation, page2Validation]
+    [pagina, page1Validation, page2Validation],
   );
 
   const handleSchoolChange = useCallback(
@@ -157,7 +157,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return newData;
       });
     },
-    [pagina, page3Validation]
+    [pagina, page3Validation],
   );
 
   const handleEmergencyContactsChange = useCallback(
@@ -166,7 +166,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         page1Validation.validate(updatedData);
       }
     },
-    [pagina, page1Validation]
+    [pagina, page1Validation],
   );
 
   const validateCurrentPage = useCallback((): boolean => {
@@ -218,7 +218,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           email: datosPersonales.email,
           password: datosPersonales.password,
           username: datosPersonales.username,
-        })
+        }),
       );
 
       if (createScoutAuth0Action.rejected.match(auth0Result)) {
@@ -260,8 +260,20 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           ...datosPersonales,
           tenantId: tenant,
         },
-        normalizedUserRole
+        normalizedUserRole,
       );
+
+      // Extraer el id devuelto por Auth0 (normalizado en la action)
+      try {
+        const created = auth0Result.payload as { userId?: string } | undefined;
+        const auth0Id = created?.userId;
+        if (auth0Id) {
+          const md = memberData as Record<string, unknown>;
+          md["userId"] = auth0Id;
+        }
+      } catch (e) {
+        console.warn("No se pudo extraer userId del resultado de Auth0:", e);
+      }
 
       let memberResult;
 
@@ -271,7 +283,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           school: datosEscolares,
         };
         memberResult = await dispatch(
-          createMemberWithSchoolDataAction({ memberData: requestData })
+          createMemberWithSchoolDataAction({ memberData: requestData }),
         );
       } else {
         memberResult = await dispatch(createMemberAction(memberData));
@@ -365,7 +377,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
       await enviarDatos();
     },
-    [pagina, validateCurrentPage, scrollToFirstError, enviarDatos]
+    [pagina, validateCurrentPage, scrollToFirstError, enviarDatos],
   );
 
   const handleSchoolDialogResponse = useCallback(
@@ -379,17 +391,17 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         void enviarDatos();
       }
     },
-    [enviarDatos]
+    [enviarDatos],
   );
 
   const totalPaginas = useMemo(
     () => (incluirDatosEscolares ? 3 : 2),
-    [incluirDatosEscolares]
+    [incluirDatosEscolares],
   );
 
   const progreso = useMemo(
     () => (pagina / totalPaginas) * 100,
-    [pagina, totalPaginas]
+    [pagina, totalPaginas],
   );
 
   return {

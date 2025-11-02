@@ -136,9 +136,12 @@ export const assignSubgroupAndSection = async (data: {
 
 // Obtener datos escolares de un miembro
 export const getSchoolDataByMemberId = async (id: string | number | bigint) => {
-  const response = await api.get<SchoolData>("/members/list_schoolData_by_memberId", {
-    params: { id },
-  });
+  const response = await api.get<SchoolData>(
+    "/members/list_schoolData_by_memberId",
+    {
+      params: { id },
+    },
+  );
   return response.data;
 };
 
