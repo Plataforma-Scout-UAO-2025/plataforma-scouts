@@ -44,6 +44,8 @@ type useRoleEnrollmentReturn = {
   loadingSubmit: boolean;
   errors: Record<string, string>;
   handlePersonalChange: (e: ChangeEvent) => void;
+  handleEmergencyContactsChange: (updatedData: PersonalData) => void;
+
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 };
 
@@ -78,6 +80,8 @@ export function useRoleEnrollment({
     height: "",
     tenantId: "",
     role,
+    emergency_contacts: [{ name: "", relationship: "", phone: "" }],
+
   });
 
   useEffect(() => {
@@ -104,7 +108,14 @@ export function useRoleEnrollment({
     },
     [validation],
   );
-
+  const handleEmergencyContactsChange = useCallback(
+    (updatedData: PersonalData) => {
+      if (pagina === 1) {
+        validation.validate(updatedData);
+      }
+    },
+    [pagina, validation],
+  );
   const validateCurrentPage = useCallback((): boolean => {
     const isValid = validation.validate(datosPersonales);
     if (!isValid) {
@@ -298,6 +309,7 @@ export function useRoleEnrollment({
     loadingSubmit,
     errors: validation.errors,
     handlePersonalChange,
+    handleEmergencyContactsChange,
     handleSubmit,
   };
 }

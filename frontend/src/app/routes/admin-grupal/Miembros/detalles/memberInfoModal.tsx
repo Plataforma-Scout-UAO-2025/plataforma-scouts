@@ -160,19 +160,15 @@ export default function MemberInfoModal({
             {isScout && memberId && <SchoolInfo memberId={memberId} />}
             {isScout && (
               <>
-                <EmergencyContacts member={displayMember} />
                 <Interests member={displayMember} />
               </>
             )}
-
-            
-
+            <EmergencyContacts member={displayMember} />
             {isScout && (
               <GuardianInfo guardian={guardianInfo} loading={loadingGuardian} />
             )}
             <MemberAssignmentInfo member={displayMember} />
             <MemberStatusBar member={displayMember} />
-
             {isAcudiente && (
               <>
                 {isLoadingMembers ? (

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import PersonalDataForm from "./components/PersonalDataForm";
 import DataTreatmentConsent from "./components/DataTreatmentConsent";
 import SuccessModal from "./components/SuccessModal";
+import EmergencyContacts from "./components/EmergencyContacts";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 import { useOrgStructure } from "@/hooks/useOrgStructure";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
@@ -33,6 +34,7 @@ function ScouterEnrollment() {
     setShowUserExistsDialog,
     showAuth0ErrorDialog,
     setShowAuth0ErrorDialog,
+    handleEmergencyContactsChange,
     errorMessage,
     loadingSubmit,
     errors,
@@ -71,16 +73,23 @@ function ScouterEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) {
+    if (pagina === 1) 
       return (
-        <PersonalDataForm
-          datos={datosPersonales}
-          handleChange={handlePersonalChange}
-          setDatos={setDatosPersonales}
-          errors={errors}
-        />
+       <>
+      <PersonalDataForm
+        datos={datosPersonales}
+        handleChange={handlePersonalChange}
+        setDatos={setDatosPersonales}
+        errors={errors}
+      />
+      <EmergencyContacts
+        datos={datosPersonales}
+        setDatos={setDatosPersonales}
+        onContactChange={handleEmergencyContactsChange}
+        errors={errors}
+      />
+    </>
       );
-    }
 
     if (pagina === 2) {
       return (

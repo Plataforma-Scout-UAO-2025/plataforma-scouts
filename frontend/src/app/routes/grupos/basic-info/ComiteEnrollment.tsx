@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import PersonalDataForm from "./components/PersonalDataForm";
 import DataTreatmentConsent from "./components/DataTreatmentConsent";
+import EmergencyContacts from "./components/EmergencyContacts";
 import SuccessModal from "./components/SuccessModal";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 import { UserExistsDialog } from "./components/UserExistsDialog";
@@ -26,6 +27,7 @@ function ComiteAdminEnrollment() {
     loadingSubmit,
     errors,
     handlePersonalChange,
+    handleEmergencyContactsChange,
     handleSubmit,
   } = useRoleEnrollment({ role: "COMITE_ADMIN", totalPaginas: 2 });
 
@@ -37,16 +39,23 @@ function ComiteAdminEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) {
+    if (pagina === 1) 
       return (
-        <PersonalDataForm
-          datos={datosPersonales}
-          handleChange={handlePersonalChange}
-          setDatos={setDatosPersonales}
-          errors={errors}
-        />
-      );
-    }
+     <>
+      <PersonalDataForm
+        datos={datosPersonales}
+        handleChange={handlePersonalChange}
+        setDatos={setDatosPersonales}
+        errors={errors}
+      />
+      <EmergencyContacts
+        datos={datosPersonales}
+        setDatos={setDatosPersonales}
+        onContactChange={handleEmergencyContactsChange}
+        errors={errors}
+      />
+    </>
+  );
 
     return (
       <DataTreatmentConsent
