@@ -65,34 +65,6 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
                                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
                                                 .hasAnyRole(ADMIN_GLOBAL.name())
-
-<<<<<<< HEAD
-                                    .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/**")
-                                    .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
-                                                    DEV_SUPPORT.name())
-                                    .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/groups/**")
-                                    .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
-                                                    DEV_SUPPORT.name())
-                                    .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/groups/**")
-                                    .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
-                                                    DEV_SUPPORT.name())
-                                    .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/groups/**")
-                                    .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
-                                                    DEV_SUPPORT.name())
-
-                                    // Operaciones de consulta en grupos
-
-                                    .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
-                                    .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
-                                                    COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                                    SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
-                                                    SCOUT.name())
-                                    .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*")
-                                    .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(),
-                                                    COMITE_ADMIN.name(), DEV_SUPPORT.name(),
-                                                    SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
-                                                    SCOUT.name())
-=======
                                                 // Operaciones de consulta en grupos
 
                                                 // .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/groups/**")
@@ -120,7 +92,6 @@ public class SecurityConfig {
                                                                 COMITE_ADMIN.name(), DEV_SUPPORT.name(),
                                                                 SCOUTER.name(), TESORERO.name(), ACUDIENTE.name(),
                                                                 SCOUT.name())
->>>>>>> develop
 
                                     // Operaciones en almacenamiento de imagenes
 
@@ -194,23 +165,6 @@ public class SecurityConfig {
                                     .requestMatchers("/api/v1/auth0/**")
                                     .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-<<<<<<< HEAD
-
-                                    // Guardians
-
-                                    .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
-                                    .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                            DEV_SUPPORT.name())
-                                    .requestMatchers(HttpMethod.POST, "/api/v1/guardian/**")
-                                    .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                            DEV_SUPPORT.name())
-                                    .requestMatchers(HttpMethod.PUT, "/api/v1/guardian/**")
-                                    .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                            DEV_SUPPORT.name())
-                                    .requestMatchers(HttpMethod.DELETE, "/api/v1/guardian/**")
-                                    .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                            DEV_SUPPORT.name())
-=======
                                                 // Guardians
 
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
@@ -225,7 +179,6 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
                                                                 DEV_SUPPORT.name())
->>>>>>> develop
 
                                     //
                                     // ==== FICHAS MÉDICAS ====
@@ -235,13 +188,6 @@ public class SecurityConfig {
                                     .requestMatchers(HttpMethod.POST, "/api/v1/medical_record/create_record/**")
                                     .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
 
-<<<<<<< HEAD
-                                    .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_record/**")
-                                    .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(), SCOUT.name())
-
-                                    .requestMatchers(HttpMethod.PUT, "/api/v1/medical_record/update_record/**")
-                                    .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
-=======
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/v1/medical_record/list_record/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(),
@@ -250,8 +196,6 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.PUT,
                                                                 "/api/v1/medical_record/update_record/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
->>>>>>> develop
-
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_by_tenant")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name())
                                     .requestMatchers(HttpMethod.GET, "/api/v1/medical_record/list_by_tenant")
