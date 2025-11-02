@@ -12,7 +12,6 @@ import { Pencil, Trash, User, ArrowRightLeft} from "lucide-react";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
 import DeleteMemberModal from "../modals/DeleteMemberModal";
-import type { on } from "events";
 
 interface GuardianMembersTableProps {
   filteredMembers: MemberBasicInfo[];

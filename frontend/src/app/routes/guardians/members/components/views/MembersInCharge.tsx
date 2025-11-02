@@ -6,7 +6,7 @@ import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
 import GuardianMembersTable from "../tables/GuardianMembersTable";
 import MemberDetailsSheet from "../modals/MemberDetailsSheet";
 import SelectMemberModal from "../modals/SelectMemberModal";
-import ReassignGuardianModal from "../modals/ReassingGuardianModal"; 
+import ReassignGuardianModal from "../modals/ReassignGuardianModal"; 
 import { removeMemberFromGuardian, addMemberToGuardian } from "@/api/guardiansApi"; 
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
