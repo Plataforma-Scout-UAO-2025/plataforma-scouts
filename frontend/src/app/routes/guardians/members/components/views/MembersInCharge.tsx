@@ -111,7 +111,7 @@ const MembersInCharge = () => {
         await refetch();
       }
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error reasignando miembro:', error);
       toast.error('Error al reasignar el miembro');
       throw error;
