@@ -1,0 +1,58 @@
+meta {
+  name: Create Group - Different Slug
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/create
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "slug": "otro-slug-prueba",
+    "name": "Grupo Diferente",
+    "tenant_id": "t-bruno-success-slugv04",
+    "status": "active",
+    "is_active": true,
+    "district": "Distrito de prueba",
+    "identifier_number": "002",
+    "address": "Dirección de prueba",
+    "phone": "1234567890",
+    "email": "grupo.diferente@scouts.org"
+  }
+}
+
+tests {
+  test("Validar creación con slug diferente en mismo tenant", function() {
+    expect(res.status).to.equal(201);
+    expect(res.headers).to.have.property('location').that.contains('/api/v1/tenants/');
+    expect(res.body).to.have.property('slug');
+    expect(res.body).to.have.property('name');
+    expect(res.body).to.have.property('tenant_id');
+    expect(res.body.slug).to.equal('otro-slug-prueba');
+  });
+
+  test("Validar estructura del response", function() {
+    expect(res.body).to.have.property('slug');
+    expect(res.body).to.have.property('name');
+    expect(res.body).to.have.property('tenant_id');
+    expect(res.body).to.have.property('status');
+    expect(res.body).to.have.property('is_active');
+  });
+}
+
+docs {
+  **Nombre:** Crear grupo - slug diferente (mismo tenant)
+  
+  **Endpoint:** `/api/v1/tenants/{tenantId}/groups/create`
+  
+  **Descripción:** Validar que se pueden crear grupos con slugs distintos dentro del mismo tenant.
+}

@@ -32,25 +32,7 @@ export const getSubramasByRamaId = async (tenantId: string, groupSlug: string, r
   }
 };
 
-/**
- * Recomendación de uso para compañeros:
- * - Si dispones de `sectionId` (id de la rama) y `subgroupId`, llama directamente al endpoint:
- *     await organigramaClient.getSubgroupRaw(sectionId, subgroupId, tenantId, groupSlug)
- *   Esto obtiene la subrama exacta desde el backend.
- *
- * - Si NO tienes `sectionId`:
- *   - Si lo que necesitas son los miembros del subgrupo, puedes usar:
- *       await organigramaClient.getMembersBySubgroup(Number(subgroupId))
- *     (no requiere sectionId)
- *   - Si necesitas la entidad Subgroup, intenta primero localizar `sectionId` en el store/UI
- *     o recorrer las subramas de la sección conocida y filtrar por id:
- *       const subs = await organigramaClient.getSubgroups(sectionIdCandidate, tenantId, groupSlug)
- *       const found = subs.find(s => String(s.id ?? s.subgroupId ?? s.subgroup_id) === String(subgroupId))
- *   - Si este flujo es frecuente, pedir al backend un endpoint que busque subgrupo por id global sería ideal.
- *
- * Nota: Este servicio actualmente implementa la búsqueda vía `getSubgroupsRaw(sectionId, ...)` y filtrado
- * porque no existe un endpoint global que reciba solo `subgroupId` y retorne la subrama.
- */
+
 
 export const getSubramaById = async (tenantId: string, groupSlug: string, sectionId: string, id: string): Promise<Subrama | null> => {
   try {
@@ -111,7 +93,6 @@ export const deleteSubrama = async (tenantId: string, groupSlug: string, section
           console.error(' [SubramaService] Respuesta del backend (delete):', maybe.response.data);
         }
       } catch (errLogging) {
-        // Log the secondary error to avoid unused-variable lint issues
         console.debug(' [SubramaService] Secondary logging error:', errLogging);
       }
 

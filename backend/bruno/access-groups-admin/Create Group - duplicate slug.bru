@@ -1,0 +1,61 @@
+meta {
+  name: Create Group - Duplicate Slug
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/create
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "slug": "bruno-info-slugv04",
+    "name": "Grupo Scout Duplicado",
+    "tenant_id": "t-bruno-success-slugv04",
+    "status": "active",
+    "is_active": true,
+    "district": "Distrito de prueba",
+    "identifier_number": "003",
+    "address": "Dirección de prueba",
+    "phone": "1234567890",
+    "email": "grupo.duplicado@scouts.org"
+  }
+}
+
+tests {
+  test("Validar error por slug duplicado", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body).to.have.property('error').that.equals('Bad Request');
+    expect(res.body).to.have.property('message');
+    const message = res.body.message.toLowerCase();
+    expect(message).to.satisfy(function(msg) {
+      return msg.includes('ya existe') || msg.includes('already exists');
+    });
+  });
+
+  test("Validar estructura del error", function() {
+    expect(res.body).to.have.property('timestamp');
+    expect(res.body).to.have.property('path');
+    expect(res.body).to.have.property('status').that.equals(400);
+  });
+}
+
+docs {
+  **Nombre:** Crear grupo - validación de slug duplicado
+  
+  **Endpoint:** `/api/v1/tenants/{tenantId}/groups/create`
+  
+  **Descripción:** Validar que el endpoint rechaza la creación cuando el slug ya existe.
+  Se espera:
+  - Código 400 (Bad Request)
+  - Mensaje de error de duplicado
+  - Estructura de error correcta
+}

@@ -1,0 +1,55 @@
+meta {
+  name: Create Tenant - create info
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:8080/api/v1/tenants/create
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+tests {
+  test("Validar creación exitosa del tenant info", function() {
+    expect(res.status).to.equal(201);
+    expect(res.headers).to.have.property('location').that.contains('/api/v1/tenants/');
+    expect(res.body.slug).to.equal('bruno-info-slugv01');
+  });
+
+  test("Validar estructura del response para tenant info", function() {
+    expect(res.body).to.have.property('slug');
+    expect(res.body).to.have.property('tenant_id');
+    expect(res.body).to.have.property('status');
+  });
+}
+
+docs {
+  **Nombre:** Crear tenant info (caso exitoso)
+  
+  **Endpoint:** /api/v1/tenants/create
+  
+  **Descripción:** Validar que el endpoint crea correctamente un nuevo tenant con información.
+  Se espera:
+  - Código 201
+  - Header Location con el ID del tenant creado
+  - Respuesta con los datos del tenant
+}
+
+body {
+  {
+    "tenant_id": "t-bruno-info-slugv01",
+    "slug": "bruno-info-slugv01",
+    "status": "active"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

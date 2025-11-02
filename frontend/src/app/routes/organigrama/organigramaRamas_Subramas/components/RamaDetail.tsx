@@ -50,7 +50,6 @@ export default function RamaDetail() {
       const data = await organigramaService.getRamaById(tenantId, groupSlug, String(id));
       if (data) {
         let ramaData = data as Rama;
-        // Si no hay iconObjectId, intentar obtenerlo de sessionStorage
         if (!ramaData.iconObjectId) {
           const storedIcon = sessionStorage.getItem(`icon_${ramaData.id}`);
           if (storedIcon) {
@@ -259,7 +258,6 @@ export default function RamaDetail() {
       setUploading(false);
       setUploadPercent(0);
       setCurrentUploadingFile(null);
-      // iconPreview ya se limpió antes del refetch
     }
   };
 
@@ -300,7 +298,7 @@ export default function RamaDetail() {
             groupSlug,
             sectionId,
             finalTarget,
-            true // deleteFromStorage = true para eliminación física
+            true 
           );
           
           if (result === null) {
@@ -331,7 +329,7 @@ export default function RamaDetail() {
     const iconUrl = rama.iconUrl ?? rama.icono;
     
     // DEBUG: Log temporal para diagnosticar el problema
-    console.log('🔍 [DEBUG] getIconUrl called:', {
+    console.log(' [DEBUG] getIconUrl called:', {
       ramaName: rama.name ?? rama.nombre,
       iconUrl: iconUrl,
       ramaIconUrl: rama.iconUrl,
@@ -539,20 +537,16 @@ export default function RamaDetail() {
 
   // Actualizar el estado local con el nuevo iconObjectId
   setRama({ ...rama, iconObjectId: uploadResult });
-  // Guardar en sessionStorage como respaldo
   sessionStorage.setItem(`icon_${rama.id}`, uploadResult);
   setImageRefreshToken(Date.now());
   setUploadPercent(100);
   toast.success('Ícono actualizado correctamente');
-      // Forzar refresh visual de imágenes (cache-busting)
       setImageRefreshToken(Date.now());
     } catch (err) {
       console.error(' [RamaDetail] Error subiendo ícono:', err);
-      // Revertir preview en caso de error
       setIconPreview(previousIcon);
       toast.error('Error subiendo el ícono');
     } finally {
-      // NO revocar el preview aquí - se revocará cuando se reemplace o al desmontar
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -600,16 +594,16 @@ export default function RamaDetail() {
       }
       setIconPreview(null);
 
-      console.log('🔍 [DEBUG] About to fetch updated rama...');
+      console.log(' [DEBUG] About to fetch updated rama...');
       const updatedRama = await organigramaService.getRamaById(tenantId, groupSlug, rama.id);
-      console.log('🔍 [DEBUG] Received updatedRama:', {
+      console.log(' [DEBUG] Received updatedRama:', {
         hasUpdatedRama: !!updatedRama,
         updatedRamaIconUrl: updatedRama?.iconUrl,
         updatedRamaName: updatedRama?.name
       });
       
       if (updatedRama) {
-        console.log('🔍 [DEBUG] About to setRama with updated data...');
+        console.log(' [DEBUG] About to setRama with updated data...');
         setRama(updatedRama);
         const mainImageUrl = getMainImageUrl(updatedRama);
         setImagenPrincipal(`${mainImageUrl}?v=${Date.now()}`);
@@ -622,7 +616,6 @@ export default function RamaDetail() {
       setImagenPrincipal(previousMain || 'https://placehold.co/800x300');
       toast.error('Error subiendo la imagen principal');
     } finally {
-      // NO revocar el preview aquí - se revocará cuando se reemplace o al desmontar
       setUploading(false);
       setCurrentUploadingFile(null);
       setUploadPercent(0);
@@ -654,13 +647,11 @@ export default function RamaDetail() {
   toast.success('Galería actualizada correctamente');
       setImageRefreshToken(Date.now());
 
-      // NO revocar los previews aquí - se revocarán cuando se reemplacen o al desmontar
       setGalleryLocalPreviews(prev => prev.filter(p => !previews.includes(p)));
     } catch (err) {
       console.error(' [RamaDetail] Error subiendo galería:', err);
       const addedPreviews = galleryLocalPreviews.slice(-files.length);
       setGaleriaFotos(prev => prev.filter(src => !addedPreviews.includes(src)));
-      // NO revocar los previews aquí - se revocarán cuando se reemplacen o al desmontar
       setGalleryLocalPreviews(prev => prev.slice(0, -files.length));
       toast.error('Error subiendo la galería');
     }
