@@ -27,25 +27,26 @@ import java.util.*;
 
 /**
  * ================================================================
- *  CONTROLADOR: MemberController
- *  DESCRIPCIÓN: Gestiona las operaciones CRUD y consultas
- *  relacionadas con miembros, datos escolares y subgrupos.
- *  BASE URL: /api/v1/members
+ * CONTROLADOR: MemberController
+ * DESCRIPCIÓN: Gestiona las operaciones CRUD y consultas
+ * relacionadas con miembros, datos escolares y subgrupos.
+ * BASE URL: /api/v1/members
  * ================================================================
- *   ENDPOINTS DISPONIBLES:
- *   POST    → /create_member — Crear miembro
- *   POST    → /create_member_with_school — Crear miembro + datos escolares
- *   GET     → /list_members — Listar todos los miembros
- *   GET     → /list_member_by_id?id={id} — Buscar miembro por ID
- *   GET     → /list_members_by_subgroup?id={id} — Miembros por subgrupo
- *   GET     → /list_members_by_status?status={status} — Filtrar por estado
- *   GET     → /list_subGroup_by_memberId?id={id} — Subgrupo por miembro
- *   GET     → /list_schoolData_by_memberId?id={id} — Datos escolares
- *   GET     → /list_members_with_details — Listar miembros con detalles
- *   PUT     → /update_member_status/{id}?status={status} — Actualizar estado
- *   PUT     → /update_member_by_id/{id} — Actualizar información completa
- *   PUT     → /update_role — Actualizar role con base al rol de Auth0
- *   PUT     → /assign_subgroup_and_section — Asigna la seccion y el sub grupo a un miembro
+ * ENDPOINTS DISPONIBLES:
+ * POST → /create_member — Crear miembro
+ * POST → /create_member_with_school — Crear miembro + datos escolares
+ * GET → /list_members — Listar todos los miembros
+ * GET → /list_member_by_id?id={id} — Buscar miembro por ID
+ * GET → /list_members_by_subgroup?id={id} — Miembros por subgrupo
+ * GET → /list_members_by_status?status={status} — Filtrar por estado
+ * GET → /list_subGroup_by_memberId?id={id} — Subgrupo por miembro
+ * GET → /list_schoolData_by_memberId?id={id} — Datos escolares
+ * GET → /list_members_with_details — Listar miembros con detalles
+ * PUT → /update_member_status/{id}?status={status} — Actualizar estado
+ * PUT → /update_member_by_id/{id} — Actualizar información completa
+ * PUT → /update_role — Actualizar role con base al rol de Auth0
+ * PUT → /assign_subgroup_and_section — Asigna la seccion y el sub grupo a un
+ * miembro
  */
 @Slf4j
 @RestController
@@ -73,7 +74,6 @@ public class MemberController {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-
     /**
      * Crea un nuevo miembro en el sistema.
      *
@@ -92,7 +92,6 @@ public class MemberController {
         log.info("Miembro creado exitosamente con ID: {}", response.getMemberId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
 
     /**
      * Crea un miembro junto con sus datos escolares en una sola transacción.
@@ -116,19 +115,16 @@ public class MemberController {
         SchoolData schoolData = SchoolDataMapper.toEntity(
                 schoolDto,
                 savedMember.getMemberId(),
-                savedMember.getTenantId()
-        );
+                savedMember.getTenantId());
         SchoolData savedSchool = schoolservice.create_school(schoolData);
 
         Map<String, Object> response = Map.of(
                 "member", MemberMapper.toDto(savedMember),
                 "school", SchoolDataMapper.toDto(savedSchool),
-                "message", "Miembro y datos escolares creados exitosamente"
-        );
+                "message", "Miembro y datos escolares creados exitosamente");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
 
     /**
      * Lista todos los miembros registrados en el sistema.
@@ -145,7 +141,6 @@ public class MemberController {
         return ResponseEntity.ok(membersDto);
     }
 
-
     /**
      * Busca un miembro por su ID.
      *
@@ -159,7 +154,6 @@ public class MemberController {
         return memberOpt.map(member -> ResponseEntity.ok(ListMemberMapper.toDto(member)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
-
 
     /**
      * Lista los miembros que pertenecen a un subgrupo específico.
@@ -226,12 +220,11 @@ public class MemberController {
      */
     @GetMapping("/list_members_with_details")
     public ResponseEntity<List<MemberWithSubgroupAndSectionDto>> listMembersWithDetails() {
-        
+
         log.info("Listando miembros con detalles completos para el usuario autenticado");
 
         try {
-            List<MemberWithSubgroupAndSectionDto> members = 
-                    memberservice.get_members_with_subgroup_and_section();
+            List<MemberWithSubgroupAndSectionDto> members = memberservice.get_members_with_subgroup_and_section();
 
             if (members.isEmpty()) {
                 log.info("No se encontraron miembros para el tenant del usuario autenticado");
@@ -263,23 +256,23 @@ public class MemberController {
             GroupResponseDTO[] groups = groupService.getAllGroups();
 
             // Obtener todos los miembros con rol ADMIN_GRUPO
-            List<uao.edu.co.scouts_project.member.model.Member> admins = memberservice.findMembersByRole("ADMIN_GRUPO");
+            List<Member> admins = memberservice.findMembersByRole("ADMIN_GRUPO");
 
             // Map tenantId -> admin DTO (si hay varios, toma el primero)
-            Map<String, uao.edu.co.scouts_project.member.dto.ListMemberDto> adminByTenant = admins.stream()
+            Map<String, ListMemberDto> adminByTenant = admins.stream()
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toMap(uao.edu.co.scouts_project.member.model.Member::getTenantId,
-                            uao.edu.co.scouts_project.member.mapper.ListMemberMapper::toDto,
+                    .collect(Collectors.toMap(Member::getTenantId,
+                            ListMemberMapper::toDto,
                             (existing, replacement) -> existing));
 
             List<Map<String, Object>> result = new ArrayList<>();
             if (groups != null) {
-                    for (GroupResponseDTO g : groups) {
+                for (GroupResponseDTO g : groups) {
                     Map<String, Object> item = new HashMap<>();
                     // incluir la info del grupo (el DTO ya tiene la mayoría de campos solicitados)
                     item.put("group", g);
                     // agregar el encargado (puede ser null)
-                        item.put("inChargeOf", adminByTenant.get(g.tenantId()));
+                    item.put("inChargeOf", adminByTenant.get(g.tenantId()));
                     result.add(item);
                 }
             }
@@ -307,14 +300,13 @@ public class MemberController {
         return ResponseEntity.ok(Map.of(
                 "message", "Estado actualizado correctamente",
                 "memberId", memberId.toString(),
-                "newStatus", enumStatus.name()
-        ));
+                "newStatus", enumStatus.name()));
     }
 
     /**
      * Actualiza toda la información de un miembro existente.
      *
-     * @param memberId        ID del miembro
+     * @param memberId  ID del miembro
      * @param updateDto DTO con los nuevos datos
      * @return miembro actualizado o 404 si no existe
      */
@@ -336,23 +328,19 @@ public class MemberController {
 
         boolean updated = memberservice.update_role(
                 request.getMemberId(),
-                request.getNewRole()
-        );
+                request.getNewRole());
 
         if (updated) {
             return ResponseEntity.ok(Map.of(
                     "message", "Rol actualizado correctamente",
                     "memberId", request.getMemberId().toString(),
-                    "newRole", request.getNewRole()
-            ));
+                    "newRole", request.getNewRole()));
         } else {
             return ResponseEntity.ok(Map.of(
                     "message", "El rol ya estaba actualizado o el miembro no existe",
-                    "memberId", request.getMemberId().toString()
-            ));
+                    "memberId", request.getMemberId().toString()));
         }
     }
-
 
     /**
      * Asigna un subgrupo y una sección a un miembro dentro de una transacción.
@@ -362,7 +350,8 @@ public class MemberController {
      */
     @PutMapping("/assign_subgroup_and_section")
     @Transactional
-    public ResponseEntity<Map<String, String>> assign_subgroup_and_section(@Valid @RequestBody AssignSubgroupAndSectionDto request) {
+    public ResponseEntity<Map<String, String>> assign_subgroup_and_section(
+            @Valid @RequestBody AssignSubgroupAndSectionDto request) {
         Long memberId = request.getMemberId();
         Long subgroupId = request.getSubGroupId();
         Long sectionId = request.getSectionId();
@@ -374,8 +363,7 @@ public class MemberController {
                     "message", "Subgrupo y sección asignados correctamente",
                     "memberId", memberId.toString(),
                     "subgroupId", subgroupId.toString(),
-                    "sectionId", sectionId.toString()
-            ));
+                    "sectionId", sectionId.toString()));
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "No se pudo asignar el subgrupo y la sección. Verifique los datos."));

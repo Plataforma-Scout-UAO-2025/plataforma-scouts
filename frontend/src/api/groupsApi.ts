@@ -1,5 +1,33 @@
 import api from "./axios";
-import type { GroupResponseDTO as Group, UpdateGroupDTO, GroupMembersDTO, TopGroupByMembersDTO } from "@/types/group.type";
+import type { 
+  GroupResponseDTO as Group, 
+  UpdateGroupDTO, 
+  GroupMembersDTO, 
+  TopGroupByMembersDTO, 
+  GroupWithLeaderDTO,
+  GroupWithLeaderResponseDTO
+} from "@/types/group.type";
+
+// Helper para convertir snake_case a camelCase
+const snakeToCamel = (str: string): string => {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+};
+
+// Helper para transformar objeto de snake_case a camelCase
+const transformKeys = (obj: any): any => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(transformKeys);
+  if (typeof obj !== 'object') return obj;
+
+  const transformed: any = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const camelKey = snakeToCamel(key);
+      transformed[camelKey] = transformKeys(obj[key]);
+    }
+  }
+  return transformed;
+};
 
 // Crear un nuevo grupo
 export const createGroup = async (data: Group) => {
@@ -14,10 +42,17 @@ export const getGroup = async (tenantId: string) => {
   return response.data[0] || null;
 };
 
-// Obtener de todos los grupos
+// Obtener todos los grupos desde el endpoint de members
 export const getGroups = async () => {
-  const response = await api.get<Group[]>("/tenants/A/groups/getAll");
-  return response.data;
+  const response = await api.get<GroupWithLeaderResponseDTO[]>("/members/getAll");
+  
+  // Transformar toda la respuesta (inChargeOf y group) de snake_case a camelCase
+  const groupsWithLeaders = response.data.map((item) => ({
+    inChargeOf: item.inChargeOf ? transformKeys(item.inChargeOf) : null,
+    group: transformKeys(item.group)
+  }));
+  
+  return groupsWithLeaders as GroupWithLeaderDTO[];
 };
 
 // Actualizar perfil de usuario
@@ -73,3 +108,35 @@ export const getTopGroupsByMembers = async () => {
   const response = await api.get<TopGroupByMembersDTO[]>("/statistics/groups/most-members");
   return response.data;
 }
+
+// Crear grupo (multipart) enviando el dto como JSON y opcionalmente una imagen
+export const createGroupMultipart = async (
+  tenantId: string,
+  dto: Record<string, unknown>,
+  image?: File,
+) => {
+  const fd = new FormData();
+  
+  // El DTO debe ser enviado como application/json dentro del FormData
+  const dtoBlob = new Blob([JSON.stringify(dto)], { type: "application/json" });
+  fd.append("dto", dtoBlob);
+  
+  // Si hay una imagen, agregarla como multipart file
+  if (image) {
+    fd.append("image", image);
+  }
+  
+  // El navegador automáticamente establece el Content-Type a multipart/form-data
+  const response = await api.post<Group>(`/tenants/${tenantId}/groups`, fd);
+  return response.data;
+};
+
+// Validar slug
+export const validateSlug = async (slug: string) => {
+  // El endpoint usa "non-tenant" como placeholder ya que la validación es global
+  const response = await api.get<{ slug: string; valid: boolean; reason?: string; message?: string }>(
+    `/tenants/non-tenant/groups/slug/validate`,
+    { params: { slug } }
+  );
+  return response.data;
+};

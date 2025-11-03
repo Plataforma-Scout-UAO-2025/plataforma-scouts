@@ -39,7 +39,7 @@ public interface IMemberService {
      * @param tenantId Identificador del tenant por el cual filtrar los miembros.
      * 
      */
-    
+
     List<Member> get_member_by_role_and_tenantId(String role, String tenantId);
 
     /**

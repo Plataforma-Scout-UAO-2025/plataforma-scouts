@@ -9,10 +9,12 @@ import {
   fetchActiveGroupsCountAction,
   fetchInactiveGroupsCountAction,
   fetchTopGroupsByMembersAction,
+  createGroupMultipartAction,
+  validateSlugAction,
 } from "./groupsActions";
-import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO } from "@/types/group.type";
+import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO, GroupWithLeaderDTO } from "@/types/group.type";
 interface GroupsState {
-  groups: Group[];
+  groups: GroupWithLeaderDTO[];
   group?: Group | null;
   loading: boolean;
   error: string | null;
@@ -22,6 +24,11 @@ interface GroupsState {
   activeGroupsCount: number;
   inactiveGroupsCount: number;
   topGroupsByMembers: TopGroupByMembersDTO[];
+  slugValidation: {
+    loading: boolean;
+    valid: boolean | null;
+    message: string | null;
+  };
 }
 const initialState: GroupsState = {
   groups: [],
@@ -34,6 +41,11 @@ const initialState: GroupsState = {
   activeGroupsCount: 0,
   inactiveGroupsCount: 0,
   topGroupsByMembers: [],
+  slugValidation: {
+    loading: false,
+    valid: null,
+    message: null,
+  },
 };
 
 
@@ -72,7 +84,7 @@ const groupsSlice = createSlice({
     });
     builder.addCase(fetchGroupsAction.fulfilled, (state, action) => {
       state.loading = false;
-      state.groups = action.payload as Group[];
+      state.groups = action.payload as GroupWithLeaderDTO[];
     });
     builder.addCase(fetchGroupsAction.rejected, (state, action) => {
       state.loading = false;
@@ -102,8 +114,38 @@ const groupsSlice = createSlice({
       state.loading = false;
       state.message = action.payload.message;
       if (action.payload.newGroup) {
-        state.groups.push(action.payload.newGroup);
+        // Wrap the new group in GroupWithLeaderDTO structure
+        state.groups.push({
+          inChargeOf: null,
+          group: action.payload.newGroup
+        });
       }
+    });
+    builder.addCase(createGroupAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
+
+    // Crear grupo (multipart)
+    builder.addCase(createGroupMultipartAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createGroupMultipartAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message;
+      if (action.payload.newGroup) {
+        // Wrap the new group in GroupWithLeaderDTO structure
+        state.groups.push({
+          inChargeOf: null,
+          group: action.payload.newGroup
+        });
+      }
+    });
+    builder.addCase(createGroupMultipartAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
     });
 
     // Stats de grupos
@@ -180,6 +222,23 @@ const groupsSlice = createSlice({
     builder.addCase(fetchTopGroupsByMembersAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
+    });
+
+    // Validación de slug
+    builder.addCase(validateSlugAction.pending, (state) => {
+      state.slugValidation.loading = true;
+      state.slugValidation.valid = null;
+      state.slugValidation.message = null;
+    });
+    builder.addCase(validateSlugAction.fulfilled, (state, action) => {
+      state.slugValidation.loading = false;
+      state.slugValidation.valid = action.payload.valid;
+      state.slugValidation.message = action.payload.message || action.payload.reason || null;
+    });
+    builder.addCase(validateSlugAction.rejected, (state, action) => {
+      state.slugValidation.loading = false;
+      state.slugValidation.valid = false;
+      state.slugValidation.message = action.payload as string;
     });
   },
 });export const { clearNotification, clearGroups } = groupsSlice.actions;

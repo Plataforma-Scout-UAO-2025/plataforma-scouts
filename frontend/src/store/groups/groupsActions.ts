@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getGroup, getGroups, updateGroup, createGroup, getMembersCountByGroup, getTotalMembersCount, getActiveGroupsCount, getInactiveGroupsCount, getTopGroupsByMembers } from "@/api/groupsApi";
+import { getGroup, getGroups, updateGroup, createGroup, getMembersCountByGroup, getTotalMembersCount, getActiveGroupsCount, getInactiveGroupsCount, getTopGroupsByMembers, createGroupMultipart, validateSlug } from "@/api/groupsApi";
 import type {
   GroupResponseDTO as Group,
   UpdateGroupDTO,
@@ -75,6 +75,43 @@ export const createGroupAction = createAsyncThunk<
     const errorData = axiosError.response?.data as { error: string };
     const errorMessage = errorData?.error || "Error al crear el grupo";
     return rejectWithValue({ error: errorMessage });
+  }
+});
+
+// Crear grupo (multipart) usando el endpoint /tenants/{tenantId}/groups
+export const createGroupMultipartAction = createAsyncThunk<
+  { message: string; newGroup?: Group },
+  { tenantId: string; dto: Record<string, unknown>; image?: File },
+  { rejectValue: { error: string } }
+>("group/createMultipart", async ({ tenantId, dto, image }, { rejectWithValue }) => {
+  try {
+    const response = await createGroupMultipart(tenantId, dto, image);
+    return {
+      message: "Grupo creado exitosamente",
+      newGroup: response,
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string; message?: string };
+    const errorMessage = errorData?.error || errorData?.message || "Error al crear el grupo";
+    return rejectWithValue({ error: errorMessage });
+  }
+});
+
+// Validar slug
+export const validateSlugAction = createAsyncThunk<
+  { slug: string; valid: boolean; reason?: string; message?: string },
+  string,
+  { rejectValue: string }
+>("group/validateSlug", async (slug: string, { rejectWithValue }) => {
+  try {
+    const result = await validateSlug(slug);
+    return result;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string; message?: string };
+    const errorMessage = errorData?.error || errorData?.message || "Error al validar el slug";
+    return rejectWithValue(errorMessage);
   }
 });
 

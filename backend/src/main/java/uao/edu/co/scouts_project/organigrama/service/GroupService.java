@@ -3,10 +3,12 @@ package uao.edu.co.scouts_project.organigrama.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
 import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
@@ -24,11 +26,16 @@ import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import org.springframework.context.annotation.Lazy;
+
+import uao.edu.co.scouts_project.infrastructure.auth0.Auth0AdminAdapter;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 import uao.edu.co.scouts_project.member.service.IMemberService;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
 import uao.edu.co.scouts_project.member.mapper.MemberMapper;
 import uao.edu.co.scouts_project.member.model.Member;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 
 import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GLOBAL;
 import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GRUPO;
@@ -46,10 +53,20 @@ import java.util.stream.Stream;
 @Service
 public class GroupService implements IGroupService {
 
+    @Value("${SUPERUSER_PASSWORD}")
+    private String SUPERUSER_PASSWORD;
+
+    @Value("${SUPERUSER_USERNAME}")
+    private String SUPERUSER_USERNAME;
+
+    @Value("${SUPERUSER_EMAIL}")
+    private String SUPERUSER_EMAIL;
+
     private final GroupRepository groupRepository;
     private final TenantRepository tenantRepository;
     private final SupabaseStorageService storageService;
 
+    private final Auth0AdminPort adminPort;
     private final ConnectionQueryPort connectionQueryPort;
     private final OrganizationQueryPort organizationQueryPort;
     private final ITenantService tenantService;
@@ -63,6 +80,7 @@ public class GroupService implements IGroupService {
 
     public GroupService(
             @Qualifier("organigramaStorageService") SupabaseStorageService storageService,
+            Auth0AdminPort adminPort,
             ConnectionQueryPort connectionQueryPort,
             ITenantService tenantService,
             IMemberService memberService,
@@ -74,6 +92,7 @@ public class GroupService implements IGroupService {
         this.tenantRepository = tenantRepository;
         this.memberService = memberService;
         this.storageService = storageService;
+        this.adminPort = adminPort;
         this.connectionQueryPort = connectionQueryPort;
         this.organizationQueryPort = organizationQueryPort;
         this.tenantService = tenantService;
@@ -107,23 +126,21 @@ public class GroupService implements IGroupService {
     @Override
     public GroupResponseDTO createGroupFull(GroupDTO group, MultipartFile imageFile) {
 
-        // // 1. Obtener el Grupo y el Slug [Creado por el ADMIN_GLOBAL]
+        // 1. Obtener el Grupo y el Slug [Creado por el ADMIN_GLOBAL]
         String slug = group.slug();
-
         validateSlugFormat(slug);
 
-        // 2, Create la Organization en Auth0 UNIENDO LA CONEXIÓN de la BD de Auth0 (con
-        // el identificador 'con_id' )
+        // 2. Crear la Organización en Auth0 uniendo la conexión de la BD de Auth0
         String displayName = slug;
-
         logger.info("Se creará una organización en Auth0.");
 
-        // Si llega una imagen, subirla a Supabase y usar su URL pública para la
-        // organización
+        // Imagen por defecto
         String organizationImageUrl = "https://img.freepik.com/vector-gratis/vector-diseno-degradado-colorido-pajaro_343694-2506.jpg?semt=ais_hybrid&w=740&q=80";
+        UUID objectId = null; // ← Declarar fuera del try
+
         try {
             if (imageFile != null && !imageFile.isEmpty()) {
-                UUID objectId = storageService.uploadFileAndGetObjectId(imageFile, BUCKET_IMAGES);
+                objectId = storageService.uploadFileAndGetObjectId(imageFile, BUCKET_IMAGES);
                 String publicUrl = storageService.getPublicUrlFromObjectId(objectId);
                 if (publicUrl != null && !publicUrl.isBlank()) {
                     organizationImageUrl = publicUrl;
@@ -135,45 +152,34 @@ public class GroupService implements IGroupService {
 
         // Crear Organización
         String orgId = organizationQueryPort.createOrganization(displayName, organizationImageUrl);
-
         logger.info("OK: Organización creada con ÉXITO.");
 
-        // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
-        // de forma: $'uep-{tenant.slug}'
+        // Crear conexión en Auth0
         logger.info("Se creará la conexión a la BD de Auth0 con el UEP-{orgId}: " + orgId);
-
         String connectionId = connectionQueryPort.createOrUpdateAuth0DbConnection(orgId);
-
         logger.info("OK: Conexión creada con ÉXITO.");
 
-        // ASOCIAR LA CONEXIÓN A LA ORGANIZACIÓN EN AUTH0
+        // Asociar la conexión a la organización
         logger.info("Se asociará la conexión a la organización en Auth0.");
         organizationQueryPort.enableConnectionForOrganization(orgId, connectionId);
-
         logger.info("OK: Conexión asociada a la organización en Auth0.");
-        // - Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
-        // de conexión de dicha organization
-        // (con el 'con_id' o como se específique) en Auth0.
-        // logger.info("Se creará el super usuario en Auth0");
 
-        // // Crear SUPERUSUARIO ADMIN_GLOBAL en la conexión recién creada
-        // CreateUserCommandDTO superUserCmd = new CreateUserCommandDTO(
-        // SUPERUSEREMAIL,
-        // SUPERUSERPASSWORD,
-        // SUPERUSER_USERNAME);
+        // Crear usuario con rol ADMIN_GLOBAL (comentado)
+        logger.info("Se creará el super usuario en Auth0");
+        CreateUserCommandDTO superUserCmd = new CreateUserCommandDTO(
+                SUPERUSER_EMAIL,
+                SUPERUSER_PASSWORD,
+                SUPERUSER_USERNAME);
+        logger.info("Creando superusuario en conexión: {}", connectionId);
+        CreatedUserDTO createdSuperUser = adminPort.createUserInConnection(superUserCmd, connectionId);
+        adminPort.addUserToOrganization(orgId, createdSuperUser.getId());
+        adminPort.assignRole(createdSuperUser.getId(), Role.ADMIN_GLOBAL.name());
+        logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
 
-        // logger.info("Creando superusuario en conexión: {}", connectionRef);
-        // CreatedUserDTO createdSuperUser = this.createUserInConnection(superUserCmd,
-        // // Asociar al org y asignar rol ADMIN_GLOBAL
-        // addUserToOrganization(orgId, createdSuperUser.getId());
-        // assignRole(createdSuperUser.getId(), Role.ADMIN_GLOBAL);
+        // BD PROPIO
 
-        // logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
-
-        // Crear el Tenant en BD con el org_id de Auth0
-
+        // Crear Tenant
         logger.info("\n\nSe creará el DTO de Tenant");
-
         var tenantInfo = new TenantInfoDTO(
                 orgId,
                 slug,
@@ -182,12 +188,10 @@ public class GroupService implements IGroupService {
                 LocalDate.now().atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
 
         logger.info("Se creará el Tenant en BD");
-
         tenantService.createTenantInfo(tenantInfo);
-
         logger.info("OK: Se crea el tenant con éxito en BD.");
-        logger.info("Se creará un nuevo grupo.");
 
+        // Crear Grupo
         logger.info("\n\nSe creará un grupo en BD.");
 
         GroupDTO finalGroup = new GroupDTO(
@@ -205,7 +209,7 @@ public class GroupService implements IGroupService {
                 group.mission(),
                 group.vision(),
                 group.history(),
-                group.logoObjectId(),
+                objectId, // ← puede ser null si no se sube imagen
                 group.scarfObjectId(),
                 group.socialLinks(),
                 group.config(),
@@ -213,11 +217,29 @@ public class GroupService implements IGroupService {
                 "ACTIVE",
                 null,
                 null);
+
         GroupResponseDTO response = createGroup(finalGroup);
-
         logger.info("OK: Se crea el grupo con éxito en BD.");
-        return response;
 
+        logger.info("Creación de Miembro ADMIN_GRUPO asociado al grupo y tenant.");
+                Member member = Member.b
+                        .userId(createdSuperUser.
+                        .tenantI
+                        .firstName(
+                        .lastName(
+                        
+                        .role(ADMIN_GLOBAL
+                        .identification("1111
+                        .documentType(Document
+                        .email(SUPERUSE
+                        .isActi
+                        .acceptTreatme
+                        .build(); // <- obl
+
+        memberService.create_member(member);
+        ;
+
+        return response;
     }
 
     @Override
