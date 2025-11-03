@@ -164,7 +164,7 @@ public class GuardianServiceImpl implements GuardianService {
                 .orElseThrow(() -> new MemberNotFoundException("Miembro con ID " + memberId + " no encontrado"));
     
         // AGREGAR: Validación de edad para permitir solo remover mayores de 18 años
-        if (member.getAge() == null || member.getAge() < 18) {
+        if (member.getAge() == null || member.getAge() >= 18) {
             throw new IllegalArgumentException("Solo se pueden remover miembros mayores de 18 años. El miembro tiene " + 
                                              (member.getAge() != null ? member.getAge() : "edad desconocida") + " años.");
         }

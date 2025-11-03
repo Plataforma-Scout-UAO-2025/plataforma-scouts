@@ -54,7 +54,7 @@ export default function EmergencyContactItem({
             placeholder="Nombre completo del contacto"
             value={contact?.name || ''}
             onChange={(e) => onUpdate(index, 'name', e.target.value)}
-              className="w-full"
+            className="w-full"
           />
         </div>
 
