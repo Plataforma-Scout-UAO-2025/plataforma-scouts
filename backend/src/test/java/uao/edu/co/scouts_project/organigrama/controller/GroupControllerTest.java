@@ -107,7 +107,7 @@ class GroupControllerTest {
                 null, // groupId
                 TENANT, // tenantId
                 GROUP, // slug
-                "Grupo Scout Centinelas 113", // name
+                "Centinelas 113", // name
                 null, // district
                 null, // identifierNumber
                 null, // address
@@ -128,7 +128,7 @@ class GroupControllerTest {
                 null // updatedAt
         );
 
-        when(groupService.createGroup(eq(TENANT), any(GroupDTO.class)))
+        when(groupService.createGroupFull(any(GroupDTO.class), isNull()))
                 .thenReturn(sampleResponse());
 
         mvc.perform(post(BASE, TENANT)

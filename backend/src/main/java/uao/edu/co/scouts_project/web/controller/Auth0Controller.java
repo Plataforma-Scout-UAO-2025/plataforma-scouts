@@ -320,19 +320,7 @@ public class Auth0Controller {
         }
     }
 
-    @PostMapping(value = "/create-tenant", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN_GLOBAL')")
-    @Operation(summary = "Crear tenant y grupo base (solo JSON)", requestBody = @RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = CreateGroupDTO.class))))
-    public ResponseEntity<ResponseDTO<CreatingGroupDTO>> createTenantJson(
-            @Valid @org.springframework.web.bind.annotation.RequestBody CreateGroupDTO group) {
-        CreatingGroupDTO creatingGroup = auth0Service.createTenant(group);
-        return ResponseEntity.ok(ResponseDTO.<CreatingGroupDTO>builder()
-                .status(HttpStatus.OK.value())
-                .message("Tenant y grupo creados")
-                .data(creatingGroup)
-                .build());
-    }
-
+ 
     // --- Change role (Global Admin) ---
     @PutMapping("/change-role-global")
     @PreAuthorize("hasRole('ADMIN_GLOBAL')")

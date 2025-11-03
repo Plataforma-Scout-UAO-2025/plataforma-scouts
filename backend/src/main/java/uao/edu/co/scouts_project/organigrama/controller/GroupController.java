@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import uao.edu.co.scouts_project.organigrama.dto.UpdateGroupActiveStatusDTO;
 import uao.edu.co.scouts_project.organigrama.dto.CreatingGroupDTO;
@@ -78,38 +81,32 @@ public class GroupController {
                         @ApiResponse(responseCode = "400", description = "Datos inválidos o faltantes")
         })
 
-        @PostMapping
+        @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
         public ResponseEntity<GroupResponseDTO> createGroup(
                         @Parameter(description = "Tenant ID", example = "tenant-001") @PathVariable String tenantId,
                         @Valid @RequestBody GroupDTO dto) {
-                GroupResponseDTO created = groupService.createGroup(tenantId, dto);
+                GroupResponseDTO created = groupService.createGroupFull(dto, null);
                 return ResponseEntity
                                 .created(URI.create("/api/v1/tenants/" + tenantId + "/groups/" + created.slug()))
                                 .body(created);
         }
 
-        @Operation(summary = "Crear un nuevo grupo scout", description = """
-                        Crea un nuevo grupo dentro de un tenant específico.
-                        Los campos requeridos son `slug`, `name` y el `tenantId` se toma desde la URL.
-                        Los demás campos son opcionales (nullable).
-                        """, tags = { "Groups" })
+        @Operation(summary = "Crear un nuevo grupo (multipart)", description = "Crea un nuevo grupo y permite enviar una imagen opcional para la organización")
         @ApiResponses(value = {
-                        @ApiResponse(responseCode = "201", description = "Grupo creado exitosamente", content = @Content(schema = @Schema(implementation = GroupResponseDTO.class))),
-                        @ApiResponse(responseCode = "400", description = "Datos inválidos"),
-                        @ApiResponse(responseCode = "409", description = "Ya existe un grupo con el mismo slug dentro del tenant"),
-                        @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                        @ApiResponse(responseCode = "201", description = "Grupo creado exitosamente"),
+                        @ApiResponse(responseCode = "400", description = "Datos inválidos o faltantes")
         })
-        @PostMapping("/create")
-        public ResponseEntity<GroupResponseDTO> createGroup(
-                        @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, description = "Datos necesarios para crear el grupo", content = @Content(schema = @Schema(implementation = CreatingGroupDTO.class))) @Valid @RequestBody CreatingGroupDTO entity) {
-
-                GroupResponseDTO created = groupService.createGroup(entity);
-
+        @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<GroupResponseDTO> createGroupMultipart(
+                        @Parameter(description = "Payload JSON del grupo") @RequestPart("dto") @Valid GroupDTO dto,
+                        @Parameter(description = "Imagen opcional para la organización", schema = @Schema(type = "string", format = "binary"))
+                        @RequestPart(name = "image", required = false) MultipartFile image) {
+                GroupResponseDTO created = groupService.createGroupFull(dto, image);
                 return ResponseEntity
-                                .created(URI.create("/api/v1/tenants/" + entity.getTenantId() + "/groups/"
-                                                + created.slug()))
+                                .created(URI.create("/api/v1/tenants/" + created.tenantId() + "/groups/" + created.slug()))
                                 .body(created);
         }
+
 
         @Operation(summary = "Actualizar parcialmente un grupo existente", description = "Actualiza solo los campos enviados en el body (PATCH)")
         @ApiResponses(value = {

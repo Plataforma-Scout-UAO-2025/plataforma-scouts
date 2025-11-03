@@ -29,12 +29,9 @@ import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 import uao.edu.co.scouts_project.member.service.IMemberService;
 import uao.edu.co.scouts_project.member.service.MemberServiceImp;
-import uao.edu.co.scouts_project.organigrama.dto.CreateGroupDTO;
-import uao.edu.co.scouts_project.organigrama.dto.CreatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,45 +41,29 @@ public class Auth0ServiceImpl implements IAuth0Service {
     @SuppressWarnings("unused")
     private final MemberServiceImp memberServiceImp_1;
 
-    @Value("${SUPERUSER_PASSWORD}")
-    private String SUPERUSERPASSWORD;
-
-    @Value("${SUPERUSER_EMAIL}")
-    private String SUPERUSEREMAIL;
-
-    @Value("${SUPERUSER_USERNAME}")
-    private String SUPERUSER_USERNAME;
 
     @SuppressWarnings("unused")
     private final Auth0AdminAdapter auth0AdminAdapter;
 
     private final Auth0AdminPort adminPort;
-    private final ConnectionQueryPort connectionQueryPort;
-    private final OrganizationQueryPort organizationQueryPort;
     private final RoleMappingPort roleMappingPort;
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final PermissionQueryPort permissionQueryPort; // Added
 
-    private final ITenantService tenantService;
     private final IGroupService groupService;
     @SuppressWarnings("unused")
     private final IMemberService memberServiceImp;
     @SuppressWarnings("unused")
     private final SupabaseStorageService supabaseStorageService;
 
-    private static final Logger logger = LoggerFactory.getLogger(IAuth0Service.class);
 
     public Auth0ServiceImpl(Auth0AdminPort adminPort,
-            ConnectionQueryPort connectionQueryPort,
-            OrganizationQueryPort organizationQueryPort,
             RoleMappingPort roleMappingPort,
             RoleAssignmentValidator roleAssignmentValidator,
             PermissionQueryPort permissionQueryPort, Auth0AdminAdapter auth0AdminAdapter,
             ITenantService tenantService, IGroupService groupService, IMemberService memberService,
             SupabaseStorageService supabaseStorageService, MemberServiceImp memberServiceImp_1) {
         this.adminPort = adminPort;
-        this.connectionQueryPort = connectionQueryPort;
-        this.organizationQueryPort = organizationQueryPort;
         this.roleMappingPort = roleMappingPort;
         this.roleAssignmentValidator = roleAssignmentValidator;
         this.permissionQueryPort = permissionQueryPort;
@@ -90,7 +71,6 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
         this.memberServiceImp = memberService;
         this.groupService = groupService;
-        this.tenantService = tenantService;
         this.supabaseStorageService = supabaseStorageService;
         this.memberServiceImp_1 = memberServiceImp_1;
 
@@ -352,87 +332,6 @@ public class Auth0ServiceImpl implements IAuth0Service {
         if (auth == null)
             return false;
         return auth.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN_GLOBAL".equals(a.getAuthority()));
-    }
-
-    @Override
-    public CreatingGroupDTO createTenant(CreateGroupDTO group) {
-
-        // // 1. Obtener el Grupo y el Slug [Creado por el ADMIN_GLOBAL]
-        String slug = group.getSlug();
-
-        // 2, Create la Organization en Auth0 UNIENDO LA CONEXIÓN de la BD de
-        // Auth0 (con el identificador 'con_id' )
-        String displayName = slug;
-
-        logger.info("Se creará una organización en Auth0.");
-
-        // Crear Organización
-        String orgId = organizationQueryPort.createOrganization(displayName,
-                "https://img.freepik.com/vector-gratis/vector-diseno-degradado-colorido-pajaro_343694-2506.jpg?semt=ais_hybrid&w=740&q=80");
-
-        logger.info("OK: Organización creada con ÉXITO.");
-
-        // - [Listo] Create la Conexión a BD en Auth0. (Con Username Email,y Password)
-        // de forma: $'uep-{tenant.slug}'
-        logger.info("Se creará la conexión a la BD de Auth0 con el UEP-{orgId}: " + orgId);
-
-    String connectionRef = connectionQueryPort.createOrUpdateAuth0DbConnection(orgId);
-
-        logger.info("OK: Conexión creada con ÉXITO.");
-
-        // - Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
-        // de conexión de dicha organization
-        // (con el 'con_id' o como se específique) en Auth0.
-
-        logger.info("Se creará el super usuario en Auth0");
-
-    // Crear SUPERUSUARIO ADMIN_GLOBAL en la conexión recién creada
-    CreateUserCommandDTO superUserCmd = new CreateUserCommandDTO(
-        SUPERUSEREMAIL,
-        SUPERUSERPASSWORD,
-        SUPERUSER_USERNAME);
-
-    logger.info("Creando superusuario en conexión: {}", connectionRef);
-    CreatedUserDTO createdSuperUser = this.createUserInConnection(superUserCmd, connectionRef);
-    // Asociar al org y asignar rol ADMIN_GLOBAL
-    addUserToOrganization(orgId, createdSuperUser.getId());
-    assignRole(createdSuperUser.getId(), Role.ADMIN_GLOBAL);
-
-        logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
-
-        // Crear el Tenant en BD con el org_id de Auth0
-
-        logger.info("Se creará el DTO de Tenant");
-
-    var tenantInfo = new uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO(
-        orgId,
-        slug,
-        "ACTIVE",
-        LocalDate.now().atStartOfDay().toInstant(java.time.ZoneOffset.UTC),
-        LocalDate.now().atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
-
-        logger.info("Se creará el Tenant en BD");
-
-    tenantService.createTenantInfo(tenantInfo);
-
-        logger.info("OK: Se crea el tenant con éxito en BD.");
-
-        logger.info("Se creará un nuevo grupo.");
-
-        // - Crear el Group en BD con el tenant_id (GroupService).
-    CreatingGroupDTO newGroup = new CreatingGroupDTO(
-        orgId, slug, group.getName(), group.getDistrict(), group.getIdentifierNumber(),
-        group.getAddress(), group.getPhone(), group.getEmail(), null, null,
-                null, null, null, null, null, null,
-                null, true, null);
-        logger.info("Se creará un grupo en BD.");
-
-        groupService.createGroup(newGroup);
-
-        logger.info("OK: Se crea el grupo con éxito en BD.");
-
-        return newGroup;
-
     }
 
 }
