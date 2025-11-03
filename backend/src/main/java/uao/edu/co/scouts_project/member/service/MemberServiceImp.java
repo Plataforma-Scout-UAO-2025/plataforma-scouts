@@ -436,6 +436,20 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Member> findMembersByRole(String role) {
+        if (role == null || role.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            return memberRepository.findByRole(role.trim().toUpperCase());
+        } catch (Exception e) {
+            log.error("Error fetching members by role {}: {}", role, e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
     /** Valida los campos obligatorios del miembro. */
     private void validateMemberData(Member member) {
         if (member == null) {

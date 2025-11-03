@@ -98,4 +98,12 @@ public interface IMemberService {
      */
     List<MemberWithSubgroupAndSectionDto> get_members_with_subgroup_and_section();
 
+    /**
+     * Obtiene los miembros que tienen un rol específico (por ejemplo: ADMIN_GRUPO).
+     *
+     * @param role nombre del rol a filtrar
+     * @return lista de miembros que coinciden con el rol
+     */
+    List<Member> findMembersByRole(String role);
+
 }
