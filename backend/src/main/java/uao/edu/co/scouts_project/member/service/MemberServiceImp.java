@@ -53,8 +53,6 @@ public class MemberServiceImp implements IMemberService {
     @Autowired
     private PermissionQueryPort permissionQueryPort;
 
-
-
     /**
      * Crea un nuevo miembro validando duplicados e información obligatoria.
      *
@@ -70,7 +68,8 @@ public class MemberServiceImp implements IMemberService {
             Optional<Member> existingMember = memberRepository.findByIdentification(miembro.getIdentification());
             if (existingMember.isPresent()) {
                 log.warn("Attempt to create duplicate member with identification: {}", miembro.getIdentification());
-                throw new IllegalArgumentException("A member with identification " + miembro.getIdentification() + " already exists");
+                throw new IllegalArgumentException(
+                        "A member with identification " + miembro.getIdentification() + " already exists");
             }
 
             String userId = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -93,8 +92,6 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
-
-
     /**
      * Lista todos los miembros registrados, ordenados por apellido y nombre.
      *
@@ -114,7 +111,27 @@ public class MemberServiceImp implements IMemberService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Member> get_member_by_role_and_tenantId(String role, String tenantId) {
+        if (role == null || role.isBlank()) {
+            log.warn("Null or blank role provided for member search");
+            throw new IllegalArgumentException("Role cannot be null or blank");
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("Null or blank tenantId provided for member search");
+            throw new IllegalArgumentException("Tenant ID cannot be null or blank");
+        }
 
+        log.info("Listing members with role: {} and tenantId: {}", role, tenantId);
+        List<Member> members = memberRepository.findByRoleAndTenantId(role, tenantId);
+
+        return members.stream()
+                .filter(Objects::nonNull)
+                .sorted(Comparator
+                        .comparing(Member::getLastName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(Member::getFirstName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .collect(Collectors.toList());
+    }
 
     /**
      * Obtiene un miembro por su ID.
@@ -142,8 +159,6 @@ public class MemberServiceImp implements IMemberService {
         return maybeMember;
     }
 
-
-
     /**
      * Obtiene un miembro por su ID.
      *
@@ -168,7 +183,6 @@ public class MemberServiceImp implements IMemberService {
         log.info("Found {} members for subgroupId={}", members.size(), subGroupId);
         return Optional.of(members);
     }
-
 
     /**
      * Lista los miembros filtrados por estado.
@@ -208,7 +222,8 @@ public class MemberServiceImp implements IMemberService {
      *
      * @param memberId   ID del miembro.
      * @param enumStatus Nuevo estado.
-     * @return {@code true} si se actualizó correctamente, {@code false} si el estado era el mismo.
+     * @return {@code true} si se actualizó correctamente, {@code false} si el
+     *         estado era el mismo.
      */
     @Override
     public Boolean update_status(Long memberId, Status enumStatus) {
@@ -238,13 +253,13 @@ public class MemberServiceImp implements IMemberService {
         return true;
     }
 
-
-
     /**
-     * Actualiza la información de un miembro existente sin sobrescribir valores nulos.
+     * Actualiza la información de un miembro existente sin sobrescribir valores
+     * nulos.
      *
      * @param memberId     ID del miembro a actualizar.
-     * @param memberUpdate Entidad Member con los datos a actualizar (campos null no se actualizan).
+     * @param memberUpdate Entidad Member con los datos a actualizar (campos null no
+     *                     se actualizan).
      * @return El miembro actualizado.
      */
     @Override
@@ -273,8 +288,9 @@ public class MemberServiceImp implements IMemberService {
      * Si son diferentes, actualiza el rol en la BD.
      *
      * @param memberId ID del miembro cuyo rol se debe verificar y actualizar.
-     * @param newRole Nuevo rol obtenido desde Auth0 o el sistema externo.
-     * @return {@code true} si el rol fue actualizado, {@code false} si el rol era el mismo o el miembro no existe.
+     * @param newRole  Nuevo rol obtenido desde Auth0 o el sistema externo.
+     * @return {@code true} si el rol fue actualizado, {@code false} si el rol era
+     *         el mismo o el miembro no existe.
      */
     @Override
     @Transactional
@@ -325,11 +341,11 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
-
     /**
      * Asigna un miembro a un subGrupo existente
-     * @param sectionId Id de la seccion a la cual sera asigando el miembro
-     * @param memberId  ID del miembro a actualizar.
+     * 
+     * @param sectionId  Id de la seccion a la cual sera asigando el miembro
+     * @param memberId   ID del miembro a actualizar.
      * @param subGroupId Id del sub grupo que recibirá al miembro
      * @return el estado booleano de la operación
      */
@@ -365,13 +381,16 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
-
     /**
-     * Obtiene todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.
-     * El tenantId se obtiene del JWT token (claim org_id) usando PermissionQueryPort.
-     * Utiliza JOIN FETCH para evitar N+1 queries y obtener toda la información en consultas optimizadas.
+     * Obtiene todos los miembros del tenant del usuario autenticado con información
+     * completa de subgrupo y sección.
+     * El tenantId se obtiene del JWT token (claim org_id) usando
+     * PermissionQueryPort.
+     * Utiliza JOIN FETCH para evitar N+1 queries y obtener toda la información en
+     * consultas optimizadas.
      *
-     * @return Lista de DTOs con información completa del miembro, subgrupo y sección.
+     * @return Lista de DTOs con información completa del miembro, subgrupo y
+     *         sección.
      */
     @Override
     @Transactional(readOnly = true)
@@ -385,9 +404,10 @@ public class MemberServiceImp implements IMemberService {
                 log.error("Error al obtener org_id del usuario autenticado: {}", e.getMessage(), e);
                 throw new IllegalStateException("No se pudo obtener la organización del usuario autenticado", e);
             }
-            
+
             if (tenantId == null || tenantId.isBlank()) {
-                log.error("El org_id del usuario autenticado es null o vacío. Verifica que el claim 'org_id' esté presente en el JWT.");
+                log.error(
+                        "El org_id del usuario autenticado es null o vacío. Verifica que el claim 'org_id' esté presente en el JWT.");
                 throw new IllegalStateException("No se pudo determinar la organización del usuario autenticado");
             }
 
@@ -421,12 +441,13 @@ public class MemberServiceImp implements IMemberService {
             }
 
             // 4. Convertir a DTOs usando el mapper con el mapa de secciones
-            List<MemberWithSubgroupAndSectionDto> result = memberWithSubgroupAndSectionMapper.toDtoList(members, sectionsMap);
+            List<MemberWithSubgroupAndSectionDto> result = memberWithSubgroupAndSectionMapper.toDtoList(members,
+                    sectionsMap);
 
             log.info("Successfully converted {} members to DTOs with complete information", result.size());
 
             return result;
-            
+
         } catch (IllegalStateException e) {
             // Re-lanzar excepciones de estado para que el controller las maneje
             throw e;
@@ -466,13 +487,17 @@ public class MemberServiceImp implements IMemberService {
         }
     }
 
-    /** Obtiene los nombres de las propiedades nulas para ignorarlas en el copiado de propiedades. */
+    /**
+     * Obtiene los nombres de las propiedades nulas para ignorarlas en el copiado de
+     * propiedades.
+     */
     private String[] getNullPropertyNames(Object source) {
         final BeanWrapper src = new BeanWrapperImpl(source);
         Set<String> emptyNames = new HashSet<>();
         for (var pd : src.getPropertyDescriptors()) {
             Object srcValue = src.getPropertyValue(pd.getName());
-            if (srcValue == null) emptyNames.add(pd.getName());
+            if (srcValue == null)
+                emptyNames.add(pd.getName());
         }
         // Ignora campos del sistema
         emptyNames.add("memberId");

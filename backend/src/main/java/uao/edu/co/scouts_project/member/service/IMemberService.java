@@ -31,13 +31,24 @@ public interface IMemberService {
     List<Member> get_members();
 
     /**
+     * 
+     * Obtiene una lista de miembros que coinciden con el rol y tenantId
+     * especificados.
+     * 
+     * @param role     Nombre del rol por el cual filtrar los miembros.
+     * @param tenantId Identificador del tenant por el cual filtrar los miembros.
+     * 
+     */
+    
+    List<Member> get_member_by_role_and_tenantId(String role, String tenantId);
+
+    /**
      * Obtiene un miembro a partir de su ID único.
      *
      * @param member_id Identificador único del miembro.
      * @return {@link Optional} que contiene el miembro si existe.
      */
     Optional<Member> get_member_by_id(Long member_id);
-
 
     /**
      * Obtiene todos los miembros de un suBroupId dado
@@ -48,7 +59,8 @@ public interface IMemberService {
     Optional<List<Member>> get_members_by_subGroupId(Long subGroupId);
 
     /**
-     * Lista los miembros según su estado actual (PENDING, APPROVED, REJECTED, etc.).
+     * Lista los miembros según su estado actual (PENDING, APPROVED, REJECTED,
+     * etc.).
      *
      * @param status Estado de los miembros a filtrar.
      * @return Lista de miembros que coinciden con el estado especificado.
@@ -60,7 +72,8 @@ public interface IMemberService {
      *
      * @param memberId   ID del miembro a actualizar.
      * @param enumStatus Nuevo estado a asignar.
-     * @return {@code true} si la actualización fue exitosa, {@code false} en caso contrario.
+     * @return {@code true} si la actualización fue exitosa, {@code false} en caso
+     *         contrario.
      */
     Boolean update_status(Long memberId, Status enumStatus);
 
@@ -76,22 +89,24 @@ public interface IMemberService {
     /**
      * Actualiza el rol de un miembro solo si su rol en Auth0 ha cambiado
      *
-     * @param memberId  ID del miembro a actualizar.
-     * @return {@code true} si la actualización fue exitosa, {@code false} en caso contrario.
+     * @param memberId ID del miembro a actualizar.
+     * @return {@code true} si la actualización fue exitosa, {@code false} en caso
+     *         contrario.
      */
     Boolean update_role(Long memberId, String newRole);
 
     /**
      * Asigna un miembro a un subGrupo existente
      *
-     * @param memberId     ID del miembro a actualizar.
+     * @param memberId   ID del miembro a actualizar.
      * @param subGroupId Id del sub grupo que recibirá al miembro
      * @return el estado booleano de la operación
      */
     Boolean assignSubgroupAndSection(Long memberId, Long subGroupId, Long sectionId);
 
     /**
-     * Obtiene todos los miembros del tenant del usuario autenticado con información completa de subgrupo y sección.
+     * Obtiene todos los miembros del tenant del usuario autenticado con información
+     * completa de subgrupo y sección.
      * El tenantId se obtiene del JWT token del usuario autenticado (claim org_id).
      *
      * @return Lista de miembros con información completa de subgrupo y sección.

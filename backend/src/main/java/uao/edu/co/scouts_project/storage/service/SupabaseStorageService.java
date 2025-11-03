@@ -131,7 +131,17 @@ public class SupabaseStorageService {
             
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + supabaseProperties.getServiceRoleKey());
-            headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+            // apikey header is required by Supabase for storage operations
+            headers.set("apikey", supabaseProperties.getServiceRoleKey());
+            // Content type fallback when unknown
+            MediaType mediaType = null;
+            try {
+                String ct = file.getContentType();
+                mediaType = (ct != null && !ct.isBlank()) ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM;
+            } catch (Exception ignore) {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
+            headers.setContentType(mediaType);
             
             HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
             
@@ -164,7 +174,15 @@ public class SupabaseStorageService {
             
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + supabaseProperties.getServiceRoleKey());
-            headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+            headers.set("apikey", supabaseProperties.getServiceRoleKey());
+            MediaType mediaType = null;
+            try {
+                String ct = file.getContentType();
+                mediaType = (ct != null && !ct.isBlank()) ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM;
+            } catch (Exception ignore) {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
+            headers.setContentType(mediaType);
             headers.set("x-upsert", "true"); // Permite sobrescribir si existe
             
             HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
