@@ -17,7 +17,6 @@ export const emergencyContactSchema = z.object({
   phone: z.string()
     .min(1, 'El teléfono es requerido')
     .refine((value) => {
-      if (!value || value.trim() === '') return true;
       const cleanValue = value.replace(/\s/g, '').replace(/\+57/g, '');
       return /^\d{10}$/.test(cleanValue);
     }, {

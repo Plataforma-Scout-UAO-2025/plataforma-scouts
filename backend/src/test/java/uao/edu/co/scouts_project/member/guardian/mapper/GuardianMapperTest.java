@@ -230,12 +230,12 @@ public class GuardianMapperTest {
     }
 
     @Nested
-    @DisplayName("toDTO (GuardianWIthMemberDTO) Tests")
+    @DisplayName("toDTO (GuardianWithMembersDTO) Tests")
     class ToDTOTests {
 
         @Test
-        @DisplayName("Should convert Member to GuardianWIthMemberDTO with members")
-        void shouldConvertMemberToGuardianWIthMemberDTO() {
+        @DisplayName("Should convert Member to GuardianWithMembersDTO with members")
+        void shouldConvertMemberToGuardianWithMembersDTO() {
             // Act
             GuardianWithMembersDTO result = GuardianMapper.toDTO(guardianMember, membersInCharge);
 
