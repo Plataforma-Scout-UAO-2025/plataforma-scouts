@@ -5,6 +5,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 import {
   createMemberAction,
   createMemberAuth0Action,
+  assignSubgroupAndSectionAction,
 } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
@@ -12,7 +13,7 @@ import { useRoleContext } from "@/hooks/useRoleContext";
 import { normalizeRawRole } from "@/roles/roles";
 import { personalDataBaseSchema } from "@/schemas/enrollment.schema";
 import type { ChangeEvent, PersonalData } from "@/types/enrollment.type";
-import type { Member } from "@/types/member.type";
+import type { CreateMember } from "@/types/member.type";
 import type { role } from "@/types/enrollment.type";
 
 type ApiError = {
@@ -25,6 +26,8 @@ type ApiError = {
 type useRoleEnrollmentProps = {
   role: role;
   totalPaginas: number;
+  selectedSection?: string;
+  selectedSubgroup?: string;
 };
 
 type useRoleEnrollmentReturn = {
@@ -44,12 +47,15 @@ type useRoleEnrollmentReturn = {
   loadingSubmit: boolean;
   errors: Record<string, string>;
   handlePersonalChange: (e: ChangeEvent) => void;
+  handleEmergencyContactsChange: (updatedData: PersonalData) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 };
 
 export function useRoleEnrollment({
   role,
   totalPaginas,
+  selectedSection,
+  selectedSubgroup,
 }: useRoleEnrollmentProps): useRoleEnrollmentReturn {
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
@@ -78,6 +84,7 @@ export function useRoleEnrollment({
     height: "",
     tenantId: "",
     role,
+    emergency_contacts: [{ name: "", relationship: "", phone: "" }],
   });
 
   useEffect(() => {
@@ -91,27 +98,24 @@ export function useRoleEnrollment({
   const handlePersonalChange = useCallback(
     (e: ChangeEvent) => {
       const { name, value } = e.target;
-
       setDatosPersonales((prev) => {
         const newData = { ...prev, [name]: value };
-
-        setTimeout(() => {
-          validation.validateField(name, value, newData);
-        }, 0);
-
+        setTimeout(() => validation.validateField(name, value, newData), 0);
         return newData;
       });
     },
-    [validation],
+    [validation]
+  );
+
+  const handleEmergencyContactsChange = useCallback(
+    (updatedData: PersonalData) => {
+      if (pagina === 1) validation.validate(updatedData);
+    },
+    [pagina, validation]
   );
 
   const validateCurrentPage = useCallback((): boolean => {
-    const isValid = validation.validate(datosPersonales);
-    if (!isValid) {
-      console.log("Errores de validación:", validation.errors);
-    }
-
-    return isValid;
+    return validation.validate(datosPersonales);
   }, [datosPersonales, validation]);
 
   const scrollToFirstError = useCallback(() => {
@@ -119,21 +123,15 @@ export function useRoleEnrollment({
       const firstErrorElement =
         document.querySelector('[class*="border-red"]') ||
         document.querySelector(".text-red-600");
-      if (firstErrorElement) {
-        firstErrorElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
+      if (firstErrorElement)
+        firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
   }, []);
 
   const enviarDatos = useCallback(async () => {
     try {
       if (!datosPersonales.username || !datosPersonales.password) {
-        setErrorMessage(
-          "El nombre de usuario y la contraseña son obligatorios",
-        );
+        setErrorMessage("El nombre de usuario y la contraseña son obligatorios");
         setShowAuth0ErrorDialog(true);
         return;
       }
@@ -144,27 +142,15 @@ export function useRoleEnrollment({
           password: datosPersonales.password,
           username: datosPersonales.username,
           role: role,
-        }),
+        })
       );
 
       if (createMemberAuth0Action.rejected.match(auth0Result)) {
         const error = auth0Result.payload as ApiError;
-        let mensaje = "Error desconocido al crear usuario en Auth0";
+        let mensaje = error?.detail || error?.message || error?.error || "Error desconocido al crear usuario en Auth0";
 
-        if (error?.detail) {
-          mensaje = error.detail;
-        } else if (error?.message) {
-          mensaje = error.message;
-        } else if (error?.error) {
-          mensaje = error.error;
-        }
-
-        if (
-          mensaje.toLowerCase().includes("already exists") ||
-          mensaje.toLowerCase().includes("ya existe")
-        ) {
-          mensaje =
-            "El email o nombre de usuario ya está registrado en el sistema";
+        if (mensaje.toLowerCase().includes("already exists") || mensaje.toLowerCase().includes("ya existe")) {
+          mensaje = "El email o nombre de usuario ya está registrado en el sistema";
         }
 
         setErrorMessage(mensaje);
@@ -181,40 +167,21 @@ export function useRoleEnrollment({
 
       const normalizedUserRole = normalizeRawRole(currentUserRole);
 
-      const memberData: Member = transformData(
-        {
-          ...datosPersonales,
-          tenantId: tenant,
-          role,
-        },
-        normalizedUserRole,
+      const memberData: CreateMember = transformData(
+        { ...datosPersonales, tenantId: tenant, role },
+        normalizedUserRole
       );
 
-      try {
-        const created = auth0Result.payload as { userId?: string };
-        if (created?.userId) {
-          const md = memberData as Record<string, unknown>;
-          md["userId"] = created.userId;
-        }
-      } catch (e) {
-        console.warn("No se pudo extraer userId del resultado de Auth0:", e);
-      }
+      const created = auth0Result.payload as { userId?: string };
+      if (created?.userId) memberData.userId = created.userId;
 
       const memberResult = await dispatch(createMemberAction(memberData));
-
       if (createMemberAction.rejected.match(memberResult)) {
-        const error = memberResult.payload as ApiError;
-        let mensaje = "Error al crear el miembro";
+      const error = memberResult.payload as ApiError;
+      const mensaje = error?.message || "Error al crear el miembro";
 
-        if (error?.message) {
-          mensaje = error.message;
-        }
 
-        if (
-          mensaje.includes("already exists") ||
-          mensaje.includes("ya existe") ||
-          mensaje.includes("identification")
-        ) {
+        if (mensaje.includes("already exists") || mensaje.includes("ya existe") || mensaje.includes("identification")) {
           setShowUserExistsDialog(true);
           return;
         }
@@ -224,42 +191,51 @@ export function useRoleEnrollment({
         return;
       }
 
-      validation.clearErrors();
-      setShowModal(true);
-    } catch (error) {
-      console.error("Error al enviar la solicitud:", error);
+      const createdMember = memberResult.payload as {
+        memberId?: number;
+        member_id?: number;
+        newMember?: { memberId?: number; member_id?: number };
+      };
 
-      let mensaje = "Error inesperado al procesar la solicitud";
+      const memberId =
+        createdMember?.memberId ??
+        createdMember?.member_id ??
+        createdMember?.newMember?.memberId ??
+        createdMember?.newMember?.member_id;
 
-      if (error instanceof Error) {
-        mensaje = error.message;
-      } else if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error
-      ) {
-        const responseError = error as {
-          response?: { data?: { message?: string } };
-        };
-        if (responseError.response?.data?.message) {
-          mensaje = responseError.response.data.message;
+      if (memberId && (selectedSection || selectedSubgroup)) {
+        try {
+          await dispatch(
+            assignSubgroupAndSectionAction({
+              memberId,
+              sectionId: selectedSection ? Number(selectedSection) : undefined,
+              subGroupId: selectedSubgroup ? Number(selectedSubgroup) : undefined,
+            })
+          ).unwrap();
+        } catch {
+          setErrorMessage("El miembro fue creado pero hubo un error en la asignación");
+          setShowAuth0ErrorDialog(true);
+          return;
         }
       }
 
+      validation.clearErrors();
+      setShowModal(true);
+    } catch (error) {
+      let mensaje = "Error inesperado al procesar la solicitud";
+      if (error instanceof Error) mensaje = error.message;
       setErrorMessage(mensaje);
       setShowAuth0ErrorDialog(true);
     }
-  }, [datosPersonales, orgId, role, currentUserRole, dispatch, validation]);
+  }, [datosPersonales, orgId, role, currentUserRole, dispatch, validation, selectedSection, selectedSubgroup]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-
       if (!validateCurrentPage()) {
         scrollToFirstError();
         return;
       }
-
       if (pagina < totalPaginas) {
         setPagina((prev) => prev + 1);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -267,19 +243,10 @@ export function useRoleEnrollment({
       }
       await enviarDatos();
     },
-    [
-      pagina,
-      totalPaginas,
-      validateCurrentPage,
-      scrollToFirstError,
-      enviarDatos,
-    ],
+    [pagina, totalPaginas, validateCurrentPage, scrollToFirstError, enviarDatos]
   );
 
-  const progreso = useMemo(
-    () => (pagina / totalPaginas) * 100,
-    [pagina, totalPaginas],
-  );
+  const progreso = useMemo(() => (pagina / totalPaginas) * 100, [pagina, totalPaginas]);
 
   return {
     datosPersonales,
@@ -298,6 +265,7 @@ export function useRoleEnrollment({
     loadingSubmit,
     errors: validation.errors,
     handlePersonalChange,
+    handleEmergencyContactsChange,
     handleSubmit,
   };
 }

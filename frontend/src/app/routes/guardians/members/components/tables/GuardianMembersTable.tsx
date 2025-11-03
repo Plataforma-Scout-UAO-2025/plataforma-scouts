@@ -147,7 +147,6 @@ const GuardianMembersTable = ({
               const gender = memberRec.gender || "N/A";
               const birthDate = memberRec.birth_date || memberRec.birthDate;
               const relationship = memberRec.relationship || "No especificado";
-
               return (
                 <TableRow key={`member-${memberId}-${idx}`}>
                   <TableCell className="pl-4 font-medium truncate">

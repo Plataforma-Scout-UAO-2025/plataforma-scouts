@@ -162,7 +162,7 @@ export default function EmergencyContacts({
                 }
                 required
               />
-              {contactErrors.name && (
+              {c.name.trim() !== "" && contactErrors.name && (
                 <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {contactErrors.name}

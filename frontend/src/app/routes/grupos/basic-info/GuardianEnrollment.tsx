@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import PersonalDataForm from "./components/PersonalDataForm";
+import EmergencyContacts from "./components/EmergencyContacts";
 import DataTreatmentConsent from "./components/DataTreatmentConsent";
 import SuccessModal from "./components/SuccessModal";
 import { UserExistsDialog } from "./components/UserExistsDialog";
@@ -27,6 +28,7 @@ function GuardianEnrollment() {
     loadingSubmit,
     errors,
     handlePersonalChange,
+    handleEmergencyContactsChange,
     handleSubmit,
   } = useRoleEnrollment({ role: "ACUDIENTE", totalPaginas: 2 });
 
@@ -46,16 +48,23 @@ function GuardianEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) {
+    if (pagina === 1) 
       return (
-        <PersonalDataForm
-          datos={datosPersonales}
-          handleChange={handlePersonalChange}
-          setDatos={setDatosPersonales}
-          errors={errors}
-        />
-      );
-    }
+       <>
+      <PersonalDataForm
+        datos={datosPersonales}
+        handleChange={handlePersonalChange}
+        setDatos={setDatosPersonales}
+        errors={errors}
+      />
+      <EmergencyContacts
+        datos={datosPersonales}
+        setDatos={setDatosPersonales}
+        onContactChange={handleEmergencyContactsChange}
+        errors={errors}
+      />
+    </>
+  );
 
     return (
       <DataTreatmentConsent

@@ -19,6 +19,7 @@ import { listRoles } from "@/api/membersApi";
 import type { RoleSummary } from "@/api/membersApi";
 import { useState, useEffect } from "react";
 
+
 interface MemberDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,7 +37,7 @@ export default function MemberDetailsModal({
   orgId,
   onSuccess,
   onReject,
-  showRejectButton = true
+  showRejectButton = true,
 }: MemberDetailsModalProps) {
   const {
     groups,
@@ -62,6 +63,7 @@ export default function MemberDetailsModal({
     onOpenChange(false);
   };
 
+  // Cargar roles disponibles
   useEffect(() => {
     let mounted = true;
     const fetchRoles = async () => {
@@ -84,6 +86,7 @@ export default function MemberDetailsModal({
     };
   }, [open]);
 
+  // Hook de aprobación de miembro
   const { loading, canAccept, accept } = useMemberApproval({
     member,
     selectedSection,
@@ -92,6 +95,7 @@ export default function MemberDetailsModal({
     onSuccess,
     onClose: handleClose,
   });
+
 
   if (!member) return null;
 
@@ -114,6 +118,7 @@ export default function MemberDetailsModal({
             <EmergencyContacts member={member} />
             <Interests member={member} />
             <SchoolInfo memberId={member.member_id} />
+
             <AssignmentSelectors
               groups={groups}
               sections={sections}
@@ -130,6 +135,7 @@ export default function MemberDetailsModal({
               selectedRole={selectedRole}
               setSelectedRole={setSelectedRole}
             />
+
             <MemberStatusBar member={member} />
           </div>
         )}
@@ -149,7 +155,11 @@ export default function MemberDetailsModal({
             variant="primary"
             onClick={accept}
             disabled={
-              loading || !canAccept || !selectedGroupSlug || !selectedRole || !selectedSubgroup
+              loading ||
+              !canAccept ||
+              !selectedGroupSlug ||
+              !selectedRole ||
+              !selectedSubgroup
             }
             className="flex-1 bg-green-900 hover:bg-green/800"
           >

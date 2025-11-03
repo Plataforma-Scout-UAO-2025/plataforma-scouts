@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import PersonalDataForm from "./components/PersonalDataForm";
 import DataTreatmentConsent from "./components/DataTreatmentConsent";
 import SuccessModal from "./components/SuccessModal";
+import EmergencyContacts from "./components/EmergencyContacts";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 import { useOrgStructure } from "@/hooks/useOrgStructure";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
@@ -21,26 +22,8 @@ import { ErrorDialog } from "./components/ErrorDialog";
 function ScouterEnrollment() {
   const navigate = useNavigate();
   const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
-  const {
-    datosPersonales,
-    setDatosPersonales,
-    pagina,
-    setPagina,
-    totalPaginas,
-    progreso,
-    showModal,
-    showUserExistsDialog,
-    setShowUserExistsDialog,
-    showAuth0ErrorDialog,
-    setShowAuth0ErrorDialog,
-    errorMessage,
-    loadingSubmit,
-    errors,
-    handlePersonalChange,
-    handleSubmit,
-  } = useRoleEnrollment({ role: "SCOUTER", totalPaginas: 3 });
 
-  const {
+    const {
     sections,
     subgroups,
     selectedGroupSlug,
@@ -53,7 +36,34 @@ function ScouterEnrollment() {
   } = useOrgStructure({
     orgId: orgId || "",
     open: true,
+    
   });
+  
+  const {
+    datosPersonales,
+    setDatosPersonales,
+    pagina,
+    setPagina,
+    totalPaginas,
+    progreso,
+    showModal,
+    showUserExistsDialog,
+    setShowUserExistsDialog,
+    showAuth0ErrorDialog,
+    setShowAuth0ErrorDialog,
+    handleEmergencyContactsChange,
+    errorMessage,
+    loadingSubmit,
+    errors,
+    handlePersonalChange,
+    handleSubmit,
+   } = useRoleEnrollment({ 
+    role: "SCOUTER", 
+    totalPaginas: 3,
+    selectedSection,   
+    selectedSubgroup,   
+  });
+
 
   const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
@@ -71,16 +81,23 @@ function ScouterEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) {
+    if (pagina === 1) 
       return (
-        <PersonalDataForm
-          datos={datosPersonales}
-          handleChange={handlePersonalChange}
-          setDatos={setDatosPersonales}
-          errors={errors}
-        />
+       <>
+      <PersonalDataForm
+        datos={datosPersonales}
+        handleChange={handlePersonalChange}
+        setDatos={setDatosPersonales}
+        errors={errors}
+      />
+      <EmergencyContacts
+        datos={datosPersonales}
+        setDatos={setDatosPersonales}
+        onContactChange={handleEmergencyContactsChange}
+        errors={errors}
+      />
+    </>
       );
-    }
 
     if (pagina === 2) {
       return (

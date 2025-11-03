@@ -104,6 +104,7 @@ export interface CreateMember {
   subgroupId?: number | 0;
   subgroupName?: string;
   sectionId?: number | 0;
+  userId?: string;
   sectionName?: string;
   firstName?: string;
   lastName?: string;
@@ -112,6 +113,7 @@ export interface CreateMember {
   isActive?: boolean;
   emergencyContacts?: EmergencyContact[];
   accept_treatment?: boolean;
+
   
   member_id?: number;
   first_name?: string;

@@ -165,7 +165,7 @@ public class SecurityConfig {
 
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
-                                                                DEV_SUPPORT.name())
+                                                                DEV_SUPPORT.name(), SCOUT.name())
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
                                                                 DEV_SUPPORT.name())

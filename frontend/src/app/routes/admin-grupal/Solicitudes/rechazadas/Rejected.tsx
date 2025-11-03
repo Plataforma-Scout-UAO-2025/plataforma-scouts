@@ -10,7 +10,7 @@ import type { Member } from "@/types/member.type";
 
 const Rejected = () => {
   const [searchFilter, setSearchFilter] = useState("");
-  const [phoneFilter, setPhoneFilter] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [openViewModal, setOpenViewModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -28,7 +28,7 @@ const Rejected = () => {
     status: "REJECTED",
     pageSize: 10,
     search: searchFilter,
-    phoneFilter, 
+    city: cityFilter,
   });
 
   const { orgId } = useAuth0ApiWrapper();
@@ -61,8 +61,8 @@ const Rejected = () => {
         <RejectedFilter
           searchFilter={searchFilter}
           setSearchFilter={setSearchFilter}
-          phoneFilter={phoneFilter}
-          setPhoneFilter={setPhoneFilter}
+          cityFilter={cityFilter}
+          setCityFilter={setCityFilter}
         />
       </section>
 
