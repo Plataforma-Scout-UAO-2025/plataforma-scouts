@@ -181,7 +181,9 @@ export function useRoleEnrollment({
       const mensaje = error?.message || "Error al crear el miembro";
 
 
-        if (mensaje.includes("already exists") || mensaje.includes("ya existe") || mensaje.includes("identification")) {
+        if (mensaje.includes("already exists") ||
+           mensaje.includes("ya existe") || 
+           mensaje.includes("identification")) {
           setShowUserExistsDialog(true);
           return;
         }
