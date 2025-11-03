@@ -1,7 +1,10 @@
 # Archivos temporales de pnpm y npm que no se deben subir al repositorio
-pnpm-lock.yaml
+
+# Por motivos de fuerza mayor,
+# se incluyen los archivos de configuración de pnpm y npm para evitar conflictos 
+# entre desarrolladores e instalación de dependencias locales en cada cliente.
+
 pnpm-workspace.yaml
-package-lock.json
 
 # Logs
 logs
