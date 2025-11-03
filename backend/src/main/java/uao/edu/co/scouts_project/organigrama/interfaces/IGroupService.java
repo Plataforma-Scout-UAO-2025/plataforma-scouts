@@ -11,6 +11,7 @@ import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
 
 public interface IGroupService {
 
@@ -44,6 +45,8 @@ public interface IGroupService {
 
     void validateSlugFormat(String slug);
 
-    GroupAdminCreatedResponseDTO addGroupAdmin(Long groupId, CreateGroupAdminRequestDTO request);
+    SlugValidationResponseDTO validateSlug(String slug);
+
+    GroupAdminCreatedResponseDTO addGroupAdmin(String slug, String tenantId, CreateGroupAdminRequestDTO request);
 
 }

@@ -7,9 +7,13 @@ interface Props {
   name: string;
   onClose: () => void;
   onConfirm: () => void;
+  /** Texto de advertencia adicional (opcional) */
+  warning?: string;
+  /** Si es true, se deshabilita la acción de eliminar (p.ej. cuando no se puede eliminar un nivel con asociaciones) */
+  disableConfirm?: boolean;
 }
 
-export default function ConfirmDeleteModal({ open, type, name, onClose, onConfirm }: Props) {
+export default function ConfirmDeleteModal({ open, type, name, onClose, onConfirm, warning, disableConfirm = false }: Props) {
   const label = type === "nivel" ? "Nivel" : "Cargo";
 
   return (
@@ -24,11 +28,30 @@ export default function ConfirmDeleteModal({ open, type, name, onClose, onConfir
           </DialogDescription>
         </DialogHeader>
 
+        {warning && (
+          <div className="mb-4 p-3 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-800 text-sm">
+            {warning}
+          </div>
+        )}
+
         <p className="text-accent-foreground mb-6 text-sm">
-          ¿Estás seguro de que quieres eliminar el {label.toLowerCase()} <b>{name}</b>? <br />
-          <span className="text-muted-foreground">
-            Esta acción es permanente y no se puede deshacer.
-          </span>
+          {disableConfirm ? (
+            <>
+              No es posible eliminar el {label.toLowerCase()} <b>{name}</b> en este momento.
+              <br />
+              <span className="text-muted-foreground">
+                Resuelve las dependencias indicadas en la advertencia para poder continuar.
+              </span>
+            </>
+          ) : (
+            <>
+              ¿Estás seguro de que quieres eliminar el {label.toLowerCase()} <b>{name}
+              </b>? <br />
+              <span className="text-muted-foreground">
+                Esta acción es permanente y no se puede deshacer.
+              </span>
+            </>
+          )}
         </p>
 
         <div className="flex justify-end gap-3">
@@ -42,6 +65,9 @@ export default function ConfirmDeleteModal({ open, type, name, onClose, onConfir
           <Button
             onClick={onConfirm}
             className="bg-primary text-white hover:bg-primary-hover"
+            disabled={disableConfirm}
+            aria-disabled={disableConfirm}
+            title={disableConfirm ? "No se puede eliminar mientras existan asociaciones" : undefined}
           >
             Eliminar
           </Button>

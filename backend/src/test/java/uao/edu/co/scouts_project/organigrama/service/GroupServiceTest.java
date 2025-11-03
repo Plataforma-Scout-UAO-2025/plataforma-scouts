@@ -12,6 +12,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
@@ -90,42 +91,89 @@ class GroupServiceTest {
     }
 
     // ---------- CREATE ----------
-    // @Test
-    // @DisplayName("createGroup: guarda y devuelve respuesta cuando el slug no
-    // existe")
-    // void create_ok() {
-    // when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID),
-    // eq(SLUG))).thenReturn(false);
-    // when(groupRepository.save(any(Group.class))).thenAnswer(inv -> {
-    // Group g = inv.getArgument(0);
-    // g.setGroupId(1L);
-    // return g;
-    // });
+    @Test
+    @DisplayName("createGroup: guarda y devuelve respuesta cuando el slug no existe")
+    void create_ok() {
+        when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(false);
+        when(groupRepository.save(any(Group.class))).thenAnswer(inv -> {
+            Group g = inv.getArgument(0);
+            g.setGroupId(1L);
+            return g;
+        });
 
-    // GroupResponseDTO out = groupService.createGroup(TENANT_ID, newDto());
+        GroupResponseDTO out = groupService.createGroup(TENANT_ID, newDto());
 
-    // assertThat(out).isNotNull();
-    // assertThat(out.groupId()).isEqualTo(1L);
-    // assertThat(out.slug()).isEqualTo(SLUG);
-    // assertThat(out.name()).isEqualTo("Grupo Scout Centinelas 113");
+        assertThat(out).isNotNull();
+        assertThat(out.groupId()).isEqualTo(1L);
+        assertThat(out.slug()).isEqualTo(SLUG);
+        assertThat(out.name()).isEqualTo("Grupo Scout Centinelas 113");
 
-    // verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
-    // verify(groupRepository).save(any(Group.class));
-    // }
+            verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
+        verify(groupRepository).save(any(Group.class));
+    }
 
-    // @Test
-    // @DisplayName("createGroup: lanza IllegalArgumentException si el slug ya
-    // existe")
-    // void create_conflict_whenSlugExists() {
-    // when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID),
-    // eq(SLUG))).thenReturn(true);
+    @Test
+    @DisplayName("createGroup: lanza IllegalArgumentException si el slug ya existe")
+    void create_conflict_whenSlugExists() {
+        when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG))).thenReturn(true);
 
-    // assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, newDto()))
-    // .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, newDto()))
+                .isInstanceOf(IllegalArgumentException.class);
 
-    // verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
-    // verify(groupRepository, never()).save(any());
-    // }
+        verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
+        verify(groupRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("createGroup: lanza IllegalArgumentException si el slug tiene formato inválido")
+    void create_invalid_slug_format() {
+        final GroupDTO invalidDto = new GroupDTO(
+            null, TENANT_ID, "Slug Inválido!", "Nombre", 
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
+        );
+
+        assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, invalidDto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Slug inválido");
+
+        verify(groupRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("createGroup: permite crear múltiples grupos en un tenant")
+    void create_multiple_groups_same_tenant() {
+            when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), anyString())).thenReturn(false);
+        when(groupRepository.save(any(Group.class))).thenReturn(entity);
+
+        GroupDTO firstGroup = newDto();
+        GroupDTO secondGroup = new GroupDTO(
+            null, TENANT_ID, "otro-grupo", "Otro Grupo",
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
+        );
+
+        groupService.createGroup(TENANT_ID, firstGroup);
+        groupService.createGroup(TENANT_ID, secondGroup);
+
+        verify(groupRepository, times(2)).save(any(Group.class));
+    }
+
+    @Test
+    @DisplayName("createGroup: lanza IllegalArgumentException si el slug es null")
+    void create_null_slug() {
+        final GroupDTO nullSlugDto = new GroupDTO(
+            null, TENANT_ID, null, "Nombre",
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
+        );
+
+        assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, nullSlugDto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("El slug no puede estar vacío");
+
+        verify(groupRepository, never()).save(any());
+    }
 
     // ---------- GET BY SLUG ----------
     @Test
@@ -144,6 +192,24 @@ class GroupServiceTest {
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
     }
 
+
+    @Test
+    @DisplayName("updateGroup (UpdatingGroupDTO): lanza IllegalArgumentException si se intenta cambiar el slug")
+    void update_with_updatingDto_slug_conflict() {
+        when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
+            .thenReturn(Optional.of(entity));
+
+        UpdatingGroupDTO dto = new UpdatingGroupDTO();
+        dto.setSlug("nuevo-slug");
+
+        assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("El campo slug es inmutable");
+
+        verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
+        verify(groupRepository, never()).existsByTenantIdAndSlug(anyString(), anyString());
+        verify(groupRepository, never()).save(any());
+    }
     @Test
     @DisplayName("getGroupBySlug: incluye URLs públicas cuando existen imágenes")
     void getBySlug_includesUrls() {
@@ -174,6 +240,114 @@ class GroupServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
+    }
+
+    // ---------- UPDATE (PATCH) ----------
+    @Test
+    @DisplayName("updateGroup: actualiza atributos permitidos")
+    void update_group_allowed_fields() {
+        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
+            .thenReturn(Optional.of(entity));
+        when(groupRepository.save(any(Group.class))).thenReturn(entity);
+
+        GroupDTO updateDto = new GroupDTO(
+            null, TENANT_ID, SLUG, "Nuevo Nombre",
+            "Distrito Nuevo", "123", "Nueva Dirección", "123456", "nuevo@email.com",
+            LocalDate.now(), "Nuevo Lema", "Nueva Misión", "Nueva Visión", "Nueva Historia",
+            null, null, Map.of("facebook", "newfb"), Map.of("color", "blue"), 
+            true, "ACTIVE", null, null
+        );
+
+        GroupResponseDTO updated = groupService.updateGroup(TENANT_ID, SLUG, updateDto);
+
+        assertThat(updated.name()).isEqualTo("Nuevo Nombre");
+        verify(groupRepository).save(any(Group.class));
+    }
+
+    @Test
+    @DisplayName("updateGroup: no permite modificar slug")
+    void update_group_immutable_slug() {
+            Group existingGroup = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
+            existingGroup.setGroupId(1L);
+
+        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
+                .thenReturn(Optional.of(existingGroup));
+
+        GroupDTO updateDto = new GroupDTO(
+            null, TENANT_ID, "nuevo-slug", "Nombre", 
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
+        );
+
+        assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, updateDto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("slug es inmutable");
+
+        verify(groupRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updateGroup: no permite modificar tenantId")
+    void update_group_immutable_tenantId() {
+            Group existingGroup = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
+            existingGroup.setGroupId(1L);
+
+        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
+                .thenReturn(Optional.of(existingGroup));
+
+        GroupDTO updateDto = new GroupDTO(
+            null, "otro-tenant", SLUG, "Nombre",
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
+        );
+
+        assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, updateDto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("tenantId es inmutable");
+
+        verify(groupRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updateGroup: ignora el slug cuando es null")
+    void update_group_ignores_null_slug() {
+        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
+            .thenReturn(Optional.of(entity));
+        when(groupRepository.save(any(Group.class))).thenReturn(entity);
+
+        GroupDTO updateDto = new GroupDTO(
+            null, TENANT_ID, null, "Nuevo Nombre", 
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
+        );
+
+        GroupResponseDTO updated = groupService.updateGroup(TENANT_ID, SLUG, updateDto);
+
+        assertThat(updated.slug()).isEqualTo(SLUG);  // El slug no debe cambiar
+        assertThat(updated.name()).isEqualTo("Nuevo Nombre");  // Otros campos sí se actualizan
+        verify(groupRepository).save(any(Group.class));
+    }
+
+    @Test
+    @DisplayName("updateGroup: permite activar/desactivar grupo")
+    void update_group_active_status() {
+        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
+            .thenReturn(Optional.of(entity));
+        when(groupRepository.save(any(Group.class))).thenReturn(entity);
+
+        // Desactivar
+        GroupDTO deactivateDto = newDto();
+        deactivateDto = new GroupDTO(
+            null, TENANT_ID, SLUG, "Nombre",
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, Map.of(), Map.of(), false, "INACTIVE", null, null
+        );
+
+        GroupResponseDTO updated = groupService.updateGroup(TENANT_ID, SLUG, deactivateDto);
+        assertThat(updated.isActive()).isFalse();
+        assertThat(updated.status()).isEqualTo("INACTIVE");
+
+        verify(groupRepository, times(1)).save(any(Group.class));
     }
 
     // ---------- LIST ----------

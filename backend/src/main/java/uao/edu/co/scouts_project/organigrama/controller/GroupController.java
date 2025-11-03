@@ -32,6 +32,15 @@ import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.Map;
 
 import java.net.URI;
 import java.util.List;
@@ -42,9 +51,22 @@ import java.util.List;
 public class GroupController {
 
         private final IGroupService groupService;
+        private final ObjectMapper objectMapper;
+        private static final Logger log = LoggerFactory.getLogger(GroupController.class);
 
-        public GroupController(IGroupService groupService) {
+        public GroupController(IGroupService groupService, ObjectMapper objectMapper) {
                 this.groupService = groupService;
+                this.objectMapper = objectMapper;
+        }
+
+        @Operation(summary = "Obtener todos los grupos")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Grupos encontrados"),
+                        @ApiResponse(responseCode = "404", description = "No se encontraron grupos")
+        })
+        @GetMapping("/getAll")
+        public GroupResponseDTO[] getAllGroups() {
+                return groupService.getAllGroups();
         }
 
         @Operation(summary = "Obtener todos los grupos de un tenant")
@@ -67,16 +89,6 @@ public class GroupController {
                 return groupService.getGroupBySlug(tenantId, groupSlug);
         }
 
-        @Operation(summary = "Obtener todos los grupos")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Grupos encontrados"),
-                        @ApiResponse(responseCode = "404", description = "No se encontraron grupos")
-        })
-        @GetMapping("/getAll")
-        public GroupResponseDTO[] getAllGroups() {
-                return groupService.getAllGroups();
-        }
-
         @Operation(summary = "Crear un nuevo grupo (multipart)", description = "Crea un nuevo grupo y permite enviar una imagen opcional para la organización")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "201", description = "Grupo creado exitosamente"),
@@ -85,14 +97,30 @@ public class GroupController {
         @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<GroupResponseDTO> createGroupMultipart(
                         @Parameter(description = "Payload JSON del grupo") @RequestPart("dto") @Valid GroupDTO dto,
-                        @Parameter(description = "Imagen opcional para la organización", schema = @Schema(type = "string", format = "binary"))
-                        @RequestPart(name = "image", required = false) MultipartFile image) {
+                        @Parameter(description = "Imagen opcional para la organización", schema = @Schema(type = "string", format = "binary")) @RequestPart(name = "image", required = false) MultipartFile image) {
                 GroupResponseDTO created = groupService.createGroupFull(dto, image);
                 return ResponseEntity
-                                .created(URI.create("/api/v1/tenants/" + created.tenantId() + "/groups/" + created.slug()))
+                                .created(URI.create(
+                                                "/api/v1/tenants/" + created.tenantId() + "/groups/" + created.slug()))
                                 .body(created);
         }
 
+        @PostMapping("/{slug}/admins")
+        @Operation(summary = "Crear admin de grupo (ADMIN_GRUPO)", description = "Crea un usuario en Auth0 con rol ADMIN_GRUPO dentro de la organización (tenant) del grupo", responses = {
+                        @ApiResponse(responseCode = "201", description = "Admin de grupo creado", content = @Content(schema = @Schema(implementation = GroupAdminCreatedResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+                        @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
+        })
+        public ResponseEntity<GroupAdminCreatedResponseDTO> createGroupAdmin(
+                        @Parameter(description = "ID del tenant", example = "tenant-001") @PathVariable String tenantId,
+
+                        @Parameter(description = "Slug del grupo", example = "grupo-803") @PathVariable String slug,
+
+                        @Valid @RequestBody CreateGroupAdminRequestDTO request) {
+
+                GroupAdminCreatedResponseDTO created = groupService.addGroupAdmin(slug, tenantId, request);
+                return ResponseEntity.status(201).body(created);
+        }
 
         @Operation(summary = "Actualizar parcialmente un grupo existente", description = "Actualiza solo los campos enviados en el body (PATCH)")
         @ApiResponses(value = {
@@ -104,12 +132,6 @@ public class GroupController {
                         @Parameter(description = "Tenant ID", example = "org-001") @PathVariable String tenantId,
                         @Parameter(description = "Slug del grupo", example = "grupo-803") @PathVariable String groupSlug,
                         @Valid @RequestBody UpdatingGroupDTO dto) {
-                return groupService.updateGroup(tenantId, groupSlug, dto);
-        }
-
-        @PutMapping("/{groupSlug}")
-        public GroupResponseDTO updateGroup(@PathVariable String tenantId, @PathVariable String groupSlug,
-                        @Valid @RequestBody GroupDTO dto) {
                 return groupService.updateGroup(tenantId, groupSlug, dto);
         }
 
@@ -156,7 +178,7 @@ public class GroupController {
                 return ResponseEntity.noContent().build();
         }
 
-        // ============== NUEVOS ENDPOINTS PATCH PARA ACTUALIZACIÓN INDIVIDUAL
+        // ============== NUEVOS ENDPOINTS PATCH PARA ACTUALIZACIÓN INDIVIDUAL //
         // ==============
 
         @Operation(summary = "Actualizar solo el logo de un grupo", description = "Actualiza únicamente la imagen del logo sin modificar otros campos del grupo. Elimina automáticamente el logo anterior de Supabase.")
@@ -189,24 +211,22 @@ public class GroupController {
                 return ResponseEntity.noContent().build();
         }
 
-        @PostMapping("/{groupId}/admins")
-        @PreAuthorize("hasRole('ADMIN_GLOBAL')")
-        @Operation(
-                        summary = "Crear admin de grupo (ADMIN_GRUPO)",
-                        description = "Crea un usuario en Auth0 con rol ADMIN_GRUPO dentro de la organización (tenant) del grupo",
-                        responses = {
-                                        @ApiResponse(responseCode = "201", description = "Admin de grupo creado",
-                                                        content = @Content(schema = @Schema(implementation = GroupAdminCreatedResponseDTO.class))),
-                                        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
-                                        @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
-                        }
-        )
-        public ResponseEntity<GroupAdminCreatedResponseDTO> createGroupAdmin(
-                        @PathVariable String tenantId,
-                        @PathVariable Long groupId,
-                        @Valid @RequestBody CreateGroupAdminRequestDTO request) {
-                GroupAdminCreatedResponseDTO created = groupService.addGroupAdmin(groupId, request);
-                return ResponseEntity.status(201).body(created);
+        @Operation(summary = "Validar disponibilidad y formato de slug", description = "Valida si el slug cumple el formato permitido y si no está en uso por ningún otro grupo.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Resultado de validación devuelto"),
+                        @ApiResponse(responseCode = "400", description = "Parámetro slug faltante")
+        })
+        @GetMapping("/slug/validate")
+        public ResponseEntity<SlugValidationResponseDTO> validateSlug(
+                        @Parameter(description = "Tenant ID (contexto)", example = "tenant-001") @PathVariable String tenantId,
+                        @Parameter(description = "Slug a validar", example = "grupo-exploradores") @org.springframework.web.bind.annotation.RequestParam(name = "slug", required = true) String slug) {
+                if (slug == null || slug.trim().isEmpty()) {
+                        return ResponseEntity.badRequest().build();
+                }
+                // La validación es global (no depende de tenant), pero mantenemos el path por
+                // consistencia
+                SlugValidationResponseDTO result = groupService.validateSlug(slug.trim());
+                return ResponseEntity.ok(result);
         }
 
 }

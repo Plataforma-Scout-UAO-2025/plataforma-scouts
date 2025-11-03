@@ -8,8 +8,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
+import uao.edu.co.scouts_project.domain.dto.common.ResponseDTO;
+import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -43,6 +44,19 @@ public class GlobalExceptionHandler {
         ex.getMessage());
   }
 
+  @ExceptionHandler(Auth0GatewayException.class)
+  public ResponseEntity<ResponseDTO<String>> handleAuth0GatewayException(
+      Auth0GatewayException ex) {
+    ResponseDTO<String> responseDTO = new ResponseDTO<String>(
+        502,
+        ex.getMessage(),
+        null,
+        ex.getCause().getMessage()
+
+    );
+    return new ResponseEntity<>(responseDTO, HttpStatus.BAD_GATEWAY);
+  }
+
   @ExceptionHandler(GuardianExceptions.InvalidGuardianException.class)
   public ResponseEntity<Map<String, Object>> handleInvalidGuardian(
       GuardianExceptions.InvalidGuardianException ex) {
@@ -53,7 +67,8 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletRequest req) {
+  public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex,
+      HttpServletRequest req) {
     Map<String, String> errors = new HashMap<>();
     ex.getBindingResult().getAllErrors().forEach((error) -> {
       String fieldName = ((FieldError) error).getField();
@@ -76,6 +91,15 @@ public class GlobalExceptionHandler {
     return buildErrorResponse(
         HttpStatus.CONFLICT,
         "Member Already Assigned",
+        ex.getMessage());
+  }
+
+  @ExceptionHandler(GuardianExceptions.AvailableGuardiansException.class)
+  public ResponseEntity<Map<String, Object>> handleAvailableGuardiansNotFound(
+      GuardianExceptions.AvailableGuardiansException ex) {
+    return buildErrorResponse(
+        HttpStatus.NOT_FOUND,
+        "Available Guardians Not Found",
         ex.getMessage());
   }
 

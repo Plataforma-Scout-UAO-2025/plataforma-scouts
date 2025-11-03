@@ -1,0 +1,39 @@
+meta {
+  name: Patch - Deactivate Group
+  type: http
+  seq: 14
+}
+
+patch {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/bruno-info-slugv06
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+tests {
+  test("DEBUG - response", function() {
+    console.log('DEBUG RESPONSE STATUS:', res.status);
+    console.log('DEBUG RESPONSE BODY:', JSON.stringify(res.body));
+  });
+  test("Desactivar grupo", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body).to.have.property('isActive').that.equals(false);
+    expect(res.body).to.have.property('status').that.equals('INACTIVE');
+  });
+}
+
+docs {
+  **Nombre:** Desactivar Grupo
+  **Endpoint:** PATCH /api/v1/tenants/{tenantId}/groups/{slug}
+}
+
+body {
+  {
+  "isActive": false,
+  "status": "INACTIVE"
+  }
+}

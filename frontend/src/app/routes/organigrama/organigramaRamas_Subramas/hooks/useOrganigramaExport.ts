@@ -6,18 +6,56 @@ import { getGroupBySlug } from '@/api/organigramaApi';
 
 type Opts = { tenantId?: string; groupSlug?: string };
 
-// Función para filtrar solo ramas scout
+// Filtra SOLO las 5 ramas canónicas y devuelve UNA por categoría,
+// replicando la lógica de la vista (coincidencia por prefijo + selección determinista).
 const filterScoutBranches = (ramas: Rama[]): Rama[] => {
   const normalize = (s: string) => String(s || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-  const ordenRamas = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'];
+    .toLowerCase()
+    .trim();
+  const CATS = ['cachorros', 'manada', 'webelos', 'tropa', 'clan'] as const;
+  type Cat = typeof CATS[number];
 
-  return ramas.filter((rama) => {
+  // Agrupar por categoría detectada por prefijo
+  const groups: Record<Cat, Rama[]> = { cachorros: [], manada: [], webelos: [], tropa: [], clan: [] };
+  ramas.forEach((rama) => {
     const n = normalize(String(rama.name || rama.nombre || ''));
-    return ordenRamas.some(orden => n.startsWith(orden));
+    const cat = CATS.find((c) => n.startsWith(c));
+    if (cat) groups[cat].push(rama);
   });
+
+  // Seleccionar representante por categoría:
+  // 1) Coincidencia exacta con nombre canónico (normalizado)
+  // 2) Si no hay exacta, la más antigua por createdAt
+  // 3) Si no hay fecha válida, orden alfabético como desempate
+  const pickRepresentative = (list: Rama[], token: Cat): Rama | undefined => {
+    if (!list || list.length === 0) return undefined;
+    const exact = list.find((r) => normalize(String(r.name || r.nombre || '')) === token);
+    if (exact) return exact;
+    const parseTs = (r: Rama) => {
+      const t = Date.parse(r.createdAt || '');
+      return Number.isFinite(t) ? t : Number.MAX_SAFE_INTEGER;
+    };
+    return list
+      .slice()
+      .sort((a, b) => {
+        const at = parseTs(a);
+        const bt = parseTs(b);
+        if (at !== bt) return at - bt;
+        const an = String(a.name || a.nombre || '');
+        const bn = String(b.name || b.nombre || '');
+        return an.localeCompare(bn, 'es');
+      })[0];
+  };
+
+  // Construir resultado en el orden canónico
+  const result: Rama[] = [];
+  for (const cat of CATS) {
+    const chosen = pickRepresentative(groups[cat], cat);
+    if (chosen) result.push(chosen);
+  }
+  return result;
 };
 
 // Función para ordenar ramas según el orden scout

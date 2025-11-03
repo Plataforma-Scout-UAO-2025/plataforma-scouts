@@ -5,6 +5,9 @@ import { Card } from "@/components/ui/card";
 import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
 import { fetchGroupAction } from "@/store/organigrama/organigramaActions";
 import type { RootState, AppDispatch } from "@/store/store";
+import { useRoleContext } from "@/hooks/useRoleContext";
+import { RawRole } from "@/roles/roles";
+import { toast } from "sonner";
 
 export default function OrganigramaHome() {
   const navigate = useNavigate();
@@ -13,6 +16,7 @@ export default function OrganigramaHome() {
   const { group, loading } = useSelector(
     (state: RootState) => state.organigrama
   );
+  const { currentUserRole } = useRoleContext();
 
   // Fetch group information when tenant params are available
   useEffect(() => {
@@ -39,6 +43,20 @@ export default function OrganigramaHome() {
     },
   ];
 
+  const handleNavigate = (path: string) => {
+    // Bloquear acceso a Niveles Organizativos para rol SCOUTER desde el Home
+    if (
+      path === "/app/organigrama/niveles-organizativos" &&
+      currentUserRole === RawRole.SCOUTER
+    ) {
+      toast.warning(
+        "No tienes permisos para gestionar Niveles Organizativos."
+      );
+      return; // Mantenerse en la misma vista
+    }
+    navigate(path);
+  };
+
   return (
     <div className="min-h-screen bg-background px-8 py-10">
       {/* Encabezado */}
@@ -62,11 +80,11 @@ export default function OrganigramaHome() {
             key={card.title}
             role="button"
             tabIndex={0}
-            onClick={() => navigate(card.path)}
+            onClick={() => handleNavigate(card.path)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                navigate(card.path);
+                handleNavigate(card.path);
               }
             }}
             className="

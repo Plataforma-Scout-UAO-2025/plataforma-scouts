@@ -15,6 +15,7 @@ import uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
 import uao.edu.co.scouts_project.organigrama.model.Group;
@@ -24,7 +25,13 @@ import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
 import org.springframework.context.annotation.Lazy;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.member.service.IMemberService;
+import uao.edu.co.scouts_project.member.mapper.MemberMapper;
+import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
+
+import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GLOBAL;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GRUPO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -47,6 +54,7 @@ public class GroupService implements IGroupService {
     private final OrganizationQueryPort organizationQueryPort;
     private final ITenantService tenantService;
     private final IAuth0Service auth0Service;
+    private final IMemberService memberService;
 
     private static final Logger logger = LoggerFactory.getLogger(GroupService.class);
 
@@ -57,12 +65,14 @@ public class GroupService implements IGroupService {
             @Qualifier("organigramaStorageService") SupabaseStorageService storageService,
             ConnectionQueryPort connectionQueryPort,
             ITenantService tenantService,
+            IMemberService memberService,
             OrganizationQueryPort organizationQueryPort,
             TenantRepository tenantRepository,
             GroupRepository groupRepository,
             @Lazy IAuth0Service auth0Service) {
         this.groupRepository = groupRepository;
         this.tenantRepository = tenantRepository;
+        this.memberService = memberService;
         this.storageService = storageService;
         this.connectionQueryPort = connectionQueryPort;
         this.organizationQueryPort = organizationQueryPort;
@@ -132,10 +142,15 @@ public class GroupService implements IGroupService {
         // de forma: $'uep-{tenant.slug}'
         logger.info("Se creará la conexión a la BD de Auth0 con el UEP-{orgId}: " + orgId);
 
-        connectionQueryPort.createOrUpdateAuth0DbConnection(orgId);
+        String connectionId = connectionQueryPort.createOrUpdateAuth0DbConnection(orgId);
 
         logger.info("OK: Conexión creada con ÉXITO.");
 
+        // ASOCIAR LA CONEXIÓN A LA ORGANIZACIÓN EN AUTH0
+        logger.info("Se asociará la conexión a la organización en Auth0.");
+        organizationQueryPort.enableConnectionForOrganization(orgId, connectionId);
+
+        logger.info("OK: Conexión asociada a la organización en Auth0.");
         // - Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
         // de conexión de dicha organization
         // (con el 'con_id' o como se específique) en Auth0.
@@ -149,7 +164,6 @@ public class GroupService implements IGroupService {
 
         // logger.info("Creando superusuario en conexión: {}", connectionRef);
         // CreatedUserDTO createdSuperUser = this.createUserInConnection(superUserCmd,
-        // connectionRef);
         // // Asociar al org y asignar rol ADMIN_GLOBAL
         // addUserToOrganization(orgId, createdSuperUser.getId());
         // assignRole(createdSuperUser.getId(), Role.ADMIN_GLOBAL);
@@ -206,6 +220,24 @@ public class GroupService implements IGroupService {
 
     }
 
+    @Override
+    public SlugValidationResponseDTO validateSlug(String slug) {
+        // 1) Validar formato primero
+        try {
+            validateSlugFormat(slug);
+        } catch (IllegalArgumentException e) {
+            return new SlugValidationResponseDTO(slug, false, "format", e.getMessage());
+        }
+
+        // 2) Verificar unicidad global (no usado por ningún grupo)
+        boolean exists = groupRepository.existsBySlug(slug);
+        if (exists) {
+            return new SlugValidationResponseDTO(slug, false, "exists", "El slug ya está en uso");
+        }
+
+        return new SlugValidationResponseDTO(slug, true, null, null);
+    }
+
     @Transactional(readOnly = true)
     public List<GroupResponseDTO> getGroupsByTenant(String tenantId) {
         ensureTenantExists(tenantId);
@@ -235,17 +267,57 @@ public class GroupService implements IGroupService {
         return toResponseDTO(group); // La versión simple es suficiente para un solo objeto
     }
 
+    @Transactional
+    public GroupResponseDTO createGroup(String tenantId, GroupDTO dto) {
+        ensureTenantExists(tenantId);
+
+        // Validar que no exista otro grupo con el mismo slug en el mismo tenant
+        if (groupRepository.existsByTenantIdAndSlug(tenantId, dto.slug())) {
+            throw new IllegalArgumentException("Ya existe un grupo con el slug '" + dto.slug() + "' en este tenant");
+        }
+
+        validateSlugFormat(dto.slug());
+
+        Group group;
+        try {
+            group = new Group(tenantId, dto.slug(), dto.name());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error al crear el grupo: " + e.getMessage(), e);
+        }
+        mapDtoToEntity(dto, group);
+
+        Group saved = groupRepository.save(group);
+        return toResponseDTO(saved);
+    }
+
+    public void validateSlugFormat(String slug) {
+        if (slug == null || slug.trim().isEmpty()) {
+            throw new IllegalArgumentException("El slug no puede estar vacío.");
+        }
+        if (!SLUG_PATTERN.matcher(slug).matches()) {
+            throw new IllegalArgumentException(
+                    "Slug inválido. Solo minúsculas, números y guiones medios. Ej: 'grupo-exploradores'");
+        }
+    }
+
     @Override
     public void ensureSlugIsUnique(String slug) {
-        if (groupRepository.existsBySlug(slug)) {
-            throw new IllegalArgumentException("El slug '" + slug + "' ya está en uso en otro grupo.");
-        }
+        throw new UnsupportedOperationException(
+                "ensureSlugIsUnique is not used; slug uniqueness is validated per tenant.");
     }
 
     @Override
     public GroupResponseDTO updateGroup(String tenantId, String groupSlug, GroupDTO dto) {
         ensureTenantExists(tenantId);
         Group group = findGroupOrThrow(tenantId, groupSlug);
+
+        // Validar que el slug y tenantId son inmutables
+        if (dto.slug() != null && !dto.slug().equals(groupSlug)) {
+            throw new IllegalArgumentException("El campo slug es inmutable");
+        }
+        if (dto.tenantId() != null && !dto.tenantId().equals(tenantId)) {
+            throw new IllegalArgumentException("El campo tenantId es inmutable");
+        }
 
         if (dto.logoObjectId() != null && !Objects.equals(dto.logoObjectId(), group.getLogoObjectId())) {
             storageService.deleteFileByObjectId(group.getLogoObjectId());
@@ -266,11 +338,9 @@ public class GroupService implements IGroupService {
         // 1. Buscar el grupo actual
         Group existing = findGroupOrThrow(tenantId, slug);
 
-        // 2. Validar slug (si cambia)
+        // 2. Validar slug (si cambia) - el slug es inmutable en los PATCH.
         if (dto.getSlug() != null && !dto.getSlug().equals(existing.getSlug())) {
-            validateSlugFormat(dto.getSlug());
-            ensureSlugIsUnique(dto.getSlug());
-            existing.setSlug(dto.getSlug());
+            throw new IllegalArgumentException("El campo slug es inmutable");
         }
 
         // 3. Mapear campos no nulos desde el DTO hacia la entidad
@@ -413,26 +483,25 @@ public class GroupService implements IGroupService {
     }
 
     @Override
-    public void validateSlugFormat(String slug) {
-        if (slug == null || slug.trim().isEmpty()) {
-            throw new IllegalArgumentException("El slug no puede estar vacío.");
-        }
-        if (!SLUG_PATTERN.matcher(slug).matches()) {
-            throw new IllegalArgumentException(
-                    "Slug inválido. Solo minúsculas, números y guiones medios. Ej: 'grupo-exploradores'");
-        }
-    }
-
-    @Override
     @Transactional
-    public GroupAdminCreatedResponseDTO addGroupAdmin(Long groupId, CreateGroupAdminRequestDTO request) {
-        // 1) Buscar grupo y obtener tenant/org id
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Grupo no encontrado para id=" + groupId));
+    public GroupAdminCreatedResponseDTO addGroupAdmin(String slug, String tenantId,
+            CreateGroupAdminRequestDTO request) {
 
-        String tenantId = group.getTenantId();
+        // 1) Buscar el grupo y verificar su existencia
+        Group group = groupRepository.findByTenantIdAndSlug(tenantId, slug)
+                .orElseThrow(() -> new IllegalArgumentException("Grupo no encontrado para slug=" + slug));
 
-        // 2) Construir comando para Auth0 con rol ADMIN_GRUPO
+        List<Member> activeGroupAdmins = memberService
+                .get_member_by_role_and_tenantId(ADMIN_GRUPO.name(), tenantId)
+                .stream()
+                .filter(m -> Boolean.TRUE.equals(m.getIsActive())) // Solo Usuarios Activos
+                .toList();
+
+        if (!activeGroupAdmins.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Ya existe un usuario ACTIVO con rol ADMIN_GRUPAL para el tenant: " + tenantId);
+        }
+        // 2) Crear usuario en Auth0 con rol ADMIN_GRUPO
         CreateUserWithRoleCommandDTO cmd = new CreateUserWithRoleCommandDTO(
                 request.email(),
                 request.password(),
@@ -441,8 +510,26 @@ public class GroupService implements IGroupService {
 
         var created = auth0Service.createUserWithRoleInOrganizationElevated(cmd, tenantId);
 
+        // 3) Validar que se haya enviado el DTO del miembro
+        if (request.member() == null) {
+            throw new IllegalArgumentException("El objeto 'member' es requerido en la solicitud");
+        }
+
+        // 4) Mapear DTO → entidad usando el MemberMapper
+        Member member = MemberMapper.toEntity(request.member());
+
+        // 5) Ajustar campos automáticos
+        member.setRole(Role.ADMIN_GRUPO.name());
+        member.setTenantId(tenantId);
+        member.setUserId(created.getId());
+        member.setIsActive(member.getIsActive() != null ? member.getIsActive() : true);
+
+        // 6) Crear el miembro en la base de datos
+        memberService.create_member(member);
+
+        // 7) Responder con DTO de creación
         return new GroupAdminCreatedResponseDTO(
-                groupId,
+                group.getGroupId(),
                 tenantId,
                 created.getId(),
                 created.getEmail(),

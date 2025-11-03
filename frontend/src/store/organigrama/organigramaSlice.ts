@@ -1,9 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchGroupAction, fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchSubgroupMembersAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction } from "./organigramaActions";
+import { fetchGroupAction, fetchSectionsAction, fetchSectionWithSubgroupsAction, fetchSubgroupMembersAction, setIconAction, deleteIconAction, setPhotoPrincipalAction, deletePhotoPrincipalAction, addGalleryImageAction, replaceGalleryImageAction, fetchRamasWithSubramasAction } from "./organigramaActions";
 import type { Section } from "@/types/section-simple.type";
 import type { Subgroup } from "@/types/subgroup-simple.type";
 import type { GroupResponseDTO } from "@/types/group.type";
 import type { Member } from "@/types/member.type";
+import type { Branch as Rama } from "@/app/routes/organigrama/organigramaRamas_Subramas/types/frontend";
 
 interface OrganigramaState {
   group: GroupResponseDTO | null;
@@ -16,6 +17,11 @@ interface OrganigramaState {
       error: string | null;
     };
   };
+  // Nuevo estado para ramas procesadas
+  ramas: Rama[];
+  ramasLoading: boolean;
+  ramasError: string | null;
+  ramasLastFetch: number;
   loading: boolean;
   error: string | null;
 }
@@ -25,6 +31,11 @@ const initialState: OrganigramaState = {
   sections: [],
   currentSection: null,
   subgroupMembers: {},
+  // Nuevo estado inicial para ramas
+  ramas: [],
+  ramasLoading: false,
+  ramasError: null,
+  ramasLastFetch: 0,
   loading: false,
   error: null,
 };
@@ -32,7 +43,25 @@ const initialState: OrganigramaState = {
 const organigramaSlice = createSlice({
   name: "organigrama",
   initialState,
-  reducers: {},
+  reducers: {
+    // Invalidar cache de ramas manualmente
+    invalidateRamasCache: (state) => {
+      state.ramasLastFetch = 0;
+      state.ramas = [];
+      state.ramasError = null;
+    },
+    
+    // Limpiar cache expirado de ramas
+    cleanExpiredRamasCache: (state) => {
+      const now = Date.now();
+      const CACHE_TTL = 30 * 1000; // 30 segundos
+      if (state.ramasLastFetch > 0 && (now - state.ramasLastFetch) > CACHE_TTL) {
+        state.ramas = [];
+        state.ramasLastFetch = 0;
+        state.ramasError = null;
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(fetchGroupAction.pending, (state) => {
       state.loading = true;
@@ -178,8 +207,28 @@ const organigramaSlice = createSlice({
       state.subgroupMembers[subgroupId].loading = false;
       state.subgroupMembers[subgroupId].error = action.payload as string;
     });
+
+    // Ramas with subgroups actions
+    builder.addCase(fetchRamasWithSubramasAction.pending, (state) => {
+      state.ramasLoading = true;
+      state.ramasError = null;
+    });
+    builder.addCase(fetchRamasWithSubramasAction.fulfilled, (state, action) => {
+      state.ramasLoading = false;
+      state.ramas = action.payload;
+      state.ramasLastFetch = Date.now();
+      state.ramasError = null;
+    });
+    builder.addCase(fetchRamasWithSubramasAction.rejected, (state, action) => {
+      state.ramasLoading = false;
+      state.ramasError = action.payload as string;
+      // No resetear ramasLastFetch para mantener cache en caso de error
+    });
   },
 });
+
+// Export actions
+export const { invalidateRamasCache, cleanExpiredRamasCache } = organigramaSlice.actions;
 
 // Selectors
 export const selectSubgroupMembers = (subgroupId: number) => (state: { organigrama: OrganigramaState }) => {

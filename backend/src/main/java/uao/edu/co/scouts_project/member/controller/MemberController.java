@@ -20,7 +20,9 @@ import uao.edu.co.scouts_project.member.service.ISchoolService;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
-
+import uao.edu.co.scouts_project.organigrama.service.GroupService;
+import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
+import java.util.stream.Collectors;
 import java.util.*;
 
 /**
@@ -58,6 +60,9 @@ public class MemberController {
 
     @Autowired
     private SubgroupService subgroupService;
+
+    @Autowired
+    private GroupService groupService;
 
     /**
      * Obtiene el nombre de usuario autenticado desde el contexto de seguridad.
@@ -241,6 +246,47 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
             log.error("Error inesperado al listar miembros con detalles: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Lista todos los grupos y añade el miembro responsable (rol ADMIN_GRUPO)
+     * asociado por tenant_id en la propiedad `inChargeOf`.
+     *
+     * @return lista de grupos enriquecidos con el admin grupal (si existe)
+     */
+    @GetMapping("/getAll")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Map<String, Object>>> getAll() {
+        try {
+            GroupResponseDTO[] groups = groupService.getAllGroups();
+
+            // Obtener todos los miembros con rol ADMIN_GRUPO
+            List<uao.edu.co.scouts_project.member.model.Member> admins = memberservice.findMembersByRole("ADMIN_GRUPO");
+
+            // Map tenantId -> admin DTO (si hay varios, toma el primero)
+            Map<String, uao.edu.co.scouts_project.member.dto.ListMemberDto> adminByTenant = admins.stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(uao.edu.co.scouts_project.member.model.Member::getTenantId,
+                            uao.edu.co.scouts_project.member.mapper.ListMemberMapper::toDto,
+                            (existing, replacement) -> existing));
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            if (groups != null) {
+                    for (GroupResponseDTO g : groups) {
+                    Map<String, Object> item = new HashMap<>();
+                    // incluir la info del grupo (el DTO ya tiene la mayoría de campos solicitados)
+                    item.put("group", g);
+                    // agregar el encargado (puede ser null)
+                        item.put("inChargeOf", adminByTenant.get(g.tenantId()));
+                    result.add(item);
+                }
+            }
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error al obtener grupos con admin: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
