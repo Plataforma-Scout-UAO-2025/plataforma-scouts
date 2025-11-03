@@ -13,12 +13,18 @@ import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
 import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
 import uao.edu.co.scouts_project.organigrama.model.Group;
 import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
 import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
 import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
+import uao.edu.co.scouts_project.application.service.IAuth0Service;
+import org.springframework.context.annotation.Lazy;
+import uao.edu.co.scouts_project.infrastructure.security.Role;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,6 +46,7 @@ public class GroupService implements IGroupService {
     private final ConnectionQueryPort connectionQueryPort;
     private final OrganizationQueryPort organizationQueryPort;
     private final ITenantService tenantService;
+    private final IAuth0Service auth0Service;
 
     private static final Logger logger = LoggerFactory.getLogger(GroupService.class);
 
@@ -52,13 +59,15 @@ public class GroupService implements IGroupService {
             ITenantService tenantService,
             OrganizationQueryPort organizationQueryPort,
             TenantRepository tenantRepository,
-            GroupRepository groupRepository) {
+            GroupRepository groupRepository,
+            @Lazy IAuth0Service auth0Service) {
         this.groupRepository = groupRepository;
         this.tenantRepository = tenantRepository;
         this.storageService = storageService;
         this.connectionQueryPort = connectionQueryPort;
         this.organizationQueryPort = organizationQueryPort;
         this.tenantService = tenantService;
+        this.auth0Service = auth0Service;
     }
 
     @Override
@@ -123,7 +132,7 @@ public class GroupService implements IGroupService {
         // de forma: $'uep-{tenant.slug}'
         logger.info("Se creará la conexión a la BD de Auth0 con el UEP-{orgId}: " + orgId);
 
-    connectionQueryPort.createOrUpdateAuth0DbConnection(orgId);
+        connectionQueryPort.createOrUpdateAuth0DbConnection(orgId);
 
         logger.info("OK: Conexión creada con ÉXITO.");
 
@@ -149,7 +158,7 @@ public class GroupService implements IGroupService {
 
         // Crear el Tenant en BD con el org_id de Auth0
 
-        logger.info("Se creará el DTO de Tenant");
+        logger.info("\n\nSe creará el DTO de Tenant");
 
         var tenantInfo = new TenantInfoDTO(
                 orgId,
@@ -165,8 +174,33 @@ public class GroupService implements IGroupService {
         logger.info("OK: Se crea el tenant con éxito en BD.");
         logger.info("Se creará un nuevo grupo.");
 
-        logger.info("Se creará un grupo en BD.");
-        GroupResponseDTO response = createGroup(group);
+        logger.info("\n\nSe creará un grupo en BD.");
+
+        GroupDTO finalGroup = new GroupDTO(
+                group.groupId(),
+                orgId,
+                group.slug(),
+                group.name(),
+                group.district(),
+                group.identifierNumber(),
+                group.address(),
+                group.phone(),
+                group.email(),
+                group.foundedIn(),
+                group.motto(),
+                group.mission(),
+                group.vision(),
+                group.history(),
+                group.logoObjectId(),
+                group.scarfObjectId(),
+                group.socialLinks(),
+                group.config(),
+                true,
+                "ACTIVE",
+                null,
+                null);
+        GroupResponseDTO response = createGroup(finalGroup);
+
         logger.info("OK: Se crea el grupo con éxito en BD.");
         return response;
 
@@ -387,6 +421,32 @@ public class GroupService implements IGroupService {
             throw new IllegalArgumentException(
                     "Slug inválido. Solo minúsculas, números y guiones medios. Ej: 'grupo-exploradores'");
         }
+    }
+
+    @Override
+    @Transactional
+    public GroupAdminCreatedResponseDTO addGroupAdmin(Long groupId, CreateGroupAdminRequestDTO request) {
+        // 1) Buscar grupo y obtener tenant/org id
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Grupo no encontrado para id=" + groupId));
+
+        String tenantId = group.getTenantId();
+
+        // 2) Construir comando para Auth0 con rol ADMIN_GRUPO
+        CreateUserWithRoleCommandDTO cmd = new CreateUserWithRoleCommandDTO(
+                request.email(),
+                request.password(),
+                request.username(),
+                Role.ADMIN_GRUPO);
+
+        var created = auth0Service.createUserWithRoleInOrganizationElevated(cmd, tenantId);
+
+        return new GroupAdminCreatedResponseDTO(
+                groupId,
+                tenantId,
+                created.getId(),
+                created.getEmail(),
+                Role.ADMIN_GRUPO.name());
     }
 
     // Método `toResponseDTO` sobrecargado: uno para carga masiva (más eficiente)

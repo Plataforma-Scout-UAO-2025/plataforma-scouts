@@ -29,8 +29,7 @@ import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 import uao.edu.co.scouts_project.member.service.IMemberService;
 import uao.edu.co.scouts_project.member.service.MemberServiceImp;
-import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
-import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
+// removed unused IGroupService and ITenantService to avoid circular deps
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +49,7 @@ public class Auth0ServiceImpl implements IAuth0Service {
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final PermissionQueryPort permissionQueryPort; // Added
 
-    private final IGroupService groupService;
+    // removed: private final IGroupService groupService;
     @SuppressWarnings("unused")
     private final IMemberService memberServiceImp;
     @SuppressWarnings("unused")
@@ -58,11 +57,11 @@ public class Auth0ServiceImpl implements IAuth0Service {
 
 
     public Auth0ServiceImpl(Auth0AdminPort adminPort,
-            RoleMappingPort roleMappingPort,
-            RoleAssignmentValidator roleAssignmentValidator,
-            PermissionQueryPort permissionQueryPort, Auth0AdminAdapter auth0AdminAdapter,
-            ITenantService tenantService, IGroupService groupService, IMemberService memberService,
-            SupabaseStorageService supabaseStorageService, MemberServiceImp memberServiceImp_1) {
+        RoleMappingPort roleMappingPort,
+        RoleAssignmentValidator roleAssignmentValidator,
+        PermissionQueryPort permissionQueryPort, Auth0AdminAdapter auth0AdminAdapter,
+        IMemberService memberService,
+        SupabaseStorageService supabaseStorageService, MemberServiceImp memberServiceImp_1) {
         this.adminPort = adminPort;
         this.roleMappingPort = roleMappingPort;
         this.roleAssignmentValidator = roleAssignmentValidator;
@@ -70,7 +69,6 @@ public class Auth0ServiceImpl implements IAuth0Service {
         this.auth0AdminAdapter = auth0AdminAdapter;
 
         this.memberServiceImp = memberService;
-        this.groupService = groupService;
         this.supabaseStorageService = supabaseStorageService;
         this.memberServiceImp_1 = memberServiceImp_1;
 

@@ -9,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
 
 public interface IGroupService {
 
@@ -41,5 +43,7 @@ public interface IGroupService {
     void ensureSlugIsUnique(String slug);
 
     void validateSlugFormat(String slug);
+
+    GroupAdminCreatedResponseDTO addGroupAdmin(Long groupId, CreateGroupAdminRequestDTO request);
 
 }

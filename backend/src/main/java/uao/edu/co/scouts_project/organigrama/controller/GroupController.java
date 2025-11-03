@@ -30,6 +30,8 @@ import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdateImageRequest;
 import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
 
 import java.net.URI;
 import java.util.List;
@@ -73,22 +75,6 @@ public class GroupController {
         @GetMapping("/getAll")
         public GroupResponseDTO[] getAllGroups() {
                 return groupService.getAllGroups();
-        }
-
-        @Operation(summary = "Crear un nuevo grupo", description = "Crea un nuevo grupo dentro del tenant especificado")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "201", description = "Grupo creado exitosamente"),
-                        @ApiResponse(responseCode = "400", description = "Datos inválidos o faltantes")
-        })
-
-        @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-        public ResponseEntity<GroupResponseDTO> createGroup(
-                        @Parameter(description = "Tenant ID", example = "tenant-001") @PathVariable String tenantId,
-                        @Valid @RequestBody GroupDTO dto) {
-                GroupResponseDTO created = groupService.createGroupFull(dto, null);
-                return ResponseEntity
-                                .created(URI.create("/api/v1/tenants/" + tenantId + "/groups/" + created.slug()))
-                                .body(created);
         }
 
         @Operation(summary = "Crear un nuevo grupo (multipart)", description = "Crea un nuevo grupo y permite enviar una imagen opcional para la organización")
@@ -201,6 +187,26 @@ public class GroupController {
                         @Parameter(description = "UUID del nuevo pañolón en Supabase Storage") @Valid @RequestBody UpdateImageRequest request) {
                 groupService.updateScarf(tenantId, groupSlug, request.objectId());
                 return ResponseEntity.noContent().build();
+        }
+
+        @PostMapping("/{groupId}/admins")
+        @PreAuthorize("hasRole('ADMIN_GLOBAL')")
+        @Operation(
+                        summary = "Crear admin de grupo (ADMIN_GRUPO)",
+                        description = "Crea un usuario en Auth0 con rol ADMIN_GRUPO dentro de la organización (tenant) del grupo",
+                        responses = {
+                                        @ApiResponse(responseCode = "201", description = "Admin de grupo creado",
+                                                        content = @Content(schema = @Schema(implementation = GroupAdminCreatedResponseDTO.class))),
+                                        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+                                        @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
+                        }
+        )
+        public ResponseEntity<GroupAdminCreatedResponseDTO> createGroupAdmin(
+                        @PathVariable String tenantId,
+                        @PathVariable Long groupId,
+                        @Valid @RequestBody CreateGroupAdminRequestDTO request) {
+                GroupAdminCreatedResponseDTO created = groupService.addGroupAdmin(groupId, request);
+                return ResponseEntity.status(201).body(created);
         }
 
 }
