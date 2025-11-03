@@ -61,6 +61,17 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
             long tookMs = System.currentTimeMillis() - startedAt;
             if (e.getStatusCode() == 409) {
                 log.warn("[Auth0-Orgs] already-exists: name={} (status=409, durationMs={})", name, tookMs);
+                // Intentar recuperar la organización existente por name y devolver su id
+                try {
+                    Organization existing = executeWithRetry(() -> api().organizations().getByName(name).execute(), "get organization by name");
+                    if (existing != null && existing.getId() != null) {
+                        String id = existing.getId();
+                        log.info("[Auth0-Orgs] Reutilizando organización existente: name={}, id={} (tras 409)", name, id);
+                        return id;
+                    }
+                } catch (Exception lookupEx) {
+                    log.warn("[Auth0-Orgs] No fue posible recuperar organización por name tras 409: name={}, cause={}", name, lookupEx.getMessage());
+                }
                 throw new OrganizationAlreadyExistsException(name);
             }
             String code = "ERR_ORG_CREATE_API_" + e.getStatusCode();
