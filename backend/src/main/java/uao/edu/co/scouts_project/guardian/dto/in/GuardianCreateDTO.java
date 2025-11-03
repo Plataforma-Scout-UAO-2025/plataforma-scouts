@@ -13,6 +13,7 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -34,8 +35,10 @@ public class GuardianCreateDTO {
     private String tenantId;
     private String subgroupId;
     @NotBlank(message = "El nombre es obligatorio")
+    @JsonProperty("firstName")
     private String firstName;
     @NotBlank(message = "El apellido es obligatorio")
+    @JsonProperty("lastName")
     private String lastName;
     @Positive(message = "Edad debe ser un número positivo")
     private Integer age;
