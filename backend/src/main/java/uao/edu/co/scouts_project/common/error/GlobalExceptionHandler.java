@@ -8,7 +8,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions;
 import java.time.Instant;
@@ -76,6 +75,15 @@ public class GlobalExceptionHandler {
     return buildErrorResponse(
         HttpStatus.CONFLICT,
         "Member Already Assigned",
+        ex.getMessage());
+  }
+
+  @ExceptionHandler(GuardianExceptions.AvailableGuardiansException.class)
+  public ResponseEntity<Map<String, Object>> handleAvailableGuardiansNotFound(
+      GuardianExceptions.AvailableGuardiansException ex) {
+    return buildErrorResponse(
+        HttpStatus.NOT_FOUND,
+        "Available Guardians Not Found",
         ex.getMessage());
   }
 

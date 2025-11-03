@@ -28,11 +28,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.AvailableGuardianDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
+import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.AvailableGuardiansException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.GuardianNotFoundException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.MemberAlreadyAssignedException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions.MemberNotFoundException;
+import uao.edu.co.scouts_project.guardian.model.AvailableGuardian;
 import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 import uao.edu.co.scouts_project.guardian.repository.GuardianRepository;
 import uao.edu.co.scouts_project.guardian.service.GuardianServiceImpl;
@@ -42,7 +45,7 @@ import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 
 @ExtendWith(MockitoExtension.class)
-class GuadianServiceImplTest {
+class GuardianServiceImplTest {
 
     @Mock
     private GuardianRepository guardianRepository;
@@ -234,6 +237,116 @@ class GuadianServiceImplTest {
     }
 
     @Nested
+    @DisplayName("findAvailableGuardians Tests")
+    class FindAvailableGuardiansTests {
+
+        @Test
+        @DisplayName("Should return list of available guardians")
+        void shouldReturnAvailableGuardians() {
+            // Arrange
+            AvailableGuardian guardian1 = AvailableGuardian.builder()
+                    .memberId(1L)
+                    .firstName("John")
+                    .lastName("Doe")
+                    .identification("1234567890")
+                    .build();
+
+            AvailableGuardian guardian2 = AvailableGuardian.builder()
+                    .memberId(2L)
+                    .firstName("Jane")
+                    .lastName("Smith")
+                    .identification("0987654321")
+                    .build();
+
+            List<AvailableGuardian> availableGuardians = Arrays.asList(guardian1, guardian2);
+            when(guardianRepository.findAvailableGuardians()).thenReturn(availableGuardians);
+
+            // Act
+            List<AvailableGuardianDTO> result = guardianService.findAvailableGuardians();
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(2, result.size());
+
+            // Verify first guardian
+            assertEquals(1L, result.get(0).getMemberId());
+            assertEquals("John", result.get(0).getFirstName());
+            assertEquals("Doe", result.get(0).getLastName());
+            assertEquals("1234567890", result.get(0).getIdentification());
+
+            // Verify second guardian
+            assertEquals(2L, result.get(1).getMemberId());
+            assertEquals("Jane", result.get(1).getFirstName());
+            assertEquals("Smith", result.get(1).getLastName());
+            assertEquals("0987654321", result.get(1).getIdentification());
+
+            verify(guardianRepository, times(1)).findAvailableGuardians();
+        }
+
+        @Test
+        @DisplayName("Should return single available guardian")
+        void shouldReturnSingleAvailableGuardian() {
+            // Arrange
+            AvailableGuardian guardian = AvailableGuardian.builder()
+                    .memberId(1L)
+                    .firstName("John")
+                    .lastName("Doe")
+                    .identification("1234567890")
+                    .build();
+
+            when(guardianRepository.findAvailableGuardians()).thenReturn(Arrays.asList(guardian));
+
+            // Act
+            List<AvailableGuardianDTO> result = guardianService.findAvailableGuardians();
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals("John", result.get(0).getFirstName());
+            verify(guardianRepository, times(1)).findAvailableGuardians();
+        }
+
+        @Test
+        @DisplayName("Should throw AvailableGuardiansException when no available guardians found")
+        void shouldThrowExceptionWhenNoAvailableGuardians() {
+            // Arrange
+            when(guardianRepository.findAvailableGuardians()).thenReturn(Collections.emptyList());
+
+            // Act & Assert
+            assertThrows(AvailableGuardiansException.class,
+                    () -> guardianService.findAvailableGuardians());
+            verify(guardianRepository, times(1)).findAvailableGuardians();
+        }
+
+        @Test
+        @DisplayName("Should correctly map all fields from AvailableGuardian to AvailableGuardianDTO")
+        void shouldMapAllFieldsCorrectly() {
+            // Arrange
+            AvailableGuardian guardian = AvailableGuardian.builder()
+                    .memberId(123L)
+                    .firstName("Carlos")
+                    .lastName("Rodriguez")
+                    .identification("1122334455")
+                    .build();
+
+            when(guardianRepository.findAvailableGuardians()).thenReturn(Arrays.asList(guardian));
+
+            // Act
+            List<AvailableGuardianDTO> result = guardianService.findAvailableGuardians();
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            AvailableGuardianDTO dto = result.get(0);
+
+            assertEquals(guardian.getMemberId(), dto.getMemberId());
+            assertEquals(guardian.getFirstName(), dto.getFirstName());
+            assertEquals(guardian.getLastName(), dto.getLastName());
+            assertEquals(guardian.getIdentification(), dto.getIdentification());
+        }
+    }
+
+    @Nested
     @DisplayName("saveGuardian Tests")
     class SaveGuardianTests {
 
@@ -368,17 +481,34 @@ class GuadianServiceImplTest {
         @Test
         @DisplayName("Should remove guardian ID from member successfully")
         void shouldRemoveGuardianIdFromMember() {
-            // Arrange
-            regularMember.setGuardianId(1);
+            // Arrange - Create an adult member (18+ years old) for this test
+            Member adultMember = Member.builder()
+                    .memberId(3L)
+                    .userId("adult-member-789")
+                    .tenantId("tenant-1")
+                    .firstName("Adult")
+                    .lastName("Member")
+                    .age(20)
+                    .role("SCOUT")
+                    .identification("1112223334")
+                    .documentType(DocumentType.CC)
+                    .phone("3001112233")
+                    .isActive(true)
+                    .status(Status.APPROVED)
+                    .acceptanceDate(LocalDate.now())
+                    .guardianId(1)
+                    .subgroup(subgroup)
+                    .build();
+            
             when(guardianRepository.existsById(1L)).thenReturn(true);
-            when(guardianRepository.findById(2L)).thenReturn(Optional.of(regularMember));
-            when(guardianRepository.save(any(Member.class))).thenReturn(regularMember);
+            when(guardianRepository.findById(3L)).thenReturn(Optional.of(adultMember));
+            when(guardianRepository.save(any(Member.class))).thenReturn(adultMember);
 
             // Act & Assert
-            assertDoesNotThrow(() -> guardianService.removeGuardianIdFromMember(1L, 2L));
+            assertDoesNotThrow(() -> guardianService.removeGuardianIdFromMember(1L, 3L));
 
             verify(guardianRepository, times(1)).existsById(1L);
-            verify(guardianRepository, times(1)).findById(2L);
+            verify(guardianRepository, times(1)).findById(3L);
             verify(guardianRepository, times(1)).save(any(Member.class));
         }
 
