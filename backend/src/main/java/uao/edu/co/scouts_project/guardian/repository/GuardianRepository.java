@@ -17,7 +17,7 @@ import uao.edu.co.scouts_project.guardian.model.MemberCustom;
 public interface GuardianRepository extends JpaRepository<Member, Long> {
         
         @Query("SELECT new uao.edu.co.scouts_project.guardian.model.MemberCustom(" +
-                        "m.memberId, m.firstName, m.lastName, m.identification, m.documentType, m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive, m.email, m.role) "
+                        "m.memberId, m.firstName, m.lastName, m.identification, m.documentType, m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive, m.email, m.role, m.relationship) "
                         +
                         "FROM Member m WHERE m.guardianId = :guardianId")
         List<MemberCustom> findMembersInChargeOf(@Param("guardianId") Long guardianId);
@@ -29,7 +29,7 @@ public interface GuardianRepository extends JpaRepository<Member, Long> {
 
         @Query("SELECT new uao.edu.co.scouts_project.guardian.model.MemberCustom(" +
                 "m.memberId, m.firstName, m.lastName, m.identification, m.documentType, " +
-                "m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive, m.email, m.role) " +
+                "m.age, m.gender, m.phone, m.birthDate, m.address, m.isActive, m.email, m.role, m.relationship) " +
                 "FROM Member m WHERE m.guardianId IS NULL AND m.role = 'SCOUT' AND m.age < 18 AND m.isActive = true")
         List<MemberCustom> findMembersWithoutGuardian();
 
