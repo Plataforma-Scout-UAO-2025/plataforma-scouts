@@ -10,29 +10,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import type { MemberBasicInfo } from "@/types/guardian.type";
+import type { MemberBasicInfo } from "@/types/guardian.type"; 
+import { getAvailableGuardians } from "@/api/guardiansApi";
 import { Search, User, ArrowRight, Shield } from "lucide-react";
+import { useAuth0 } from "@auth0/auth0-react";
 
 interface ReassignGuardianModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (memberId: number, newGuardianId: number) => Promise<void>;
+  onConfirm: (memberId: number, newGuardianId: number, currentGuardianId: number) => Promise<void>;
   member: MemberBasicInfo | null;
   isReassigning: boolean;
 }
 
-// Interfaz para TODOS los guardianes del sistema
 interface GuardianOption {
   guardianId: number;
-  firstName?: string;
-  first_name?: string;
-  lastName?: string;
-  last_name?: string;
-  identification?: string;
+  firstName: string;
+  lastName: string;
+  identification: string;
   phone?: string;
   email?: string;
   membersCount?: number;
-  isCurrentGuardian?: boolean; // Para identificar el guardian actual
+  isCurrentGuardian?: boolean;
 }
 
 interface ExtendedMemberInfo extends MemberBasicInfo {
@@ -45,7 +44,22 @@ interface ExtendedMemberInfo extends MemberBasicInfo {
   identification?: string;
   age?: number;
   role?: string;
-  guardianId?: number; // ID del guardian actual
+  guardianId?: number;
+}
+
+// Tipo para los datos de la API
+interface GuardianApiResponse {
+  member_id?: number;
+  guardianId?: number;
+  id?: number;
+  first_name?: string;
+  firstName?: string;
+  last_name?: string;
+  lastName?: string;
+  identification?: string;
+  phone?: string;
+  email?: string;
+  membersCount?: number;
 }
 
 export default function ReassignGuardianModal({
@@ -55,110 +69,87 @@ export default function ReassignGuardianModal({
   member,
   isReassigning
 }: ReassignGuardianModalProps) {
+  const { user } = useAuth0();
   const [allGuardians, setAllGuardians] = useState<GuardianOption[]>([]);
   const [filteredGuardians, setFilteredGuardians] = useState<GuardianOption[]>([]);
   const [selectedGuardianId, setSelectedGuardianId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const getCurrentGuardianId = (): number => {
+    return user?.sub ? parseInt(user.sub.replace('auth0|', '')) : 0;
+  };
+
   const loadAllGuardians = useCallback(async () => {
     setLoading(true);
-    try {    
-      const currentGuardianId = (member as ExtendedMemberInfo)?.guardianId;
+    try {
+      const guardiansData = await getAvailableGuardians();
+      if (!guardiansData || !Array.isArray(guardiansData)) {
+        throw new Error("Datos inválidos recibidos de la API");
+      }
       
-      const mockGuardians: GuardianOption[] = [
-        {
-          guardianId: 1,
-          firstName: "María",
-          lastName: "González",
-          identification: "12345678",
-          phone: "300-123-4567",
-          email: "maria.gonzalez@email.com",
-          membersCount: 2,
-          isCurrentGuardian: currentGuardianId === 1
-        },
-        {
-          guardianId: 2,
-          firstName: "Carlos",
-          lastName: "Rodríguez", 
-          identification: "87654321",
-          phone: "301-987-6543",
-          email: "carlos.rodriguez@email.com",
-          membersCount: 1,
-          isCurrentGuardian: currentGuardianId === 2
-        },
-        {
-          guardianId: 3,
-          firstName: "Ana",
-          lastName: "Martínez",
-          identification: "11223344",
-          phone: "302-555-1234",
-          email: "ana.martinez@email.com",
-          membersCount: 3,
-          isCurrentGuardian: currentGuardianId === 3
-        },
-        {
-          guardianId: 4,
-          firstName: "Pedro",
-          lastName: "López",
-          identification: "55667788",
-          phone: "303-111-2222",
-          email: "pedro.lopez@email.com",
-          membersCount: 0,
-          isCurrentGuardian: currentGuardianId === 4
-        },
-        {
-          guardianId: 5,
-          firstName: "Laura",
-          lastName: "Hernández",
-          identification: "99887766",
-          phone: "304-333-4444",
-          email: "laura.hernandez@email.com",
-          membersCount: 4,
-          isCurrentGuardian: currentGuardianId === 5
-        }
-      ];
+      const currentGuardianId = getCurrentGuardianId();
       
-      setAllGuardians(mockGuardians);
-      setFilteredGuardians(mockGuardians);
+      const formattedGuardians: GuardianOption[] = guardiansData.map((item: GuardianApiResponse, index: number) => {
+        
+        return {
+          guardianId: item.member_id || item.guardianId || item.id || index + 1,
+          firstName: item.first_name || item.firstName || "Sin nombre",
+          lastName: item.last_name || item.lastName || "Sin apellido", 
+          identification: item.identification || "Sin identificación",
+          phone: item.phone || undefined,
+          email: item.email || undefined,
+          membersCount: item.membersCount || 0,
+          isCurrentGuardian: currentGuardianId === (item.member_id || item.guardianId || item.id)
+        };
+      });
+      
+      
+      const validGuardians = formattedGuardians.filter(guardian => 
+        guardian.firstName !== "Sin nombre" && 
+        guardian.lastName !== "Sin apellido" &&
+        guardian.guardianId > 0
+      );
+      
+      
+      setAllGuardians(validGuardians);
+      setFilteredGuardians(validGuardians);
+      
     } catch (error) {
-      console.error("Error al cargar los guardianes:", error);
+      console.error("Error loading all guardians:", error);
       toast.error("Error al cargar los guardianes");
+      
+      setAllGuardians([]);
+      setFilteredGuardians([]);
     } finally {
       setLoading(false);
     }
-  }, [member]);
+  }, [user?.sub]);
+  
 
-  // Cargar TODOS los guardianes cuando se abre el modal
   useEffect(() => {
     if (isOpen && member) {
       loadAllGuardians();
     }
-  }, [isOpen, member, loadAllGuardians]);
+  }, [isOpen, member, loadAllGuardians]); 
 
-  // Filtrar guardianes por búsqueda
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredGuardians(allGuardians);
     } else {
       const filtered = allGuardians.filter((guardian) => {
-        const firstName = guardian.firstName || guardian.first_name || "";
-        const lastName = guardian.lastName || guardian.last_name || "";
-        const fullName = `${firstName} ${lastName}`.toLowerCase();
-        const identification = guardian.identification || "";
-        
+        const fullName = `${guardian.firstName} ${guardian.lastName}`.toLowerCase();
         return fullName.includes(searchTerm.toLowerCase()) ||
-               identification.includes(searchTerm);
+               guardian.identification.includes(searchTerm);
       });
       setFilteredGuardians(filtered);
     }
   }, [searchTerm, allGuardians]);
 
   const handleGuardianSelect = (guardianId: number) => {
-    // No permitir seleccionar el guardian actual
     const selectedGuardian = allGuardians.find(g => g.guardianId === guardianId);
     if (selectedGuardian?.isCurrentGuardian) {
-      toast.warning("Este miembro ya está asignado a ese guardian");
+      toast.warning("Este miembro ya está asignado a este guardian");
       return;
     }
     setSelectedGuardianId(guardianId);
@@ -169,29 +160,34 @@ export default function ReassignGuardianModal({
       toast.error("Por favor selecciona un guardian");
       return;
     }
-
+  
     if (!member) {
       toast.error("No se encontró el miembro");
       return;
     }
-
+  
     const memberId = getMemberId(member);
-    if (!memberId) {
-      toast.error("No se pudo identificar el miembro");
-      return;
-    }
-
-    const selectedGuardian = allGuardians.find(g => g.guardianId === selectedGuardianId);
-    if (selectedGuardian?.isCurrentGuardian) {
-      toast.error("No puedes reasignar al mismo guardian");
-      return;
-    }
+    const currentGuardianId = getCurrentGuardianId();
     
+    if (!memberId || !currentGuardianId) {
+      toast.error("Error: IDs inválidos");
+      return;
+    }
+  
+    if (currentGuardianId === selectedGuardianId) {
+      toast.error("El guardian actual y el nuevo son el mismo");
+      return;
+    }
+  
     try {
-      await onConfirm(memberId, selectedGuardianId);
+      await onConfirm(memberId, selectedGuardianId, currentGuardianId);
       handleClose();
-    } catch (error) {
-      console.error("Error reassigning guardian:", error);
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        toast.error((error as Error).message);
+      } else {
+        toast.error("Ocurrió un error desconocido");
+      }
     }
   };
 
@@ -233,12 +229,9 @@ export default function ReassignGuardianModal({
   };
 
   const getGuardianName = (guardian: GuardianOption): string => {
-    const firstName = guardian.firstName || guardian.first_name || "Sin nombre";
-    const lastName = guardian.lastName || guardian.last_name || "";
-    return `${firstName} ${lastName}`.trim();
+    return `${guardian.firstName} ${guardian.lastName}`.trim();
   };
 
-  // Función para obtener el color del badge según la cantidad de miembros
   const getMemberCountBadge = (count: number, isCurrentGuardian: boolean) => {
     if (isCurrentGuardian) {
       return "bg-blue-100 text-blue-800 border-blue-200";
@@ -266,7 +259,6 @@ export default function ReassignGuardianModal({
         </DialogHeader>
 
         <div className="flex-1 flex flex-col space-y-4 py-4 min-h-0">
-          {/* Información del miembro */}
           <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded flex-shrink-0">
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-blue-600" />
@@ -277,11 +269,13 @@ export default function ReassignGuardianModal({
                     ({(member as ExtendedMemberInfo).age} años)
                   </span>
                 )}
+                <div className="text-xs text-gray-500 mt-1">
+                  Guardian actual: {user?.name} (ID: {getCurrentGuardianId()})
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Buscador */}
           <div className="relative flex-shrink-0">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
@@ -292,7 +286,6 @@ export default function ReassignGuardianModal({
             />
           </div>
 
-          {/* Lista de TODOS los guardianes */}
           <div className="flex-1 border rounded-lg overflow-hidden flex flex-col min-h-0">
             {loading ? (
               <div className="flex items-center justify-center flex-1">
@@ -308,6 +301,9 @@ export default function ReassignGuardianModal({
                   <p className="text-gray-500">
                     {searchTerm ? "No se encontraron guardianes" : "No hay guardianes registrados"}
                   </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Total de registros recibidos: {allGuardians.length}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -315,7 +311,7 @@ export default function ReassignGuardianModal({
                 <div className="space-y-2">
                   {filteredGuardians.map((guardian) => (
                     <div
-                      key={guardian.guardianId}
+                      key={`guardian-${guardian.guardianId}`}
                       className={`flex items-center space-x-3 p-4 rounded-lg border transition-colors ${
                         guardian.isCurrentGuardian
                           ? 'bg-blue-50 border-blue-300 cursor-not-allowed opacity-75'
@@ -325,7 +321,6 @@ export default function ReassignGuardianModal({
                       }`}
                       onClick={() => !guardian.isCurrentGuardian && handleGuardianSelect(guardian.guardianId)}
                     >
-                      {/* Radio button visual */}
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                         guardian.isCurrentGuardian
                           ? 'bg-blue-100 border-blue-300'
@@ -355,7 +350,7 @@ export default function ReassignGuardianModal({
                               )}
                             </div>
                             <p className="text-sm text-gray-500 truncate">
-                              ID: {guardian.guardianId} • {guardian.identification || "Sin identificación"}
+                              ID: {guardian.guardianId} • {guardian.identification}
                             </p>
                             <p className="text-xs text-gray-400 truncate">
                               {guardian.phone && `Tel: ${guardian.phone}`}
@@ -382,7 +377,6 @@ export default function ReassignGuardianModal({
             )}
           </div>
 
-          {/* Confirmación */}
           {selectedGuardianId && (
             <div className="text-sm text-gray-600 bg-green-50 p-3 rounded flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -394,10 +388,10 @@ export default function ReassignGuardianModal({
             </div>
           )}
 
-          {/* Información adicional */}
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded flex-shrink-0">
             <div className="flex items-center justify-between">
               <span>Total de guardianes: {allGuardians.length}</span>
+              <span>Mostrando: {filteredGuardians.length}</span>
             </div>
           </div>
         </div>

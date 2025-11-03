@@ -23,4 +23,6 @@ public interface GuardianService {
     void deleteGuardianById(Long guardianId);
     void addMemberToGuardian(Long guardianId, Long memberId);
     void removeGuardianIdFromMember(Long guardianId, Long memberId);
+    boolean reassignMemberGuardian(Long memberId, Long currentGuardianId, Long newGuardianId);
+    
 }

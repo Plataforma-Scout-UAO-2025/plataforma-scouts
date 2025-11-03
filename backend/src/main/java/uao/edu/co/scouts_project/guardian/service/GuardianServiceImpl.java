@@ -163,7 +163,6 @@ public class GuardianServiceImpl implements GuardianService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("Miembro con ID " + memberId + " no encontrado"));
     
-        // AGREGAR: Validación de edad para permitir solo remover mayores de 18 años
         if (member.getAge() == null || member.getAge() < 18) {
             throw new IllegalArgumentException("Solo se pueden remover miembros mayores de 18 años. El miembro tiene " + 
                                              (member.getAge() != null ? member.getAge() : "edad desconocida") + " años.");
@@ -173,6 +172,34 @@ public class GuardianServiceImpl implements GuardianService {
         
         member.setGuardianId(null);
         memberRepository.save(member);
+    }
+
+    @Override
+    @Transactional
+    public boolean reassignMemberGuardian(Long memberId, Long currentGuardianId, Long newGuardianId) {
+        log.info("Iniciando reasignación: miembro {} del guardian {} al guardian {}", 
+                 memberId, currentGuardianId, newGuardianId);
+        
+        if (!memberRepository.findValidGuardianById(currentGuardianId).isPresent()) {
+            throw new GuardianNotFoundException("Guardian actual con ID " + currentGuardianId + " no encontrado");
+        }
+        
+        if (!memberRepository.findValidGuardianById(newGuardianId).isPresent()) {
+            throw new GuardianNotFoundException("Nuevo guardian con ID " + newGuardianId + " no encontrado");
+        }
+        
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("Miembro con ID " + memberId + " no encontrado"));
+        
+        if (member.getGuardianId() == null || !member.getGuardianId().equals(currentGuardianId.intValue())) {
+            throw new InvalidGuardianException("El miembro " + memberId + " no pertenece al guardian " + currentGuardianId);
+        }
+        
+        int updatedRows = memberRepository.reassignMemberGuardian(memberId, currentGuardianId, newGuardianId);
+        
+        log.info("Reasignación completada. Filas actualizadas: {}", updatedRows);
+        
+        return updatedRows > 0;
     }
 
     @Override

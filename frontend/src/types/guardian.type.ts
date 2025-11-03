@@ -48,8 +48,8 @@ export interface Guardian {
   user_id: string
   rol: "ACUDIENTE" | "ADMIN" | "USUARIO"
   tenant_id: string
-  firstName: string
-  lastName: string
+  first_name: string
+  last_name: string
   age: number
   identification: string
   document_type: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP'
@@ -126,5 +126,15 @@ export interface GuardianSummary {
   lastName?: string;
   phone?: string;
   isActive?: boolean;
+  membersCount?: number;
+}
+
+export interface AvailableGuardianDTO {
+  guardianId: number;
+  firstName: string;
+  lastName: string;
+  identification: string;
+  phone?: string;
+  email?: string;
   membersCount?: number;
 }

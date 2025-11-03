@@ -7,12 +7,13 @@ import GuardianMembersTable from "../tables/GuardianMembersTable";
 import MemberDetailsSheet from "../modals/MemberDetailsSheet";
 import SelectMemberModal from "../modals/SelectMemberModal";
 import ReassignGuardianModal from "../modals/ReassignGuardianModal"; 
-import { removeMemberFromGuardian, addMemberToGuardian } from "@/api/guardiansApi"; 
+import { removeMemberFromGuardian, addMemberToGuardian, reassignMemberGuardian } from "@/api/guardiansApi"; 
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import EditMemberModal from "../modals/EditMemberModal";
+import { AxiosError } from "axios";
 
 interface ExtendedMemberInfo extends MemberBasicInfo {
   member_id?: string | number;
@@ -83,37 +84,35 @@ const MembersInCharge = () => {
   };
 
   const handleReassignGuardian = (member: MemberBasicInfo) => {
-    console.log("Abriendo modal de reasignación para:", member);
     setMemberToReassign(member);
     setIsReassignModalOpen(true);
   };
 
-  const handleConfirmReassign = async (memberId: number, newGuardianId: number) => {
-    if (!guardianId) {
-      toast.error('No se pudo identificar el guardian actual');
-      return;
-    }
-
+  const handleConfirmReassign = async (memberId: number, newGuardianId: number, currentGuardianId: number) => {
+    
     setIsReassigning(true);
+    
     try {
-      console.log('Reasignando miembro:', { memberId, fromGuardianId: guardianId, toGuardianId: newGuardianId });
-      
-      // Paso 1: Remover del guardian actual
-      await removeMemberFromGuardian(guardianId, memberId);
-      
-      // Paso 2: Asignar al nuevo guardian
-      await addMemberToGuardian(newGuardianId, memberId);
+      await reassignMemberGuardian(currentGuardianId, memberId, newGuardianId);
       
       toast.success('Miembro reasignado exitosamente');
       
-      // Refrescar la lista
       if (refetch) {
         await refetch();
       }
       
-    } catch (error) {
-      console.error('Error reasignando miembro:', error);
-      toast.error('Error al reasignar el miembro');
+    } catch (error: unknown) {
+      
+      if (error instanceof AxiosError) {
+        console.error("Status:", error.response?.status);
+        console.error("Data:", error.response?.data);
+        
+        const errorMessage = error.response?.data || 'Error al reasignar el miembro';
+        toast.error(`Error: ${errorMessage}`);
+      } else {
+        toast.error('Error al reasignar el miembro');
+      }
+      
       throw error;
     } finally {
       setIsReassigning(false);
@@ -142,8 +141,6 @@ const MembersInCharge = () => {
         toast.error('No se pudo identificar el miembro');
         return;
       }
-
-      console.log('Removing member from guardian:', { guardianId, memberId });
       
       await removeMemberFromGuardian(guardianId, memberId);
       
@@ -154,7 +151,6 @@ const MembersInCharge = () => {
       }
       
     } catch (error) {
-      console.error('Error removing member from guardian:', error);
       toast.error('Error al remover el miembro del guardian');
       throw error;
     }

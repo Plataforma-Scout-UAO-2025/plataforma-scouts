@@ -161,16 +161,16 @@ const GuardianProfilePage: React.FC = () => {
         
         <div className="flex-1 p-6">
           <ProfileHeader 
-            first_name={guardianApiData?.firstName || ''} 
-            last_name={guardianApiData?.lastName || ''} 
+            first_name={guardianApiData?.first_name || ''} 
+            last_name={guardianApiData?.last_name || ''} 
             grupo={guardianApiData?.rol || ''} 
             is_active={guardianApiData?.is_active || false} 
           />
           
           <ProfileInfoCard
             address={guardianApiData?.address || ''} 
-            first_name={guardianApiData?.firstName || ''} 
-            last_name={guardianApiData?.lastName || ''} 
+            first_name={guardianApiData?.first_name || ''} 
+            last_name={guardianApiData?.last_name || ''} 
             identification={guardianApiData?.identification || ''} 
             documentType={guardianApiData?.document_type || 'CC'} 
             email={user?.email || 'N/A'} 
@@ -196,8 +196,8 @@ const GuardianProfilePage: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleEditProfile} 
         initialData={{
-          firstName: guardianApiData?.firstName ?? user?.nickname ?? '',
-          lastName: guardianApiData?.lastName || '',
+          firstName: guardianApiData?.first_name ?? user?.nickname ?? '',
+          lastName: guardianApiData?.last_name || '',
           identification: guardianApiData?.identification || '',
           documentType: guardianApiData?.document_type || 'CC',
           email: user?.email ?? 'N/A',
