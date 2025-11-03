@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import type { Member, UpdateMember, EmergencyContact } from "@/types/member.type";
 import { useAppDispatch } from "./useAppDispatch";
 import { updateMemberAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
+import { updateMemberRole } from "@/api/membersApi";
 import { toast } from "sonner";
 
 type AnyMember = Member | UpdateMember;
@@ -53,6 +54,7 @@ export function useMemberEdit({
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [editedData, setEditedData] = useState<Partial<UpdateMember>>({});
+  const [initialRole, setInitialRole] = useState<string | undefined>(undefined);
 
   const memberId = getMemberId(member);
 
@@ -60,8 +62,14 @@ export function useMemberEdit({
   const m = targetMember ?? member;
   if (!m) {
     setEditedData({});
+    setInitialRole(undefined);
     return;
   }
+
+  // Guardar el rol inicial para detectar cambios
+  const memberWithRole = m as Member;
+  const currentRole = memberWithRole.role;
+  setInitialRole(currentRole);
 
   const initialData: Partial<UpdateMember> = {
     firstName: getMemberField(m, "firstName", "first_name"),
@@ -77,6 +85,7 @@ export function useMemberEdit({
     hobbies: getMemberField(m, "hobbies", "hobbies"),
     sports: getMemberField(m, "sports", "sports"),
     instruments: getMemberField(m, "instruments", "instruments"),
+    role: currentRole, // Agregar el rol al estado inicial
   };
 
   const birthDate = (m as Member).birth_date ?? (m as UpdateMember).birthDate;
@@ -230,15 +239,37 @@ export function useMemberEdit({
 
       await dispatch(updateMemberAction(payload)).unwrap();
 
-      // Asignar subgrupo y sección si han cambiado
-      if (selectedSubgroup || selectedSection) {
-        await dispatch(
-          assignSubgroupAndSectionAction({
-            memberId,
-            subGroupId: selectedSubgroup ? Number(selectedSubgroup) : undefined,
-            sectionId: selectedSection ? Number(selectedSection) : undefined,
-          })
-        ).unwrap();
+      // Verificar si el rol cambió y actualizar
+      if (editedData.role && editedData.role !== initialRole) {
+        await updateMemberRole({
+          memberId: memberId,
+          newRole: editedData.role,
+        });
+        toast.success(`Rol actualizado a ${editedData.role}`);
+      }
+
+      // Asignar subgrupo y sección solo si ambos tienen valores válidos
+      const hasValidSubgroup = selectedSubgroup && Number(selectedSubgroup) > 0;
+      const hasValidSection = selectedSection && Number(selectedSection) > 0;
+
+      if (hasValidSubgroup || hasValidSection) {
+        const assignmentData: {
+          memberId: number;
+          subGroupId?: number;
+          sectionId?: number;
+        } = {
+          memberId,
+        };
+
+        if (hasValidSubgroup) {
+          assignmentData.subGroupId = Number(selectedSubgroup);
+        }
+
+        if (hasValidSection) {
+          assignmentData.sectionId = Number(selectedSection);
+        }
+
+        await dispatch(assignSubgroupAndSectionAction(assignmentData)).unwrap();
       }
 
       const firstName = editedData.firstName || "";

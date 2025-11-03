@@ -16,6 +16,8 @@ import AssignmentSection from "./components/edit/AssignmentSection";
 import PersonalInfoForm from "../basic-info/components/edit/PersonalInfoForm";
 import PhysicalInfoForm from "../basic-info/components/edit/PhysicalInfoForm";
 import EmergencyContactsForm from "../basic-info/components/edit/EmergencyContactsForm";
+import RoleSelectionForm from "../basic-info/components/edit/RoleSelectionForm";
+import type { role } from "@/types/enrollment.type";
 
 interface EditMemberModalProps {
   open: boolean;
@@ -193,6 +195,12 @@ export default function EditMemberModal({
                 onRemoveContact={handleRemoveEmergencyContact}
               />
             )}
+
+            <RoleSelectionForm
+              currentRole={editedData.role as role}
+              onRoleChange={(newRole) => handleFieldChange("role", newRole)}
+              loading={loading}
+            />
 
             <AssignmentSection
               groups={groups}

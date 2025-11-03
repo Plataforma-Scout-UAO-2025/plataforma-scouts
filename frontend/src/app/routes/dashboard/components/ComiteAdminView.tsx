@@ -9,8 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { AxiosError } from "axios";
+import { useMemberAccess } from "@/hooks/useMemberAccess";
+import PendingApprovalModal from "@/app/routes/admin-grupal/Miembros/components/PendingApprovalModal";
+import InactiveMemberModal from "@/app/routes/admin-grupal/Miembros/components/InactiveMemberModal";
 
 const ComiteAdminView = () => {
+  const { hasAccess, reason, loading: accessLoading } = useMemberAccess();
   const { currentUserRoleLabel } = useRoleContext();
   const tenantId = useTenant();
   const [data, setData] = useState<DashboardFinanciero | null>(null);
@@ -38,6 +42,23 @@ const ComiteAdminView = () => {
       getDashboardData(tenantId);
     }
   }, [tenantId]);
+
+  if (accessLoading) {
+    return <div className="flex justify-center items-center h-screen">Validando acceso...</div>;
+  }
+
+  if (reason === "pending") {
+    return <PendingApprovalModal isOpen={true} />;
+  }
+
+  if (reason === "inactive") {
+    return <InactiveMemberModal isOpen={true} />;
+  }
+
+  if (!hasAccess) {
+    return <div className="flex justify-center items-center h-screen">No tienes acceso al sistema</div>;
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
