@@ -8,8 +8,6 @@ import ComiteAdminView from "./components/ComiteAdminView";
 import ScouterView from "./components/ScouterView";
 import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import TesoreroView from "./components/TesoreroView";
-import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
 
 
 export default function Dashboard() {
