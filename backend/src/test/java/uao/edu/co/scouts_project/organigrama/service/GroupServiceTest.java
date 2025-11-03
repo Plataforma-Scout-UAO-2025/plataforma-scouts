@@ -601,7 +601,7 @@ class GroupServiceTest {
         // Assert
         verify(storageService, never()).deleteFileByObjectId(any());
         verify(groupRepository, never()).deleteById(any());
-        assertEquals("Grupo con ID: " + groupId + " ha sido eliminado.", result);
+        assertEquals("Grupo con ID: " + groupId + " no existe.", result);
     }
 
     @Test

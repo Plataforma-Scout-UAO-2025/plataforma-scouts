@@ -435,8 +435,9 @@ public class GroupService implements IGroupService {
                 storageService.deleteFileByObjectId(group.getScarfObjectId());
             }
             groupRepository.deleteById(groupId);
+            return "Grupo con ID: " + groupId + " ha sido eliminado.";
         }
-        return "Grupo con ID: " + groupId + " ha sido eliminado.";
+        return "Grupo con ID: " + groupId + " no encontrado.";
     }
 
     @Override
