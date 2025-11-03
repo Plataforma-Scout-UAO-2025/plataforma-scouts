@@ -23,7 +23,6 @@ import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
 import uao.edu.co.scouts_project.organigrama.service.GroupService;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import java.util.stream.Collectors;
-
 import java.util.*;
 
 /**
