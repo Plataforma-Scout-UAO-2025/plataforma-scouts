@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { Member, UpdateMember, EmergencyContact } from "@/types/member.type";
 import { useAppDispatch } from "./useAppDispatch";
-import { updateMemberAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
+import { updateMemberAction, assignSubgroupAndSectionAction, changeAuth0UserRoleAction } from "@/store/members/membersActions";
 import { updateMemberRole } from "@/api/membersApi";
 import { toast } from "sonner";
 
@@ -239,13 +239,35 @@ export function useMemberEdit({
 
       await dispatch(updateMemberAction(payload)).unwrap();
 
-      // Verificar si el rol cambió y actualizar
+      // Verificar si el rol cambió y actualizar en BD y Auth0
       if (editedData.role && editedData.role !== initialRole) {
+        // Obtener user_id usando getMemberField para manejar ambos formatos
+        const userId = getMemberField(member, "userId", "user_id");
+
+        // 1. Actualizar en la base de datos
         await updateMemberRole({
           memberId: memberId,
           newRole: editedData.role,
         });
-        toast.success(`Rol actualizado a ${editedData.role}`);
+
+        // 2. Actualizar en Auth0
+        if (userId) {
+          try {
+            await dispatch(
+              changeAuth0UserRoleAction({
+                user_id: userId,
+                newRole: editedData.role,
+              })
+            ).unwrap();
+            toast.success(`Rol actualizado exitosamente a ${editedData.role}`);
+          } catch (error) {
+            console.error("[useMemberEdit] Error actualizando rol en Auth0:", error);
+            toast.error("El rol se actualizó en la base de datos pero hubo un error al actualizarlo en Auth0. El usuario debe cerrar sesión y volver a iniciar.");
+          }
+        } else {
+          console.warn("[useMemberEdit] No se encontró user_id en el member");
+          toast.warning("No se pudo actualizar el rol en Auth0 (userId no encontrado). El usuario debe cerrar sesión.");
+        }
       }
 
       // Asignar subgrupo y sección solo si ambos tienen valores válidos

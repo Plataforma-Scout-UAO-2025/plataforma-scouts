@@ -189,26 +189,26 @@ export default function RoleSelectionForm({
               <AlertTriangle className="h-6 w-6" />
               <AlertDialogTitle>Confirmar Cambio de Rol</AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="space-y-3">
-              <div>
-                Estás a punto de cambiar el rol a{" "}
-                <strong className="text-foreground">
-                  {getPendingRoleInfo()?.label}
-                </strong>
-                .
-              </div>
-              <div className="text-sm bg-amber-50 border border-amber-200 rounded p-3">
-                {getPendingRoleInfo()?.description}
-              </div>
-              <div className="font-medium text-amber-800">
-                Este rol tiene permisos administrativos y puede acceder a
-                funciones críticas del sistema.
-              </div>
-              <div className="text-sm">
-                ¿Estás seguro de que deseas realizar este cambio?
-              </div>
+            <AlertDialogDescription>
+              Estás a punto de cambiar el rol a{" "}
+              <strong className="text-foreground">
+                {getPendingRoleInfo()?.label}
+              </strong>
+              .
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-3 px-6">
+            <div className="text-sm bg-amber-50 border border-amber-200 rounded p-3">
+              {getPendingRoleInfo()?.description}
+            </div>
+            <div className="font-medium text-amber-800 text-sm">
+              Este rol tiene permisos administrativos y puede acceder a
+              funciones críticas del sistema.
+            </div>
+            <div className="text-sm text-muted-foreground">
+              ¿Estás seguro de que deseas realizar este cambio?
+            </div>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelRoleChange}>
               Cancelar
