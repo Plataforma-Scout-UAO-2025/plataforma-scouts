@@ -66,7 +66,7 @@ public class MemberMapper {
                 .build();
     }
 
-    public static Member toEntity(CreateMemberDTO dto) {
+    public static Member toEntityFromCreateDto(CreateMemberDTO dto) {
         if (dto == null) {
             return null;
         }

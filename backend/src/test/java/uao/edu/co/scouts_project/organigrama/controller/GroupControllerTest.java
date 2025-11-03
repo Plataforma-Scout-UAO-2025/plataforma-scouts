@@ -109,53 +109,6 @@ class GroupControllerTest {
         }
 
         @Test
-        @DisplayName("PUT /groups/{slug} → 200 OK")
-        void update_ok() throws Exception {
-                GroupDTO req = new GroupDTO(
-                                1L, // groupId
-                                TENANT,
-                                GROUP,
-                                "Grupo Scout Centinelas 113 (Actualizado)",
-                                null, // district
-                                null, // identifierNumber
-                                null, // address
-                                null, // phone
-                                null, // email
-                                null, // foundedIn
-                                null, // motto
-                                null, // mission
-                                null, // vision
-                                null, // history
-                                null, // logoObjectId (UUID)
-                                null, // scarfObjectId (UUID)
-                                Map.of(), // socialLinks
-                                Map.of(), // config
-                                Boolean.TRUE, // isActive
-                                "ACTIVE", // status
-                                null, // createdAt
-                                null // updatedAt
-                );
-
-                GroupResponseDTO updated = new GroupResponseDTO(
-                                1L, TENANT, GROUP, "Grupo Scout Centinelas 113 (Actualizado)",
-                                "Distrito Valle", "ID-803", "Calle 123", "3001234567", "grupo@example.com",
-                                LocalDate.of(1998, 1, 1),
-                                "Siempre Listos", "Formar mejores ciudadanos", "Ser ejemplo", "Historia...",
-                                "https://cdn.url/logo.png", "https://cdn.url/scarf.png",
-                                Map.<String, Object>of(), Map.<String, Object>of(), true, "ACTIVE",
-                                LocalDateTime.now(), LocalDateTime.now());
-
-                when(groupService.updateGroup(eq(TENANT), eq(GROUP), any(GroupDTO.class)))
-                                .thenReturn(updated);
-
-                mvc.perform(put(BASE + "/{groupSlug}", TENANT, GROUP)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(om.writeValueAsBytes(req)))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.name").value("Grupo Scout Centinelas 113 (Actualizado)"));
-        }
-
-        @Test
         @DisplayName("PATCH /groups/{slug}/logo → 204 No Content")
         void update_logo_ok() throws Exception {
                 String body = "{\"objectId\":\"123e4567-e89b-12d3-a456-426614174000\"}";

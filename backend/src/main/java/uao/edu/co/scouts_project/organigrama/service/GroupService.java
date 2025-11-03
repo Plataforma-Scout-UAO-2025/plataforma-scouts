@@ -516,7 +516,7 @@ public class GroupService implements IGroupService {
         }
 
         // 4) Mapear DTO → entidad usando el MemberMapper
-        Member member = MemberMapper.toEntity(request.member());
+        Member member = MemberMapper.toEntityFromCreateDto(request.member());
 
         // 5) Ajustar campos automáticos
         member.setRole(Role.ADMIN_GRUPO.name());

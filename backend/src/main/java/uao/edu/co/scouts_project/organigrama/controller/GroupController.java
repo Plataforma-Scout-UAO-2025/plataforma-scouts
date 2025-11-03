@@ -109,7 +109,8 @@ public class GroupController {
         @Operation(summary = "Crear admin de grupo (ADMIN_GRUPO)", description = "Crea un usuario en Auth0 con rol ADMIN_GRUPO dentro de la organización (tenant) del grupo", responses = {
                         @ApiResponse(responseCode = "201", description = "Admin de grupo creado", content = @Content(schema = @Schema(implementation = GroupAdminCreatedResponseDTO.class))),
                         @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
-                        @ApiResponse(responseCode = "404", description = "Grupo no encontrado")
+                        @ApiResponse(responseCode = "404", description = "Grupo no encontrado"),
+                        @ApiResponse(responseCode = "502", description = "Error de comunicación con Auth0")
         })
         public ResponseEntity<GroupAdminCreatedResponseDTO> createGroupAdmin(
                         @Parameter(description = "ID del tenant", example = "tenant-001") @PathVariable String tenantId,
