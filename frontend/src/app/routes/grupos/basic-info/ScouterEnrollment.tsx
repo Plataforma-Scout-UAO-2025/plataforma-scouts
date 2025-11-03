@@ -22,6 +22,23 @@ import { ErrorDialog } from "./components/ErrorDialog";
 function ScouterEnrollment() {
   const navigate = useNavigate();
   const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
+
+    const {
+    sections,
+    subgroups,
+    selectedGroupSlug,
+    selectedSection,
+    setSelectedSection,
+    selectedSubgroup,
+    setSelectedSubgroup,
+    loadingSections,
+    loadingSubgroups,
+  } = useOrgStructure({
+    orgId: orgId || "",
+    open: true,
+    
+  });
+  
   const {
     datosPersonales,
     setDatosPersonales,
@@ -40,22 +57,13 @@ function ScouterEnrollment() {
     errors,
     handlePersonalChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "SCOUTER", totalPaginas: 3 });
-
-  const {
-    sections,
-    subgroups,
-    selectedGroupSlug,
-    selectedSection,
-    setSelectedSection,
-    selectedSubgroup,
-    setSelectedSubgroup,
-    loadingSections,
-    loadingSubgroups,
-  } = useOrgStructure({
-    orgId: orgId || "",
-    open: true,
+   } = useRoleEnrollment({ 
+    role: "SCOUTER", 
+    totalPaginas: 3,
+    selectedSection,   
+    selectedSubgroup,   
   });
+
 
   const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
