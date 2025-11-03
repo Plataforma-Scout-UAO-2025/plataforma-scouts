@@ -290,6 +290,7 @@ public class GroupService implements IGroupService {
         return toResponseDTO(saved);
     }
 
+    @Override
     public void validateSlugFormat(String slug) {
         if (slug == null || slug.trim().isEmpty()) {
             throw new IllegalArgumentException("El slug no puede estar vacío.");

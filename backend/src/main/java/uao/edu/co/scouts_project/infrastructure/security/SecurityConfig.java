@@ -32,10 +32,11 @@ public class SecurityConfig {
 
                                                 .requestMatchers("/api/v1/sec/roles").authenticated()
                                                 .requestMatchers("/api/v1/sec/org_id").authenticated()
-                                                // .requestMatchers("/api/v1/sec/admin/auth0/connections/*").denyAll()
-                                                // .requestMatchers(
-                                                // "/api/v1/sec/admin/auth0/organizations/*/connections/*")
-                                                // .denyAll()
+                                                .requestMatchers("/api/v1/sec/connection").authenticated()
+                                                .requestMatchers("/api/v1/sec/admin/auth0/connections/*").denyAll()
+                                                .requestMatchers(
+                                                                "/api/v1/sec/admin/auth0/organizations/*/connections/*")
+                                                .denyAll()
 
                                                 .requestMatchers("/api/v1/mock/scouts/list")
                                                 .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
@@ -164,8 +165,8 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name())
 
                                                 // // // Cualquier otra operación en auth0: SOLO ADMINS
-                                                // .requestMatchers("/api/v1/auth0/**")
-                                                // .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
+                                                .requestMatchers("/api/v1/auth0/**")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
                                                 // Guardians
 

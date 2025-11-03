@@ -21,56 +21,28 @@ import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO; // Add
 import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
-import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
-import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
 import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
-import uao.edu.co.scouts_project.infrastructure.auth0.Auth0AdminAdapter;
 import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
-import uao.edu.co.scouts_project.member.service.IMemberService;
-import uao.edu.co.scouts_project.member.service.MemberServiceImp;
-// removed unused IGroupService and ITenantService to avoid circular deps
-
 import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class Auth0ServiceImpl implements IAuth0Service {
 
-    @SuppressWarnings("unused")
-    private final MemberServiceImp memberServiceImp_1;
-
-
-    @SuppressWarnings("unused")
-    private final Auth0AdminAdapter auth0AdminAdapter;
-
     private final Auth0AdminPort adminPort;
     private final RoleMappingPort roleMappingPort;
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final PermissionQueryPort permissionQueryPort; // Added
 
-    // removed: private final IGroupService groupService;
-    @SuppressWarnings("unused")
-    private final IMemberService memberServiceImp;
-    @SuppressWarnings("unused")
-    private final SupabaseStorageService supabaseStorageService;
-
-
     public Auth0ServiceImpl(Auth0AdminPort adminPort,
-        RoleMappingPort roleMappingPort,
-        RoleAssignmentValidator roleAssignmentValidator,
-        PermissionQueryPort permissionQueryPort, Auth0AdminAdapter auth0AdminAdapter,
-        IMemberService memberService,
-        SupabaseStorageService supabaseStorageService, MemberServiceImp memberServiceImp_1) {
+            RoleMappingPort roleMappingPort,
+            RoleAssignmentValidator roleAssignmentValidator,
+            PermissionQueryPort permissionQueryPort) {
         this.adminPort = adminPort;
         this.roleMappingPort = roleMappingPort;
         this.roleAssignmentValidator = roleAssignmentValidator;
         this.permissionQueryPort = permissionQueryPort;
-        this.auth0AdminAdapter = auth0AdminAdapter;
-
-        this.memberServiceImp = memberService;
-        this.supabaseStorageService = supabaseStorageService;
-        this.memberServiceImp_1 = memberServiceImp_1;
 
     }
 

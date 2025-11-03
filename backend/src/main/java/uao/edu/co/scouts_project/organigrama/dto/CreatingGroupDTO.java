@@ -71,27 +71,27 @@ public class CreatingGroupDTO {
     @Schema(description = "Historia del grupo", example = "Fundado en 1990, hemos crecido...", required = true)
     private String history;
 
-    // Enviarlo como null, porque con la imagen se pone este objectId
+    // Send it as null, because it will be added later.
     @JsonProperty("logo_object_id")
     private UUID logoObjectId;
 
-    // Enviarlo como null, porque luego se agrega .
+    // Send it as null, because it will be added later.
     @JsonProperty("scarf_object_id")
     private UUID scarfObjectId;
 
-    // Enviarlo como null, porque luego se agrega .
+    // Send it as null, because it will be added later.
     @JsonProperty("social_links")
     private Map<String, Object> socialLinks;
 
-    // Enviarlo como null, porque luego se agrega .
+    // Send it as null, because it will be added later.
     @JsonProperty("config")
     private Map<String, Object> config;
 
-    // Enviarlo como true
+    // Send it as true
     @JsonProperty("is_active")
     private Boolean isActive;
 
-    // Enviarlo como "ACTIVE"
+    // Send it as "ACTIVE"
     @JsonProperty("status")
     @Schema(description = "Estado del grupo", example = "ACTIVE")
     private String status;

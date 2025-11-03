@@ -51,8 +51,7 @@ public class GlobalExceptionHandler {
         502,
         ex.getMessage(),
         null,
-        ex.getCause().getMessage()
-
+        ex.getCause() != null ? ex.getCause().getMessage() : null
     );
     return new ResponseEntity<>(responseDTO, HttpStatus.BAD_GATEWAY);
   }

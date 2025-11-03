@@ -549,7 +549,7 @@ class GroupServiceTest {
     @Test
     void deleteGroup_shouldDeleteGroupAndAssociatedFiles_whenGroupExistsWithFiles() {
         // Arrange
-        Long groupId = 1L;
+        long groupId = 1L;
         UUID logoId = UUID.randomUUID();
         UUID scarfId = UUID.randomUUID();
 

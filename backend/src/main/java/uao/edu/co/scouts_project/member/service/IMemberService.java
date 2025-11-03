@@ -32,12 +32,14 @@ public interface IMemberService {
 
     /**
      * 
-     * @param role
-     * @param tenantId
-     * @return Lista de miembros que coinciden con el rol y tenantId especificados.
+     * Obtiene una lista de miembros que coinciden con el rol y tenantId
+     * especificados.
+     * 
+     * @param role     Nombre del rol por el cual filtrar los miembros.
+     * @param tenantId Identificador del tenant por el cual filtrar los miembros.
      * 
      */
-
+    
     List<Member> get_member_by_role_and_tenantId(String role, String tenantId);
 
     /**
