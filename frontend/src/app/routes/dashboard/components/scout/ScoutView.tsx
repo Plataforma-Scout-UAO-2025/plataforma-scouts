@@ -26,7 +26,7 @@ const Dashboard = () => {
   const { isActive } = useMemberStatusDialog();
   
   // Hook personalizado para validar acceso del miembro
-  const { hasAccess, reason, loading: accessLoading } = useMemberAccess();
+  const { hasAccess, reason, } = useMemberAccess();
 
   const [guardian, setGuardian] = useState<Guardian | null>(null);
   const [loadingGuardian, setLoadingGuardian] = useState(false);

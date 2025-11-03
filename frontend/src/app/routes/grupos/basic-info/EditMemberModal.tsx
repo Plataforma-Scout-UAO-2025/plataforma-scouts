@@ -162,10 +162,13 @@ export default function EditMemberModal({
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">
-            Editar Información del Miembro
+            Editar Información del Miembro 
           </DialogTitle>
           <DialogDescription>
-            Modifica los datos del miembro y guarda los cambios. Los campos marcados con * son obligatorios.
+            Modifica los datos del miembro <span className=" text-l text-primary/800">
+            <strong>{member?.firstName ?? member?.first_name}{" "}
+            {member?.lastName ?? member?.last_name}</strong>
+          </span> y guarda los cambios. Los campos marcados con * son obligatorios.
           </DialogDescription>
         </DialogHeader>
         {loadingDetails ? (

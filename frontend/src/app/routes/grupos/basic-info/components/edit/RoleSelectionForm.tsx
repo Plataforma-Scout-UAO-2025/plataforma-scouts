@@ -6,10 +6,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -130,12 +130,11 @@ export default function RoleSelectionForm({
 
   return (
     <>
-      <div className="space-y-4 p-6 border border-amber-200 rounded-lg bg-amber-50/50">
-        <div className="flex items-center gap-2 text-amber-800">
-          <Shield className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Cambio de Rol</h3>
-        </div>
-
+      <div className="space-y-4 border-t-2 pt-4">
+         <div className="flex items-center gap-2 border-b-2 border-primary pb-2">
+        <Shield className="h-5 w-5 text-primary" />
+        <h3 className="text-lg font-semibold text-primary">Cambio de Rol</h3>
+       </div>
         <div className="space-y-2">
           <Label htmlFor="role" className="text-sm font-medium">
             Rol del Miembro
@@ -170,22 +169,13 @@ export default function RoleSelectionForm({
             </p>
           )}
         </div>
-
-        <div className="flex items-start gap-2 p-3 bg-amber-100 border border-amber-300 rounded-md">
-          <AlertTriangle className="h-4 w-4 text-amber-700 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-amber-800">
-            <strong>Importante:</strong> Cambiar el rol afectará los permisos y
-            accesos del miembro en el sistema. Esta acción es irreversible y
-            puede requerir que el usuario vuelva a iniciar sesión.
-          </p>
-        </div>
       </div>
 
       {/* Modal de Confirmación para Roles Críticos */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <div className="flex items-center gap-2 text-amber-600 mb-2">
+            <div className="flex items-center gap-2 text-primary mb-2">
               <AlertTriangle className="h-6 w-6" />
               <AlertDialogTitle>Confirmar Cambio de Rol</AlertDialogTitle>
             </div>
@@ -198,10 +188,10 @@ export default function RoleSelectionForm({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3 px-6">
-            <div className="text-sm bg-amber-50 border border-amber-200 rounded p-3">
+            <div className="text-sm bg-amber-50 border border-primary rounded p-3">
               {getPendingRoleInfo()?.description}
             </div>
-            <div className="font-medium text-amber-800 text-sm">
+            <div className="font-medium text-primary text-sm">
               Este rol tiene permisos administrativos y puede acceder a
               funciones críticas del sistema.
             </div>
@@ -210,12 +200,15 @@ export default function RoleSelectionForm({
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelRoleChange}>
-              Cancelar
-            </AlertDialogCancel>
+            <AlertDialogFooter>
+              <Button variant="secondary" onClick={handleCancelRoleChange}>
+                Cancelar
+              </Button>
+          </AlertDialogFooter>
+
             <AlertDialogAction
               onClick={handleConfirmRoleChange}
-              className="bg-amber-600 hover:bg-amber-700"
+              className="bg-primary hover:bg-green-950"
             >
               Sí, Cambiar Rol
             </AlertDialogAction>

@@ -46,7 +46,7 @@ function Start-Backend {
         
         # Determine Maven command based on OS
         $mvnCmd = if ($IsWindows -or $env:OS -eq "Windows_NT") { ".\mvnw.cmd" } else { "./mvnw" }
-        Start-Process $mvnCmd -ArgumentList "spring-boot:run","-Dspring-boot.run.profiles=development" -NoNewWindow
+       Start-Process $mvnCmd -ArgumentList "spring-boot:run","-Dspring-boot.run.profiles=development" -NoNewWindow
 
         Set-Location ".."
         
