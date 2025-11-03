@@ -1,6 +1,6 @@
 export interface GroupResponseDTO {
   groupId: number;
-  tenant_id: string;
+  tenantId: string;
   slug: string;
   name: string;
   district?: string;

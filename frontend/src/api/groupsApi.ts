@@ -7,6 +7,7 @@ import type {
   GroupWithLeaderDTO,
   GroupWithLeaderResponseDTO
 } from "@/types/group.type";
+import type { CreateGroupAdminRequestDTO } from "@/types/groupAdmin.type";
 
 // Helper para convertir snake_case a camelCase
 const snakeToCamel = (str: string): string => {
@@ -137,6 +138,19 @@ export const validateSlug = async (slug: string) => {
   const response = await api.get<{ slug: string; valid: boolean; reason?: string; message?: string }>(
     `/tenants/non-tenant/groups/slug/validate`,
     { params: { slug } }
+  );
+  return response.data;
+};
+
+// Crear administrador de grupo
+export const createGroupAdmin = async (
+  tenantId: string,
+  slug: string,
+  data: CreateGroupAdminRequestDTO
+) => {
+  const response = await api.post(
+    `/tenants/${tenantId}/groups/${slug}/admins`,
+    data
   );
   return response.data;
 };

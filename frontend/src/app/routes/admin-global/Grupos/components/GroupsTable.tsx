@@ -35,6 +35,8 @@ const GroupsTable = () => {
   const [isAssignAdminOpen, setIsAssignAdminOpen] = useState(false);
   const [selectedGroupForAssign, setSelectedGroupForAssign] = useState<Group | null>(null);
 
+
+
   // Fetch grupos solo si no están cargados
   useEffect(() => {
     if (!groups || groups.length === 0) {
@@ -130,14 +132,6 @@ const GroupsTable = () => {
                     <Button
                       variant="iconbutton"
                       size="icon"
-                      className="text-black hover:text-primary"
-                      onClick={() => handleAdminGroup(group, setIsAdminGroupOpen, setSelectedGroupAdmin)}
-                    >
-                      <UserPlus />
-                    </Button>
-                    <Button
-                      variant="iconbutton"
-                      size="icon"
                       className="text-secondary hover:text-blue-800"
                       onClick={() => {
                         handleEditClick(group, setIsEditModalOpen, setSelectedGroupEdit);
@@ -176,7 +170,7 @@ const GroupsTable = () => {
         onOpenChange={setIsAssignAdminOpen}
         group={selectedGroupForAssign}
       />
-    </div>
+    </div >
   );
 };
 

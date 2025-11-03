@@ -222,20 +222,21 @@ public class GroupService implements IGroupService {
         logger.info("OK: Se crea el grupo con éxito en BD.");
 
         logger.info("Creación de Miembro ADMIN_GRUPO asociado al grupo y tenant.");
-                Member member = Member.b
-                        .userId(createdSuperUser.
-                        .tenantI
-                        .firstName(
-                        .lastName(
-                        
-                        .role(ADMIN_GLOBAL
-                        .identification("1111
-                        .documentType(Document
-                        .email(SUPERUSE
-                        .isActi
-                        .acceptTreatme
-                        .build(); // <- obl
+        Member member = Member.builder()
+                .userId(createdSuperUser.getId())
+                .tenantId(orgId)
+                .firstName("César")
+                .lastName("Navia")
+                .age(40)
+                .role(ADMIN_GLOBAL.name())
+                .identification("1111111111")
+                .documentType(DocumentType.CC)
+                .email(SUPERUSER_EMAIL)
+                .isActive(true)
+                .acceptTreatment(true)
+                .build(); // <- obligatorio
 
+        
         memberService.create_member(member);
         ;
 
