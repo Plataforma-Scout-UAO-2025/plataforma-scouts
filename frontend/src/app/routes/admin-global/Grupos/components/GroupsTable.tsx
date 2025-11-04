@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import {
   Table,
@@ -8,7 +9,7 @@ import {
   TableRow,
   Button,
 } from "@/components/ui/index";
-import { Info, Pencil, UserPlus } from "lucide-react";
+import { Info, Pencil, UserPlus, UserCog } from "lucide-react";
 import type { GroupResponseDTO as Group } from "@/types/group.type";
 import { useGroup } from "@/hooks/useGroup";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
@@ -18,6 +19,7 @@ import FullScreenLoader from "@/components/common/FullScreenLoader";
 import GroupInfoModal from "../detalles/GroupInfoModal";
 import GroupAdminModal from "../detalles/GroupAdminModal";
 import GroupEditModal from "../detalles/GroupEditModal";
+import EditAdminModal from "../detalles/EditAdminModal";
 
 const GroupsTable = () => {
   const dispatch = useAppDispatch();
@@ -31,10 +33,51 @@ const GroupsTable = () => {
   const [selectedGroupEdit, setSelectedGroupEdit] = useState<Group | null>(null);
   const [isAdminGroupOpen, setIsAdminGroupOpen] = useState(false);
   const [selectedGroupAdmin, setSelectedGroupAdmin] = useState<Group | null>(null);
+  const [isEditAdminOpen, setIsEditAdminOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<{
+    member_id: number;
+    first_name: string;
+    last_name: string;
+    identification: string;
+    document_type: string | null;
+    birth_date: string | null;
+    address: string | null;
+    phone: string | null;
+    gender: string | null;
+    weight: string | number | null;
+    height: string | number | null;
+    email: string | null;
+    full_name: string;
+  } | null>(null);
+  const [selectedGroupName, setSelectedGroupName] = useState<string>("");
 
   useEffect(() => {
     dispatch(fetchGroupsWithAdminsAction());
   }, [dispatch]);
+
+  // Función para editar el administrador de grupo
+  const handleEditAdmin = (
+    admin: { 
+      member_id: number; 
+      first_name: string; 
+      last_name: string; 
+      identification: string; 
+      document_type: string | null; 
+      birth_date: string | null; 
+      address: string | null; 
+      phone: string | null; 
+      gender: string | null; 
+      weight: string | number | null; 
+      height: string | number | null; 
+      email: string | null; 
+      full_name: string; 
+    },
+    groupName: string
+  ) => {
+    setSelectedAdmin(admin);
+    setSelectedGroupName(groupName);
+    setIsEditAdminOpen(true);
+  };
 
   // Memoizar grupos ordenados por nombre y transformar a GroupResponseDTO
   const sortedGroups = useMemo(() => {
@@ -149,17 +192,34 @@ const GroupsTable = () => {
                       variant="iconbutton"
                       size="icon"
                       onClick={() => handleViewInfo(groupTransformed, setIsInfoModalOpen, setSelectedGroupInfo)}
+                      title="Ver información del grupo"
                     >
                       <Info />
                     </Button>
-                    <Button
-                      variant="iconbutton"
-                      size="icon"
-                      className="text-black hover:text-primary"
-                      onClick={() => handleAdminGroup(groupTransformed, setIsAdminGroupOpen, setSelectedGroupAdmin)}
-                    >
-                      <UserPlus />
-                    </Button>
+                    
+                    {/* Botón para crear/gestionar admin */}
+                    {!inChargeOf ? (
+                      <Button
+                        variant="iconbutton"
+                        size="icon"
+                        className="text-green-600 hover:text-green-800"
+                        onClick={() => handleAdminGroup(groupTransformed, setIsAdminGroupOpen, setSelectedGroupAdmin)}
+                        title="Crear administrador de grupo"
+                      >
+                        <UserPlus />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="iconbutton"
+                        size="icon"
+                        className="text-blue-600 hover:text-blue-800"
+                        onClick={() => handleEditAdmin(inChargeOf, groupTransformed.name)}
+                        title={`Editar administrador: ${inChargeOf.full_name}`}
+                      >
+                        <UserCog />
+                      </Button>
+                    )}
+                    
                     <Button
                       variant="iconbutton"
                       size="icon"
@@ -167,6 +227,7 @@ const GroupsTable = () => {
                       onClick={() => {
                         handleEditClick(groupTransformed, setIsEditModalOpen, setSelectedGroupEdit);
                       }}
+                      title="Editar grupo"
                     >
                       <Pencil />
                     </Button>
@@ -194,6 +255,13 @@ const GroupsTable = () => {
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
         group={selectedGroupEdit}
+      />
+
+      <EditAdminModal
+        open={isEditAdminOpen}
+        onOpenChange={setIsEditAdminOpen}
+        admin={selectedAdmin}
+        groupName={selectedGroupName}
       />
     </div>
   );

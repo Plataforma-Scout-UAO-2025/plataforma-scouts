@@ -5,6 +5,8 @@ import {
   fetchGroupsWithAdminsAction,
   updateGroupAction,
   createGroupAction,
+  createGroupAdminAction,
+  createGroupAdminWithConnectionAction,
   fetchMembersCountByGroupAction,
   fetchTotalMembersCountAction,
   fetchActiveGroupsCountAction,
@@ -197,6 +199,36 @@ const groupsSlice = createSlice({
     builder.addCase(fetchTopGroupsByMembersAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
+    });
+
+    // Crear administrador de grupo
+    builder.addCase(createGroupAdminAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createGroupAdminAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(createGroupAdminAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
+
+    // Crear administrador de grupo con conexión específica
+    builder.addCase(createGroupAdminWithConnectionAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createGroupAdminWithConnectionAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(createGroupAdminWithConnectionAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
     });
   },
 });export const { clearNotification, clearGroups } = groupsSlice.actions;

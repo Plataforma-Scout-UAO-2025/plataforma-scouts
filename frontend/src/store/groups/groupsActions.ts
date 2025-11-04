@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getGroup, getGroups, updateGroup, createGroup, getMembersCountByGroup, getTotalMembersCount, getActiveGroupsCount, getInactiveGroupsCount, getTopGroupsByMembers, getGroupsWithAdmins } from "@/api/groupsApi";
+import { getGroup, getGroups, updateGroup, createGroup, getMembersCountByGroup, getTotalMembersCount, getActiveGroupsCount, getInactiveGroupsCount, getTopGroupsByMembers, getGroupsWithAdmins, createGroupAdmin, createGroupAdminWithConnection } from "@/api/groupsApi";
 import type {
   GroupResponseDTO as Group,
   UpdateGroupDTO,
@@ -190,5 +190,67 @@ export const fetchTopGroupsByMembersAction = createAsyncThunk<
     const errorMessage =
       errorData?.error || "Error al obtener los grupos con más miembros";
     return rejectWithValue(errorMessage);
+  }
+});
+
+// Crear administrador de grupo
+export const createGroupAdminAction = createAsyncThunk<
+  { message: string; userId: string; email: string; assignedRole: string },
+  {
+    tenantId: string;
+    slug: string;
+    data: {
+      email: string;
+      password: string;
+      username: string;
+      member: Record<string, unknown>;
+    };
+  },
+  { rejectValue: { error: string } }
+>("groups/createAdmin", async ({ tenantId, slug, data }, { rejectWithValue }) => {
+  try {
+    const response = await createGroupAdmin(tenantId, slug, data);
+    return {
+      message: "Administrador de grupo creado exitosamente",
+      userId: response.userId,
+      email: response.email,
+      assignedRole: response.assignedRole,
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string; message?: string };
+    const errorMessage = errorData?.error || errorData?.message || "Error al crear el administrador de grupo";
+    return rejectWithValue({ error: errorMessage });
+  }
+});
+
+// Crear administrador de grupo con conexión específica (usa la conexión correcta del grupo)
+export const createGroupAdminWithConnectionAction = createAsyncThunk<
+  { message: string; userId: string; email: string; assignedRole: string },
+  {
+    tenantId: string;
+    slug: string;
+    data: {
+      email: string;
+      password: string;
+      username: string;
+      member: Record<string, unknown>;
+    };
+  },
+  { rejectValue: { error: string } }
+>("groups/createAdminWithConnection", async ({ tenantId, slug, data }, { rejectWithValue }) => {
+  try {
+    const response = await createGroupAdminWithConnection(tenantId, slug, data);
+    return {
+      message: "Administrador de grupo creado exitosamente.",
+      userId: response.userId,
+      email: response.email,
+      assignedRole: response.assignedRole,
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as { error?: string; message?: string };
+    const errorMessage = errorData?.error || errorData?.message || "Error al crear el administrador de grupo";
+    return rejectWithValue({ error: errorMessage });
   }
 });

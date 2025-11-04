@@ -75,6 +75,42 @@ export const getGroupsWithAdmins = async () => {
   return response.data;
 };
 
+// Crear administrador de grupo
+export const createGroupAdmin = async (
+  tenantId: string,
+  slug: string,
+  data: {
+    email: string;
+    password: string;
+    username: string;
+    member: Record<string, unknown>;
+  }
+) => {
+  const response = await api.post(
+    `/tenants/${tenantId}/groups/${slug}/admins`,
+    data
+  );
+  return response.data;
+};
+
+// Crear administrador de grupo con conexión específica (usa la conexión correcta del grupo)
+export const createGroupAdminWithConnection = async (
+  tenantId: string,
+  slug: string,
+  data: {
+    email: string;
+    password: string;
+    username: string;
+    member: Record<string, unknown>;
+  }
+) => {
+  const response = await api.post(
+    `/tenants/${tenantId}/groups/${slug}/admins-with-connection`,
+    data
+  );
+  return response.data;
+};
+
 // Actualizar grupo
 export const updateGroup = async (
   tenantId: string,
