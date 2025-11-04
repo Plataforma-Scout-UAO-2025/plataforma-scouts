@@ -1,4 +1,4 @@
-import type { Guardian } from '@/types/guardian.type';
+import type { Guardian, Status, DocumentType } from '@/types/guardian.type';
 
 /*
 Se crea un mapper para evitar error con el casing tanto en back como front
@@ -16,10 +16,10 @@ export interface GuardianApiResponse {
   last_name?: string;
   age: number;
   identification: string;
-  document_type: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP';
+  document_type: DocumentType;
   phone: string;
   is_active: boolean;
-  status: "APPROVED" | "PENDING" | "REJECTED" | string;
+  status: Status;
   acceptance_date: string;
   address: string;
 }
@@ -37,7 +37,7 @@ export function normalizeGuardianData(apiResponse: GuardianApiResponse): Guardia
     document_type: apiResponse.document_type,
     phone: apiResponse.phone,
     is_active: apiResponse.is_active,
-    status: apiResponse.status,
+    status: apiResponse.status as Status,
     acceptance_date: apiResponse.acceptance_date,
     address: apiResponse.address,
   };

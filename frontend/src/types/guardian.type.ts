@@ -1,5 +1,11 @@
-export type DocumentType = "CC" | "CE" | "PA";
-export type Status = "APPROVED" | "PENDING" | "REJECTED";
+export const DOCUMENT_TYPES = ["CC", "TI", "CE", "PA"] as const;
+export type DocumentType = typeof DOCUMENT_TYPES[number];
+
+export const STATUSES = ["APPROVED", "PENDING", "REJECTED"] as const;
+export type Status = typeof STATUSES[number];
+
+export const ROLES = ["ACUDIENTE", "ADMIN", "USUARIO"] as const;
+export type Role = typeof ROLES[number];
 
 export interface SubgroupDTO {
   subgroupId?: number;
@@ -47,7 +53,7 @@ export interface MemberBasicInfo {
 export interface Guardian {
   member_id?: number
   user_id: string
-  rol: "ACUDIENTE" | "ADMIN" | "USUARIO"
+  rol: Role
   tenant_id: string
   firstName: string
   lastName: string
@@ -85,7 +91,7 @@ export interface GuardianCreateResponse {
 export interface CreateGuardianDTO {
   userId?: string;
   subgroup?: SubgroupDTO;
-  rol?: string;
+  rol?: Role;
   tenantId?: string;
   subgroupId?: string;
   firstName: string;
@@ -103,7 +109,7 @@ export interface CreateGuardianDTO {
 export interface UpdateGuardianDTO {
   userId?: string;
   subgroup?: SubgroupDTO;
-  rol?: string;
+  rol?: Role;
   tenantId?: string;
   subgroupId?: string;
   firstName?: string;
