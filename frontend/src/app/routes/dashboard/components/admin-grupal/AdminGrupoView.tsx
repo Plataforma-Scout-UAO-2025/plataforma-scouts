@@ -5,8 +5,12 @@ import GenderChart from "./GenderChart";
 import BranchDistribution from "./BranchDistribution";
 import GeneralStats from "./GeneralStats";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
+import { useMemberAccess } from "@/hooks/useMemberAccess";
+import PendingApprovalModal from "@/app/routes/admin-grupal/Miembros/components/PendingApprovalModal";
+import InactiveMemberModal from "@/app/routes/admin-grupal/Miembros/components/InactiveMemberModal";
 
 const AdminGrupoView = () => {
+  const { hasAccess, reason, loading: accessLoading } = useMemberAccess();
   const { user } = useAuth0();
   const {
     branchMemberCount,
@@ -25,6 +29,22 @@ const AdminGrupoView = () => {
     totalRamas: branchMembers.filter((rama) => rama !== "Sin Rama").length || 0,
     nuevosEsteMes: nuevosEsteMes,
   };
+
+  if (accessLoading) {
+    return <div className="flex justify-center items-center h-screen">Validando acceso...</div>;
+  }
+
+  if (reason === "pending") {
+    return <PendingApprovalModal isOpen={true} />;
+  }
+
+  if (reason === "inactive") {
+    return <InactiveMemberModal isOpen={true} />;
+  }
+
+  if (!hasAccess) {
+    return <div className="flex justify-center items-center h-screen">No tienes acceso al sistema</div>;
+  }
 
   if (loading) {
     return <FullScreenLoader message="Cargando..." />;

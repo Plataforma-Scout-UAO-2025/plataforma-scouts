@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import type { DashboardFinanciero } from "@/types/dashboard-tesorero.types";
 import type { InstallmentPayment, PaymentStatus } from "@/types/pago.type";
 import type { MiembroMora } from "@/types/dashboard-tesorero.types";
+import { useMemberAccess } from "@/hooks/useMemberAccess";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -26,6 +27,8 @@ import { Doughnut } from "react-chartjs-2";
 import api from "@/api/axios";
 import { useTenant } from "@/hooks/useTenant";
 import { toast } from "sonner";
+import PendingApprovalModal from "@/app/routes/admin-grupal/Miembros/components/PendingApprovalModal";
+import InactiveMemberModal from "@/app/routes/admin-grupal/Miembros/components/InactiveMemberModal";
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -671,6 +674,9 @@ export default function TesoreroView() {
   const [data, setData] = useState<DashboardFinanciero | null>(null);
   const tenantId = useTenant();
 
+  // Hook personalizado para validar acceso del miembro
+  const { hasAccess, reason, loading: accessLoading } = useMemberAccess();
+
   async function getDashboardData(tenantId: string) {
     try {
       const response = await api.get("finanzas/dashboard/" + tenantId);
@@ -687,6 +693,34 @@ export default function TesoreroView() {
       getDashboardData(tenantId);
     }
   }, [tenantId]);
+
+  // Mostrar loader mientras se valida el acceso
+  if (accessLoading) {
+    return (
+      <div className="flex justify-center items-center h-64 text-lg text-gray-600">
+        Cargando información...
+      </div>
+    );
+  }
+
+  // Mostrar modal de solicitud pendiente
+  if (reason === "pending") {
+    return <PendingApprovalModal isOpen={true} />;
+  }
+
+  // Mostrar modal de miembro inactivo
+  if (reason === "inactive") {
+    return <InactiveMemberModal isOpen={true} />;
+  }
+
+  // Si no tiene acceso por cualquier otra razón
+  if (!hasAccess) {
+    return (
+      <div className="flex justify-center items-center h-64 text-lg text-gray-600">
+        No tienes acceso al sistema. Por favor contacta a los administradores.
+      </div>
+    );
+  }
 
   return (
     <div className="mx-4 space-y-6">

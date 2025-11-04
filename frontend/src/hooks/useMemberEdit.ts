@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import type { Member, UpdateMember, EmergencyContact } from "@/types/member.type";
 import { useAppDispatch } from "./useAppDispatch";
-import { updateMemberAction, assignSubgroupAndSectionAction } from "@/store/members/membersActions";
+import { updateMemberAction, assignSubgroupAndSectionAction, changeAuth0UserRoleAction } from "@/store/members/membersActions";
+import { updateMemberRole } from "@/api/membersApi";
 import { toast } from "sonner";
 
 type AnyMember = Member | UpdateMember;
@@ -53,6 +54,7 @@ export function useMemberEdit({
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [editedData, setEditedData] = useState<Partial<UpdateMember>>({});
+  const [initialRole, setInitialRole] = useState<string | undefined>(undefined);
 
   const memberId = getMemberId(member);
 
@@ -60,8 +62,14 @@ export function useMemberEdit({
   const m = targetMember ?? member;
   if (!m) {
     setEditedData({});
+    setInitialRole(undefined);
     return;
   }
+
+  // Guardar el rol inicial para detectar cambios
+  const memberWithRole = m as Member;
+  const currentRole = memberWithRole.role;
+  setInitialRole(currentRole);
 
   const initialData: Partial<UpdateMember> = {
     firstName: getMemberField(m, "firstName", "first_name"),
@@ -77,6 +85,7 @@ export function useMemberEdit({
     hobbies: getMemberField(m, "hobbies", "hobbies"),
     sports: getMemberField(m, "sports", "sports"),
     instruments: getMemberField(m, "instruments", "instruments"),
+    role: currentRole, // Agregar el rol al estado inicial
   };
 
   const birthDate = (m as Member).birth_date ?? (m as UpdateMember).birthDate;
@@ -230,15 +239,59 @@ export function useMemberEdit({
 
       await dispatch(updateMemberAction(payload)).unwrap();
 
-      // Asignar subgrupo y sección si han cambiado
-      if (selectedSubgroup || selectedSection) {
-        await dispatch(
-          assignSubgroupAndSectionAction({
-            memberId,
-            subGroupId: selectedSubgroup ? Number(selectedSubgroup) : undefined,
-            sectionId: selectedSection ? Number(selectedSection) : undefined,
-          })
-        ).unwrap();
+      // Verificar si el rol cambió y actualizar en BD y Auth0
+      if (editedData.role && editedData.role !== initialRole) {
+        // Obtener user_id usando getMemberField para manejar ambos formatos
+        const userId = getMemberField(member, "userId", "user_id");
+
+        // 1. Actualizar en la base de datos
+        await updateMemberRole({
+          memberId: memberId,
+          newRole: editedData.role,
+        });
+
+        // 2. Actualizar en Auth0
+        if (userId) {
+          try {
+            await dispatch(
+              changeAuth0UserRoleAction({
+                user_id: userId,
+                newRole: editedData.role,
+              })
+            ).unwrap();
+            toast.success(`Rol actualizado exitosamente a ${editedData.role}`);
+          } catch (error) {
+            console.error("[useMemberEdit] Error actualizando rol en Auth0:", error);
+            toast.error("El rol se actualizó en la base de datos pero hubo un error al actualizarlo en Auth0. El usuario debe cerrar sesión y volver a iniciar.");
+          }
+        } else {
+          console.warn("[useMemberEdit] No se encontró user_id en el member");
+          toast.warning("No se pudo actualizar el rol en Auth0 (userId no encontrado). El usuario debe cerrar sesión.");
+        }
+      }
+
+      // Asignar subgrupo y sección solo si ambos tienen valores válidos
+      const hasValidSubgroup = selectedSubgroup && Number(selectedSubgroup) > 0;
+      const hasValidSection = selectedSection && Number(selectedSection) > 0;
+
+      if (hasValidSubgroup || hasValidSection) {
+        const assignmentData: {
+          memberId: number;
+          subGroupId?: number;
+          sectionId?: number;
+        } = {
+          memberId,
+        };
+
+        if (hasValidSubgroup) {
+          assignmentData.subGroupId = Number(selectedSubgroup);
+        }
+
+        if (hasValidSection) {
+          assignmentData.sectionId = Number(selectedSection);
+        }
+
+        await dispatch(assignSubgroupAndSectionAction(assignmentData)).unwrap();
       }
 
       const firstName = editedData.firstName || "";

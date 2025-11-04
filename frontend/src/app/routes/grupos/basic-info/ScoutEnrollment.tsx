@@ -1,6 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import PersonalDataForm from "./components/PersonalDataForm";
 import EmergencyContacts from "./components/EmergencyContacts";
 import InterestsForm from "./components/InterestsForm";
@@ -12,9 +20,27 @@ import { UserExistsDialog } from "./components/UserExistsDialog";
 import { ErrorDialog } from "./components/ErrorDialog";
 
 import { useScoutEnrollment } from "@/hooks/useScoutEnrollment";
+import { useOrgStructure } from "@/hooks/useOrgStructure";
+import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
 
 function ScoutEnrollment() {
   const navigate = useNavigate();
+  const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
+
+  const {
+    sections,
+    subgroups,
+    selectedGroupSlug,
+    selectedSection,
+    setSelectedSection,
+    selectedSubgroup,
+    setSelectedSubgroup,
+    loadingSections,
+    loadingSubgroups,
+  } = useOrgStructure({
+    orgId: orgId || "",
+    open: true,
+  });
 
   const {
     datosPersonales,
@@ -39,7 +65,10 @@ function ScoutEnrollment() {
     handleSchoolChange,
     handleSubmit,
     handleSchoolDialogResponse,
-  } = useScoutEnrollment();
+  } = useScoutEnrollment({
+    selectedSection,
+    selectedSubgroup,
+  });
 
   const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
@@ -81,14 +110,90 @@ function ScoutEnrollment() {
           />
         </>
       );
+    if (pagina === 3)
+      return (
+        <SchoolDataForm
+          datos={datosEscolares}
+          handleChange={handleSchoolChange}
+          errors={errors}
+        />
+      );
+    
+    // Página 4: Asignación organizacional
     return (
-      <SchoolDataForm
-        datos={datosEscolares}
-        handleChange={handleSchoolChange}
-        errors={errors}
-      />
+      <div className="col-span-full space-y-4">
+        <h3 className="text-lg font-semibold text-primary border-b-2 border-primary pb-2">
+          Asignación Organizacional
+        </h3>
+
+        {/* Selector de Sección */}
+        <div className="space-y-2">
+          <Label htmlFor="section">Sección *</Label>
+          <Select
+            value={selectedSection}
+            onValueChange={setSelectedSection}
+            disabled={
+              !selectedGroupSlug || loadingSections || sections.length === 0
+            }
+            required
+          >
+            <SelectTrigger
+              id="section"
+              className={errors.section ? "border-red-500" : ""}
+            >
+              <SelectValue placeholder="Selecciona una sección" />
+            </SelectTrigger>
+            <SelectContent>
+              {sections.map((section) => (
+                <SelectItem key={section.id} value={String(section.id)}>
+                  {section.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.section && (
+            <p className="text-xs text-red-600">{errors.section}</p>
+          )}
+        </div>
+
+        {/* Selector de Subgrupo */}
+        <div className="space-y-2">
+          <Label htmlFor="subgroup">Subgrupo *</Label>
+          <Select
+            value={selectedSubgroup}
+            onValueChange={setSelectedSubgroup}
+            disabled={
+              !selectedSection || loadingSubgroups || subgroups.length === 0
+            }
+          >
+            <SelectTrigger
+              id="subgroup"
+              className={errors.subgroup ? "border-red-500" : ""}
+            >
+              <SelectValue placeholder="Selecciona un subgrupo" />
+            </SelectTrigger>
+            <SelectContent>
+              {subgroups.map((subgroup) => (
+                <SelectItem key={subgroup.id} value={String(subgroup.id)}>
+                  {subgroup.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.subgroup && (
+            <p className="text-xs text-red-600">{errors.subgroup}</p>
+          )}
+        </div>
+      </div>
     );
   };
+    if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
@@ -125,7 +230,8 @@ function ScoutEnrollment() {
             variant="primary"
             disabled={
               loadingSubmit ||
-              (pagina === 2 && datosPersonales.accept_treatment === false)
+              (pagina === 2 && datosPersonales.accept_treatment === false) ||
+              (pagina === 4 && (!selectedGroupSlug || !selectedSection || !selectedSubgroup))
             }
           >
             {loadingSubmit
@@ -146,7 +252,7 @@ function ScoutEnrollment() {
         open={showModal}
         onClose={() => {
           setShowModal(false);
-          navigate("/app/dashboard");
+          navigate("/app/miembros");
         }}
       />
 

@@ -9,7 +9,7 @@ import { updateMember } from '@/api/membersApi';
 import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
 import { editMemberSchema, type EditMemberFormData } from '../../schemas/MemberForm.schema';
 import MemberContactForm from './MemberContactForm';
-//import EmergencyContactsList from './emergencyContact/EmergencyContactList';
+import EmergencyContactsList from './emergencyContact/EmergencyContactList';
 
 interface MemberUpdate extends UpdateMember {
   member_id?: number;
@@ -44,7 +44,8 @@ export default function EditMemberModal({
     resolver: zodResolver(editMemberSchema)
   });
 
-  const { setEmergencyContacts } = useEmergencyContacts();
+  const { emergencyContacts, setEmergencyContacts, addEmergencyContact, removeEmergencyContact, updateEmergencyContact } = useEmergencyContacts();
+
   
   const documentType = watch('documentType');
 
@@ -79,22 +80,14 @@ export default function EditMemberModal({
       }
       const updateData = {
       phone: data.phone,
-      document_type: data.documentType,
+      documentType: data.documentType,
       address: data.address,
+      emergencyContacts: emergencyContacts.filter(contact => 
+        contact.name && contact.relationship && contact.phone
+      ),
     };
-      console.log('📤 Datos que se enviarán al backend:', updateData);
-
       await updateMember(String(id), updateData); 
-      /*await updateMember(String(id), {
-        phone: data.phone,
-        documentType: data.documentType,
-        address: data.address,
-        //emergencyContacts: emergencyContacts.filter(contact => 
-        //  contact.name && contact.relationship && contact.phone
-        //),
-      });
-      */
-
+      
       toast.success('Miembro actualizado correctamente');
       handleClose();
       
@@ -135,14 +128,14 @@ return (
           documentType={documentType}
           onDocumentTypeChange={(value) => setValue('documentType', value as NonNullable<EditMemberFormData['documentType']>)}
         />
-        {/* 
+        
         <EmergencyContactsList
           contacts={emergencyContacts}
           onAdd={addEmergencyContact}
           onUpdate={updateEmergencyContact}
           onRemove={removeEmergencyContact}
         />
-        */}
+
 
         <DialogFooter className="space-x-2">
           <Button type="button" variant="outline" onClick={handleClose}>

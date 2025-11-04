@@ -6,6 +6,7 @@ import {
   createMemberAction,
   createMemberWithSchoolDataAction,
   createScoutAuth0Action,
+  assignSubgroupAndSectionAction,
 } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
@@ -29,6 +30,11 @@ type ApiError = {
   error?: string;
   detail?: string;
   status?: number;
+};
+
+type UseScoutEnrollmentParams = {
+  selectedSection?: string;
+  selectedSubgroup?: string;
 };
 
 type UseScoutEnrollmentReturn = {
@@ -58,7 +64,10 @@ type UseScoutEnrollmentReturn = {
   handleSchoolDialogResponse: (incluir: boolean) => void;
 };
 
-export function useScoutEnrollment(): UseScoutEnrollmentReturn {
+export function useScoutEnrollment(
+  params: UseScoutEnrollmentParams = {}
+): UseScoutEnrollmentReturn {
+  const { selectedSection, selectedSubgroup } = params;
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
   const { orgId } = useAuth0ApiWrapper();
@@ -114,12 +123,25 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
   const getCurrentErrors = useCallback(() => {
     if (pagina === 1) return page1Validation.errors;
     if (pagina === 2) return page2Validation.errors;
-    return page3Validation.errors;
+    if (pagina === 3) return page3Validation.errors;
+    if (pagina === 4) {
+      const errors: Record<string, string> = {};
+      if (!selectedSection) {
+        errors.section = "Debe seleccionar una sección";
+      }
+      if (!selectedSubgroup) {
+        errors.subgroup = "Debe seleccionar un subgrupo";
+      }
+      return errors;
+    }
+    return {};
   }, [
     pagina,
     page1Validation.errors,
     page2Validation.errors,
     page3Validation.errors,
+    selectedSection,
+    selectedSubgroup,
   ]);
 
   const handlePersonalChange = useCallback(
@@ -171,12 +193,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
   const validateCurrentPage = useCallback((): boolean => {
     if (pagina === 1) {
-      const isValid = page1Validation.validate(datosPersonales);
-
-      if (!isValid) {
-        console.log("Errores de validación página 1:", page1Validation.errors);
-      }
-      return isValid;
+      return page1Validation.validate(datosPersonales);
     }
     if (pagina === 2) {
       return page2Validation.validate(datosPersonales);
@@ -184,6 +201,10 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
     if (pagina === 3) {
       return page3Validation.validate(datosEscolares);
+    }
+
+    if (pagina === 4) {
+      return !!selectedSection && !!selectedSubgroup;
     }
 
     return false;
@@ -194,6 +215,8 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     page1Validation,
     page2Validation,
     page3Validation,
+    selectedSection,
+    selectedSubgroup,
   ]);
 
   const scrollToFirstError = useCallback(() => {
@@ -315,6 +338,42 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return;
       }
 
+      // Obtener el ID del miembro creado
+      // La estructura varía según si se incluyeron datos escolares o no
+      const createdMember = memberResult.payload as {
+        memberId?: number;
+        member_id?: number;
+        newMember?: {
+          member?: {
+            memberId?: number;
+          };
+        };
+      };
+
+      // Extraer memberId según la estructura de respuesta
+    
+      const memberId =
+        createdMember?.newMember?.member?.memberId ??
+        createdMember?.memberId ??
+        createdMember?.member_id;
+
+      if (memberId && selectedSection && selectedSubgroup) {
+        try {
+          await dispatch(
+            assignSubgroupAndSectionAction({
+              memberId,
+              sectionId: Number(selectedSection),
+              subGroupId: Number(selectedSubgroup),
+            })
+          ).unwrap();
+        } catch (assignError) {
+          console.error("Error al asignar sección/subgrupo:", assignError);
+          setErrorMessage("El scout fue creado pero hubo un error en la asignación de sección/subgrupo");
+          setShowAuth0ErrorDialog(true);
+          return;
+        }
+      }
+
       page1Validation.clearErrors();
       page2Validation.clearErrors();
       page3Validation.clearErrors();
@@ -349,6 +408,8 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     datosEscolares,
     orgId,
     currentUserRole,
+    selectedSection,
+    selectedSubgroup,
     dispatch,
     page1Validation,
     page2Validation,
@@ -375,6 +436,12 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return;
       }
 
+      if (pagina === 3) {
+        setPagina(4);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
       await enviarDatos();
     },
     [pagina, validateCurrentPage, scrollToFirstError, enviarDatos],
@@ -388,14 +455,15 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         setPagina(3);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        void enviarDatos();
+        setPagina(4);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     },
-    [enviarDatos],
+    [],
   );
 
   const totalPaginas = useMemo(
-    () => (incluirDatosEscolares ? 3 : 2),
+    () => (incluirDatosEscolares ? 4 : 3),
     [incluirDatosEscolares],
   );
 

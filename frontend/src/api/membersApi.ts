@@ -145,6 +145,15 @@ export const getSchoolDataByMemberId = async (id: string | number | bigint) => {
   return response.data;
 };
 
+// Actualizar rol de un miembro en la base de datos
+export const updateMemberRole = async (data: {
+  memberId: number;
+  newRole: string;
+}) => {
+  const response = await api.put(`/members/update_role`, data);
+  return response.data;
+};
+
 // Cambiar rol de usuario en Auth0 (backend controller /api/v1/auth0/change-role)
 export const changeAuth0UserRole = async (data: {
   user_id: string;

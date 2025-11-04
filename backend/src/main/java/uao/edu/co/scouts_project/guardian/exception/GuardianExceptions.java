@@ -25,4 +25,10 @@ public class GuardianExceptions {
             super(message);
         }
     }
+
+    public static class AvailableGuardiansException extends RuntimeException {
+        public AvailableGuardiansException(String message) {
+            super(message);
+        }
+    }
 }

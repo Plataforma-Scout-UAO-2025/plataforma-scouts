@@ -106,7 +106,8 @@ public class GroupStatisticsService {
             // Buscar nombre del grupo (si existe)
             var groupOpt = groupRepository.findById(groupId);
             String groupName = groupOpt.map(g -> g.getName()).orElse("<Desconocido>");
-            result.add(new GroupMembersCountDTO(groupId, groupName, count == null ? 0L : count));
+            String status = groupOpt.map(g -> g.getStatus()).orElse("<Desconocido>");
+            result.add(new GroupMembersCountDTO(groupId, groupName, status, count == null ? 0L : count));
         }
 
         return result;
@@ -126,7 +127,8 @@ public class GroupStatisticsService {
             Long count = (Long) row[1];
             var groupOpt = groupRepository.findById(groupId);
             String groupName = groupOpt.map(g -> g.getName()).orElse("<Desconocido>");
-            result.add(new GroupMembersCountDTO(groupId, groupName, count == null ? 0L : count));
+            String status = groupOpt.map(g -> g.getStatus()).orElse("<Desconocido>");
+            result.add(new GroupMembersCountDTO(groupId, groupName, status, count == null ? 0L : count));
         }
 
         return result;

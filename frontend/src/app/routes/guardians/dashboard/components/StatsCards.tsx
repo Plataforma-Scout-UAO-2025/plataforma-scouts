@@ -1,24 +1,8 @@
-import { Users, DollarSign, AlertTriangle } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
 
-interface StatsCardsProps {
-  data: {
-    valorPendiente: number;
-    cuotasPendientes: number;
-  };
-}
-
-const formatearMoneda = (monto: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(monto);
-};
-
-export default function StatsCards({ data }: StatsCardsProps) {
+export default function StatsCards() {
   // Obtener miembros a cargo usando el hook
   const { user } = useAuth0();
   const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
@@ -31,20 +15,6 @@ export default function StatsCards({ data }: StatsCardsProps) {
       valor: loading ? "..." : members.length.toString(),
       detalle: "Total de miembros",
       color: "text-blue-600",
-    },
-    {
-      icon: DollarSign,
-      titulo: "Valor Pendiente",
-      valor: formatearMoneda(data.valorPendiente),
-      detalle: "Saldo por pagar",
-      color: "text-red-600",
-    },
-    {
-      icon: AlertTriangle,
-      titulo: "Cuotas Pendientes",
-      valor: data.cuotasPendientes.toString(),
-      detalle: "Cuotas por pagar",
-      color: "text-amber-600",
     }
   ];
 
@@ -64,7 +34,7 @@ export default function StatsCards({ data }: StatsCardsProps) {
                 </p>
               </div>
               
-              <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-accent/60 transition-colors">
+              <div className="flex items-center gap-4 p-3 rounded-lg">
                 <div className={`p-3 ${stat.color}`}>
                   <stat.icon className="w-5 h-5" />
                 </div>

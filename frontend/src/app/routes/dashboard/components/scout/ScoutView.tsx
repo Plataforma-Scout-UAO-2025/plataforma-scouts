@@ -3,6 +3,7 @@ import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useMemberStatusDialog } from "@/hooks/useMemberStatusDialog";
+import { useMemberAccess } from "@/hooks/useMemberAccess";
 import {
   Card,
   CardContent,
@@ -11,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { fetchMembersWithBranchAction } from "@/store/members/membersActions";
 import { User, Flag } from "lucide-react";
+import PendingApprovalModal from "@/app/routes/admin-grupal/Miembros/components/PendingApprovalModal";
+import InactiveMemberModal from "@/app/routes/admin-grupal/Miembros/components/InactiveMemberModal";
 
 import { guardianService } from "@/app/routes/guardians/services/guardianService";
 import type { Guardian } from "@/types/guardian.type";
@@ -21,6 +24,9 @@ const Dashboard = () => {
   const { members, loading, error } = useAppSelector((state) => state.members);
   const { user } = useAuth0();
   const { isActive } = useMemberStatusDialog();
+  
+  // Hook personalizado para validar acceso del miembro
+  const { hasAccess, reason, } = useMemberAccess();
 
   const [guardian, setGuardian] = useState<Guardian | null>(null);
   const [loadingGuardian, setLoadingGuardian] = useState(false);
@@ -64,26 +70,48 @@ const Dashboard = () => {
     fetchGuardian();
   }, [scoutInfo]);
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64 text-lg text-gray-600">
         Cargando información...
       </div>
     );
+  }
 
-  if (error)
+  // Mostrar modal de solicitud pendiente
+  if (reason === "pending") {
+    return <PendingApprovalModal isOpen={true} />;
+  }
+
+  // Mostrar modal de miembro inactivo
+  if (reason === "inactive") {
+    return <InactiveMemberModal isOpen={true} />;
+  }
+
+  // Si no tiene acceso por cualquier otra razón
+  if (!hasAccess) {
+    return (
+      <div className="flex justify-center items-center h-64 text-lg text-gray-600">
+        No tienes acceso al sistema. Por favor contacta a los administradores.
+      </div>
+    );
+  }
+
+  if (error) {
     return (
       <p className="text-center text-red-500 font-medium">
         Error al cargar datos: {error}
       </p>
     );
+  }
 
-  if (!scoutInfo)
+  if (!scoutInfo) {
     return (
       <p className="text-center text-gray-600">
         No se encontró información del scout.
       </p>
     );
+  }
 
   return (
     <div className="max-w-5xl mx-auto py-10 px-6">
