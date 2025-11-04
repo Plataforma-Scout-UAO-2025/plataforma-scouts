@@ -16,6 +16,8 @@ import AssignmentSection from "./components/edit/AssignmentSection";
 import PersonalInfoForm from "../basic-info/components/edit/PersonalInfoForm";
 import PhysicalInfoForm from "../basic-info/components/edit/PhysicalInfoForm";
 import EmergencyContactsForm from "../basic-info/components/edit/EmergencyContactsForm";
+import RoleSelectionForm from "../basic-info/components/edit/RoleSelectionForm";
+import type { role } from "@/types/enrollment.type";
 
 interface EditMemberModalProps {
   open: boolean;
@@ -163,7 +165,10 @@ export default function EditMemberModal({
             Editar Información del Miembro
           </DialogTitle>
           <DialogDescription>
-            Modifica los datos del miembro y guarda los cambios. Los campos marcados con * son obligatorios.
+            Modifica los datos del miembro <span className=" text-l text-primary/800">
+              <strong>{member?.firstName ?? member?.first_name}{" "}
+                {member?.lastName ?? member?.last_name}</strong>
+            </span> y guarda los cambios. Los campos marcados con * son obligatorios.
           </DialogDescription>
         </DialogHeader>
         {loadingDetails ? (
@@ -193,6 +198,12 @@ export default function EditMemberModal({
                 onRemoveContact={handleRemoveEmergencyContact}
               />
             )}
+
+            <RoleSelectionForm
+              currentRole={editedData.role as role}
+              onRoleChange={(newRole) => handleFieldChange("role", newRole)}
+              loading={loading}
+            />
 
             <AssignmentSection
               groups={groups}

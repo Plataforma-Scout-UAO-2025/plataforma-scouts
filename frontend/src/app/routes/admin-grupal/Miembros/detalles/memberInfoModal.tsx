@@ -5,7 +5,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-
 } from "@/components/ui/dialog";
 import type { Member } from "@/types/member.type";
 import { Button } from "@/components/ui/button";
@@ -16,9 +15,12 @@ import MemberStatusBar from "../../Solicitudes/detalles/components/MemberStatusB
 import SchoolInfo from "../../Solicitudes/detalles/components/SchoolInfo";
 import MembersInChargeCard from "../../../guardians/profile/components/MembersInChargeCard";
 import { useState, useEffect } from "react";
-import { getMembersInChargeOf } from "@/api/guardiansApi";
+import { guardianService } from "@/app/routes/guardians/services/guardianService";
 import { getMembersWithBranch, getMembersByStatus } from "@/api/membersApi";
+import type { Guardian } from "@/types/guardian.type";
 import MemberAssignmentInfo from "@/app/routes/admin-grupal/Miembros/components/MemberAssignmentInfo";
+import GuardianInfo from "@/app/routes/admin-grupal/Miembros/components/GuardianInfo";
+
 import type { MemberBasicInfo } from "@/types/guardian.type";
 
 interface MemberInfoModalProps {
@@ -37,16 +39,19 @@ export default function MemberInfoModal({
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [fullMemberData, setFullMemberData] = useState<Member | null>(null);
   const [isLoadingFullData, setIsLoadingFullData] = useState(false);
+  const [guardianInfo, setGuardianInfo] = useState<Guardian | null>(null); const [loadingGuardian, setLoadingGuardian] = useState(false);
 
   const isScout = member?.role?.toUpperCase() === "SCOUT";
   const isAcudiente = member?.role?.toUpperCase() === "ACUDIENTE";
-  const handleClose = () => {
-    onOpenChange(false);
-  };
+
+  const handleClose = () => onOpenChange(false);
+
+  //Cargar datos completos del miembro
   useEffect(() => {
     const fetchCombinedData = async () => {
       if (!open) {
         setFullMemberData(null);
+        setGuardianInfo(null);
         return;
       }
 
@@ -62,19 +67,30 @@ export default function MemberInfoModal({
 
         const fromBranch = membersWithBranch.find(
           (m: Member) =>
-            String(m.member_id ?? m.memberId) === String(targetMemberId),
+            String(m.member_id ?? m.memberId) === String(targetMemberId)
         );
         const fromStatus = membersWithStatus.find(
           (m: Member) =>
-            String(m.member_id ?? m.memberId) === String(targetMemberId),
+            String(m.member_id ?? m.memberId) === String(targetMemberId)
         );
 
         const merged = { ...fromBranch, ...fromStatus };
-
         setFullMemberData(merged || null);
+
+        // Obtener información del acudiente si el miembro es SCOUT
+        if (merged?.guardian_id) {
+          setLoadingGuardian(true);
+          const guardian = await guardianService.getGuardianById(merged.guardian_id);
+          setGuardianInfo(guardian);
+          setLoadingGuardian(false);
+        } else {
+          setGuardianInfo(null);
+        }
       } catch (error) {
-        console.error("Error al obtener datos combinados del miembro:", error);
+        console.error("Error al obtener datos del miembro o acudiente:", error);
         setFullMemberData(null);
+        setGuardianInfo(null);
+        setLoadingGuardian(false);
       } finally {
         setIsLoadingFullData(false);
       }
@@ -93,7 +109,7 @@ export default function MemberInfoModal({
 
       setIsLoadingMembers(true);
       try {
-        const members = await getMembersInChargeOf(member.guardian_id);
+        const members = await guardianService.getMembersInChargeOf(member.guardian_id);
         setMembersInCharge(members || []);
       } catch (error) {
         console.error("Error al obtener miembros a cargo:", error);
@@ -106,9 +122,7 @@ export default function MemberInfoModal({
     fetchMembersInCharge();
   }, [open, isAcudiente, member?.guardian_id]);
 
-  const handleViewMember = (id: number) => {
-    setSelectedMemberId(id);
-  };
+  const handleViewMember = (id: number) => setSelectedMemberId(id);
 
   const miembrosACargo = membersInCharge.map((m) => ({
     id: parseInt(m.memberId || "0"),
@@ -124,7 +138,7 @@ export default function MemberInfoModal({
   const memberId = displayMember.member_id ?? displayMember.memberId;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">
@@ -146,14 +160,15 @@ export default function MemberInfoModal({
             {isScout && memberId && <SchoolInfo memberId={memberId} />}
             {isScout && (
               <>
-                <EmergencyContacts member={displayMember} />
                 <Interests member={displayMember} />
               </>
             )}
+            <EmergencyContacts member={displayMember} />
+            {isScout && (
+              <GuardianInfo guardian={guardianInfo} loading={loadingGuardian} />
+            )}
             <MemberAssignmentInfo member={displayMember} />
-
             <MemberStatusBar member={displayMember} />
-
             {isAcudiente && (
               <>
                 {isLoadingMembers ? (
@@ -168,23 +183,9 @@ export default function MemberInfoModal({
                 )}
               </>
             )}
-            {displayMember.role === "SCOUTER" && (
-              <div className="p-4 bg-purple-50 rounded-md border border-purple-200">
-                <p className="text-sm text-purple-700">
-                  Información específica de SCOUTER (próximamente)
-                </p>
-              </div>
-            )}
-            {displayMember.role === "TESORERO" && (
-              <div className="p-4 bg-green-50 rounded-md border border-green-200">
-                <p className="text-sm text-green-700">
-                  Información específica de TESORERO (próximamente)
-                </p>
-              </div>
-            )}
           </div>
-
         )}
+
         <DialogFooter>
           <Button variant="primary" onClick={handleClose}>
             Cerrar

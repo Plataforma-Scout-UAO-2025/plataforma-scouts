@@ -1,0 +1,14 @@
+meta {
+  name: Read
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseurl}}/{{id}}
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,23 @@
+meta {
+  name: 200 Ok
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseurl}}/members/assign_subgroup_and_section
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "memberId": 359,
+    "subGroupId": 111,
+    "sectionId": 3
+  }
+}

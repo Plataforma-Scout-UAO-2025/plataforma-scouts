@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import type { DashboardFinanciero } from "@/types/dashboard-tesorero.types";
 import type { InstallmentPayment, PaymentStatus } from "@/types/pago.type";
 import type { MiembroMora } from "@/types/dashboard-tesorero.types";
+import { useMemberAccess } from "@/hooks/useMemberAccess";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -26,6 +27,8 @@ import { Doughnut } from "react-chartjs-2";
 import api from "@/api/axios";
 import { useTenant } from "@/hooks/useTenant";
 import { toast } from "sonner";
+import PendingApprovalModal from "@/app/routes/admin-grupal/Miembros/components/PendingApprovalModal";
+import InactiveMemberModal from "@/app/routes/admin-grupal/Miembros/components/InactiveMemberModal";
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -303,15 +306,14 @@ const ultimosPagosColumns: ColumnDef<InstallmentPayment>[] = [
       const installment = row.original;
       return (
         <div
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            installment.status === "PENDING"
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${installment.status === "PENDING"
               ? "bg-yellow-100 text-yellow-800"
               : installment.status === "PAID"
-              ? "bg-green-100 text-green-800"
-              : installment.status === "OVERDUE"
-              ? "bg-red-100 text-red-800"
-              : "bg-blue-100 text-blue-800"
-          }`}
+                ? "bg-green-100 text-green-800"
+                : installment.status === "OVERDUE"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-blue-100 text-blue-800"
+            }`}
         >
           {statusDict[installment.status]}
         </div>
@@ -440,9 +442,9 @@ const UltimosPagosTable = ({ data }: UltimosPagosTableProps) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -538,9 +540,9 @@ const MiembrosMoraTable = ({ data }: MiembrosMoraTableProps) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -671,6 +673,9 @@ export default function TesoreroView() {
   const [data, setData] = useState<DashboardFinanciero | null>(null);
   const tenantId = useTenant();
 
+  // Hook personalizado para validar acceso del miembro
+  const { hasAccess, reason, loading: accessLoading } = useMemberAccess();
+
   async function getDashboardData(tenantId: string) {
     try {
       const response = await api.get("finanzas/dashboard/" + tenantId);
@@ -680,13 +685,41 @@ export default function TesoreroView() {
       console.error("Error al obtener los datos del dashboard:", error);
     }
   }
- 
+
 
   useEffect(() => {
     if (tenantId) {
       getDashboardData(tenantId);
     }
   }, [tenantId]);
+
+  // Mostrar loader mientras se valida el acceso
+  if (accessLoading) {
+    return (
+      <div className="flex justify-center items-center h-64 text-lg text-gray-600">
+        Cargando información...
+      </div>
+    );
+  }
+
+  // Mostrar modal de solicitud pendiente
+  if (reason === "pending") {
+    return <PendingApprovalModal isOpen={true} />;
+  }
+
+  // Mostrar modal de miembro inactivo
+  if (reason === "inactive") {
+    return <InactiveMemberModal isOpen={true} />;
+  }
+
+  // Si no tiene acceso por cualquier otra razón
+  if (!hasAccess) {
+    return (
+      <div className="flex justify-center items-center h-64 text-lg text-gray-600">
+        No tienes acceso al sistema. Por favor contacta a los administradores.
+      </div>
+    );
+  }
 
   return (
     <div className="mx-4 space-y-6">
@@ -762,11 +795,11 @@ export default function TesoreroView() {
             <CardTitle>Distribución estado de pagos mes actual</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-center">
-             <PieChart data={data?.distribucion_pagos || {
-               porcentaje_pagado: 0,
-               porcentaje_pendiente: 0,
-               porcentaje_vencido: 0,
-             }} />
+            <PieChart data={data?.distribucion_pagos || {
+              porcentaje_pagado: 0,
+              porcentaje_pendiente: 0,
+              porcentaje_vencido: 0,
+            }} />
           </CardContent>
         </Card>
       </section>
