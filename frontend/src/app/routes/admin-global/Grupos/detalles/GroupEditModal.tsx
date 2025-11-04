@@ -114,7 +114,6 @@ export default function GroupEditModal({
         .map((key) => [key, form[key]])
     );
     
-    // Always send both status and is_active if either changed
     if ('status' in updates) {
       updates['status'] = form.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE';
       updates['isActive'] = form.status === 'ACTIVE';
@@ -128,13 +127,12 @@ export default function GroupEditModal({
       delete updates['isActive'];
     }
 
-    // Actualizar campos generales si hay cambios
     if (Object.keys(updates).length > 0) {
       const action = await dispatch(
         updateGroupAction({ tenantId, groupSlug, updates })
       );
       if (!updateGroupAction.fulfilled.match(action)) {
-        return; // Si falla, no continuar
+        return; 
       }
     }
 
@@ -263,6 +261,8 @@ export default function GroupEditModal({
                         handleChange("foundedIn", date as unknown as UpdateGroupDTO["foundedIn"]);
                       }
                     }}
+                    disabled={(date) => date > new Date()}
+                    defaultMonth={form.foundedIn ? new Date(form.foundedIn) : undefined}
                     initialFocus
                     locale={es}
                   />

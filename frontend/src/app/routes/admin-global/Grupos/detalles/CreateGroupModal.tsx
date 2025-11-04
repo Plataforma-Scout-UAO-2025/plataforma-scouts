@@ -31,7 +31,7 @@ import {
   fetchGroupsWithAdminsAction,
 } from "@/store/groups/groupsActions";
 import { clearNotification } from "@/store/groups/groupsSlice";
-import type { CreateGroupDTO, GroupResponseDTO } from "@/types/group.type";
+import type { CreateGroupDTO } from "@/types/group.type";
 import { useGroup } from "@/hooks/useGroup";
 import { uploadPhotoFile } from "@/lib/imageUtils";
 
@@ -122,7 +122,6 @@ export default function CreateGroupModal({
     };
 
     const groupData = {
-      groupId: 0, // Temporal, será asignado por el backend
       tenant_id: "A", // Tenant por defecto para grupos globales
       slug: generatedSlug,
       name: form.name,
@@ -141,9 +140,8 @@ export default function CreateGroupModal({
       social_links: socialLinks,
       config: form.config || null,
       is_active: form.isActive ?? true,
-      isActive: form.isActive ?? true,
       status: form.status ?? "ACTIVE",
-    } as unknown as GroupResponseDTO;
+    };
 
     const action = await dispatch(createGroupAction(groupData));
 
@@ -261,6 +259,8 @@ export default function CreateGroupModal({
                         handleChange("foundedIn", date.toISOString());
                       }
                     }}
+                    disabled={(date) => date > new Date()}
+                    defaultMonth={form.foundedIn ? new Date(form.foundedIn) : undefined}
                     initialFocus
                     locale={es}
                   />
