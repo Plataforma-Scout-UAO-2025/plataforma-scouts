@@ -13,15 +13,21 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
+import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
 import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
+import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
+import uao.edu.co.scouts_project.infrastructure.adapter.RoleMappingAdapter;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
 import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GRUPO;
 import uao.edu.co.scouts_project.member.mapper.MemberMapper;
@@ -48,6 +54,8 @@ public class GroupService implements IGroupService {
     private final TenantRepository tenantRepository;
     private final SupabaseStorageService storageService;
 
+    private final Auth0AdminPort adminPort;
+    private final RoleMappingPort roleMappingPort;
     private final ConnectionQueryPort connectionQueryPort;
     private final OrganizationQueryPort organizationQueryPort;
     private final ITenantService tenantService;
@@ -59,8 +67,19 @@ public class GroupService implements IGroupService {
     private static final Pattern SLUG_PATTERN = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$");
     private static final String BUCKET_IMAGES = "images";
 
+    @Value("${SUPERUSER_USERNAME}")
+    private String SUPERUSER_USERNAME;
+
+    @Value("${SUPERUSER_PASSWORD}")
+    private String SUPERUSER_PASSWORD;
+
+    @Value("${SUPERUSER_EMAIL}")
+    private String SUPERUSER_EMAIL;
+
     public GroupService(
             @Qualifier("organigramaStorageService") SupabaseStorageService storageService,
+            Auth0AdminPort adminPort,
+            RoleMappingPort roleMappingPort,
             ConnectionQueryPort connectionQueryPort,
             ITenantService tenantService,
             IMemberService memberService,
@@ -72,6 +91,8 @@ public class GroupService implements IGroupService {
         this.tenantRepository = tenantRepository;
         this.memberService = memberService;
         this.storageService = storageService;
+        this.adminPort = adminPort;
+        this.roleMappingPort = roleMappingPort;
         this.connectionQueryPort = connectionQueryPort;
         this.organizationQueryPort = organizationQueryPort;
         this.tenantService = tenantService;
@@ -149,24 +170,30 @@ public class GroupService implements IGroupService {
         organizationQueryPort.enableConnectionForOrganization(orgId, connectionId);
 
         logger.info("OK: Conexión asociada a la organización en Auth0.");
+
         // - Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
         // de conexión de dicha organization
         // (con el 'con_id' o como se específique) en Auth0.
-        // logger.info("Se creará el super usuario en Auth0");
+        logger.info("Se creará el super usuario en Auth0");
 
         // // Crear SUPERUSUARIO ADMIN_GLOBAL en la conexión recién creada
-        // CreateUserCommandDTO superUserCmd = new CreateUserCommandDTO(
-        // SUPERUSEREMAIL,
-        // SUPERUSERPASSWORD,
-        // SUPERUSER_USERNAME);
+        CreateUserCommandDTO superUserCmd = new CreateUserCommandDTO(
+                SUPERUSER_EMAIL,
+                SUPERUSER_PASSWORD,
+                SUPERUSER_USERNAME);
 
-        // logger.info("Creando superusuario en conexión: {}", connectionRef);
-        // CreatedUserDTO createdSuperUser = this.createUserInConnection(superUserCmd,
+        logger.info("Creando superusuario en conexión: {}", connectionId);
+
+        CreatedUserDTO createdSuperUser = adminPort.createUserInConnection(superUserCmd, connectionId);
         // // Asociar al org y asignar rol ADMIN_GLOBAL
-        // addUserToOrganization(orgId, createdSuperUser.getId());
-        // assignRole(createdSuperUser.getId(), Role.ADMIN_GLOBAL);
 
-        // logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
+        adminPort.addUserToOrganization(orgId, createdSuperUser.getId());
+
+        String roleId = roleMappingPort.getAuth0RoleId(ADMIN_GRUPO);
+
+        adminPort.assignRole(createdSuperUser.getId(), roleId);
+
+        logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
 
         // Crear el Tenant en BD con el org_id de Auth0
 
@@ -559,7 +586,8 @@ public class GroupService implements IGroupService {
         // 2) Obtener o crear la conexión correcta para este grupo basado en su tenantId
         String connectionId = connectionQueryPort.createOrUpdateAuth0DbConnection(tenantId);
 
-        // 3) Crear usuario en Auth0 con rol ADMIN_GRUPO en la conexión correcta del grupo
+        // 3) Crear usuario en Auth0 con rol ADMIN_GRUPO en la conexión correcta del
+        // grupo
         CreateUserWithRoleCommandDTO cmd = new CreateUserWithRoleCommandDTO(
                 request.email(),
                 request.password(),
