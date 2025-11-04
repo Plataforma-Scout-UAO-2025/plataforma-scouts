@@ -35,7 +35,7 @@ const GroupsDistribution = ({ memberCounts }: GroupsDistributionProps) => {
             );
 
             return (
-              <div key={memberCount.group_name} className="space-y-2">
+              <div key={memberCount.group_id} className="space-y-2">
                 <div className="flex justify-between items-center gap-2 flex-wrap">
                   <span className="text-text font-medium text-sm sm:text-base break-words max-w-[60%]">
                     {memberCount.group_name}
