@@ -197,9 +197,7 @@ function Grupos() {
         originalGroupData || undefined
       );
 
-      // Actualizar información general del grupo (sin logo ni scarf)
-      const { logo_object_id: _logo_object_id, scarf_object_id: _scarf_object_id, ...generalUpdate } = updateData;
-      await updateGroup(tenantId, groupSlug, generalUpdate);
+      await updateGroup(tenantId, groupSlug, updateData);
 
       // Actualizar logo si cambió
       if (logoChanged && data.logo) {
