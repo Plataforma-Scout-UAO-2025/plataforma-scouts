@@ -1,7 +1,7 @@
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Control } from "react-hook-form";
-import type { CompleteDataFormData } from "../../schemas/CompleteData.schema.ts";
+import type { CompleteDataFormData } from "@/app/routes/guardians/schemas/CompleteData.schema";
 
 interface GenderFieldProps {
   control: Control<CompleteDataFormData>;

@@ -1,15 +1,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@/components/ui/form.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { completeDataSchema, type CompleteDataFormData } from "../schemas/CompleteData.schema.ts";
-import { useAgeCalculation } from "../hooks/useAgeCalculation.ts";
-import { DocumentTypeField } from "./fields/DocumentTypeField.tsx";
-import { IdentificationField } from "./fields/IdentificationField.tsx";
-import { PhoneField } from "./fields/PhoneField.tsx";
-import { GenderField } from "./fields/GenderField.tsx";
-import { BirthDateField } from "./fields/BirthDateField.tsx";
-import { AddressField } from "./fields/AddressField.tsx";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { completeDataSchema, type CompleteDataFormData } from "@/app/routes/guardians/schemas/CompleteData.schema";
+import { useAgeCalculation } from "@/app/routes/guardians/hooks/useAgeCalculation";
+import { DocumentTypeField } from "@/app/routes/guardians/components/fields/DocumentTypeField";
+import { IdentificationField } from "@/app/routes/guardians/components/fields/IdentificationField";
+import { PhoneField } from "@/app/routes/guardians/components/fields/PhoneField";
+import { GenderField } from "@/app/routes/guardians/components/fields/GenderField";
+import { BirthDateField } from "@/app/routes/guardians/components/fields/BirthDateField";
+import { AddressField } from "@/app/routes/guardians/components/fields/AddressField";
 
 interface CompleteDataFormProps {
   onSubmit: (data: CompleteDataFormData) => Promise<void>;

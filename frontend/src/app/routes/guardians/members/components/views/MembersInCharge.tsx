@@ -3,16 +3,16 @@ import { Button } from "@/components/ui/index";
 import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
-import GuardianMembersTable from "../tables/GuardianMembersTable";
-import MemberDetailsSheet from "../modals/MemberDetailsSheet";
-import SelectMemberModal from "../modals/SelectMemberModal";
-import ReassignGuardianModal from "../modals/ReassignGuardianModal"; 
+import GuardianMembersTable from "@/app/routes/guardians/members/components/tables/GuardianMembersTable";
+import MemberDetailsSheet from "@/app/routes/guardians/members/components/modals/MemberDetailsSheet";
+import SelectMemberModal from "@/app/routes/guardians/members/components/modals/SelectMemberModal";
+import ReassignGuardianModal from "@/app/routes/guardians/members/components/modals/ReassignGuardianModal"; 
 import { removeMemberFromGuardian, addMemberToGuardian, reassignMemberGuardian } from "@/api/guardiansApi"; 
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import EditMemberModal from "../modals/EditMemberModal";
+import EditMemberModal from "@/app/routes/guardians/members/components/modals/EditMemberModal";
 import { AxiosError } from "axios";
 
 interface ExtendedMemberInfo extends MemberBasicInfo {

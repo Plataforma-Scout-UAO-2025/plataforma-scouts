@@ -69,15 +69,12 @@ export const reassignMemberGuardian = async (
   currentGuardianId: number | string, 
   memberId: number | string, 
   newGuardianId: number | string
-) => {
-  console.log(`🔄 Reasignando miembro ${memberId} del guardian ${currentGuardianId} al guardian ${newGuardianId}`);
-  
+) => {  
   try {
     const response = await api.put(`/guardian/${currentGuardianId}/members/${memberId}/reassign/${newGuardianId}`);
-    console.log("✅ Miembro reasignado directamente");
     return response.data;
   } catch (error) {
-    console.error("❌ Error reasignando miembro:", error);
+    console.error("Error reasignando miembro:", error);
     throw error;
   }
 };

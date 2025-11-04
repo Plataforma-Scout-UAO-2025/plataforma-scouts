@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { MemberFormData } from '../../schemas/MemberForm.schema';
+import type { MemberFormData } from '@/app/routes/guardians/members/schemas/MemberForm.schema';
 
 interface PersonalInfoFormProps {
   register: UseFormRegister<MemberFormData>;
