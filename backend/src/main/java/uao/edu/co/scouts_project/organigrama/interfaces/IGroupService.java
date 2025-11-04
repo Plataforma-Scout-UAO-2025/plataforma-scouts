@@ -6,12 +6,12 @@ import java.util.UUID;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
-import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
-import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 
 public interface IGroupService {
 
@@ -48,5 +48,11 @@ public interface IGroupService {
     SlugValidationResponseDTO validateSlug(String slug);
 
     GroupAdminCreatedResponseDTO addGroupAdmin(String slug, String tenantId, CreateGroupAdminRequestDTO request);
+
+    /**
+     * Crea un administrador de grupo usando la conexión correcta de Auth0 basada en el slug del grupo.
+     * Este método asegura que el usuario se cree en la conexión específica del grupo.
+     */
+    GroupAdminCreatedResponseDTO addGroupAdminWithConnection(String slug, String tenantId, CreateGroupAdminRequestDTO request);
 
 }

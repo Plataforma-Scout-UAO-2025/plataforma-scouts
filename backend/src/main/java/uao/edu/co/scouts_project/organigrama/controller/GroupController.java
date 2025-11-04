@@ -1,6 +1,26 @@
 package uao.edu.co.scouts_project.organigrama.controller;
 
+import java.net.URI;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -9,41 +29,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
-import uao.edu.co.scouts_project.organigrama.dto.UpdateGroupActiveStatusDTO;
-import uao.edu.co.scouts_project.organigrama.dto.CreatingGroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdateGroupActiveStatusDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdateImageRequest;
 import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
 import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
-import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
-import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
-import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.Map;
-
-import java.net.URI;
-import java.util.List;
 
 @Tag(name = "Groups", description = "Operaciones CRUD para la gestión de grupos scouts dentro de un tenant")
 @RestController
@@ -120,6 +114,24 @@ public class GroupController {
                         @Valid @RequestBody CreateGroupAdminRequestDTO request) {
 
                 GroupAdminCreatedResponseDTO created = groupService.addGroupAdmin(slug, tenantId, request);
+                return ResponseEntity.status(201).body(created);
+        }
+
+        @PostMapping("/{slug}/admins-with-connection")
+        @Operation(summary = "Crear admin de grupo con conexión específica", description = "Crea un usuario en Auth0 con rol ADMIN_GRUPO usando la conexión correcta del grupo basada en su slug", responses = {
+                        @ApiResponse(responseCode = "201", description = "Admin de grupo creado en la conexión correcta", content = @Content(schema = @Schema(implementation = GroupAdminCreatedResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+                        @ApiResponse(responseCode = "404", description = "Grupo no encontrado"),
+                        @ApiResponse(responseCode = "502", description = "Error de comunicación con Auth0")
+        })
+        public ResponseEntity<GroupAdminCreatedResponseDTO> createGroupAdminWithConnection(
+                        @Parameter(description = "ID del tenant", example = "tenant-001") @PathVariable String tenantId,
+
+                        @Parameter(description = "Slug del grupo", example = "grupo-803") @PathVariable String slug,
+
+                        @Valid @RequestBody CreateGroupAdminRequestDTO request) {
+
+                GroupAdminCreatedResponseDTO created = groupService.addGroupAdminWithConnection(slug, tenantId, request);
                 return ResponseEntity.status(201).body(created);
         }
 
