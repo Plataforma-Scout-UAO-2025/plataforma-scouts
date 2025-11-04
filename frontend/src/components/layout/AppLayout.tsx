@@ -75,7 +75,13 @@ const adminGlobalItems: MenuItem[] = [
     label: "Grupos",
     icon: <Users />,
     href: "/app/admin-global/grupos",
-  }
+  },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
+  },
 ];
 
 const adminGrupalItems: MenuItem[] = [

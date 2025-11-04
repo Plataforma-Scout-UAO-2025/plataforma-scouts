@@ -167,6 +167,7 @@ export default function MedicalRecordsView() {
                     break;
 
                 case 'ADMIN_GRUPO':
+                case 'ADMIN_GLOBAL':
                     // Solo para líderes/admin: obtener todos los registros
                     medicalResponse = await getMedicalRecordsByTenantApi(tenantId);
 
@@ -387,6 +388,7 @@ export default function MedicalRecordsView() {
 
         case 'SCOUTER':
         case 'ADMIN_GRUPO':
+        case 'ADMIN_GLOBAL':
             return (
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
@@ -406,14 +408,19 @@ export default function MedicalRecordsView() {
                                 <Download className="h-4 w-4" />
                                 {isExporting ? 'Exportando...' : 'Exportar Todo'}
                             </Button>
-                            <Button
-                                onClick={handleCreate}
-                                className="flex items-center gap-2"
-                                disabled={isLoading}
-                            >
-                                <Plus className="h-4 w-4" />
-                                Nuevo Registro
-                            </Button>
+                            {
+                                currentUserRole === 'ADMIN_GLOBAL' ?
+                                <></>
+                                :
+                                <Button
+                                    onClick={handleCreate}
+                                    className="flex items-center gap-2"
+                                    disabled={isLoading}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Nuevo Registro
+                                </Button>
+                            }
                         </div>
                     </div>
 
