@@ -228,19 +228,6 @@ const loadAllGuardians = useCallback(async () => {
     return `${guardian.firstName} ${guardian.lastName}`.trim();
   };
 
-  const getMemberCountBadge = (count: number, isCurrentGuardian: boolean) => {
-    if (isCurrentGuardian) {
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    }
-    if (count === 0) {
-      return "bg-green-100 text-green-800 border-green-200";
-    }
-    if (count <= 2) {
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    }
-    return "bg-red-100 text-red-800 border-red-200";
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
@@ -354,9 +341,6 @@ const loadAllGuardians = useCallback(async () => {
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0 ml-4">
-                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getMemberCountBadge(guardian.membersCount || 0, guardian.isCurrentGuardian || false)}`}>
-                              {guardian.membersCount || 0} miembro{(guardian.membersCount || 0) !== 1 ? 's' : ''}
-                            </div>
                             {selectedGuardianId === guardian.guardianId && !guardian.isCurrentGuardian && (
                               <div className="flex items-center gap-1 text-green-600 mt-1">
                                 <ArrowRight size={12} />
