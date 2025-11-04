@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User, Droplets, AlertTriangle, Eye, Edit, FileDown } from 'lucide-react'; // ← Agregamos FileDown
 import type { MedicalRecord } from '../../../../types/medical-record.type';
-import { useRoleContext } from '@/hooks/useRoleContext';
 
 interface MedicalTableRowProps {
     record: MedicalRecord;
@@ -13,7 +12,6 @@ interface MedicalTableRowProps {
 }
 
 export function MedicalTableRow({ record, onView, onEdit, onExport }: MedicalTableRowProps) {
-    const { currentUserRole } = useRoleContext();
     const hasContent = (text: string) => text && text.trim().length > 0;
 
     const formatDate = (dateString: string) => {
@@ -83,20 +81,15 @@ export function MedicalTableRow({ record, onView, onEdit, onExport }: MedicalTab
                         <Eye className="h-4 w-4" />
                     </Button>
 
-                    {
-                        currentUserRole === 'ADMIN_GLOBAL' ?
-                        <></>
-                        :
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(record)}
-                            className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600 transition-colors"
-                            title="Editar registro"
-                        >
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                    }
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(record)}
+                        className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600 transition-colors"
+                        title="Editar registro"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </Button>
 
                     {/* Nuevo botón de exportar */}
                     <Button
