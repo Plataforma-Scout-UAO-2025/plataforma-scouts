@@ -197,20 +197,21 @@ public class SecurityConfig {
 
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/medical_record/create_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name())
 
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/v1/medical_record/list_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(),
-                                                                SCOUT.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), 
+                                                                ACUDIENTE.name(), SCOUT.name())
 
                                                 .requestMatchers(HttpMethod.PUT,
                                                                 "/api/v1/medical_record/update_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name())
 
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/v1/medical_record/list_by_tenant")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), 
+                                                                ACUDIENTE.name())
 
                                                 //
                                                 // Pagos

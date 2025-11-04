@@ -81,8 +81,11 @@ export default function MedicalRecordsView() {
             let currentMemberId: number | undefined;
 
             let scoutMembers: Member[] = [];
+            let scoutRecords: MedicalDB[] = [];
             let filteredMedicalRecords: MedicalDB[] = [];
             let adaptedRecords: MedicalRecord[] = [];
+            const medicalFetch: MedicalDB[][] = [];
+            const allTenants: Set<string> = new Set();
 
             switch (currentUserRole) {
                 case 'SCOUT':
@@ -203,6 +206,55 @@ export default function MedicalRecordsView() {
                     );
 
                     // Adaptar registros médicos
+                    adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => { return addNameToMedicalRecord(record, membersMap) });
+                    setRecords(adaptedRecords);
+                    break;
+
+                case 'ADMIN_GLOBAL':
+                    // Obtener información de todos los miembros
+                    scoutMembers = await getMembersWithBranch();
+
+                    // por cada miembro, se obtiene el tenant sin repetir
+                    scoutMembers.forEach(member => {
+                        allTenants.add(member.tenantId || '');
+                    });
+
+                    allTenants.delete(tenantId);
+
+                    // por cada tenant, se añaden registros médicos de cada uno de los tenants
+                    allTenants.forEach(async tenant => {
+                        medicalFetch.push( [...(await getMedicalRecordsByTenantApi(tenant)).content] );
+                    });
+
+                    // Parece redundante, pero sin esto no carga los registros médicos
+                    medicalFetch.push((await getMedicalRecordsByTenantApi(tenantId)).content);
+
+                    // y luego se concadenan todos
+                    medicalFetch.forEach(medicalTenant => {
+                        scoutRecords = [...scoutRecords, ...medicalTenant];
+                    });
+
+                    // por cada miembro
+                    scoutMembers.forEach((member: Member) => {
+                        // si son miembros scouts aprobados y activos...
+                        if (member.role === 'SCOUT' && member.status === 'APPROVED' &&
+                            member.isActive) {
+                            // se añade su nombre al mapeo de nombres por id
+                            membersMap.set(
+                                member.memberId?.toString() || "",
+                                `${member.firstName} ${member.lastName}`
+                            );
+                        }
+                    });
+
+                    // se filtran los registros médicos con base a si su id se encuentra en el mapeo de nombres
+                    // (evita bugs al integrar la lista de registros médicos y la lista de miembros en la tabla)
+                    filteredMedicalRecords = scoutRecords.filter(
+                        (record: MedicalDB) =>
+                            membersMap.has(record.member_id.toString())
+                    );
+
+                    // Adaptar los registros médicos para que tengan los nombres anteriormente capturados
                     adaptedRecords = filteredMedicalRecords.map((record: MedicalDB) => { return addNameToMedicalRecord(record, membersMap) });
                     setRecords(adaptedRecords);
                     break;
@@ -387,6 +439,7 @@ export default function MedicalRecordsView() {
 
         case 'SCOUTER':
         case 'ADMIN_GRUPO':
+        case 'ADMIN_GLOBAL':
             return (
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
