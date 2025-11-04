@@ -215,7 +215,6 @@ export default function GroupAdminModal({
         },
       };
 
-      console.log("Payload a enviar:", JSON.stringify(payload, null, 2));
 
       // Llamar a la acción de Redux para crear administrador de grupo con la conexión correcta
       const result = await dispatch(createGroupAdminWithConnectionAction(payload));
