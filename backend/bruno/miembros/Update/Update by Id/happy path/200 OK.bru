@@ -1,0 +1,30 @@
+meta {
+  name: 201 Ok
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseurl}}/members/update_member_by_id/370
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "firstName": "Juan Antonio",
+    "lastName": "Pérez",
+    "age": 13,
+    "documentType": "TI",
+    "email": "juan.actualizado@example.com",
+    "isActive": true,
+    "status": "APPROVED",
+    "emergencyContacts": [
+      { "name": "María Pérez", "relationship": "Madre", "phone": "3002345678" }
+    ]
+  }
+}

@@ -30,6 +30,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/ui";
 import {
   Form,
   FormControl,
@@ -44,8 +45,9 @@ import {
 } from "@/schemas/group.schema";
 import { useTenantParams } from "@/app/routes/organigrama/organigramaRamas_Subramas/hooks/useTenantParams";
 import { getGroupsByTenant } from "@/api/organigramaApi";
-import { updateGroup } from "@/api/groupsApi";
+import { updateGroup, updateGroupLogo, updateGroupScarf } from "@/api/groupsApi";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
+import { uploadPhotoFile } from "@/lib/imageUtils";
 
 // Tipos
 interface GroupData {
@@ -108,8 +110,8 @@ const mapFormDataToUpdate = (
   mission: formData.mission || "",
   vision: formData.vision || "",
   history: formData.history || "",
-  logo_object_id: formData.logo || null,
-  scarf_object_id: formData.scarf || null,
+  logo_object_id: formData.logo || undefined,
+  scarf_object_id: formData.scarf || undefined,
   social_links: formData.social_links || {},
   config: originalData?.config || {},
   is_active: originalData?.is_active ?? true,
@@ -134,6 +136,8 @@ function Grupos() {
   const [originalGroupData, setOriginalGroupData] = useState<GroupData | null>(
     null
   );
+  const [logoChanged, setLogoChanged] = useState(false);
+  const [scarfChanged, setScarfChanged] = useState(false);
   const { tenantId, groupSlug } = useTenantParams();
 
   const form = useForm<UpdateGroupFormData>({
@@ -193,10 +197,36 @@ function Grupos() {
         originalGroupData || undefined
       );
 
-      await updateGroup(tenantId, groupSlug, updateData);
-      toast.success("Información del grupo actualizada exitosamente");
+      // Actualizar información general del grupo (sin logo ni scarf)
+      const { logo_object_id: _logo_object_id, scarf_object_id: _scarf_object_id, ...generalUpdate } = updateData;
+      await updateGroup(tenantId, groupSlug, generalUpdate);
 
-      // Recargar datos después de la actualización
+      // Actualizar logo si cambió
+      if (logoChanged && data.logo) {
+        try {
+          await updateGroupLogo(tenantId, groupSlug, data.logo);
+          toast.success("Logo actualizado correctamente");
+        } catch (error) {
+          console.error("Error actualizando logo:", error);
+          toast.error("Error al actualizar el logo");
+        }
+      }
+
+      // Actualizar scarf si cambió
+      if (scarfChanged && data.scarf) {
+        try {
+          await updateGroupScarf(tenantId, groupSlug, data.scarf);
+          toast.success("Pañoleta actualizada correctamente");
+        } catch (error) {
+          console.error("Error actualizando pañoleta:", error);
+          toast.error("Error al actualizar la pañoleta");
+        }
+      }
+
+      toast.success("Información del grupo actualizada exitosamente");
+      setLogoChanged(false);
+      setScarfChanged(false);
+
       await loadGroupData();
     } catch (error) {
       console.error("Error actualizando grupo:", error);
@@ -288,7 +318,7 @@ function Grupos() {
                               {field.value
                                 ? parseYMDToDate(
                                     field.value
-                                  )!.toLocaleDateString()
+                                  )?.toLocaleDateString() || "Selecciona una fecha"
                                 : "Selecciona una fecha"}
                             </span>
                             <CalendarDays className="h-4 w-4" />
@@ -308,6 +338,8 @@ function Grupos() {
                                 : "";
                               field.onChange(value);
                             }}
+                            disabled={(date) => date > new Date()}
+                            defaultMonth={field.value ? parseYMDToDate(field.value) : undefined}
                           />
                         </PopoverContent>
                       </Popover>
@@ -486,9 +518,16 @@ function Grupos() {
                 name="logo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID del Logo</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <ImageUpload
+                        label="Logo del grupo"
+                        value={field.value}
+                        onChange={(objectId) => {
+                          field.onChange(objectId);
+                          setLogoChanged(true);
+                        }}
+                        onUpload={uploadPhotoFile}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -500,9 +539,16 @@ function Grupos() {
                 name="scarf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID de la Pañoleta</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <ImageUpload
+                        label="Pañoleta del grupo"
+                        value={field.value}
+                        onChange={(objectId) => {
+                          field.onChange(objectId);
+                          setScarfChanged(true);
+                        }}
+                        onUpload={uploadPhotoFile}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

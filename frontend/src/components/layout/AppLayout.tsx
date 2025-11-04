@@ -76,7 +76,45 @@ const adminGlobalItems: MenuItem[] = [
     label: "Grupos",
     icon: <Users />,
     href: "/app/admin-global/grupos",
-  }
+  },
+  { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
+  {
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: <Boxes />,
+    submenu: [
+      {
+        id: "solicitudes-pendientes",
+        label: "Pendientes",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes",
+      },
+      {
+        id: "solicitudes-rechazadas",
+        label: "Rechazadas",
+        icon: <BarChart3 />,
+        href: "/app/solicitudes/rechazadas",
+      },
+    ],
+  },
+  {
+    id: "organigrama",
+    label: "Organigrama",
+    icon: <Network />,
+    href: "/app/organigrama",
+  },
+  {
+    id: "financiero",
+    label: "Financiero",
+    icon: <DollarSign />,
+    href: "/app/financiero/cuotas",
+  },
+  {
+    id: "medico",
+    label: "Información Médica",
+    icon: <BriefcaseMedical />,
+    href: "/app/grupos/informacion-medica",
+  },
 ];
 
 const adminGrupalItems: MenuItem[] = [

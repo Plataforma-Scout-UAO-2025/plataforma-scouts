@@ -1,0 +1,28 @@
+meta {
+  name: 409 conflict
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}/members/create_member
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json 
+}
+
+body:json {
+  {
+    "tenantId": "org_6B3k4dao2Wf6eGxa",
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "age": 12,
+    "role": "MEMBER",
+    "identification": "1020304050",
+    "documentType": "TI",
+    "accept_treatment": true
+  }
+}

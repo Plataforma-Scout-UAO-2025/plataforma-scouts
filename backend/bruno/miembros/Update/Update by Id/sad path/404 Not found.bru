@@ -1,0 +1,21 @@
+meta {
+  name: 404 Not found
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseurl}}/members/update_member_by_id/999999
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "firstName": "Manuel"
+  }
+}

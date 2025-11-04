@@ -17,8 +17,12 @@ import type { Member } from "@/types/member.type";
 import { updateMemberAction } from "@/store/members/membersActions";
 import type { AppDispatch } from "@/store/store";
 import { Pencil, Save, X } from "lucide-react";
+import { useMemberAccess } from "@/hooks/useMemberAccess";
+import PendingApprovalModal from "@/app/routes/admin-grupal/Miembros/components/PendingApprovalModal";
+import InactiveMemberModal from "@/app/routes/admin-grupal/Miembros/components/InactiveMemberModal";
 
 const ScouterView = () => {
+  const { hasAccess, reason, loading: accessLoading } = useMemberAccess();
   const { user } = useAuth0();
   const { currentUserRoleLabel } = useRoleContext();
   const displayName = user?.nickname || "";
@@ -158,6 +162,22 @@ const ScouterView = () => {
     await handleSaveMember(m, updates);
     cancelEdit(m);
   };
+
+  if (accessLoading) {
+    return <div className="flex justify-center items-center h-screen">Validando acceso...</div>;
+  }
+
+  if (reason === "pending") {
+    return <PendingApprovalModal isOpen={true} />;
+  }
+
+  if (reason === "inactive") {
+    return <InactiveMemberModal isOpen={true} />;
+  }
+
+  if (!hasAccess) {
+    return <div className="flex justify-center items-center h-screen">No tienes acceso al sistema</div>;
+  }
 
   return (
     <div className="space-y-8">

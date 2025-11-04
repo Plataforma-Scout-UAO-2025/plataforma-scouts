@@ -1,0 +1,22 @@
+meta {
+  name: 404 Not found
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseurl}}/members/update_role
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "memberId": 999999,
+    "newRole": "SCOUTER"
+  }
+}
