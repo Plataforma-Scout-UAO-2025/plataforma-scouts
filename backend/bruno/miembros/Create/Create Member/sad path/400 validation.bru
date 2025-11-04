@@ -1,0 +1,28 @@
+meta {
+  name: 400 validation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}/members/create_member
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json 
+}
+
+body:json {
+  {
+    "tenantId": "",
+    "firstName": "X",
+    "lastName": "Y",
+    "age": -1,
+    "role": "MEMBER",
+    "identification": "",
+    "documentType": "INVALID",
+    "accept_treatment": false
+  }
+}
