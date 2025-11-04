@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { UseFormRegister, FieldErrors } from 'react-hook-form';
-import type { EditMemberFormData } from '../../schemas/MemberForm.schema';
+import type { EditMemberFormData } from '@/app/routes/guardians/members/schemas/MemberForm.schema';
 
 interface MemberContactFormProps {
   register: UseFormRegister<EditMemberFormData>;

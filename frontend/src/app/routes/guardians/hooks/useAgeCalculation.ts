@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import type { CompleteDataFormData } from "../schemas/CompleteData.schema.ts";
+import type { CompleteDataFormData } from "@/app/routes/guardians/schemas/CompleteData.schema";
 
 /**
  * Hook para calcular automáticamente la edad basándose en la fecha de nacimiento

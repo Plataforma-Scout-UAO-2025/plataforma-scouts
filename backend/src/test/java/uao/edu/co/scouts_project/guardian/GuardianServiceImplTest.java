@@ -64,7 +64,7 @@ class GuardianServiceImplTest {
         // Setup Subgroup
         subgroup = Subgroup.builder()
                 .subgroupId(1L)
-                .name("Test Subgroup")
+                .name("Manada de Lobatos")
                 .build();
 
         // Setup Guardian Member
@@ -72,15 +72,15 @@ class GuardianServiceImplTest {
                 .memberId(1L)
                 .userId("guardian-123")
                 .tenantId("tenant-1")
-                .firstName("John")
-                .lastName("Doe")
-                .age(35)
+                .firstName("Carlos")
+                .lastName("Rodríguez")
+                .age(38)
                 .role("ACUDIENTE") // String, not enum
-                .identification("1234567890")
+                .identification("1087654321")
                 .documentType(DocumentType.CC)
-                .phone("3001234567")
+                .phone("3012345678")
                 .isActive(true)
-                .relationship("Father")
+                .relationship("Padre")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.now())
                 .subgroup(subgroup)
@@ -91,13 +91,13 @@ class GuardianServiceImplTest {
                 .memberId(2L)
                 .userId("member-456")
                 .tenantId("tenant-1")
-                .firstName("Jane")
-                .lastName("Smith")
-                .age(10)
+                .firstName("María")
+                .lastName("González")
+                .age(12)
                 .role("SCOUT") // String, not enum
-                .identification("9876543210")
+                .identification("1098765432")
                 .documentType(DocumentType.TI)
-                .phone("3009876543")
+                .phone("3109876543")
                 .isActive(true)
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.now())
@@ -109,14 +109,14 @@ class GuardianServiceImplTest {
         guardianCreateDTO = GuardianCreateDTO.builder()
                 .userId("guardian-123")
                 .tenantId("tenant-1")
-                .firstName("John")
-                .lastName("Doe")
-                .age(35)
-                .identification("1234567890")
+                .firstName("Carlos")
+                .lastName("Rodríguez")
+                .age(38)
+                .identification("1087654321")
                 .documentType(DocumentType.CC)
-                .phone("3001234567")
+                .phone("3012345678")
                 .isActive(true)
-                .relationship("Father")
+                .relationship("Padre")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.now())
                 .rol("ACUDIENTE") // String, not enum
@@ -124,16 +124,16 @@ class GuardianServiceImplTest {
 
         // Setup MemberCustom
         memberCustom = MemberCustom.builder()
-                .firstName("Jane")
-                .lastName("Smith")
-                .identification("9876543210")
+                .firstName("María")
+                .lastName("González")
+                .identification("1098765432")
                 .documentType(DocumentType.TI)
                 .emergencyContacts(Collections.emptyList())
-                .age(10)
+                .age(12)
                 .gender("FEMALE")
-                .phone("3009876543")
+                .phone("3109876543")
                 .isActive(true)
-                .birthDate(LocalDate.of(2013, 5, 15))
+                .birthDate(LocalDate.of(2013, 8, 22))
                 .build();
     }
 
@@ -153,7 +153,7 @@ class GuardianServiceImplTest {
             // Assert
             assertNotNull(result);
             assertEquals("guardian-123", result.getUserId());
-            assertEquals("John", result.getFirstName());
+            assertEquals("Carlos", result.getFirstName());
             verify(guardianRepository, times(1)).findValidGuardianById(1L);
         }
 
@@ -186,7 +186,7 @@ class GuardianServiceImplTest {
             // Assert
             assertNotNull(result);
             assertEquals(1, result.size());
-            assertEquals("Jane", result.get(0).getFirstName());
+            assertEquals("María", result.get(0).getFirstName());
             verify(guardianRepository, times(1)).findMembersInChargeOf(1L);
         }
 
@@ -246,16 +246,16 @@ class GuardianServiceImplTest {
             // Arrange
             AvailableGuardian guardian1 = AvailableGuardian.builder()
                     .memberId(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .identification("1234567890")
+                    .firstName("Carlos")
+                    .lastName("Rodríguez")
+                    .identification("1087654321")
                     .build();
 
             AvailableGuardian guardian2 = AvailableGuardian.builder()
                     .memberId(2L)
-                    .firstName("Jane")
-                    .lastName("Smith")
-                    .identification("0987654321")
+                    .firstName("Ana")
+                    .lastName("Martínez")
+                    .identification("1076543210")
                     .build();
 
             List<AvailableGuardian> availableGuardians = Arrays.asList(guardian1, guardian2);
@@ -270,15 +270,15 @@ class GuardianServiceImplTest {
 
             // Verify first guardian
             assertEquals(1L, result.get(0).getMemberId());
-            assertEquals("John", result.get(0).getFirstName());
-            assertEquals("Doe", result.get(0).getLastName());
-            assertEquals("1234567890", result.get(0).getIdentification());
+            assertEquals("Carlos", result.get(0).getFirstName());
+            assertEquals("Rodríguez", result.get(0).getLastName());
+            assertEquals("1087654321", result.get(0).getIdentification());
 
             // Verify second guardian
             assertEquals(2L, result.get(1).getMemberId());
-            assertEquals("Jane", result.get(1).getFirstName());
-            assertEquals("Smith", result.get(1).getLastName());
-            assertEquals("0987654321", result.get(1).getIdentification());
+            assertEquals("Ana", result.get(1).getFirstName());
+            assertEquals("Martínez", result.get(1).getLastName());
+            assertEquals("1076543210", result.get(1).getIdentification());
 
             verify(guardianRepository, times(1)).findAvailableGuardians();
         }
@@ -289,9 +289,9 @@ class GuardianServiceImplTest {
             // Arrange
             AvailableGuardian guardian = AvailableGuardian.builder()
                     .memberId(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .identification("1234567890")
+                    .firstName("Carlos")
+                    .lastName("Rodríguez")
+                    .identification("1087654321")
                     .build();
 
             when(guardianRepository.findAvailableGuardians()).thenReturn(Arrays.asList(guardian));
@@ -302,7 +302,7 @@ class GuardianServiceImplTest {
             // Assert
             assertNotNull(result);
             assertEquals(1, result.size());
-            assertEquals("John", result.get(0).getFirstName());
+            assertEquals("Carlos", result.get(0).getFirstName());
             verify(guardianRepository, times(1)).findAvailableGuardians();
         }
 
@@ -354,7 +354,7 @@ class GuardianServiceImplTest {
         @DisplayName("Should save new guardian successfully and return response with ID")
         void shouldSaveNewGuardian() {
             // Arrange
-            when(guardianRepository.existsByValidGuardianIdentification("1234567890")).thenReturn(false);
+            when(guardianRepository.existsByValidGuardianIdentification("1087654321")).thenReturn(false);
             when(guardianRepository.save(any(Member.class))).thenReturn(guardianMember);
 
             // Act
@@ -364,7 +364,7 @@ class GuardianServiceImplTest {
             assertNotNull(response);
             assertNotNull(response.id());
             assertEquals(1L, response.id());
-            verify(guardianRepository, times(1)).existsByValidGuardianIdentification("1234567890");
+            verify(guardianRepository, times(1)).existsByValidGuardianIdentification("1087654321");
             verify(guardianRepository, times(1)).save(any(Member.class));
         }
 
@@ -372,12 +372,12 @@ class GuardianServiceImplTest {
         @DisplayName("Should throw MemberAlreadyAssignedException when guardian already exists")
         void shouldThrowExceptionWhenGuardianExists() {
             // Arrange
-            when(guardianRepository.existsByValidGuardianIdentification("1234567890")).thenReturn(true);
+            when(guardianRepository.existsByValidGuardianIdentification("1087654321")).thenReturn(true);
 
             // Act & Assert
             assertThrows(MemberAlreadyAssignedException.class,
                     () -> guardianService.saveGuardian(guardianCreateDTO));
-            verify(guardianRepository, times(1)).existsByValidGuardianIdentification("1234567890");
+            verify(guardianRepository, times(1)).existsByValidGuardianIdentification("1087654321");
             verify(guardianRepository, never()).save(any(Member.class));
         }
     }
@@ -391,14 +391,14 @@ class GuardianServiceImplTest {
         void shouldUpdateGuardian() {
             // Arrange
             GuardianCreateDTO updateDTO = GuardianCreateDTO.builder()
-                    .firstName("John Updated")
-                    .lastName("Doe Updated")
-                    .age(36)
-                    .identification("1234567890")
+                    .firstName("Carlos Andrés")
+                    .lastName("Rodríguez López")
+                    .age(39)
+                    .identification("1087654321")
                     .documentType(DocumentType.CC)
-                    .phone("3001111111")
+                    .phone("3012222222")
                     .isActive(true)
-                    .relationship("Father")
+                    .relationship("Padre")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
                     .build();
@@ -568,6 +568,43 @@ class GuardianServiceImplTest {
             verify(guardianRepository, times(1)).existsById(999L);
             verify(guardianRepository, never()).removeGuardianIdFromMembers(anyLong());
             verify(guardianRepository, never()).deleteGuardianById(anyLong());
+        }
+    }
+
+    @Nested
+    @DisplayName("findMembersWithoutGuardian Tests")
+    class FindMembersWithoutGuardianTests {
+
+        @Test
+        @DisplayName("Should return list of members without guardian")
+        void shouldReturnMembersWithoutGuardian() {
+            // Arrange
+            when(guardianRepository.findMembersWithoutGuardian()).thenReturn(Arrays.asList(memberCustom));
+
+            // Act
+            List<MemberDTO> result = guardianService.findMembersWithoutGuardian();
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals("María", result.get(0).getFirstName());
+            assertEquals("González", result.get(0).getLastName());
+            verify(guardianRepository, times(1)).findMembersWithoutGuardian();
+        }
+
+        @Test
+        @DisplayName("Should return empty list when no members without guardian")
+        void shouldReturnEmptyListWhenNoMembersWithoutGuardian() {
+            // Arrange
+            when(guardianRepository.findMembersWithoutGuardian()).thenReturn(Collections.emptyList());
+
+            // Act
+            List<MemberDTO> result = guardianService.findMembersWithoutGuardian();
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(0, result.size());
+            verify(guardianRepository, times(1)).findMembersWithoutGuardian();
         }
     }
 }
