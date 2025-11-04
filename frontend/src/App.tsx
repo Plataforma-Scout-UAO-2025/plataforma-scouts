@@ -95,9 +95,9 @@ function App() {
             <Route path="grupos/informacion-medica" element={<ProtectedRoute allowedRoles={[RawRole.ADMIN_GLOBAL, RawRole.ADMIN_GRUPO, RawRole.SCOUTER, RawRole.ACUDIENTE, RawRole.SCOUT]}><MedicalRecordsView /></ProtectedRoute>} />
 
             {/* Rutas para Guardianes*/}
-            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><MembersInCharge /></ProtectedRoute>} />
-            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><GuardianProfile /></ProtectedRoute>} />
-            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE]}><WelcomeAddMember /></ProtectedRoute>} />
+            <Route path="guardians/members" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE, RawRole.ADMIN_GLOBAL]}><MembersInCharge /></ProtectedRoute>} />
+            <Route path="guardians/profile" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE, RawRole.ADMIN_GLOBAL]}><GuardianProfile /></ProtectedRoute>} />
+            <Route path="guardians/welcome" element={<ProtectedRoute allowedRoles={[RawRole.ACUDIENTE, RawRole.ADMIN_GLOBAL]}><WelcomeAddMember /></ProtectedRoute>} />
 
             {/* Rutas para Scout*/}
             <Route path="grupos/utils/ScoutEnrollmentInfo" element={<ProtectedRoute allowedRoles={[RawRole.SCOUT]}><ScoutEnrollmentInfo /></ProtectedRoute>} />

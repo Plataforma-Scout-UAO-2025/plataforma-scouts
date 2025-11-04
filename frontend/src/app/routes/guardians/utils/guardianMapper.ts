@@ -1,4 +1,4 @@
-import type { Guardian, Status, DocumentType } from '@/types/guardian.type';
+import type { Guardian, Status, DocumentType, Role } from '@/types/guardian.type';
 
 /*
 Se crea un mapper para evitar error con el casing tanto en back como front
@@ -7,7 +7,7 @@ Se crea un mapper para evitar error con el casing tanto en back como front
 export interface GuardianApiResponse {
   member_id?: number;
   user_id: string;
-  rol: "ACUDIENTE" | "ADMIN" | "USUARIO";
+  rol: Role
   tenant_id: string;
   // API might return either snake_case or camelCase
   firstName?: string;
