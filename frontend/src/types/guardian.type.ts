@@ -1,5 +1,5 @@
-export type DocumentType = "CC" | "TI" | "CE" | "PASSPORT" | "RC" | "PA" | "PEP" | "PPT" | "NIT" | "NUIP";
-export type Status = "PENDING" | "ACCEPTED" | "NOT_ACCEPTED" | "ACTIVE" | "INACTIVE";
+export type DocumentType = "CC" | "CE" | "PA";
+export type Status = "APPROVED" | "PENDING" | "REJECTED";
 
 export interface SubgroupDTO {
   subgroupId?: number;
@@ -53,10 +53,10 @@ export interface Guardian {
   lastName: string
   age: number
   identification: string
-  document_type: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP'
+  document_type: DocumentType
   phone: string
   is_active: boolean
-  status: "APPROVED" | "PENDING" | "REJECTED" | string
+  status: Status
   acceptance_date: string
   address: string
 }
@@ -119,15 +119,6 @@ export interface UpdateGuardianDTO {
   isActive?: boolean;
   status?: Status;
   acceptanceDate?: string;
-}
-
-export interface GuardianSummary {
-  userId?: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  isActive?: boolean;
-  membersCount?: number;
 }
 
 export interface AvailableGuardianDTO {
