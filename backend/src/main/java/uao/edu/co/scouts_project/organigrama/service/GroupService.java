@@ -1,38 +1,5 @@
 package uao.edu.co.scouts_project.organigrama.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
-import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
-import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
-import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
-import uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO;
-import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
-import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
-import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
-import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
-import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
-import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
-import uao.edu.co.scouts_project.organigrama.model.Group;
-import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
-import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
-import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
-import uao.edu.co.scouts_project.application.service.IAuth0Service;
-import org.springframework.context.annotation.Lazy;
-import uao.edu.co.scouts_project.infrastructure.security.Role;
-import uao.edu.co.scouts_project.member.service.IMemberService;
-import uao.edu.co.scouts_project.member.mapper.MemberMapper;
-import uao.edu.co.scouts_project.member.model.Member;
-import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
-
-import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GLOBAL;
-import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GRUPO;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +9,37 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import uao.edu.co.scouts_project.application.service.IAuth0Service;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
+import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
+import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
+import uao.edu.co.scouts_project.infrastructure.security.Role;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GRUPO;
+import uao.edu.co.scouts_project.member.mapper.MemberMapper;
+import uao.edu.co.scouts_project.member.model.Member;
+import uao.edu.co.scouts_project.member.service.IMemberService;
+import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
+import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.SlugValidationResponseDTO;
+import uao.edu.co.scouts_project.organigrama.dto.TenantInfoDTO;
+import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
+import uao.edu.co.scouts_project.organigrama.interfaces.IGroupService;
+import uao.edu.co.scouts_project.organigrama.interfaces.ITenantService;
+import uao.edu.co.scouts_project.organigrama.model.Group;
+import uao.edu.co.scouts_project.organigrama.repository.GroupRepository;
+import uao.edu.co.scouts_project.organigrama.repository.TenantRepository;
+import uao.edu.co.scouts_project.storage.service.SupabaseStorageService;
 
 @Service
 public class GroupService implements IGroupService {
@@ -530,6 +528,64 @@ public class GroupService implements IGroupService {
         memberService.create_member(member);
 
         // 7) Responder con DTO de creación
+        return new GroupAdminCreatedResponseDTO(
+                group.getGroupId(),
+                tenantId,
+                created.getId(),
+                created.getEmail(),
+                Role.ADMIN_GRUPO.name());
+    }
+
+    @Override
+    @Transactional
+    public GroupAdminCreatedResponseDTO addGroupAdminWithConnection(String slug, String tenantId,
+            CreateGroupAdminRequestDTO request) {
+
+        // 1) Buscar el grupo y verificar su existencia
+        Group group = groupRepository.findByTenantIdAndSlug(tenantId, slug)
+                .orElseThrow(() -> new IllegalArgumentException("Grupo no encontrado para slug=" + slug));
+
+        List<Member> activeGroupAdmins = memberService
+                .get_member_by_role_and_tenantId(ADMIN_GRUPO.name(), tenantId)
+                .stream()
+                .filter(m -> Boolean.TRUE.equals(m.getIsActive())) // Solo Usuarios Activos
+                .toList();
+
+        if (!activeGroupAdmins.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Ya existe un usuario ACTIVO con rol ADMIN_GRUPAL para el tenant: " + tenantId);
+        }
+
+        // 2) Obtener o crear la conexión correcta para este grupo basado en su tenantId
+        String connectionId = connectionQueryPort.createOrUpdateAuth0DbConnection(tenantId);
+
+        // 3) Crear usuario en Auth0 con rol ADMIN_GRUPO en la conexión correcta del grupo
+        CreateUserWithRoleCommandDTO cmd = new CreateUserWithRoleCommandDTO(
+                request.email(),
+                request.password(),
+                request.username(),
+                Role.ADMIN_GRUPO);
+
+        var created = auth0Service.createUserWithRoleInOrganizationWithConnection(cmd, tenantId, connectionId);
+
+        // 4) Validar que se haya enviado el DTO del miembro
+        if (request.member() == null) {
+            throw new IllegalArgumentException("El objeto 'member' es requerido en la solicitud");
+        }
+
+        // 5) Mapear DTO → entidad usando el MemberMapper
+        Member member = MemberMapper.toEntityFromCreateDto(request.member());
+
+        // 6) Ajustar campos automáticos
+        member.setRole(Role.ADMIN_GRUPO.name());
+        member.setTenantId(tenantId);
+        member.setUserId(created.getId());
+        member.setIsActive(member.getIsActive() != null ? member.getIsActive() : true);
+
+        // 7) Crear el miembro en la base de datos
+        memberService.create_member(member);
+
+        // 8) Responder con DTO de creación
         return new GroupAdminCreatedResponseDTO(
                 group.getGroupId(),
                 tenantId,
