@@ -2,23 +2,28 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import CargoInfoModal from "./CargoInfoModal";
+import RemoveMemberModal from "./RemoveMemberModal";
 import type { Cargo } from "../types/niveles.types";
 
 
 interface Props {
   cargo: Cargo;
-  /** Lista de nombres de miembros asociados a este cargo */
-  members?: string[];
+  /** Lista de miembros asignados al cargo con id para permitir desasignar */
+  membersDetailed?: { id: string; label: string }[];
   /** Abre el modal de edición del cargo */
   onEdit?: (cargo: Cargo) => void;
   /** Confirma/elimina el cargo */
   onDelete?: (cargo: Cargo) => void;
   /** Abre flujo para agregar miembro al cargo (misma lógica de editar) */
   onAddMember?: () => void;
+  /** Desasignar un miembro del cargo actual */
+  onRemoveMember?: (memberId: string) => void;
 }
 
-export default function PositionItem({ cargo, members = [], onEdit, onDelete, onAddMember }: Props) {
+export default function PositionItem({ cargo, membersDetailed = [], onEdit, onDelete, onAddMember, onRemoveMember }: Props) {
   const [openInfo, setOpenInfo] = useState(false);
+  const [openRemove, setOpenRemove] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<{ id: string; label: string } | null>(null);
 
   // Simulación: nombre y descripción de la persona asignada (usar datos reales si están disponibles)
   const personName = cargo.titular || "Sin asignar";
@@ -58,10 +63,24 @@ export default function PositionItem({ cargo, members = [], onEdit, onDelete, on
           </div>
 
           {/* Miembros del cargo */}
-          {members.length > 0 ? (
-            <ul className="list-disc ml-5 mt-2 text-xs text-muted-foreground">
-              {members.map((m, idx) => (
-                <li key={idx}>{m}</li>
+          {membersDetailed.length > 0 ? (
+            <ul className="ml-1 mt-2 text-xs text-muted-foreground space-y-1">
+              {membersDetailed.map((m) => (
+                <li key={m.id} className="flex items-center gap-1">
+                  <span className="truncate">• {m.label}</span>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-7 w-7 p-0"
+                    aria-label="Quitar del cargo"
+                    onClick={() => {
+                      setSelectedMember(m);
+                      setOpenRemove(true);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </li>
               ))}
             </ul>
           ) : (
@@ -84,35 +103,35 @@ export default function PositionItem({ cargo, members = [], onEdit, onDelete, on
         <div className="flex items-center gap-2">
           {/* Ver información del cargo (icono de ojo) */}
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-md border border-border hover:bg-accent hover:text-primary transition-colors"
+            size="sm"
+            variant="outline"
             onClick={() => setOpenInfo(true)}
+            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
             aria-label="Ver información del cargo"
           >
-            <Eye className="h-4 w-4 text-primary" />
+            <Eye className="h-4 w-4" />
           </Button>
 
           {/* Editar */}
           <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-md border border-border hover:bg-accent hover:text-primary transition-colors"
+            size="sm"
+            variant="outline"
             onClick={() => onEdit?.(cargo)}
+            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-white border-primary"
             aria-label="Editar cargo"
           >
-            <Pencil className="h-4 w-4 text-secondary" />
+            <Pencil className="h-4 w-4" />
           </Button>
 
           {/* Eliminar */}
           <Button
-            size="icon"
+            size="sm"
             variant="destructive"
-            className="h-8 w-8 rounded-md border border-border bg-transparent hover:bg-destructive/10 transition-colors"
             onClick={() => onDelete?.(cargo)}
+            className="h-8 w-8 p-0"
             aria-label="Eliminar cargo"
           >
-            <Trash2 className="h-4 w-4 text-destructive" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -124,7 +143,22 @@ export default function PositionItem({ cargo, members = [], onEdit, onDelete, on
         cargoName={cargo.nombre}
         personName={personName}
         personDescription={personDescription}
-        members={members}
+        members={membersDetailed.map((m) => m.label)}
+      />
+
+      {/* Modal de confirmación para quitar miembro del cargo */}
+      <RemoveMemberModal
+        open={openRemove}
+        memberLabel={selectedMember?.label}
+        cargoName={cargo.nombre}
+        onClose={() => setOpenRemove(false)}
+        onConfirm={() => {
+          if (selectedMember && onRemoveMember) {
+            onRemoveMember(selectedMember.id);
+          }
+          setOpenRemove(false);
+          setSelectedMember(null);
+        }}
       />
     </>
   );

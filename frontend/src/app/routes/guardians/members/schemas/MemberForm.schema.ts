@@ -1,5 +1,5 @@
 import { z } from 'zod';
-
+import { emergencyContactSchema } from './EmergencyContact.schema';
 /**
  * Schema de validación para el formulario de miembros/scouts
  * 
@@ -62,8 +62,17 @@ export const editMemberSchema = z.object({
   documentType: z.enum(['CC', 'TI', 'RC', 'CE', 'PA', 'PEP', 'PPT', 'NIT', 'NUIP'], {
     message: 'El tipo de documento es requerido'
   }).optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),  
+  phone: z.string()
+    .optional()
+    .refine((value) => {
+      if (!value || value.trim() === '') return true;
+      const cleanValue = value.replace(/\s/g, '').replace(/\+57/g, '');
+      return /^\d{10}$/.test(cleanValue);
+    }, {
+      message: 'El teléfono debe tener 10 dígitos (puede incluir +57 opcional)'
+    }),
+  address: z.string().optional(),
+  emergencyContacts: z.array(emergencyContactSchema).optional()
 });
 
 export type MemberFormData = z.infer<typeof memberFormSchema>;

@@ -9,9 +9,9 @@ import ScouterView from "./components/ScouterView";
 import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import TesoreroView from "./components/TesoreroView";
 
+
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
-
 
   if (status === "loading" || status === "idle") {
     return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;

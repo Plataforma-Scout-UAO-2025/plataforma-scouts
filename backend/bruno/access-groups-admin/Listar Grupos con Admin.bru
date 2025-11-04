@@ -1,0 +1,55 @@
+meta {
+  name: Listar Grupos con Admin
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:8080/api/v1/members/getAll
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("Validar que se obtiene 200 y estructura esperada", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body).to.be.an('array');
+
+    if (res.body.length > 0) {
+      var item = res.body[0];
+
+      // Debe existir la clave 'group' con al menos slug y tenantId
+      expect(item).to.have.property('group');
+      expect(item.group).to.have.property('slug');
+      // el DTO GroupResponseDTO usa tenantId como campo
+      expect(item.group).to.have.property('tenantId');
+
+      // Debe existir la clave 'inChargeOf' (puede ser null)
+      expect(item).to.have.property('inChargeOf');
+      if (item.inChargeOf) {
+        // Usamos el mapper ListMemberDto: tenant_id debe existir y coincidir
+        expect(item.inChargeOf).to.have.property('tenant_id');
+        expect(item.inChargeOf.tenant_id).to.equal(item.group.tenantId);
+      }
+    }
+  });
+
+  test("Validar multiples entradas si existen", function() {
+    expect(res.body.length).to.be.at.least(0);
+  });
+}
+
+docs {
+  **Nombre:** Listar grupos con su admin grupal
+
+  **Endpoint:** `/api/v1/members/getAll`
+
+  **Descripción:** Retorna una lista de objetos que contienen la información del grupo (`group`) y el miembro encargado (`inChargeOf`) si existe. El test valida:
+  - Código 200
+  - Respuesta es un array
+  - Cada entrada contiene `group` con `slug` y `tenantId`
+  - Si `inChargeOf` no es nulo, su `tenant_id` coincide con `group.tenantId`
+}

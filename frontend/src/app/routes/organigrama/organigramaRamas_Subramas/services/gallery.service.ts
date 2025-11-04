@@ -7,19 +7,17 @@ import {
 
 // Helper para obtener una rama directamente
 const getRamaByIdDirect = async (tenantId: string, groupSlug: string, id: string) => {
-  // use raw wrapper to get backend payload without normalization
   try {
     const data = await getSection(id, tenantId, groupSlug) as Record<string, unknown>;
     return data;
   } catch {
-    // If the client fails, surface the error (no direct api fallback here).
     return undefined;
   }
 };
 
 //  Función auxiliar: extraer UUID válido desde string o URL
 const extractUuidFromString = (value: string | null | undefined): string | null => {
-  console.info('🔎 [GalleryService] extractUuidFromString called with:', String(value)?.slice?.(0, 120));
+  console.info(' [GalleryService] extractUuidFromString called with:', String(value)?.slice?.(0, 120));
   if (!value) return null;
   const match = String(value).match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
   return match ? match[0] : null;
@@ -32,7 +30,7 @@ export const getGalleryImageUuids = async (
   sectionId: string
 ): Promise<string[]> => {
   try {
-    console.info('🔎 [GalleryService] getGalleryImageUuids called for:', { tenantId, groupSlug, sectionId });
+    console.info(' [GalleryService] getGalleryImageUuids called for:', { tenantId, groupSlug, sectionId });
     const rama = await getRamaByIdDirect(tenantId, groupSlug, sectionId);
     const maybe = rama as unknown as Record<string, unknown> | undefined;
 
@@ -95,7 +93,7 @@ export const resolveGalleryItem = async (
   targetUuidOrUrl: string
 ): Promise<{ id: string; url: string } | null> => {
   try {
-    console.info('🔎 [GalleryService] resolveGalleryItem called for:', { tenantId, groupSlug, sectionId, target: String(targetUuidOrUrl)?.slice?.(0,120) });
+    console.info(' [GalleryService] resolveGalleryItem called for:', { tenantId, groupSlug, sectionId, target: String(targetUuidOrUrl)?.slice?.(0,120) });
     const backend = await getRamaByIdDirect(tenantId, groupSlug, sectionId);
     const rec = backend as unknown as Record<string, unknown> | undefined;
     const galleryArr = (rec?.['gallery'] as unknown[] | undefined) ?? [];
@@ -139,7 +137,7 @@ export const addGalleryImage = async (
   file: File
   , signal?: AbortSignal
 ): Promise<string> => {
-    console.info('🆕 [GalleryService] addGalleryImage called:', { tenantId, groupSlug, sectionId, filename: file?.name });
+    console.info(' [GalleryService] addGalleryImage called:', { tenantId, groupSlug, sectionId, filename: file?.name });
     const formData = new FormData();
     formData.append('file', file);
 
@@ -148,7 +146,6 @@ export const addGalleryImage = async (
     const newUuid = extractUuidFromString(uploadResponse.objectId);
     if (!newUuid) throw new Error('Upload did not return a valid UUID');
 
-    // prefer client wrapper
     const addPayload = createAddPayload(newUuid);
     await patchGallery(sectionId, addPayload, tenantId, groupSlug);
 
@@ -161,7 +158,7 @@ export const replaceGalleryList = async (
   sectionId: string,
   keepGalleryUuids: string[]
 ): Promise<Record<string, unknown> | null> => {
-  console.info('⚠️ [GalleryService] replaceGalleryList called (force replace):', { tenantId, groupSlug, sectionId, keep: keepGalleryUuids?.length });
+  console.info(' [GalleryService] replaceGalleryList called (force replace):', { tenantId, groupSlug, sectionId, keep: keepGalleryUuids?.length });
     const backendRec = await getRamaByIdDirect(tenantId, groupSlug, sectionId) as Record<string, unknown> | undefined;
     const name = String(backendRec?.['name'] ?? backendRec?.['nombre'] ?? '');
     const description = backendRec?.['description'] ?? backendRec?.['descripcion'] ?? null;
@@ -176,7 +173,6 @@ export const replaceGalleryList = async (
       galleryObjectIds: keepGalleryUuids
     };
 
-    // Use central client raw update to send backend-shaped payload
     const result = await updateSection(sectionId, payload, tenantId, groupSlug) as Record<string, unknown>;
     return (result as Record<string, unknown>) ?? null;
 };
@@ -188,7 +184,7 @@ export const replaceGalleryImage = async (
   newFile: File
   , signal?: AbortSignal
 ): Promise<string> => {
-  console.info('🔁 [GalleryService] replaceGalleryImage called:', { tenantId, groupSlug, sectionId, targetImageUuid, filename: newFile?.name });
+  console.info(' [GalleryService] replaceGalleryImage called:', { tenantId, groupSlug, sectionId, targetImageUuid, filename: newFile?.name });
     const validTargetUuid = extractUuidFromString(targetImageUuid);
     if (!validTargetUuid) {
       console.error(' [GalleryService] UUID inválido detectado. Abortando PATCH.');
@@ -215,7 +211,7 @@ export const deleteGalleryImageById = async (
   targetImageUuidOrUrl: string,
   deleteFromStorage = false
 ): Promise<Record<string, unknown> | null> => {
-  console.info('🗑️ [GalleryService] Iniciando eliminación de imagen por ID (DELETE):', { 
+  console.info(' [GalleryService] Iniciando eliminación de imagen por ID (DELETE):', { 
     targetImageUuidOrUrl, 
     deleteFromStorage,
     sectionId 
@@ -228,17 +224,16 @@ export const deleteGalleryImageById = async (
       throw new Error('Invalid UUID format detected');
     }
 
-    console.info('🔍 [GalleryService] Verificando existencia de imagen en galería antes de DELETE...');
+    console.info(' [GalleryService] Verificando existencia de imagen en galería antes de DELETE...');
     const currentUuids = await getGalleryImageUuids(tenantId, groupSlug, sectionId);
     if (!currentUuids.includes(validTargetUuid)) {
       console.warn(' [GalleryService] UUID objetivo no pertenece a la galería local (primer check). Intentando re-fetch antes de abortar.', { validTargetUuid, currentUuids });
-      // Re-check inmediato para cubrir condiciones de carrera donde otra operación ya haya quitado la referencia
+      
       const recheckUuids = await getGalleryImageUuids(tenantId, groupSlug, sectionId);
       if (!recheckUuids.includes(validTargetUuid)) {
         console.warn(' [GalleryService] Tras re-fetch la imagen no figura en la galería; abortando operación sin error:', { validTargetUuid, recheckUuids });
         return null;
       }
-      // Si tras el re-check ahora sí está presente, continuamos con la eliminación
       console.info(' [GalleryService] Re-check detectó la UUID en la galería; procediendo con DELETE:', { validTargetUuid });
     }
 

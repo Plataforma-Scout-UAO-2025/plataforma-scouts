@@ -3,6 +3,8 @@ import { AxiosError } from "axios";
 import { getSections, getSectionWithSubgroups, setPhotoPrincipal as setPhotoPrincipalApi, deletePhotoPrincipal as deletePhotoPrincipalApi, setSubgroupPhotoPrincipal, deleteSubgroupPhotoPrincipal, getGroupBySlug, getMembersBySubgroup } from '@/api/organigramaApi';
 import { setIcon, deleteIcon } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/icon.service';
 import { addGalleryImage, replaceGalleryImage } from '@/app/routes/organigrama/organigramaRamas_Subramas/services/gallery.service';
+import * as organigramaService from '@/app/routes/organigrama/organigramaRamas_Subramas/services';
+import { processRamasData, CACHE_CONFIG } from '@/app/routes/organigrama/organigramaRamas_Subramas/utils/ramasProcessor';
 
 // Fetch group information
 export const fetchGroupAction = createAsyncThunk("organigrama/fetchGroup", async ({ tenantId, groupSlug }: { tenantId: string; groupSlug: string }, { rejectWithValue }) => {
@@ -151,3 +153,60 @@ export const fetchSubgroupMembersAction = createAsyncThunk("organigrama/fetchSub
     return rejectWithValue(message);
   }
 });
+
+// Fetch ramas with subgroups (processed and filtered)
+export const fetchRamasWithSubramasAction = createAsyncThunk(
+  "organigrama/fetchRamasWithSubramas",
+  async ({ 
+    tenantId, 
+    groupSlug, 
+    force = false 
+  }: { 
+    tenantId: string; 
+    groupSlug: string; 
+    force?: boolean 
+  }, { rejectWithValue, signal }) => {
+    
+    let attempt = 0;
+    let lastError: unknown = null;
+    
+    while (attempt < CACHE_CONFIG.RETRY_ATTEMPTS) {
+      try {
+        console.log(`🔄 [Redux] Fetching ramas (attempt ${attempt + 1}/${CACHE_CONFIG.RETRY_ATTEMPTS}, force: ${force})`);
+        
+        const data = await organigramaService.getRamasWithSubramas(
+          tenantId,
+          groupSlug,
+          { signal }
+        );
+        
+        // Procesar datos: filtrar y ordenar según estándares scout
+        const processedRamas = processRamasData(data);
+        
+        console.log(`✅ [Redux] Ramas fetched successfully: ${processedRamas.length} ramas`);
+        return processedRamas;
+        
+      } catch (err: unknown) {
+        const castErr = err as { name?: string } | undefined;
+        if (castErr?.name === 'AbortError') {
+          console.log('🚫 [Redux] Request aborted');
+          throw err;
+        }
+        
+        lastError = err;
+        attempt += 1;
+        
+        if (attempt < CACHE_CONFIG.RETRY_ATTEMPTS) {
+          console.log(`⚠️ [Redux] Attempt ${attempt} failed, retrying in ${CACHE_CONFIG.RETRY_DELAY}ms...`);
+          await new Promise((res) => setTimeout(res, CACHE_CONFIG.RETRY_DELAY));
+        }
+      }
+    }
+    
+    console.error('❌ [Redux] All retry attempts failed:', lastError);
+    const axiosError = lastError as AxiosError;
+    const errorData = axiosError?.response?.data as { error?: string };
+    const message = errorData?.error || "Error al obtener ramas con subramas";
+    return rejectWithValue(message);
+  }
+);

@@ -56,7 +56,7 @@ const DeleteMemberModal = ({
         
         {member && (
           <div className="py-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="p-4 rounded-lg border border-gray-200">
               <p className="font-semibold text-gray-900">
                 {getMemberName(member)}
               </p>

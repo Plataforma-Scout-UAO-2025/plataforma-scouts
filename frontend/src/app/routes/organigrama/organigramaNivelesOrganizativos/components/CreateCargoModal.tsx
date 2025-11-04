@@ -61,6 +61,7 @@ export default function CreateCargoModal({ open, onClose, onSave, initialNombre 
               placeholder="Ej: Tesorero"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
+              className="w-full"
             />
           </div>
 
@@ -72,6 +73,7 @@ export default function CreateCargoModal({ open, onClose, onSave, initialNombre 
               placeholder="Descripción opcional del cargo..."
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
+              className="w-full"
             />
           </div>
 

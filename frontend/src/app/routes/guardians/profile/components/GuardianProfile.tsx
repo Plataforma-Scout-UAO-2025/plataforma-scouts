@@ -146,7 +146,7 @@ const GuardianProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#fffaf3]">
       <div className="flex flex-col min-h-screen">
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate('/app/dashboard')} className="hover:bg-gray-100">
               <ArrowLeft className="h-5 w-5" />
@@ -161,16 +161,16 @@ const GuardianProfilePage: React.FC = () => {
         
         <div className="flex-1 p-6">
           <ProfileHeader 
-            first_name={guardianApiData?.first_name || ''} 
-            last_name={guardianApiData?.last_name || ''} 
+            first_name={guardianApiData?.firstName || ''} 
+            last_name={guardianApiData?.lastName || ''} 
             grupo={guardianApiData?.rol || ''} 
             is_active={guardianApiData?.is_active || false} 
           />
           
           <ProfileInfoCard
             address={guardianApiData?.address || ''} 
-            first_name={guardianApiData?.first_name || ''} 
-            last_name={guardianApiData?.last_name || ''} 
+            first_name={guardianApiData?.firstName || ''} 
+            last_name={guardianApiData?.lastName || ''} 
             identification={guardianApiData?.identification || ''} 
             documentType={guardianApiData?.document_type || 'CC'} 
             email={user?.email || 'N/A'} 
@@ -196,15 +196,15 @@ const GuardianProfilePage: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleEditProfile} 
         initialData={{
-          firstName: guardianApiData?.first_name ?? user?.nickname ?? '',
-          lastName: guardianApiData?.last_name || '',
+          firstName: guardianApiData?.firstName ?? user?.nickname ?? '',
+          lastName: guardianApiData?.lastName || '',
           identification: guardianApiData?.identification || '',
           documentType: guardianApiData?.document_type || 'CC',
           email: user?.email ?? 'N/A',
           emailAlt: undefined,
           phone: guardianApiData?.phone || '',
           phoneAlt: undefined,
-          address: 'N/A'
+          address: guardianApiData?.address || ''
         }} 
       />
       
