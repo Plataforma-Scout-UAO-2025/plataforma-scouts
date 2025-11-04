@@ -15,7 +15,7 @@ import MemberStatusBar from "../../Solicitudes/detalles/components/MemberStatusB
 import SchoolInfo from "../../Solicitudes/detalles/components/SchoolInfo";
 import MembersInChargeCard from "../../../guardians/profile/components/MembersInChargeCard";
 import { useState, useEffect } from "react";
-import { getMembersInChargeOf, getGuardianById } from "@/api/guardiansApi";
+import { guardianService } from "@/app/routes/guardians/services/guardianService";
 import { getMembersWithBranch, getMembersByStatus } from "@/api/membersApi";
 import type { Guardian } from "@/types/guardian.type";
 import MemberAssignmentInfo from "@/app/routes/admin-grupal/Miembros/components/MemberAssignmentInfo";
@@ -80,7 +80,7 @@ export default function MemberInfoModal({
         // Obtener información del acudiente si el miembro es SCOUT
         if (merged?.guardian_id) {
           setLoadingGuardian(true);
-          const guardian = await getGuardianById(merged.guardian_id);
+          const guardian = await guardianService.getGuardianById(merged.guardian_id);
           setGuardianInfo(guardian);
           setLoadingGuardian(false);
         } else {
@@ -109,7 +109,7 @@ export default function MemberInfoModal({
 
       setIsLoadingMembers(true);
       try {
-        const members = await getMembersInChargeOf(member.guardian_id);
+        const members = await guardianService.getMembersInChargeOf(member.guardian_id);
         setMembersInCharge(members || []);
       } catch (error) {
         console.error("Error al obtener miembros a cargo:", error);
