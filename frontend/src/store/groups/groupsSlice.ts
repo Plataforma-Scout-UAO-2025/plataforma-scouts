@@ -231,5 +231,6 @@ const groupsSlice = createSlice({
       state.error = action.payload?.error as string;
     });
   },
-});export const { clearNotification, clearGroups } = groupsSlice.actions;
+});
+export const { clearNotification, clearGroups } = groupsSlice.actions;
 export default groupsSlice.reducer;
