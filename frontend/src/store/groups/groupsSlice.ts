@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchGroupAction,
   fetchGroupsAction,
+  fetchGroupsWithAdminsAction,
   updateGroupAction,
   createGroupAction,
   fetchMembersCountByGroupAction,
@@ -10,9 +11,10 @@ import {
   fetchInactiveGroupsCountAction,
   fetchTopGroupsByMembersAction,
 } from "./groupsActions";
-import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO } from "@/types/group.type";
+import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO, GroupWithAdminBackendDTO } from "@/types/group.type";
 interface GroupsState {
   groups: Group[];
+  groupsWithAdmins: GroupWithAdminBackendDTO[];
   group?: Group | null;
   loading: boolean;
   error: string | null;
@@ -25,6 +27,7 @@ interface GroupsState {
 }
 const initialState: GroupsState = {
   groups: [],
+  groupsWithAdmins: [],
   group: null,
   loading: false,
   error: null,
@@ -75,6 +78,20 @@ const groupsSlice = createSlice({
       state.groups = action.payload as Group[];
     });
     builder.addCase(fetchGroupsAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // Grupos con administradores
+    builder.addCase(fetchGroupsWithAdminsAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchGroupsWithAdminsAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.groupsWithAdmins = action.payload;
+    });
+    builder.addCase(fetchGroupsWithAdminsAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });

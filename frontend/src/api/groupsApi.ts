@@ -1,5 +1,5 @@
 import api from "./axios";
-import type { GroupResponseDTO as Group, UpdateGroupDTO, GroupMembersDTO, TopGroupByMembersDTO } from "@/types/group.type";
+import type { GroupResponseDTO as Group, UpdateGroupDTO, GroupMembersDTO, TopGroupByMembersDTO, GroupWithAdminBackendDTO } from "@/types/group.type";
 
 // Crear un nuevo grupo
 export const createGroup = async (data: Group) => {
@@ -17,6 +17,11 @@ export const getGroup = async (tenantId: string) => {
 // Obtener de todos los grupos
 export const getGroups = async () => {
   const response = await api.get<Group[]>("/tenants/A/groups/getAll");
+  return response.data;
+};
+
+export const getGroupsWithAdmins = async () => {
+  const response = await api.get<GroupWithAdminBackendDTO[]>("/members/getAll");
   return response.data;
 };
 

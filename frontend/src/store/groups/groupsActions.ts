@@ -1,10 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getGroup, getGroups, updateGroup, createGroup, getMembersCountByGroup, getTotalMembersCount, getActiveGroupsCount, getInactiveGroupsCount, getTopGroupsByMembers } from "@/api/groupsApi";
+import { getGroup, getGroups, updateGroup, createGroup, getMembersCountByGroup, getTotalMembersCount, getActiveGroupsCount, getInactiveGroupsCount, getTopGroupsByMembers, getGroupsWithAdmins } from "@/api/groupsApi";
 import type {
   GroupResponseDTO as Group,
   UpdateGroupDTO,
   TopGroupByMembersDTO,
+  GroupWithAdminBackendDTO,
 } from "@/types/group.type";
 
 // Obtener datos de un grupo
@@ -34,6 +35,29 @@ export const fetchGroupsAction = createAsyncThunk(
       const axiosError = error as AxiosError;
       const errorData = axiosError.response?.data as { error: string };
       const errorMessage = errorData?.error || "Error al obtener los grupos";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Obtener grupos con administradores
+export const fetchGroupsWithAdminsAction = createAsyncThunk<
+  GroupWithAdminBackendDTO[],
+  void,
+  { rejectValue: string }
+>(
+  "groups/fetchWithAdmins",
+  async (_, { rejectWithValue }) => {
+    try {
+      const groupsWithAdmins = await getGroupsWithAdmins();
+      return groupsWithAdmins;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error?: string; message?: string };
+      const errorMessage = errorData?.error 
+        || errorData?.message 
+        || `Error ${axiosError.response?.status || 'desconocido'} al obtener los grupos con administradores`;
+      
       return rejectWithValue(errorMessage);
     }
   }
