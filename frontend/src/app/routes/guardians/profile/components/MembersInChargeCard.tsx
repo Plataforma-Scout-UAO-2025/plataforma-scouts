@@ -1,4 +1,4 @@
-import { Users} from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ export default function MembersInChargeCard({
   return (
     <>
       {/* Miembros a Cargo */}
-  <Card>
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-[#1a4134]" />
@@ -46,7 +46,7 @@ export default function MembersInChargeCard({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge 
+                  <Badge
                     variant={miembro.isActive ? "default" : "secondary"}
                     className={miembro.isActive ? "bg-green-100 text-green-800 text-xs" : "text-xs"}
                   >
@@ -66,7 +66,7 @@ export default function MembersInChargeCard({
           </div>
         </CardContent>
       </Card>
-      
+
     </>
   );
 }

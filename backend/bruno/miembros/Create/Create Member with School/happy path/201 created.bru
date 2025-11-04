@@ -1,0 +1,43 @@
+meta {
+  name: 201 created
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseurl}}/members/create_member_with_school
+  auth: inherit
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "member": {
+      "tenantId": "org_6B3k4dao2Wf6eGxa",
+      "firstName": "Ana",
+      "lastName": "Gómez",
+      "age": 13,
+      "role": "SCOUT",
+      "identification": "99112233",
+      "documentType": "TI",
+      "email": "ana.gomez@example.com",
+      "isActive": true,
+      "status": "PENDING",
+      "emergencyContacts": [
+        { "name": "Carlos Gómez", "relationship": "Padre", "phone": "3011112222" }
+      ],
+      "accept_treatment": true
+    },
+    "school": {
+      "tenant_id": "org_6B3k4dao2Wf6eGxa",
+      "institution": "Colegio X",
+      "course": "7B",
+      "calendar": "A",
+      "shift": "Mañana"
+    }
+  }
+}
