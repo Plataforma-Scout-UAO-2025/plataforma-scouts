@@ -1,6 +1,5 @@
 import api from "./axios";
 import type { 
-  Guardian, 
   GuardianWithMembers, 
   CreateGuardianDTO, 
   UpdateGuardianDTO, 
@@ -8,6 +7,7 @@ import type {
   GuardianCreateResponse,
   AvailableGuardianDTO 
 } from "@/types/guardian.type";
+import { normalizeGuardianData, type GuardianApiResponse } from "@/app/routes/guardians/utils/guardianMapper";
 
 // Crear un nuevo guardian
 export const createGuardian = async (data: CreateGuardianDTO) => {
@@ -17,8 +17,9 @@ export const createGuardian = async (data: CreateGuardianDTO) => {
 
 // Obtener guardian por ID (solo datos básicos)
 export const getGuardianById = async (id: number | string) => {
-  const response = await api.get<Guardian>(`/guardian/${id}`);
-  return response.data;
+  const response = await api.get<GuardianApiResponse>(`/guardian/${id}`);
+  // Normalize the response to handle naming inconsistencies
+  return normalizeGuardianData(response.data);
 };
 
 // Obtener guardian con sus miembros asociados

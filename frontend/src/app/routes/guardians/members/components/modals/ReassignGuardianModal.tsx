@@ -76,57 +76,53 @@ export default function ReassignGuardianModal({
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const getCurrentGuardianId = (): number => {
-    return user?.sub ? parseInt(user.sub.replace('auth0|', '')) : 0;
-  };
+  const getCurrentGuardianId = useCallback((): number => {
+  return user?.sub ? parseInt(user.sub.replace('auth0|', '')) : 0;
+}, [user?.sub]);
 
-  const loadAllGuardians = useCallback(async () => {
-    setLoading(true);
-    try {
-      const guardiansData = await getAvailableGuardians();
-      if (!guardiansData || !Array.isArray(guardiansData)) {
-        throw new Error("Datos inválidos recibidos de la API");
-      }
-      
-      const currentGuardianId = getCurrentGuardianId();
-      
-      const formattedGuardians: GuardianOption[] = guardiansData.map((item: GuardianApiResponse, index: number) => {
-        
-        return {
-          guardianId: item.member_id || item.guardianId || item.id || index + 1,
-          firstName: item.first_name || item.firstName || "Sin nombre",
-          lastName: item.last_name || item.lastName || "Sin apellido", 
-          identification: item.identification || "Sin identificación",
-          phone: item.phone || undefined,
-          email: item.email || undefined,
-          membersCount: item.membersCount || 0,
-          isCurrentGuardian: currentGuardianId === (item.member_id || item.guardianId || item.id)
-        };
-      });
-      
-      
-      const validGuardians = formattedGuardians.filter(guardian => 
-        guardian.firstName !== "Sin nombre" && 
-        guardian.lastName !== "Sin apellido" &&
-        guardian.guardianId > 0
-      );
-      
-      
-      setAllGuardians(validGuardians);
-      setFilteredGuardians(validGuardians);
-      
-    } catch (error) {
-      console.error("Error loading all guardians:", error);
-      toast.error("Error al cargar los guardianes");
-      
-      setAllGuardians([]);
-      setFilteredGuardians([]);
-    } finally {
-      setLoading(false);
+const loadAllGuardians = useCallback(async () => {
+  setLoading(true);
+  try {
+    const guardiansData = await getAvailableGuardians();
+    if (!guardiansData || !Array.isArray(guardiansData)) {
+      throw new Error("Datos inválidos recibidos de la API");
     }
-  }, [user?.sub]);
+    
+    const currentGuardianId = getCurrentGuardianId();
+    const formattedGuardians: GuardianOption[] = guardiansData.map((item: GuardianApiResponse, index: number) => {
+      
+      return {
+        guardianId: item.member_id || item.guardianId || item.id || index + 1,
+        firstName: item.first_name || item.firstName || "Sin nombre",
+        lastName: item.last_name || item.lastName || "Sin apellido", 
+        identification: item.identification || "Sin identificación",
+        phone: item.phone || undefined,
+        email: item.email || undefined,
+        membersCount: item.membersCount || 0,
+        isCurrentGuardian: currentGuardianId === (item.member_id || item.guardianId || item.id)
+      };
+    });
+    
+    const validGuardians = formattedGuardians.filter(guardian => 
+      guardian.firstName !== "Sin nombre" && 
+      guardian.lastName !== "Sin apellido" &&
+      guardian.guardianId > 0
+    );
+    
+    setAllGuardians(validGuardians);
+    setFilteredGuardians(validGuardians);
+    
+  } catch (error) {
+    console.error("Error loading all guardians:", error);
+    toast.error("Error al cargar los guardianes");
+    
+    setAllGuardians([]);
+    setFilteredGuardians([]);
+  } finally {
+    setLoading(false);
+  }
+}, [getCurrentGuardianId]);
   
-
   useEffect(() => {
     if (isOpen && member) {
       loadAllGuardians();

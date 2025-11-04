@@ -45,11 +45,12 @@ export interface MemberBasicInfo {
 }
 
 export interface Guardian {
+  member_id?: number
   user_id: string
   rol: "ACUDIENTE" | "ADMIN" | "USUARIO"
   tenant_id: string
-  first_name: string
-  last_name: string
+  firstName: string
+  lastName: string
   age: number
   identification: string
   document_type: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP'
