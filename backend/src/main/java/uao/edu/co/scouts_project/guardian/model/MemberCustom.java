@@ -34,10 +34,11 @@ public class MemberCustom {
     private Boolean isActive;
     private String email;
     private String role;
+    private String relationship;
 
     public MemberCustom(Long memberId, String firstName, String lastName, String identification,
             DocumentType documentType, Integer age, String gender,
-            String phone, LocalDate birthDate, String address, Boolean isActive, String email, String role) {
+            String phone, LocalDate birthDate, String address, Boolean isActive, String email, String role, String relationship) {
         this.memberId = memberId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -51,6 +52,7 @@ public class MemberCustom {
         this.isActive = isActive;
         this.email = email;
         this.role = role;
+        this.relationship = relationship;
         this.emergencyContacts = null;
     }
 

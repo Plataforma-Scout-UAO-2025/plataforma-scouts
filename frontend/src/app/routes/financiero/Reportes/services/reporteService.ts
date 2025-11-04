@@ -25,7 +25,7 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
 
         // Hoja 1: Resumen del Reporte
         const resumenData = [
-          ['REPORTE DE PAGOS - ' + (reporte.scope?.toUpperCase() || 'GENERAL')],
+          ['REPORTE FINANCIERO CONSOLIDADO - KNUT' + (reporte.scope?.toUpperCase() || 'GENERAL')],
           [''],
           ['Información del Reporte'],
           ['Alcance', reporte.scope || 'General'],
@@ -155,7 +155,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(20);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('REPORTE FINANCIERO DE PAGOS', 105, 15, { align: 'center' });
+        pdf.text('REPORTE FINANCIERO CONSOLIDADO - KNUT', 105, 15, { align: 'center' });
         
         pdf.setFontSize(12);
         pdf.text(reporte.scope?.toUpperCase() || 'GENERAL', 105, 23, { align: 'center' });

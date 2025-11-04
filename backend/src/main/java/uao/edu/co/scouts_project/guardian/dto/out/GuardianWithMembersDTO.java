@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -31,8 +32,10 @@ public class GuardianWithMembersDTO {
     private SubgroupDTO subgroup;
     private String tenantId;
     @NotBlank
+    @JsonProperty("firstName")
     private String firstName;
     @NotBlank
+    @JsonProperty("lastName")
     private String lastName;
     @Positive
     private Integer age;

@@ -7,6 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
 import uao.edu.co.scouts_project.organigrama.dto.UpdatingGroupDTO;
@@ -24,61 +27,67 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class GroupServiceTest {
 
-    private static final String TENANT_ID   = "T1";
-    private static final String SLUG        = "centinelas-113";
+    private static final String TENANT_ID = "T1";
+    private static final String SLUG = "centinelas-113";
 
-    @Mock private GroupRepository groupRepository;
-    @Mock private TenantRepository tenantRepository;
-    @Mock private SupabaseStorageService storageService;
+    @Mock
+    private GroupRepository groupRepository;
+    @Mock
+    private TenantRepository tenantRepository;
+    @Mock
+    private SupabaseStorageService storageService;
 
     @InjectMocks
     private GroupService groupService;
 
     private Group entity;
 
+    @SuppressWarnings("unused")
     private GroupDTO newDto() {
         return new GroupDTO(
-            null,               //  1 groupId
-            TENANT_ID,          //  2 tenantId
-            SLUG,               //  3 slug
-            "Grupo Scout Centinelas 113", // 4 name
-            null,               //  5 district
-            null,               //  6 identifierNumber
-            null,               //  7 address
-            null,               //  8 phone
-            null,               //  9 email
-            null,               // 10 foundedIn
-            null,               // 11 motto
-            null,               // 12 mission
-            null,               // 13 vision
-            null,               // 14 history
-            null,               // 15 logoObjectId
-            null,               // 16 scarfObjectId
-            Map.<String,Object>of(), // 17 socialLinks
-            Map.<String,Object>of(), // 18 config
-            Boolean.TRUE,       // 19 isActive
-            "ACTIVE",           // 20 status
-            null,               // 21 createdAt
-            null                // 22 updatedAt
+                null, // 1 groupId
+                TENANT_ID, // 2 tenantId
+                SLUG, // 3 slug
+                "Grupo Scout Centinelas 113", // 4 name
+                null, // 5 district
+                null, // 6 identifierNumber
+                null, // 7 address
+                null, // 8 phone
+                null, // 9 email
+                null, // 10 foundedIn
+                null, // 11 motto
+                null, // 12 mission
+                null, // 13 vision
+                null, // 14 history
+                null, // 15 logoObjectId
+                null, // 16 scarfObjectId
+                Map.<String, Object>of(), // 17 socialLinks
+                Map.<String, Object>of(), // 18 config
+                Boolean.TRUE, // 19 isActive
+                "ACTIVE", // 20 status
+                null, // 21 createdAt
+                null // 22 updatedAt
         );
     }
 
     @BeforeEach
     void init() {
-    when(tenantRepository.existsById(TENANT_ID)).thenReturn(true);
+        when(tenantRepository.existsById(TENANT_ID)).thenReturn(true);
 
         entity = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
         entity.setGroupId(1L);
-        entity.setFoundedIn(LocalDate.of(1998,1,1));
+        entity.setFoundedIn(LocalDate.of(1998, 1, 1));
         entity.setIsActive(true);
 
-    // Stubs de storage omitidos: la implementación maneja nulls/colecciones vacías
+        // Stubs de storage omitidos: la implementación maneja nulls/colecciones vacías
     }
 
     // ---------- CREATE ----------
@@ -99,7 +108,7 @@ class GroupServiceTest {
         assertThat(out.slug()).isEqualTo(SLUG);
         assertThat(out.name()).isEqualTo("Grupo Scout Centinelas 113");
 
-            verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
+        verify(groupRepository).existsByTenantIdAndSlug(TENANT_ID, SLUG);
         verify(groupRepository).save(any(Group.class));
     }
 
@@ -119,10 +128,9 @@ class GroupServiceTest {
     @DisplayName("createGroup: lanza IllegalArgumentException si el slug tiene formato inválido")
     void create_invalid_slug_format() {
         final GroupDTO invalidDto = new GroupDTO(
-            null, TENANT_ID, "Slug Inválido!", "Nombre", 
-            null, null, null, null, null, null, null, null, null, null,
-            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
-        );
+                null, TENANT_ID, "Slug Inválido!", "Nombre",
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, Map.of(), Map.of(), true, "ACTIVE", null, null);
 
         assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, invalidDto))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -134,15 +142,14 @@ class GroupServiceTest {
     @Test
     @DisplayName("createGroup: permite crear múltiples grupos en un tenant")
     void create_multiple_groups_same_tenant() {
-            when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), anyString())).thenReturn(false);
+        when(groupRepository.existsByTenantIdAndSlug(eq(TENANT_ID), anyString())).thenReturn(false);
         when(groupRepository.save(any(Group.class))).thenReturn(entity);
 
         GroupDTO firstGroup = newDto();
         GroupDTO secondGroup = new GroupDTO(
-            null, TENANT_ID, "otro-grupo", "Otro Grupo",
-            null, null, null, null, null, null, null, null, null, null,
-            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
-        );
+                null, TENANT_ID, "otro-grupo", "Otro Grupo",
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, Map.of(), Map.of(), true, "ACTIVE", null, null);
 
         groupService.createGroup(TENANT_ID, firstGroup);
         groupService.createGroup(TENANT_ID, secondGroup);
@@ -154,10 +161,9 @@ class GroupServiceTest {
     @DisplayName("createGroup: lanza IllegalArgumentException si el slug es null")
     void create_null_slug() {
         final GroupDTO nullSlugDto = new GroupDTO(
-            null, TENANT_ID, null, "Nombre",
-            null, null, null, null, null, null, null, null, null, null,
-            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
-        );
+                null, TENANT_ID, null, "Nombre",
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, Map.of(), Map.of(), true, "ACTIVE", null, null);
 
         assertThatThrownBy(() -> groupService.createGroup(TENANT_ID, nullSlugDto))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -171,9 +177,9 @@ class GroupServiceTest {
     @DisplayName("getGroupBySlug: devuelve detalle cuando existe")
     void getBySlug_ok() {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
 
-    GroupResponseDTO out = groupService.getGroupBySlug(TENANT_ID, SLUG);
+        GroupResponseDTO out = groupService.getGroupBySlug(TENANT_ID, SLUG);
 
         assertThat(out).isNotNull();
         assertThat(out.groupId()).isEqualTo(1L);
@@ -183,12 +189,11 @@ class GroupServiceTest {
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
     }
 
-
     @Test
     @DisplayName("updateGroup (UpdatingGroupDTO): lanza IllegalArgumentException si se intenta cambiar el slug")
     void update_with_updatingDto_slug_conflict() {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
 
         UpdatingGroupDTO dto = new UpdatingGroupDTO();
         dto.setSlug("nuevo-slug");
@@ -201,6 +206,7 @@ class GroupServiceTest {
         verify(groupRepository, never()).existsByTenantIdAndSlug(anyString(), anyString());
         verify(groupRepository, never()).save(any());
     }
+
     @Test
     @DisplayName("getGroupBySlug: incluye URLs públicas cuando existen imágenes")
     void getBySlug_includesUrls() {
@@ -210,11 +216,11 @@ class GroupServiceTest {
         entity.setScarfObjectId(scarfId);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(storageService.getPublicUrlsFromObjectIds(eq(Set.of(logoId, scarfId))))
-            .thenReturn(Map.of(logoId, "logo-url", scarfId, "scarf-url"));
+                .thenReturn(Map.of(logoId, "logo-url", scarfId, "scarf-url"));
 
-    GroupResponseDTO out = groupService.getGroupBySlug(TENANT_ID, SLUG);
+        GroupResponseDTO out = groupService.getGroupBySlug(TENANT_ID, SLUG);
 
         assertThat(out.logoObjectUrl()).isEqualTo("logo-url");
         assertThat(out.scarfObjectUrl()).isEqualTo("scarf-url");
@@ -225,7 +231,7 @@ class GroupServiceTest {
     @DisplayName("getGroupBySlug: lanza IllegalArgumentException cuando no existe")
     void getBySlug_notFound() {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> groupService.getGroupBySlug(TENANT_ID, SLUG))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -238,16 +244,15 @@ class GroupServiceTest {
     @DisplayName("updateGroup: actualiza atributos permitidos")
     void update_group_allowed_fields() {
         when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenReturn(entity);
 
         GroupDTO updateDto = new GroupDTO(
-            null, TENANT_ID, SLUG, "Nuevo Nombre",
-            "Distrito Nuevo", "123", "Nueva Dirección", "123456", "nuevo@email.com",
-            LocalDate.now(), "Nuevo Lema", "Nueva Misión", "Nueva Visión", "Nueva Historia",
-            null, null, Map.of("facebook", "newfb"), Map.of("color", "blue"), 
-            true, "ACTIVE", null, null
-        );
+                null, TENANT_ID, SLUG, "Nuevo Nombre",
+                "Distrito Nuevo", "123", "Nueva Dirección", "123456", "nuevo@email.com",
+                LocalDate.now(), "Nuevo Lema", "Nueva Misión", "Nueva Visión", "Nueva Historia",
+                null, null, Map.of("facebook", "newfb"), Map.of("color", "blue"),
+                true, "ACTIVE", null, null);
 
         GroupResponseDTO updated = groupService.updateGroup(TENANT_ID, SLUG, updateDto);
 
@@ -258,17 +263,16 @@ class GroupServiceTest {
     @Test
     @DisplayName("updateGroup: no permite modificar slug")
     void update_group_immutable_slug() {
-            Group existingGroup = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
-            existingGroup.setGroupId(1L);
+        Group existingGroup = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
+        existingGroup.setGroupId(1L);
 
         when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
                 .thenReturn(Optional.of(existingGroup));
 
         GroupDTO updateDto = new GroupDTO(
-            null, TENANT_ID, "nuevo-slug", "Nombre", 
-            null, null, null, null, null, null, null, null, null, null,
-            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
-        );
+                null, TENANT_ID, "nuevo-slug", "Nombre",
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, Map.of(), Map.of(), true, "ACTIVE", null, null);
 
         assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, updateDto))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -280,17 +284,16 @@ class GroupServiceTest {
     @Test
     @DisplayName("updateGroup: no permite modificar tenantId")
     void update_group_immutable_tenantId() {
-            Group existingGroup = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
-            existingGroup.setGroupId(1L);
+        Group existingGroup = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
+        existingGroup.setGroupId(1L);
 
         when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
                 .thenReturn(Optional.of(existingGroup));
 
         GroupDTO updateDto = new GroupDTO(
-            null, "otro-tenant", SLUG, "Nombre",
-            null, null, null, null, null, null, null, null, null, null,
-            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
-        );
+                null, "otro-tenant", SLUG, "Nombre",
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, Map.of(), Map.of(), true, "ACTIVE", null, null);
 
         assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, updateDto))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -303,19 +306,18 @@ class GroupServiceTest {
     @DisplayName("updateGroup: ignora el slug cuando es null")
     void update_group_ignores_null_slug() {
         when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenReturn(entity);
 
         GroupDTO updateDto = new GroupDTO(
-            null, TENANT_ID, null, "Nuevo Nombre", 
-            null, null, null, null, null, null, null, null, null, null,
-            null, null, Map.of(), Map.of(), true, "ACTIVE", null, null
-        );
+                null, TENANT_ID, null, "Nuevo Nombre",
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, Map.of(), Map.of(), true, "ACTIVE", null, null);
 
         GroupResponseDTO updated = groupService.updateGroup(TENANT_ID, SLUG, updateDto);
 
-        assertThat(updated.slug()).isEqualTo(SLUG);  // El slug no debe cambiar
-        assertThat(updated.name()).isEqualTo("Nuevo Nombre");  // Otros campos sí se actualizan
+        assertThat(updated.slug()).isEqualTo(SLUG); // El slug no debe cambiar
+        assertThat(updated.name()).isEqualTo("Nuevo Nombre"); // Otros campos sí se actualizan
         verify(groupRepository).save(any(Group.class));
     }
 
@@ -323,16 +325,15 @@ class GroupServiceTest {
     @DisplayName("updateGroup: permite activar/desactivar grupo")
     void update_group_active_status() {
         when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenReturn(entity);
 
         // Desactivar
         GroupDTO deactivateDto = newDto();
         deactivateDto = new GroupDTO(
-            null, TENANT_ID, SLUG, "Nombre",
-            null, null, null, null, null, null, null, null, null, null,
-            null, null, Map.of(), Map.of(), false, "INACTIVE", null, null
-        );
+                null, TENANT_ID, SLUG, "Nombre",
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, Map.of(), Map.of(), false, "INACTIVE", null, null);
 
         GroupResponseDTO updated = groupService.updateGroup(TENANT_ID, SLUG, deactivateDto);
         assertThat(updated.isActive()).isFalse();
@@ -351,13 +352,13 @@ class GroupServiceTest {
 
         when(storageService.getPublicUrlsFromObjectIds(any())).thenReturn(Map.of());
         when(groupRepository.findByTenantId(eq(TENANT_ID)))
-            .thenReturn(List.of(entity, e2));
+                .thenReturn(List.of(entity, e2));
 
-    List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_ID);
+        List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_ID);
 
         assertThat(out).hasSize(2);
         assertThat(out).extracting(GroupResponseDTO::slug)
-            .containsExactlyInAnyOrder(SLUG, "g2");
+                .containsExactlyInAnyOrder(SLUG, "g2");
 
         verify(groupRepository).findByTenantId(TENANT_ID);
         verify(storageService).getPublicUrlsFromObjectIds(any());
@@ -381,15 +382,15 @@ class GroupServiceTest {
         g2.setScarfObjectId(scarfShared);
 
         when(groupRepository.findByTenantId(eq(TENANT_ID)))
-            .thenReturn(List.of(g1, g2));
-        when(storageService.getPublicUrlsFromObjectIds(argThat(ids -> ids.containsAll(Set.of(logo1, scarfShared, logo2)) && ids.size() == 3)))
-            .thenReturn(Map.of(
-                logo1, "logo1-url",
-                scarfShared, "scarf-url",
-                logo2, "logo2-url"
-            ));
+                .thenReturn(List.of(g1, g2));
+        when(storageService.getPublicUrlsFromObjectIds(
+                argThat(ids -> ids.containsAll(Set.of(logo1, scarfShared, logo2)) && ids.size() == 3)))
+                .thenReturn(Map.of(
+                        logo1, "logo1-url",
+                        scarfShared, "scarf-url",
+                        logo2, "logo2-url"));
 
-    List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_ID);
+        List<GroupResponseDTO> out = groupService.getGroupsByTenant(TENANT_ID);
 
         assertThat(out).hasSize(2);
         GroupResponseDTO primary = out.stream().filter(dto -> dto.slug().equals(SLUG)).findFirst().orElseThrow();
@@ -408,35 +409,35 @@ class GroupServiceTest {
     @DisplayName("updateGroup: actualiza campos y devuelve respuesta")
     void update_ok() {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
         GroupDTO patch = new GroupDTO(
-            1L,                // groupId
-            TENANT_ID,         // tenantId
-            SLUG,              // slug
-            "Grupo Actualizado", // name
-            null,              // district
-            null,              // identifierNumber
-            null,              // address
-            null,              // phone
-            null,              // email
-            null,              // foundedIn
-            null,              // motto
-            null,              // mission
-            null,              // vision
-            null,              // history
-            null,              // logoObjectId (UUID)
-            null,              // scarfObjectId (UUID)
-            Map.of(),          // socialLinks
-            Map.of(),          // config
-            Boolean.FALSE,     // isActive
-            "ACTIVE",        // status
-            null,              // createdAt
-            null               // updatedAt
+                1L, // groupId
+                TENANT_ID, // tenantId
+                SLUG, // slug
+                "Grupo Actualizado", // name
+                null, // district
+                null, // identifierNumber
+                null, // address
+                null, // phone
+                null, // email
+                null, // foundedIn
+                null, // motto
+                null, // mission
+                null, // vision
+                null, // history
+                null, // logoObjectId (UUID)
+                null, // scarfObjectId (UUID)
+                Map.of(), // socialLinks
+                Map.of(), // config
+                Boolean.FALSE, // isActive
+                "ACTIVE", // status
+                null, // createdAt
+                null // updatedAt
         );
 
-    GroupResponseDTO out = groupService.updateGroup(TENANT_ID, SLUG, patch);
+        GroupResponseDTO out = groupService.updateGroup(TENANT_ID, SLUG, patch);
 
         assertThat(out).isNotNull();
         assertThat(out.name()).isEqualTo("Grupo Actualizado");
@@ -458,35 +459,34 @@ class GroupServiceTest {
         entity.setScarfObjectId(oldScarf);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
         GroupDTO patch = new GroupDTO(
-            1L,
-            TENANT_ID,
-            SLUG,
-            "Grupo Actualizado",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            newLogo,
-            newScarf,
-            Map.of(),
-            Map.of(),
-            Boolean.TRUE,
-            "ACTIVE",
-            null,
-            null
-        );
+                1L,
+                TENANT_ID,
+                SLUG,
+                "Grupo Actualizado",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                newLogo,
+                newScarf,
+                Map.of(),
+                Map.of(),
+                Boolean.TRUE,
+                "ACTIVE",
+                null,
+                null);
 
-    GroupResponseDTO out = groupService.updateGroup(TENANT_ID, SLUG, patch);
+        GroupResponseDTO out = groupService.updateGroup(TENANT_ID, SLUG, patch);
 
         assertThat(out.logoObjectUrl()).isNull();
         assertThat(out.scarfObjectUrl()).isNull();
@@ -502,72 +502,99 @@ class GroupServiceTest {
     @DisplayName("updateGroup: lanza IllegalArgumentException cuando no existe el grupo")
     void update_notFound() {
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         GroupDTO patch = new GroupDTO(
-            1L,                // groupId
-            TENANT_ID,         // tenantId
-            SLUG,              // slug
-            "Grupo Actualizado", // name
-            null,              // district
-            null,              // identifierNumber
-            null,              // address
-            null,              // phone
-            null,              // email
-            null,              // foundedIn
-            null,              // motto
-            null,              // mission
-            null,              // vision
-            null,              // history
-            null,              // logoObjectId (UUID)
-            null,              // scarfObjectId (UUID)
-            Map.of(),          // socialLinks
-            Map.of(),          // config
-            Boolean.FALSE,     // isActive
-            "ACTIVE",        // status
-            null,              // createdAt
-            null               // updatedAt
+                1L, // groupId
+                TENANT_ID, // tenantId
+                SLUG, // slug
+                "Grupo Actualizado", // name
+                null, // district
+                null, // identifierNumber
+                null, // address
+                null, // phone
+                null, // email
+                null, // foundedIn
+                null, // motto
+                null, // mission
+                null, // vision
+                null, // history
+                null, // logoObjectId (UUID)
+                null, // scarfObjectId (UUID)
+                Map.of(), // socialLinks
+                Map.of(), // config
+                Boolean.FALSE, // isActive
+                "ACTIVE", // status
+                null, // createdAt
+                null // updatedAt
         );
 
-    assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, patch))
-            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, patch))
+                .isInstanceOf(IllegalArgumentException.class);
 
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
         verify(groupRepository, never()).save(any());
     }
 
     // ---------- DELETE ----------
+
     @Test
-    @DisplayName("deleteGroup: elimina cuando existe")
-    void delete_ok() {
+    void deleteGroup_shouldDeleteGroupAndAssociatedFiles_whenGroupExistsWithFiles() {
+        // Arrange
+        long groupId = 1L;
         UUID logoId = UUID.randomUUID();
         UUID scarfId = UUID.randomUUID();
-        entity.setLogoObjectId(logoId);
-        entity.setScarfObjectId(scarfId);
 
-        when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
-        doNothing().when(groupRepository).delete(any(Group.class));
+        Group group = new Group();
+        group.setLogoObjectId(logoId);
+        group.setScarfObjectId(scarfId);
 
-    groupService.deleteGroup(TENANT_ID, SLUG);
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(group));
 
-        verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
-        verify(groupRepository).delete(entity);
+        // Act
+        String result = groupService.deleteGroup(groupId);
+
+        // Assert
         verify(storageService).deleteFileByObjectId(logoId);
         verify(storageService).deleteFileByObjectId(scarfId);
+        verify(groupRepository).deleteById(groupId);
+
+        assertEquals("Grupo con ID: " + groupId + " ha sido eliminado.", result);
     }
 
     @Test
-    @DisplayName("deleteGroup: lanza IllegalArgumentException cuando no existe")
-    void delete_notFound() {
-        when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.empty());
+    void deleteGroup_shouldDeleteGroupWithoutFiles_whenGroupExistsWithoutFiles() {
+        // Arrange
+        Long groupId = 2L;
+        Group group = new Group();
+        group.setLogoObjectId(null);
+        group.setScarfObjectId(null);
 
-    assertThatThrownBy(() -> groupService.deleteGroup(TENANT_ID, SLUG))
-            .isInstanceOf(IllegalArgumentException.class);
+        when(groupRepository.findById(groupId)).thenReturn(Optional.of(group));
 
-        verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
-        verify(groupRepository, never()).delete(any());
+        // Act
+        String result = groupService.deleteGroup(groupId);
+
+        // Assert
+        verify(storageService, never()).deleteFileByObjectId(any());
+        verify(groupRepository).deleteById(groupId);
+        assertEquals("Grupo con ID: " + groupId + " ha sido eliminado.", result);
+    }
+
+    @Test
+    void deleteGroup_shouldReturnMessage_whenGroupDoesNotExist() {
+        // Arrange
+        Long groupId = 3L;
+        when(groupRepository.findById(groupId)).thenReturn(Optional.empty());
+
+        // Act
+        String result = groupService.deleteGroup(groupId);
+
+        // Assert
+        verify(storageService, never()).deleteFileByObjectId(any());
+        verify(groupRepository, never()).deleteById(any());
+        assertEquals("Grupo con ID: " + groupId + " no encontrado.", result);
+
     }
 
     @Test
@@ -577,10 +604,10 @@ class GroupServiceTest {
         entity.setLogoObjectId(logoId);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.deleteLogoImage(TENANT_ID, SLUG);
+        groupService.deleteLogoImage(TENANT_ID, SLUG);
 
         assertThat(entity.getLogoObjectId()).isNull();
         verify(storageService).deleteFileByObjectId(logoId);
@@ -593,9 +620,9 @@ class GroupServiceTest {
         entity.setLogoObjectId(null);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
 
-    groupService.deleteLogoImage(TENANT_ID, SLUG);
+        groupService.deleteLogoImage(TENANT_ID, SLUG);
 
         verify(storageService, never()).deleteFileByObjectId(any());
         verify(groupRepository, never()).save(any());
@@ -608,10 +635,10 @@ class GroupServiceTest {
         entity.setScarfObjectId(scarfId);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.deleteScarfImage(TENANT_ID, SLUG);
+        groupService.deleteScarfImage(TENANT_ID, SLUG);
 
         assertThat(entity.getScarfObjectId()).isNull();
         verify(storageService).deleteFileByObjectId(scarfId);
@@ -624,9 +651,9 @@ class GroupServiceTest {
         entity.setScarfObjectId(null);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
 
-    groupService.deleteScarfImage(TENANT_ID, SLUG);
+        groupService.deleteScarfImage(TENANT_ID, SLUG);
 
         verify(storageService, never()).deleteFileByObjectId(any());
         verify(groupRepository, never()).save(any());
@@ -640,10 +667,10 @@ class GroupServiceTest {
         entity.setLogoObjectId(oldLogo);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateLogo(TENANT_ID, SLUG, newLogo);
+        groupService.updateLogo(TENANT_ID, SLUG, newLogo);
 
         assertThat(entity.getLogoObjectId()).isEqualTo(newLogo);
         verify(storageService).deleteFileByObjectId(oldLogo);
@@ -657,10 +684,10 @@ class GroupServiceTest {
         entity.setLogoObjectId(logo);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateLogo(TENANT_ID, SLUG, logo);
+        groupService.updateLogo(TENANT_ID, SLUG, logo);
 
         assertThat(entity.getLogoObjectId()).isEqualTo(logo);
         verify(storageService, never()).deleteFileByObjectId(any());
@@ -675,10 +702,10 @@ class GroupServiceTest {
         entity.setScarfObjectId(oldScarf);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateScarf(TENANT_ID, SLUG, newScarf);
+        groupService.updateScarf(TENANT_ID, SLUG, newScarf);
 
         assertThat(entity.getScarfObjectId()).isEqualTo(newScarf);
         verify(storageService).deleteFileByObjectId(oldScarf);
@@ -692,10 +719,10 @@ class GroupServiceTest {
         entity.setScarfObjectId(scarf);
 
         when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-            .thenReturn(Optional.of(entity));
+                .thenReturn(Optional.of(entity));
         when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    groupService.updateScarf(TENANT_ID, SLUG, scarf);
+        groupService.updateScarf(TENANT_ID, SLUG, scarf);
 
         assertThat(entity.getScarfObjectId()).isEqualTo(scarf);
         verify(storageService, never()).deleteFileByObjectId(any());

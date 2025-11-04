@@ -124,6 +124,7 @@ public class GuardianMapper {
             .birthDate(memberCustom.getBirthDate())
             .address(memberCustom.getAddress())
             .isActive(memberCustom.getIsActive())
+            .relationship(memberCustom.getRelationship())
             .build();
 }
 }
