@@ -45,6 +45,16 @@ export interface CreateGroupDTO {
 }
 
 export interface UpdateGroupDTO {
+  group_id?: number;
+  tenant_id?: string;
+  slug?: string;
+  identifier_number?: string;
+  founded_in?: string;
+  logo_object_id?: string;
+  scarf_object_id?: string;
+  social_links?: Record<string, unknown>;
+  is_active?: boolean;
+
   groupId?: number;
   name: string;
   district?: string;

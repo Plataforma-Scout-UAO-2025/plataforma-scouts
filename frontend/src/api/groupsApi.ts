@@ -35,6 +35,30 @@ export const updateGroup = async (
   return response.data;
 };
 
+// Actualizar logo del grupo
+export const updateGroupLogo = async (
+  tenantId: string,
+  groupSlug: string,
+  objectId: string,
+) => {
+  const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/logo`, {
+    object_id: objectId,
+  });
+  return response.data;
+};
+
+// Actualizar scarf/pañoleta del grupo
+export const updateGroupScarf = async (
+  tenantId: string,
+  groupSlug: string,
+  objectId: string,
+) => {
+  const response = await api.patch(`/tenants/${tenantId}/groups/${groupSlug}/scarf`, {
+    object_id: objectId,
+  });
+  return response.data;
+};
+
 // Enviar un DTO completo para update_member_by_id
 export const updateMemberByDto = async (
   id: string,

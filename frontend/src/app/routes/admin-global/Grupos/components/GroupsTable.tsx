@@ -81,7 +81,7 @@ const GroupsTable = () => {
         <TableHeader className="text-primary">
           <TableRow>
             <TableHead className="font-bold text-primary">Nombre</TableHead>
-            <TableHead className="font-bold text-primary">Administrador</TableHead>
+            <TableHead className="font-bold text-primary">Jefe de Grupo</TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
             <TableHead className="font-bold text-primary text-center">
               Acciones
@@ -130,7 +130,7 @@ const GroupsTable = () => {
                         )}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground italic">Sin administrador</span>
+                      <span className="text-muted-foreground italic">Sin jefe de grupo</span>
                     )}
                   </TableCell>
                   <TableCell>
