@@ -130,7 +130,7 @@ const GroupsTable = () => {
                         )}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground italic">Sin jefe de grupo</span>
+                      <span className="text-muted-foreground italic">Sin Jefe de Grupo</span>
                     )}
                   </TableCell>
                   <TableCell>
