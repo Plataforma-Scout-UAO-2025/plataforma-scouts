@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Agregar esta importación
+import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { getAvailableMembers } from "@/api/guardiansApi";
+import { getAvailableMembers, getGuardianById } from "@/api/guardiansApi";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import { Search, User, Users, UserPlus } from "lucide-react";
 
@@ -41,18 +42,57 @@ export default function SelectMemberModal({
   onConfirm,
   isAdding,
 }: SelectMemberModalProps) {
-  const navigate = useNavigate(); // Agregar esto
+  const navigate = useNavigate();
+  const { user } = useAuth0();
+  
   const [availableMembers, setAvailableMembers] = useState<MemberBasicInfo[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<MemberBasicInfo[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [guardianMemberId, setGuardianMemberId] = useState<number | undefined>(undefined);
+
+  const loadAvailableMembers = async () => {
+    setLoading(true);
+    try {
+      const members = await getAvailableMembers();
+      setAvailableMembers(members);
+      setFilteredMembers(members);
+    } catch (error) {
+      console.error("Error al cargar los miembros disponibles: ", error);
+      toast.error("Error al cargar los miembros disponibles");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadGuardianMemberId = async () => {
+    try {
+      const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+      
+      if (guardianId) {
+        const guardianData = await getGuardianById(guardianId);
+        setGuardianMemberId(guardianData.member_id);
+      }
+    } catch (error) {
+      console.error("❌ Error al cargar el member_id del acudiente: ", error);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
       loadAvailableMembers();
+      loadGuardianMemberId();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  useEffect(() => {
+    if (user?.sub) {
+      loadGuardianMemberId();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
@@ -72,24 +112,31 @@ export default function SelectMemberModal({
     }
   }, [searchTerm, availableMembers]);
 
-  const loadAvailableMembers = async () => {
-    setLoading(true);
-    try {
-      const members = await getAvailableMembers();
-      setAvailableMembers(members);
-      setFilteredMembers(members);
-    } catch (error) {
-      console.error("Error al cargar los miembros disponibles: ", error);
-      toast.error("Error al cargar los miembros disponibles");
-    } finally {
-      setLoading(false);
+  const handleCreateScout = async () => {
+    let memberId = guardianMemberId;
+    
+    if (!memberId) {
+      const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+      
+      if (guardianId) {
+        try {
+          const guardianData = await getGuardianById(guardianId);
+          memberId = guardianData.member_id;
+        } catch {
+          toast.error("Error al obtener la información del acudiente");
+          return;
+        }
+      }
     }
-  };
-
-  const handleCreateScout = () => {
+    
     handleClose();
     
-    navigate("/app/grupos/basic-info/scout-enrollment");
+    navigate("/app/inscripcion", { 
+      state: { 
+        guardianMemberId: memberId,
+        fromGuardianView: true 
+      } 
+    });
     
     toast.info("Completa el formulario para crear un nuevo scout");
   };

@@ -151,7 +151,7 @@ const MembersInCharge = () => {
       }
       
     } catch (error) {
-      toast.error('Error al remover el miembro del guardian');
+      toast.error('Error al remover un miembro menor de edad');
       throw error;
     }
   };  
