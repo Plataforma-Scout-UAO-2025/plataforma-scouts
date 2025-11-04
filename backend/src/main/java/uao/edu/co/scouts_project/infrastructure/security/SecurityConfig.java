@@ -153,7 +153,7 @@ public class SecurityConfig {
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/list_subGroup_by_memberId")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name(), ADMIN_GLOBAL.name())
-                                                .requestMatchers("/api/v1/members/list_schoolData_by_memberId")
+                                                .requestMatchers("/api/v1/members/list_schoolData_by_membegit rId")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), SCOUT.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/update_member_status/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
