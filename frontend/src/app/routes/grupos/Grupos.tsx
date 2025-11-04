@@ -318,7 +318,7 @@ function Grupos() {
                               {field.value
                                 ? parseYMDToDate(
                                     field.value
-                                  )!.toLocaleDateString()
+                                  )?.toLocaleDateString() || "Selecciona una fecha"
                                 : "Selecciona una fecha"}
                             </span>
                             <CalendarDays className="h-4 w-4" />
