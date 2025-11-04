@@ -183,20 +183,6 @@ export default function MemberInfoModal({
                 )}
               </>
             )}
-            {displayMember.role === "SCOUTER" && (
-              <div className="p-4 bg-purple-50 rounded-md border border-purple-200">
-                <p className="text-sm text-purple-700">
-                  Información específica de SCOUTER (próximamente)
-                </p>
-              </div>
-            )}
-            {displayMember.role === "TESORERO" && (
-              <div className="p-4 bg-green-50 rounded-md border border-green-200">
-                <p className="text-sm text-green-700">
-                  Información específica de TESORERO (próximamente)
-                </p>
-              </div>
-            )}
           </div>
         )}
 

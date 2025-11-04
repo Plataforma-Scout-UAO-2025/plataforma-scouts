@@ -4,6 +4,7 @@ import { useAppDispatch } from "./useAppDispatch";
 import { useAppSelector } from "./useAppSelector";
 import { fetchMembersWithBranchAction } from "@/store/members/membersActions";
 import type { Member } from "@/types/member.type";
+import { normalizeRawRole, RawRole } from "@/roles/roles";
 
 interface MemberAccessResult {
   hasAccess: boolean;
@@ -13,21 +14,25 @@ interface MemberAccessResult {
 }
 
 /**
- * Hook personalizado para validar el acceso de cualquier miembro al sistema.
+ * Hook que valida si un usuario puede acceder al dashboard.
  * 
- * Valida dos condiciones para TODOS los roles:
- * 1. El status del miembro debe ser "APPROVED"
- * 2. El miembro debe estar activo (isActive === true)
+ * Para la mayoría de roles (Scout, Scouter, etc.):
+ *   - Necesitan estar en la base de datos
+ *   - Su estado debe ser "APPROVED"
+ *   - Deben estar activos (isActive = true)
  * 
- * @returns {MemberAccessResult} Estado de acceso del miembro
+ * Para Admins (Admin Global y Admin Grupo):
+ *   - Pueden acceder aunque no estén en la BD, usando su rol de Auth0
+ *   - Si están en la BD, aplican las mismas reglas que otros roles
+ * 
+ * @returns {MemberAccessResult} Info del acceso y razón si fue denegado
  */
 export function useMemberAccess(): MemberAccessResult {
   const dispatch = useAppDispatch();
   const { user } = useAuth0();
   const { members, loading } = useAppSelector((state) => state.members);
   
-  // useRef para rastrear si ya se hizo el fetch inicial
-  // Esto evita el loop infinito al hacer múltiples dispatches
+  // Guardamos si ya trajimos los miembros de la BD para no hacer el fetch varias veces
   const hasFetchedRef = useRef(false);
   
   const [accessState, setAccessState] = useState<MemberAccessResult>({
@@ -37,17 +42,16 @@ export function useMemberAccess(): MemberAccessResult {
     loading: true,
   });
 
-  // Efecto para cargar miembros SOLO UNA VEZ al montar el componente
+  // Traemos la lista de miembros de la BD solo una vez cuando se monta el componente
   useEffect(() => {
-    // Solo dispatch si nunca se ha hecho antes
     if (!hasFetchedRef.current) {
       dispatch(fetchMembersWithBranchAction());
-      hasFetchedRef.current = true; // Marcar como "ya se hizo"
+      hasFetchedRef.current = true;
     }
-  }, [dispatch]); // Solo depende de dispatch (estable)
+  }, [dispatch]);
 
   useEffect(() => {
-    // Esperar a que termine la carga
+    // Mientras se cargan los datos, mostramos loading
     if (loading) {
       setAccessState({
         hasAccess: false,
@@ -58,7 +62,7 @@ export function useMemberAccess(): MemberAccessResult {
       return;
     }
 
-    // Buscar el miembro actual por email
+    // Necesitamos el email del usuario para buscarlo en la BD
     const currentUserEmail = user?.email;
     if (!currentUserEmail) {
       setAccessState({
@@ -72,7 +76,24 @@ export function useMemberAccess(): MemberAccessResult {
 
     const currentMember = members.find((m) => m.email === currentUserEmail);
 
+    // ¿El usuario NO está en la base de datos?
     if (!currentMember) {
+      // Chequeamos si es admin usando su rol de Auth0
+      const auth0Roles = (user as any)?.["https://scouts-platform-backend//roles"] || [];
+      const userRole = auth0Roles[0] ? normalizeRawRole(auth0Roles[0]) : RawRole.UNKNOWN;
+      
+      // Los admins pueden entrar aunque no estén en la BD
+      if (userRole === RawRole.ADMIN_GLOBAL || userRole === RawRole.ADMIN_GRUPO) {
+        setAccessState({
+          hasAccess: true,
+          reason: null,
+          member: null,
+          loading: false,
+        });
+        return;
+      }
+      
+      // Si no es admin y no está en la BD, no puede entrar
       setAccessState({
         hasAccess: false,
         reason: null,
@@ -82,9 +103,38 @@ export function useMemberAccess(): MemberAccessResult {
       return;
     }
 
-    // Validar status: debe ser "APPROVED"
-    const memberStatus = currentMember.status?.toUpperCase();
-    if (memberStatus !== "APPROVED") {
+    // Ahora sí, el usuario está en la BD. Validamos su estado
+    const memberRole = normalizeRawRole((currentMember as any).role ?? (currentMember as any).rol);
+    const memberStatusRaw = (currentMember as any).status ?? (currentMember as any).estado ?? null;
+    const memberStatus = typeof memberStatusRaw === "string" ? memberStatusRaw.toUpperCase() : memberStatusRaw;
+    
+    // Lógica especial para Admin Global y Admin Grupo
+    if (memberRole === RawRole.ADMIN_GLOBAL || memberRole === RawRole.ADMIN_GRUPO) {
+      // Si no tienen estado o están aprobados, pueden entrar sin problema
+      if (memberStatusRaw === null || memberStatusRaw === undefined || memberStatus === "APPROVED") {
+        setAccessState({
+          hasAccess: true,
+          reason: null,
+          member: currentMember,
+          loading: false,
+        });
+        return;
+      }
+      
+      // Si están rechazados o pendientes, mostramos un modal
+      if (memberStatus !== "APPROVED") {
+        setAccessState({
+          hasAccess: false,
+          reason: "pending",
+          member: currentMember,
+          loading: false,
+        });
+        return;
+      }
+    }
+
+    // Para roles normales (Scout, Scouter, etc.), el estado debe ser "APPROVED"
+    if (typeof memberStatus === "string" && memberStatus !== "APPROVED") {
       setAccessState({
         hasAccess: false,
         reason: "pending",
@@ -94,8 +144,7 @@ export function useMemberAccess(): MemberAccessResult {
       return;
     }
 
-    // Validar isActive: debe ser true
-    // Verificar directamente la propiedad isActive en lugar de usar la función
+    // Además, deben estar activos
     if (!currentMember.isActive) {
       setAccessState({
         hasAccess: false,
@@ -106,7 +155,7 @@ export function useMemberAccess(): MemberAccessResult {
       return;
     }
 
-    // Si pasó todas las validaciones, tiene acceso
+    // Todo bien, puede entrar al dashboard
     setAccessState({
       hasAccess: true,
       reason: null,
