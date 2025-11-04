@@ -101,3 +101,4 @@ export { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupActio
   PopoverContent,
   PopoverAnchor,
 } from "./popover"
+export { ImageUpload } from "./image-upload";

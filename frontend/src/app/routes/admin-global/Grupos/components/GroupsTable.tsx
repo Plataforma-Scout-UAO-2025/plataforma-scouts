@@ -8,20 +8,21 @@ import {
   TableRow,
   Button,
 } from "@/components/ui/index";
-import { Info, Pencil, UserPlus } from "lucide-react";
+import { Info, Pencil, UserPlus, UserCog } from "lucide-react";
 import type { GroupResponseDTO as Group } from "@/types/group.type";
 import { useGroup } from "@/hooks/useGroup";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { fetchGroupsAction } from "@/store/groups/groupsActions";
+import { fetchGroupsWithAdminsAction } from "@/store/groups/groupsActions";
+import { useGroupManagement } from "@/hooks/useGroupManagement";
+import FullScreenLoader from "@/components/common/FullScreenLoader";
 import GroupInfoModal from "../detalles/GroupInfoModal";
 import GroupAdminModal from "../detalles/GroupAdminModal";
 import GroupEditModal from "../detalles/GroupEditModal";
-import { useGroupManagement } from "@/hooks/useGroupManagement";
-import FullScreenLoader from "@/components/common/FullScreenLoader";
+import EditAdminModal from "../detalles/EditAdminModal";
 
 const GroupsTable = () => {
   const dispatch = useAppDispatch();
-  const { groups, loading, error } = useGroup();
+  const { groupsWithAdmins, loading, error } = useGroup();
   const { isActive, handleViewInfo, handleAdminGroup, handleEditClick } = useGroupManagement();
   
   // Estados para modales
@@ -31,19 +32,86 @@ const GroupsTable = () => {
   const [selectedGroupEdit, setSelectedGroupEdit] = useState<Group | null>(null);
   const [isAdminGroupOpen, setIsAdminGroupOpen] = useState(false);
   const [selectedGroupAdmin, setSelectedGroupAdmin] = useState<Group | null>(null);
+  const [isEditAdminOpen, setIsEditAdminOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<{
+    member_id: number;
+    first_name: string;
+    last_name: string;
+    identification: string;
+    document_type: string | null;
+    birth_date: string | null;
+    address: string | null;
+    phone: string | null;
+    gender: string | null;
+    weight: string | number | null;
+    height: string | number | null;
+    email: string | null;
+    full_name: string;
+  } | null>(null);
+  const [selectedGroupName, setSelectedGroupName] = useState<string>("");
 
-  // Fetch grupos solo si no están cargados
   useEffect(() => {
-    if (!groups || groups.length === 0) {
-      dispatch(fetchGroupsAction());
-    }
-  }, [dispatch, groups]);
+    dispatch(fetchGroupsWithAdminsAction());
+  }, [dispatch]);
 
-  // Memoizar grupos ordenados por nombre
+  // Función para editar el administrador de grupo
+  const handleEditAdmin = (
+    admin: { 
+      member_id: number; 
+      first_name: string; 
+      last_name: string; 
+      identification: string; 
+      document_type: string | null; 
+      birth_date: string | null; 
+      address: string | null; 
+      phone: string | null; 
+      gender: string | null; 
+      weight: string | number | null; 
+      height: string | number | null; 
+      email: string | null; 
+      full_name: string; 
+    },
+    groupName: string
+  ) => {
+    setSelectedAdmin(admin);
+    setSelectedGroupName(groupName);
+    setIsEditAdminOpen(true);
+  };
+
+  // Memoizar grupos ordenados por nombre y transformar a GroupResponseDTO
   const sortedGroups = useMemo(() => {
-    if (!groups) return [];
-    return [...groups].sort((a, b) => a.name.localeCompare(b.name));
-  }, [groups]);
+    if (!groupsWithAdmins) return [];
+    
+    return [...groupsWithAdmins]
+      .map((item) => ({
+        ...item,
+        groupTransformed: {
+          groupId: item.group.group_id,
+          tenant_id: item.group.tenant_id,
+          slug: item.group.slug,
+          name: item.group.name,
+          district: item.group.district,
+          identifierNumber: item.group.identifier_number,
+          address: item.group.address,
+          phone: item.group.phone,
+          email: item.group.email,
+          foundedIn: item.group.founded_in,
+          motto: item.group.motto,
+          mission: item.group.mission,
+          vision: item.group.vision,
+          history: item.group.history,
+          logoObjectId: item.group.logo_object_url,
+          scarfObjectId: item.group.scarf_object_url,
+          socialLinks: item.group.social_links,
+          config: item.group.config,
+          isActive: item.group.is_active,
+          status: item.group.status,
+          createdAt: item.group.created_at,
+          updatedAt: item.group.updated_at,
+        } as Group,
+      }))
+      .sort((a, b) => a.group.name.localeCompare(b.group.name));
+  }, [groupsWithAdmins]);
 
   if (loading) {
     return <FullScreenLoader message="Cargando..." />;
@@ -55,6 +123,7 @@ const GroupsTable = () => {
         <TableHeader className="text-primary">
           <TableRow>
             <TableHead className="font-bold text-primary">Nombre</TableHead>
+            <TableHead className="font-bold text-primary">Jefe de Grupo</TableHead>
             <TableHead className="font-bold text-primary">Estado</TableHead>
             <TableHead className="font-bold text-primary text-center">
               Acciones
@@ -64,23 +133,50 @@ const GroupsTable = () => {
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-8">
+              <TableCell colSpan={4} className="text-center py-8">
                 <p className="text-muted-foreground text-lg">Cargando grupos...</p>
               </TableCell>
             </TableRow>
           ) : error ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-8">
-                <p className="text-red-600 text-lg">Error cargando grupos: {error}</p>
+              <TableCell colSpan={4} className="text-center py-8">
+                <div className="flex flex-col items-center gap-4">
+                  <p className="text-red-600 text-lg">Error cargando grupos: {error}</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => dispatch(fetchGroupsWithAdminsAction())}
+                  >
+                    Reintentar
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : sortedGroups.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-8">
+                <p className="text-muted-foreground text-lg">No hay grupos disponibles</p>
               </TableCell>
             </TableRow>
           ) : (
-            sortedGroups.map((group, idx) => {
+            sortedGroups.map((item, idx) => {
+              const { groupTransformed, inChargeOf } = item;
               return (
-                <TableRow key={group.groupId ?? `group-${idx}`}>
-                  <TableCell className="font-medium">{group.name}</TableCell>
+                <TableRow key={groupTransformed.groupId ?? `group-${idx}`}>
+                  <TableCell className="font-medium">{groupTransformed.name}</TableCell>
                   <TableCell>
-                    {isActive(group as Group & Record<string, unknown>) ? (
+                    {inChargeOf ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium">{inChargeOf.full_name}</span>
+                        {inChargeOf.email && (
+                          <span className="text-xs text-muted-foreground">{inChargeOf.email}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground italic">Sin Jefe de Grupo</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isActive(groupTransformed as Group & Record<string, unknown>) ? (
                       <span className="inline-block px-2 py-1 rounded-lg border border-green-300 bg-green-100 text-green-800 font-semibold">
                         Activo
                       </span>
@@ -94,25 +190,43 @@ const GroupsTable = () => {
                     <Button
                       variant="iconbutton"
                       size="icon"
-                      onClick={() => handleViewInfo(group as Group, setIsInfoModalOpen, setSelectedGroupInfo)}
+                      onClick={() => handleViewInfo(groupTransformed, setIsInfoModalOpen, setSelectedGroupInfo)}
+                      title="Ver información del grupo"
                     >
                       <Info />
                     </Button>
-                    <Button
-                      variant="iconbutton"
-                      size="icon"
-                      className="text-black hover:text-primary"
-                      onClick={() => handleAdminGroup(group as Group, setIsAdminGroupOpen, setSelectedGroupAdmin)}
-                    >
-                      <UserPlus />
-                    </Button>
+                    
+                    {/* Botón para crear/gestionar admin */}
+                    {!inChargeOf ? (
+                      <Button
+                        variant="iconbutton"
+                        size="icon"
+                        className="text-green-600 hover:text-green-800"
+                        onClick={() => handleAdminGroup(groupTransformed, setIsAdminGroupOpen, setSelectedGroupAdmin)}
+                        title="Crear administrador de grupo"
+                      >
+                        <UserPlus />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="iconbutton"
+                        size="icon"
+                        className="text-blue-600 hover:text-blue-800"
+                        onClick={() => handleEditAdmin(inChargeOf, groupTransformed.name)}
+                        title={`Editar administrador: ${inChargeOf.full_name}`}
+                      >
+                        <UserCog />
+                      </Button>
+                    )}
+                    
                     <Button
                       variant="iconbutton"
                       size="icon"
                       className="text-secondary hover:text-blue-800"
                       onClick={() => {
-                        handleEditClick(group as Group, setIsEditModalOpen, setSelectedGroupEdit);
+                        handleEditClick(groupTransformed, setIsEditModalOpen, setSelectedGroupEdit);
                       }}
+                      title="Editar grupo"
                     >
                       <Pencil />
                     </Button>
@@ -140,6 +254,13 @@ const GroupsTable = () => {
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
         group={selectedGroupEdit}
+      />
+
+      <EditAdminModal
+        open={isEditAdminOpen}
+        onOpenChange={setIsEditAdminOpen}
+        admin={selectedAdmin}
+        groupName={selectedGroupName}
       />
     </div>
   );

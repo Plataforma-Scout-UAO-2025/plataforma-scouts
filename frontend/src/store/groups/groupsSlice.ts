@@ -2,17 +2,21 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchGroupAction,
   fetchGroupsAction,
+  fetchGroupsWithAdminsAction,
   updateGroupAction,
   createGroupAction,
+  createGroupAdminAction,
+  createGroupAdminWithConnectionAction,
   fetchMembersCountByGroupAction,
   fetchTotalMembersCountAction,
   fetchActiveGroupsCountAction,
   fetchInactiveGroupsCountAction,
   fetchTopGroupsByMembersAction,
 } from "./groupsActions";
-import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO } from "@/types/group.type";
+import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO, GroupWithAdminBackendDTO } from "@/types/group.type";
 interface GroupsState {
   groups: Group[];
+  groupsWithAdmins: GroupWithAdminBackendDTO[];
   group?: Group | null;
   loading: boolean;
   error: string | null;
@@ -25,6 +29,7 @@ interface GroupsState {
 }
 const initialState: GroupsState = {
   groups: [],
+  groupsWithAdmins: [],
   group: null,
   loading: false,
   error: null,
@@ -75,6 +80,20 @@ const groupsSlice = createSlice({
       state.groups = action.payload as Group[];
     });
     builder.addCase(fetchGroupsAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // Grupos con administradores
+    builder.addCase(fetchGroupsWithAdminsAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchGroupsWithAdminsAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.groupsWithAdmins = action.payload;
+    });
+    builder.addCase(fetchGroupsWithAdminsAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });
@@ -181,6 +200,37 @@ const groupsSlice = createSlice({
       state.loading = false;
       state.error = action.payload as string;
     });
+
+    // Crear administrador de grupo
+    builder.addCase(createGroupAdminAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createGroupAdminAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(createGroupAdminAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
+
+    // Crear administrador de grupo con conexión específica
+    builder.addCase(createGroupAdminWithConnectionAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.message = "";
+    });
+    builder.addCase(createGroupAdminWithConnectionAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(createGroupAdminWithConnectionAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.error as string;
+    });
   },
-});export const { clearNotification, clearGroups } = groupsSlice.actions;
+});
+export const { clearNotification, clearGroups } = groupsSlice.actions;
 export default groupsSlice.reducer;
