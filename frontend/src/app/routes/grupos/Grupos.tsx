@@ -198,8 +198,7 @@ function Grupos() {
       );
 
       // Actualizar información general del grupo (sin logo ni scarf)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { logo_object_id, scarf_object_id, ...generalUpdate } = updateData;
+      const { logo_object_id: _logo_object_id, scarf_object_id: _scarf_object_id, ...generalUpdate } = updateData;
       await updateGroup(tenantId, groupSlug, generalUpdate);
 
       // Actualizar logo si cambió
