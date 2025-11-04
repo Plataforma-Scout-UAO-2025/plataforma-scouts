@@ -86,7 +86,7 @@ class GroupStatisticsServiceTest {
         Tenant tenant = new Tenant();
         tenant.setTenantId(tenantId);
 
-        List<GroupMembersDTO> expected = List.of(new GroupMembersDTO(1L, "Grupo A", 5L));
+    List<GroupMembersDTO> expected = List.of(new GroupMembersDTO(1L, "Grupo A", "ACTIVE", 5L));
 
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(memberRepository.countMembersByGroup(tenantId)).thenReturn(expected);

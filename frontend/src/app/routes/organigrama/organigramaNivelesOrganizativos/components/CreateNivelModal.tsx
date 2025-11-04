@@ -39,6 +39,7 @@ export default function CreateNivelModal({ open, onClose, onSave }: Props) {
               placeholder="Ej: Asamblea General de Jefatura y Padres"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
+              className="w-full"
             />
           </div>
 
@@ -50,6 +51,7 @@ export default function CreateNivelModal({ open, onClose, onSave }: Props) {
               placeholder="Descripción opcional del nivel..."
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
+              className="w-full"
             />
           </div>
 

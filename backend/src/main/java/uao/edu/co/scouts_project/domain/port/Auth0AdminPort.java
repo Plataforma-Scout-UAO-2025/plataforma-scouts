@@ -20,6 +20,12 @@ public interface Auth0AdminPort {
 
     CreatedUserDTO createUser(CreateUserCommandDTO cmd);
 
+    /**
+     * Crea un usuario en una conexión específica de Auth0 (connectionId/con_id).
+     * No consulta el JWT; usa explícitamente la conexión proporcionada.
+     */
+    CreatedUserDTO createUserInConnection(CreateUserCommandDTO cmd, String connectionId);
+
     int countRoles();
 
     List<OrganizationSummaryDTO> listOrganizations();

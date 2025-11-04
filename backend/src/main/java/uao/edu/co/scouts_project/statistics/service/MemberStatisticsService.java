@@ -17,6 +17,7 @@ public class MemberStatisticsService {
     @Transactional(readOnly = true)
     public TotalMembersDTO getTotalMembers() {
         long total = memberRepository.count();
-        return new TotalMembersDTO(total);
+        // Aseguramos que nunca retornamos un número negativo
+        return new TotalMembersDTO(Math.max(0L, total));
     }
 }

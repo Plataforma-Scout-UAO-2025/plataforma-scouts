@@ -16,6 +16,15 @@ import type { Subgroup } from "@/types/subgroup-simple.type";
 // resetSeed ya no aplica: datos provienen del backend
 export function resetSeed() { /* noop */ }
 
+// Normaliza texto: quita acentos/diacríticos, pasa a minúsculas y recorta
+function normalizeText(str: string): string {
+  return String(str || "")
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 /* ============================================================
    🔹 Obtener datos por año
    ============================================================ */
@@ -24,23 +33,47 @@ export async function getByAnio(anio: number, tenantId?: string, groupSlug?: str
   if (!(tenantId && groupSlug)) return { anio, niveles: [] };
 
   const sections = await getSections(tenantId, groupSlug);
-  const normalize = (s: string) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  // Consideramos "niveles organizativos" a nombres que contengan estas palabras clave
-  const isOrganizationalLevel = (name: string) => {
-    const n = normalize(name);
-    return n.includes('comit') || n.includes('asamblea') || n.includes('corte') || n.includes('consejo');
-  };
-  const organizationalSections = (sections || []).filter((s: Section) => isOrganizationalLevel(String(s.name || '')));
+
+  // Excluir nombres específicos de niveles organizativos (coincidencia parcial, insensible a mayúsculas)
+  const EXCLUDED_LEVEL_TOKENS = [
+    "cachorros",
+    "manada",
+    "webelos",
+    "tropa",
+    "clan",
+  ];
+  const EXCLUDED_LEVEL_TOKENS_NORM = EXCLUDED_LEVEL_TOKENS.map(normalizeText);
+
+  // Filtrar y ordenar secciones (niveles) alfabéticamente
+  const filteredSections = (sections || []).filter((sec: Section) => {
+    const nombre = normalizeText(sec.name || "");
+    return !EXCLUDED_LEVEL_TOKENS_NORM.some((token) => nombre.includes(token));
+  });
+  const sortedSections = filteredSections.sort((a: Section, b: Section) => {
+    const an = normalizeText(a.name || "");
+    const bn = normalizeText(b.name || "");
+    return an.localeCompare(bn, 'es', { sensitivity: 'base' });
+  });
 
   const niveles: Nivel[] = [];
-  for (const s of organizationalSections) {
+  for (const s of sortedSections) {
     const subgroups = await getSubgroups(s.sectionId, tenantId, groupSlug);
-    const cargos: Cargo[] = (subgroups || []).map((sg: Subgroup) => ({
-      id: String(sg.subgroupId ?? sg.id),
-      nombre: String(sg.name || ''),
-      visible: true,
-      descripcion: sg.description ?? undefined,
-    }));
+    const cargos: Cargo[] = (subgroups || [])
+      .map((sg: Subgroup) => ({
+        id: String(sg.subgroupId ?? sg.id),
+        nombre: String(sg.name || ''),
+        visible: true,
+        descripcion: sg.description ?? undefined,
+      }))
+      .sort((a: Cargo, b: Cargo) => {
+        const an = normalizeText(a.nombre);
+        const bn = normalizeText(b.nombre);
+        const SIN = 'sin cargo';
+        if (an === SIN && bn === SIN) return 0;
+        if (an === SIN) return 1; // a debe ir al final
+        if (bn === SIN) return -1; // b debe ir al final
+        return an.localeCompare(bn, 'es', { sensitivity: 'base' });
+      });
     niveles.push({
       id: String(s.sectionId ?? s.id),
       nombre: String(s.name || ''),

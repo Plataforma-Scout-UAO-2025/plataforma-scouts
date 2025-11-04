@@ -1,0 +1,57 @@
+meta {
+  name: Create Group - No Slug
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/create
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body {
+  {
+    "name": "Grupo Scout Sin Slug",
+    "tenant_id": "t-bruno-success-slugv04",
+    "status": "active",
+    "is_active": true,
+    "district": "Distrito de prueba",
+    "identifier_number": "006",
+    "address": "Dirección de prueba",
+    "phone": "1234567892",
+    "email": "grupo.sinslug@scouts.org"
+  }
+}
+
+tests {
+  test("Validar error por falta de slug", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body).to.have.property('error').that.equals('Bad Request');
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.equal('Error de validación en los datos enviados');
+  });
+
+  test("Validar estructura del error", function() {
+    expect(res.body).to.have.property('timestamp');
+    expect(res.body).to.have.property('path');
+    expect(res.body).to.have.property('status').that.equals(400);
+  });
+}
+
+docs {
+  **Nombre:** Crear grupo - validación de slug requerido
+  
+  **Endpoint:** `/api/v1/tenants/{tenantId}/groups/create`
+  
+  **Descripción:** Validar que el endpoint rechaza la creación cuando no se proporciona el slug.
+  Se espera:
+  - Código 400 (Bad Request)
+  - Mensaje de error por campo requerido
+  - Estructura de error correcta
+}

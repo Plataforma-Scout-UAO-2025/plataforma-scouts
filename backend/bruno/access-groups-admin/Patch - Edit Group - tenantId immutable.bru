@@ -1,0 +1,40 @@
+meta {
+  name: Patch - Edit Group - tenantId immutable
+  type: http
+  seq: 12
+}
+
+patch {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/bruno-info-slugv06
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+tests {
+  test("DEBUG - response", function() {
+    console.log('DEBUG RESPONSE STATUS:', res.status);
+    console.log('DEBUG RESPONSE BODY:', JSON.stringify(res.body));
+  });
+  test("Intentar editar tenantId (inmutable)", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body).to.have.property('message');
+    const msg = res.body.message.toLowerCase();
+    expect(msg).to.satisfy(function(m) { return m.includes('tenantid') && m.includes('inmutable'); });
+  });
+}
+
+docs {
+  **Nombre:** Editar tenantId (inmutable)
+  **Endpoint:** PATCH /api/v1/tenants/{tenantId}/groups/{slug}
+  **Descripción:** Intentar modificar tenantId desde el body no está permitido; se espera error 400.
+}
+
+body {
+  {
+  "tenantId": "bruno-info-slugv06"
+  }
+}

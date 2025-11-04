@@ -2,7 +2,7 @@ package uao.edu.co.scouts_project.finanzas.payments.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,10 +34,17 @@ public class PaymentsService {
     
     private final IMemberRepository memberRepo;
 
+    private final java.time.Clock clock;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public PaymentsService(IPaymentsReadRepository readRepo, IMemberRepository memberRepo) {
+        this(readRepo, memberRepo, java.time.Clock.systemUTC());
+    }
+
+    public PaymentsService(IPaymentsReadRepository readRepo, IMemberRepository memberRepo, java.time.Clock clock) {
         this.readRepo = readRepo;
         this.memberRepo = memberRepo;
+        this.clock = clock;
     }
 
 
@@ -94,7 +101,7 @@ public void appendPayment(String tenantId, Long installmentId, AppendPaymentDto 
 
     // 3) paid_at no puede ser futura
     if (dto.getPaid_at() != null) {
-        LocalDate today = LocalDate.now(); // o ZoneId.of("America/Bogota")
+        LocalDate today = LocalDate.now(clock); // use injected clock for testability
         if (dto.getPaid_at().isAfter(today)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "paid_at cannot be in the future");
         }
@@ -146,7 +153,7 @@ public void appendPayment(String tenantId, Long installmentId, AppendPaymentDto 
             List<InstallmentWithConceptAndMemberRow> rows,
             boolean includeMembers
     ) {
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate today = LocalDate.now(clock);
         int year = today.getYear();
         int month = today.getMonthValue();
 
@@ -163,7 +170,6 @@ public void appendPayment(String tenantId, Long installmentId, AppendPaymentDto 
         for (var r : rows) {
             boolean isPaid = "PAID".equalsIgnoreCase(r.getStatus());
             LocalDate due = r.getDue_date();
-
             if (isPaid) {
                 totalPagado = totalPagado.add(nullSafe(r.getAmount()));
             } else {
