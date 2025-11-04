@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Upload, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +28,6 @@ export default function CreateRamaModal({
   onSuccess,
 }: CreateRamaModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { error, handleError, clearError } = useApiError();
@@ -160,58 +159,6 @@ export default function CreateRamaModal({
               className="w-full bg-card border border-border rounded-md focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
               required
             />
-          </div>
-
-          {/* Campo Icono */}
-          <div className="space-y-2">
-            <Label htmlFor="icono-file-create" className="text-foreground">
-              Icono
-            </Label>
-            <div>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => document.getElementById('icono-file-create')?.click()}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('icono-file-create')?.click(); }}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-accent"
-              >
-                <div className="text-muted-foreground">Seleccionar icono (Opcional)</div>
-                <div className="flex items-center gap-3">
-                  {isUploading ? (
-                    <div className="text-sm text-muted-foreground">Subiendo...</div>
-                  ) : imagenUrl ? (
-                    <img src={imagenUrl} alt="icono" className="h-8 w-8 rounded object-cover" />
-                  ) : (
-                    <Upload className="w-4 h-4 text-muted-foreground" />
-                  )}
-                </div>
-              </div>
-              <input
-                id="icono-file-create"
-                name="icono-file-create"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                title="Seleccionar icono"
-                aria-label="Seleccionar icono"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    
-                    setIsUploading(true);
-                    try {
-                      setSelectedFile(file);
-                      
-                      const previewUrl = URL.createObjectURL(file);
-                      setImagenUrl(previewUrl);
-                    } catch (err) {
-                      console.error('Error procesando imagen:', err);
-                    } finally {
-                      setIsUploading(false);
-                    }
-                  }}
-              />
-            </div>
           </div>
 
           {/* Campo Descripción */}

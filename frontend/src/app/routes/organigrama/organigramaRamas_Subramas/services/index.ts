@@ -1,5 +1,3 @@
-
-
 // CRUD para Ramas
 export {
   getRamas,
@@ -35,8 +33,6 @@ export {
   replaceGalleryList,
 } from '../../services/imageFacade';
 
-// Nota: las funciones de galería se reexportan desde la fachada central (imageFacade)
-// El antiguo reexport desde './gallery.service' fue eliminado para evitar duplicados.
 
 // Gestión de íconos de secciones
 export {

@@ -8,11 +8,13 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,7 +31,14 @@ class PaymentsServiceTest {
 
     @Mock IPaymentsReadRepository repo;
 
-    @InjectMocks PaymentsService service;
+    PaymentsService service;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setup() {
+        // Fixed clock matching the deterministic dates used in tests
+        var fixedClock = Clock.fixed(Instant.parse("2025-11-15T00:00:00Z"), ZoneOffset.UTC);
+        this.service = new PaymentsService(repo, null, fixedClock);
+    }
 
     // ---- Helpers: implementaciones anónimas (sin Mockito) ----
 
@@ -191,9 +200,10 @@ class PaymentsServiceTest {
 
     @Test
     void listAccountStatusForTenant_buildsGlobalKpis() {
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        LocalDate yesterday = today.minusDays(1);
-        LocalDate twoMonthsAgo = today.minusMonths(2);
+                        // Use fixed dates to avoid flakiness on month boundaries
+                        LocalDate today = LocalDate.of(2025, 11, 15);
+                        LocalDate yesterday = today.minusDays(1);
+                        LocalDate twoMonthsAgo = today.minusMonths(2);
 
         when(repo.findAllInstallmentsForTenant("org_TENANT"))
                 .thenReturn(List.of(

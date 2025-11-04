@@ -3,22 +3,46 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMembersAction, fetchMembersWithBranchAction } from "@/store/members/membersActions";
+import {
+  fetchMembersAction,
+  fetchMembersWithBranchAction,
+} from "@/store/members/membersActions";
 import { fetchGroupAction } from "@/store/organigrama/organigramaActions";
 import type { RootState, AppDispatch } from "@/store/store";
 import { useTenantParams } from "./organigramaRamas_Subramas/hooks/useTenantParams";
-// Usar el mismo origen de datos/orden que la vista de Ramas y Subramas
-import useOrganigramaDataWithCache from "./organigramaRamas_Subramas/hooks/useOrganigramaDataWithCache";
+// Usar Redux para el mismo origen de datos/orden que la vista de Ramas y Subramas
+import { fetchRamasWithSubramasAction } from "@/store/organigrama/organigramaActions";
+import { selectRamas, selectRamasLoading } from "@/store/organigrama/selectors";
 import { useNavigate } from "react-router-dom";
 import { useNiveles } from "./organigramaNivelesOrganizativos/hooks/useNiveles";
 import type { OrganigramaNiveles } from "./organigramaNivelesOrganizativos/types/niveles.types";
-import { exportOrgChartCombinedPDF, exportLevelsCSV, exportBranchesCSV } from "./utils/exportOrgChartCombined.ts";
+import {
+  exportOrgChartCombinedPDF,
+  exportLevelsCSV,
+  exportBranchesCSV,
+} from "./utils/exportOrgChartCombined.ts";
 
-type BranchLite = { id: string | number; name: string; description?: string; minAge?: number; maxAge?: number; status?: string };
-type SubgroupLite = { id: string | number; name?: string; status?: string; leader?: string };
+type BranchLite = {
+  id: string | number;
+  name: string;
+  description?: string;
+  minAge?: number;
+  maxAge?: number;
+  status?: string;
+};
+type SubgroupLite = {
+  id: string | number;
+  name?: string;
+  status?: string;
+  leader?: string;
+};
 
-const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const normalize = (s: string) => stripAccents(String(s || "")).toLowerCase().trim();
+const stripAccents = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const normalize = (s: string) =>
+  stripAccents(String(s || ""))
+    .toLowerCase()
+    .trim();
 
 // Fixed orders for specific committees
 const JEFATURA_ORDER = [
@@ -42,19 +66,25 @@ export default function OrgChartSummary() {
   const dispatch = useDispatch<AppDispatch>();
   const { members } = useSelector((state: RootState) => state.members);
   const { group } = useSelector((state: RootState) => state.organigrama);
-  
+
   const currentYear = new Date().getFullYear();
   // Get tenant/group first to use them for both ramas/subramas and niveles
   const { tenantId, groupSlug } = useTenantParams();
   // Pass tenant/group to the niveles hook so it fetches from backend (sections/subgroups)
-  const { anio, data: nivelesData, loading: nivelesLoading } = useNiveles(
+  const {
+    anio,
+    data: nivelesData,
+    loading: nivelesLoading,
+  } = useNiveles(
     currentYear,
     tenantId ? String(tenantId) : undefined,
     groupSlug
   );
   const navigate = useNavigate();
 
-  const [branches, setBranches] = useState<Array<{ section: BranchLite; subgroups: SubgroupLite[] }>>([]);
+  const [branches, setBranches] = useState<
+    Array<{ section: BranchLite; subgroups: SubgroupLite[] }>
+  >([]);
   const [branchesLoading, setBranchesLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +95,11 @@ export default function OrgChartSummary() {
     }
   }, [dispatch, members.length]);
 
+  // Usar Redux para el mismo origen de datos/orden que la vista de Ramas/Subramas
+  const ramas = useSelector(selectRamas);
+  const ramasLoading = useSelector(selectRamasLoading);
+  const ramasFetching = ramasLoading; // Alias para compatibilidad
+
   // Cargar información del grupo para usar el nombre en el título del PDF
   useEffect(() => {
     if (tenantId && groupSlug && !group) {
@@ -72,11 +107,21 @@ export default function OrgChartSummary() {
     }
   }, [dispatch, tenantId, groupSlug, group]);
 
-  // Reutilizar el mismo hook que la vista de Ramas/Subramas para asegurar el mismo set y orden
-  const { ramas, isFetching: ramasFetching, isLoading: ramasLoading } = useOrganigramaDataWithCache(
-    tenantId ? String(tenantId) : undefined,
-    groupSlug
-  );
+  // Cargar ramas con Redux si es necesario
+  useEffect(() => {
+    const shouldFetch = ramas.length === 0 && !ramasLoading;
+    if (tenantId && groupSlug && shouldFetch) {
+      console.log(
+        "🎯 [OrgChartSummary] Should fetch ramas, dispatching Redux action"
+      );
+      dispatch(
+        fetchRamasWithSubramasAction({
+          tenantId: String(tenantId),
+          groupSlug,
+        })
+      );
+    }
+  }, [dispatch, tenantId, groupSlug, ramas.length, ramasLoading]);
 
   // Mapear a la estructura simplificada cuando cambien las ramas
   useEffect(() => {
@@ -89,47 +134,58 @@ export default function OrgChartSummary() {
         const mapped = ramas.map((r) => {
           const rec = r as unknown as Record<string, unknown>;
           const section: BranchLite = {
-            id: (rec['sectionId'] ?? rec['id'] ?? '') as string | number,
-            name: String(rec['name'] ?? rec['nombre'] ?? ''),
+            id: (rec["sectionId"] ?? rec["id"] ?? "") as string | number,
+            name: String(rec["name"] ?? rec["nombre"] ?? ""),
             description:
-              typeof r['description'] === 'string'
-                ? String(r['description'])
-                : typeof (rec['descripcion']) === 'string'
-                ? String(rec['descripcion'])
+              typeof r["description"] === "string"
+                ? String(r["description"])
+                : typeof rec["descripcion"] === "string"
+                ? String(rec["descripcion"])
                 : undefined,
             minAge:
-              typeof rec['minAge'] === 'number'
-                ? (rec['minAge'] as number)
-                : typeof rec['edadMin'] === 'number'
-                ? (rec['edadMin'] as number)
+              typeof rec["minAge"] === "number"
+                ? (rec["minAge"] as number)
+                : typeof rec["edadMin"] === "number"
+                ? (rec["edadMin"] as number)
                 : undefined,
             maxAge:
-              typeof rec['maxAge'] === 'number'
-                ? (rec['maxAge'] as number)
-                : typeof rec['edadMax'] === 'number'
-                ? (rec['edadMax'] as number)
+              typeof rec["maxAge"] === "number"
+                ? (rec["maxAge"] as number)
+                : typeof rec["edadMax"] === "number"
+                ? (rec["edadMax"] as number)
                 : undefined,
-            status: typeof rec['status'] === 'string' ? String(rec['status']) : undefined,
+            status:
+              typeof rec["status"] === "string"
+                ? String(rec["status"])
+                : undefined,
           };
-          const subsRaw = (rec['subgroups'] ?? rec['subramas'] ?? []) as unknown;
+          const subsRaw = (rec["subgroups"] ??
+            rec["subramas"] ??
+            []) as unknown;
           const subgroups: SubgroupLite[] = Array.isArray(subsRaw)
             ? (subsRaw as unknown[]).map((sg) => {
                 const sgRec = sg as Record<string, unknown>;
-                const rawId = sgRec['subgroupId'] ?? sgRec['id'] ?? sgRec['subgroup_id'] ?? crypto.randomUUID();
+                const rawId =
+                  sgRec["subgroupId"] ??
+                  sgRec["id"] ??
+                  sgRec["subgroup_id"] ??
+                  crypto.randomUUID();
                 return {
                   id: rawId as string | number,
-                  name: String(sgRec['name'] ?? sgRec['nombre'] ?? ''),
+                  name: String(sgRec["name"] ?? sgRec["nombre"] ?? ""),
                   status:
-                    typeof sgRec['isActive'] === 'boolean'
-                      ? (sgRec['isActive'] ? 'active' : 'inactive')
-                      : typeof sgRec['status'] === 'string'
-                      ? String(sgRec['status'])
+                    typeof sgRec["isActive"] === "boolean"
+                      ? sgRec["isActive"]
+                        ? "active"
+                        : "inactive"
+                      : typeof sgRec["status"] === "string"
+                      ? String(sgRec["status"])
                       : undefined,
                   leader:
-                    typeof sgRec['leader'] === 'string'
-                      ? String(sgRec['leader'])
-                      : typeof sgRec['jefe'] === 'string'
-                      ? String(sgRec['jefe'])
+                    typeof sgRec["leader"] === "string"
+                      ? String(sgRec["leader"])
+                      : typeof sgRec["jefe"] === "string"
+                      ? String(sgRec["jefe"])
                       : undefined,
                 };
               })
@@ -140,7 +196,7 @@ export default function OrgChartSummary() {
       }
     } catch (e) {
       const err = e as { message?: string } | undefined;
-      setError(err?.message || 'No se pudo procesar ramas y subramas.');
+      setError(err?.message || "No se pudo procesar ramas y subramas.");
     } finally {
       setBranchesLoading(false);
     }
@@ -170,7 +226,12 @@ export default function OrgChartSummary() {
     try {
       setExportingPDF(true);
       const mem = await ensureMembersLoaded();
-      await exportOrgChartCombinedPDF(branches, nivelesData as OrganigramaNiveles, mem, { year: anio, groupName: group?.name || undefined });
+      await exportOrgChartCombinedPDF(
+        branches,
+        nivelesData as OrganigramaNiveles,
+        mem,
+        { year: anio, groupName: group?.name || undefined }
+      );
     } finally {
       setExportingPDF(false);
     }
@@ -192,9 +253,15 @@ export default function OrgChartSummary() {
   return (
     <div className="min-h-screen bg-background px-6 md:px-8 py-6">
       <header className="flex flex-wrap gap-3 items-center mb-6">
-        <h1 className="text-3xl font-extrabold text-primary">Organigrama Completo</h1>
+        <h1 className="text-3xl font-extrabold text-primary">
+          Organigrama Completo
+        </h1>
         <div className="ml-auto flex items-center gap-2">
-          <Button onClick={onExportPDF} disabled={exportingPDF} className="bg-primary text-white hover:bg-primary-hover">
+          <Button
+            onClick={onExportPDF}
+            disabled={exportingPDF}
+            className="bg-primary text-white hover:bg-primary-hover"
+          >
             {exportingPDF ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -206,7 +273,12 @@ export default function OrgChartSummary() {
               </>
             )}
           </Button>
-          <Button variant="outline" onClick={onExportCSVBranches} disabled={exportingBranches} className="border-border">
+          <Button
+            variant="outline"
+            onClick={onExportCSVBranches}
+            disabled={exportingBranches}
+            className="border-border"
+          >
             {exportingBranches ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -216,7 +288,11 @@ export default function OrgChartSummary() {
               "CSV Ramas/Subramas"
             )}
           </Button>
-          <Button variant="outline" onClick={onExportCSVLevels} className="border-border">
+          <Button
+            variant="outline"
+            onClick={onExportCSVLevels}
+            className="border-border"
+          >
             CSV Niveles
           </Button>
         </div>
@@ -232,69 +308,116 @@ export default function OrgChartSummary() {
       </div>
 
       {error && (
-        <Card className="p-4 border border-destructive text-destructive mb-4">{error}</Card>
+        <Card className="p-4 border border-destructive text-destructive mb-4">
+          {error}
+        </Card>
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Branches & Subgroups */}
         <Card className="p-4 bg-card border-border border">
-          <h2 className="text-xl font-bold text-primary mb-3">Ramas y Subramas</h2>
+          <h2 className="text-xl font-bold text-primary mb-3">
+            Ramas y Subramas
+          </h2>
           {branchesLoading || ramasFetching || ramasLoading ? (
             <div className="text-sm text-muted-foreground">Cargando ramas…</div>
           ) : (
             <div className="space-y-3">
-              {branches.map(({ section, subgroups }: { section: BranchLite; subgroups: SubgroupLite[] }) => (
-                <div key={String(section.id)} className="border border-border rounded-md p-3">
-                  <div className="font-semibold text-foreground">{section.name}</div>
-                  {subgroups.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">— Sin subramas</div>
-                  ) : (
-                    <ul className="list-disc ml-5 mt-2 text-sm">
-                      {subgroups.map((sg: SubgroupLite) => (
-                        <li key={String(sg.id)} className="text-foreground">
-                          {sg.name || "Subrama"}
-                          {sg.status ? (
-                            <span className="ml-2 text-muted-foreground">({sg.status})</span>
-                          ) : null}
-                          {sg.leader ? (
-                            <span className="ml-2 text-muted-foreground">• Líder: {sg.leader}</span>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
+              {branches.map(
+                ({
+                  section,
+                  subgroups,
+                }: {
+                  section: BranchLite;
+                  subgroups: SubgroupLite[];
+                }) => (
+                  <div
+                    key={String(section.id)}
+                    className="border border-border rounded-md p-3"
+                  >
+                    <div className="font-semibold text-foreground">
+                      {section.name}
+                    </div>
+                    {subgroups.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">
+                        — Sin subramas
+                      </div>
+                    ) : (
+                      <ul className="list-disc ml-5 mt-2 text-sm">
+                        {subgroups.map((sg: SubgroupLite) => (
+                          <li key={String(sg.id)} className="text-foreground">
+                            {sg.name || "Subrama"}
+                            {sg.status ? (
+                              <span className="ml-2 text-muted-foreground">
+                                ({sg.status})
+                              </span>
+                            ) : null}
+                            {sg.leader ? (
+                              <span className="ml-2 text-muted-foreground">
+                                • Líder: {sg.leader}
+                              </span>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              )}
             </div>
           )}
         </Card>
 
         {/* Organizational Levels */}
         <Card className="p-4 bg-card border-border border">
-          <h2 className="text-xl font-bold text-primary mb-3">Niveles Organizativos</h2>
+          <h2 className="text-xl font-bold text-primary mb-3">
+            Niveles Organizativos
+          </h2>
           {nivelesLoading ? (
-            <div className="text-sm text-muted-foreground">Cargando niveles…</div>
+            <div className="text-sm text-muted-foreground">
+              Cargando niveles…
+            </div>
           ) : (
             <div className="space-y-3">
               {(nivelesData?.niveles || []).map((nivel) => (
-                <div key={nivel.id} className="border border-border rounded-md p-3">
-                  <div className="font-semibold text-foreground">{nivel.nombre}</div>
+                <div
+                  key={nivel.id}
+                  className="border border-border rounded-md p-3"
+                >
+                  <div className="font-semibold text-foreground">
+                    {nivel.nombre}
+                  </div>
                   {nivel.descripcion && (
-                    <div className="text-sm text-muted-foreground">{nivel.descripcion}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {nivel.descripcion}
+                    </div>
                   )}
                   {nivel.cargos.length === 0 ? (
-                    <div className="text-sm text-muted-foreground mt-2">— Sin cargos</div>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      — Sin cargos
+                    </div>
                   ) : (
                     <ul className="list-disc ml-5 mt-2 text-sm">
                       {(() => {
                         const nName = normalize(nivel.nombre);
                         const isJefatura = nName.includes("comite de jefatura");
                         const isPadres = nName.includes("comite de padres");
-                        const priority = isJefatura ? JEFATURA_ORDER : isPadres ? PADRES_ORDER : null;
+                        const priority = isJefatura
+                          ? JEFATURA_ORDER
+                          : isPadres
+                          ? PADRES_ORDER
+                          : null;
                         const sorted = [...nivel.cargos].sort((a, b) => {
+                          const SIN = "sin cargo";
+                          const an = normalize(a.nombre);
+                          const bn = normalize(b.nombre);
                           if (priority) {
-                            const ai = priority.indexOf(normalize(a.nombre));
-                            const bi = priority.indexOf(normalize(b.nombre));
+                            // Regla global: 'Sin cargo' al final
+                            if (an === SIN && bn === SIN) return 0;
+                            if (an === SIN) return 1;
+                            if (bn === SIN) return -1;
+                            const ai = priority.indexOf(an);
+                            const bi = priority.indexOf(bn);
                             const aIn = ai !== -1;
                             const bIn = bi !== -1;
                             if (aIn && bIn) return ai - bi;
@@ -303,18 +426,25 @@ export default function OrgChartSummary() {
                             return a.nombre.localeCompare(b.nombre, "es");
                           }
                           // Default: alphabetical
+                          if (an === SIN && bn === SIN) return 0;
+                          if (an === SIN) return 1;
+                          if (bn === SIN) return -1;
                           return a.nombre.localeCompare(b.nombre, "es");
                         });
                         return sorted.map((c) => (
-                        <li key={c.id} className="text-foreground">
-                          {c.nombre}
-                          {c.titular ? (
-                            <span className="ml-2 text-muted-foreground">• {c.titular}</span>
-                          ) : null}
-                          {(c.inicio && c.fin) ? (
-                            <span className="ml-2 text-muted-foreground">({c.inicio}-{c.fin})</span>
-                          ) : null}
-                        </li>
+                          <li key={c.id} className="text-foreground">
+                            {c.nombre}
+                            {c.titular ? (
+                              <span className="ml-2 text-muted-foreground">
+                                • {c.titular}
+                              </span>
+                            ) : null}
+                            {c.inicio && c.fin ? (
+                              <span className="ml-2 text-muted-foreground">
+                                ({c.inicio}-{c.fin})
+                              </span>
+                            ) : null}
+                          </li>
                         ));
                       })()}
                     </ul>

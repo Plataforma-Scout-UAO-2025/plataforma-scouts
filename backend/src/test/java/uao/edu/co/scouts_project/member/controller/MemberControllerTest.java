@@ -19,7 +19,13 @@ import uao.edu.co.scouts_project.organigrama.model.Subgroup;
 import uao.edu.co.scouts_project.organigrama.service.SubgroupService;
 import uao.edu.co.scouts_project.member.shared.enums.Status;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import uao.edu.co.scouts_project.organigrama.service.GroupService;
+import uao.edu.co.scouts_project.organigrama.dto.GroupResponseDTO;
+import uao.edu.co.scouts_project.member.mapper.ListMemberMapper;
+import uao.edu.co.scouts_project.member.dto.ListMemberDto;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +43,9 @@ class MemberControllerTest {
 
     @Mock
     private SubgroupService subgroupService;
+
+    @Mock
+    private GroupService groupService;
 
     @Mock
     private Authentication authentication;
@@ -186,6 +195,133 @@ class MemberControllerTest {
         assertEquals(OK, response.getStatusCode());
         assertTrue(response.getBody() instanceof List);
         verify(memberService).get_members_by_status("APPROVED");
+    }
+
+
+    // ==================== Tests para el endpoint /getAll ====================
+
+    @Test
+    void testGetAll_noGroups_returnEmptyList() {
+        when(groupService.getAllGroups()).thenReturn(new GroupResponseDTO[0]);
+        when(memberService.findMembersByRole("ADMIN_GRUPO")).thenReturn(Collections.emptyList());
+
+        ResponseEntity<?> response = memberController.getAll();
+
+        assertEquals(OK, response.getStatusCode());
+        assertTrue(response.getBody() instanceof List);
+        List<?> body = (List<?>) response.getBody();
+        assertTrue(body.isEmpty());
+
+        verify(groupService).getAllGroups();
+        verify(memberService).findMembersByRole("ADMIN_GRUPO");
+    }
+
+    @Test
+    void testGetAll_groupsWithoutAdmins_inChargeOfNull() {
+        GroupResponseDTO group = new GroupResponseDTO(
+                1L,
+                "tenant-001",
+                "slug-1",
+                "Grupo Uno",
+                null,
+                null,
+                null,
+                null,
+                null,
+                (LocalDate) null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                Map.of(),
+                Map.of(),
+                true,
+                "active",
+                (LocalDateTime) null,
+                (LocalDateTime) null
+        );
+
+        when(groupService.getAllGroups()).thenReturn(new GroupResponseDTO[]{group});
+        when(memberService.findMembersByRole("ADMIN_GRUPO")).thenReturn(Collections.emptyList());
+
+        ResponseEntity<?> response = memberController.getAll();
+        assertEquals(OK, response.getStatusCode());
+
+        List<Map<String, Object>> body = (List<Map<String, Object>>) response.getBody();
+        assertEquals(1, body.size());
+        assertNull(body.get(0).get("inChargeOf"));
+    }
+
+    @Test
+    void testGetAll_groupWithAdmin_inChargeOfPopulated() {
+        GroupResponseDTO group = new GroupResponseDTO(
+                1L,
+                "tenant-001",
+                "slug-1",
+                "Grupo Uno",
+                null, null, null, null, null, (LocalDate) null,
+                null, null, null, null, null, null,
+                Map.of(), Map.of(), true, "active", (LocalDateTime) null, (LocalDateTime) null
+        );
+
+        Member admin = new Member();
+        admin.setMemberId(99L);
+        admin.setTenantId("tenant-001");
+        admin.setFirstName("Admin");
+        admin.setLastName("Grupo");
+        admin.setRole("ADMIN_GRUPO");
+
+        when(groupService.getAllGroups()).thenReturn(new GroupResponseDTO[]{group});
+        when(memberService.findMembersByRole("ADMIN_GRUPO")).thenReturn(List.of(admin));
+
+        ResponseEntity<?> response = memberController.getAll();
+        assertEquals(OK, response.getStatusCode());
+
+        List<Map<String, Object>> body = (List<Map<String, Object>>) response.getBody();
+        assertEquals(1, body.size());
+
+        Object inChargeObj = body.get(0).get("inChargeOf");
+        assertNotNull(inChargeObj);
+        assertTrue(inChargeObj instanceof ListMemberDto);
+        ListMemberDto inCharge = (ListMemberDto) inChargeObj;
+        assertEquals("tenant-001", inCharge.getTenant_id());
+        assertEquals(99L, inCharge.getMember_id());
+    }
+
+    @Test
+    void testGetAll_multipleAdmins_chooseFirst() {
+        GroupResponseDTO group = new GroupResponseDTO(
+                1L,
+                "tenant-001",
+                "slug-1",
+                "Grupo Uno",
+                null, null, null, null, null, (LocalDate) null,
+                null, null, null, null, null, null,
+                Map.of(), Map.of(), true, "active", (LocalDateTime) null, (LocalDateTime) null
+        );
+
+        Member adminA = new Member();
+        adminA.setMemberId(11L);
+        adminA.setTenantId("tenant-001");
+        adminA.setFirstName("A");
+
+        Member adminB = new Member();
+        adminB.setMemberId(22L);
+        adminB.setTenantId("tenant-001");
+        adminB.setFirstName("B");
+
+        when(groupService.getAllGroups()).thenReturn(new GroupResponseDTO[]{group});
+        when(memberService.findMembersByRole("ADMIN_GRUPO")).thenReturn(List.of(adminA, adminB));
+
+        ResponseEntity<?> response = memberController.getAll();
+        assertEquals(OK, response.getStatusCode());
+
+        List<Map<String, Object>> body = (List<Map<String, Object>>) response.getBody();
+        ListMemberDto inCharge = (ListMemberDto) body.get(0).get("inChargeOf");
+        // se espera que se mantenga el primero (adminA)
+        assertEquals(11L, inCharge.getMember_id());
     }
 
 

@@ -36,7 +36,11 @@ export default function QuickActions() {
       {quickActions.map((action, index) => {
         const IconComponent = action.icon;
         return (
-          <Card key={index} className="hover:shadow-xl hover:scale-101 transition-all duration-300 ease-in-out" onClick={action.action}>
+          <Card 
+            key={index} 
+            className="cursor-pointer hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-in-out" 
+            onClick={action.action}
+          >
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
                 <div className={`p-3 rounded-lg ${action.color}`}>
