@@ -23,7 +23,6 @@ import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
 import uao.edu.co.scouts_project.domain.exception.auth0.UserAlreadyMemberException;
-import uao.edu.co.scouts_project.domain.exception.auth0.UserNotMemberException;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import com.auth0.exception.APIException;
@@ -88,6 +87,49 @@ public class Auth0AdminAdapter implements Auth0AdminPort {
         } catch (Auth0Exception e) {
             log.error("Error creando usuario en Auth0: {}", e.getMessage());
             throw new Auth0GatewayException("Fallo creando usuario", e);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public CreatedUserDTO createUserInConnection(CreateUserCommandDTO cmd, String connectionId) {
+        try {
+            if (connectionId == null || connectionId.isBlank()) {
+                throw new Auth0GatewayException("connectionId es obligatorio para crear el usuario en una conexión específica");
+            }
+
+            // Auth0 SDK 'User(connection)' espera el NOMBRE de la conexión, no el ID.
+            // Si recibimos un ID (formato típico 'con_...'), resolvemos el nombre primero.
+            String connectionRef = connectionId;
+            String connectionNameToUse = connectionRef;
+            if (connectionRef.startsWith("con_")) {
+                try {
+                    var conn = api().connections().get(connectionRef, null).execute();
+                    if (conn == null || conn.getName() == null || conn.getName().isBlank()) {
+                        throw new Auth0GatewayException("No se pudo resolver el nombre de la conexión desde el ID: " + connectionRef);
+                    }
+                    connectionNameToUse = conn.getName();
+                } catch (Auth0Exception e) {
+                    log.error("Error resolviendo nombre de conexión para {}: {}", connectionRef, e.getMessage());
+                    throw new Auth0GatewayException("Fallo resolviendo nombre de conexión", e);
+                }
+            }
+
+            log.debug("Creando usuario con conexión explícita: {}", connectionNameToUse);
+
+            User user = new User(connectionNameToUse);
+            user.setEmail(cmd.getEmail());
+            user.setPassword(cmd.getPassword());
+            user.setUsername(cmd.getUsername());
+            user.setEmailVerified(false);
+            user.setAppMetadata(java.util.Map.of("created_by_api", true));
+
+            User created = api().users().create(user).execute();
+            return new CreatedUserDTO(created.getId(), created.getEmail(), created.getUsername(),
+                    created.isEmailVerified());
+        } catch (Auth0Exception e) {
+            log.error("Error creando usuario en Auth0 con conexión explícita: {}", e.getMessage());
+            throw new Auth0GatewayException("Fallo creando usuario en conexión específica", e);
         }
     }
 

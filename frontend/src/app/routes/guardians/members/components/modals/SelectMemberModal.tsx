@@ -77,13 +77,11 @@ export default function SelectMemberModal({
   const loadAvailableMembers = async () => {
     setLoading(true);
     try {
-      console.log("🔄 Cargando miembros disponibles...");
       const members = await getAvailableMembers();
-      console.log("✅ Miembros disponibles:", members);
       setAvailableMembers(members);
       setFilteredMembers(members);
     } catch (error) {
-      console.error("❌ Error loading available members:", error);
+      console.error("Error al cargar los miembros disponibles: ", error);
       toast.error("Error al cargar los miembros disponibles");
     } finally {
       setLoading(false);
@@ -106,12 +104,11 @@ export default function SelectMemberModal({
       return;
     }
 
-    console.log("🚀 Enviando miembros seleccionados:", selectedMemberIds);
     try {
       await onConfirm(selectedMemberIds);
       handleClose();
     } catch (error) {
-      console.error("❌ Error adding members:", error);
+      console.error("Error al añadir miembros: ", error);
     }
   };
 
