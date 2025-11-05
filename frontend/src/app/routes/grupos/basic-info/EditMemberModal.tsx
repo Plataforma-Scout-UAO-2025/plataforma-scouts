@@ -127,7 +127,6 @@ export default function EditMemberModal({
 
   if (!member) return null;
 
-  const isScout = member?.role?.toUpperCase() === "SCOUT";
   const emergencyContacts = (editedData.emergencyContacts || []) as import("@/types/member.type").EmergencyContact[];
 
   const isAssignmentValid = () => {
@@ -189,15 +188,13 @@ export default function EditMemberModal({
               onFieldChange={handleFieldChange}
             />
 
-            {isScout && (
-              <EmergencyContactsForm
-                emergencyContacts={emergencyContacts}
-                loading={loading}
-                onContactChange={handleEmergencyContactChange}
-                onAddContact={handleAddEmergencyContact}
-                onRemoveContact={handleRemoveEmergencyContact}
-              />
-            )}
+            <EmergencyContactsForm
+              emergencyContacts={emergencyContacts}
+              loading={loading}
+              onContactChange={handleEmergencyContactChange}
+              onAddContact={handleAddEmergencyContact}
+              onRemoveContact={handleRemoveEmergencyContact}
+            />
 
             <RoleSelectionForm
               currentRole={editedData.role as role}

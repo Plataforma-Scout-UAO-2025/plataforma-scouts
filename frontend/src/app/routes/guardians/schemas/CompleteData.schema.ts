@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DOCUMENT_TYPES } from "@/types/guardian.type";
 
 export const completeDataSchema = z.object({
   identification: z
@@ -8,7 +9,7 @@ export const completeDataSchema = z.object({
     .regex(/^\d+$/, "La identificación solo puede contener números"),
   
   documentType: z
-    .enum(["CC", "TI", "RC", "CE", "PA", "PEP", "PPT", "NIT", "NUIP"], {
+    .enum(DOCUMENT_TYPES, {
       message: "Seleccione un tipo de documento válido",
     }),
   
