@@ -257,11 +257,11 @@ const groupsSlice = createSlice({
     });
     builder.addCase(validateGroupSlugAction.fulfilled, (state, action) => {
       state.slugValidation.isValidating = false;
-      // El backend devuelve "valid: true" cuando el slug está disponible
       state.slugValidation.isAvailable = action.payload.valid;
-      // Si hay un mensaje o reason de error, lo guardamos
-      if (action.payload.reason || action.payload.message) {
+      if (action.payload.valid === false && (action.payload.reason || action.payload.message)) {
         state.slugValidation.error = action.payload.reason || action.payload.message;
+      } else {
+        state.slugValidation.error = null;
       }
     });
     builder.addCase(validateGroupSlugAction.rejected, (state, action) => {

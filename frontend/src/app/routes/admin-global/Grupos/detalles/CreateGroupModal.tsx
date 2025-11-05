@@ -134,7 +134,6 @@ export default function CreateGroupModal({
       return;
     }
 
-    // Validar formato del slug
     const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
     if (!slugRegex.test(form.slug)) {
       toast.error(
@@ -143,9 +142,11 @@ export default function CreateGroupModal({
       return;
     }
 
-    // Validar que el slug esté disponible
     if (slugValidation.error || slugValidation.isAvailable === false) {
-      toast.error("El slug no está disponible o hay un error en la validación");
+      toast.error(
+        slugValidation.error ||
+          "El slug no está disponible o hay un error en la validación"
+      );
       return;
     }
 
