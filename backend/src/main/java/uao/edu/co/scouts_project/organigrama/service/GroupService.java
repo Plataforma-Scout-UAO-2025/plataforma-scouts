@@ -36,6 +36,7 @@ import uao.edu.co.scouts_project.member.mapper.MemberMapper;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.service.IMemberService;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
@@ -720,6 +721,7 @@ public class GroupService implements IGroupService {
         member.setRole(Role.ADMIN_GRUPO.name());
         member.setTenantId(tenantId);
         member.setUserId(created.getId());
+        member.setStatus(Status.APPROVED);
         member.setIsActive(member.getIsActive() != null ? member.getIsActive() : true);
 
         // 7) Crear el miembro en la base de datos
