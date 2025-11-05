@@ -94,6 +94,7 @@ export default function MemberDetailsModal({
   });
 
   if (!member) return null;
+  const isScout = member?.role?.toUpperCase() === "SCOUT";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -113,7 +114,9 @@ export default function MemberDetailsModal({
             <PersonalInfo member={member} />
             <EmergencyContacts member={member} />
             <Interests member={member} />
-            <SchoolInfo memberId={member.member_id} />
+            {isScout && (
+              <SchoolInfo memberId={member.member_id} />
+            )}
 
             <AssignmentSelectors
               groups={groups}
