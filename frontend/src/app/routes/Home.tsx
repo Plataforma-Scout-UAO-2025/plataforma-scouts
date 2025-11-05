@@ -31,7 +31,7 @@ export default function Home() {
               </ul>
             </nav>
 
-            <LoginButton variant="outline" organization="org_GSCNqgwZbxhKkEYr">Admin</LoginButton>
+            <LoginButton variant="outline" organization={import.meta.env.VITE_ADMIN_ORGANIZATION_ID}>Admin</LoginButton>
           </div>
         </div>
       </header>

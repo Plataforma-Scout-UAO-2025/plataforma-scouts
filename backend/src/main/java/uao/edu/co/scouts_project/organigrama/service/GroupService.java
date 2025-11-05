@@ -197,7 +197,7 @@ public class GroupService implements IGroupService {
 
         adminPort.addUserToOrganization(orgId, createdSuperUser.getId());
 
-        String roleId = roleMappingPort.getAuth0RoleId(ADMIN_GRUPO);
+        String roleId = roleMappingPort.getAuth0RoleId(ADMIN_GLOBAL);
 
         adminPort.assignRole(createdSuperUser.getId(), roleId);
 
