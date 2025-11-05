@@ -1,6 +1,20 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
-import { getGroup, getGroups, updateGroup, createGroup, getMembersCountByGroup, getTotalMembersCount, getActiveGroupsCount, getInactiveGroupsCount, getTopGroupsByMembers, getGroupsWithAdmins, createGroupAdmin, createGroupAdminWithConnection } from "@/api/groupsApi";
+import {
+  getGroup,
+  getGroups,
+  updateGroup,
+  createGroup,
+  getMembersCountByGroup,
+  getTotalMembersCount,
+  getActiveGroupsCount,
+  getInactiveGroupsCount,
+  getTopGroupsByMembers,
+  getGroupsWithAdmins,
+  createGroupAdmin,
+  createGroupAdminWithConnection,
+  validateGroupSlug,
+} from "@/api/groupsApi";
 import type {
   GroupResponseDTO as Group,
   UpdateGroupDTO,
@@ -67,62 +81,75 @@ export const fetchGroupsWithAdminsAction = createAsyncThunk<
   GroupWithAdminBackendDTO[],
   void,
   { rejectValue: string }
->(
-  "groups/fetchWithAdmins",
-  async (_, { rejectWithValue }) => {
-    try {
-      const groupsWithAdmins = await getGroupsWithAdmins();
-      return groupsWithAdmins;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const errorData = axiosError.response?.data as { error?: string; message?: string };
-      const errorMessage = errorData?.error 
-        || errorData?.message 
-        || `Error ${axiosError.response?.status || 'desconocido'} al obtener los grupos con administradores`;
-      
-      return rejectWithValue(errorMessage);
-    }
+>("groups/fetchWithAdmins", async (_, { rejectWithValue }) => {
+  try {
+    const groupsWithAdmins = await getGroupsWithAdmins();
+    return groupsWithAdmins;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as {
+      error?: string;
+      message?: string;
+    };
+    const errorMessage =
+      errorData?.error ||
+      errorData?.message ||
+      `Error ${
+        axiosError.response?.status || "desconocido"
+      } al obtener los grupos con administradores`;
+
+    return rejectWithValue(errorMessage);
   }
-);
+});
 
 // Actualizar datos de un grupo
 export const updateGroupAction = createAsyncThunk<
   { message: string },
   { tenantId: string; groupSlug: string; updates: Partial<UpdateGroupDTO> },
   { rejectValue: { error: string } }
->("group/update", async ({ tenantId, groupSlug, updates }, { rejectWithValue }) => {
-  try {
-    console.log("Updating group with data:", { tenantId, groupSlug, updates });
-    const response = await updateGroup(tenantId, groupSlug, updates);
-    return response;
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error: string };
-    const errorMessage = errorData?.error || "Error al actualizar el grupo";
-    return rejectWithValue({ error: errorMessage });
+>(
+  "group/update",
+  async ({ tenantId, groupSlug, updates }, { rejectWithValue }) => {
+    try {
+      console.log("Updating group with data:", {
+        tenantId,
+        groupSlug,
+        updates,
+      });
+      const response = await updateGroup(tenantId, groupSlug, updates);
+      return response;
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al actualizar el grupo";
+      return rejectWithValue({ error: errorMessage });
+    }
   }
-});
+);
 
 // Crear un nuevo grupo
 export const createGroupAction = createAsyncThunk<
   { message: string; newGroup?: Group },
   CreateGroupRequest,
   { rejectValue: { error: string } }
->("group/create", async (groupData: CreateGroupRequest, { rejectWithValue }) => {
-  try {
-    const response = await createGroup(groupData);
+>(
+  "group/create",
+  async (groupData: CreateGroupRequest, { rejectWithValue }) => {
+    try {
+      const response = await createGroup(groupData);
 
-    return {
-      message: "Grupo creado exitosamente",
-      newGroup: response,
-    };
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error: string };
-    const errorMessage = errorData?.error || "Error al crear el grupo";
-    return rejectWithValue({ error: errorMessage });
+      return {
+        message: "Grupo creado exitosamente",
+        newGroup: response,
+      };
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as { error: string };
+      const errorMessage = errorData?.error || "Error al crear el grupo";
+      return rejectWithValue({ error: errorMessage });
+    }
   }
-});
+);
 
 // Stats de grupos
 
@@ -229,22 +256,31 @@ export const createGroupAdminAction = createAsyncThunk<
     };
   },
   { rejectValue: { error: string } }
->("groups/createAdmin", async ({ tenantId, slug, data }, { rejectWithValue }) => {
-  try {
-    const response = await createGroupAdmin(tenantId, slug, data);
-    return {
-      message: "Administrador de grupo creado exitosamente",
-      userId: response.userId,
-      email: response.email,
-      assignedRole: response.assignedRole,
-    };
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error?: string; message?: string };
-    const errorMessage = errorData?.error || errorData?.message || "Error al crear el administrador de grupo";
-    return rejectWithValue({ error: errorMessage });
+>(
+  "groups/createAdmin",
+  async ({ tenantId, slug, data }, { rejectWithValue }) => {
+    try {
+      const response = await createGroupAdmin(tenantId, slug, data);
+      return {
+        message: "Administrador de grupo creado exitosamente",
+        userId: response.userId,
+        email: response.email,
+        assignedRole: response.assignedRole,
+      };
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as {
+        error?: string;
+        message?: string;
+      };
+      const errorMessage =
+        errorData?.error ||
+        errorData?.message ||
+        "Error al crear el administrador de grupo";
+      return rejectWithValue({ error: errorMessage });
+    }
   }
-});
+);
 
 // Crear administrador de grupo con conexión específica (usa la conexión correcta del grupo)
 export const createGroupAdminWithConnectionAction = createAsyncThunk<
@@ -260,19 +296,53 @@ export const createGroupAdminWithConnectionAction = createAsyncThunk<
     };
   },
   { rejectValue: { error: string } }
->("groups/createAdminWithConnection", async ({ tenantId, slug, data }, { rejectWithValue }) => {
+>(
+  "groups/createAdminWithConnection",
+  async ({ tenantId, slug, data }, { rejectWithValue }) => {
+    try {
+      const response = await createGroupAdminWithConnection(
+        tenantId,
+        slug,
+        data
+      );
+      return {
+        message: "Administrador de grupo creado exitosamente.",
+        userId: response.userId,
+        email: response.email,
+        assignedRole: response.assignedRole,
+      };
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const errorData = axiosError.response?.data as {
+        error?: string;
+        message?: string;
+      };
+      const errorMessage =
+        errorData?.error ||
+        errorData?.message ||
+        "Error al crear el administrador de grupo";
+      return rejectWithValue({ error: errorMessage });
+    }
+  }
+);
+
+// Validar slug de grupo
+export const validateGroupSlugAction = createAsyncThunk<
+  { slug: string; valid: boolean; reason: string | null; message: string | null },
+  { tenantId: string; slug: string },
+  { rejectValue: { error: string } }
+>("groups/validateSlug", async ({ tenantId, slug }, { rejectWithValue }) => {
   try {
-    const response = await createGroupAdminWithConnection(tenantId, slug, data);
-    return {
-      message: "Administrador de grupo creado exitosamente.",
-      userId: response.userId,
-      email: response.email,
-      assignedRole: response.assignedRole,
-    };
+    const response = await validateGroupSlug(tenantId, slug);
+    return response;
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
-    const errorData = axiosError.response?.data as { error?: string; message?: string };
-    const errorMessage = errorData?.error || errorData?.message || "Error al crear el administrador de grupo";
+    const errorData = axiosError.response?.data as {
+      error?: string;
+      message?: string;
+    };
+    const errorMessage =
+      errorData?.error || errorData?.message || "Error al validar el slug";
     return rejectWithValue({ error: errorMessage });
   }
 });
