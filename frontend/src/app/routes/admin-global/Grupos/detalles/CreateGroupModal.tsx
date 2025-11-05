@@ -86,12 +86,7 @@ export default function CreateGroupModal({
       return;
     }
 
-    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-    if (!slugRegex.test(slug)) {
-      return;
-    }
-
-    dispatch(validateGroupSlugAction({ tenantId: "A", slug }));
+    dispatch(validateGroupSlugAction({ slug }));
   };
 
   const handleChange = <K extends keyof CreateGroupDTO>(

@@ -329,11 +329,11 @@ export const createGroupAdminWithConnectionAction = createAsyncThunk<
 // Validar slug de grupo
 export const validateGroupSlugAction = createAsyncThunk<
   { slug: string; valid: boolean; reason: string | null; message: string | null },
-  { tenantId: string; slug: string },
+  { slug: string },
   { rejectValue: { error: string } }
->("groups/validateSlug", async ({ tenantId, slug }, { rejectWithValue }) => {
+>("groups/validateSlug", async ({ slug }, { rejectWithValue }) => {
   try {
-    const response = await validateGroupSlug(tenantId, slug);
+    const response = await validateGroupSlug( slug);
     return response;
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
