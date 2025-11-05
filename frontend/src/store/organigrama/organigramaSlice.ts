@@ -22,6 +22,7 @@ interface OrganigramaState {
   ramasLoading: boolean;
   ramasError: string | null;
   ramasLastFetch: number;
+  ramasHasAttemptedFetch: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -36,6 +37,7 @@ const initialState: OrganigramaState = {
   ramasLoading: false,
   ramasError: null,
   ramasLastFetch: 0,
+  ramasHasAttemptedFetch: false,
   loading: false,
   error: null,
 };
@@ -48,6 +50,7 @@ const organigramaSlice = createSlice({
     invalidateRamasCache: (state) => {
       state.ramasLastFetch = 0;
       state.ramas = [];
+      state.ramasHasAttemptedFetch = false;
       state.ramasError = null;
     },
     
@@ -212,6 +215,7 @@ const organigramaSlice = createSlice({
     builder.addCase(fetchRamasWithSubramasAction.pending, (state) => {
       state.ramasLoading = true;
       state.ramasError = null;
+      state.ramasHasAttemptedFetch = true;
     });
     builder.addCase(fetchRamasWithSubramasAction.fulfilled, (state, action) => {
       state.ramasLoading = false;
