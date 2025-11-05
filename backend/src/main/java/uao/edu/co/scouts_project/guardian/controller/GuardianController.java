@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import uao.edu.co.scouts_project.guardian.dto.in.GuardianCreateDTO;
+import uao.edu.co.scouts_project.guardian.dto.out.AvailableGuardianDTO;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianCreateResponse;
 import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
@@ -47,6 +48,12 @@ public class GuardianController {
         @PathVariable @NotNull Long id) {
         GuardianCreateDTO guardian = guardianService.findGuardianById(id);
         return ResponseEntity.ok(guardian);
+    }
+
+    @GetMapping("/list-available")
+    public ResponseEntity<List<AvailableGuardianDTO>> getAvailableGuardians() {
+        List<AvailableGuardianDTO> availableGuardians = guardianService.findAvailableGuardians();
+        return ResponseEntity.ok(availableGuardians);
     }
 
     @Operation(
@@ -137,6 +144,25 @@ public class GuardianController {
             @PathVariable @NotNull Long memberId) {
         guardianService.removeGuardianIdFromMember(guardianId, memberId);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+    summary = "Reasignar miembro a otro guardian",
+    description = "Cambia el guardian responsable de un miembro específico."
+    )
+    @ApiResponse(responseCode = "200", description = "Miembro reasignado exitosamente.")
+    @ApiResponse(responseCode = "404", description = "Guardian o miembro no encontrado.")
+    @PutMapping("/{currentGuardianId}/members/{memberId}/reassign/{newGuardianId}")
+    public ResponseEntity<Void> reassignMemberGuardian(
+        @Parameter(description = "ID del guardian actual", required = true)
+        @PathVariable @NotNull Long currentGuardianId,
+        @Parameter(description = "ID del miembro a reasignar", required = true)
+        @PathVariable @NotNull Long memberId,
+        @Parameter(description = "ID del nuevo guardian", required = true)
+        @PathVariable @NotNull Long newGuardianId
+    ) {
+    guardianService.reassignMemberGuardian(memberId, currentGuardianId, newGuardianId);
+    return ResponseEntity.ok().build();
     }
 
     @Operation(

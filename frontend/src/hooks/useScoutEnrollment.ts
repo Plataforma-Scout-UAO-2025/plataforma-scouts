@@ -6,6 +6,7 @@ import {
   createMemberAction,
   createMemberWithSchoolDataAction,
   createScoutAuth0Action,
+  assignSubgroupAndSectionAction,
 } from "@/store/members/membersActions";
 import { transformData } from "@/app/routes/grupos/basic-info/utils/enrollment.utils";
 import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
@@ -29,6 +30,11 @@ type ApiError = {
   error?: string;
   detail?: string;
   status?: number;
+};
+
+type UseScoutEnrollmentParams = {
+  selectedSection?: string;
+  selectedSubgroup?: string;
 };
 
 type UseScoutEnrollmentReturn = {
@@ -58,7 +64,10 @@ type UseScoutEnrollmentReturn = {
   handleSchoolDialogResponse: (incluir: boolean) => void;
 };
 
-export function useScoutEnrollment(): UseScoutEnrollmentReturn {
+export function useScoutEnrollment(
+  params: UseScoutEnrollmentParams = {}
+): UseScoutEnrollmentReturn {
+  const { selectedSection, selectedSubgroup } = params;
   const dispatch = useAppDispatch();
   const { loading: loadingSubmit } = useMember();
   const { orgId } = useAuth0ApiWrapper();
@@ -114,12 +123,25 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
   const getCurrentErrors = useCallback(() => {
     if (pagina === 1) return page1Validation.errors;
     if (pagina === 2) return page2Validation.errors;
-    return page3Validation.errors;
+    if (pagina === 3) return page3Validation.errors;
+    if (pagina === 4) {
+      const errors: Record<string, string> = {};
+      if (!selectedSection) {
+        errors.section = "Debe seleccionar una sección";
+      }
+      if (!selectedSubgroup) {
+        errors.subgroup = "Debe seleccionar un subgrupo";
+      }
+      return errors;
+    }
+    return {};
   }, [
     pagina,
     page1Validation.errors,
     page2Validation.errors,
     page3Validation.errors,
+    selectedSection,
+    selectedSubgroup,
   ]);
 
   const handlePersonalChange = useCallback(
@@ -141,7 +163,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return newData;
       });
     },
-    [pagina, page1Validation, page2Validation]
+    [pagina, page1Validation, page2Validation],
   );
 
   const handleSchoolChange = useCallback(
@@ -157,7 +179,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return newData;
       });
     },
-    [pagina, page3Validation]
+    [pagina, page3Validation],
   );
 
   const handleEmergencyContactsChange = useCallback(
@@ -166,17 +188,12 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         page1Validation.validate(updatedData);
       }
     },
-    [pagina, page1Validation]
+    [pagina, page1Validation],
   );
 
   const validateCurrentPage = useCallback((): boolean => {
     if (pagina === 1) {
-      const isValid = page1Validation.validate(datosPersonales);
-
-      if (!isValid) {
-        console.log("Errores de validación página 1:", page1Validation.errors);
-      }
-      return isValid;
+      return page1Validation.validate(datosPersonales);
     }
     if (pagina === 2) {
       return page2Validation.validate(datosPersonales);
@@ -184,6 +201,10 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
 
     if (pagina === 3) {
       return page3Validation.validate(datosEscolares);
+    }
+
+    if (pagina === 4) {
+      return !!selectedSection && !!selectedSubgroup;
     }
 
     return false;
@@ -194,6 +215,8 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     page1Validation,
     page2Validation,
     page3Validation,
+    selectedSection,
+    selectedSubgroup,
   ]);
 
   const scrollToFirstError = useCallback(() => {
@@ -218,7 +241,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           email: datosPersonales.email,
           password: datosPersonales.password,
           username: datosPersonales.username,
-        })
+        }),
       );
 
       if (createScoutAuth0Action.rejected.match(auth0Result)) {
@@ -260,8 +283,19 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           ...datosPersonales,
           tenantId: tenant,
         },
-        normalizedUserRole
+        normalizedUserRole,
       );
+
+      try {
+        const created = auth0Result.payload as { userId?: string } | undefined;
+        const auth0Id = created?.userId;
+        if (auth0Id) {
+          const md = memberData as Record<string, unknown>;
+          md["userId"] = auth0Id;
+        }
+      } catch (e) {
+        console.warn("No se pudo extraer userId del resultado de Auth0:", e);
+      }
 
       let memberResult;
 
@@ -271,7 +305,7 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
           school: datosEscolares,
         };
         memberResult = await dispatch(
-          createMemberWithSchoolDataAction({ memberData: requestData })
+          createMemberWithSchoolDataAction({ memberData: requestData }),
         );
       } else {
         memberResult = await dispatch(createMemberAction(memberData));
@@ -301,6 +335,38 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         setErrorMessage(mensaje);
         setShowAuth0ErrorDialog(true);
         return;
+      }
+
+      const createdMember = memberResult.payload as {
+        memberId?: number;
+        member_id?: number;
+        newMember?: {
+          member?: {
+            memberId?: number;
+          };
+        };
+      };
+    
+      const memberId =
+        createdMember?.newMember?.member?.memberId ??
+        createdMember?.memberId ??
+        createdMember?.member_id;
+
+      if (memberId && selectedSection && selectedSubgroup) {
+        try {
+          await dispatch(
+            assignSubgroupAndSectionAction({
+              memberId,
+              sectionId: Number(selectedSection),
+              subGroupId: Number(selectedSubgroup),
+            })
+          ).unwrap();
+        } catch (assignError) {
+          console.error("Error al asignar sección/subgrupo:", assignError);
+          setErrorMessage("El scout fue creado pero hubo un error en la asignación de sección/subgrupo");
+          setShowAuth0ErrorDialog(true);
+          return;
+        }
       }
 
       page1Validation.clearErrors();
@@ -337,6 +403,8 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
     datosEscolares,
     orgId,
     currentUserRole,
+    selectedSection,
+    selectedSubgroup,
     dispatch,
     page1Validation,
     page2Validation,
@@ -363,9 +431,15 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         return;
       }
 
+      if (pagina === 3) {
+        setPagina(4);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
       await enviarDatos();
     },
-    [pagina, validateCurrentPage, scrollToFirstError, enviarDatos]
+    [pagina, validateCurrentPage, scrollToFirstError, enviarDatos],
   );
 
   const handleSchoolDialogResponse = useCallback(
@@ -376,20 +450,21 @@ export function useScoutEnrollment(): UseScoutEnrollmentReturn {
         setPagina(3);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        void enviarDatos();
+        setPagina(4);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     },
-    [enviarDatos]
+    [],
   );
 
   const totalPaginas = useMemo(
-    () => (incluirDatosEscolares ? 3 : 2),
-    [incluirDatosEscolares]
+    () => (incluirDatosEscolares ? 4 : 3),
+    [incluirDatosEscolares],
   );
 
   const progreso = useMemo(
     () => (pagina / totalPaginas) * 100,
-    [pagina, totalPaginas]
+    [pagina, totalPaginas],
   );
 
   return {

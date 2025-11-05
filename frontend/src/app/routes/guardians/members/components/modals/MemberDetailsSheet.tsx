@@ -5,8 +5,8 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import type { MemberBasicInfo } from "@/types/guardian.type";
-import PersonalInfoSection from "./details/PersonalInfoSection";
-import ScoutInfoSection from "./details/ScoutInfoSection";
+import PersonalInfoSection from "@/app/routes/guardians/members/components/modals/details/PersonalInfoSection";
+import ScoutInfoSection from "@/app/routes/guardians/members/components/modals/details/ScoutInfoSection";
 
 interface MemberDetailsSheetProps {
   open: boolean;
