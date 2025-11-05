@@ -47,6 +47,7 @@ import { setAuth0TokenProvider } from "@/api/axios";
 import { useEffect } from "react";
 import * as React from "react";
 import { useGroupInfo } from "@/hooks/useGroupInfo";
+import { useTenantParams } from '@/app/routes/organigrama/organigramaRamas_Subramas/hooks/useTenantParams';
 
 type SubMenuItem = {
   id: string;
@@ -278,9 +279,19 @@ function AppLayoutContent() {
   const { status, currentUserRole, currentUserRoleLabel, error, retry } =
     useRoleContext();
   const { groupName, loading: groupLoading } = useGroupInfo();
+  const { tenantId } = useTenantParams();
 
   // Determinar qué menú mostrar según el rol del usuario
   const getMenuItems = (): MenuItem[] => {
+        if (currentUserRole === RawRole.ADMIN_GLOBAL) {
+          const userTenantClaim =
+            import.meta.env.VITE_ADMIN_ORGANIZATION_ID;
+          if (tenantId && userTenantClaim && tenantId === userTenantClaim) {
+            return adminGlobalItems.filter((it) => it.id === "inicio" || it.id === "grupos");
+          }
+          return adminGlobalItems.filter((it) => it.id !== "grupos");;
+        }
+
     switch (currentUserRole) {
       case RawRole.ACUDIENTE:
         return acudienteItems;
@@ -294,8 +305,6 @@ function AppLayoutContent() {
         return comiteItems;
       case RawRole.ADMIN_GRUPO:
         return adminGrupalItems;
-      case RawRole.ADMIN_GLOBAL:
-        return adminGlobalItems;
       default:
         return ScoutItems;
     }
