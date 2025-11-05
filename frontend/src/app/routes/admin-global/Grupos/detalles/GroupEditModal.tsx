@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button, Input, Label, ImageUpload } from "@/components/ui";
 import {
@@ -26,11 +27,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { updateGroupAction, fetchGroupsWithAdminsAction } from "@/store/groups/groupsActions";
+import {
+  updateGroupAction,
+  fetchGroupsWithAdminsAction,
+} from "@/store/groups/groupsActions";
 import { clearNotification } from "@/store/groups/groupsSlice";
-import type {
-  UpdateGroupDTO,
-} from "@/types/group.type";
+import type { UpdateGroupDTO } from "@/types/group.type";
 import { useGroup } from "@/hooks/useGroup";
 import { uploadPhotoFile } from "@/lib/imageUtils";
 
@@ -76,18 +78,21 @@ export default function GroupEditModal({
 
   if (!group) return null;
 
-  const handleChange = <K extends keyof UpdateGroupDTO>(field: K, value: UpdateGroupDTO[K]) => {
-    if (field === 'isActive') {
+  const handleChange = <K extends keyof UpdateGroupDTO>(
+    field: K,
+    value: UpdateGroupDTO[K]
+  ) => {
+    if (field === "isActive") {
       setForm((prev) => ({
         ...prev,
         isActive: Boolean(value),
-        status: value ? 'ACTIVE' : 'INACTIVE',
+        status: value ? "ACTIVE" : "INACTIVE",
       }));
-    } else if (field === 'status') {
+    } else if (field === "status") {
       setForm((prev) => ({
         ...prev,
         status: String(value),
-        is_active: String(value) === 'ACTIVE',
+        is_active: String(value) === "ACTIVE",
       }));
     } else {
       setForm((prev) => ({ ...prev, [field]: value }));
@@ -104,42 +109,56 @@ export default function GroupEditModal({
       return;
     }
 
-    const updates: Partial<UpdateGroupDTO & { is_active?: boolean }> = Object.fromEntries(
-      (Object.keys(form) as Array<keyof UpdateGroupDTO>)
-        .filter((key) => {
-          // Excluir logo y scarf del update general, se manejan por separado
-          if (key === 'logoObjectId' || key === 'scarfObjectId') return false;
-          return form[key] !== group[key];
-        })
-        .map((key) => [key, form[key]])
-    );
-    
-    if ('status' in updates) {
-      updates['status'] = form.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE';
-      updates['isActive'] = form.status === 'ACTIVE';
+    if (form.email && form.email.trim() !== "") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email)) {
+        toast.error("El formato del correo electrónico no es válido");
+        return;
+      }
     }
-    if ('isActive' in updates && !('status' in updates)) {
-      updates['isActive'] = Boolean(form.isActive);
-      updates['status'] = form.isActive ? 'ACTIVE' : 'INACTIVE';
-      delete updates['is_active'];
-    }
-    if ('isActive' in updates) {
-      delete updates['isActive'];
-    }
+
+    const updates: Record<string, unknown> = {};
+
+    (Object.keys(form) as Array<keyof UpdateGroupDTO>).forEach((key) => {
+      if (key === "logoObjectId" || key === "scarfObjectId") return;
+
+      if (form[key] !== group[key]) {
+        switch (key) {
+          case "identifierNumber":
+            updates["identifier_number"] = form[key];
+            break;
+          case "foundedIn":
+            updates["founded_in"] = form[key];
+            break;
+          case "socialLinks":
+            updates["social_links"] = form[key];
+            break;
+          case "isActive":
+            updates["is_active"] = Boolean(form[key]);
+            updates["status"] = form[key] ? "ACTIVE" : "INACTIVE";
+            break;
+          case "status":
+            updates["status"] = form[key] === "ACTIVE" ? "ACTIVE" : "INACTIVE";
+            updates["is_active"] = form[key] === "ACTIVE";
+            break;
+          default:
+            updates[key] = form[key];
+        }
+      }
+    });
 
     if (Object.keys(updates).length > 0) {
       const action = await dispatch(
         updateGroupAction({ tenantId, groupSlug, updates })
       );
       if (!updateGroupAction.fulfilled.match(action)) {
-        return; 
+        return;
       }
     }
 
-    // Actualizar logo si cambió
     if (logoChanged && form.logoObjectId) {
       try {
-        const { updateGroupLogo } = await import('@/api/groupsApi');
+        const { updateGroupLogo } = await import("@/api/groupsApi");
         await updateGroupLogo(tenantId, groupSlug, form.logoObjectId);
         toast.success("Logo actualizado correctamente");
       } catch (err) {
@@ -149,10 +168,9 @@ export default function GroupEditModal({
       }
     }
 
-    // Actualizar scarf si cambió
     if (scarfChanged && form.scarfObjectId) {
       try {
-        const { updateGroupScarf } = await import('@/api/groupsApi');
+        const { updateGroupScarf } = await import("@/api/groupsApi");
         await updateGroupScarf(tenantId, groupSlug, form.scarfObjectId);
         toast.success("Pañoleta actualizada correctamente");
       } catch (err) {
@@ -162,7 +180,6 @@ export default function GroupEditModal({
       }
     }
 
-    // Recargar datos
     await dispatch(fetchGroupsWithAdminsAction());
     if (onSave) onSave({ ...group, ...form });
     onOpenChange(false);
@@ -175,6 +192,9 @@ export default function GroupEditModal({
           <DialogTitle className="text-2xl font-bold text-primary">
             Editar Grupo
           </DialogTitle>
+          <DialogDescription>
+            Modifica la información del grupo scout
+          </DialogDescription>
         </DialogHeader>
         <div className="p-4 bg-white rounded-md border border-slate-200">
           <h3 className="text-lg font-medium text-gray-700 mb-4">
@@ -188,6 +208,17 @@ export default function GroupEditModal({
                 value={form.name ?? ""}
                 onChange={(e) => handleChange("name", e.target.value)}
               />
+            </div>
+            <div>
+              <Label className="text-sm text-accent-foreground">Slug</Label>
+              <Input
+                className="mt-1 w-full bg-white"
+                value={form.slug ?? ""}
+                onChange={(e) => handleChange("slug", e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Solo letras minúsculas, números y guiones
+              </p>
             </div>
             <div>
               <Label className="text-sm text-accent-foreground">Distrito</Label>
@@ -204,11 +235,15 @@ export default function GroupEditModal({
               <Input
                 className="mt-1 w-full"
                 value={form.identifierNumber ?? ""}
-                onChange={(e) => handleChange("identifierNumber", e.target.value)}
+                onChange={(e) =>
+                  handleChange("identifierNumber", e.target.value)
+                }
               />
             </div>
             <div>
-              <Label className="text-sm text-accent-foreground">Dirección</Label>
+              <Label className="text-sm text-accent-foreground">
+                Dirección
+              </Label>
               <Input
                 className="mt-1 w-full"
                 value={form.address ?? ""}
@@ -248,21 +283,33 @@ export default function GroupEditModal({
                     {form.foundedIn ? (
                       format(new Date(form.foundedIn), "PPP", { locale: es })
                     ) : (
-                      <span className="text-muted-foreground">Seleccionar fecha</span>
+                      <span className="text-muted-foreground">
+                        Seleccionar fecha
+                      </span>
                     )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={form.foundedIn ? new Date(form.foundedIn) : undefined}
+                    captionLayout="dropdown"
+                    fromYear={1900}
+                    toYear={new Date().getFullYear()}
+                    selected={
+                      form.foundedIn ? new Date(form.foundedIn) : undefined
+                    }
                     onSelect={(date) => {
                       if (date) {
-                        handleChange("foundedIn", date as unknown as UpdateGroupDTO["foundedIn"]);
+                        handleChange(
+                          "foundedIn",
+                          date as unknown as UpdateGroupDTO["foundedIn"]
+                        );
                       }
                     }}
                     disabled={(date) => date > new Date()}
-                    defaultMonth={form.foundedIn ? new Date(form.foundedIn) : undefined}
+                    defaultMonth={
+                      form.foundedIn ? new Date(form.foundedIn) : undefined
+                    }
                     initialFocus
                     locale={es}
                   />
@@ -276,6 +323,21 @@ export default function GroupEditModal({
                 value={form.motto ?? ""}
                 onChange={(e) => handleChange("motto", e.target.value)}
               />
+            </div>
+            <div>
+              <Label className="text-sm text-accent-foreground">Estado</Label>
+              <Select
+                value={form.status ?? group.status ?? "INACTIVE"}
+                onValueChange={(val) => handleChange("status", val)}
+              >
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Activo</SelectItem>
+                  <SelectItem value="INACTIVE">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <ImageUpload
@@ -298,21 +360,6 @@ export default function GroupEditModal({
                 }}
                 onUpload={uploadPhotoFile}
               />
-            </div>
-            <div>
-              <Label className="text-sm text-accent-foreground">Estado</Label>
-              <Select
-                value={form.status ?? group.status ?? 'INACTIVE'}
-                onValueChange={(val) => handleChange('status', val)}
-              >
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ACTIVE">Activo</SelectItem>
-                  <SelectItem value="INACTIVE">Inactivo</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="md:col-span-2">
@@ -349,9 +396,13 @@ export default function GroupEditModal({
                   <Input
                     className="mt-1"
                     placeholder="https://ejemplo.com"
-                    value={(form.socialLinks as Record<string, string>)?.website ?? ""}
+                    value={
+                      (form.socialLinks as Record<string, string>)?.website ??
+                      ""
+                    }
                     onChange={(e) => {
-                      const currentLinks = (form.socialLinks as Record<string, string>) || {};
+                      const currentLinks =
+                        (form.socialLinks as Record<string, string>) || {};
                       handleChange("socialLinks", {
                         ...currentLinks,
                         website: e.target.value,
@@ -364,9 +415,13 @@ export default function GroupEditModal({
                   <Input
                     className="mt-1"
                     placeholder="https://facebook.com/..."
-                    value={(form.socialLinks as Record<string, string>)?.facebook ?? ""}
+                    value={
+                      (form.socialLinks as Record<string, string>)?.facebook ??
+                      ""
+                    }
                     onChange={(e) => {
-                      const currentLinks = (form.socialLinks as Record<string, string>) || {};
+                      const currentLinks =
+                        (form.socialLinks as Record<string, string>) || {};
                       handleChange("socialLinks", {
                         ...currentLinks,
                         facebook: e.target.value,
@@ -379,9 +434,13 @@ export default function GroupEditModal({
                   <Input
                     className="mt-1"
                     placeholder="https://instagram.com/..."
-                    value={(form.socialLinks as Record<string, string>)?.instagram ?? ""}
+                    value={
+                      (form.socialLinks as Record<string, string>)?.instagram ??
+                      ""
+                    }
                     onChange={(e) => {
-                      const currentLinks = (form.socialLinks as Record<string, string>) || {};
+                      const currentLinks =
+                        (form.socialLinks as Record<string, string>) || {};
                       handleChange("socialLinks", {
                         ...currentLinks,
                         instagram: e.target.value,

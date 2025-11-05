@@ -188,3 +188,12 @@ export const getTopGroupsByMembers = async () => {
   const response = await api.get<TopGroupByMembersDTO[]>("/statistics/groups/most-members");
   return response.data;
 }
+
+// Validar si un slug de grupo ya existe
+export const validateGroupSlug = async (slug: string) => {
+  const response = await api.get<{ slug: string; valid: boolean; reason: string | null; message: string | null }>(
+    `/tenants/A/groups/slug/validate`,
+    { params: { slug } }
+  );
+  return response.data;
+}
