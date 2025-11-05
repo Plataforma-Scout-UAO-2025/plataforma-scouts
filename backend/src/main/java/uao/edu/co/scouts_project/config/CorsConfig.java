@@ -23,7 +23,8 @@ public class CorsConfig implements WebMvcConfigurer {
                         "http://127.0.0.1:5173",   // IP local
                         "https://scouts-frontend.fly.dev/", // Producción Fly
                         "https://plataformascout.org/", // Producción
-                        "https://www.plataformascout.org/"
+                        "https://www.plataformascout.org/",
+                        "https://api.plataformascout.org/"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
@@ -42,7 +43,8 @@ public class CorsConfig implements WebMvcConfigurer {
                 "http://127.0.0.1:5173",
                 "https://scouts-frontend.fly.dev/",
                 "https://plataformascout.org/",
-                "https://www.plataformascout.org/"
+                "https://www.plataformascout.org/",
+                "https://api.plataformascout.org/"
         ));
         
         // Métodos HTTP permitidos
