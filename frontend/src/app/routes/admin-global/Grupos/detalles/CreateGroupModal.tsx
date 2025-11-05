@@ -150,7 +150,7 @@ export default function CreateGroupModal({
     }
 
     if (slugValidation.isValidating) {
-      toast.error("Esperando validación del slug...");
+      toast.info("Esperando validación del slug...");
       return;
     }
 
