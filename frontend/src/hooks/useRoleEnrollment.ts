@@ -173,7 +173,10 @@ export function useRoleEnrollment({
       );
 
       const created = auth0Result.payload as { userId?: string };
-      if (created?.userId) memberData.user_id = created.userId;
+      if (created?.userId) {
+        const md = memberData as Record<string, unknown>;
+        md["userId"] = created.userId;
+      }
 
       const memberResult = await dispatch(createMemberAction(memberData));
       if (createMemberAction.rejected.match(memberResult)) {
