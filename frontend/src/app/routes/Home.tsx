@@ -31,7 +31,7 @@ export default function Home() {
               </ul>
             </nav>
 
-            <LoginButton variant="outline" organization="">Iniciar sesión</LoginButton>
+            <LoginButton variant="outline" organization="org_GSCNqgwZbxhKkEYr">Admin</LoginButton>
           </div>
         </div>
       </header>
