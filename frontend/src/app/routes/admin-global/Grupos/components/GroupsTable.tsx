@@ -7,8 +7,9 @@ import {
   TableHeader,
   TableRow,
   Button,
+  Input,
 } from "@/components/ui/index";
-import { Info, Pencil, UserPlus, UserCog } from "lucide-react";
+import { Info, Pencil, UserPlus, UserCog, Search as SearchIcon } from "lucide-react";
 import type { GroupResponseDTO as Group } from "@/types/group.type";
 import { useGroup } from "@/hooks/useGroup";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
@@ -49,6 +50,7 @@ const GroupsTable = () => {
     full_name: string;
   } | null>(null);
   const [selectedGroupName, setSelectedGroupName] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     dispatch(fetchGroupsWithAdminsAction());
@@ -113,12 +115,37 @@ const GroupsTable = () => {
       .sort((a, b) => a.group.name.localeCompare(b.group.name));
   }, [groupsWithAdmins]);
 
+  const visibleGroups = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return sortedGroups;
+    return sortedGroups.filter((item) => {
+      const name = item.group?.name?.toLowerCase?.() || "";
+      const slug = item.group?.slug?.toLowerCase?.() || "";
+      const admin = item.inChargeOf?.full_name?.toLowerCase?.() || "";
+      const email = item.inChargeOf?.email?.toLowerCase?.() || "";
+      return (
+        name.includes(q) || slug.includes(q) || admin.includes(q) || email.includes(q)
+      );
+    });
+  }, [sortedGroups, searchTerm]);
+
   if (loading) {
     return <FullScreenLoader message="Cargando..." />;
   }
 
   return (
     <div>
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative w-full max-w-md">
+          <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por nombre de grupo, slug o administrador..."
+            className="pl-8"
+          />
+        </div>
+      </div>
       <Table className="text-sm">
         <TableHeader className="text-primary">
           <TableRow>
@@ -151,14 +178,20 @@ const GroupsTable = () => {
                 </div>
               </TableCell>
             </TableRow>
-          ) : sortedGroups.length === 0 ? (
+          ) : visibleGroups.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center py-8">
-                <p className="text-muted-foreground text-lg">No hay grupos disponibles</p>
+                {searchTerm.trim() ? (
+                  <p className="text-muted-foreground text-lg">
+                    No hay resultados para "{searchTerm}"
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground text-lg">No hay grupos disponibles</p>
+                )}
               </TableCell>
             </TableRow>
           ) : (
-            sortedGroups.map((item, idx) => {
+            visibleGroups.map((item, idx) => {
               const { groupTransformed, inChargeOf } = item;
               return (
                 <TableRow key={groupTransformed.groupId ?? `group-${idx}`}>

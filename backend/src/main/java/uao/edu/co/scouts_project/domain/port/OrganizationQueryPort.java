@@ -20,4 +20,18 @@ public interface OrganizationQueryPort {
      * @return el mismo connectionId como símbolo de éxito
      */
     String enableConnectionForOrganization(String organizationId, String connectionId);
+
+    /**
+     * Actualiza campos editables de una organización en Auth0.
+     * Actualmente soporta:
+     * - displayName (nombre visible en el dashboard de Auth0)
+     * - branding.logoUrl (logo visible en el dashboard de Auth0)
+     * Cualquier parámetro null será ignorado (no se actualiza ese campo).
+     *
+     * @param organizationId id de la organización destino (no nulo/ni vacío)
+     * @param displayName nuevo display name, o null para no cambiarlo
+     * @param logoUrl nueva URL de logo (https), o null para no cambiarla
+     * @return el id de la organización actualizada
+     */
+    String updateOrganization(String organizationId, String displayName, String logoUrl);
 }

@@ -99,6 +99,13 @@ public class TenantService implements ITenantService {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant no encontrado"));
 
+        // Validar unicidad del slug si se intenta cambiar
+        if (dto.getSlug() != null && !dto.getSlug().equals(tenant.getSlug())) {
+            if (tenantRepository.existsBySlug(dto.getSlug())) {
+                throw new IllegalArgumentException("Tenant con SLUG '" + dto.getSlug() + "' ya existe");
+            }
+        }
+
         if (dto.getSlug() != null)
             tenant.setSlug(dto.getSlug());
         if (dto.getStatus() != null)

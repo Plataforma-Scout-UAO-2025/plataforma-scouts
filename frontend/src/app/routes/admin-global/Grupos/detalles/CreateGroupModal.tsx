@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button, Input, Label, ImageUpload } from "@/components/ui";
 import {
@@ -29,8 +30,12 @@ import { es } from "date-fns/locale";
 import {
   createGroupAction,
   fetchGroupsWithAdminsAction,
+  validateGroupSlugAction,
 } from "@/store/groups/groupsActions";
-import { clearNotification } from "@/store/groups/groupsSlice";
+import {
+  clearNotification,
+  resetSlugValidation,
+} from "@/store/groups/groupsSlice";
 import type { CreateGroupDTO } from "@/types/group.type";
 import { useGroup } from "@/hooks/useGroup";
 import { uploadPhotoFile } from "@/lib/imageUtils";
@@ -51,7 +56,7 @@ export default function CreateGroupModal({
     status: "ACTIVE",
   });
   const dispatch = useDispatch<AppDispatch>();
-  const { message, error } = useGroup();
+  const { message, error, slugValidation } = useGroup();
 
   useEffect(() => {
     if (message) {
@@ -71,8 +76,18 @@ export default function CreateGroupModal({
         isActive: true,
         status: "ACTIVE",
       });
+      dispatch(resetSlugValidation());
     }
-  }, [open]);
+  }, [open, dispatch]);
+
+  const validateSlug = (slug: string) => {
+    if (!slug || slug.trim() === "") {
+      dispatch(resetSlugValidation());
+      return;
+    }
+
+    dispatch(validateGroupSlugAction({ slug }));
+  };
 
   const handleChange = <K extends keyof CreateGroupDTO>(
     field: K,
@@ -90,6 +105,12 @@ export default function CreateGroupModal({
         status: String(value),
         isActive: String(value) === "ACTIVE",
       }));
+    } else if (field === "slug") {
+      setForm((prev) => ({ ...prev, [field]: value }));
+      const timeoutId = setTimeout(() => {
+        validateSlug(String(value));
+      }, 500);
+      return () => clearTimeout(timeoutId);
     } else {
       setForm((prev) => ({ ...prev, [field]: value }));
     }
@@ -103,15 +124,40 @@ export default function CreateGroupModal({
       return;
     }
 
-    const generatedSlug = form.name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
+    if (!form.slug || form.slug.trim() === "") {
+      toast.error("El slug es requerido");
+      return;
+    }
+
+    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!slugRegex.test(form.slug)) {
+      toast.error(
+        "El slug solo puede contener letras minúsculas, números y guiones"
+      );
+      return;
+    }
+
+    if (slugValidation.error || slugValidation.isAvailable === false) {
+      toast.error(
+        slugValidation.error ||
+          "El slug no está disponible o hay un error en la validación"
+      );
+      return;
+    }
+
+    if (slugValidation.isValidating) {
+      toast.info("Esperando validación del slug...");
+      return;
+    }
 
     if (!form.email || form.email.trim() === "") {
       toast.error("El correo electrónico es requerido");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      toast.error("El formato del correo electrónico no es válido");
       return;
     }
 
@@ -123,7 +169,7 @@ export default function CreateGroupModal({
 
     const groupData = {
       tenant_id: "A", // Tenant por defecto para grupos globales
-      slug: generatedSlug,
+      slug: form.slug ?? "",
       name: form.name,
       district: form.district || null,
       identifier_number: form.identifierNumber || null,
@@ -159,6 +205,9 @@ export default function CreateGroupModal({
           <DialogTitle className="text-2xl font-bold text-primary">
             Crear Grupo
           </DialogTitle>
+          <DialogDescription>
+            Completa la información para crear un nuevo grupo scout
+          </DialogDescription>
         </DialogHeader>
         <div className="p-4 bg-white rounded-md border border-slate-200">
           <h3 className="text-lg font-medium text-gray-700 mb-4">
@@ -173,6 +222,41 @@ export default function CreateGroupModal({
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="Nombre del grupo"
               />
+            </div>
+            <div>
+              <Label className="text-sm text-accent-foreground">Slug *</Label>
+              <Input
+                className={`mt-1 w-full ${
+                  slugValidation.error || slugValidation.isAvailable === false
+                    ? "border-red-500"
+                    : slugValidation.isAvailable === true
+                    ? "border-green-500"
+                    : ""
+                }`}
+                value={form.slug ?? ""}
+                onChange={(e) => handleChange("slug", e.target.value)}
+                placeholder="slug-del-grupo"
+              />
+              {slugValidation.isValidating && (
+                <p className="text-xs text-gray-500 mt-1">Validando...</p>
+              )}
+              {slugValidation.error && (
+                <p className="text-xs text-red-500 mt-1">
+                  {slugValidation.error}
+                </p>
+              )}
+              {!slugValidation.error &&
+                slugValidation.isAvailable === false && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Este slug ya está en uso
+                  </p>
+                )}
+              {!slugValidation.error && slugValidation.isAvailable === true && (
+                <p className="text-xs text-green-600 mt-1">Slug disponible</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Solo letras minúsculas, números y guiones
+              </p>
             </div>
             <div>
               <Label className="text-sm text-accent-foreground">Distrito</Label>
@@ -193,7 +277,7 @@ export default function CreateGroupModal({
                 onChange={(e) =>
                   handleChange("identifierNumber", e.target.value)
                 }
-                placeholder="NIT u otro identificador"
+                placeholder="Identificador"
               />
             </div>
             <div>
@@ -218,7 +302,7 @@ export default function CreateGroupModal({
             </div>
             <div>
               <Label className="text-sm text-accent-foreground">
-                Correo electrónico
+                Correo electrónico *
               </Label>
               <Input
                 type="email"
@@ -251,6 +335,9 @@ export default function CreateGroupModal({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
+                    captionLayout="dropdown"
+                    fromYear={1900}
+                    toYear={new Date().getFullYear()}
                     selected={
                       form.foundedIn ? new Date(form.foundedIn) : undefined
                     }
@@ -260,7 +347,9 @@ export default function CreateGroupModal({
                       }
                     }}
                     disabled={(date) => date > new Date()}
-                    defaultMonth={form.foundedIn ? new Date(form.foundedIn) : undefined}
+                    defaultMonth={
+                      form.foundedIn ? new Date(form.foundedIn) : undefined
+                    }
                     initialFocus
                     locale={es}
                   />
@@ -274,22 +363,6 @@ export default function CreateGroupModal({
                 value={form.motto ?? ""}
                 onChange={(e) => handleChange("motto", e.target.value)}
                 placeholder="Lema del grupo"
-              />
-            </div>
-            <div>
-              <ImageUpload
-                label="Logo del grupo"
-                value={form.logoObjectId ?? ""}
-                onChange={(objectId) => handleChange("logoObjectId", objectId)}
-                onUpload={uploadPhotoFile}
-              />
-            </div>
-            <div>
-              <ImageUpload
-                label="Pañoleta del grupo"
-                value={form.scarfObjectId ?? ""}
-                onChange={(objectId) => handleChange("scarfObjectId", objectId)}
-                onUpload={uploadPhotoFile}
               />
             </div>
             <div>
@@ -307,7 +380,22 @@ export default function CreateGroupModal({
                 </SelectContent>
               </Select>
             </div>
-
+            <div>
+              <ImageUpload
+                label="Logo del grupo"
+                value={form.logoObjectId ?? ""}
+                onChange={(objectId) => handleChange("logoObjectId", objectId)}
+                onUpload={uploadPhotoFile}
+              />
+            </div>
+            <div>
+              <ImageUpload
+                label="Pañoleta del grupo"
+                value={form.scarfObjectId ?? ""}
+                onChange={(objectId) => handleChange("scarfObjectId", objectId)}
+                onUpload={uploadPhotoFile}
+              />
+            </div>
             <div className="md:col-span-2">
               <Label className="text-sm text-accent-foreground">Misión</Label>
               <Textarea

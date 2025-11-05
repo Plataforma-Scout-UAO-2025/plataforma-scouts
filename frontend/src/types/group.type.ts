@@ -26,6 +26,7 @@ export interface GroupResponseDTO {
 export interface CreateGroupDTO {
   groupId?: number;
   name: string;
+  slug: string;
   district?: string;
   identifierNumber?: string;
   address?: string;

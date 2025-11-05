@@ -145,6 +145,13 @@ export default function GroupAdminModal({
     }
     if (!datosPersonales.username.trim()) {
       newErrors.username = "El usuario es requerido";
+    } else {
+      const uname = datosPersonales.username.trim();
+      if (uname.length > 10) {
+        newErrors.username = "El usuario no puede tener más de 10 caracteres";
+      } else if (uname.includes(".")) {
+        newErrors.username = "El usuario no puede contener puntos";
+      }
     }
     if (!datosPersonales.password) {
       newErrors.password = "La contraseña es requerida";
@@ -158,6 +165,9 @@ export default function GroupAdminModal({
     }
     if (!datosPersonales.identification.trim()) {
       newErrors.identification = "El número de documento es requerido";
+    }
+    if (!datosPersonales.document_type) {
+      newErrors.document_type = "El tipo de documento es requerido";
     }
     if (!datosPersonales.birth_date) {
       newErrors.birth_date = "La fecha de nacimiento es requerida";
@@ -311,6 +321,7 @@ export default function GroupAdminModal({
               <Label>Usuario</Label>
               <Input
                 name="username"
+                maxLength={10}
                 value={datosPersonales.username}
                 onChange={handlePersonalChange}
                 className="mt-1 w-full"
@@ -318,6 +329,9 @@ export default function GroupAdminModal({
               {errors.username && (
                 <p className="text-red-600 text-sm">{errors.username}</p>
               )}
+              <p className="text-xs text-gray-500 mt-1">
+                Máximo 10 caracteres. No use puntos (.).
+              </p>
             </div>
 
             <div>
@@ -355,13 +369,28 @@ export default function GroupAdminModal({
             </div>
 
             <div>
-              <Label>Tipo documento</Label>
-              <Input
-                name="document_type"
+              <Label>Tipo de documento</Label>
+              <Select
                 value={datosPersonales.document_type}
-                onChange={handlePersonalChange}
-                className="mt-1 w-full"
-              />
+                onValueChange={(v: string) =>
+                  setDatosPersonales((prev) => ({ ...prev, document_type: v }))
+                }
+              >
+                <SelectTrigger className="w-full mt-1 bg-white">
+                  <SelectValue placeholder="Selecciona un tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CC">Cédula de Ciudadanía (CC)</SelectItem>
+                  <SelectItem value="TI">Tarjeta de Identidad (TI)</SelectItem>
+                  <SelectItem value="RC">Registro Civil (RC)</SelectItem>
+                  <SelectItem value="CE">Cédula de Extranjería (CE)</SelectItem>
+                  <SelectItem value="PA">Pasaporte (PA)</SelectItem>
+                  <SelectItem value="PEP">Permiso Especial de Permanencia (PEP)</SelectItem>
+                  <SelectItem value="PPT">Permiso por Protección Temporal (PPT)</SelectItem>
+                  <SelectItem value="NIT">Número de Identificación Tributaria (NIT)</SelectItem>
+                  <SelectItem value="NUIP">Número Único de Identificación Personal (NUIP)</SelectItem>
+                </SelectContent>
+              </Select>
               {errors.document_type && (
                 <p className="text-red-600 text-sm">{errors.document_type}</p>
               )}

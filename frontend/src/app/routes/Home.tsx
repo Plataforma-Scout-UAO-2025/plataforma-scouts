@@ -31,7 +31,11 @@ export default function Home() {
               </ul>
             </nav>
 
+<<<<<<< HEAD
             <LoginButton variant="outline" organization="org_GSCNqgwZbxhKkEYr">Iniciar sesión</LoginButton>
+=======
+            <LoginButton variant="outline" organization={import.meta.env.VITE_ADMIN_ORGANIZATION_ID}>Admin</LoginButton>
+>>>>>>> develop
           </div>
         </div>
       </header>

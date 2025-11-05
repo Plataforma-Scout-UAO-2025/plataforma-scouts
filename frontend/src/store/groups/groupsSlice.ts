@@ -12,6 +12,7 @@ import {
   fetchActiveGroupsCountAction,
   fetchInactiveGroupsCountAction,
   fetchTopGroupsByMembersAction,
+  validateGroupSlugAction,
 } from "./groupsActions";
 import type { GroupResponseDTO as Group, GroupMembersDTO, TopGroupByMembersDTO, GroupWithAdminBackendDTO } from "@/types/group.type";
 interface GroupsState {
@@ -26,6 +27,11 @@ interface GroupsState {
   activeGroupsCount: number;
   inactiveGroupsCount: number;
   topGroupsByMembers: TopGroupByMembersDTO[];
+  slugValidation: {
+    isValidating: boolean;
+    isAvailable: boolean | null;
+    error: string | null;
+  };
 }
 const initialState: GroupsState = {
   groups: [],
@@ -39,6 +45,11 @@ const initialState: GroupsState = {
   activeGroupsCount: 0,
   inactiveGroupsCount: 0,
   topGroupsByMembers: [],
+  slugValidation: {
+    isValidating: false,
+    isAvailable: null,
+    error: null,
+  },
 };
 
 
@@ -55,6 +66,13 @@ const groupsSlice = createSlice({
       state.group = null;
       state.error = null;
       state.message = "";
+    },
+    resetSlugValidation(state) {
+      state.slugValidation = {
+        isValidating: false,
+        isAvailable: null,
+        error: null,
+      };
     },
   },
   extraReducers: (builder) => {
@@ -230,7 +248,28 @@ const groupsSlice = createSlice({
       state.loading = false;
       state.error = action.payload?.error as string;
     });
+
+    // Validar slug de grupo
+    builder.addCase(validateGroupSlugAction.pending, (state) => {
+      state.slugValidation.isValidating = true;
+      state.slugValidation.error = null;
+      state.slugValidation.isAvailable = null;
+    });
+    builder.addCase(validateGroupSlugAction.fulfilled, (state, action) => {
+      state.slugValidation.isValidating = false;
+      state.slugValidation.isAvailable = action.payload.valid;
+      if (action.payload.valid === false && (action.payload.reason || action.payload.message)) {
+        state.slugValidation.error = action.payload.reason || action.payload.message;
+      } else {
+        state.slugValidation.error = null;
+      }
+    });
+    builder.addCase(validateGroupSlugAction.rejected, (state, action) => {
+      state.slugValidation.isValidating = false;
+      state.slugValidation.error = action.payload?.error || "Error al validar slug";
+      state.slugValidation.isAvailable = false;
+    });
   },
 });
-export const { clearNotification, clearGroups } = groupsSlice.actions;
+export const { clearNotification, clearGroups, resetSlugValidation } = groupsSlice.actions;
 export default groupsSlice.reducer;
