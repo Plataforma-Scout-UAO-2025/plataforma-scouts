@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -13,20 +14,29 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import uao.edu.co.scouts_project.application.service.IAuth0Service;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
+import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
 import uao.edu.co.scouts_project.domain.port.ConnectionQueryPort;
 import uao.edu.co.scouts_project.domain.port.OrganizationQueryPort;
+import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
+
+import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GLOBAL;
 import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GRUPO;
 import uao.edu.co.scouts_project.member.mapper.MemberMapper;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.service.IMemberService;
+import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
+import uao.edu.co.scouts_project.member.shared.enums.Status;
 import uao.edu.co.scouts_project.organigrama.dto.CreateGroupAdminRequestDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupAdminCreatedResponseDTO;
 import uao.edu.co.scouts_project.organigrama.dto.GroupDTO;
@@ -48,6 +58,8 @@ public class GroupService implements IGroupService {
     private final TenantRepository tenantRepository;
     private final SupabaseStorageService storageService;
 
+    private final Auth0AdminPort adminPort;
+    private final RoleMappingPort roleMappingPort;
     private final ConnectionQueryPort connectionQueryPort;
     private final OrganizationQueryPort organizationQueryPort;
     private final ITenantService tenantService;
@@ -59,8 +71,19 @@ public class GroupService implements IGroupService {
     private static final Pattern SLUG_PATTERN = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$");
     private static final String BUCKET_IMAGES = "images";
 
+    @Value("${SUPERUSER_USERNAME}")
+    private String SUPERUSER_USERNAME;
+
+    @Value("${SUPERUSER_PASSWORD}")
+    private String SUPERUSER_PASSWORD;
+
+    @Value("${SUPERUSER_EMAIL}")
+    private String SUPERUSER_EMAIL;
+
     public GroupService(
             @Qualifier("organigramaStorageService") SupabaseStorageService storageService,
+            Auth0AdminPort adminPort,
+            RoleMappingPort roleMappingPort,
             ConnectionQueryPort connectionQueryPort,
             ITenantService tenantService,
             IMemberService memberService,
@@ -72,6 +95,8 @@ public class GroupService implements IGroupService {
         this.tenantRepository = tenantRepository;
         this.memberService = memberService;
         this.storageService = storageService;
+        this.adminPort = adminPort;
+        this.roleMappingPort = roleMappingPort;
         this.connectionQueryPort = connectionQueryPort;
         this.organizationQueryPort = organizationQueryPort;
         this.tenantService = tenantService;
@@ -119,10 +144,14 @@ public class GroupService implements IGroupService {
         // Si llega una imagen, subirla a Supabase y usar su URL pública para la
         // organización
         String organizationImageUrl = "https://img.freepik.com/vector-gratis/vector-diseno-degradado-colorido-pajaro_343694-2506.jpg?semt=ais_hybrid&w=740&q=80";
+        UUID uploadedLogoId = null;
         try {
             if (imageFile != null && !imageFile.isEmpty()) {
                 UUID objectId = storageService.uploadFileAndGetObjectId(imageFile, BUCKET_IMAGES);
+                logger.info("Imagen subida para organización con objectId: {}", objectId);
+                uploadedLogoId = objectId;
                 String publicUrl = storageService.getPublicUrlFromObjectId(objectId);
+                logger.info("URL pública de la imagen subida: {}", publicUrl);
                 if (publicUrl != null && !publicUrl.isBlank()) {
                     organizationImageUrl = publicUrl;
                 }
@@ -149,24 +178,30 @@ public class GroupService implements IGroupService {
         organizationQueryPort.enableConnectionForOrganization(orgId, connectionId);
 
         logger.info("OK: Conexión asociada a la organización en Auth0.");
+
         // - Crear Usuario con rol de ADMIN_GLOBAL en la Base de Datos
         // de conexión de dicha organization
         // (con el 'con_id' o como se específique) en Auth0.
-        // logger.info("Se creará el super usuario en Auth0");
+        logger.info("Se creará el super usuario en Auth0");
 
         // // Crear SUPERUSUARIO ADMIN_GLOBAL en la conexión recién creada
-        // CreateUserCommandDTO superUserCmd = new CreateUserCommandDTO(
-        // SUPERUSEREMAIL,
-        // SUPERUSERPASSWORD,
-        // SUPERUSER_USERNAME);
+        CreateUserCommandDTO superUserCmd = new CreateUserCommandDTO(
+                SUPERUSER_EMAIL,
+                SUPERUSER_PASSWORD,
+                SUPERUSER_USERNAME);
 
-        // logger.info("Creando superusuario en conexión: {}", connectionRef);
-        // CreatedUserDTO createdSuperUser = this.createUserInConnection(superUserCmd,
+        logger.info("Creando superusuario en conexión: {}", connectionId);
+
+        CreatedUserDTO createdSuperUser = adminPort.createUserInConnection(superUserCmd, connectionId);
         // // Asociar al org y asignar rol ADMIN_GLOBAL
-        // addUserToOrganization(orgId, createdSuperUser.getId());
-        // assignRole(createdSuperUser.getId(), Role.ADMIN_GLOBAL);
 
-        // logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
+        adminPort.addUserToOrganization(orgId, createdSuperUser.getId());
+
+        String roleId = roleMappingPort.getAuth0RoleId(ADMIN_GLOBAL);
+
+        adminPort.assignRole(createdSuperUser.getId(), roleId);
+
+        logger.info("OK: Usuario ADMIN_GLOBAL creado con éxito.");
 
         // Crear el Tenant en BD con el org_id de Auth0
 
@@ -203,7 +238,7 @@ public class GroupService implements IGroupService {
                 group.mission(),
                 group.vision(),
                 group.history(),
-                group.logoObjectId(),
+                (uploadedLogoId != null ? uploadedLogoId : group.logoObjectId()),
                 group.scarfObjectId(),
                 group.socialLinks(),
                 group.config(),
@@ -214,6 +249,30 @@ public class GroupService implements IGroupService {
         GroupResponseDTO response = createGroup(finalGroup);
 
         logger.info("OK: Se crea el grupo con éxito en BD.");
+
+        // ||||| MEMBER |||||
+
+        logger.info("Se creará un MemberDTO");
+
+        Member newSuperUserMember = Member.builder()
+                .userId(createdSuperUser.getId())
+                .tenantId(orgId)
+                .firstName("César")
+                .lastName("Navia")
+                .age(50)
+                .role(ADMIN_GLOBAL.name())
+                .identification(String.valueOf(ThreadLocalRandom.current().nextInt(100000000, 999999999)))
+                .documentType(DocumentType.CC)
+                .email(SUPERUSER_EMAIL)
+                .gender("Masculino")
+                .isActive(true)
+                .acceptanceDate(LocalDate.now())
+                .acceptTreatment(true).build();
+
+        logger.info("Se creará el Miembro con rol en BD");
+        memberService.create_member(newSuperUserMember);
+        logger.info("OK: Miembro ADMIN_GLOBAL creado con éxito");
+
         return response;
 
     }
@@ -310,19 +369,54 @@ public class GroupService implements IGroupService {
         ensureTenantExists(tenantId);
         Group group = findGroupOrThrow(tenantId, groupSlug);
 
-        // Validar que el slug y tenantId son inmutables
-        if (dto.slug() != null && !dto.slug().equals(groupSlug)) {
-            throw new IllegalArgumentException("El campo slug es inmutable");
-        }
+        // tenantId sigue siendo inmutable
         if (dto.tenantId() != null && !dto.tenantId().equals(tenantId)) {
             throw new IllegalArgumentException("El campo tenantId es inmutable");
         }
 
+        // Si viene un nuevo slug, permitir cambiarlo (validación básica y unicidad por
+        // tenant)
+        if (dto.slug() != null && !Objects.equals(dto.slug(), group.getSlug())) {
+            validateSlugFormat(dto.slug());
+            if (groupRepository.existsByTenantIdAndSlug(tenantId, dto.slug())) {
+                throw new IllegalArgumentException(
+                        "Ya existe un grupo con el slug '" + dto.slug() + "' en este tenant");
+            }
+            group.setSlug(dto.slug());
+
+            // Actualizar también el slug del Tenant
+            var tenantDto = tenantService.getTenantById(tenantId);
+            TenantInfoDTO tenantUpdate = new TenantInfoDTO(
+                    tenantId,
+                    dto.slug(),
+                    tenantDto.status(),
+                    null,
+                    null);
+            tenantService.updateTenantInfo(tenantId, tenantUpdate);
+        }
+
+        // Detectar cambios relevantes para Auth0 (displayName y logo)
+        String newDisplayName = null;
+        if (dto.name() != null && !Objects.equals(dto.name(), group.getName())) {
+            newDisplayName = dto.name();
+        }
+        String newLogoUrl = null;
         if (dto.logoObjectId() != null && !Objects.equals(dto.logoObjectId(), group.getLogoObjectId())) {
+            newLogoUrl = storageService.getPublicUrlFromObjectId(dto.logoObjectId());
             storageService.deleteFileByObjectId(group.getLogoObjectId());
         }
         if (dto.scarfObjectId() != null && !Objects.equals(dto.scarfObjectId(), group.getScarfObjectId())) {
             storageService.deleteFileByObjectId(group.getScarfObjectId());
+        }
+
+        // Sincronizar cambios en Auth0 Organization si aplica
+        if (newDisplayName != null || newLogoUrl != null) {
+            try {
+                organizationQueryPort.updateOrganization(tenantId, newDisplayName, newLogoUrl);
+            } catch (Exception e) {
+                logger.warn("No se pudo actualizar la organización en Auth0 para tenantId={}: {}", tenantId,
+                        e.getMessage());
+            }
         }
 
         mapDtoToEntity(dto, group);
@@ -337,9 +431,34 @@ public class GroupService implements IGroupService {
         // 1. Buscar el grupo actual
         Group existing = findGroupOrThrow(tenantId, slug);
 
-        // 2. Validar slug (si cambia) - el slug es inmutable en los PATCH.
-        if (dto.getSlug() != null && !dto.getSlug().equals(existing.getSlug())) {
-            throw new IllegalArgumentException("El campo slug es inmutable");
+        // 2. Permitir cambiar el slug si viene en el PATCH (sin autogenerar)
+        if (dto.getSlug() != null && !Objects.equals(dto.getSlug(), existing.getSlug())) {
+            validateSlugFormat(dto.getSlug());
+            if (groupRepository.existsByTenantIdAndSlug(tenantId, dto.getSlug())) {
+                throw new IllegalArgumentException(
+                        "Ya existe un grupo con el slug '" + dto.getSlug() + "' en este tenant");
+            }
+            existing.setSlug(dto.getSlug());
+
+            // Actualizar también el slug del Tenant
+            var tenantDto = tenantService.getTenantById(tenantId);
+            TenantInfoDTO tenantUpdate = new TenantInfoDTO(
+                    tenantId,
+                    dto.getSlug(),
+                    tenantDto.status(),
+                    null,
+                    null);
+            tenantService.updateTenantInfo(tenantId, tenantUpdate);
+        }
+
+        // Detectar cambios relevantes para Auth0 (displayName y logo)
+        String newDisplayName = null;
+        if (dto.getName() != null && !Objects.equals(dto.getName(), existing.getName())) {
+            newDisplayName = dto.getName();
+        }
+        String newLogoUrl = null;
+        if (dto.getLogoObjectId() != null && !Objects.equals(dto.getLogoObjectId(), existing.getLogoObjectId())) {
+            newLogoUrl = storageService.getPublicUrlFromObjectId(dto.getLogoObjectId());
         }
 
         // 3. Mapear campos no nulos desde el DTO hacia la entidad
@@ -381,6 +500,16 @@ public class GroupService implements IGroupService {
         // 4. Guardar los cambios
         Group updated = groupRepository.save(existing);
 
+        // 4.1 Sincronizar cambios en Auth0 Organization si aplica
+        if (newDisplayName != null || newLogoUrl != null) {
+            try {
+                organizationQueryPort.updateOrganization(tenantId, newDisplayName, newLogoUrl);
+            } catch (Exception e) {
+                logger.warn("No se pudo actualizar la organización en Auth0 para tenantId={}: {}", tenantId,
+                        e.getMessage());
+            }
+        }
+
         // 5. Retornar DTO de respuesta con URLs y demás
         return toResponseDTO(updated);
     }
@@ -406,6 +535,17 @@ public class GroupService implements IGroupService {
 
         group.setLogoObjectId(logoObjectId);
         groupRepository.save(group);
+
+        // Actualizar también el logo en Auth0 (branding.logoUrl)
+        try {
+            String newLogoUrl = (logoObjectId != null) ? storageService.getPublicUrlFromObjectId(logoObjectId) : null;
+            if (newLogoUrl != null && !newLogoUrl.isBlank()) {
+                organizationQueryPort.updateOrganization(tenantId, null, newLogoUrl);
+            }
+        } catch (Exception e) {
+            logger.warn("No se pudo actualizar el logo de la organización en Auth0 para tenantId={}: {}", tenantId,
+                    e.getMessage());
+        }
     }
 
     @Override
@@ -559,7 +699,8 @@ public class GroupService implements IGroupService {
         // 2) Obtener o crear la conexión correcta para este grupo basado en su tenantId
         String connectionId = connectionQueryPort.createOrUpdateAuth0DbConnection(tenantId);
 
-        // 3) Crear usuario en Auth0 con rol ADMIN_GRUPO en la conexión correcta del grupo
+        // 3) Crear usuario en Auth0 con rol ADMIN_GRUPO en la conexión correcta del
+        // grupo
         CreateUserWithRoleCommandDTO cmd = new CreateUserWithRoleCommandDTO(
                 request.email(),
                 request.password(),
@@ -580,6 +721,7 @@ public class GroupService implements IGroupService {
         member.setRole(Role.ADMIN_GRUPO.name());
         member.setTenantId(tenantId);
         member.setUserId(created.getId());
+        member.setStatus(Status.APPROVED);
         member.setIsActive(member.getIsActive() != null ? member.getIsActive() : true);
 
         // 7) Crear el miembro en la base de datos

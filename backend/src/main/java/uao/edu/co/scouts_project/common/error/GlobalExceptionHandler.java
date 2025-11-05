@@ -1,6 +1,7 @@
 package uao.edu.co.scouts_project.common.error;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -82,6 +83,26 @@ public class GlobalExceptionHandler {
     body.put("details", errors);
     body.put("path", req.getRequestURI());
     return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+      HttpServletRequest req) {
+    String raw = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+    String message = raw;
+    if (raw != null) {
+      if (raw.contains("tenant_slug_key")) {
+        message = "El slug del tenant ya existe. Por favor elige otro.";
+      }
+    }
+
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put("timestamp", LocalDateTime.now());
+    body.put("status", HttpStatus.CONFLICT.value());
+    body.put("error", "Conflict");
+    body.put("message", message);
+    body.put("path", req.getRequestURI());
+    return new ResponseEntity<>(body, HttpStatus.CONFLICT);
   }
 
   @ExceptionHandler(GuardianExceptions.MemberAlreadyAssignedException.class)

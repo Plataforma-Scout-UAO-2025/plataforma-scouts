@@ -46,12 +46,14 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
 
         boolean hasLogo = normalizedLogo != null;
         String logDisplay = trimmedDisplay.length() > 100 ? trimmedDisplay.substring(0, 100) + "…" : trimmedDisplay;
-        log.info("[Auth0-Orgs] Creando organización: name={}, display_name='{}', brandingLogoPresent={}", name, logDisplay, hasLogo);
+        log.info("[Auth0-Orgs] Creando organización: name={}, display_name='{}', brandingLogoPresent={}", name,
+                logDisplay, hasLogo);
         log.debug("[Auth0-Orgs] Payload SDK (request): {}", org);
 
         long startedAt = System.currentTimeMillis();
         try {
-            Organization created = executeWithRetry(() -> api().organizations().create(org).execute(), "create organization");
+            Organization created = executeWithRetry(() -> api().organizations().create(org).execute(),
+                    "create organization");
             long tookMs = System.currentTimeMillis() - startedAt;
             String id = created.getId();
             log.info("[Auth0-Orgs] Organización creada: name={}, id={}, durationMs={}", name, id, tookMs);
@@ -63,20 +65,26 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
                 log.warn("[Auth0-Orgs] already-exists: name={} (status=409, durationMs={})", name, tookMs);
                 // Intentar recuperar la organización existente por name y devolver su id
                 try {
-                    Organization existing = executeWithRetry(() -> api().organizations().getByName(name).execute(), "get organization by name");
+                    Organization existing = executeWithRetry(() -> api().organizations().getByName(name).execute(),
+                            "get organization by name");
                     if (existing != null && existing.getId() != null) {
                         String id = existing.getId();
-                        log.info("[Auth0-Orgs] Reutilizando organización existente: name={}, id={} (tras 409)", name, id);
+                        log.info("[Auth0-Orgs] Reutilizando organización existente: name={}, id={} (tras 409)", name,
+                                id);
                         return id;
                     }
                 } catch (Exception lookupEx) {
-                    log.warn("[Auth0-Orgs] No fue posible recuperar organización por name tras 409: name={}, cause={}", name, lookupEx.getMessage());
+                    log.warn("[Auth0-Orgs] No fue posible recuperar organización por name tras 409: name={}, cause={}",
+                            name, lookupEx.getMessage());
                 }
                 throw new OrganizationAlreadyExistsException(name);
             }
             String code = "ERR_ORG_CREATE_API_" + e.getStatusCode();
-            log.error("[Auth0-Orgs] {}: name={}, status={}, message='{}', durationMs={}", code, name, e.getStatusCode(), e.getMessage(), tookMs);
-            throw new Auth0GatewayException(code + ": Fallo creando organización: status=" + e.getStatusCode() + ", message=" + e.getMessage(), e);
+            log.error("[Auth0-Orgs] {}: name={}, status={}, message='{}', durationMs={}", code, name, e.getStatusCode(),
+                    e.getMessage(), tookMs);
+            throw new Auth0GatewayException(
+                    code + ": Fallo creando organización: status=" + e.getStatusCode() + ", message=" + e.getMessage(),
+                    e);
         } catch (Auth0Exception e) {
             long tookMs = System.currentTimeMillis() - startedAt;
             String code = "ERR_ORG_CREATE_TRANSPORT";
@@ -115,13 +123,17 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
 
             // Intentar ADD
             try {
-                executeWithRetry(() -> api().organizations().addConnection(orgId, payload).execute(), "add enabled connection");
+                executeWithRetry(() -> api().organizations().addConnection(orgId, payload).execute(),
+                        "add enabled connection");
                 long tookMs = System.currentTimeMillis() - startedAt;
-                log.info("[Auth0-Orgs] Conexión habilitada: orgId={}, connectionId={}, durationMs={}", orgId, connId, tookMs);
+                log.info("[Auth0-Orgs] Conexión habilitada: orgId={}, connectionId={}, durationMs={}", orgId, connId,
+                        tookMs);
                 return connId;
             } catch (APIException addEx) {
                 if (addEx.getStatusCode() == 409) {
-                    log.warn("[Auth0-Orgs] add-enabled-connection 409 (ya habilitada), procediendo con update: orgId={}, connectionId={}", orgId, connId);
+                    log.warn(
+                            "[Auth0-Orgs] add-enabled-connection 409 (ya habilitada), procediendo con update: orgId={}, connectionId={}",
+                            orgId, connId);
                     EnabledConnectionPayload updatePayload = new EnabledConnectionPayload();
                     updatePayload.setAssignMembershipOnLogin(true);
                     updatePayload.setIsSignupEnabled(true);
@@ -129,15 +141,19 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
 
                     log.debug("[Auth0-Orgs] Payload updateConnection (request): {}", updatePayload);
 
-                    executeWithRetry(() -> api().organizations().updateConnection(orgId, connId, updatePayload).execute(), "update enabled connection");
+                    executeWithRetry(
+                            () -> api().organizations().updateConnection(orgId, connId, updatePayload).execute(),
+                            "update enabled connection");
                     long tookMs = System.currentTimeMillis() - startedAt;
-                    log.info("[Auth0-Orgs] Conexión actualizada tras 409: orgId={}, connectionId={}, durationMs={}", orgId, connId, tookMs);
+                    log.info("[Auth0-Orgs] Conexión actualizada tras 409: orgId={}, connectionId={}, durationMs={}",
+                            orgId, connId, tookMs);
                     return connId;
                 }
                 if (addEx.getStatusCode() == 404) {
                     long tookMs = System.currentTimeMillis() - startedAt;
                     String code = "ERR_ORG_ENABLE_CONN_API_404";
-                    log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, message='{}', durationMs={}", code, orgId, connId, addEx.getMessage(), tookMs);
+                    log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, message='{}', durationMs={}", code, orgId,
+                            connId, addEx.getMessage(), tookMs);
                     throw new ResourceNotFoundException("Connection not found: " + connId, addEx);
                 }
                 throw addEx;
@@ -147,17 +163,81 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
             int status = e.getStatusCode();
             if (status == 404) {
                 String code = "ERR_ORG_GET_API_404";
-                log.error("[Auth0-Orgs] {}: orgId={}, message='{}', durationMs={}", code, orgId, e.getMessage(), tookMs);
+                log.error("[Auth0-Orgs] {}: orgId={}, message='{}', durationMs={}", code, orgId, e.getMessage(),
+                        tookMs);
                 throw new ResourceNotFoundException("Organization not found: " + orgId, e);
             }
             String code = "ERR_ORG_ENABLE_CONN_API_" + status;
-            log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, status={}, message='{}', durationMs={}", code, orgId, connId, status, e.getMessage(), tookMs);
-            throw new Auth0GatewayException(code + ": Fallo habilitando conexión: status=" + status + ", message=" + e.getMessage(), e);
+            log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, status={}, message='{}', durationMs={}", code, orgId,
+                    connId, status, e.getMessage(), tookMs);
+            throw new Auth0GatewayException(
+                    code + ": Fallo habilitando conexión: status=" + status + ", message=" + e.getMessage(), e);
         } catch (Auth0Exception e) {
             long tookMs = System.currentTimeMillis() - startedAt;
             String code = "ERR_ORG_ENABLE_CONN_TRANSPORT";
-            log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, message='{}', durationMs={}", code, orgId, connId, e.getMessage(), tookMs);
+            log.error("[Auth0-Orgs] {}: orgId={}, connectionId={}, message='{}', durationMs={}", code, orgId, connId,
+                    e.getMessage(), tookMs);
             throw new Auth0GatewayException(code + ": Fallo habilitando conexión (transport)", e);
+        }
+    }
+
+    @Override
+    public String updateOrganization(String organizationId, String displayName, String logoUrl) {
+        if (organizationId == null || organizationId.trim().isEmpty()) {
+            throw new IllegalArgumentException("organizationId no puede ser nulo o vacío");
+        }
+
+        final String orgId = organizationId.trim();
+        final String trimmedDisplay = (displayName != null) ? displayName.trim() : null;
+        final String normalizedLogo = OrganizationPayloadUtil.normalizeLogoUrlOrNull(logoUrl);
+
+        // Si no hay nada para actualizar, salir temprano
+        if ((trimmedDisplay == null || trimmedDisplay.isEmpty()) && normalizedLogo == null) {
+            return orgId;
+        }
+
+        long startedAt = System.currentTimeMillis();
+        try {
+            // Construir payload parcial para PATCH
+            Organization patch = new Organization();
+            if (trimmedDisplay != null && !trimmedDisplay.isEmpty()) {
+                patch.setDisplayName(trimmedDisplay);
+            }
+            if (normalizedLogo != null) {
+                Branding branding = new Branding();
+                branding.setLogoUrl(normalizedLogo);
+                patch.setBranding(branding);
+            }
+
+            log.info("[Auth0-Orgs] Actualizando organización: orgId={}, changeDisplayName={}, changeLogo={}",
+                    orgId, (trimmedDisplay != null && !trimmedDisplay.isEmpty()), (normalizedLogo != null));
+            log.debug("[Auth0-Orgs] Payload SDK (update request): {}", patch);
+
+            Organization updated = executeWithRetry(() -> api().organizations().update(orgId, patch).execute(),
+                    "update organization");
+            long tookMs = System.currentTimeMillis() - startedAt;
+            log.info("[Auth0-Orgs] Organización actualizada: orgId={}, newDisplayName='{}', durationMs={}", orgId,
+                    updated != null ? updated.getDisplayName() : trimmedDisplay, tookMs);
+            return orgId;
+        } catch (APIException e) {
+            long tookMs = System.currentTimeMillis() - startedAt;
+            int status = e.getStatusCode();
+            if (status == 404) {
+                String code = "ERR_ORG_UPDATE_API_404";
+                log.error("[Auth0-Orgs] {}: orgId={}, message='{}', durationMs={}", code, orgId, e.getMessage(),
+                        tookMs);
+                throw new ResourceNotFoundException("Organization not found: " + orgId, e);
+            }
+            String code = "ERR_ORG_UPDATE_API_" + status;
+            log.error("[Auth0-Orgs] {}: orgId={}, status={}, message='{}', durationMs={}", code, orgId, status,
+                    e.getMessage(), tookMs);
+            throw new Auth0GatewayException(code + ": Fallo actualizando organización: status=" + status + ", message="
+                    + e.getMessage(), e);
+        } catch (Auth0Exception e) {
+            long tookMs = System.currentTimeMillis() - startedAt;
+            String code = "ERR_ORG_UPDATE_TRANSPORT";
+            log.error("[Auth0-Orgs] {}: orgId={}, message='{}', durationMs={}", code, orgId, e.getMessage(), tookMs);
+            throw new Auth0GatewayException(code + ": Fallo actualizando organización (transport)", e);
         }
     }
 
@@ -173,8 +253,13 @@ public class Auth0OrganizationAdapter implements OrganizationQueryPort {
                 int status = e.getStatusCode();
                 boolean retryable = status == 429 || (status >= 500 && status < 600);
                 if (retryable && attempts <= 3) {
-                    log.warn("[Auth0-Orgs] {} recibió {}. Reintentando {}/3 en {} ms", opDesc, status, attempts, backoff);
-                    try { Thread.sleep(backoff); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                    log.warn("[Auth0-Orgs] {} recibió {}. Reintentando {}/3 en {} ms", opDesc, status, attempts,
+                            backoff);
+                    try {
+                        Thread.sleep(backoff);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
                     backoff *= 2;
                     continue;
                 }
