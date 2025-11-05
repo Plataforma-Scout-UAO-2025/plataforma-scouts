@@ -11,7 +11,7 @@ import {
 import { Pencil, Trash, User, ArrowRightLeft} from "lucide-react";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
-import DeleteMemberModal from "../modals/DeleteMemberModal";
+import DeleteMemberModal from "@/app/routes/guardians/members/components/modals/DeleteMemberModal";
 
 interface GuardianMembersTableProps {
   filteredMembers: MemberBasicInfo[];

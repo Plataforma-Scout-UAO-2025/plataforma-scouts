@@ -58,7 +58,7 @@ export default function GuardianInfo({
 
       <CardContent className="space-y-2 text-lg">
         <p>
-          <strong>Nombre:</strong> {guardian.first_name} {guardian.last_name}
+          <strong>Nombre:</strong> {guardian.firstName} {guardian.lastName}
         </p>
 
         <p>

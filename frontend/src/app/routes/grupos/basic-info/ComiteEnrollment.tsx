@@ -23,7 +23,7 @@ function ComiteAdminEnrollment() {
   const navigate = useNavigate();
   const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
 
-    const {
+  const {
     sections,
     subgroups,
     selectedGroupSlug,
@@ -36,7 +36,6 @@ function ComiteAdminEnrollment() {
   } = useOrgStructure({
     orgId: orgId || "",
     open: true,
-    
   });
 
   const {
@@ -56,8 +55,10 @@ function ComiteAdminEnrollment() {
     handlePersonalChange,
     handleEmergencyContactsChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "COMITE_ADMIN", totalPaginas: 3,  selectedSection,   
-    selectedSubgroup });
+  } = useRoleEnrollment({
+    role: "COMITE_ADMIN", totalPaginas: 3, selectedSection,
+    selectedSubgroup
+  });
 
   const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
@@ -67,25 +68,25 @@ function ComiteAdminEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) 
+    if (pagina === 1)
       return (
-     <>
-      <PersonalDataForm
-        datos={datosPersonales}
-        handleChange={handlePersonalChange}
-        setDatos={setDatosPersonales}
-        errors={errors}
-      />
-      <EmergencyContacts
-        datos={datosPersonales}
-        setDatos={setDatosPersonales}
-        onContactChange={handleEmergencyContactsChange}
-        errors={errors}
-      />
-    </>
-  );
+        <>
+          <PersonalDataForm
+            datos={datosPersonales}
+            handleChange={handlePersonalChange}
+            setDatos={setDatosPersonales}
+            errors={errors}
+          />
+          <EmergencyContacts
+            datos={datosPersonales}
+            setDatos={setDatosPersonales}
+            onContactChange={handleEmergencyContactsChange}
+            errors={errors}
+          />
+        </>
+      );
 
-  if (pagina === 2) {
+    if (pagina === 2) {
       return (
         <DataTreatmentConsent
           value={datosPersonales.accept_treatment}
@@ -94,7 +95,7 @@ function ComiteAdminEnrollment() {
         />
       );
     }
-  return (
+    return (
       <div className="col-span-full space-y-4">
         <h3 className="text-lg font-semibold text-primary border-b-2 border-primary pb-2">
           Asignación Organizacional

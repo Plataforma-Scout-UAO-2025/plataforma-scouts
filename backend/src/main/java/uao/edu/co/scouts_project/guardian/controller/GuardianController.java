@@ -147,6 +147,25 @@ public class GuardianController {
     }
 
     @Operation(
+    summary = "Reasignar miembro a otro guardian",
+    description = "Cambia el guardian responsable de un miembro específico."
+    )
+    @ApiResponse(responseCode = "200", description = "Miembro reasignado exitosamente.")
+    @ApiResponse(responseCode = "404", description = "Guardian o miembro no encontrado.")
+    @PutMapping("/{currentGuardianId}/members/{memberId}/reassign/{newGuardianId}")
+    public ResponseEntity<Void> reassignMemberGuardian(
+        @Parameter(description = "ID del guardian actual", required = true)
+        @PathVariable @NotNull Long currentGuardianId,
+        @Parameter(description = "ID del miembro a reasignar", required = true)
+        @PathVariable @NotNull Long memberId,
+        @Parameter(description = "ID del nuevo guardian", required = true)
+        @PathVariable @NotNull Long newGuardianId
+    ) {
+    guardianService.reassignMemberGuardian(memberId, currentGuardianId, newGuardianId);
+    return ResponseEntity.ok().build();
+    }
+
+    @Operation(
         summary = "Eliminar acudiente",
         description = "Elimina un acudiente (guardian) del sistema."
     )

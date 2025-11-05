@@ -286,7 +286,6 @@ export function useScoutEnrollment(
         normalizedUserRole,
       );
 
-      // Extraer el id devuelto por Auth0 (normalizado en la action)
       try {
         const created = auth0Result.payload as { userId?: string } | undefined;
         const auth0Id = created?.userId;
@@ -338,8 +337,6 @@ export function useScoutEnrollment(
         return;
       }
 
-      // Obtener el ID del miembro creado
-      // La estructura varía según si se incluyeron datos escolares o no
       const createdMember = memberResult.payload as {
         memberId?: number;
         member_id?: number;
@@ -349,8 +346,6 @@ export function useScoutEnrollment(
           };
         };
       };
-
-      // Extraer memberId según la estructura de respuesta
     
       const memberId =
         createdMember?.newMember?.member?.memberId ??

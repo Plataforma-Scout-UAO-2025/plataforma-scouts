@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import EmergencyContactItem from './EmergencyContactItem';
+import EmergencyContactItem from '@/app/routes/guardians/members/components/modals/emergencyContact/EmergencyContactItem';
 
 interface EmergencyContact {
   name: string;

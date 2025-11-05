@@ -306,15 +306,14 @@ const ultimosPagosColumns: ColumnDef<InstallmentPayment>[] = [
       const installment = row.original;
       return (
         <div
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            installment.status === "PENDING"
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${installment.status === "PENDING"
               ? "bg-yellow-100 text-yellow-800"
               : installment.status === "PAID"
-              ? "bg-green-100 text-green-800"
-              : installment.status === "OVERDUE"
-              ? "bg-red-100 text-red-800"
-              : "bg-blue-100 text-blue-800"
-          }`}
+                ? "bg-green-100 text-green-800"
+                : installment.status === "OVERDUE"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-blue-100 text-blue-800"
+            }`}
         >
           {statusDict[installment.status]}
         </div>
@@ -443,9 +442,9 @@ const UltimosPagosTable = ({ data }: UltimosPagosTableProps) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -541,9 +540,9 @@ const MiembrosMoraTable = ({ data }: MiembrosMoraTableProps) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -686,7 +685,7 @@ export default function TesoreroView() {
       console.error("Error al obtener los datos del dashboard:", error);
     }
   }
- 
+
 
   useEffect(() => {
     if (tenantId) {
@@ -796,11 +795,11 @@ export default function TesoreroView() {
             <CardTitle>Distribución estado de pagos mes actual</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-center">
-             <PieChart data={data?.distribucion_pagos || {
-               porcentaje_pagado: 0,
-               porcentaje_pendiente: 0,
-               porcentaje_vencido: 0,
-             }} />
+            <PieChart data={data?.distribucion_pagos || {
+              porcentaje_pagado: 0,
+              porcentaje_pendiente: 0,
+              porcentaje_vencido: 0,
+            }} />
           </CardContent>
         </Card>
       </section>

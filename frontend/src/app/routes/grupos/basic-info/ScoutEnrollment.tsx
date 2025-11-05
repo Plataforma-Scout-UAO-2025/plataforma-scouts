@@ -118,7 +118,6 @@ function ScoutEnrollment() {
           errors={errors}
         />
       );
-    
     // Página 4: Asignación organizacional
     return (
       <div className="col-span-full space-y-4">
@@ -187,7 +186,7 @@ function ScoutEnrollment() {
       </div>
     );
   };
-    if (authLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Cargando...</p>

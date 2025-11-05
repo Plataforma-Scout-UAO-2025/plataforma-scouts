@@ -163,8 +163,8 @@ export default function AssignmentSelectors(props: Props) {
                     rolesLoading
                       ? "Cargando roles..."
                       : roles.length === 0
-                      ? "No hay roles disponibles"
-                      : "Selecciona un rol"
+                        ? "No hay roles disponibles"
+                        : "Selecciona un rol"
                   }
                 />
               </SelectTrigger>

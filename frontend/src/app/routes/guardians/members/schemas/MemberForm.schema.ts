@@ -1,15 +1,6 @@
 import { z } from 'zod';
-import { emergencyContactSchema } from './EmergencyContact.schema';
-/**
- * Schema de validación para el formulario de miembros/scouts
- * 
- * Valida:
- * - Información personal (nombres, apellidos, documento, género, fecha nacimiento)
- * - Contacto (email, teléfono en formato colombiano, dirección)
- * - Información scout (rol, fecha aceptación, estado activo)
- * - Información adicional opcional (peso, altura, hobbies, deportes, instrumentos)
- * - Contactos de emergencia (array opcional)
- */
+import { emergencyContactSchema } from '@/app/routes/guardians/members/schemas/EmergencyContact.schema';
+
 export const memberFormSchema = z.object({
   firstName: z.string().min(1, 'Los nombres son requeridos'),
   lastName: z.string().min(1, 'Los apellidos son requeridos'),

@@ -84,7 +84,6 @@ export default function RoleSelectionForm({
 
   const handleRoleSelect = (newRole: string) => {
     const selectedRole = newRole as role;
-    
     // Si es el mismo rol, no hacer nada
     if (selectedRole === currentRole) {
       return;
@@ -131,10 +130,10 @@ export default function RoleSelectionForm({
   return (
     <>
       <div className="space-y-4 border-t-2 pt-4">
-         <div className="flex items-center gap-2 border-b-2 border-primary pb-2">
-        <Shield className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold text-primary">Cambio de Rol</h3>
-       </div>
+        <div className="flex items-center gap-2 border-b-2 border-primary pb-2">
+          <Shield className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold text-primary">Cambio de Rol</h3>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="role" className="text-sm font-medium">
             Rol del Miembro
@@ -162,7 +161,6 @@ export default function RoleSelectionForm({
               ))}
             </SelectContent>
           </Select>
-          
           {currentRole && (
             <p className="text-xs text-muted-foreground mt-1">
               Rol actual: <span className="font-medium">{getRoleLabel(currentRole)}</span>
@@ -204,7 +202,7 @@ export default function RoleSelectionForm({
               <Button variant="secondary" onClick={handleCancelRoleChange}>
                 Cancelar
               </Button>
-          </AlertDialogFooter>
+            </AlertDialogFooter>
 
             <AlertDialogAction
               onClick={handleConfirmRoleChange}

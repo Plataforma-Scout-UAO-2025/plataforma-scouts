@@ -1,12 +1,13 @@
 import api from "./axios";
 import type { 
-  Guardian, 
   GuardianWithMembers, 
   CreateGuardianDTO, 
   UpdateGuardianDTO, 
   MemberBasicInfo, 
-  GuardianCreateResponse 
+  GuardianCreateResponse,
+  AvailableGuardianDTO 
 } from "@/types/guardian.type";
+import { normalizeGuardianData, type GuardianApiResponse } from "@/app/routes/guardians/utils/guardianMapper";
 
 // Crear un nuevo guardian
 export const createGuardian = async (data: CreateGuardianDTO) => {
@@ -16,8 +17,9 @@ export const createGuardian = async (data: CreateGuardianDTO) => {
 
 // Obtener guardian por ID (solo datos básicos)
 export const getGuardianById = async (id: number | string) => {
-  const response = await api.get<Guardian>(`/guardian/${id}`);
-  return response.data;
+  const response = await api.get<GuardianApiResponse>(`/guardian/${id}`);
+  // Normalize the response to handle naming inconsistencies
+  return normalizeGuardianData(response.data);
 };
 
 // Obtener guardian con sus miembros asociados
@@ -38,8 +40,15 @@ export const updateGuardian = async (id: number | string, data: UpdateGuardianDT
   return response.data;
 };
 
+// Obtener miembros disponibles para asignar a un guardian
 export const getAvailableMembers = async (): Promise<MemberBasicInfo[]> => {
   const response = await api.get<MemberBasicInfo[]>('/guardian/members/available-guardian');
+  return response.data;
+};
+
+//Obtener todos los guardianes disponibles
+export const getAvailableGuardians = async (): Promise<AvailableGuardianDTO[]> => {
+  const response = await api.get<AvailableGuardianDTO[]>('/guardian/list-available');
   return response.data;
 };
 
@@ -53,6 +62,21 @@ export const addMemberToGuardian = async (guardianId: number | string, memberId:
 export const removeMemberFromGuardian = async (guardianId: number | string, memberId: number | string) => {
   const response = await api.delete(`/guardian/${guardianId}/members/${memberId}`);
   return response.data;
+};
+
+// Reasignar un miembro a otro guardian
+export const reassignMemberGuardian = async (
+  currentGuardianId: number | string, 
+  memberId: number | string, 
+  newGuardianId: number | string
+) => {  
+  try {
+    const response = await api.put(`/guardian/${currentGuardianId}/members/${memberId}/reassign/${newGuardianId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error reasignando miembro:", error);
+    throw error;
+  }
 };
 
 // Eliminar un guardian

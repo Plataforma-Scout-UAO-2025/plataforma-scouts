@@ -36,7 +36,6 @@ function ScouterEnrollment() {
   } = useOrgStructure({
     orgId: orgId || "",
     open: true,
-    
   });
   
   const {
@@ -64,7 +63,6 @@ function ScouterEnrollment() {
     selectedSubgroup,   
   });
 
-
   const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
       ...prev,
@@ -81,22 +79,22 @@ function ScouterEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) 
+    if (pagina === 1)
       return (
-       <>
-      <PersonalDataForm
-        datos={datosPersonales}
-        handleChange={handlePersonalChange}
-        setDatos={setDatosPersonales}
-        errors={errors}
-      />
-      <EmergencyContacts
-        datos={datosPersonales}
-        setDatos={setDatosPersonales}
-        onContactChange={handleEmergencyContactsChange}
-        errors={errors}
-      />
-    </>
+        <>
+          <PersonalDataForm
+            datos={datosPersonales}
+            handleChange={handlePersonalChange}
+            setDatos={setDatosPersonales}
+            errors={errors}
+          />
+          <EmergencyContacts
+            datos={datosPersonales}
+            setDatos={setDatosPersonales}
+            onContactChange={handleEmergencyContactsChange}
+            errors={errors}
+          />
+        </>
       );
 
     if (pagina === 2) {

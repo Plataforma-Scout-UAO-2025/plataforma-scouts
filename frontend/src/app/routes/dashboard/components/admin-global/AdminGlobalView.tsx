@@ -52,19 +52,17 @@ const AdminGlobalView = () => {
           Gestiona los grupos de la plataforma desde aquí
         </p>
       </header>
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <section className="my-4 sm:my-8">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:grid-flow-row lg:auto-rows-max">
+        <div className="my-4 sm:my-8">
           <HeaderCard
             total_members_count={totalMembersCount}
             active_groups_count={activeGroupsCount}
             inactive_groups_count={inactiveGroupsCount}
           />
-        </section>
-        <section className="my-4 sm:my-8">
-          <div className="grid grid-cols-1 gap-6">
-            <GroupsDistribution memberCounts={memberCounts} />
-          </div>
-        </section>
+        </div>
+        <div className="my-4 sm:my-8 flex max-h-[350px]">
+          <GroupsDistribution memberCounts={memberCounts} />
+        </div>
       </section>
     </div>
   );

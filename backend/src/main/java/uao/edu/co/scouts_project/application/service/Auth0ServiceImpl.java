@@ -2,30 +2,27 @@ package uao.edu.co.scouts_project.application.service;
 
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Service;
 
-import uao.edu.co.scouts_project.common.service.SupabaseStorageService;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
-import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO; // Added
-import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException;
 import uao.edu.co.scouts_project.domain.exception.auth0.ResourceNotFoundException;
+import uao.edu.co.scouts_project.domain.exception.auth0.UnauthorizedRoleAssignmentException; // Added
 import uao.edu.co.scouts_project.domain.port.Auth0AdminPort;
+import uao.edu.co.scouts_project.domain.port.PermissionQueryPort;
 import uao.edu.co.scouts_project.domain.port.RoleMappingPort;
-import uao.edu.co.scouts_project.domain.port.PermissionQueryPort; // Added
 import uao.edu.co.scouts_project.infrastructure.security.Role;
-import java.util.Arrays;
-import java.util.List;
 
 @Service
 public class Auth0ServiceImpl implements IAuth0Service {
@@ -291,6 +288,48 @@ public class Auth0ServiceImpl implements IAuth0Service {
         addUserToOrganization(organizationId, userId);
 
         // 3) Asignar rol (incluye ADMIN_GLOBAL/ADMIN_GRUPO si se solicita)
+        String roleId = roleMappingPort.getAuth0RoleId(role);
+        adminPort.assignRole(userId, roleId);
+
+        return created;
+    }
+
+    @Override
+    public CreatedUserDTO createUserWithRoleInOrganizationWithConnection(
+            CreateUserWithRoleCommandDTO request,
+            String organizationId,
+            String connectionId) {
+        if (!isCurrentUserAdminGlobal()) {
+            throw new UnauthorizedRoleAssignmentException(
+                    "Solo ADMIN_GLOBAL puede crear usuarios con roles administrativos");
+        }
+        if (organizationId == null || organizationId.isBlank()) {
+            throw new IllegalArgumentException("organizationId es obligatorio");
+        }
+        if (connectionId == null || connectionId.isBlank()) {
+            throw new IllegalArgumentException("connectionId es obligatorio");
+        }
+
+        // Parsear rol (permitiendo roles administrativos)
+        Role role;
+        try {
+            role = Role.valueOf(String.valueOf(request.getRole()).toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Rol inválido: " + request.getRole());
+        }
+
+        // 1) Crear usuario en la conexión específica
+        CreateUserCommandDTO createCmd = new CreateUserCommandDTO(
+                request.getEmail(),
+                request.getPassword(),
+                request.getUsername());
+        CreatedUserDTO created = adminPort.createUserInConnection(createCmd, connectionId);
+        String userId = created.getId();
+
+        // 2) Asociar al organizationId especificado
+        addUserToOrganization(organizationId, userId);
+
+        // 3) Asignar rol
         String roleId = roleMappingPort.getAuth0RoleId(role);
         adminPort.assignRole(userId, roleId);
 

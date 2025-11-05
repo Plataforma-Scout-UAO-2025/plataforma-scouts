@@ -1,7 +1,7 @@
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import type { Control } from "react-hook-form";
-import type { CompleteDataFormData } from "../../schemas/CompleteData.schema.ts";
+import type { CompleteDataFormData } from "@/app/routes/guardians/schemas/CompleteData.schema";
 
 interface PhoneFieldProps {
   control: Control<CompleteDataFormData>;

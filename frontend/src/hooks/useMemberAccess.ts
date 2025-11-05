@@ -13,6 +13,27 @@ interface MemberAccessResult {
   loading: boolean;
 }
 
+interface Auth0UserWithRoles {
+  email?: string;
+  "https://scouts-platform-backend//roles"?: string[];
+  [key: string]: unknown;
+}
+
+function getMemberRole(member: Member): string | undefined {
+  return (member as { role?: string }).role ?? (member as { rol?: string }).rol;
+}
+
+function getMemberStatus(member: Member): string | null {
+  const statusRaw = (member as { status?: string }).status ?? 
+                    (member as { estado?: string }).estado ?? 
+                    null;
+  return typeof statusRaw === "string" ? statusRaw.toUpperCase() : statusRaw;
+}
+
+function getIsActive(member: Member): boolean {
+  return member.isActive ?? member.is_active ?? false;
+}
+
 /**
  * Hook que valida si un usuario puede acceder al dashboard.
  * 
@@ -79,7 +100,8 @@ export function useMemberAccess(): MemberAccessResult {
     // ¿El usuario NO está en la base de datos?
     if (!currentMember) {
       // Chequeamos si es admin usando su rol de Auth0
-      const auth0Roles = (user as any)?.["https://scouts-platform-backend//roles"] || [];
+      const auth0User = user as Auth0UserWithRoles | undefined;
+      const auth0Roles = auth0User?.["https://scouts-platform-backend//roles"] || [];
       const userRole = auth0Roles[0] ? normalizeRawRole(auth0Roles[0]) : RawRole.UNKNOWN;
       
       // Los admins pueden entrar aunque no estén en la BD
@@ -104,14 +126,15 @@ export function useMemberAccess(): MemberAccessResult {
     }
 
     // Ahora sí, el usuario está en la BD. Validamos su estado
-    const memberRole = normalizeRawRole((currentMember as any).role ?? (currentMember as any).rol);
-    const memberStatusRaw = (currentMember as any).status ?? (currentMember as any).estado ?? null;
-    const memberStatus = typeof memberStatusRaw === "string" ? memberStatusRaw.toUpperCase() : memberStatusRaw;
+    const memberRoleStr = getMemberRole(currentMember);
+    const memberRole = normalizeRawRole(memberRoleStr);
+    const memberStatus = getMemberStatus(currentMember);
+    const isActiveMember = getIsActive(currentMember);
     
     // Lógica especial para Admin Global y Admin Grupo
     if (memberRole === RawRole.ADMIN_GLOBAL || memberRole === RawRole.ADMIN_GRUPO) {
       // Si no tienen estado o están aprobados, pueden entrar sin problema
-      if (memberStatusRaw === null || memberStatusRaw === undefined || memberStatus === "APPROVED") {
+      if (memberStatus === null || memberStatus === "APPROVED") {
         setAccessState({
           hasAccess: true,
           reason: null,
@@ -134,7 +157,7 @@ export function useMemberAccess(): MemberAccessResult {
     }
 
     // Para roles normales (Scout, Scouter, etc.), el estado debe ser "APPROVED"
-    if (typeof memberStatus === "string" && memberStatus !== "APPROVED") {
+    if (memberStatus !== null && memberStatus !== "APPROVED") {
       setAccessState({
         hasAccess: false,
         reason: "pending",
@@ -145,7 +168,7 @@ export function useMemberAccess(): MemberAccessResult {
     }
 
     // Además, deben estar activos
-    if (!currentMember.isActive) {
+    if (!isActiveMember) {
       setAccessState({
         hasAccess: false,
         reason: "inactive",

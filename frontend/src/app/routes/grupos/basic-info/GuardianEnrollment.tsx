@@ -56,10 +56,10 @@ function GuardianEnrollment() {
     handlePersonalChange,
     handleEmergencyContactsChange,
     handleSubmit,
-  } = useRoleEnrollment({ 
-    role: "ACUDIENTE", 
+  } = useRoleEnrollment({
+    role: "ACUDIENTE",
     totalPaginas: 3,
-    selectedSection,   
+    selectedSection,
     selectedSubgroup,
   });
 
@@ -79,7 +79,7 @@ function GuardianEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) 
+    if (pagina === 1)
       return (
         <>
           <PersonalDataForm

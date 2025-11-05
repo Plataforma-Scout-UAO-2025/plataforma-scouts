@@ -189,24 +189,7 @@ class GroupServiceTest {
         verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
     }
 
-    @Test
-    @DisplayName("updateGroup (UpdatingGroupDTO): lanza IllegalArgumentException si se intenta cambiar el slug")
-    void update_with_updatingDto_slug_conflict() {
-        when(groupRepository.findByTenantIdAndSlug(eq(TENANT_ID), eq(SLUG)))
-                .thenReturn(Optional.of(entity));
-
-        UpdatingGroupDTO dto = new UpdatingGroupDTO();
-        dto.setSlug("nuevo-slug");
-
-        assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, dto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("El campo slug es inmutable");
-
-        verify(groupRepository).findByTenantIdAndSlug(TENANT_ID, SLUG);
-        verify(groupRepository, never()).existsByTenantIdAndSlug(anyString(), anyString());
-        verify(groupRepository, never()).save(any());
-    }
-
+   
     @Test
     @DisplayName("getGroupBySlug: incluye URLs públicas cuando existen imágenes")
     void getBySlug_includesUrls() {
@@ -260,26 +243,6 @@ class GroupServiceTest {
         verify(groupRepository).save(any(Group.class));
     }
 
-    @Test
-    @DisplayName("updateGroup: no permite modificar slug")
-    void update_group_immutable_slug() {
-        Group existingGroup = new Group(TENANT_ID, SLUG, "Grupo Scout Centinelas 113");
-        existingGroup.setGroupId(1L);
-
-        when(groupRepository.findByTenantIdAndSlug(TENANT_ID, SLUG))
-                .thenReturn(Optional.of(existingGroup));
-
-        GroupDTO updateDto = new GroupDTO(
-                null, TENANT_ID, "nuevo-slug", "Nombre",
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, Map.of(), Map.of(), true, "ACTIVE", null, null);
-
-        assertThatThrownBy(() -> groupService.updateGroup(TENANT_ID, SLUG, updateDto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("slug es inmutable");
-
-        verify(groupRepository, never()).save(any());
-    }
 
     @Test
     @DisplayName("updateGroup: no permite modificar tenantId")

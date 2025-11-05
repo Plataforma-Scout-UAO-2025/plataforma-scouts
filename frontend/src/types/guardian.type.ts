@@ -1,5 +1,11 @@
-export type DocumentType = "CC" | "TI" | "CE" | "PASSPORT" | "RC" | "PA" | "PEP" | "PPT" | "NIT" | "NUIP";
-export type Status = "PENDING" | "ACCEPTED" | "NOT_ACCEPTED" | "ACTIVE" | "INACTIVE";
+export const DOCUMENT_TYPES = ["CC", "TI", "CE", "PA"] as const;
+export type DocumentType = typeof DOCUMENT_TYPES[number];
+
+export const STATUSES = ["APPROVED", "PENDING", "REJECTED"] as const;
+export type Status = typeof STATUSES[number];
+
+export const ROLES = ["ACUDIENTE", "ADMIN", "USUARIO"] as const;
+export type Role = typeof ROLES[number];
 
 export interface SubgroupDTO {
   subgroupId?: number;
@@ -45,17 +51,18 @@ export interface MemberBasicInfo {
 }
 
 export interface Guardian {
+  member_id?: number
   user_id: string
-  rol: "ACUDIENTE" | "ADMIN" | "USUARIO"
+  rol: Role
   tenant_id: string
   firstName: string
   lastName: string
   age: number
   identification: string
-  document_type: 'CC' | 'TI' | 'RC' | 'CE' | 'PA' | 'PEP' | 'PPT' | 'NIT' | 'NUIP'
+  document_type: DocumentType
   phone: string
   is_active: boolean
-  status: "APPROVED" | "PENDING" | "REJECTED" | string
+  status: Status
   acceptance_date: string
   address: string
 }
@@ -84,7 +91,7 @@ export interface GuardianCreateResponse {
 export interface CreateGuardianDTO {
   userId?: string;
   subgroup?: SubgroupDTO;
-  rol?: string;
+  rol?: Role;
   tenantId?: string;
   subgroupId?: string;
   firstName: string;
@@ -102,7 +109,7 @@ export interface CreateGuardianDTO {
 export interface UpdateGuardianDTO {
   userId?: string;
   subgroup?: SubgroupDTO;
-  rol?: string;
+  rol?: Role;
   tenantId?: string;
   subgroupId?: string;
   firstName?: string;
@@ -120,11 +127,12 @@ export interface UpdateGuardianDTO {
   acceptanceDate?: string;
 }
 
-export interface GuardianSummary {
-  userId?: string;
-  firstName?: string;
-  lastName?: string;
+export interface AvailableGuardianDTO {
+  guardianId: number;
+  firstName: string;
+  lastName: string;
+  identification: string;
   phone?: string;
-  isActive?: boolean;
+  email?: string;
   membersCount?: number;
 }

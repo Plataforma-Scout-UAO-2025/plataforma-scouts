@@ -2,8 +2,6 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useState } from 'react';
 import StatsCards from '@/app/routes/guardians/dashboard/components/StatsCards';
 import QuickActions from '@/app/routes/guardians/dashboard/components/QuickActions';
-import PendingApprovalModal from "@/app/routes/admin-grupal/Miembros/components/PendingApprovalModal";
-import InactiveMemberModal from "@/app/routes/admin-grupal/Miembros/components/InactiveMemberModal";
 
 export default function AcudienteView() {
   const { user } = useAuth0();

@@ -6,11 +6,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog.tsx";
-import { CompleteDataForm } from "./components/CompleteDataForm.tsx";
-import type { CompleteDataFormData } from "./schemas/CompleteData.schema.ts";
-import { useCompleteData } from "./hooks/useCompleteData.ts";
-import { guardianService } from "./services/guardianService.ts";
+} from "@/components/ui/dialog";
+import { CompleteDataForm } from "@/app/routes/guardians/components/CompleteDataForm";
+import type { CompleteDataFormData } from "@/app/routes/guardians/schemas/CompleteData.schema";
+import { useCompleteData } from "@/app/routes/guardians/hooks/useCompleteData";
+import { guardianService } from "@/app/routes/guardians/services/guardianService";
 import { toast } from "sonner";
 
 export const CompleteDataModal = () => {

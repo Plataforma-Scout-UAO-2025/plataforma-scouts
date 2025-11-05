@@ -35,7 +35,7 @@ export default function InactiveMemberModal({ isOpen }: InactiveMemberModalProps
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={() => { }}>
       <DialogContent
         className="sm:max-w-md"
         onEscapeKeyDown={(e) => e.preventDefault()}
@@ -52,14 +52,14 @@ export default function InactiveMemberModal({ isOpen }: InactiveMemberModalProps
             No Estás Actualmente Activo
           </DialogTitle>
           <DialogDescription className="text-center text-base pt-2">
-            Tu cuenta no está activa en este momento. 
+            Tu cuenta no está activa en este momento.
             No puedes acceder a las funcionalidades del sistema hasta que tu cuenta sea reactivada.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="bg-red-50 border border-red-200 rounded-md p-4 my-4">
           <p className="text-sm text-red-800 text-center">
-            <strong>Nota:</strong> Si crees que esto es un error, por favor contacta 
+            <strong>Nota:</strong> Si crees que esto es un error, por favor contacta
             a los administradores del grupo para más información.
           </p>
         </div>

@@ -44,8 +44,8 @@ const Dashboard = () => {
       if (!scoutInfo) return;
 
       // Aseguramos compatibilidad entre guardian_id o guardianId
-        const guardianId =
-         (scoutInfo as { guardian_id?: number })?.guardian_id ??
+      const guardianId =
+        (scoutInfo as { guardian_id?: number })?.guardian_id ??
         (scoutInfo as { guardianId?: number })?.guardianId ??
         (scoutInfo as { guardian?: { id?: number } })?.guardian?.id;
 
@@ -178,7 +178,7 @@ const Dashboard = () => {
               <strong>Rol:</strong>{" "}
               {scoutInfo.role
                 ? scoutInfo.role.charAt(0).toUpperCase() +
-                  scoutInfo.role.slice(1).toLowerCase()
+                scoutInfo.role.slice(1).toLowerCase()
                 : "Sin rol"}
             </p>
             <p>
@@ -196,9 +196,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div >
-  
+
       <GuardianInfo guardian={guardian} loading={loadingGuardian} />
-      
+
     </div>
   );
 };

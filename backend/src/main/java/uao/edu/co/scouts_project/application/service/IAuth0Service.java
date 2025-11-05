@@ -1,15 +1,15 @@
 package uao.edu.co.scouts_project.application.service;
 
+import java.util.List;
+
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreateUserWithRoleCommandDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.CreatedUserDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.OrganizationSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.RoleSummaryDTO;
-import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.domain.dto.auth0.UserAuth0ChangeRoleDTO;
+import uao.edu.co.scouts_project.domain.dto.auth0.UserSummaryDTO;
 import uao.edu.co.scouts_project.infrastructure.security.Role;
-
-import java.util.List;
 
 public interface IAuth0Service {
 
@@ -44,5 +44,14 @@ public interface IAuth0Service {
 
     CreatedUserDTO createUserWithRoleInOrganizationElevated(CreateUserWithRoleCommandDTO request,
             String organizationId);
+
+    /**
+     * Crea un usuario con rol en una organización usando una conexión específica.
+     * Solo ADMIN_GLOBAL puede invocar este método.
+     */
+    CreatedUserDTO createUserWithRoleInOrganizationWithConnection(
+            CreateUserWithRoleCommandDTO request,
+            String organizationId,
+            String connectionId);
 
 }

@@ -104,6 +104,17 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
               member.role?.toUpperCase() === 'SCOUT'  // insensible a mayúsculas
           );
           break;
+
+        case 'ADMIN_GLOBAL':
+          membersResponse = await getMembersWithBranch();
+
+          scoutMembers = membersResponse.filter(
+            (member: Member) =>
+              member.isActive &&
+              member.status === 'APPROVED' &&  // solo aprobados
+              member.role?.toUpperCase() === 'SCOUT'  // insensible a mayúsculas
+          );
+          break;
       }
 
       // Cargar registros médicos existentes

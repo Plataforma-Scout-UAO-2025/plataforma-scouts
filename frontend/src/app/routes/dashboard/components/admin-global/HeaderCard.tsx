@@ -29,7 +29,7 @@ const HeaderCard = ({ total_members_count, active_groups_count, inactive_groups_
       {cards.map((item, index) => (
         <div
           key={index}
-          className={`mb-4 border rounded-xl shadow-sm p-3 flex items-center`}
+          className={`${index < cards.length - 1 ? 'mb-4' : ''} border rounded-xl shadow-sm p-3 flex items-center`}
         >
           <div className="p-4 w-full">
             <div className="flex justify-between">

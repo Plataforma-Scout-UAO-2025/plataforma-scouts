@@ -7,9 +7,9 @@ import { toast } from 'sonner';
 import type { UpdateMember } from '@/types/member.type';
 import { updateMember } from '@/api/membersApi';
 import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
-import { editMemberSchema, type EditMemberFormData } from '../../schemas/MemberForm.schema';
-import MemberContactForm from './MemberContactForm';
-import EmergencyContactsList from './emergencyContact/EmergencyContactList';
+import { editMemberSchema, type EditMemberFormData } from '@/app/routes/guardians/members/schemas/MemberForm.schema';
+import MemberContactForm from '@/app/routes/guardians/members/components/modals/MemberContactForm';
+import EmergencyContactsList from '@/app/routes/guardians/members/components/modals/emergencyContact/EmergencyContactList';
 
 interface MemberUpdate extends UpdateMember {
   member_id?: number;

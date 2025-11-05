@@ -1,17 +1,23 @@
 package uao.edu.co.scouts_project.infrastructure.security;
 
-import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-import static uao.edu.co.scouts_project.infrastructure.security.Role.*;
+import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.ACUDIENTE;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GLOBAL;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.ADMIN_GRUPO;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.DEV_SUPPORT;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.SCOUT;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.SCOUTER;
+import static uao.edu.co.scouts_project.infrastructure.security.Role.TESORERO;
 
 @Configuration
 @EnableWebSecurity
@@ -75,6 +81,9 @@ public class SecurityConfig {
                                                 .hasRole(ADMIN_GLOBAL.name())
 
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/*/admins")
+                                                .hasRole(ADMIN_GLOBAL.name())
+
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/groups/*/admins-with-connection")
                                                 .hasRole(ADMIN_GLOBAL.name())
 
                                                 .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/groups/*/active")
@@ -142,7 +151,7 @@ public class SecurityConfig {
                                                 //
                                                 // Datos básicos de miembros
                                                 .requestMatchers("/api/v1/members/create_member")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), ADMIN_GLOBAL.name() )
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/create_member_with_school")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ACUDIENTE.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/list_members")
@@ -152,15 +161,13 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/members/list_members_by_status")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/list_subGroup_by_memberId")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name(), ADMIN_GLOBAL.name())
-                                                .requestMatchers("/api/v1/members/list_schoolData_by_membegit rId")
+                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
+                                                .requestMatchers("/api/v1/members/list_schoolData_by_memberId")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), SCOUT.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/update_member_status/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/update_member_by_id/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ACUDIENTE.name(), ADMIN_GLOBAL.name())
-                                                .requestMatchers("/api/v1/members/update_role/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
+                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(), DEV_SUPPORT.name(), ACUDIENTE.name())
                                                 .requestMatchers("/api/v1/members/update_role/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), DEV_SUPPORT.name(), ADMIN_GLOBAL.name())
                                                 .requestMatchers("/api/v1/members/assign_subgroup_and_section/")
@@ -190,20 +197,21 @@ public class SecurityConfig {
 
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/medical_record/create_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name())
 
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/v1/medical_record/list_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name(),
-                                                                SCOUT.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), 
+                                                                ACUDIENTE.name(), SCOUT.name())
 
                                                 .requestMatchers(HttpMethod.PUT,
                                                                 "/api/v1/medical_record/update_record/**")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name())
 
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/v1/medical_record/list_by_tenant")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), SCOUTER.name(), ACUDIENTE.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(), 
+                                                                ACUDIENTE.name())
 
                                                 //
                                                 // Pagos

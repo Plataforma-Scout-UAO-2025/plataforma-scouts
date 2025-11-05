@@ -35,7 +35,7 @@ export default function PendingApprovalModal({ isOpen }: PendingApprovalModalPro
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={() => { }}>
       <DialogContent
         className="sm:max-w-md"
         onEscapeKeyDown={(e) => e.preventDefault()}
@@ -56,10 +56,10 @@ export default function PendingApprovalModal({ isOpen }: PendingApprovalModalPro
             Por favor, espera a que tu solicitud sea revisada y aprobada.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 my-4">
           <p className="text-sm text-yellow-800 text-center">
-            <strong>Nota:</strong> Serás notificado por correo electrónico una vez que tu 
+            <strong>Nota:</strong> Serás notificado por correo electrónico una vez que tu
             solicitud sea aprobada y puedas acceder al sistema.
           </p>
         </div>

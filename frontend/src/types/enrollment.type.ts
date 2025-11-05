@@ -104,7 +104,7 @@ export interface CreateAuth0Response {
   };
 
   // Campos normalizados
-  userId?: string; // extraído desde data.id
+  userId?: string;
   email?: string;
   username?: string;
   role?: string;

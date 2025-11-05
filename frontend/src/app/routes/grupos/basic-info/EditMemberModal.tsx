@@ -127,7 +127,6 @@ export default function EditMemberModal({
 
   if (!member) return null;
 
-  const isScout = member?.role?.toUpperCase() === "SCOUT";
   const emergencyContacts = (editedData.emergencyContacts || []) as import("@/types/member.type").EmergencyContact[];
 
   const isAssignmentValid = () => {
@@ -166,9 +165,9 @@ export default function EditMemberModal({
           </DialogTitle>
           <DialogDescription>
             Modifica los datos del miembro <span className=" text-l text-primary/800">
-            <strong>{member?.firstName ?? member?.first_name}{" "}
-            {member?.lastName ?? member?.last_name}</strong>
-          </span> y guarda los cambios. Los campos marcados con * son obligatorios.
+              <strong>{member?.firstName ?? member?.first_name}{" "}
+                {member?.lastName ?? member?.last_name}</strong>
+            </span> y guarda los cambios. Los campos marcados con * son obligatorios.
           </DialogDescription>
         </DialogHeader>
         {loadingDetails ? (
@@ -189,15 +188,19 @@ export default function EditMemberModal({
               onFieldChange={handleFieldChange}
             />
 
-            {isScout && (
-              <EmergencyContactsForm
-                emergencyContacts={emergencyContacts}
-                loading={loading}
-                onContactChange={handleEmergencyContactChange}
-                onAddContact={handleAddEmergencyContact}
-                onRemoveContact={handleRemoveEmergencyContact}
-              />
-            )}
+            <EmergencyContactsForm
+              emergencyContacts={emergencyContacts}
+              loading={loading}
+              onContactChange={handleEmergencyContactChange}
+              onAddContact={handleAddEmergencyContact}
+              onRemoveContact={handleRemoveEmergencyContact}
+            />
+
+            <RoleSelectionForm
+              currentRole={editedData.role as role}
+              onRoleChange={(newRole) => handleFieldChange("role", newRole)}
+              loading={loading}
+            />
 
             <RoleSelectionForm
               currentRole={editedData.role as role}

@@ -34,11 +34,11 @@ export default function GuardianInfo({ guardian, loading }: GuardianInfoProps) {
   }
 
   const infoItems = [
-    ["Nombres", `${guardian.first_name ?? ""} ${guardian.last_name ?? ""}`.trim() || "Sin información"],
+    ["Nombres", `${guardian.firstName ?? ""} ${guardian.lastName ?? ""}`.trim() || "Sin información"],
     ["Tipo de documento", guardian.document_type || "Sin información"],
     ["Número de documento", guardian.identification || "Sin información"],
     ["Teléfono", guardian.phone || "Sin información"],
-   
+
   ] as const;
 
   return (

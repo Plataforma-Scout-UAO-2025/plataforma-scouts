@@ -21,9 +21,9 @@ import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 
 function TreasurerEnrollment() {
   const navigate = useNavigate();
-const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
+  const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
 
-    const {
+  const {
     sections,
     subgroups,
     selectedGroupSlug,
@@ -36,7 +36,7 @@ const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
   } = useOrgStructure({
     orgId: orgId || "",
     open: true,
-    
+
   });
 
   const {
@@ -57,8 +57,10 @@ const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
     handlePersonalChange,
     handleEmergencyContactsChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "TESORERO", totalPaginas: 3, selectedSection,   
-    selectedSubgroup });
+  } = useRoleEnrollment({
+    role: "TESORERO", totalPaginas: 3, selectedSection,
+    selectedSubgroup
+  });
 
   const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
@@ -76,7 +78,7 @@ const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) 
+    if (pagina === 1)
       return (
         <>
           <PersonalDataForm
@@ -95,16 +97,16 @@ const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
       );
 
     if (pagina === 2) {
-          return (
-            <DataTreatmentConsent
-              value={datosPersonales.accept_treatment}
-              onChange={handleConsentChange}
-              error={errors.data_treatment_consent}
-            />
-          );
-        }
+      return (
+        <DataTreatmentConsent
+          value={datosPersonales.accept_treatment}
+          onChange={handleConsentChange}
+          error={errors.data_treatment_consent}
+        />
+      );
+    }
 
-  
+
     return (
       <div className="col-span-full space-y-4">
         <h3 className="text-lg font-semibold text-primary border-b-2 border-primary pb-2">
