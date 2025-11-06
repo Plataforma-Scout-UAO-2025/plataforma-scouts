@@ -155,7 +155,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(20);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('REPORTE FINANCIERO CONSOLIDADO - KNUT', 105, 15, { align: 'center' });
+        pdf.text('REPORTE FINANCIERO CONSOLIDADO', 105, 15, { align: 'center' });
         
         pdf.setFontSize(12);
         pdf.text(reporte.scope?.toUpperCase() || 'GENERAL', 105, 23, { align: 'center' });
@@ -317,9 +317,15 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
             { align: 'center' }
           );
           pdf.text(
-            'Este reporte fue generado automáticamente por el sistema de gestión de scouts.',
+            'Este reporte fue generado automáticamente por el sistema.',
             105,
             290,
+            { align: 'center' }
+          );
+          pdf.text(
+            'KNUT',
+            105,
+            295,
             { align: 'center' }
           );
         }
