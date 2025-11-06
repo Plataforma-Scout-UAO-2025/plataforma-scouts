@@ -84,6 +84,20 @@ export interface GuardianWithMembers {
   members?: MemberBasicInfo[];
 }
 
+export interface GuardianCompleteData {
+  userId: string;
+  tenantId: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  birthDate: string;
+  identification: string;
+  documentType: DocumentType;
+  phone: string;
+  isActive: boolean;
+  status: Status;
+}
+
 export interface GuardianCreateResponse {
   member_id: number;
 }
