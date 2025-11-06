@@ -1,5 +1,6 @@
 package uao.edu.co.scouts_project.member.mapper;
 
+import uao.edu.co.scouts_project.member.dto.CreateMemberDTO;
 import uao.edu.co.scouts_project.member.dto.MemberDto;
 import uao.edu.co.scouts_project.member.model.Member;
 import uao.edu.co.scouts_project.member.shared.enums.DocumentType;
@@ -20,7 +21,8 @@ public class MemberMapper {
      * @return DTO con la información del miembro.
      */
     public static MemberDto toDto(Member member) {
-        if (member == null) return null;
+        if (member == null)
+            return null;
 
         return MemberDto.builder()
                 .memberId(member.getMemberId())
@@ -51,16 +53,57 @@ public class MemberMapper {
                 .emergencyContacts(
                         member.getEmergencyContacts() != null
                                 ? member.getEmergencyContacts().stream()
-                                .map(ec -> MemberDto.EmergencyContactDto.builder()
-                                        .name(ec.getName())
-                                        .relationship(ec.getRelationship())
-                                        .phone(ec.getPhone())
-                                        .build())
-                                .collect(Collectors.toList())
-                                : null
-                )
+                                        .map(ec -> MemberDto.EmergencyContactDto.builder()
+                                                .name(ec.getName())
+                                                .relationship(ec.getRelationship())
+                                                .phone(ec.getPhone())
+                                                .build())
+                                        .collect(Collectors.toList())
+                                : null)
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
+                .acceptTreatment(member.getAcceptTreatment())
+                .build();
+    }
+
+    public static Member toEntityFromCreateDto(CreateMemberDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        return Member.builder()
+                .userId(dto.getUserId())
+                .tenantId(dto.getTenantId())
+                .firstName(dto.getFirstName())
+                .lastName(dto.getLastName())
+                .age(dto.getAge())
+                .role(dto.getRole())
+                .identification(dto.getIdentification())
+                .documentType(dto.getDocumentType())
+                .email(dto.getEmail())
+                .gender(dto.getGender())
+                .birthDate(dto.getBirthDate())
+                .address(dto.getAddress())
+                .phone(dto.getPhone())
+                .weight(dto.getWeight())
+                .height(dto.getHeight())
+                .hobbies(dto.getHobbies())
+                .sports(dto.getSports())
+                .instruments(dto.getInstruments())
+                .isActive(dto.getIsActive())
+                .relationship(dto.getRelationship())
+                .status(dto.getStatus())
+                .acceptanceDate(dto.getAcceptanceDate())
+                .acceptTreatment(dto.getAcceptTreatment())
+                .emergencyContacts(dto.getEmergencyContacts() != null
+                        ? dto.getEmergencyContacts().stream()
+                                .map(contact -> Member.EmergencyContact.builder()
+                                        .name(contact.getName())
+                                        .relationship(contact.getRelationship())
+                                        .phone(contact.getPhone())
+                                        .build())
+                                .collect(Collectors.toList())
+                        : null)
                 .build();
     }
 
@@ -72,7 +115,8 @@ public class MemberMapper {
      * @throws IllegalArgumentException si los valores de los enums son inválidos
      */
     public static Member toEntity(MemberDto dto) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         Member member = new Member();
 
@@ -115,6 +159,7 @@ public class MemberMapper {
         }
 
         member.setAcceptanceDate(dto.getAcceptanceDate());
+        member.setAcceptTreatment(dto.getAcceptTreatment());
 
         if (dto.getEmergencyContacts() != null) {
             member.setEmergencyContacts(
@@ -124,15 +169,15 @@ public class MemberMapper {
                                     .relationship(ecDto.getRelationship())
                                     .phone(ecDto.getPhone())
                                     .build())
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         }
 
         return member;
     }
 
     /**
-     * Convierte de forma segura un String a DocumentType, normalizando mayúsculas/minúsculas.
+     * Convierte de forma segura un String a DocumentType, normalizando
+     * mayúsculas/minúsculas.
      *
      * @param documentTypeStr String con el tipo de documento
      * @return DocumentType correspondiente
@@ -152,14 +197,13 @@ public class MemberMapper {
             throw new IllegalArgumentException(
                     String.format("Tipo de documento inválido: '%s'. Valores permitidos: %s",
                             documentTypeStr,
-                            String.join(", ", getDocumentTypeValues())
-                    )
-            );
+                            String.join(", ", getDocumentTypeValues())));
         }
     }
 
     /**
-     * Convierte de forma segura un String a Status, normalizando mayúsculas/minúsculas.
+     * Convierte de forma segura un String a Status, normalizando
+     * mayúsculas/minúsculas.
      *
      * @param statusStr String con el estado
      * @return Status correspondiente
@@ -179,9 +223,7 @@ public class MemberMapper {
             throw new IllegalArgumentException(
                     String.format("Estado inválido: '%s'. Valores permitidos: %s",
                             statusStr,
-                            String.join(", ", getStatusValues())
-                    )
-            );
+                            String.join(", ", getStatusValues())));
         }
     }
 

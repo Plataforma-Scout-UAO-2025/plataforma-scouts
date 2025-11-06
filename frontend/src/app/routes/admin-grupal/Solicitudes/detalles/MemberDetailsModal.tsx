@@ -36,7 +36,7 @@ export default function MemberDetailsModal({
   orgId,
   onSuccess,
   onReject,
-  showRejectButton = true
+  showRejectButton = true,
 }: MemberDetailsModalProps) {
   const {
     groups,
@@ -94,6 +94,7 @@ export default function MemberDetailsModal({
   });
 
   if (!member) return null;
+  const isScout = member?.role?.toUpperCase() === "SCOUT";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -113,7 +114,10 @@ export default function MemberDetailsModal({
             <PersonalInfo member={member} />
             <EmergencyContacts member={member} />
             <Interests member={member} />
-            <SchoolInfo memberId={member.member_id} />
+            {isScout && (
+              <SchoolInfo memberId={member.member_id} />
+            )}
+
             <AssignmentSelectors
               groups={groups}
               sections={sections}
@@ -130,6 +134,7 @@ export default function MemberDetailsModal({
               selectedRole={selectedRole}
               setSelectedRole={setSelectedRole}
             />
+
             <MemberStatusBar member={member} />
           </div>
         )}
@@ -149,7 +154,11 @@ export default function MemberDetailsModal({
             variant="primary"
             onClick={accept}
             disabled={
-              loading || !canAccept || !selectedGroupSlug || !selectedRole || !selectedSubgroup
+              loading ||
+              !canAccept ||
+              !selectedGroupSlug ||
+              !selectedRole ||
+              !selectedSubgroup
             }
             className="flex-1 bg-green-900 hover:bg-green/800"
           >

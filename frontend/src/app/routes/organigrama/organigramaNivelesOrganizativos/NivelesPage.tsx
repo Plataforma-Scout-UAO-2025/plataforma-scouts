@@ -11,8 +11,12 @@ import { fetchMembersAction, fetchMembersWithBranchAction, assignSubgroupAndSect
 import type { RootState, AppDispatch } from "@/store/store";
 // Importar submódulo de ramas/subramas para mostrar solo los acordeones de COMITÉ
 import { useTenantParams } from "../organigramaRamas_Subramas/hooks/useTenantParams";
-import useOrganigramaData from "../organigramaRamas_Subramas/hooks/useOrganigramaData";
+import { fetchRamasWithSubramasAction } from "@/store/organigrama/organigramaActions";
+import { selectRamas, selectRamasLoading } from "@/store/organigrama/selectors";
 import RamaList from "../organigramaRamas_Subramas/components/RamaList";
+import { getSectionWithSubgroups, createSubgroup } from "@/api/organigramaApi";
+import type { Subgroup } from "@/types/subgroup-simple.type";
+import type { Member } from "@/types/member.type";
 
 // 🔹 Modales importados
 import CreateNivelModal from "./components/CreateNivelModal";
@@ -31,9 +35,10 @@ export default function NivelesPage() {
   const { members, loading: membersLoading, error: membersError } = useSelector((state: RootState) => state.members);
   
   const currentYear = new Date().getFullYear();
-  // Hooks del submódulo de ramas: deben invocarse en el mismo orden siempre
+  // Hooks del submódulo de ramas: usar Redux para consistencia
   const { tenantId, groupSlug } = useTenantParams();
-  const { ramas } = useOrganigramaData(tenantId, groupSlug);
+  const ramas = useSelector(selectRamas);
+  const ramasLoading = useSelector(selectRamasLoading);
 
   const { anio, data, loading, addNivel, updateNivel, removeNivel, addCargo, updateCargo, removeCargo } =
     useNiveles(currentYear, tenantId, groupSlug);
@@ -60,7 +65,15 @@ export default function NivelesPage() {
     id: string;
     name: string;
     nivelId?: string;
+    cargoCount?: number;
+    memberCount?: number;
+    isSinCargo?: boolean;
   } | null>(null);
+  const isSinCargoName = (name?: unknown): boolean => {
+    if (name == null) return false;
+    const s = String(name).trim().toLowerCase();
+    return s === "sin cargo" || s === "sincargo" || s === "sin_cargo";
+  };
 
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -87,6 +100,18 @@ export default function NivelesPage() {
       })();
     }
   }, [dispatch, members.length]);
+
+  // Cargar ramas con Redux si es necesario
+  useEffect(() => {
+    const shouldFetch = ramas.length === 0 && !ramasLoading;
+    if (tenantId && groupSlug && shouldFetch) {
+      console.log('🎯 [NivelesPage] Should fetch ramas, dispatching Redux action');
+      dispatch(fetchRamasWithSubramasAction({ 
+        tenantId: String(tenantId), 
+        groupSlug 
+      }));
+    }
+  }, [dispatch, tenantId, groupSlug, ramas.length, ramasLoading]);
 
   // ===== HANDLERS DE NIVELES =====
 
@@ -173,11 +198,18 @@ export default function NivelesPage() {
   };
 
   const handleDeleteCargo = (cargo: Cargo, nivel: Nivel) => {
+    // Contar miembros asociados a este cargo (subgroup)
+    const cargoIdNum = toNumberSafe((cargo as unknown as { id?: unknown }).id);
+    const memberCount = cargoIdNum !== undefined && members && members.length > 0
+      ? members.reduce((acc, m) => acc + (getMemberSubgroupId(m) === cargoIdNum ? 1 : 0), 0)
+      : 0;
     setDeleteTarget({
       type: "cargo",
       id: cargo.id,
       name: cargo.nombre,
       nivelId: nivel.id,
+      memberCount,
+      isSinCargo: isSinCargoName(cargo.nombre),
     });
     setOpenDelete(true);
   };
@@ -235,13 +267,115 @@ export default function NivelesPage() {
     }
   };
 
+  // Desasignar miembro de un cargo: lo movemos a un subgrupo "Sin cargo" dentro del mismo nivel (sección)
+  const handleRemoveMemberFromCargo = async (nivel: Nivel, _cargo: Cargo, memberId: string) => {
+    try {
+      // 1) Asegurar existencia de subgrupo "Sin cargo" en la sección (nivel)
+      const sectionId = nivel.id;
+      // Nota: necesitamos tenantId y groupSlug del contexto
+      let sinCargoSubgroupId: number | undefined;
+      if (tenantId && groupSlug && sectionId) {
+        const { subgroups } = await getSectionWithSubgroups(sectionId, tenantId, groupSlug);
+        const found = (subgroups as Subgroup[] || []).find((sg) => String(sg.name || (sg as unknown as { nombre?: string }).nombre || "").toLowerCase() === "sin cargo");
+        if (found) {
+          sinCargoSubgroupId = Number(found.subgroupId ?? found.id);
+        } else {
+          // Crear subgrupo "Sin cargo"
+          const created = await createSubgroup(
+            sectionId,
+            { name: "Sin cargo", description: "Miembros no asignados" } as unknown as Omit<Subgroup, "id" | "subgroupId" | "tenantId" | "groupId" | "sectionId" | "createdAt" | "updatedAt">,
+            tenantId,
+            groupSlug
+          );
+          sinCargoSubgroupId = Number(created.subgroupId ?? created.id);
+        }
+      }
+
+      if (!sinCargoSubgroupId) {
+        console.warn("No fue posible determinar/crear el subgrupo 'Sin cargo'. Abortando desasignación.");
+        return;
+      }
+
+      // 2) Mover el miembro al subgrupo "Sin cargo" dentro de la misma sección
+      const memberIdNum = Number(memberId);
+      const memberIdToSend: number | string = Number.isFinite(memberIdNum) ? memberIdNum : memberId;
+
+      const result = await dispatch(
+        assignSubgroupAndSectionAction({
+          memberId: memberIdToSend,
+          subGroupId: sinCargoSubgroupId,
+          sectionId: Number.isFinite(Number(nivel.id)) ? Number(nivel.id) : undefined,
+        })
+      );
+      if (assignSubgroupAndSectionAction.fulfilled.match(result)) {
+        setShowSuccess(true);
+        // Refrescar lista de miembros (preferir enriquecido)
+        const r1 = await dispatch(fetchMembersWithBranchAction());
+        if (fetchMembersWithBranchAction.rejected.match(r1)) {
+          await dispatch(fetchMembersAction());
+        }
+        setMembersRefreshKey((k) => k + 1);
+      } else {
+        console.error("Error al desasignar miembro del cargo: ", result);
+      }
+    } catch (e) {
+      console.error("Fallo al desasignar miembro del cargo", e);
+    }
+  };
+
+  // Helpers locales para advertencia al eliminar un nivel
+  const toNumberSafe = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const getMemberSubgroupId = (m: Member): number | undefined => {
+    return (
+      toNumberSafe(m?.subgroup_id) ??
+      toNumberSafe(m?.subgroup?.subgroupId) ??
+      toNumberSafe(m?.subgroup?.subgroup_id)
+    );
+  };
+  const getCargoName = (c: Cargo | { nombre?: string; name?: string }): string => {
+    const maybe = (c as { nombre?: string; name?: string });
+    return String(maybe.nombre ?? maybe.name ?? "");
+  };
+
+  const computeLevelCounts = (nivel: Nivel) => {
+    // Ignorar el cargo especial "Sin cargo" para fines de eliminación de nivel
+    const cargos = (nivel.cargos || []).filter((c) => !isSinCargoName(getCargoName(c as Cargo)));
+    const cargoCount = cargos.length;
+    let memberCount = 0;
+    if (cargoCount > 0 && members && members.length > 0) {
+      const cargoIds = cargos
+        .map((c) => toNumberSafe((c as unknown as { id?: unknown }).id))
+        .filter((id): id is number => typeof id === 'number');
+      if (cargoIds.length > 0) {
+        memberCount = members.reduce((acc, m) => {
+          const sg = getMemberSubgroupId(m);
+          return acc + (sg !== undefined && cargoIds.includes(sg) ? 1 : 0);
+        }, 0);
+      }
+    }
+    return { cargoCount, memberCount };
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
     if (deleteTarget.type === "nivel") {
+      // Evitar eliminar si viene bloqueado por asociaciones
+      if ((deleteTarget.cargoCount || 0) + (deleteTarget.memberCount || 0) > 0) {
+        return;
+      }
       await removeNivel(deleteTarget.id);
     } else {
       // Eliminar cargo dentro del nivel
+      // Evitar eliminar si el cargo tiene miembros asociados,
+      // excepto cuando es el cargo especial "Sin cargo" (permitido).
+      if (!deleteTarget.isSinCargo && (deleteTarget.memberCount || 0) > 0) {
+        return;
+      }
       const nivel = data.niveles.find(
         (n) => n.id === deleteTarget.nivelId
       );
@@ -307,6 +441,7 @@ export default function NivelesPage() {
                 ramas={comiteRamas}
                 // Pasamos handlers: onCreateSubrama abre el modal Crear Cargo en este módulo
                 onEditRama={() => { console.info('editar rama (desde niveles)'); }}
+                onDeleteRama={() => { console.info('eliminar rama (desde niveles)'); }}
                 onCreateSubrama={(ramaId) => handleCreateCargoFromRama(ramaId)}
                 onEditSubrama={() => { console.info('editar subrama (desde niveles)'); }}
                 onDeleteSubrama={() => { console.info('eliminar subrama (desde niveles)'); }}
@@ -342,10 +477,13 @@ export default function NivelesPage() {
                 setOpenEditNivel(true);
               }}
               onDelete={() => {
+                const { cargoCount, memberCount } = computeLevelCounts(nivel);
                 setDeleteTarget({
                   type: "nivel",
                   id: nivel.id,
                   name: nivel.nombre,
+                  cargoCount,
+                  memberCount,
                 });
                 setOpenDelete(true);
               }}
@@ -359,6 +497,7 @@ export default function NivelesPage() {
               }}
               onAddMember={(cargo) => handleOpenAddMember(nivel, cargo)}
               onDeleteCargo={(cargo) => handleDeleteCargo(cargo, nivel)}
+              onRemoveMember={(cargo, memberId) => handleRemoveMemberFromCargo(nivel, cargo, memberId)}
             />
           ))}
         </div>
@@ -413,6 +552,17 @@ export default function NivelesPage() {
         name={deleteTarget?.name || ""}
         onClose={() => setOpenDelete(false)}
         onConfirm={confirmDelete}
+        warning={
+          deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0
+            ? `No se puede eliminar este nivel porque tiene ${deleteTarget?.cargoCount ?? 0} cargo(s) y ${deleteTarget?.memberCount ?? 0} miembro(s) asociados.`
+            : deleteTarget?.type === 'cargo' && !deleteTarget?.isSinCargo && (deleteTarget?.memberCount || 0) > 0
+            ? `No se puede eliminar este cargo porque tiene ${deleteTarget?.memberCount ?? 0} miembro(s) asociados.`
+            : undefined
+        }
+        disableConfirm={
+          (deleteTarget?.type === 'nivel' && (deleteTarget?.cargoCount || 0) + (deleteTarget?.memberCount || 0) > 0) ||
+          (deleteTarget?.type === 'cargo' && !deleteTarget?.isSinCargo && (deleteTarget?.memberCount || 0) > 0)
+        }
       />
 
       {/* Modal de éxito */}

@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Input,
@@ -19,12 +19,33 @@ import {
   PopoverContent,
 } from "@/components/ui";
 import type { Gender } from "@/types/enrollment.type";
-import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 import type { GroupResponseDTO as Group } from "@/types/group.type";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { createGroupAdminWithConnectionAction, fetchGroupsWithAdminsAction } from "@/store/groups/groupsActions";
+import { useGroup } from "@/hooks/useGroup";
+
+interface PersonalData {
+  firstname: string;
+  lastname: string;
+  email: string;
+  confirm_email: string;
+  username: string;
+  password: string;
+  confirm_password: string;
+  document_type: string;
+  identification: string;
+  birth_date: string;
+  address: string;
+  phone: string;
+  gender: string;
+  weight: string;
+  height: string;
+}
 
 interface GroupAdminModalProps {
   open: boolean;
@@ -37,17 +58,49 @@ export default function GroupAdminModal({
   onOpenChange,
   group,
 }: GroupAdminModalProps) {
-  const {
-    datosPersonales,
-    setDatosPersonales,
-    handlePersonalChange,
-    handleSubmit,
-    loadingSubmit,
-    errors,
-  } = useRoleEnrollment({ role: "ADMIN_GRUPO", totalPaginas: 1 });
+  const dispatch = useAppDispatch();
+  const { loading: loadingSubmit } = useGroup();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [datosPersonales, setDatosPersonales] = useState<PersonalData>({
+    firstname: "",
+    lastname: "",
+    email: "",
+    confirm_email: "",
+    username: "",
+    password: "",
+    confirm_password: "",
+    document_type: "",
+    identification: "",
+    birth_date: "",
+    address: "",
+    phone: "",
+    gender: "",
+    weight: "",
+    height: "",
+  });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset form when modal closes
+      setDatosPersonales({
+        firstname: "",
+        lastname: "",
+        email: "",
+        confirm_email: "",
+        username: "",
+        password: "",
+        confirm_password: "",
+        document_type: "",
+        identification: "",
+        birth_date: "",
+        address: "",
+        phone: "",
+        gender: "",
+        weight: "",
+        height: "",
+      });
+      setErrors({});
+    }
   }, [open]);
 
   const parseISOToLocalDate = (iso?: string | undefined): Date | undefined => {
@@ -60,11 +113,138 @@ export default function GroupAdminModal({
     return new Date(y, m - 1, d);
   };
 
+  const handlePersonalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setDatosPersonales((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!datosPersonales.firstname.trim()) {
+      newErrors.firstname = "El nombre es requerido";
+    }
+    if (!datosPersonales.lastname.trim()) {
+      newErrors.lastname = "Los apellidos son requeridos";
+    }
+    if (!datosPersonales.email.trim()) {
+      newErrors.email = "El correo es requerido";
+    } else if (!/\S+@\S+\.\S+/.test(datosPersonales.email)) {
+      newErrors.email = "El correo no es válido";
+    }
+    if (datosPersonales.email !== datosPersonales.confirm_email) {
+      newErrors.confirm_email = "Los correos no coinciden";
+    }
+    if (!datosPersonales.username.trim()) {
+      newErrors.username = "El usuario es requerido";
+    } else {
+      const uname = datosPersonales.username.trim();
+      if (uname.length > 10) {
+        newErrors.username = "El usuario no puede tener más de 10 caracteres";
+      } else if (uname.includes(".")) {
+        newErrors.username = "El usuario no puede contener puntos";
+      }
+    }
+    if (!datosPersonales.password) {
+      newErrors.password = "La contraseña es requerida";
+    } else if (datosPersonales.password.length < 8) {
+      newErrors.password = "La contraseña debe tener al menos 8 caracteres";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#_-])/.test(datosPersonales.password)) {
+      newErrors.password = "Debe contener mayúsculas, minúsculas, números y símbolos (@$!%*?&#_-)";
+    }
+    if (datosPersonales.password !== datosPersonales.confirm_password) {
+      newErrors.confirm_password = "Las contraseñas no coinciden";
+    }
+    if (!datosPersonales.identification.trim()) {
+      newErrors.identification = "El número de documento es requerido";
+    }
+    if (!datosPersonales.document_type) {
+      newErrors.document_type = "El tipo de documento es requerido";
+    }
+    if (!datosPersonales.birth_date) {
+      newErrors.birth_date = "La fecha de nacimiento es requerida";
+    }
+    if (!datosPersonales.gender) {
+      newErrors.gender = "El género es requerido";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleCancel = () => onOpenChange(false);
 
   const onCreate = async (e: React.FormEvent<HTMLFormElement>) => {
-    await handleSubmit(e);
-    onOpenChange(false);
+    e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Por favor completa todos los campos correctamente");
+      return;
+    }
+
+    if (!group) {
+      toast.error("No se ha seleccionado un grupo");
+      return;
+    }
+
+    try {
+      // Preparar el DTO del miembro según CreateMemberDTO del backend (usa snake_case)
+      const memberDto = {
+        first_name: datosPersonales.firstname,
+        last_name: datosPersonales.lastname,
+        document_type: datosPersonales.document_type || "CC",
+        identification: datosPersonales.identification,
+        birth_date: datosPersonales.birth_date,
+        address: datosPersonales.address,
+        phone: datosPersonales.phone,
+        gender: datosPersonales.gender,
+        weight: datosPersonales.weight || undefined,
+        height: datosPersonales.height || undefined,
+        email: datosPersonales.email,
+        role: "ADMIN_GRUPO",
+        is_active: true,
+        accept_treatment: true, // Requerido por la base de datos
+      };
+
+      const payload = {
+        tenantId: group.tenant_id,
+        slug: group.slug,
+        data: {
+          email: datosPersonales.email,
+          password: datosPersonales.password,
+          username: datosPersonales.username,
+          member: memberDto,
+        },
+      };
+
+
+      // Llamar a la acción de Redux para crear administrador de grupo con la conexión correcta
+      const result = await dispatch(createGroupAdminWithConnectionAction(payload));
+
+      if (createGroupAdminWithConnectionAction.fulfilled.match(result)) {
+        toast.success("Administrador de grupo creado exitosamente en la conexión correcta");
+        
+        // Refrescar la lista de grupos
+        await dispatch(fetchGroupsWithAdminsAction());
+        
+        onOpenChange(false);
+      } else {
+        console.error("Error del backend:", result.payload);
+        const errorMessage = result.payload?.error || "Error al crear el administrador de grupo";
+        toast.error(errorMessage);
+      }
+    } catch (error: unknown) {
+      console.error("Error inesperado al crear administrador de grupo:", error);
+      toast.error("Error inesperado al crear el administrador de grupo");
+    }
   };
 
   return (
@@ -141,6 +321,7 @@ export default function GroupAdminModal({
               <Label>Usuario</Label>
               <Input
                 name="username"
+                maxLength={10}
                 value={datosPersonales.username}
                 onChange={handlePersonalChange}
                 className="mt-1 w-full"
@@ -148,6 +329,9 @@ export default function GroupAdminModal({
               {errors.username && (
                 <p className="text-red-600 text-sm">{errors.username}</p>
               )}
+              <p className="text-xs text-gray-500 mt-1">
+                Máximo 10 caracteres. No use puntos (.).
+              </p>
             </div>
 
             <div>
@@ -158,10 +342,14 @@ export default function GroupAdminModal({
                 value={datosPersonales.password}
                 onChange={handlePersonalChange}
                 className="mt-1 w-full"
+                placeholder="Ej: Admin@123"
               />
               {errors.password && (
                 <p className="text-red-600 text-sm">{errors.password}</p>
               )}
+              <p className="text-xs text-gray-500 mt-1">
+                Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos (@$!%*?&#_-)
+              </p>
             </div>
 
             <div>
@@ -181,13 +369,28 @@ export default function GroupAdminModal({
             </div>
 
             <div>
-              <Label>Tipo documento</Label>
-              <Input
-                name="document_type"
+              <Label>Tipo de documento</Label>
+              <Select
                 value={datosPersonales.document_type}
-                onChange={handlePersonalChange}
-                className="mt-1 w-full"
-              />
+                onValueChange={(v: string) =>
+                  setDatosPersonales((prev) => ({ ...prev, document_type: v }))
+                }
+              >
+                <SelectTrigger className="w-full mt-1 bg-white">
+                  <SelectValue placeholder="Selecciona un tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CC">Cédula de Ciudadanía (CC)</SelectItem>
+                  <SelectItem value="TI">Tarjeta de Identidad (TI)</SelectItem>
+                  <SelectItem value="RC">Registro Civil (RC)</SelectItem>
+                  <SelectItem value="CE">Cédula de Extranjería (CE)</SelectItem>
+                  <SelectItem value="PA">Pasaporte (PA)</SelectItem>
+                  <SelectItem value="PEP">Permiso Especial de Permanencia (PEP)</SelectItem>
+                  <SelectItem value="PPT">Permiso por Protección Temporal (PPT)</SelectItem>
+                  <SelectItem value="NIT">Número de Identificación Tributaria (NIT)</SelectItem>
+                  <SelectItem value="NUIP">Número Único de Identificación Personal (NUIP)</SelectItem>
+                </SelectContent>
+              </Select>
               {errors.document_type && (
                 <p className="text-red-600 text-sm">{errors.document_type}</p>
               )}
@@ -236,6 +439,7 @@ export default function GroupAdminModal({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
+                    captionLayout="dropdown"
                     selected={
                       datosPersonales.birth_date
                         ? parseISOToLocalDate(datosPersonales.birth_date)

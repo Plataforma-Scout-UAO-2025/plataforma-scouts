@@ -42,12 +42,36 @@ public class SupabaseStorageService {
         String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
         String objectPath = "organigrama/" + UUID.randomUUID().toString() + "." + extension;
 
+        // 🔹 Subir el archivo primero
         uploadFile(file, objectPath, bucket);
 
-        StorageObject newObject = storageObjectRepository.findByNameAndBucketId(objectPath, bucket)
-            .orElseThrow(() -> new RuntimeException("El objeto de storage no se pudo encontrar después de la subida: " + objectPath));
+        // 🔹 Consultar los metadatos del objeto recién subido
+        String url = supabaseProperties.getStorageUrl() + "/object/info/" + bucket + "/" + objectPath;
 
-        return newObject.getId();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + supabaseProperties.getServiceRoleKey());
+        headers.set("apikey", supabaseProperties.getServiceRoleKey());
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Error al obtener metadatos del objeto desde Supabase: " + response.getStatusCode());
+            }
+
+            Map body = response.getBody();
+            if (body == null || !body.containsKey("id")) {
+                throw new RuntimeException("La respuesta de Supabase no contiene el campo 'id'");
+            }
+
+            String objectId = (String) body.get("id");
+            return UUID.fromString(objectId);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al consultar metadatos del objeto desde Supabase", e);
+        }
     }
 
     /**
@@ -131,7 +155,17 @@ public class SupabaseStorageService {
             
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + supabaseProperties.getServiceRoleKey());
-            headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+            // apikey header is required by Supabase for storage operations
+            headers.set("apikey", supabaseProperties.getServiceRoleKey());
+            // Content type fallback when unknown
+            MediaType mediaType = null;
+            try {
+                String ct = file.getContentType();
+                mediaType = (ct != null && !ct.isBlank()) ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM;
+            } catch (Exception ignore) {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
+            headers.setContentType(mediaType);
             
             HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
             
@@ -164,7 +198,15 @@ public class SupabaseStorageService {
             
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + supabaseProperties.getServiceRoleKey());
-            headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+            headers.set("apikey", supabaseProperties.getServiceRoleKey());
+            MediaType mediaType = null;
+            try {
+                String ct = file.getContentType();
+                mediaType = (ct != null && !ct.isBlank()) ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM;
+            } catch (Exception ignore) {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
+            headers.setContentType(mediaType);
             headers.set("x-upsert", "true"); // Permite sobrescribir si existe
             
             HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);

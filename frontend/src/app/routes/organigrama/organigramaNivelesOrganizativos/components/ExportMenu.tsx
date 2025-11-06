@@ -16,7 +16,34 @@ import autoTable from "jspdf-autotable";
 /* ============================================================
    📄 Exportación a PDF
    ============================================================ */
-function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: string) {
+// Util para cargar una imagen desde un URL (manejado por Vite) y esperar a que esté lista
+// Footer: dibuja línea y la marca KNUT en cada página
+function drawKnutFooter(doc: jsPDF, color: [number, number, number] = [26, 65, 52]) {
+  const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } })
+    .getNumberOfPages?.bind(doc)
+    ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } })
+      .internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal)
+    ?? (() => 1);
+  const total = Math.max(1, getPages());
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const marginX = 14;
+    const y = ph - 24;
+    doc.setDrawColor(...color);
+    doc.setLineWidth(1);
+    doc.line(marginX, y, pw - marginX, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...color);
+    doc.setFontSize(10);
+    doc.text("KNUT", pw - marginX, y + 12, { align: "right" as const });
+  }
+}
+
+// Nota: omitimos helpers de imagen y número de páginas heredados; ahora dibujamos footer por página
+
+async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: string) {
   const doc = new jsPDF();
   const title = `Conformación de Niveles Organizativos${groupName ? ` - ${groupName}` : ""}`;
   const fecha = new Date().toLocaleDateString("es-CO");
@@ -72,14 +99,24 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
       const isPad = nName.includes("comite de padres");
       const priority = isJef ? JEFATURA_ORDER : isPad ? PADRES_ORDER : null;
       const sorted = [...nivel.cargos].sort((a, b) => {
+        const SIN = 'sin cargo';
+        const an = normalize(a.nombre);
+        const bn = normalize(b.nombre);
         if (priority) {
-          const ai = priority.indexOf(normalize(a.nombre));
-          const bi = priority.indexOf(normalize(b.nombre));
+          // 'Sin cargo' siempre al final
+          if (an === SIN && bn === SIN) return 0;
+          if (an === SIN) return 1;
+          if (bn === SIN) return -1;
+          const ai = priority.indexOf(an);
+          const bi = priority.indexOf(bn);
           const aIn = ai !== -1; const bIn = bi !== -1;
           if (aIn && bIn) return ai - bi;
           if (aIn) return -1; if (bIn) return 1;
           return a.nombre.localeCompare(b.nombre, 'es');
         }
+        if (an === SIN && bn === SIN) return 0;
+        if (an === SIN) return 1;
+        if (bn === SIN) return -1;
         return a.nombre.localeCompare(b.nombre, 'es');
       });
       sorted.forEach((cargo) => {
@@ -107,11 +144,14 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
       });
     }
   });
+  // Reservar margen inferior para no solapar el pie de página
 
   autoTable(doc, {
     head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: tableData,
     startY: 35,
+    // Reservar espacio inferior para el pie de página (línea + KNUT)
+    margin: { bottom: 32 },
     theme: "striped",
     styles: {
       fontSize: 9,
@@ -124,6 +164,9 @@ function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: str
       fontStyle: "bold",
     },
     alternateRowStyles: { fillColor: [237, 237, 237] }, // 🎨 --accent (#EDEDED)
+    didDrawPage: () => {
+      drawKnutFooter(doc);
+    },
   });
 
   doc.save(`organigrama_niveles_${data.anio}.pdf`);
@@ -173,14 +216,23 @@ function exportCSV(data: OrganigramaNiveles, members?: Member[]) {
       const isPad = nName.includes("comite de padres");
       const priority = isJef ? JEFATURA_ORDER : isPad ? PADRES_ORDER : null;
       const sorted = [...nivel.cargos].sort((a, b) => {
+        const SIN = 'sin cargo';
+        const an = normalize(a.nombre);
+        const bn = normalize(b.nombre);
         if (priority) {
-          const ai = priority.indexOf(normalize(a.nombre));
-          const bi = priority.indexOf(normalize(b.nombre));
+          if (an === SIN && bn === SIN) return 0;
+          if (an === SIN) return 1;
+          if (bn === SIN) return -1;
+          const ai = priority.indexOf(an);
+          const bi = priority.indexOf(bn);
           const aIn = ai !== -1; const bIn = bi !== -1;
           if (aIn && bIn) return ai - bi;
           if (aIn) return -1; if (bIn) return 1;
           return a.nombre.localeCompare(b.nombre, 'es');
         }
+        if (an === SIN && bn === SIN) return 0;
+        if (an === SIN) return 1;
+        if (bn === SIN) return -1;
         return a.nombre.localeCompare(b.nombre, 'es');
       });
       sorted.forEach((cargo) => {
@@ -244,7 +296,7 @@ export default function ExportMenu({ data, members }: { data: OrganigramaNiveles
       console.warn('[ExportMenu] No se pudo obtener el nombre del grupo para el título del PDF', e);
     }
 
-    exportPDF(data, members, groupName);
+    await exportPDF(data, members, groupName);
   };
 
   return (
@@ -252,7 +304,7 @@ export default function ExportMenu({ data, members }: { data: OrganigramaNiveles
       <DropdownMenuTrigger asChild>
         <Button className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-lg px-4 py-2 flex items-center">
           <Download className="mr-2 h-4 w-4 text-primary-foreground" />
-          Exportar organigrama
+          Exportar Datos
         </Button>
       </DropdownMenuTrigger>
 
@@ -264,14 +316,14 @@ export default function ExportMenu({ data, members }: { data: OrganigramaNiveles
           onClick={handleExportPDF}
           className="hover:bg-accent hover:text-primary transition-colors"
         >
-          Exportar organigrama en PDF
+          Exportar en PDF
         </DropdownMenuItem>
 
         <DropdownMenuItem
           onClick={() => exportCSV(data, members)}
           className="hover:bg-accent hover:text-primary transition-colors"
         >
-          Exportar organigrama en CSV
+          Exportar en CSV
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

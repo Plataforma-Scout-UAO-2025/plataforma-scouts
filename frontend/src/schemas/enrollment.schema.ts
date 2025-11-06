@@ -59,7 +59,7 @@ export const personalDataBaseSchema = z
       .string()
       .min(1, "El nombre de usuario es requerido")
       .min(4, "El nombre de usuario debe tener al menos 4 caracteres")
-      .max(20, "El nombre de usuario no puede tener más de 20 caracteres")
+      .max(15, "El nombre de usuario no puede tener más de 15 caracteres")
       .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
 
     password: z
@@ -133,13 +133,11 @@ export const personalDataBaseSchema = z
   });
 
 export const dataConsentSchema = z.object({
-  data_treatment_consent: z
-    .string()
-    .min(1, "Debes seleccionar una opción")
-    .refine(
-      (value) => value === "accepted",
-      "Debes autorizar el tratamiento de datos para continuar"
-    ),
+  accept_treatment: z
+    .boolean()
+    .refine((value) => value === true, {
+      message: "Debes autorizar el tratamiento de datos para continuar",
+    }),
 });
 
 export const page1Schema = z.intersection(

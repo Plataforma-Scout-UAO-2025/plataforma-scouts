@@ -55,6 +55,7 @@ public class SupabaseStorageService {
      */
     public StorageUploadResponse uploadFile(MultipartFile file, String fileName, String bucket) {
         try {
+            System.out.println("Entro a uploadFile");
             String bucketName = bucket != null ? bucket : supabaseProperties.getDefaultStorageBucket();
             String url = supabaseProperties.getStorageUrl() + "/object/" + bucketName + "/" + fileName;
             
@@ -74,7 +75,8 @@ public class SupabaseStorageService {
             
             if (response.getStatusCode().is2xxSuccessful()) {
                 String publicUrl = getPublicUrl(bucketName, fileName);
-                
+
+                System.out.println("Archivo subido exitosamente: " + publicUrl);
                 return StorageUploadResponse.builder()
                     .message("Archivo subido exitosamente")
                     .fileName(fileName)
@@ -100,6 +102,7 @@ public class SupabaseStorageService {
      * @return URL pública
      */
     public String getPublicUrl(String bucket, String fileName) {
+        System.out.println("Generando URL pública para el archivo: " + fileName + " en bucket: " + bucket);
         return supabaseProperties.getStorageUrl() + "/object/public/" + bucket + "/" + fileName;
     }
 

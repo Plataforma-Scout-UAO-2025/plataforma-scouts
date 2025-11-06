@@ -9,9 +9,10 @@ import type { Member } from '@/types/member.type';
 import { useTenant } from '@/hooks/useTenant';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { getMembers } from '@/api/membersApi';
+import { getMembersWithBranch } from '@/api/membersApi';
 import { useAuth0 } from '@auth0/auth0-react';
 import { ConfirmationModal } from './ConfirmationModal';
+import { useRoleContext } from '@/hooks/useRoleContext';
 
 interface MedicalWizardFormProps {
   memberId?: number; // Hacerlo opcional para creación
@@ -44,6 +45,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
   const [selectedMemberId, setSelectedMemberId] = useState<number>(memberId || 0);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const { currentUserRole } = useRoleContext();
 
 
   // Cargar lista de miembros desde la API
@@ -51,29 +53,68 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     try {
       setIsLoadingMembers(true);
 
-      // Cargar miembros
-      const response = await getMembers();
+      let membersResponse: Member[] = [];
+      let currentMember: Member | undefined;
+      let scoutMembers: Member[] = [];
 
-      // Filtrar solo miembros aprobados y activos
-      let scoutMembers = response.filter((member: Member) =>
-        member.role === 'SCOUT' &&
-        member.status === 'APPROVED' &&
-        member.is_active
-      );
+      switch (currentUserRole) {
+        case 'SCOUTER':
+          // Cargar miembros
+          membersResponse = await getMembersWithBranch();
 
-      // Filtrar por subgrupo del usuario actual (si tiene email)
-      if (user?.email) {
-        // Buscar el miembro actual por email
-        const currentMember = response.find((member: Member) =>
-          member.email?.toLowerCase() === user.email?.toLowerCase()
-        );
-
-        // Si el usuario actual tiene un subgrupo asignado, filtrar por ese subgrupo
-        if (currentMember?.subgroup_id) {
-          scoutMembers = scoutMembers.filter((member: Member) =>
-            member.subgroup_id === currentMember.subgroup_id
+          // Filtrar solo miembros aprobados y activos
+          scoutMembers = membersResponse.filter((member: Member) =>
+            member.isActive &&
+            member.tenantId === tenantId &&
+            member.status === 'APPROVED' &&
+            member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+            member.role?.toUpperCase() !== 'ADMIN_GLOBAL'
           );
-        }
+
+          // Buscar el miembro actual por id
+          currentMember = membersResponse.find((member: Member) =>
+            member.email?.toLowerCase() === user?.email?.toLowerCase()
+          );
+
+          // Si el usuario actual tiene un subgrupo asignado, filtrar por ese subgrupo
+          if (currentMember?.subgroup?.section?.groupId) {
+
+            scoutMembers = scoutMembers.filter(
+              (member: Member) =>
+                member?.subgroup?.section?.groupId === currentMember?.subgroup?.section?.groupId);
+
+            if (currentMember?.subgroup?.sectionId) {
+              scoutMembers = scoutMembers.filter(
+                (member: Member) =>
+                  member?.subgroup?.sectionId === currentMember?.subgroup?.sectionId);
+            }
+          }
+          break;
+
+        case 'ADMIN_GRUPO':
+          membersResponse = await getMembersWithBranch();
+
+          scoutMembers = membersResponse.filter(
+            (member: Member) =>
+              member.isActive &&
+              member.tenantId === tenantId &&   // todos los miembros del mismo tenant
+              member.status === 'APPROVED' &&  // solo aprobados
+              member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+              member.role?.toUpperCase() !== 'ADMIN_GLOBAL'  // insensible a mayúsculas
+          );
+          break;
+
+        case 'ADMIN_GLOBAL':
+          membersResponse = await getMembersWithBranch();
+
+          scoutMembers = membersResponse.filter(
+            (member: Member) =>
+              member.isActive &&
+              member.status === 'APPROVED' &&  // solo aprobados
+              member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+              member.role?.toUpperCase() !== 'ADMIN_GLOBAL'  // insensible a mayúsculas
+          );
+          break;
       }
 
       // Cargar registros médicos existentes
@@ -85,7 +126,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
 
         // Filtrar miembros que NO tienen registro médico
         const membersWithoutRecords = scoutMembers.filter(
-          (member: Member) => !existingRecordIds.has(member.member_id || 0)
+          (member: Member) => !existingRecordIds.has(member.memberId || 0)
         );
 
         setMembers(membersWithoutRecords);
@@ -98,7 +139,7 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
     } finally {
       setIsLoadingMembers(false);
     }
-  }, [tenantId, user?.email]);
+  }, [tenantId, user?.email, currentUserRole]);
 
   // Cargar miembros si estamos en modo creación
   useEffect(() => {
@@ -583,33 +624,51 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
                       Solo se muestran integrantes de tu rama/subgrupo sin registro médico
                     </p>
                     <Select
-                      value={selectedMemberId.toString()}
+                      value={selectedMemberId ? selectedMemberId.toString() : ""}
                       onValueChange={(value) => handleMemberChange(parseInt(value))}
                       disabled={isLoadingMembers || members.length === 0}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder={
-                          isLoadingMembers
-                            ? "Cargando miembros..."
-                            : members.length === 0
-                              ? "No hay integrantes disponibles"
-                              : "Seleccione un integrante"
-                        } />
+                        <SelectValue
+                          placeholder={
+                            isLoadingMembers
+                              ? "Cargando miembros..."
+                              : members.length === 0
+                                ? "No hay integrantes disponibles"
+                                : "Seleccione un integrante"
+                          }
+                        />
                       </SelectTrigger>
+
                       <SelectContent>
-                        {members.length === 0 ? (
+                        {isLoadingMembers ? (
+                          <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                            Cargando miembros...
+                          </div>
+                        ) : members.length === 0 ? (
                           <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                             No hay integrantes disponibles de tu rama/subgrupo
                           </div>
                         ) : (
-                          members.map(member => (
-                            <SelectItem key={member.member_id} value={member.member_id?.toString() || ""}>
-                              {member.first_name} {member.last_name} - ID {member.identification}
-                            </SelectItem>
-                          ))
+                          [...members]
+                            .sort((a, b) => {
+                              const nameA = `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim();
+                              const nameB = `${b.firstName ?? ""} ${b.lastName ?? ""}`.trim();
+                              return nameA.localeCompare(nameB, "es", { sensitivity: "base" });
+                            })
+                            .map((member) => (
+                              <SelectItem
+                                key={member.memberId}
+                                value={member.memberId?.toString() || ""}
+                              >
+                                {member.firstName} {member.lastName} - ID {member.identification}
+                              </SelectItem>
+                            ))
                         )}
                       </SelectContent>
                     </Select>
+
+
                     {!selectedMemberId && members.length > 0 && (
                       <p className="text-sm text-red-500">Debe seleccionar un integrante</p>
                     )}

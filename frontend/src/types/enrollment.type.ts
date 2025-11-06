@@ -45,7 +45,7 @@ export interface PersonalData {
   instruments?: string;
   tenantId: string;
   emergency_contacts?: EmergencyContact[];
-  data_treatment_consent?: string;
+  accept_treatment?: boolean;
 }
 
 export interface SchoolData {
@@ -83,10 +83,29 @@ export interface CreateAuth0Request {
   role?: role;
 }
 
+/**
+ * Respuesta posible del endpoint que crea usuarios en Auth0.
+ * El backend puede devolver una estructura anidada: { status, message, data: { id, email, username, ... } }
+ * En el frontend normalizamos la respuesta y exponemos también `userId` de conveniencia.
+ */
 export interface CreateAuth0Response {
-  message: string;
-  userId: string;
-  email: string;
-  username: string;
-  role: string;
+  // Campos directos que puede devolver la API (opcional)
+  status?: number;
+  message?: string;
+
+  // Forma «raw» que envía el backend: data.id contiene el auth0 id
+  data?: {
+    id?: string;
+    email?: string;
+    username?: string;
+    email_verified?: boolean;
+    role?: string;
+    [key: string]: unknown;
+  };
+
+  // Campos normalizados
+  userId?: string;
+  email?: string;
+  username?: string;
+  role?: string;
 }

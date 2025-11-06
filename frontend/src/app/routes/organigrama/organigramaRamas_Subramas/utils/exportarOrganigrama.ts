@@ -36,6 +36,32 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
 }
 
+// Dibuja el pie de página requerido: línea horizontal y texto "KNUT" a la derecha en cada página
+function drawKnutFooter(doc: jsPDF, colorHex = "#1A4134") {
+  const [r, g, b] = hexToRgb(colorHex);
+  // getNumberOfPages es inconsistente entre versiones; cubrir ambos casos
+  const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } })
+    .getNumberOfPages?.bind(doc)
+    ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } })
+      .internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal)
+    ?? (() => 1);
+  const total = Math.max(1, getPages());
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const marginX = 40; // consistente con márgenes de contenido
+    const lineY = ph - 28; // altura de la línea
+    doc.setDrawColor(r, g, b);
+    doc.setLineWidth(1);
+    doc.line(marginX, lineY, pw - marginX, lineY);
+    // Marca "KNUT" alineada a la derecha, debajo de la línea
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(r, g, b);
+    doc.setFontSize(10);
+    doc.text("KNUT", pw - marginX, lineY + 14, { align: "right" as const });
+  }
+}
 
 
 
@@ -282,7 +308,8 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       startY: y + 32,
       head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
       body,
-      margin: { left: x, right: x },
+      // Reservar un poco de espacio inferior para la línea y el texto del pie de página
+      margin: { left: x, right: x, bottom: 36 },
       styles: { 
         fontSize: 8, 
         cellPadding: 4, 
@@ -293,6 +320,8 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       headStyles: { fillColor: [r, g, b], textColor: [255, 255, 255] },
       columnStyles: finalColumnStyles,
       didDrawPage: () => {
+        // Dibujar el pie de página en cada página durante el render
+        drawKnutFooter(doc, opts.colorHex ?? "#1A4134");
       },
     });
 

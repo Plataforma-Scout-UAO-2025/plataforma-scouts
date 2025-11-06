@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { UseFormRegister, FieldErrors } from 'react-hook-form';
-import type { EditMemberFormData } from '../../schemas/MemberForm.schema';
+import type { EditMemberFormData } from '@/app/routes/guardians/members/schemas/MemberForm.schema';
 
 interface MemberContactFormProps {
   register: UseFormRegister<EditMemberFormData>;
@@ -26,7 +26,7 @@ export default function MemberContactForm({
         <div className="space-y-2">
           <Label htmlFor="documentType">Tipo de Documento</Label>
           <Select value={documentType || ''} onValueChange={onDocumentTypeChange}>
-            <SelectTrigger className="bg-white border">
+            <SelectTrigger className="bg-white border w-full">
               <SelectValue placeholder="Seleccione tipo de documento" />
             </SelectTrigger>
             <SelectContent>
@@ -49,12 +49,13 @@ export default function MemberContactForm({
         {/* Teléfono */}
         <div className="space-y-2">
           <Label htmlFor="phone">Teléfono</Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="Ej: +573001234567"
-            {...register('phone')}
-          />
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="Ej: +573001234567"
+              {...register('phone')}
+              className="w-full"
+            />
           {errors.phone && (
             <p className="text-sm text-red-600">{errors.phone.message}</p>
           )}
@@ -64,12 +65,13 @@ export default function MemberContactForm({
       {/* Dirección */}
       <div className="space-y-2">
         <Label htmlFor="address">Dirección</Label>
-        <Input
-          id="address"
-          type="text"
-          placeholder="Ej: Calle 123 #45-67"
-          {...register('address')}
-        />
+          <Input
+            id="address"
+            type="text"
+            placeholder="Ej: Calle 123 #45-67"
+            {...register('address')}
+            className="w-full"
+          />
         {errors.address && (
           <p className="text-sm text-red-600">{errors.address.message}</p>
         )}

@@ -3,26 +3,31 @@ import { RawRole } from "@/roles/roles";
 import AdminGlobalView from "./components/admin-global/AdminGlobalView";
 import AdminGrupoView from "./components/admin-grupal/AdminGrupoView";
 import AcudienteView from "./components/AcudienteView";
-import ScoutView from "./components/ScoutView";
+import ScoutView from "./components/scout/ScoutView";
 import ComiteAdminView from "./components/ComiteAdminView";
 import ScouterView from "./components/ScouterView";
 import { FullScreenLoader } from "@/components/common/FullScreenLoader";
 import TesoreroView from "./components/TesoreroView";
+import { useTenantParams } from "../organigrama/organigramaRamas_Subramas/hooks/useTenantParams";
+
 
 export default function Dashboard() {
   const { currentUserRole, status } = useRoleContext();
-
+  const { tenantId } = useTenantParams();
 
   if (status === "loading" || status === "idle") {
     return <FullScreenLoader message="Estamos dejando todo listo para ti!" />;
   }
-
+  if (currentUserRole === RawRole.ADMIN_GLOBAL) {
+    const userTenantClaim = import.meta.env.VITE_ADMIN_ORGANIZATION_ID;
+    if (tenantId && userTenantClaim && tenantId === userTenantClaim) {
+      return <AdminGlobalView />;
+    }
+    return <AdminGrupoView />;
+  }
 
   // Solo se renderiza Y ejecuta el componente correspondiente al rol del usuario
   switch (currentUserRole) {
-    case RawRole.ADMIN_GLOBAL:
-      return <AdminGlobalView />;
-
     case RawRole.ADMIN_GRUPO:
       return <AdminGrupoView />;
 

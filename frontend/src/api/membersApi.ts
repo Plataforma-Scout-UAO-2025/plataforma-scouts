@@ -136,9 +136,21 @@ export const assignSubgroupAndSection = async (data: {
 
 // Obtener datos escolares de un miembro
 export const getSchoolDataByMemberId = async (id: string | number | bigint) => {
-  const response = await api.get<SchoolData>("/members/list_schoolData_by_memberId", {
-    params: { id },
-  });
+  const response = await api.get<SchoolData>(
+    "/members/list_schoolData_by_memberId",
+    {
+      params: { id },
+    },
+  );
+  return response.data;
+};
+
+// Actualizar rol de un miembro en la base de datos
+export const updateMemberRole = async (data: {
+  memberId: number;
+  newRole: string;
+}) => {
+  const response = await api.put(`/members/update_role`, data);
   return response.data;
 };
 

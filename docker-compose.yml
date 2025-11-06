@@ -1,0 +1,9 @@
+services:
+  frontend:
+    image: plataforma-scout/frontend:latest
+    ports:
+      - "6578:80"
+    environment:
+      - VITE_AUTH0_DOMAIN=dev-peshzy4g14jvfyku.us.auth0.com
+      - VITE_AUTH0_CLIENT_ID=E1fqntn0ryTTylXazK30a5EpJjzmIg7f
+      - VITE_AUTH0_AUDIENCE=https://scouts-platform-backend

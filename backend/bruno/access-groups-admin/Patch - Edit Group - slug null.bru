@@ -1,0 +1,38 @@
+meta {
+  name: Patch - Edit Group - slug null
+  type: http
+  seq: 15
+}
+
+patch {
+  url: http://localhost:8080/api/v1/tenants/t-bruno-success-slugv04/groups/bruno-info-slugv06
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+tests {
+  test("DEBUG - response", function() {
+    console.log('DEBUG RESPONSE STATUS:', res.status);
+    console.log('DEBUG RESPONSE BODY:', JSON.stringify(res.body));
+  });
+  test("Editar slug con valor null (no debe cambiar el slug)", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body).to.have.property('slug').that.equals('bruno-info-slugv06');
+  });
+}
+
+docs {
+  **Nombre:** Editar slug con null
+  **Endpoint:** PATCH /api/v1/tenants/{tenantId}/groups/{slug}
+  **Descripción:** Enviar slug: null no debe modificar el slug del recurso.
+}
+
+body {
+  {
+  "slug": null
+  }
+}

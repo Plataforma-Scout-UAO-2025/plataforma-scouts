@@ -1,15 +1,43 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import PersonalDataForm from "./components/PersonalDataForm";
+import EmergencyContacts from "./components/EmergencyContacts";
 import DataTreatmentConsent from "./components/DataTreatmentConsent";
 import SuccessModal from "./components/SuccessModal";
+import { useOrgStructure } from "@/hooks/useOrgStructure";
+import { useAuth0ApiWrapper } from "@/hooks/useAuth0ApiWrapper";
 import { UserExistsDialog } from "./components/UserExistsDialog";
 import { ErrorDialog } from "./components/ErrorDialog";
 import { useRoleEnrollment } from "@/hooks/useRoleEnrollment";
 
 function TreasurerEnrollment() {
   const navigate = useNavigate();
+  const { orgId, isLoading: authLoading } = useAuth0ApiWrapper();
+
+  const {
+    sections,
+    subgroups,
+    selectedGroupSlug,
+    selectedSection,
+    setSelectedSection,
+    selectedSubgroup,
+    setSelectedSubgroup,
+    loadingSections,
+    loadingSubgroups,
+  } = useOrgStructure({
+    orgId: orgId || "",
+    open: true,
+
+  });
 
   const {
     datosPersonales,
@@ -27,13 +55,17 @@ function TreasurerEnrollment() {
     loadingSubmit,
     errors,
     handlePersonalChange,
+    handleEmergencyContactsChange,
     handleSubmit,
-  } = useRoleEnrollment({ role: "TESORERO", totalPaginas: 2 });
+  } = useRoleEnrollment({
+    role: "TESORERO", totalPaginas: 3, selectedSection,
+    selectedSubgroup
+  });
 
-  const handleConsentChange = (value: string) => {
+  const handleConsentChange = (value: boolean) => {
     setDatosPersonales((prev) => ({
       ...prev,
-      data_treatment_consent: value,
+      accept_treatment: value,
     }));
   };
 
@@ -46,25 +78,110 @@ function TreasurerEnrollment() {
   };
 
   const getCamposPagina = () => {
-    if (pagina === 1) {
+    if (pagina === 1)
       return (
-        <PersonalDataForm
-          datos={datosPersonales}
-          handleChange={handlePersonalChange}
-          setDatos={setDatosPersonales}
-          errors={errors}
+        <>
+          <PersonalDataForm
+            datos={datosPersonales}
+            handleChange={handlePersonalChange}
+            setDatos={setDatosPersonales}
+            errors={errors}
+          />
+          <EmergencyContacts
+            datos={datosPersonales}
+            setDatos={setDatosPersonales}
+            onContactChange={handleEmergencyContactsChange}
+            errors={errors}
+          />
+        </>
+      );
+
+    if (pagina === 2) {
+      return (
+        <DataTreatmentConsent
+          value={datosPersonales.accept_treatment}
+          onChange={handleConsentChange}
+          error={errors.data_treatment_consent}
         />
       );
     }
 
+
     return (
-      <DataTreatmentConsent
-        value={datosPersonales.data_treatment_consent || ""}
-        onChange={handleConsentChange}
-        error={errors.data_treatment_consent}
-      />
+      <div className="col-span-full space-y-4">
+        <h3 className="text-lg font-semibold text-primary border-b-2 border-primary pb-2">
+          Asignación Organizacional
+        </h3>
+
+        {/* Selector de Sección */}
+        <div className="space-y-2">
+          <Label htmlFor="section">Sección *</Label>
+          <Select
+            value={selectedSection}
+            onValueChange={setSelectedSection}
+            disabled={
+              !selectedGroupSlug || loadingSections || sections.length === 0
+            }
+            required
+          >
+            <SelectTrigger
+              id="section"
+              className={errors.section ? "border-red-500" : ""}
+            >
+              <SelectValue placeholder="Selecciona una sección" />
+            </SelectTrigger>
+            <SelectContent>
+              {sections.map((section) => (
+                <SelectItem key={section.id} value={String(section.id)}>
+                  {section.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.section && (
+            <p className="text-xs text-red-600">{errors.section}</p>
+          )}
+        </div>
+
+        {/* Selector de Subgrupo */}
+        <div className="space-y-2">
+          <Label htmlFor="subgroup">Subgrupo *</Label>
+          <Select
+            value={selectedSubgroup}
+            onValueChange={setSelectedSubgroup}
+            disabled={
+              !selectedSection || loadingSubgroups || subgroups.length === 0
+            }
+          >
+            <SelectTrigger
+              id="subgroup"
+              className={errors.subgroup ? "border-red-500" : ""}
+            >
+              <SelectValue placeholder="Selecciona un subgrupo" />
+            </SelectTrigger>
+            <SelectContent>
+              {subgroups.map((subgroup) => (
+                <SelectItem key={subgroup.id} value={String(subgroup.id)}>
+                  {subgroup.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.subgroup && (
+            <p className="text-xs text-red-600">{errors.subgroup}</p>
+          )}
+        </div>
+      </div>
     );
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-4 md:px-20 py-10">
@@ -87,7 +204,6 @@ function TreasurerEnrollment() {
       >
         {getCamposPagina()}
 
-        {/* Controles inferiores */}
         <div className="col-span-full flex justify-between mt-6">
           <Button
             type="button"
@@ -102,7 +218,8 @@ function TreasurerEnrollment() {
             variant="primary"
             disabled={
               loadingSubmit ||
-              (pagina === 2 && datosPersonales.data_treatment_consent === "rejected")
+              (pagina === 2 && datosPersonales.accept_treatment === false) ||
+              (pagina === 3 && (!selectedGroupSlug || !selectedSection || !selectedSubgroup))
             }
           >
             {loadingSubmit
@@ -117,7 +234,7 @@ function TreasurerEnrollment() {
       {/* Modal de éxito */}
       <SuccessModal
         open={showModal}
-        onClose={() => navigate("/app/dashboard")}
+        onClose={() => navigate("/app/miembros")}
       />
 
       <UserExistsDialog

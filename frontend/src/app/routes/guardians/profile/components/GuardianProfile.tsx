@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import ProfileHeader from './ProfileHeader';
-import ProfileInfoCard from './ProfileInfoCard';
-import MembersInChargeCard from './MembersInChargeCard';
-import GroupInfoCard from './GroupInfoCard';
-import EditProfileModal from './EditProfileModal';
-import MemberDetailsSheet from '../../members/components/modals/MemberDetailsSheet';
-import { guardianService } from '../../services/guardianService';
+import ProfileHeader from '@/app/routes/guardians/profile/components/ProfileHeader';
+import ProfileInfoCard from '@/app/routes/guardians/profile/components/ProfileInfoCard';
+import MembersInChargeCard from '@/app/routes/guardians/profile/components/MembersInChargeCard';
+import GroupInfoCard from '@/app/routes/guardians/profile/components/GroupInfoCard';
+import EditProfileModal from '@/app/routes/guardians/profile/components/EditProfileModal';
+import MemberDetailsSheet from '@/app/routes/guardians/members/components/modals/MemberDetailsSheet';
+import { guardianService } from '@/app/routes/guardians/services/guardianService';
 import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
 import type { UpdateGuardianDTO, Guardian, MemberBasicInfo } from '@/types/guardian.type';
 import FullScreenLoader from '@/components/common/FullScreenLoader';
@@ -146,7 +146,7 @@ const GuardianProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#fffaf3]">
       <div className="flex flex-col min-h-screen">
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate('/app/dashboard')} className="hover:bg-gray-100">
               <ArrowLeft className="h-5 w-5" />
@@ -161,16 +161,16 @@ const GuardianProfilePage: React.FC = () => {
         
         <div className="flex-1 p-6">
           <ProfileHeader 
-            first_name={guardianApiData?.first_name || ''} 
-            last_name={guardianApiData?.last_name || ''} 
+            first_name={guardianApiData?.firstName || ''} 
+            last_name={guardianApiData?.lastName || ''} 
             grupo={guardianApiData?.rol || ''} 
             is_active={guardianApiData?.is_active || false} 
           />
           
           <ProfileInfoCard
             address={guardianApiData?.address || ''} 
-            first_name={guardianApiData?.first_name || ''} 
-            last_name={guardianApiData?.last_name || ''} 
+            first_name={guardianApiData?.firstName || ''} 
+            last_name={guardianApiData?.lastName || ''} 
             identification={guardianApiData?.identification || ''} 
             documentType={guardianApiData?.document_type || 'CC'} 
             email={user?.email || 'N/A'} 
@@ -196,15 +196,15 @@ const GuardianProfilePage: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleEditProfile} 
         initialData={{
-          firstName: guardianApiData?.first_name ?? user?.nickname ?? '',
-          lastName: guardianApiData?.last_name || '',
+          firstName: guardianApiData?.firstName || user?.nickname || '',
+          lastName: guardianApiData?.lastName || '',
           identification: guardianApiData?.identification || '',
           documentType: guardianApiData?.document_type || 'CC',
           email: user?.email ?? 'N/A',
           emailAlt: undefined,
           phone: guardianApiData?.phone || '',
           phoneAlt: undefined,
-          address: 'N/A'
+          address: guardianApiData?.address || ''
         }} 
       />
       

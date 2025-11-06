@@ -1,6 +1,7 @@
 package uao.edu.co.scouts_project.common.error;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -8,8 +9,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
+import uao.edu.co.scouts_project.domain.dto.common.ResponseDTO;
+import uao.edu.co.scouts_project.domain.exception.auth0.Auth0GatewayException;
 import uao.edu.co.scouts_project.guardian.exception.GuardianExceptions;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -43,6 +45,18 @@ public class GlobalExceptionHandler {
         ex.getMessage());
   }
 
+  @ExceptionHandler(Auth0GatewayException.class)
+  public ResponseEntity<ResponseDTO<String>> handleAuth0GatewayException(
+      Auth0GatewayException ex) {
+    ResponseDTO<String> responseDTO = new ResponseDTO<String>(
+        502,
+        ex.getMessage(),
+        null,
+        ex.getCause() != null ? ex.getCause().getMessage() : null
+    );
+    return new ResponseEntity<>(responseDTO, HttpStatus.BAD_GATEWAY);
+  }
+
   @ExceptionHandler(GuardianExceptions.InvalidGuardianException.class)
   public ResponseEntity<Map<String, Object>> handleInvalidGuardian(
       GuardianExceptions.InvalidGuardianException ex) {
@@ -53,7 +67,8 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletRequest req) {
+  public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex,
+      HttpServletRequest req) {
     Map<String, String> errors = new HashMap<>();
     ex.getBindingResult().getAllErrors().forEach((error) -> {
       String fieldName = ((FieldError) error).getField();
@@ -70,12 +85,41 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+      HttpServletRequest req) {
+    String raw = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+    String message = raw;
+    if (raw != null) {
+      if (raw.contains("tenant_slug_key")) {
+        message = "El slug del tenant ya existe. Por favor elige otro.";
+      }
+    }
+
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put("timestamp", LocalDateTime.now());
+    body.put("status", HttpStatus.CONFLICT.value());
+    body.put("error", "Conflict");
+    body.put("message", message);
+    body.put("path", req.getRequestURI());
+    return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+  }
+
   @ExceptionHandler(GuardianExceptions.MemberAlreadyAssignedException.class)
   public ResponseEntity<Map<String, Object>> handleMemberAlreadyAssigned(
       GuardianExceptions.MemberAlreadyAssignedException ex) {
     return buildErrorResponse(
         HttpStatus.CONFLICT,
         "Member Already Assigned",
+        ex.getMessage());
+  }
+
+  @ExceptionHandler(GuardianExceptions.AvailableGuardiansException.class)
+  public ResponseEntity<Map<String, Object>> handleAvailableGuardiansNotFound(
+      GuardianExceptions.AvailableGuardiansException ex) {
+    return buildErrorResponse(
+        HttpStatus.NOT_FOUND,
+        "Available Guardians Not Found",
         ex.getMessage());
   }
 

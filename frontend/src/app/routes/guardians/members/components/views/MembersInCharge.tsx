@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/index";
 import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
-import GuardianMembersTable from "../tables/GuardianMembersTable";
-import MemberDetailsSheet from "../modals/MemberDetailsSheet";
+import GuardianMembersTable from "@/app/routes/guardians/members/components/tables/GuardianMembersTable";
+import MemberDetailsSheet from "@/app/routes/guardians/members/components/modals/MemberDetailsSheet";
+import SelectMemberModal from "@/app/routes/guardians/members/components/modals/SelectMemberModal";
+import ReassignGuardianModal from "@/app/routes/guardians/members/components/modals/ReassignGuardianModal"; 
+import { removeMemberFromGuardian, addMemberToGuardian, reassignMemberGuardian } from "@/api/guardiansApi"; 
 import type { MemberBasicInfo } from "@/types/guardian.type";
-import { Plus } from "lucide-react";
-import SelectMemberModal from "../modals/SelectMemberModal";
-import { removeMemberFromGuardian, addMemberToGuardian } from "@/api/guardiansApi"; 
 import type { UpdateMember } from "@/types/member.type";
 import { toast } from "sonner";
-import EditMemberModal from "../modals/EditMemberModal";
+import { Plus } from "lucide-react";
+import EditMemberModal from "@/app/routes/guardians/members/components/modals/EditMemberModal";
+import { AxiosError } from "axios";
 
 interface ExtendedMemberInfo extends MemberBasicInfo {
   member_id?: string | number;
@@ -21,10 +23,13 @@ interface ExtendedMemberInfo extends MemberBasicInfo {
 
 const MembersInCharge = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false); // AGREGAR ESTE ESTADO
+  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberBasicInfo | null>(null);
+  const [memberToReassign, setMemberToReassign] = useState<MemberBasicInfo | null>(null); 
   const [isAdding, setIsAdding] = useState(false);
+  const [isReassigning, setIsReassigning] = useState(false);
   const [memberToEdit, setMemberToEdit] = useState<UpdateMember | null>(null);
   
   const { user } = useAuth0();
@@ -73,13 +78,48 @@ const MembersInCharge = () => {
     }
   }; 
 
-    const handleEditMember = (member: UpdateMember) => {
+  const handleEditMember = (member: UpdateMember) => {
     setMemberToEdit(member);
     setIsEditModalOpen(true);
   };
 
+  const handleReassignGuardian = (member: MemberBasicInfo) => {
+    setMemberToReassign(member);
+    setIsReassignModalOpen(true);
+  };
+
+  const handleConfirmReassign = async (memberId: number, newGuardianId: number, currentGuardianId: number) => {
+    
+    setIsReassigning(true);
+    
+    try {
+      await reassignMemberGuardian(currentGuardianId, memberId, newGuardianId);
+      
+      toast.success('Miembro reasignado exitosamente');
+      
+      if (refetch) {
+        await refetch();
+      }
+      
+    } catch (error: unknown) {
+      
+      if (error instanceof AxiosError) {
+        console.error("Status:", error.response?.status);
+        console.error("Data:", error.response?.data);
+        
+        const errorMessage = error.response?.data || 'Error al reasignar el miembro';
+        toast.error(`Error: ${errorMessage}`);
+      } else {
+        toast.error('Error al reasignar el miembro');
+      }
+      
+      throw error;
+    } finally {
+      setIsReassigning(false);
+    }
+  };
+
   const handleEditSuccess = async () => {
-    // Refrescar la lista después de editar
     if (refetch) {
       await refetch();
     }
@@ -92,7 +132,6 @@ const MembersInCharge = () => {
         return;
       }
 
-      // Obtener el ID del miembro de diferentes posibles campos
       const extendedMember = member as ExtendedMemberInfo;
       const memberId = extendedMember.memberId || 
                           extendedMember.member_id || 
@@ -102,22 +141,17 @@ const MembersInCharge = () => {
         toast.error('No se pudo identificar el miembro');
         return;
       }
-
-      console.log('Removing member from guardian:', { guardianId, memberId });
       
-      // Llamar al endpoint para remover el miembro del guardian
       await removeMemberFromGuardian(guardianId, memberId);
       
       toast.success('Miembro removido exitosamente del guardian');
       
-      // Recargar la lista de miembros
       if (refetch) {
         await refetch();
       }
       
     } catch (error) {
-      console.error('Error removing member from guardian:', error);
-      toast.error('Error al remover el miembro del guardian');
+      toast.error('Error al remover un miembro menor de edad');
       throw error;
     }
   };  
@@ -139,7 +173,6 @@ const MembersInCharge = () => {
           <p className="text-5xl font-bold text-primary">
             Miembros a Cargo
           </p>
-          {/* AGREGAR ESTE BOTÓN */}
           <Button
             variant="primary"
             onClick={() => setIsSelectModalOpen(true)}
@@ -157,6 +190,7 @@ const MembersInCharge = () => {
               onViewMember={handleViewMember}
               onDeleteMember={handleDeleteMember}
               onEditMember={handleEditMember}
+              onReassignGuardian={handleReassignGuardian}
             />
           )}
 
@@ -187,6 +221,17 @@ const MembersInCharge = () => {
         onClose={() => setIsSelectModalOpen(false)}
         onConfirm={handleAddMembers}
         isAdding={isAdding}
+      />
+
+      <ReassignGuardianModal
+        isOpen={isReassignModalOpen}
+        onClose={() => {
+          setIsReassignModalOpen(false);
+          setMemberToReassign(null);
+        }}
+        member={memberToReassign}
+        onConfirm={handleConfirmReassign}
+        isReassigning={isReassigning}
       />
       
       <EditMemberModal
