@@ -300,6 +300,7 @@ export default function EditAdminModal({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
+                    captionLayout="dropdown"
                     selected={
                       formData.birthDate
                         ? parseISOToLocalDate(formData.birthDate)

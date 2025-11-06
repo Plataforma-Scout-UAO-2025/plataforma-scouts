@@ -336,8 +336,6 @@ export default function CreateGroupModal({
                   <Calendar
                     mode="single"
                     captionLayout="dropdown"
-                    fromYear={1900}
-                    toYear={new Date().getFullYear()}
                     selected={
                       form.foundedIn ? new Date(form.foundedIn) : undefined
                     }

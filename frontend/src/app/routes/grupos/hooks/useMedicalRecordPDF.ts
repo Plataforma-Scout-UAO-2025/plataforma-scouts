@@ -1,6 +1,7 @@
 import type { MedicalRecord } from "@/types/medical-record.type";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useGroupInfo } from '@/hooks/useGroupInfo';
 
 // Extender el tipo de jsPDF para incluir lastAutoTable
 interface jsPDFWithAutoTable extends jsPDF {
@@ -289,13 +290,16 @@ export const generateMedicalRecordPDF = async (record: MedicalRecord): Promise<B
   });
 };
 
+// Se elimina el encabezado superior general; solo se usará el nombre del grupo en la franja verde
+
 // Hook para usar la funcionalidad de PDF
 export const useMedicalRecordPDF = () => {
+  const { groupName } = useGroupInfo();
   const exportToPDF = async (record: MedicalRecord): Promise<void> => {
     try {
-      const pdfBlob = await generateMedicalRecordPDF(record);
-
-      // Crear URL y descargar
+      const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' }) as jsPDFWithAutoTable;
+      addRecordToDocument(doc, record, { generalHeader: { groupName } });
+      const pdfBlob = doc.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -314,7 +318,8 @@ export const useMedicalRecordPDF = () => {
   return { exportToPDF };
 };
 
-const addRecordToDocument = (doc: jsPDFWithAutoTable, record: MedicalRecord) => {
+type AddRecordOptions = { generalHeader?: { groupName?: string | null } };
+const addRecordToDocument = (doc: jsPDFWithAutoTable, record: MedicalRecord, opts?: AddRecordOptions) => {
   const margin = 40;
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - (margin * 2);
@@ -328,24 +333,32 @@ const addRecordToDocument = (doc: jsPDFWithAutoTable, record: MedicalRecord) => 
   const mutedColor: [number, number, number] = [113, 113, 113];
   const lightBg: [number, number, number] = [255, 250, 243];
 
-  // Header con fondo primario
+  // Header con fondo primario (sin desplazamiento adicional)
+  const headerTop = 0;
   doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, pageWidth, 100, 'F');
+  doc.rect(0, headerTop, pageWidth, 100, 'F');
 
   doc.setFillColor(...primaryHover);
-  doc.rect(0, 80, pageWidth, 20, 'F');
+  doc.rect(0, headerTop + 80, pageWidth, 20, 'F');
 
   // Título principal
   doc.setFont("helvetica", "bold");
   doc.setFontSize(24);
   doc.setTextColor(255, 255, 255);
-  doc.text("REGISTRO MÉDICO", margin, 45);
+  doc.text("REGISTRO MÉDICO", margin, headerTop + 45);
+
+  // Nombre del grupo solo en la primera página del documento (si se provee)
+  if (opts?.generalHeader?.groupName) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.text(String(opts.generalHeader.groupName), pageWidth - margin, headerTop + 45, { align: 'right' });
+  }
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(record.member_name, margin, 70);
-
-  yPosition = 120;
+  doc.text(record.member_name, margin, headerTop + 70);
+  yPosition = headerTop + 120;
 
   // Sección: Información Básica
   doc.setFillColor(...lightBg);
@@ -565,6 +578,7 @@ const addRecordToDocument = (doc: jsPDFWithAutoTable, record: MedicalRecord) => 
  * Genera UN SOLO PDF con todos los registros, cada uno en su página
  */
 export const useMassExportPDF = () => {
+  const { groupName } = useGroupInfo();
   const exportAllToPDF = async (records: MedicalRecord[]): Promise<void> => {
     if (records.length === 0) {
       throw new Error('No hay registros para exportar');
@@ -578,14 +592,13 @@ export const useMassExportPDF = () => {
         orientation: "portrait"
       }) as jsPDFWithAutoTable;
 
-      // Agregar cada registro como una página
       records.forEach((record, index) => {
-        // Para registros después del primero, agregar nueva página
         if (index > 0) {
           doc.addPage();
+          addRecordToDocument(doc, record);
+        } else {
+          addRecordToDocument(doc, record, { generalHeader: { groupName } });
         }
-        // Agregar el contenido del registro
-        addRecordToDocument(doc, record);
       });
 
       // Generar el blob y descargar

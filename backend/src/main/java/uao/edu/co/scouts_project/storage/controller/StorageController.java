@@ -37,6 +37,7 @@ public class StorageController {
             return ResponseEntity.badRequest().build();
         }
         try {
+            System.out.println("Entro al controlador uploadFile");
             UUID objectId = storageService.uploadFileAndGetObjectId(file, BUCKET_NAME);
             return ResponseEntity.ok(Map.of("objectId", objectId));
         } catch (Exception e) {

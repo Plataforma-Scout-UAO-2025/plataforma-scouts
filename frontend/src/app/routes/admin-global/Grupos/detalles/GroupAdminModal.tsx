@@ -439,6 +439,7 @@ export default function GroupAdminModal({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
+                    captionLayout="dropdown"
                     selected={
                       datosPersonales.birth_date
                         ? parseISOToLocalDate(datosPersonales.birth_date)

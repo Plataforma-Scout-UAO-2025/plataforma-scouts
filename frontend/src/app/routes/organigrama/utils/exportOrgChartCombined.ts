@@ -2,15 +2,30 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { OrganigramaNiveles } from "../organigramaNivelesOrganizativos/types/niveles.types";
 import type { Member } from "@/types/member.type";
-import KNUT from "@/assets/KNUT.png";
 
-// Image loader to compute footer size
-const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
-  const img = new Image();
-  img.onload = () => resolve(img);
-  img.onerror = reject;
-  img.src = src;
-});
+// Footer: dibuja línea y la marca KNUT en cada página
+function drawKnutFooter(doc: jsPDF, color: [number, number, number] = [26, 65, 52]) {
+  const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } })
+    .getNumberOfPages?.bind(doc)
+    ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } })
+      .internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal)
+    ?? (() => 1);
+  const total = Math.max(1, getPages());
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const marginX = 40;
+    const y = ph - 28;
+    doc.setDrawColor(...color);
+    doc.setLineWidth(1);
+    doc.line(marginX, y, pw - marginX, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...color);
+    doc.setFontSize(10);
+    doc.text("KNUT", pw - marginX, y + 14, { align: "right" as const });
+  }
+}
 
 type BranchLite = {
   id: string | number;
@@ -279,16 +294,7 @@ export async function exportOrgChartCombinedPDF(
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
   const x = 40;
   let y = 50;
-  // Pre-calc footer dimensions (no reservaremos margen global en todas las páginas)
-  const pageWidth0 = doc.internal.pageSize.getWidth();
-  const footerW = Math.min(140, pageWidth0 * 0.18);
-  let footerH = 56;
-  let footerImg: HTMLImageElement | undefined;
-  try {
-    footerImg = await loadImage(KNUT);
-    const ratio = footerImg.height > 0 ? footerImg.height / footerImg.width : 0.4;
-    footerH = footerW * ratio;
-  } catch { /* keep defaults */ }
+  // Reservaremos margen inferior vía autoTable; el pie se dibuja por página
 
   // Title
   doc.setFont("helvetica", "bold");
@@ -415,10 +421,13 @@ export async function exportOrgChartCombinedPDF(
     startY: y + 10,
     head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
     body: branchesBody,
-    // Margen inferior pequeño para no reservar espacio en todas las páginas
-    margin: { left: x, right: x, bottom: 12 },
+    // Reservar espacio para footer (línea + "KNUT")
+    margin: { left: x, right: x, bottom: 36 },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
+    didDrawPage: () => {
+      drawKnutFooter(doc);
+    },
   });
 
   const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
@@ -509,43 +518,14 @@ export async function exportOrgChartCombinedPDF(
     startY: y + 10,
     head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: levelsBody,
-    // Margen inferior pequeño para no reservar espacio en todas las páginas
-    margin: { left: x, right: x, bottom: 12 },
+    // Reservar espacio para footer (línea + "KNUT")
+    margin: { left: x, right: x, bottom: 36 },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
     headStyles: { fillColor: [26, 65, 52], textColor: [255, 255, 255] },
+    didDrawPage: () => {
+      drawKnutFooter(doc);
+    },
   });
-
-  // Pie de página solo en la última página; si no hay espacio, crear una nueva
-  try {
-    const img = footerImg ?? await loadImage(KNUT);
-    const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } }).getNumberOfPages?.bind(doc) ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal) ?? (() => 1);
-    const last = Math.max(1, getPages());
-    const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
-    doc.setPage(last);
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 18;
-    const w = Math.min(footerW, pageWidth * 0.18);
-    const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
-    const h = w * ratio;
-    const xImg = (pageWidth - w) / 2;
-    const yImg = pageHeight - h - margin;
-    const finalY = anyDoc.lastAutoTable?.finalY ?? 0;
-    if (finalY && finalY > yImg - 4) {
-      doc.addPage();
-      const pw = doc.internal.pageSize.getWidth();
-      const ph = doc.internal.pageSize.getHeight();
-      const w2 = Math.min(footerW, pw * 0.18);
-      const h2 = w2 * ratio;
-      const x2 = (pw - w2) / 2;
-      const y2 = ph - h2 - margin;
-      (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", x2, y2, w2, h2, undefined, "FAST");
-    } else {
-      (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", xImg, yImg, w, h, undefined, "FAST");
-    }
-  } catch (e) {
-    console.warn("[Export PDF OrgChart] No se pudo cargar la imagen de pie de página KNUT:", e);
-  }
 
   doc.save(`organigrama_completo_${opts?.year ?? ""}.pdf`);
 }

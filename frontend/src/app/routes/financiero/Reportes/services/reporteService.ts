@@ -25,7 +25,7 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
 
         // Hoja 1: Resumen del Reporte
         const resumenData = [
-          ['REPORTE FINANCIERO CONSOLIDADO - KNUT' + (reporte.scope?.toUpperCase() || 'GENERAL')],
+          ['REPORTE FINANCIERO CONSOLIDADO - ALCANCE: ' + (reporte.scope?.toUpperCase() || 'GENERAL')],
           [''],
           ['Información del Reporte'],
           ['Alcance', reporte.scope || 'General'],
@@ -46,6 +46,9 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
           ['Miembros Atrasados', reporte.members_overdue !== null ? reporte.members_overdue : 'N/A'],
           ['Total pagos', reporte.payments.length],
           ['% Cumplimiento', reporte.percentage !== null ? `${reporte.percentage.toFixed(1)}%` : 'N/A'],
+          [''],
+          ['Este reporte fue generado automáticamente por el sistema.'],
+          ['KNUT'],
         ];
 
         const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
@@ -88,7 +91,13 @@ export const exportarReporteExcel = (reporte: FinancialReport): Promise<void> =>
           pago.paid_at ? pago.paid_at : 'Sin pagos'
         ]);
 
-        const wsPagos = XLSX.utils.aoa_to_sheet([pagosHeaders, ...pagosData]);
+        const wsPagos = XLSX.utils.aoa_to_sheet([
+          pagosHeaders, 
+          ...pagosData,
+          ['', '', '', '', '', ''],
+          ['Este reporte fue generado automáticamente por el sistema.', '', '', '', '', ''],
+          ['KNUT', '', '', '', '', '']
+        ]);
 
         // Configurar ancho de columnas para pagos
         wsPagos['!cols'] = [
@@ -155,7 +164,7 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(20);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('REPORTE FINANCIERO CONSOLIDADO - KNUT', 105, 15, { align: 'center' });
+        pdf.text('REPORTE FINANCIERO CONSOLIDADO', 105, 15, { align: 'center' });
         
         pdf.setFontSize(12);
         pdf.text(reporte.scope?.toUpperCase() || 'GENERAL', 105, 23, { align: 'center' });
@@ -317,9 +326,15 @@ export const exportarReportePDF = (reporte: FinancialReport): Promise<void> => {
             { align: 'center' }
           );
           pdf.text(
-            'Este reporte fue generado automáticamente por el sistema de gestión de scouts.',
+            'Este reporte fue generado automáticamente por el sistema.',
             105,
             290,
+            { align: 'center' }
+          );
+          pdf.text(
+            'KNUT',
+            105,
+            295,
             { align: 'center' }
           );
         }
