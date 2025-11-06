@@ -222,15 +222,15 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name())
 
                                                 .requestMatchers("/api/v1/finanzas/payments/**")
-                                                .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), TESORERO.name(), ADMIN_GRUPO.name())
 
                                                 // Cuotas
                                                 .requestMatchers("/api/v1/finanzas/fees/**")
-                                                .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), TESORERO.name(), ADMIN_GRUPO.name())
 
                                                 // Dashboard financiero
                                                 .requestMatchers("/api/v1/finanzas/dashboard/**")
-                                                .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
+                                                .hasAnyRole(ADMIN_GLOBAL.name(), TESORERO.name(), ADMIN_GRUPO.name())
 
                                                 //
                                                 .anyRequest().permitAll()

@@ -4,14 +4,6 @@ import type { Branch as Rama, Subgroup as Subrama } from "../types/frontend";
 import { store } from "@/store/store";
 import { fetchSubgroupMembersAction } from "@/store/organigrama/organigramaActions";
 import { getMemberFullName, isMemberActiveAndApproved, isMemberScouter } from "@/hooks/useSubgroupMembers";
-import KNUT from "@/assets/KNUT.png";
-// Simple loader to get image dimensions and use as footer
-const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
-  const img = new Image();
-  img.onload = () => resolve(img);
-  img.onerror = reject;
-  img.src = src;
-});
 
 // Helper functions to filter out committee branches
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -44,6 +36,32 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
 }
 
+// Dibuja el pie de página requerido: línea horizontal y texto "KNUT" a la derecha en cada página
+function drawKnutFooter(doc: jsPDF, colorHex = "#1A4134") {
+  const [r, g, b] = hexToRgb(colorHex);
+  // getNumberOfPages es inconsistente entre versiones; cubrir ambos casos
+  const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } })
+    .getNumberOfPages?.bind(doc)
+    ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } })
+      .internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal)
+    ?? (() => 1);
+  const total = Math.max(1, getPages());
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const marginX = 40; // consistente con márgenes de contenido
+    const lineY = ph - 28; // altura de la línea
+    doc.setDrawColor(r, g, b);
+    doc.setLineWidth(1);
+    doc.line(marginX, lineY, pw - marginX, lineY);
+    // Marca "KNUT" alineada a la derecha, debajo de la línea
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(r, g, b);
+    doc.setFontSize(10);
+    doc.text("KNUT", pw - marginX, lineY + 14, { align: "right" as const });
+  }
+}
 
 
 
@@ -279,14 +297,6 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
 
     console.log(' [ExportPDF] Generando tabla con autoTable...');
     const pageW = doc.internal.pageSize.getWidth();
-    // Precalcular dimensiones del pie de página (logo); no reservaremos margen global
-  const footerW = Math.min(120, pageW * 0.18);
-    let footerH = 50;
-    try {
-      const probe = await loadImage(KNUT);
-      const ratio = probe.height > 0 ? probe.height / probe.width : 0.45;
-      footerH = footerW * ratio;
-    } catch { /* keep defaults */ }
     const availableW = pageW - x * 2;
     const updatedWeights = [10, 14, 16, 48, 12]; 
     const totalW = updatedWeights.reduce((a, b) => a + b, 0);
@@ -298,8 +308,8 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       startY: y + 32,
       head: [["Rama", "Descripción", "NombreSubrama", "Integrantes", "JefeRama"]],
       body,
-      // Usar un margen inferior pequeño para no reservar espacio en todas las páginas
-      margin: { left: x, right: x, bottom: 12 },
+      // Reservar un poco de espacio inferior para la línea y el texto del pie de página
+      margin: { left: x, right: x, bottom: 36 },
       styles: { 
         fontSize: 8, 
         cellPadding: 4, 
@@ -310,42 +320,10 @@ export const exportarOrganigramaPDF = async (ramas: Rama[], opts: ExportPDFOpts 
       headStyles: { fillColor: [r, g, b], textColor: [255, 255, 255] },
       columnStyles: finalColumnStyles,
       didDrawPage: () => {
-        // Reservado si deseamos dibujar elementos en cada página durante la generación
+        // Dibujar el pie de página en cada página durante el render
+        drawKnutFooter(doc, opts.colorHex ?? "#1A4134");
       },
     });
-
-    // Pie de página solo en la última página; si no hay espacio, crear una nueva página
-    try {
-      const img = await loadImage(KNUT);
-      const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } }).getNumberOfPages?.bind(doc) ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal) ?? (() => 1);
-      const last = Math.max(1, getPages());
-      const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
-      doc.setPage(last);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const marginBottom = 18;
-      const w = Math.min(footerW, pageWidth * 0.18);
-      const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
-      const h = w * ratio;
-      const xImg = (pageWidth - w) / 2;
-      const yImg = pageHeight - h - marginBottom;
-      const finalY = anyDoc.lastAutoTable?.finalY ?? 0;
-      if (finalY && finalY > yImg - 4) {
-        // Sin espacio: crear una página más para el logo
-        doc.addPage();
-        const pw = doc.internal.pageSize.getWidth();
-        const ph = doc.internal.pageSize.getHeight();
-        const w2 = Math.min(footerW, pw * 0.18);
-        const h2 = w2 * ratio;
-        const x2 = (pw - w2) / 2;
-        const y2 = ph - h2 - marginBottom;
-        (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", x2, y2, w2, h2, undefined, "FAST");
-      } else {
-        (doc as unknown as { addImage: (imageData: HTMLImageElement | string, format: string, x: number, y: number, w: number, h: number, alias?: string, compression?: "NONE" | "FAST" | "SLOW") => jsPDF }).addImage(img, "PNG", xImg, yImg, w, h, undefined, "FAST");
-      }
-    } catch (e) {
-      console.warn(" [ExportPDF] No se pudo agregar imagen de pie de página KNUT:", e);
-    }
 
     console.log(' [ExportPDF] Guardando archivo organigrama.pdf...');
     doc.save("organigrama.pdf");
