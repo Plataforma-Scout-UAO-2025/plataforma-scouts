@@ -53,7 +53,7 @@ export interface MemberBasicInfo {
 export interface Guardian {
   member_id?: number
   user_id: string
-  rol: Role
+  role: Role
   tenant_id: string
   firstName: string
   lastName: string
@@ -89,13 +89,16 @@ export interface GuardianCompleteData {
   tenantId: string;
   firstName: string;
   lastName: string;
+  role: 'ACUDIENTE'; // se quema ya que se está creando un acudiente
+  gender: string;
   address: string;
   birthDate: string;
   identification: string;
   documentType: DocumentType;
   phone: string;
   isActive: boolean;
-  status: Status;
+  status: 'PENDING'; //se quema ya que se está terminando de crear la cuenta
+  acceptTreatment: true; //se quema ya que si llega a este punto siempre es true
 }
 
 export interface GuardianCreateResponse {
@@ -105,7 +108,7 @@ export interface GuardianCreateResponse {
 export interface CreateGuardianDTO {
   userId?: string;
   subgroup?: SubgroupDTO;
-  rol?: Role;
+  role?: Role;
   tenantId?: string;
   subgroupId?: string;
   firstName: string;
@@ -123,7 +126,7 @@ export interface CreateGuardianDTO {
 export interface UpdateGuardianDTO {
   userId?: string;
   subgroup?: SubgroupDTO;
-  rol?: Role;
+  role?: Role;
   tenantId?: string;
   subgroupId?: string;
   firstName?: string;
