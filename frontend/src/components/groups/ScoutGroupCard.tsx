@@ -68,7 +68,7 @@ export const ScoutGroupCard = memo(function ScoutGroupCard({ group }: ScoutGroup
   // Memoizar redes sociales
   const socialLinksEntries = useMemo(() => {
     if (!groupData.socialLinks || typeof groupData.socialLinks !== 'object') return [];
-    return Object.entries(groupData.socialLinks).filter(([_platform, url]) => {
+    return Object.entries(groupData.socialLinks).filter(([, url]) => {
       return typeof url === 'string' && url.trim() !== '';
     });
   }, [groupData.socialLinks]);
