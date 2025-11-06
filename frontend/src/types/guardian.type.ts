@@ -136,3 +136,16 @@ export interface AvailableGuardianDTO {
   email?: string;
   membersCount?: number;
 }
+
+export interface Member {
+  is_active?: boolean | string | number;
+  isActive?: boolean | string | number;
+}
+
+export interface ExtendedMemberInfo extends MemberBasicInfo {
+  member_id?: string | number;
+  userId?: string | number;
+  firstName?: string;
+  lastName?: string;
+  birth_date?: string;
+}

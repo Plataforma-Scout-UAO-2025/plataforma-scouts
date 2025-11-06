@@ -75,7 +75,7 @@ export default function SelectMemberModal({
         setGuardianMemberId(guardianData.member_id);
       }
     } catch (error) {
-      console.error("❌ Error al cargar el member_id del acudiente: ", error);
+      console.error("Error al cargar el member_id del acudiente: ", error);
     }
   };
 

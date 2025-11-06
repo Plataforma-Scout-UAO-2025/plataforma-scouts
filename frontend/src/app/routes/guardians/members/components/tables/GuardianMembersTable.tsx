@@ -8,6 +8,7 @@ import {
   TableRow,
   Button,
 } from "@/components/ui/index";
+import type { Member, ExtendedMemberInfo } from "@/types/guardian.type";
 import { Pencil, Trash, User, ArrowRightLeft} from "lucide-react";
 import type { MemberBasicInfo } from "@/types/guardian.type";
 import type { UpdateMember } from "@/types/member.type";
@@ -19,19 +20,6 @@ interface GuardianMembersTableProps {
   onEditMember?: (member: UpdateMember) => void;
   onDeleteMember?: (member: MemberBasicInfo) => void;
   onReassignGuardian?: (member: MemberBasicInfo) => void;
-}
-
-interface Member {
-  is_active?: boolean | string | number;
-  isActive?: boolean | string | number;
-}
-
-interface ExtendedMemberInfo extends MemberBasicInfo {
-  member_id?: string | number;
-  userId?: string | number;
-  firstName?: string;
-  lastName?: string;
-  birth_date?: string;
 }
 
 const GuardianMembersTable = ({ 
