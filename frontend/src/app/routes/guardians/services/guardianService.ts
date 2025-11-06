@@ -5,11 +5,13 @@ import {
     getGuardianById,
     getGuardianWithMembers,
     getMembersInChargeOf,
+    getMemberIdUsingAuth0Token,
     removeMemberFromGuardian,
     updateGuardian
 } from '@/api/guardiansApi';
 import type { 
   Guardian, 
+  GuardianId,
   GuardianWithMembers,
   GuardianCompleteData,
   UpdateGuardianDTO,
@@ -41,6 +43,21 @@ export const guardianService = {
         return null;
       }
       console.error('Error obteniendo guardian:', error);
+      throw error;
+    }
+  },
+
+  getMemberId: async (auth0UserId: string): Promise<GuardianId | null> => {
+    const encodedMemberId = encodeURIComponent(auth0UserId);
+
+    try {
+      return await getMemberIdUsingAuth0Token(encodedMemberId);
+    } catch (error) {
+      const status = getErrorStatus(error);
+      if (status === 404) {
+        return null;
+      }
+      console.error('Error obteniendo member ID con el token auth0:', error);
       throw error;
     }
   },

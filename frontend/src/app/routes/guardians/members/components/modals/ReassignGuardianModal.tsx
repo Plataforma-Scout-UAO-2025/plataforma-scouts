@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import type { MemberBasicInfo } from "@/types/guardian.type"; 
 import { getAvailableGuardians } from "@/api/guardiansApi";
 import { Search, User, ArrowRight, Shield } from "lucide-react";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useGuardianMemberId } from "@/app/routes/guardians/hooks/useGuardianMemberId";
 
 interface ReassignGuardianModalProps {
   isOpen: boolean;
@@ -69,16 +69,12 @@ export default function ReassignGuardianModal({
   member,
   isReassigning
 }: ReassignGuardianModalProps) {
-  const { user } = useAuth0();
+  const { memberId: currentGuardianId } = useGuardianMemberId();
   const [allGuardians, setAllGuardians] = useState<GuardianOption[]>([]);
   const [filteredGuardians, setFilteredGuardians] = useState<GuardianOption[]>([]);
   const [selectedGuardianId, setSelectedGuardianId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const getCurrentGuardianId = useCallback((): number => {
-  return user?.sub ? parseInt(user.sub.replace('auth0|', '')) : 0;
-}, [user?.sub]);
 
 const loadAllGuardians = useCallback(async () => {
   setLoading(true);
@@ -88,7 +84,6 @@ const loadAllGuardians = useCallback(async () => {
       throw new Error("Datos inválidos recibidos de la API");
     }
     
-    const currentGuardianId = getCurrentGuardianId();
     const formattedGuardians: GuardianOption[] = guardiansData.map((item: GuardianApiResponse, index: number) => {
       
       return {
@@ -121,7 +116,7 @@ const loadAllGuardians = useCallback(async () => {
   } finally {
     setLoading(false);
   }
-}, [getCurrentGuardianId]);
+}, [currentGuardianId]);
   
   useEffect(() => {
     if (isOpen && member) {
@@ -163,7 +158,6 @@ const loadAllGuardians = useCallback(async () => {
     }
   
     const memberId = getMemberId(member);
-    const currentGuardianId = getCurrentGuardianId();
     
     if (!memberId || !currentGuardianId) {
       toast.error("Error: IDs inválidos");
@@ -253,7 +247,7 @@ const loadAllGuardians = useCallback(async () => {
                   </span>
                 )}
                 <div className="text-xs text-gray-500 mt-1">
-                  Guardian actual: {user?.name} (ID: {getCurrentGuardianId()})
+                  Guardian actual: ID {currentGuardianId || 'desconocido'}
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/index";
 import { useNavigate } from "react-router-dom";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useGuardianMemberId } from "@/app/routes/guardians/hooks/useGuardianMemberId";
 import { useMembersInChargeOf } from "@/hooks/useMembersInChargeOf";
 import GuardianMembersTable from "@/app/routes/guardians/members/components/tables/GuardianMembersTable";
 import MemberDetailsSheet from "@/app/routes/guardians/members/components/modals/MemberDetailsSheet";
@@ -32,9 +32,7 @@ const MembersInCharge = () => {
   const [isReassigning, setIsReassigning] = useState(false);
   const [memberToEdit, setMemberToEdit] = useState<UpdateMember | null>(null);
   
-  const { user } = useAuth0();
-  
-  const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  const { memberId: guardianId } = useGuardianMemberId();
   const { members, loading, error, refetch } = useMembersInChargeOf(guardianId);
   
   const navigate = useNavigate();

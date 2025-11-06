@@ -4,7 +4,8 @@ import type {
   UpdateGuardianDTO, 
   MemberBasicInfo, 
   GuardianCompleteData,
-  AvailableGuardianDTO 
+  AvailableGuardianDTO, 
+  GuardianId
 } from "@/types/guardian.type";
 import { normalizeGuardianData, type GuardianApiResponse } from "@/app/routes/guardians/utils/guardianMapper";
 
@@ -30,6 +31,12 @@ export const getGuardianWithMembers = async (id: number | string) => {
 // Obtener lista de miembros a cargo de un guardian
 export const getMembersInChargeOf = async (guardianId: number | string) => {
   const response = await api.get<MemberBasicInfo[]>(`/guardian/${guardianId}/members-list`);
+  return response.data;
+};
+
+// Obtener ID de miembro utilizando el token de Auth0
+export const getMemberIdUsingAuth0Token = async (auth0_user_id: string) => {
+  const response = await api.get<GuardianId>(`/guardian/current-logged/${auth0_user_id}`);
   return response.data;
 };
 

@@ -71,7 +71,7 @@ public class GuardianController {
     }
 
     @GetMapping("/current-logged/{auth_id}")
-    public ResponseEntity<GuardianCreateDTO> getGuardianByAuth0Id(@PathVariable("auth_id") String authId) {
+        public ResponseEntity<GuardianCreateDTO> getGuardianByAuth0Id(@PathVariable("auth_id") String authId) {
         GuardianCreateDTO guardian = guardianService.findGuardianByAuth0Id(authId);
         return ResponseEntity.ok(guardian);
     }

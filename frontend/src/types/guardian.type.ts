@@ -101,7 +101,7 @@ export interface GuardianCompleteData {
   accept_treatment: true; //se quema ya que si llega a este punto siempre es true
 }
 
-export interface GuardianCreateResponse {
+export interface GuardianId {
   member_id: number;
 }
 

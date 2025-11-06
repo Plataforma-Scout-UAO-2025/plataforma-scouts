@@ -1,11 +1,10 @@
 import { Users } from 'lucide-react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useGuardianMemberId } from '@/app/routes/guardians/hooks/useGuardianMemberId';
 import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
 
 export default function StatsCards() {
   // Obtener miembros a cargo usando el hook
-  const { user } = useAuth0();
-  const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  const { memberId: guardianId } = useGuardianMemberId();
   const { members, loading } = useMembersInChargeOf(guardianId);
 
   const estadisticas = [

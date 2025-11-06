@@ -11,6 +11,7 @@ import GroupInfoCard from '@/app/routes/guardians/profile/components/GroupInfoCa
 import EditProfileModal from '@/app/routes/guardians/profile/components/EditProfileModal';
 import MemberDetailsSheet from '@/app/routes/guardians/members/components/modals/MemberDetailsSheet';
 import { guardianService } from '@/app/routes/guardians/services/guardianService';
+import { useGuardianMemberId } from '@/app/routes/guardians/hooks/useGuardianMemberId';
 import { useMembersInChargeOf } from '@/hooks/useMembersInChargeOf';
 import type { UpdateGuardianDTO, Guardian, MemberBasicInfo } from '@/types/guardian.type';
 import FullScreenLoader from '@/components/common/FullScreenLoader';
@@ -31,8 +32,8 @@ const GuardianProfilePage: React.FC = () => {
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
   const [guardianApiData, setGuardianApiData] = useState<Guardian | null>(null);
 
-  // Obtener guardianId de Auth0
-  const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+  // Obtener guardianId usando el hook
+  const { memberId: guardianId } = useGuardianMemberId();
   
   // Usar el hook optimizado para obtener miembros a cargo
   const { members: membersInCharge, loading, error } = useMembersInChargeOf(guardianId);
