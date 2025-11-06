@@ -325,6 +325,9 @@ function Grupos() {
                         <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
+                            captionLayout="dropdown"
+                            fromYear={1900}
+                            toYear={new Date().getFullYear()}
                             selected={
                               field.value
                                 ? parseYMDToDate(field.value)
