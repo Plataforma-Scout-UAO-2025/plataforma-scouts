@@ -150,8 +150,9 @@ export default function MedicalRecordsView() {
                     }
 
                     scoutMembers.forEach((member: Member) => {
-                        if (member.role === 'SCOUT' && member.status === 'APPROVED' &&
-                            member.isActive) {
+                        if (member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+                            member.role?.toUpperCase() !== 'ADMIN_GLOBAL' && 
+                            member.status === 'APPROVED' && member.isActive) {
                             membersMap.set(
                                 member.memberId?.toString() || "",
                                 `${member.firstName} ${member.lastName}`
@@ -191,8 +192,9 @@ export default function MedicalRecordsView() {
                     }
 
                     scoutMembers.forEach((member: Member) => {
-                        if (member.role === 'SCOUT' && member.status === 'APPROVED' &&
-                            member.isActive) {
+                        if (member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+                            member.role?.toUpperCase() !== 'ADMIN_GLOBAL' && 
+                            member.status === 'APPROVED' && member.isActive) {
                             membersMap.set(
                                 member.memberId?.toString() || "",
                                 `${member.firstName} ${member.lastName}`
@@ -237,8 +239,9 @@ export default function MedicalRecordsView() {
                     // por cada miembro
                     scoutMembers.forEach((member: Member) => {
                         // si son miembros scouts aprobados y activos...
-                        if (member.role === 'SCOUT' && member.status === 'APPROVED' &&
-                            member.isActive) {
+                        if (member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+                            member.role?.toUpperCase() !== 'ADMIN_GLOBAL' && 
+                            member.status === 'APPROVED' && member.isActive) {
                             // se añade su nombre al mapeo de nombres por id
                             membersMap.set(
                                 member.memberId?.toString() || "",
