@@ -66,15 +66,16 @@ class GuardianControllerTest {
                 .tenantId("tenant-1")
                 .firstName("Carlos")
                 .lastName("Rodríguez")
-                .age(38)
+                .birthDate(LocalDate.of(1987, 3, 15))
                 .identification("1087654321")
                 .documentType(DocumentType.CC)
                 .phone("3012345678")
+                .gender("MALE")
+                .address("Calle 123 #45-67")
                 .isActive(true)
-                .relationship("Padre")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.now())
-                .rol("ACUDIENTE")
+                .role("ACUDIENTE")
                 .build();
 
         memberDTO = MemberDTO.builder()
@@ -114,9 +115,9 @@ class GuardianControllerTest {
             mockMvc.perform(get("/api/v1/guardian/1"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.userId").value("guardian-123"))
-                    .andExpect(jsonPath("$.firstName").value("Carlos"))
-                    .andExpect(jsonPath("$.lastName").value("Rodríguez"))
+                    .andExpect(jsonPath("$.user_id").value("guardian-123"))
+                    .andExpect(jsonPath("$.first_name").value("Carlos"))
+                    .andExpect(jsonPath("$.last_name").value("Rodríguez"))
                     .andExpect(jsonPath("$.identification").value("1087654321"));
 
             verify(guardianService, times(1)).findGuardianById(1L);
@@ -241,8 +242,8 @@ class GuardianControllerTest {
             when(guardianService.saveGuardian(any(GuardianCreateDTO.class))).thenReturn(response);
 
             mockMvc.perform(post("/api/v1/guardian")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(guardianDTO)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(guardianDTO)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.member_id").value(1));
 
@@ -255,8 +256,8 @@ class GuardianControllerTest {
             GuardianCreateDTO invalidDTO = GuardianCreateDTO.builder().build();
 
             mockMvc.perform(post("/api/v1/guardian")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(invalidDTO)))
                     .andExpect(status().isBadRequest());
 
             verify(guardianService, never()).saveGuardian(any());
@@ -273,8 +274,8 @@ class GuardianControllerTest {
             doNothing().when(guardianService).updateGuardianById(anyLong(), any(GuardianCreateDTO.class));
 
             mockMvc.perform(put("/api/v1/guardian/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(guardianDTO)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(guardianDTO)))
                     .andExpect(status().isOk());
 
             verify(guardianService, times(1)).updateGuardianById(eq(1L), any(GuardianCreateDTO.class));
@@ -287,8 +288,8 @@ class GuardianControllerTest {
                     .when(guardianService).updateGuardianById(anyLong(), any(GuardianCreateDTO.class));
 
             mockMvc.perform(put("/api/v1/guardian/999")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(guardianDTO)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(guardianDTO)))
                     .andExpect(status().isNotFound());
 
             verify(guardianService, times(1)).updateGuardianById(eq(999L), any(GuardianCreateDTO.class));

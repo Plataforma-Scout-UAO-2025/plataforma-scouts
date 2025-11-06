@@ -67,14 +67,12 @@ public class GuardianServiceImpl implements GuardianService {
                 .subgroup(guardian.getSubgroup())
                 .firstName(guardian.getFirstName())
                 .lastName(guardian.getLastName())
-                .age(guardian.getAge())
+                .birthDate(guardian.getBirthDate())
                 .identification(guardian.getIdentification())
                 .documentType(guardian.getDocumentType())
                 .phone(guardian.getPhone())
                 .isActive(guardian.getIsActive())
-                .relationship(guardian.getRelationship())
                 .status(guardian.getStatus())
-                .acceptanceDate(guardian.getAcceptanceDate())
                 .members(membersInCharge)
                 .build();
 
@@ -217,10 +215,9 @@ public class GuardianServiceImpl implements GuardianService {
     private void updateGuardianFields(Member existingGuardian, GuardianCreateDTO dto) {
         updateIfNotNull(dto.getFirstName(), existingGuardian::setFirstName);
         updateIfNotNull(dto.getLastName(), existingGuardian::setLastName);
-        updateIfNotNull(dto.getAge(), existingGuardian::setAge);
+        updateIfNotNull(dto.getBirthDate(), existingGuardian::setBirthDate);
         updateIfNotNull(dto.getSubgroup(), subgroup -> existingGuardian.setSubgroup(SubgroupMapper.toEntity(subgroup)));
         updateIfNotNull(dto.getPhone(), existingGuardian::setPhone);
-        updateIfNotNull(dto.getRelationship(), existingGuardian::setRelationship);
         updateIfNotNull(dto.getIdentification(), existingGuardian::setIdentification);
         updateIfNotNull(dto.getDocumentType(), existingGuardian::setDocumentType);
         updateIfNotNull(dto.getAddress(), existingGuardian::setAddress);

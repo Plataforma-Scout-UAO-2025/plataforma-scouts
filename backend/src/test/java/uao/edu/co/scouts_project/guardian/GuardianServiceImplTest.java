@@ -111,15 +111,16 @@ class GuardianServiceImplTest {
                 .tenantId("tenant-1")
                 .firstName("Carlos")
                 .lastName("Rodríguez")
-                .age(38)
+                .birthDate(LocalDate.of(1987, 3, 15))
                 .identification("1087654321")
                 .documentType(DocumentType.CC)
                 .phone("3012345678")
+                .gender("MALE")
+                .address("Calle 123 #45-67")
                 .isActive(true)
-                .relationship("Padre")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.now())
-                .rol("ACUDIENTE") // String, not enum
+                .role("ACUDIENTE") // String, not enum
                 .build();
 
         // Setup MemberCustom
@@ -393,14 +394,16 @@ class GuardianServiceImplTest {
             GuardianCreateDTO updateDTO = GuardianCreateDTO.builder()
                     .firstName("Carlos Andrés")
                     .lastName("Rodríguez López")
-                    .age(39)
+                    .birthDate(LocalDate.of(1986, 3, 15))
                     .identification("1087654321")
                     .documentType(DocumentType.CC)
                     .phone("3012222222")
+                    .gender("MALE")
+                    .address("Carrera 50 #12-34")
                     .isActive(true)
-                    .relationship("Padre")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
+                    .role("ACUDIENTE")
                     .build();
 
             when(guardianRepository.findValidGuardianById(1L)).thenReturn(Optional.of(guardianMember));
@@ -499,7 +502,7 @@ class GuardianServiceImplTest {
                     .guardianId(1)
                     .subgroup(subgroup)
                     .build();
-            
+
             when(guardianRepository.existsById(1L)).thenReturn(true);
             when(guardianRepository.findById(3L)).thenReturn(Optional.of(adultMember));
             when(guardianRepository.save(any(Member.class))).thenReturn(adultMember);

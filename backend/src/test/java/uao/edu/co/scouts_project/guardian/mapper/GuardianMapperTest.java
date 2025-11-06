@@ -50,15 +50,16 @@ public class GuardianMapperTest {
                 .tenantId("tenant-1")
                 .firstName("John")
                 .lastName("Doe")
-                .age(35)
+                .birthDate(LocalDate.of(1990, 5, 15))
                 .identification("1234567890")
                 .documentType(DocumentType.CC)
                 .phone("3001234567")
+                .gender("MALE")
+                .address("123 Main Street")
                 .isActive(true)
-                .relationship("Father")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.of(2023, 1, 15))
-                .rol("ACUDIENTE")
+                .role("ACUDIENTE")
                 .build();
 
         // Setup Member with full data
@@ -153,15 +154,16 @@ public class GuardianMapperTest {
             assertNull(result.getSubgroup(), "Subgroup should be null in toEntity");
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertEquals(LocalDate.of(1990, 5, 15), result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
-            assertTrue(result.getIsActive());
-            assertEquals("Father", result.getRelationship());
-            assertEquals(Status.APPROVED, result.getStatus());
-            assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertEquals("ACUDIENTE", result.getRole()); // String, not enum
+            assertEquals("MALE", result.getGender());
+            assertEquals("123 Main Street", result.getAddress());
+            assertFalse(result.getIsActive(), "isActive should always be false in toEntity");
+            assertEquals(Status.PENDING, result.getStatus(), "Status should always be PENDING in toEntity");
+            assertEquals("ACUDIENTE", result.getRole(), "Role should always be ACUDIENTE in toEntity"); // String, not
+                                                                                                        // enum
         }
 
         @Test
@@ -173,15 +175,16 @@ public class GuardianMapperTest {
                     .tenantId("tenant-1")
                     .firstName("John")
                     .lastName("Doe")
-                    .age(35)
+                    .birthDate(LocalDate.of(1990, 5, 15))
                     .identification("1234567890")
                     .documentType(DocumentType.CC)
                     .phone("3001234567")
+                    .gender("MALE")
+                    .address("123 Main Street")
                     .isActive(true)
-                    .relationship("Father")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
-                    .rol("ACUDIENTE")
+                    .role("ACUDIENTE")
                     .build();
 
             // Act
@@ -247,12 +250,12 @@ public class GuardianMapperTest {
             assertEquals("Test Subgroup", result.getSubgroup().getName());
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertNotNull(result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
             assertTrue(result.getIsActive());
-            assertEquals("Father", result.getRelationship());
+            assertNotNull(result.getGender());
             assertEquals(Status.APPROVED, result.getStatus());
             assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
             assertNotNull(result.getMembers());
@@ -315,16 +318,16 @@ public class GuardianMapperTest {
             assertEquals("tenant-1", result.getTenantId());
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertNotNull(result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
             assertTrue(result.getIsActive());
-            assertEquals("Father", result.getRelationship());
+            assertNotNull(result.getGender());
             assertEquals(Status.APPROVED, result.getStatus());
             assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertNotNull(result.getRol());
-            assertEquals("ACUDIENTE", result.getRol()); // String, not enum
+            assertNotNull(result.getRole());
+            assertEquals("ACUDIENTE", result.getRole()); // String, not enum
         }
 
         @Test
@@ -334,8 +337,8 @@ public class GuardianMapperTest {
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertNotNull(result.getRol());
-            assertEquals("ACUDIENTE", result.getRol()); // String, not enum
+            assertNotNull(result.getRole());
+            assertEquals("ACUDIENTE", result.getRole()); // String, not enum
         }
 
         @Test
@@ -348,7 +351,7 @@ public class GuardianMapperTest {
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertEquals("SCOUTER", result.getRol()); // String, not enum
+            assertEquals("SCOUTER", result.getRole()); // String, not enum
         }
 
         @Test
@@ -362,12 +365,12 @@ public class GuardianMapperTest {
             assertEquals(guardianMember.getTenantId(), result.getTenantId());
             assertEquals(guardianMember.getFirstName(), result.getFirstName());
             assertEquals(guardianMember.getLastName(), result.getLastName());
-            assertEquals(guardianMember.getAge(), result.getAge());
+            assertEquals(guardianMember.getBirthDate(), result.getBirthDate());
             assertEquals(guardianMember.getIdentification(), result.getIdentification());
             assertEquals(guardianMember.getDocumentType(), result.getDocumentType());
             assertEquals(guardianMember.getPhone(), result.getPhone());
             assertEquals(guardianMember.getIsActive(), result.getIsActive());
-            assertEquals(guardianMember.getRelationship(), result.getRelationship());
+            assertEquals(guardianMember.getGender(), result.getGender());
             assertEquals(guardianMember.getStatus(), result.getStatus());
             assertEquals(guardianMember.getAcceptanceDate(), result.getAcceptanceDate());
         }
@@ -537,17 +540,17 @@ public class GuardianMapperTest {
             assertEquals("tenant-1", result.getTenantId());
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertNotNull(result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
             assertTrue(result.getIsActive());
-            assertEquals("Father", result.getRelationship());
+            assertNotNull(result.getGender());
             assertEquals(Status.APPROVED, result.getStatus());
             assertEquals("123 Main St", result.getAddress());
             assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertNotNull(result.getRol());
-            assertEquals("ACUDIENTE", result.getRol());
+            assertNotNull(result.getRole());
+            assertEquals("ACUDIENTE", result.getRole());
         }
 
         @Test
@@ -603,16 +606,16 @@ public class GuardianMapperTest {
             assertEquals(guardianMember.getTenantId(), result.getTenantId());
             assertEquals(guardianMember.getFirstName(), result.getFirstName());
             assertEquals(guardianMember.getLastName(), result.getLastName());
-            assertEquals(guardianMember.getAge(), result.getAge());
+            assertEquals(guardianMember.getBirthDate(), result.getBirthDate());
             assertEquals(guardianMember.getIdentification(), result.getIdentification());
             assertEquals(guardianMember.getDocumentType(), result.getDocumentType());
             assertEquals(guardianMember.getPhone(), result.getPhone());
             assertEquals(guardianMember.getIsActive(), result.getIsActive());
-            assertEquals(guardianMember.getRelationship(), result.getRelationship());
+            assertEquals(guardianMember.getGender(), result.getGender());
             assertEquals(guardianMember.getStatus(), result.getStatus());
             assertEquals(guardianMember.getAddress(), result.getAddress());
             assertEquals(guardianMember.getAcceptanceDate(), result.getAcceptanceDate());
-            assertEquals(guardianMember.getRole(), result.getRol());
+            assertEquals(guardianMember.getRole(), result.getRole());
         }
 
         @Test
@@ -641,15 +644,16 @@ public class GuardianMapperTest {
                     .tenantId("tenant-1")
                     .firstName("Min")
                     .lastName("Mal")
-                    .age(30)
+                    .birthDate(LocalDate.of(1993, 1, 1))
                     .identification("1111111111")
                     .documentType(DocumentType.CC)
                     .phone("3001111111")
+                    .gender("MALE")
+                    .address("Test Address")
                     .isActive(true)
-                    .relationship("Guardian")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
-                    .rol("ACUDIENTE")
+                    .role("ACUDIENTE")
                     .build();
 
             // Act

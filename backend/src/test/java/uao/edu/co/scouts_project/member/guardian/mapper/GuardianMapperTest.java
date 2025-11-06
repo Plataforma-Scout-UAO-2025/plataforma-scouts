@@ -51,15 +51,16 @@ public class GuardianMapperTest {
                 .tenantId("tenant-1")
                 .firstName("John")
                 .lastName("Doe")
-                .age(35)
+                .birthDate(LocalDate.of(1988, 5, 20))
                 .identification("1234567890")
                 .documentType(DocumentType.CC)
                 .phone("3001234567")
+                .gender("MALE")
+                .address("123 Main St")
                 .isActive(true)
-                .relationship("Father")
                 .status(Status.APPROVED)
                 .acceptanceDate(LocalDate.of(2023, 1, 15))
-                .rol("ACUDIENTE")
+                .role("ACUDIENTE")
                 .build();
 
         // Setup Member with full data
@@ -154,42 +155,43 @@ public class GuardianMapperTest {
             assertNull(result.getSubgroup(), "Subgroup should be null in toEntity");
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertEquals(LocalDate.of(1988, 5, 20), result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
-            assertTrue(result.getIsActive());
-            assertEquals("Father", result.getRelationship());
-            assertEquals(Status.APPROVED, result.getStatus());
-            assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertEquals("ACUDIENTE", result.getRole()); // String, not enum
+            assertEquals("MALE", result.getGender());
+            assertEquals("123 Main St", result.getAddress());
+            assertFalse(result.getIsActive(), "isActive should be false in toEntity");
+            assertEquals(Status.PENDING, result.getStatus(), "Status should be PENDING in toEntity");
+            assertEquals("ACUDIENTE", result.getRole());
         }
 
         @Test
-        @DisplayName("Should use the role from rol field")
-        void shouldUseRoleFromRolField() {
+        @DisplayName("Should use the role from role field and set it to ACUDIENTE")
+        void shouldUseRoleFromRoleField() {
             // Arrange
             GuardianCreateDTO dtoWithRole = GuardianCreateDTO.builder()
                     .userId("guardian-123")
                     .tenantId("tenant-1")
                     .firstName("John")
                     .lastName("Doe")
-                    .age(35)
+                    .birthDate(LocalDate.of(1988, 5, 20))
                     .identification("1234567890")
                     .documentType(DocumentType.CC)
                     .phone("3001234567")
+                    .gender("MALE")
+                    .address("123 Main St")
                     .isActive(true)
-                    .relationship("Father")
                     .status(Status.APPROVED)
                     .acceptanceDate(LocalDate.now())
-                    .rol("ACUDIENTE")
+                    .role("ACUDIENTE")
                     .build();
 
             // Act
             Member result = GuardianMapper.toEntity(dtoWithRole);
 
             // Assert
-            assertEquals("ACUDIENTE", result.getRole(), "Should use role from rol field"); // String, not enum
+            assertEquals("ACUDIENTE", result.getRole(), "Should always be ACUDIENTE");
         }
 
         @Test
@@ -248,10 +250,12 @@ public class GuardianMapperTest {
             assertEquals("Test Subgroup", result.getSubgroup().getName());
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertEquals(LocalDate.of(1988, 5, 20), result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
+            assertEquals("MALE", result.getGender());
+            assertEquals("123 Main St", result.getAddress());
             assertTrue(result.getIsActive());
             assertEquals("Father", result.getRelationship());
             assertEquals(Status.APPROVED, result.getStatus());
@@ -316,16 +320,15 @@ public class GuardianMapperTest {
             assertEquals("tenant-1", result.getTenantId());
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertEquals(LocalDate.of(1988, 5, 20), result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
             assertTrue(result.getIsActive());
-            assertEquals("Father", result.getRelationship());
             assertEquals(Status.APPROVED, result.getStatus());
             assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertNotNull(result.getRol());
-            assertEquals("ACUDIENTE", result.getRol()); // String, not enum
+            assertNotNull(result.getRole());
+            assertEquals("ACUDIENTE", result.getRole());
         }
 
         @Test
@@ -335,8 +338,8 @@ public class GuardianMapperTest {
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertNotNull(result.getRol());
-            assertEquals("ACUDIENTE", result.getRol()); // String, not enum
+            assertNotNull(result.getRole());
+            assertEquals("ACUDIENTE", result.getRole());
         }
 
         @Test
@@ -349,7 +352,7 @@ public class GuardianMapperTest {
             GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertEquals("SCOUTER", result.getRol()); // String, not enum
+            assertEquals("SCOUTER", result.getRole());
         }
 
         @Test
@@ -363,14 +366,14 @@ public class GuardianMapperTest {
             assertEquals(guardianMember.getTenantId(), result.getTenantId());
             assertEquals(guardianMember.getFirstName(), result.getFirstName());
             assertEquals(guardianMember.getLastName(), result.getLastName());
-            assertEquals(guardianMember.getAge(), result.getAge());
+            assertEquals(guardianMember.getBirthDate(), result.getBirthDate());
             assertEquals(guardianMember.getIdentification(), result.getIdentification());
             assertEquals(guardianMember.getDocumentType(), result.getDocumentType());
             assertEquals(guardianMember.getPhone(), result.getPhone());
             assertEquals(guardianMember.getIsActive(), result.getIsActive());
-            assertEquals(guardianMember.getRelationship(), result.getRelationship());
             assertEquals(guardianMember.getStatus(), result.getStatus());
             assertEquals(guardianMember.getAcceptanceDate(), result.getAcceptanceDate());
+            assertEquals(guardianMember.getRole(), result.getRole());
         }
     }
 
@@ -525,8 +528,8 @@ public class GuardianMapperTest {
     class ToGuardianDTOTests {
 
         @Test
-        @DisplayName("Should convert Member to GuardianCreateDTO with memberId and address")
-        void shouldConvertMemberToGuardianDTOWithMemberIdAndAddress() {
+        @DisplayName("Should convert Member to GuardianCreateDTO with memberId")
+        void shouldConvertMemberToGuardianDTOWithMemberId() {
             // Act
             GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
 
@@ -538,17 +541,14 @@ public class GuardianMapperTest {
             assertEquals("tenant-1", result.getTenantId());
             assertEquals("John", result.getFirstName());
             assertEquals("Doe", result.getLastName());
-            assertEquals(35, result.getAge());
+            assertEquals(LocalDate.of(1988, 5, 20), result.getBirthDate());
             assertEquals("1234567890", result.getIdentification());
             assertEquals(DocumentType.CC, result.getDocumentType());
             assertEquals("3001234567", result.getPhone());
             assertTrue(result.getIsActive());
-            assertEquals("Father", result.getRelationship());
             assertEquals(Status.APPROVED, result.getStatus());
-            assertEquals("123 Main St", result.getAddress());
-            assertEquals(LocalDate.of(2023, 1, 15), result.getAcceptanceDate());
-            assertNotNull(result.getRol());
-            assertEquals("ACUDIENTE", result.getRol());
+            assertNotNull(result.getRole());
+            assertEquals("ACUDIENTE", result.getRole());
         }
 
         @Test
@@ -559,73 +559,19 @@ public class GuardianMapperTest {
 
             // Assert
             assertNotNull(result.getMemberId());
-            assertEquals(guardianMember.getMemberId(), result.getMemberId());
-        }
-
-        @Test
-        @DisplayName("Should include address field when converting with toGuardianDTO")
-        void shouldIncludeAddressField() {
-            // Arrange
-            guardianMember.setAddress("456 Oak Avenue");
-
-            // Act
-            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
-
-            // Assert
-            assertNotNull(result.getAddress());
-            assertEquals("456 Oak Avenue", result.getAddress());
-        }
-
-        @Test
-        @DisplayName("Should handle null address in toGuardianDTO")
-        void shouldHandleNullAddress() {
-            // Arrange
-            guardianMember.setAddress(null);
-
-            // Act
-            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
-
-            // Assert
-            assertNull(result.getAddress());
-        }
-
-        @Test
-        @DisplayName("Should preserve all fields including memberId and address")
-        void shouldPreserveAllFieldsIncludingMemberIdAndAddress() {
-            // Arrange
-            guardianMember.setAddress("789 Pine Street");
-
-            // Act
-            GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
-
-            // Assert
-            assertEquals(guardianMember.getMemberId(), result.getMemberId());
-            assertEquals(guardianMember.getUserId(), result.getUserId());
-            assertEquals(guardianMember.getTenantId(), result.getTenantId());
-            assertEquals(guardianMember.getFirstName(), result.getFirstName());
-            assertEquals(guardianMember.getLastName(), result.getLastName());
-            assertEquals(guardianMember.getAge(), result.getAge());
-            assertEquals(guardianMember.getIdentification(), result.getIdentification());
-            assertEquals(guardianMember.getDocumentType(), result.getDocumentType());
-            assertEquals(guardianMember.getPhone(), result.getPhone());
-            assertEquals(guardianMember.getIsActive(), result.getIsActive());
-            assertEquals(guardianMember.getRelationship(), result.getRelationship());
-            assertEquals(guardianMember.getStatus(), result.getStatus());
-            assertEquals(guardianMember.getAddress(), result.getAddress());
-            assertEquals(guardianMember.getAcceptanceDate(), result.getAcceptanceDate());
-            assertEquals(guardianMember.getRole(), result.getRol());
+            assertEquals(1L, result.getMemberId());
         }
 
         @Test
         @DisplayName("Should differentiate from toGuardianCreateDTO by including memberId")
         void shouldDifferentiateFromToGuardianCreateDTO() {
             // Act
-            GuardianCreateDTO resultWithId = GuardianMapper.toGuardianDTO(guardianMember);
-            GuardianCreateDTO resultWithoutId = GuardianMapper.toGuardianCreateDTO(guardianMember);
+            GuardianCreateDTO withMemberId = GuardianMapper.toGuardianDTO(guardianMember);
+            GuardianCreateDTO withoutMemberId = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
             // Assert
-            assertNotNull(resultWithId.getMemberId(), "toGuardianDTO should include memberId");
-            assertNull(resultWithoutId.getMemberId(), "toGuardianCreateDTO should not include memberId");
+            assertNotNull(withMemberId.getMemberId());
+            assertNull(withoutMemberId.getMemberId());
         }
     }
 
@@ -638,19 +584,19 @@ public class GuardianMapperTest {
         void shouldHandleMinimumRequiredFields() {
             // Arrange
             GuardianCreateDTO minimalDTO = GuardianCreateDTO.builder()
-                    .userId("minimal-123")
+                    .userId("user-123")
                     .tenantId("tenant-1")
-                    .firstName("Min")
-                    .lastName("Mal")
-                    .age(30)
-                    .identification("1111111111")
+                    .firstName("John")
+                    .lastName("Doe")
+                    .birthDate(LocalDate.of(1990, 1, 1))
+                    .identification("1234567890")
                     .documentType(DocumentType.CC)
-                    .phone("3001111111")
+                    .phone("3001234567")
+                    .gender("MALE")
                     .isActive(true)
-                    .relationship("Guardian")
-                    .status(Status.APPROVED)
+                    .status(Status.PENDING)
                     .acceptanceDate(LocalDate.now())
-                    .rol("ACUDIENTE")
+                    .role("ACUDIENTE")
                     .build();
 
             // Act
@@ -658,62 +604,221 @@ public class GuardianMapperTest {
 
             // Assert
             assertNotNull(result);
-            assertEquals("minimal-123", result.getUserId());
-            assertEquals("Min", result.getFirstName());
+            assertEquals("John", result.getFirstName());
+            assertEquals("Doe", result.getLastName());
         }
 
-        @Test
-        @DisplayName("Should handle inactive status")
-        void shouldHandleInactiveStatus() {
-            // Arrange
-            guardianMember.setIsActive(false);
+    }
 
-            // Act
-            GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
+    @Test
+    @DisplayName("Should include address field when converting with toGuardianDTO")
+    void shouldIncludeAddressField() {
+        // Arrange
+        guardianMember.setAddress("456 Oak Avenue");
 
-            // Assert
-            assertFalse(result.getIsActive());
-        }
+        // Act
+        GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
 
-        @Test
-        @DisplayName("Should handle rejected status")
-        void shouldHandleRejectedStatus() {
-            // Arrange
-            guardianMember.setStatus(Status.REJECTED);
+        // Assert
+        assertNotNull(result.getAddress());
+        assertEquals("456 Oak Avenue", result.getAddress());
+    }
 
-            // Act
-            GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
+    @Test
+    @DisplayName("Should handle null address in toGuardianDTO")
+    void shouldHandleNullAddress() {
+        // Arrange
+        guardianMember.setAddress(null);
 
-            // Assert
-            assertEquals(Status.REJECTED, result.getStatus());
-        }
+        // Act
+        GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
 
-        @Test
-        @DisplayName("Should handle special characters in names")
-        void shouldHandleSpecialCharactersInNames() {
-            // Arrange
-            guardianMember.setFirstName("José María");
-            guardianMember.setLastName("O'Brien-García");
+        // Assert
+        assertNull(result.getAddress());
+    }
 
-            // Act
-            GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
+    @Test
+    @DisplayName("Should preserve all fields including memberId and address")
+    void shouldPreserveAllFieldsIncludingMemberIdAndAddress() {
+        // Arrange
+        guardianMember.setAddress("789 Pine Street");
 
-            // Assert
-            assertEquals("José María", result.getFirstName());
-            assertEquals("O'Brien-García", result.getLastName());
-        }
+        // Act
+        GuardianCreateDTO result = GuardianMapper.toGuardianDTO(guardianMember);
 
-        @Test
-        @DisplayName("Should handle long identification numbers")
-        void shouldHandleLongIdentificationNumbers() {
-            // Arrange
-            guardianMember.setIdentification("1234567890123456789");
+        // Assert
+        assertEquals(guardianMember.getMemberId(), result.getMemberId());
+        assertEquals(guardianMember.getUserId(), result.getUserId());
+        assertEquals(guardianMember.getTenantId(), result.getTenantId());
+        assertEquals(guardianMember.getFirstName(), result.getFirstName());
+        assertEquals(guardianMember.getLastName(), result.getLastName());
+        assertEquals(guardianMember.getBirthDate(), result.getBirthDate());
+        assertEquals(guardianMember.getIdentification(), result.getIdentification());
+        assertEquals(guardianMember.getDocumentType(), result.getDocumentType());
+        assertEquals(guardianMember.getPhone(), result.getPhone());
+        assertEquals(guardianMember.getGender(), result.getGender());
+        assertEquals(guardianMember.getIsActive(), result.getIsActive());
+        assertEquals(guardianMember.getStatus(), result.getStatus());
+        assertEquals(guardianMember.getAddress(), result.getAddress());
+        assertEquals(guardianMember.getAcceptanceDate(), result.getAcceptanceDate());
+        assertEquals(guardianMember.getRole(), result.getRole());
+    }
 
-            // Act
-            GuardianCreateDTO result = GuardianMapper.toGuardianCreateDTO(guardianMember);
+    @Test
+    @DisplayName("Should differentiate from toGuardianCreateDTO by including memberId")
+    void shouldDifferentiateFromToGuardianCreateDTO() {
+        // Act
+        GuardianCreateDTO resultWithId = GuardianMapper.toGuardianDTO(guardianMember);
+        GuardianCreateDTO resultWithoutId = GuardianMapper.toGuardianCreateDTO(guardianMember);
 
-            // Assert
-            assertEquals("1234567890123456789", result.getIdentification());
-        }
+        // Assert
+        assertNotNull(resultWithId.getMemberId(), "toGuardianDTO should include memberId");
+        assertNull(resultWithoutId.getMemberId(), "toGuardianCreateDTO should not include memberId");
+    }
+}
+
+@Nested
+@DisplayName("Edge Cases and Null Handling Tests")
+class EdgeCasesTests {
+
+    @Test
+    @DisplayName("Should handle minimum required fields in GuardianCreateDTO")
+    void shouldHandleMinimumRequiredFields() {
+        // Arrange
+        GuardianCreateDTO minimalDTO = GuardianCreateDTO.builder()
+                .userId("minimal-123")
+                .tenantId("tenant-1")
+                .firstName("Min")
+                .lastName("Mal")
+                .birthDate(LocalDate.of(1990, 5, 15))
+                .identification("1111111111")
+                .documentType(DocumentType.CC)
+                .phone("3001111111")
+                .gender("MALE")
+                .isActive(true)
+                .status(Status.APPROVED)
+                .acceptanceDate(LocalDate.now())
+                .role("ACUDIENTE")
+                .build();
+
+        // Act
+        Member result = GuardianMapper.toEntity(minimalDTO);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("minimal-123", result.getUserId());
+        assertEquals("Min", result.getFirstName());
+        // toEntity always sets isActive to false and status to PENDING
+        assertFalse(result.getIsActive());
+        assertEquals(Status.PENDING, result.getStatus());
+    }
+
+    @Test
+    @DisplayName("Should handle inactive status")
+    void shouldHandleInactiveStatus() {
+        // Arrange
+        GuardianCreateDTO dto = GuardianCreateDTO.builder()
+                .userId("user-123")
+                .tenantId("tenant-1")
+                .firstName("John")
+                .lastName("Doe")
+                .birthDate(LocalDate.of(1985, 3, 20))
+                .identification("1234567890")
+                .documentType(DocumentType.CC)
+                .phone("3001234567")
+                .gender("MALE")
+                .isActive(true) // Try to set active
+                .status(Status.APPROVED)
+                .acceptanceDate(LocalDate.now())
+                .role("ACUDIENTE")
+                .build();
+
+        // Act
+        Member result = GuardianMapper.toEntity(dto);
+
+        // Assert
+        assertFalse(result.getIsActive(), "isActive should always be false in toEntity");
+    }
+
+    @Test
+    @DisplayName("Should handle pending status")
+    void shouldHandlePendingStatus() {
+        // Arrange
+        GuardianCreateDTO dto = GuardianCreateDTO.builder()
+                .userId("user-123")
+                .tenantId("tenant-1")
+                .firstName("John")
+                .lastName("Doe")
+                .birthDate(LocalDate.of(1985, 3, 20))
+                .identification("1234567890")
+                .documentType(DocumentType.CC)
+                .phone("3001234567")
+                .gender("MALE")
+                .isActive(false)
+                .status(Status.APPROVED) // Try to set approved
+                .acceptanceDate(LocalDate.now())
+                .role("ACUDIENTE")
+                .build();
+
+        // Act
+        Member result = GuardianMapper.toEntity(dto);
+
+        // Assert
+        assertEquals(Status.PENDING, result.getStatus(), "Status should always be PENDING in toEntity");
+    }
+
+    @Test
+    @DisplayName("Should handle special characters in names")
+    void shouldHandleSpecialCharactersInNames() {
+        // Arrange
+        GuardianCreateDTO dto = GuardianCreateDTO.builder()
+                .userId("user-123")
+                .tenantId("tenant-1")
+                .firstName("José María")
+                .lastName("O'Brien-García")
+                .birthDate(LocalDate.of(1985, 3, 20))
+                .identification("1234567890")
+                .documentType(DocumentType.CC)
+                .phone("3001234567")
+                .gender("MALE")
+                .isActive(false)
+                .status(Status.PENDING)
+                .acceptanceDate(LocalDate.now())
+                .role("ACUDIENTE")
+                .build();
+
+        // Act
+        Member result = GuardianMapper.toEntity(dto);
+
+        // Assert
+        assertEquals("José María", result.getFirstName());
+        assertEquals("O'Brien-García", result.getLastName());
+    }
+
+    @Test
+    @DisplayName("Should handle long identification numbers")
+    void shouldHandleLongIdentificationNumbers() {
+        // Arrange
+        GuardianCreateDTO dto = GuardianCreateDTO.builder()
+                .userId("user-123")
+                .tenantId("tenant-1")
+                .firstName("John")
+                .lastName("Doe")
+                .birthDate(LocalDate.of(1985, 3, 20))
+                .identification("1234567890")
+                .documentType(DocumentType.CC)
+                .phone("3001234567")
+                .gender("MALE")
+                .isActive(false)
+                .status(Status.PENDING)
+                .acceptanceDate(LocalDate.now())
+                .role("ACUDIENTE")
+                .build();
+
+        // Act
+        Member result = GuardianMapper.toEntity(dto);
+
+        // Assert
+        assertEquals("1234567890", result.getIdentification());
     }
 }

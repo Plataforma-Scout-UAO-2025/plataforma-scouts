@@ -38,12 +38,13 @@ public class GuardianWithMembersDTO {
     @JsonProperty("lastName")
     private String lastName;
     @Positive
-    private Integer age;
+    private LocalDate birthDate;
     @Size(max = 10)
     private String identification;
     private DocumentType documentType;
     @Size(max = 10)
     private String phone;
+    private String gender;
     private Boolean isActive;
     private String relationship;
     private String address;
