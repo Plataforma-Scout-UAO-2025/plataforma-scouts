@@ -70,6 +70,12 @@ public class GuardianController {
         return ResponseEntity.ok(guardianWithMembers);
     }
 
+    @GetMapping("/current-logged/{auth_id}")
+    public ResponseEntity<GuardianCreateDTO> getGuardianByAuth0Id(@PathVariable("auth_id") String authId) {
+        GuardianCreateDTO guardian = guardianService.findGuardianByAuth0Id(authId);
+        return ResponseEntity.ok(guardian);
+    }
+
     @Operation(
         summary = "Obtener miembros a cargo del acudiente",
         description = "Recupera la lista de miembros (scouts) que están a cargo de un acudiente."

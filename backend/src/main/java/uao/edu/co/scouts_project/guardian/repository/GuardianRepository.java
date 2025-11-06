@@ -55,4 +55,7 @@ public interface GuardianRepository extends JpaRepository<Member, Long> {
         @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.identification = :identification AND m.role = 'ACUDIENTE'")
         boolean existsByValidGuardianIdentification(@Param("identification") String identification);
 
+        @Query("SELECT m FROM Member m WHERE m.userId = :userId")
+        Optional<Member> findByUserId(@Param("userId") String userId);
+
 }

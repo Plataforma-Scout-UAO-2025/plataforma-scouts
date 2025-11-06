@@ -9,7 +9,10 @@ import uao.edu.co.scouts_project.guardian.dto.out.GuardianWithMembersDTO;
 import uao.edu.co.scouts_project.guardian.dto.shared.MemberDTO;
 
 public interface GuardianService {
-    
+
+    // Auth0
+    GuardianCreateDTO findGuardianByAuth0Id(String auth0Id);
+
     // Reads
     GuardianCreateDTO findGuardianById(Long id);
     GuardianWithMembersDTO findGuardianWithMembers(Long guardianId);

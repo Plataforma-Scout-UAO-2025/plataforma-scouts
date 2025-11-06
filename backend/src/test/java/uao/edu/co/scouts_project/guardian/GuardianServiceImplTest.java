@@ -172,6 +172,41 @@ class GuardianServiceImplTest {
     }
 
     @Nested
+    @DisplayName("findGuardianByAuth0Id Tests")
+    class FindGuardianByAuth0IdTests {
+
+        @Test
+        @DisplayName("Should return guardian with memberId when found by Auth0 ID")
+        void shouldReturnGuardianWhenFoundByAuth0Id() {
+            // Arrange
+            String auth0Id = "auth0|guardian-123";
+            when(guardianRepository.findByUserId(auth0Id)).thenReturn(Optional.of(guardianMember));
+
+            // Act
+            GuardianCreateDTO result = guardianService.findGuardianByAuth0Id(auth0Id);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1L, result.getMemberId());
+            verify(guardianRepository, times(1)).findByUserId(auth0Id);
+        }
+
+        @Test
+        @DisplayName("Should throw MemberNotFoundException when guardian not found by Auth0 ID")
+        void shouldThrowExceptionWhenGuardianNotFoundByAuth0Id() {
+            // Arrange
+            String auth0Id = "auth0|nonexistent-user";
+            when(guardianRepository.findByUserId(auth0Id)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            MemberNotFoundException exception = assertThrows(MemberNotFoundException.class,
+                    () -> guardianService.findGuardianByAuth0Id(auth0Id));
+            assertEquals("Member with Auth0 ID " + auth0Id + " not found", exception.getMessage());
+            verify(guardianRepository, times(1)).findByUserId(auth0Id);
+        }
+    }
+
+    @Nested
     @DisplayName("findMembersInChargeOf Tests")
     class FindMembersInChargeOfTests {
 

@@ -137,6 +137,41 @@ class GuardianControllerTest {
     }
 
     @Nested
+    @DisplayName("GET /api/v1/guardian/current-logged/{auth_id}")
+    class GetGuardianByAuth0IdTests {
+
+        @Test
+        @DisplayName("Should return 200 and guardian when found by Auth0 ID")
+        void shouldReturnGuardianWhenFoundByAuth0Id() throws Exception {
+            String auth0Id = "auth0|guardian-123";
+            GuardianCreateDTO minimalDTO = GuardianCreateDTO.builder()
+                    .memberId(1L)
+                    .build();
+            when(guardianService.findGuardianByAuth0Id(auth0Id)).thenReturn(minimalDTO);
+
+            mockMvc.perform(get("/api/v1/guardian/current-logged/{auth_id}", auth0Id))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.member_id").value(1));
+
+            verify(guardianService, times(1)).findGuardianByAuth0Id(auth0Id);
+        }
+
+        @Test
+        @DisplayName("Should return 404 when guardian not found by Auth0 ID")
+        void shouldReturn404WhenGuardianNotFoundByAuth0Id() throws Exception {
+            String auth0Id = "auth0|nonexistent-user";
+            when(guardianService.findGuardianByAuth0Id(auth0Id))
+                    .thenThrow(new MemberNotFoundException("Member with Auth0 ID " + auth0Id + " not found"));
+
+            mockMvc.perform(get("/api/v1/guardian/current-logged/{auth_id}", auth0Id))
+                    .andExpect(status().isNotFound());
+
+            verify(guardianService, times(1)).findGuardianByAuth0Id(auth0Id);
+        }
+    }
+
+    @Nested
     @DisplayName("GET /api/v1/guardian/list-available")
     class GetAvailableGuardiansTests {
 

@@ -80,6 +80,15 @@ public class GuardianServiceImpl implements GuardianService {
 
     @Override
     @Transactional(readOnly = true)
+    public GuardianCreateDTO findGuardianByAuth0Id(String auth0Id) {
+        Member member = memberRepository.findByUserId(auth0Id)
+                .orElseThrow(() -> new MemberNotFoundException("Member with Auth0 ID " + auth0Id + " not found"));
+
+        return GuardianCreateDTO.builder().memberId(member.getMemberId()).build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<AvailableGuardianDTO> findAvailableGuardians() {
         List<AvailableGuardian> availableGuardians = memberRepository.findAvailableGuardians();
 
