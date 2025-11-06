@@ -293,8 +293,6 @@ export default function GroupEditModal({
                   <Calendar
                     mode="single"
                     captionLayout="dropdown"
-                    fromYear={1900}
-                    toYear={new Date().getFullYear()}
                     selected={
                       form.foundedIn ? new Date(form.foundedIn) : undefined
                     }

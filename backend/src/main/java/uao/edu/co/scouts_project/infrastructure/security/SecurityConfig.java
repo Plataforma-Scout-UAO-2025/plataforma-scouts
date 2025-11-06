@@ -8,7 +8,9 @@ import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import uao.edu.co.scouts_project.multitenancy.JwtTenantFilter;
 
 import uao.edu.co.scouts_project.domain.port.AuthoritiesMappingPort;
 import static uao.edu.co.scouts_project.infrastructure.security.Role.ACUDIENTE;
@@ -23,18 +25,23 @@ import static uao.edu.co.scouts_project.infrastructure.security.Role.TESORERO;
 @EnableWebSecurity
 public class SecurityConfig {
 
-        private final AuthoritiesMappingPort authoritiesMappingPort;
+    private final AuthoritiesMappingPort authoritiesMappingPort;
+    private final JwtTenantFilter jwtTenantFilter;
 
-        @Autowired
-        public SecurityConfig(AuthoritiesMappingPort authoritiesMappingPort) {
-                this.authoritiesMappingPort = authoritiesMappingPort;
-        }
+    @Autowired
+    public SecurityConfig(AuthoritiesMappingPort authoritiesMappingPort, JwtTenantFilter jwtTenantFilter) {
+        this.authoritiesMappingPort = authoritiesMappingPort;
+        this.jwtTenantFilter = jwtTenantFilter;
+    }
 
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                return http
-                                .csrf(csrf -> csrf.disable())
-                                .authorizeHttpRequests(authorize -> authorize
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .addFilterAfter(jwtTenantFilter, BearerTokenAuthenticationFilter.class)
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authorize -> authorize
+                        // Health check
+                        .requestMatchers("/api/v1/test/health").permitAll()
 
                                                 .requestMatchers("/api/v1/sec/roles").authenticated()
                                                 .requestMatchers("/api/v1/sec/org_id").authenticated()
@@ -44,27 +51,23 @@ public class SecurityConfig {
                                                                 "/api/v1/sec/admin/auth0/organizations/*/connections/*")
                                                 .denyAll()
 
-                                                .requestMatchers("/api/v1/mock/scouts/list")
-                                                .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
-                                                .requestMatchers("/api/v1/mock/scouts/add/member")
-                                                .hasAnyRole(TESORERO.name())
-                                                .requestMatchers("/api/v1/mock/scouts/member")
-                                                .hasAnyRole(DEV_SUPPORT.name())
+                        .requestMatchers("/api/v1/mock/scouts/list")
+                        .hasAnyRole(ACUDIENTE.name(), DEV_SUPPORT.name())
+                        .requestMatchers("/api/v1/mock/scouts/add/member")
+                        .hasAnyRole(TESORERO.name())
+                        .requestMatchers("/api/v1/mock/scouts/member")
+                        .hasAnyRole(DEV_SUPPORT.name())
 
-                                                // Organigrama
+                        // Organigrama
 
-                                                // Operaciones CRUD en tenants
+                        // Operaciones CRUD en tenants
 
-                                                // Exponer públicamente el endpoint para resolver org_id por slug
-                                                .requestMatchers(HttpMethod.GET, "/api/v1/tenants/slug/**")
-                                                .permitAll()
+                        // Exponer públicamente el endpoint para resolver org_id por slug
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/slug/**")
+                        .permitAll()
 
-                                                .requestMatchers(HttpMethod.POST, "/api/v1/tenants")
-                                                .hasAnyRole(ADMIN_GLOBAL.name())
-                                                .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*")
-                                                .hasAnyRole(ADMIN_GLOBAL.name())
-                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*")
-                                                .hasAnyRole(ADMIN_GLOBAL.name())
+                        .requestMatchers(HttpMethod.GET, "api/v1/tenants/A/groups/getAll")
+                        .permitAll()
 
                                                 // GRUPOS:
                                                 // 🔓 Todos los GET abiertos
@@ -104,13 +107,13 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/groups/*/scarf")
                                                 .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name())
 
-                                                // Operaciones en almacenamiento de imagenes
+                        // Operaciones en almacenamiento de imagenes
 
-                                                .requestMatchers(HttpMethod.POST, "/api/v1/storage/**")
-                                                .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
-                                                                DEV_SUPPORT.name())
+                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/**")
+                        .hasAnyRole(ADMIN_GLOBAL.name(), ADMIN_GRUPO.name(), SCOUTER.name(),
+                                DEV_SUPPORT.name())
 
-                                                // ==== Auth0 Management Endpoints ====
+                        // ==== Auth0 Management Endpoints ====
 
                                                 // // Crear Scout completo (usuario + organización + rol SCOUT)
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/auth0/scouts")
@@ -133,17 +136,17 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
                                                                 ADMIN_GLOBAL.name())
 
-                                                // Agregar a organización específica: Solo ADMINS
-                                                .requestMatchers(HttpMethod.POST,
-                                                                "/api/v1/auth0/organizations/*/members")
-                                                .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
+                        // Agregar a organización específica: Solo ADMINS
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth0/organizations/*/members")
+                        .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                                                // Agregar a organización propia (usa org_id del JWT): ACUDIENTE y
-                                                // ADMINS
-                                                .requestMatchers(HttpMethod.POST,
-                                                                "/api/v1/auth0/organizations/own/members")
-                                                .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
-                                                                ADMIN_GLOBAL.name())
+                        // Agregar a organización propia (usa org_id del JWT): ACUDIENTE y
+                        // ADMINS
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth0/organizations/own/members")
+                        .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(),
+                                ADMIN_GLOBAL.name())
 
                                                 // // SOLO ADMINS: Pueden CONSULTAR (GET)
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/auth0/**")
@@ -177,7 +180,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/auth0/**")
                                                 .hasAnyRole(ADMIN_GRUPO.name(), ADMIN_GLOBAL.name())
 
-                                                // Guardians
+                        // Guardians
 
                                                 .requestMatchers(HttpMethod.GET, "/api/v1/guardian/**")
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
@@ -192,8 +195,8 @@ public class SecurityConfig {
                                                 .hasAnyRole(ACUDIENTE.name(), ADMIN_GRUPO.name(), ADMIN_GLOBAL.name(),
                                                                 DEV_SUPPORT.name())
 
-                                                //
-                                                // ==== FICHAS MÉDICAS ====
+                        //
+                        // ==== FICHAS MÉDICAS ====
 
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/medical_record/create_record/**")
@@ -221,27 +224,24 @@ public class SecurityConfig {
                                                                 "/api/v1/finanzas/payments/status/guardian/*")
                                                 .hasAnyRole(ACUDIENTE.name())
 
-                                                .requestMatchers("/api/v1/finanzas/payments/**")
-                                                .hasAnyRole(ADMIN_GLOBAL.name(), TESORERO.name(), ADMIN_GRUPO.name())
+                        // Cuotas
+                        .requestMatchers("/api/v1/finanzas/fees/**")
+                        .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
 
-                                                // Cuotas
-                                                .requestMatchers("/api/v1/finanzas/fees/**")
-                                                .hasAnyRole(ADMIN_GLOBAL.name(), TESORERO.name(), ADMIN_GRUPO.name())
+                        // Dashboard financiero
+                        .requestMatchers("/api/v1/finanzas/dashboard/**")
+                        .hasAnyRole(TESORERO.name(), ADMIN_GRUPO.name())
 
-                                                // Dashboard financiero
-                                                .requestMatchers("/api/v1/finanzas/dashboard/**")
-                                                .hasAnyRole(ADMIN_GLOBAL.name(), TESORERO.name(), ADMIN_GRUPO.name())
+                        //
+                        .anyRequest().permitAll()
 
-                                                //
-                                                .anyRequest().permitAll()
-
-                                )
-                                .cors(withDefaults())
-                                .oauth2ResourceServer(oauth2 -> oauth2
-                                                .jwt(jwt -> jwt.jwtAuthenticationConverter(
-                                                                jwtAuthenticationConverter())))
-                                .build();
-        }
+                )
+                .cors(withDefaults())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(
+                                jwtAuthenticationConverter())))
+                .build();
+    }
 
         private JwtAuthenticationConverter jwtAuthenticationConverter() {
                 JwtAuthenticationConverter converter = new JwtAuthenticationConverter();

@@ -325,6 +325,7 @@ function Grupos() {
                         <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
+                            captionLayout="dropdown"
                             selected={
                               field.value
                                 ? parseYMDToDate(field.value)

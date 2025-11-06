@@ -186,25 +186,6 @@ const tesoreroItems: MenuItem[] = [
   },
 ];
 
-// Menú para SCOUTER (solo lo que existe y es accesible actualmente)
-const scouterItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "organigrama", label: "Organigrama", icon: <Network />, href: "/app/organigrama" },
-  { id: "miembros", label: "Miembros", icon: <Users />, href: "/app/miembros" },
-  { id: "inscripcion", label: "Inscripción", icon: <Pencil />, href: "/app/inscripcion" },
-  { id: "info-medica", label: "Información Médica", icon: <BriefcaseMedical />, href: "/app/grupos/informacion-medica" },
-];
-
-// Menú para COMITÉ (COMITE_ADMIN) usando rutas existentes
-const comiteItems: MenuItem[] = [
-  { id: "inicio", label: "Inicio", icon: <LineChart />, href: "/app/dashboard" },
-  { id: "grupos", label: "Grupos", icon: <Users />, href: "/app/grupos" },
-  { id: "inscripcion", label: "Inscripcion", icon: <Pencil />, href: "/app/inscripcion" },
-  { id: "financiero", label: "Financiero", icon: <DollarSign />, href: "/app/financiero/estado-cuenta" },
-  { id: "financiero-cuotas", label: "Cuotas", icon: <DollarSign />, href: "/app/financiero/cuotas" },
-  { id: "financiero-pagos", label: "Pagos", icon: <DollarSign />, href: "/app/financiero/pagos" },
-];
-
 const acudienteItems: MenuItem[] = [
   {
     id: "inicio",
@@ -299,10 +280,6 @@ function AppLayoutContent() {
         return tesoreroItems;
       case RawRole.SCOUT:
         return ScoutItems;
-      case RawRole.SCOUTER:
-        return scouterItems;
-      case RawRole.COMITE_ADMIN:
-        return comiteItems;
       case RawRole.ADMIN_GRUPO:
         return adminGrupalItems;
       default:
@@ -392,8 +369,7 @@ function AppLayoutContent() {
                   item.submenu ? (
                     <Collapsible
                       key={item.id}
-                      className="group/collapsible"
-                    >
+                      className="group/collapsible">
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton className="text-base h-12 px-3 rounded-lg hover:bg-white/10 data-[state=open]:bg-white/20 data-[state=open]:font-semibold data-[state=open]:text-white">
