@@ -89,6 +89,7 @@ export interface GuardianCompleteData {
   tenantId: string;
   firstName: string;
   lastName: string;
+  age: number;
   role: 'ACUDIENTE'; // se quema ya que se está creando un acudiente
   gender: string;
   address: string;
