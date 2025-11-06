@@ -64,19 +64,17 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
 
           // Filtrar solo miembros aprobados y activos
           scoutMembers = membersResponse.filter((member: Member) =>
-            member.role?.toUpperCase() === 'SCOUT' &&
+            member.isActive &&
+            member.tenantId === tenantId &&
             member.status === 'APPROVED' &&
-            member.isActive
+            member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+            member.role?.toUpperCase() !== 'ADMIN_GLOBAL'
           );
 
           // Buscar el miembro actual por id
           currentMember = membersResponse.find((member: Member) =>
             member.email?.toLowerCase() === user?.email?.toLowerCase()
           );
-
-          scoutMembers = scoutMembers.filter(
-            (member: Member) =>
-              member.tenantId === tenantId);
 
           // Si el usuario actual tiene un subgrupo asignado, filtrar por ese subgrupo
           if (currentMember?.subgroup?.section?.groupId) {
@@ -101,7 +99,8 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
               member.isActive &&
               member.tenantId === tenantId &&   // todos los miembros del mismo tenant
               member.status === 'APPROVED' &&  // solo aprobados
-              member.role?.toUpperCase() === 'SCOUT'  // insensible a mayúsculas
+              member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+              member.role?.toUpperCase() !== 'ADMIN_GLOBAL'  // insensible a mayúsculas
           );
           break;
 
@@ -112,7 +111,8 @@ export default function MedicalWizardForm({ memberId, onSubmit, onCancel, initia
             (member: Member) =>
               member.isActive &&
               member.status === 'APPROVED' &&  // solo aprobados
-              member.role?.toUpperCase() === 'SCOUT'  // insensible a mayúsculas
+              member.role?.toUpperCase() !== 'DEV_SUPPORT' && 
+              member.role?.toUpperCase() !== 'ADMIN_GLOBAL'  // insensible a mayúsculas
           );
           break;
       }
