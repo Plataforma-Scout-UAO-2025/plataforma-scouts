@@ -12,42 +12,36 @@ import { getGroupBySlug } from "@/api/organigramaApi";
 import { useTenantParams } from "../../organigramaRamas_Subramas/hooks/useTenantParams";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import KNUT from "@/assets/KNUT.png";
 
 /* ============================================================
    📄 Exportación a PDF
    ============================================================ */
 // Util para cargar una imagen desde un URL (manejado por Vite) y esperar a que esté lista
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
+// Footer: dibuja línea y la marca KNUT en cada página
+function drawKnutFooter(doc: jsPDF, color: [number, number, number] = [26, 65, 52]) {
+  const getPages = (doc as unknown as { getNumberOfPages?: () => number; internal?: { getNumberOfPages?: () => number } })
+    .getNumberOfPages?.bind(doc)
+    ?? (doc as unknown as { internal?: { getNumberOfPages?: () => number } })
+      .internal?.getNumberOfPages?.bind((doc as unknown as { internal?: { getNumberOfPages?: () => number } }).internal)
+    ?? (() => 1);
+  const total = Math.max(1, getPages());
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const marginX = 14;
+    const y = ph - 24;
+    doc.setDrawColor(...color);
+    doc.setLineWidth(1);
+    doc.line(marginX, y, pw - marginX, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...color);
+    doc.setFontSize(10);
+    doc.text("KNUT", pw - marginX, y + 12, { align: "right" as const });
+  }
 }
 
-// Typesafe helpers for jspdf quirks
-type JsPDFMaybePaged = jsPDF & {
-  getNumberOfPages?: () => number;
-  internal?: { getNumberOfPages?: () => number; pageSize: { getWidth: () => number; getHeight: () => number } };
-};
-type JsPDFWithAddImage = jsPDF & {
-  addImage: (
-    imageData: HTMLImageElement | string,
-    format: string,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    alias?: string,
-    compression?: "NONE" | "FAST" | "SLOW"
-  ) => jsPDF;
-};
-const getNumberOfPagesSafe = (doc: jsPDF): number => {
-  const d = doc as unknown as JsPDFMaybePaged;
-  return d.getNumberOfPages?.() ?? d.internal?.getNumberOfPages?.() ?? 1;
-};
+// Nota: omitimos helpers de imagen y número de páginas heredados; ahora dibujamos footer por página
 
 async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName?: string) {
   const doc = new jsPDF();
@@ -150,24 +144,14 @@ async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName
       });
     }
   });
-  // Precalcular tamaño del footer (no reservamos margen global)
-  let footerW = 110;
-  let footerH = 45;
-  try {
-    const probe = await loadImage(KNUT);
-    const pageW = doc.internal.pageSize.getWidth();
-    footerW = Math.min(120, pageW * 0.28);
-    const ratio = probe.height > 0 ? probe.height / probe.width : 0.45;
-    footerH = footerW * ratio;
-  } catch {/* default sizes */}
+  // Reservar margen inferior para no solapar el pie de página
 
   autoTable(doc, {
     head: [["Nivel", "Cargo", "Titular", "Descripción"]],
     body: tableData,
     startY: 35,
-  // Importante: no reservar margen grande en todas las páginas;
-  // dejamos un margen pequeño y gestionamos el pie solo en la última página.
-  margin: { bottom: 12 },
+    // Reservar espacio inferior para el pie de página (línea + KNUT)
+    margin: { bottom: 32 },
     theme: "striped",
     styles: {
       fontSize: 9,
@@ -180,44 +164,10 @@ async function exportPDF(data: OrganigramaNiveles, members?: Member[], groupName
       fontStyle: "bold",
     },
     alternateRowStyles: { fillColor: [237, 237, 237] }, // 🎨 --accent (#EDEDED)
+    didDrawPage: () => {
+      drawKnutFooter(doc);
+    },
   });
-
-  // Pie de página: solo en la última página y sin dejar espacio en las demás.
-  try {
-    const img = await loadImage(KNUT);
-    const pageCount: number = getNumberOfPagesSafe(doc);
-    // Colocar el logo solo en la última página; si no hay espacio, crear una nueva
-    const last = Math.max(1, pageCount);
-    const anyDoc = doc as unknown as { lastAutoTable?: { finalY: number } };
-    doc.setPage(last);
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 16; // margen inferior
-    const w = Math.min(footerW, pageWidth * 0.28);
-    const ratio = img.height > 0 ? img.height / img.width : footerH / Math.max(footerW, 1);
-    const h = w * ratio;
-    const x = (pageWidth - w) / 2;
-    const y = pageHeight - h - margin;
-
-    // Verificar posible solapamiento con el contenido del último autoTable
-    const finalY = anyDoc.lastAutoTable?.finalY ?? 0;
-    if (finalY && finalY > y - 4) {
-      // No hay espacio suficiente: agregar una página extra para el logo
-      doc.addPage();
-      const pw = doc.internal.pageSize.getWidth();
-      const ph = doc.internal.pageSize.getHeight();
-      const w2 = Math.min(footerW, pw * 0.28);
-      const h2 = w2 * ratio;
-      const x2 = (pw - w2) / 2;
-      const y2 = ph - h2 - margin;
-      (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x2, y2, w2, h2, undefined, "FAST");
-    } else {
-      // Hay espacio en la última página actual
-      (doc as unknown as JsPDFWithAddImage).addImage(img, "PNG", x, y, w, h, undefined, "FAST");
-    }
-  } catch (e) {
-    console.warn("[Export PDF Niveles] No se pudo cargar la imagen de pie de página KNUT:", e);
-  }
 
   doc.save(`organigrama_niveles_${data.anio}.pdf`);
 }
