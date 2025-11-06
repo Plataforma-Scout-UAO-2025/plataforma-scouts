@@ -2,6 +2,18 @@ import { z } from "zod";
 import { DOCUMENT_TYPES } from "@/types/guardian.type";
 
 export const completeDataSchema = z.object({
+  firstName: z
+    .string()
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(50, "El nombre debe tener máximo 50 caracteres")
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El nombre solo puede contener letras"),
+  
+  lastName: z
+    .string()
+    .min(2, "El apellido debe tener al menos 2 caracteres")
+    .max(50, "El apellido debe tener máximo 50 caracteres")
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "El apellido solo puede contener letras"),
+  
   identification: z
     .string()
     .min(6, "La identificación debe tener al menos 6 dígitos")
@@ -24,7 +36,7 @@ export const completeDataSchema = z.object({
     .max(100, "La dirección debe tener máximo 100 caracteres"),
   
   gender: z
-    .enum(["MALE", "FEMALE", "OTHER"], {
+    .enum(["Masculino", "Femenino", "Otro"], {
       message: "Seleccione un género válido",
     }),
   
