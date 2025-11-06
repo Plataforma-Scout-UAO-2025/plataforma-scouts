@@ -223,13 +223,7 @@ const acudienteItems: MenuItem[] = [
     label: "Financiero",
     icon: <DollarSign />,
     href: "/app/financiero/estado-cuenta",
-  },
-  {
-    id: "medico",
-    label: "Información Médica",
-    icon: <BriefcaseMedical />,
-    href: "/app/grupos/informacion-medica",
-  },
+  }
 ];
 
 const ScoutItems: MenuItem[] = [

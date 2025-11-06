@@ -68,7 +68,7 @@ export default function SelectMemberModal({
 
   const loadGuardianMemberId = async () => {
     try {
-      const guardianId = user?.sub ? parseInt(user.sub.replace('auth0|', '')) : undefined;
+      const guardianId = user?.sub;
       
       if (guardianId) {
         const guardianData = await getGuardianById(guardianId);

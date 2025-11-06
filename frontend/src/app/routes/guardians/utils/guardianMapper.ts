@@ -28,7 +28,7 @@ export function normalizeGuardianData(apiResponse: GuardianApiResponse): Guardia
   return {
     member_id: apiResponse.member_id,
     user_id: apiResponse.user_id,
-    rol: apiResponse.rol,
+    role: apiResponse.rol,
     tenant_id: apiResponse.tenant_id,
     firstName: apiResponse.firstName || apiResponse.first_name || '',
     lastName: apiResponse.lastName || apiResponse.last_name || '',

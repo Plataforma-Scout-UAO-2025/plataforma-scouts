@@ -85,21 +85,20 @@ export interface GuardianWithMembers {
 }
 
 export interface GuardianCompleteData {
-  userId: string;
-  tenantId: string;
-  firstName: string;
-  lastName: string;
-  age: number;
+  user_id: string;
+  tenant_id: string;
+  first_name: string;
+  last_name: string;
   role: 'ACUDIENTE'; // se quema ya que se está creando un acudiente
   gender: string;
   address: string;
-  birthDate: string;
+  birth_date: string;
   identification: string;
-  documentType: DocumentType;
+  document_type: DocumentType;
   phone: string;
-  isActive: boolean;
+  is_active: boolean;
   status: 'PENDING'; //se quema ya que se está terminando de crear la cuenta
-  acceptTreatment: true; //se quema ya que si llega a este punto siempre es true
+  accept_treatment: true; //se quema ya que si llega a este punto siempre es true
 }
 
 export interface GuardianCreateResponse {

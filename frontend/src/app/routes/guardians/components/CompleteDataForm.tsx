@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { completeDataSchema, type CompleteDataFormData } from "@/app/routes/guardians/schemas/CompleteData.schema";
 import { useAgeCalculation } from "@/app/routes/guardians/hooks/useAgeCalculation";
@@ -11,22 +12,26 @@ import { GenderField } from "@/app/routes/guardians/components/fields/GenderFiel
 import { BirthDateField } from "@/app/routes/guardians/components/fields/BirthDateField";
 import { AddressField } from "@/app/routes/guardians/components/fields/AddressField";
 
+
 interface CompleteDataFormProps {
   onSubmit: (data: CompleteDataFormData) => Promise<void>;
   isSubmitting: boolean;
+  initialData?: Partial<CompleteDataFormData>;
 }
 
-export const CompleteDataForm = ({ onSubmit, isSubmitting }: CompleteDataFormProps) => {
+export const CompleteDataForm = ({ onSubmit, isSubmitting, initialData }: CompleteDataFormProps) => {
   const form = useForm<CompleteDataFormData>({
     resolver: zodResolver(completeDataSchema),
     defaultValues: {
-      identification: "",
-      documentType: undefined,
-      phone: "",
-      address: "",
-      gender: undefined,
-      birthDate: "",
-      age: undefined,
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
+      identification: initialData?.identification || "",
+      documentType: initialData?.documentType,
+      phone: initialData?.phone || "",
+      address: initialData?.address || "",
+      gender: initialData?.gender,
+      birthDate: initialData?.birthDate || ""
+
     },
   });
 
@@ -47,6 +52,44 @@ export const CompleteDataForm = ({ onSubmit, isSubmitting }: CompleteDataFormPro
         onSubmit={form.handleSubmit(handleSubmit)} 
         className="space-y-4 max-h-[60vh] overflow-y-auto px-1"
       >
+        {/* First Name and Last Name */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nombre *</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Ej: Juan"
+                    {...field}
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Apellido *</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Ej: Pérez"
+                    {...field}
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         {/* Document Type and Identification */}
         <div className="grid grid-cols-2 gap-4">
           <DocumentTypeField control={form.control} disabled={isSubmitting} />

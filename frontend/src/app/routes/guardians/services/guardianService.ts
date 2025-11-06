@@ -11,10 +11,9 @@ import {
 import type { 
   Guardian, 
   GuardianWithMembers,
-  CreateGuardianDTO, 
+  GuardianCompleteData,
   UpdateGuardianDTO,
-  MemberBasicInfo,
-  GuardianCreateResponse 
+  MemberBasicInfo
 } from '@/types/guardian.type';
 
 // Helper: Extraer status code de un error (si existe)
@@ -101,12 +100,12 @@ export const guardianService = {
     }
   },
 
-  // Crear un nuevo guardian
-  crearGuardian: async (datos: CreateGuardianDTO): Promise<GuardianCreateResponse> => {
+ // Crear un nuevo guardian (alias para compatibilidad)
+  createGuardian: async (data: GuardianCompleteData): Promise<GuardianCompleteData> => {
     try {
-        return await createGuardian(datos);
+      return await createGuardian(data);
     } catch (error) {
-      console.error('Error creando guardian:', error);
+      console.error('Error creating guardian:', error);
       throw error;
     }
   },

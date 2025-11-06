@@ -27,9 +27,9 @@ export const GenderField = ({ control, disabled }: GenderFieldProps) => {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="MALE">Masculino</SelectItem>
-              <SelectItem value="FEMALE">Femenino</SelectItem>
-              <SelectItem value="OTHER">Otro</SelectItem>
+              <SelectItem value="Masculino">Masculino</SelectItem>
+              <SelectItem value="Femenino">Femenino</SelectItem>
+              <SelectItem value="Otro">Otro</SelectItem>
             </SelectContent>
           </Select>
           <FormMessage />

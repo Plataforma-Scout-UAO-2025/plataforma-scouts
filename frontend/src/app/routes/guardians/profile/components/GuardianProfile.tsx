@@ -163,7 +163,7 @@ const GuardianProfilePage: React.FC = () => {
           <ProfileHeader 
             first_name={guardianApiData?.firstName || ''} 
             last_name={guardianApiData?.lastName || ''} 
-            grupo={guardianApiData?.rol || ''} 
+            grupo={guardianApiData?.role || ''} 
             is_active={guardianApiData?.is_active || false} 
           />
           

@@ -1,17 +1,16 @@
 import api from "./axios";
 import type { 
   GuardianWithMembers, 
-  CreateGuardianDTO, 
   UpdateGuardianDTO, 
   MemberBasicInfo, 
-  GuardianCreateResponse,
+  GuardianCompleteData,
   AvailableGuardianDTO 
 } from "@/types/guardian.type";
 import { normalizeGuardianData, type GuardianApiResponse } from "@/app/routes/guardians/utils/guardianMapper";
 
 // Crear un nuevo guardian
-export const createGuardian = async (data: CreateGuardianDTO) => {
-  const response = await api.post<GuardianCreateResponse>("/guardian", data);
+export const createGuardian = async (data: GuardianCompleteData) => {
+  const response = await api.post<GuardianCompleteData>("/guardian", data);
   return response.data;
 };
 
